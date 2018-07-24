@@ -20,43 +20,43 @@ from tests import integration
 
 
 class GatedTestCase(integration.StoreTestCase):
-
     def setUp(self):
         super().setUp()
         if not self.is_store_fake():
-            self.skipTest('Right combination of snaps and IDs is not '
-                          'available in real stores.')
+            self.skipTest(
+                "Right combination of snaps and IDs is not available in real stores."
+            )
 
     def test_gated_success(self):
         self.addCleanup(self.logout)
         self.login()
-        validations = [('snap-1', '3'), ('snap-2', '5')]
-        self.assertThat(self.gated('core', validations), Equals(0))
+        validations = [("snap-1", "3"), ("snap-2", "5")]
+        self.assertThat(self.gated("core", validations), Equals(0))
 
     def test_gated_no_login_failure(self):
         self.assertThat(
-            self.gated(
-                'core',
-                expected_output='Have you run "snapcraft login'),
-            Equals(2))
+            self.gated("core", expected_output='Have you run "snapcraft login'),
+            Equals(2),
+        )
 
     def test_gated_unknown_snap_failure(self):
         self.addCleanup(self.logout)
         self.login()
         self.assertThat(
-            self.gated(
-                'unknown',
-                expected_output="Snap 'unknown' was not found"),
-            Equals(2))
+            self.gated("unknown", expected_output="Snap 'unknown' was not found"),
+            Equals(2),
+        )
 
     def test_gated_no_validations(self):
         self.addCleanup(self.logout)
         self.login()
-        snap_name = 'test-snap-with-no-validations'
+        snap_name = "test-snap-with-no-validations"
         self.assertThat(
             self.gated(
                 snap_name,
                 expected_output=(
-                    "There are no validations for snap '{}'".format(
-                        snap_name))),
-            Equals(0))
+                    "There are no validations for snap '{}'".format(snap_name)
+                ),
+            ),
+            Equals(0),
+        )

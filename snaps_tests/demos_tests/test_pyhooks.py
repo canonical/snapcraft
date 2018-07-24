@@ -20,18 +20,19 @@ import snaps_tests
 
 class PyHookCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'pyhooks'
+    snap_content_dir = "pyhooks"
 
     def test_pyhooks(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'pyhooks', '1.0')
+        self.install_snap(snap_path, "pyhooks", "1.0")
 
         # Regular `snap set` should succeed.
-        self.run_command_in_snappy_testbed('sudo snap set pyhooks foo=bar')
+        self.run_command_in_snappy_testbed("sudo snap set pyhooks foo=bar")
 
-        if not snaps_tests.config.get('skip-install', False):
+        if not snaps_tests.config.get("skip-install", False):
             # Setting fail=true should fail.
             self.assertRaises(
                 subprocess.CalledProcessError,
                 self.run_command_in_snappy_testbed,
-                'sudo snap set pyhooks fail=true')
+                "sudo snap set pyhooks fail=true",
+            )

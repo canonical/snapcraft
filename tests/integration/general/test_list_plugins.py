@@ -18,23 +18,19 @@ import pkgutil
 
 from snapcraft import plugins
 
-from testtools.matchers import (
-    Equals,
-    StartsWith
-)
+from testtools.matchers import Equals, StartsWith
 
 from tests import integration
 
 
 class ListPluginsTestCase(integration.TestCase):
-
     def test_list_plugins(self):
-        output = self.run_snapcraft('list-plugins')
-        version, plugins_list = output.split('\n', 1)
+        output = self.run_snapcraft("list-plugins")
+        version, plugins_list = output.split("\n", 1)
         self.assertThat(version, StartsWith("Starting snapcraft "))
         plugins_list = set(plugins_list.split())
         expected = set()
         for _, modname, _ in pkgutil.iter_modules(plugins.__path__):
-            if not modname.startswith('_'):
-                expected.add(modname.replace('_', '-'))
+            if not modname.startswith("_"):
+                expected.add(modname.replace("_", "-"))
         self.assertThat(plugins_list, Equals(expected))

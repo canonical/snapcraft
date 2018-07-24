@@ -24,7 +24,6 @@ from tests import unit
 
 
 class CommandBaseNoFifoTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
         self.runner = CliRunner()
@@ -34,19 +33,22 @@ class CommandBaseNoFifoTestCase(unit.TestCase):
 
 
 class CommandBaseTestCase(CommandBaseNoFifoTestCase):
-
     def setUp(self):
         super().setUp()
 
         tempdir = self.useFixture(fixtures.TempDir()).path
-        self.call_fifo = os.path.join(tempdir, 'call_fifo')
-        self.feedback_fifo = os.path.join(tempdir, 'feedback_fifo')
+        self.call_fifo = os.path.join(tempdir, "call_fifo")
+        self.feedback_fifo = os.path.join(tempdir, "feedback_fifo")
 
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFTCTL_CALL_FIFO', self.call_fifo))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFTCTL_FEEDBACK_FIFO', self.feedback_fifo))
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFTCTL_CALL_FIFO", self.call_fifo)
+        )
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFTCTL_FEEDBACK_FIFO", self.feedback_fifo
+            )
+        )
 
         # Create the FIFOs
-        open(self.call_fifo, 'w').close()
-        open(self.feedback_fifo, 'w').close()
+        open(self.call_fifo, "w").close()
+        open(self.feedback_fifo, "w").close()

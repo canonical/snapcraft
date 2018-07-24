@@ -20,27 +20,29 @@ import testscenarios
 from tests import integration, fixture_setup
 
 
-class UnicodePropertyTestCase(testscenarios.WithScenarios,
-                              integration.TestCase):
+class UnicodePropertyTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ('summary',
-         dict(name='foo', summary='bar💩', description='baz')),
-        ('description',
-         dict(name='foo', summary='bar', description='baz💩')),
-        ]
+        ("summary", dict(name="foo", summary="bar💩", description="baz")),
+        ("description", dict(name="foo", summary="bar", description="baz💩")),
+    ]
 
     def test_invalid_unicode_workaround(self):
-        if not (os.getenv('SNAPCRAFT_FROM_SNAP', False) or
-                os.getenv('SNAPCRAFT_FROM_DEB', False)):
-            self.skipTest('The yaml unicode patch is applied to the snap '
-                          'and python3-yaml package, but not PyYAML in PyPI')
+        if not (
+            os.getenv("SNAPCRAFT_FROM_SNAP", False)
+            or os.getenv("SNAPCRAFT_FROM_DEB", False)
+        ):
+            self.skipTest(
+                "The yaml unicode patch is applied to the snap "
+                "and python3-yaml package, but not PyYAML in PyPI"
+            )
 
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, name=self.name,
-            summary=self.summary, description=self.description)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-        })
+            self.path,
+            name=self.name,
+            summary=self.summary,
+            description=self.description,
+        )
+        snapcraft_yaml.update_part("my-part", {"plugin": "nil"})
         self.useFixture(snapcraft_yaml)
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")

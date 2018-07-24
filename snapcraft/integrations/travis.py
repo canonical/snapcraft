@@ -60,10 +60,7 @@ refresh the project credentials, please run the following command::
 
     $ snapcraft enable-ci travis --refresh
 """
-from contextlib import (
-    ExitStack,
-    contextmanager,
-)
+from contextlib import ExitStack, contextmanager
 import logging
 import os
 import subprocess
@@ -71,18 +68,15 @@ import tempfile
 import yaml
 
 from snapcraft import storeapi
-from snapcraft.file_utils import (
-    requires_command_success,
-    requires_path_exists,
-)
+from snapcraft.file_utils import requires_command_success, requires_path_exists
 from snapcraft.internal import project_loader
 from snapcraft._store import login
 from snapcraft.config import LOCAL_CONFIG_FILENAME
 
 logger = logging.getLogger(__name__)
 
-TRAVIS_CONFIG_FILENAME = '.travis.yml'
-ENCRYPTED_CONFIG_FILENAME = '.snapcraft/travis_snapcraft.cfg'
+TRAVIS_CONFIG_FILENAME = ".travis.yml"
+ENCRYPTED_CONFIG_FILENAME = ".snapcraft/travis_snapcraft.cfg"
 
 
 class TravisRuntimeError(Exception):
@@ -99,43 +93,42 @@ def _acquire_and_encrypt_credentials(packages, channels):
     # (IP or reverse-dns) but Travis sudo-enabled containers, needed for
     # running xenial snapcraft, do not have static egress routes.
     # See https://docs.travis-ci.com/user/ip-addresses.
-    logger.info('Acquiring specific authorization information ...')
+    logger.info("Acquiring specific authorization information ...")
     store = storeapi.StoreClient()
     # Travis cannot register new names or add new developers.
-    acls = [
-        'package_access',
-        'package_push',
-        'package_release',
-    ]
-    if not login(store=store,
-                 acls=acls,
-                 packages=packages,
-                 channels=channels,
-                 save=False):
-        raise TravisRuntimeError(
-            'Cannot continue without logging in successfully.')
+    acls = ["package_access", "package_push", "package_release"]
+    if not login(
+        store=store, acls=acls, packages=packages, channels=channels, save=False
+    ):
+        raise TravisRuntimeError("Cannot continue without logging in successfully.")
 
     logger.info(
-        'Encrypting authorization for Travis and adjusting project to '
-        'automatically decrypt and use it during "after_success".')
-    with tempfile.NamedTemporaryFile(mode='w') as fd:
+        "Encrypting authorization for Travis and adjusting project to "
+        'automatically decrypt and use it during "after_success".'
+    )
+    with tempfile.NamedTemporaryFile(mode="w") as fd:
         store.conf.save(config_fd=fd)
         fd.flush()
-        os.makedirs(
-            os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)
+        os.makedirs(os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)
         cmd = [
-            'travis', 'encrypt-file',
-            '--force',
-            '--add', 'after_success',
-            '--decrypt-to', LOCAL_CONFIG_FILENAME,
-            fd.name, ENCRYPTED_CONFIG_FILENAME,
+            "travis",
+            "encrypt-file",
+            "--force",
+            "--add",
+            "after_success",
+            "--decrypt-to",
+            LOCAL_CONFIG_FILENAME,
+            fd.name,
+            ENCRYPTED_CONFIG_FILENAME,
         ]
         try:
             subprocess.check_output(cmd, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as err:
             raise TravisRuntimeError(
-                '`travis encrypt-file` failed: {}\n{}'.format(
-                    err.returncode, err.stderr.decode()))
+                "`travis encrypt-file` failed: {}\n{}".format(
+                    err.returncode, err.stderr.decode()
+                )
+            )
 
 
 @contextmanager
@@ -143,37 +136,42 @@ def requires_travis_preconditions():
     """Verify all Travis CI integration preconditions."""
     required = (
         requires_command_success(
-            'travis settings',
+            "travis settings",
             not_found_fmt=(
-                'Travis CLI (`{cmd_list[0]}`) is not available.\n'
-                'Please install it before trying this command again:\n\n'
-                '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
-                '    $ sudo gem install travis\n'),
+                "Travis CLI (`{cmd_list[0]}`) is not available.\n"
+                "Please install it before trying this command again:\n\n"
+                "    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n"
+                "    $ sudo gem install travis\n"
+            ),
             failure_fmt=(
-                'Travis CLI (`{command}`) is not functional or you are not '
-                'allowed to access this repository settings.\n'
-                'Make sure it works correctly in your system before trying '
-                'this command again.')
+                "Travis CLI (`{command}`) is not functional or you are not "
+                "allowed to access this repository settings.\n"
+                "Make sure it works correctly in your system before trying "
+                "this command again."
+            ),
         ),
         requires_command_success(
-            'git status',
+            "git status",
             not_found_fmt=(
-                'Git (`{cmd_list[0]}`) is not available, this tool cannot '
-                'verify its prerequisites.\n'
-                'Please install it before trying this command again:\n\n'
-                '    $ sudo apt install git\n'),
+                "Git (`{cmd_list[0]}`) is not available, this tool cannot "
+                "verify its prerequisites.\n"
+                "Please install it before trying this command again:\n\n"
+                "    $ sudo apt install git\n"
+            ),
             failure_fmt=(
-                'The current directory is not a Git repository.\n'
-                'Please switch to the desired project repository where '
-                'Travis should be enabled.')
+                "The current directory is not a Git repository.\n"
+                "Please switch to the desired project repository where "
+                "Travis should be enabled."
+            ),
         ),
         requires_path_exists(
             TRAVIS_CONFIG_FILENAME,
             error_fmt=(
-                'Travis project is not initialized for the current '
-                'directory.\n'
-                'Please initialize Travis project (e.g. `travis init`) with '
-                'appropriate parameters.')
+                "Travis project is not initialized for the current "
+                "directory.\n"
+                "Please initialize Travis project (e.g. `travis init`) with "
+                "appropriate parameters."
+            ),
         ),
     )
     with ExitStack() as cm:
@@ -182,64 +180,69 @@ def requires_travis_preconditions():
 
 
 @requires_travis_preconditions()
-def refresh():
+def refresh(project):
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = project_loader.load_config()
-    snap_name = project_config.data['name']
+    project_config = project_loader.load_config(project)
+    snap_name = project_config.data["name"]
     logger.info(
         'Refreshing credentials to push and release "{}" snaps '
-        'to edge channel in series {}'.format(snap_name, series))
+        "to edge channel in series {}".format(snap_name, series)
+    )
 
-    packages = [{'name': snap_name, 'series': series}]
-    channels = ['edge']
+    packages = [{"name": snap_name, "series": series}]
+    channels = ["edge"]
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
-        'Done. Please commit the changes to `{}` file.'.format(
-            ENCRYPTED_CONFIG_FILENAME))
+        "Done. Please commit the changes to `{}` file.".format(
+            ENCRYPTED_CONFIG_FILENAME
+        )
+    )
 
 
 @requires_travis_preconditions()
-def enable():
+def enable(project):
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = project_loader.load_config()
-    snap_name = project_config.data['name']
+    project_config = project_loader.load_config(project)
+    snap_name = project_config.data["name"]
     logger.info(
-        'Enabling Travis testbeds to push and release {!r} snaps '
-        'to edge channel in series {!r}'.format(snap_name, series))
+        "Enabling Travis testbeds to push and release {!r} snaps "
+        "to edge channel in series {!r}".format(snap_name, series)
+    )
 
-    packages = [{'name': snap_name, 'series': series}]
-    channels = ['edge']
+    packages = [{"name": snap_name, "series": series}]
+    channels = ["edge"]
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
-        'Configuring "deploy" phase to build and release the snap in the '
-        'Store.')
-    with open(TRAVIS_CONFIG_FILENAME, 'r+') as fd:
+        'Configuring "deploy" phase to build and release the snap in the ' "Store."
+    )
+    with open(TRAVIS_CONFIG_FILENAME, "r+") as fd:
         travis_conf = yaml.safe_load(fd)
         # Enable 'sudo' capability and 'docker' service.
-        travis_conf['sudo'] = 'required'
-        services = travis_conf.setdefault('services', [])
-        if 'docker' not in services:
-            services.append('docker')
+        travis_conf["sudo"] = "required"
+        services = travis_conf.setdefault("services", [])
+        if "docker" not in services:
+            services.append("docker")
         # Add a 'deploy' section with 'script' provider for building and
         # release the snap within a xenial docker container.
-        travis_conf['deploy'] = {
-            'skip_cleanup': True,
-            'provider': 'script',
-            'script': (
-                'docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c '
+        travis_conf["deploy"] = {
+            "skip_cleanup": True,
+            "provider": "script",
+            "script": (
+                "docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c "
                 '"apt update -qq && cd $(pwd) && '
-                'snapcraft && snapcraft push *.snap --release edge"'),
-            'on': {
-                'branch': 'master',
-            },
+                'snapcraft && snapcraft push *.snap --release edge"'
+            ),
+            "on": {"branch": "master"},
         }
         fd.seek(0)
         yaml.dump(travis_conf, fd, default_flow_style=False)
 
     logger.info(
-        'Done. Now you just have to review and commit changes in your '
-        'Travis project (`{}`).\n'
-        'Also make sure you add the new `{}` file.'.format(
-            TRAVIS_CONFIG_FILENAME, ENCRYPTED_CONFIG_FILENAME))
+        "Done. Now you just have to review and commit changes in your "
+        "Travis project (`{}`).\n"
+        "Also make sure you add the new `{}` file.".format(
+            TRAVIS_CONFIG_FILENAME, ENCRYPTED_CONFIG_FILENAME
+        )
+    )

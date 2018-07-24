@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Set
+from typing import Iterable, List, Sized
 
 
 def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
@@ -25,12 +25,13 @@ def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
     :param str separator: String to place between each path in the string.
     """
 
-    paths = ['{}{}'.format(prepend, p) for p in paths]
+    paths = ["{}{}".format(prepend, p) for p in paths]
     return separator.join(paths)
 
 
-def format_path_variable(envvar: str, paths: List[str],
-                         prepend: str, separator: str) -> str:
+def format_path_variable(
+    envvar: str, paths: List[str], prepend: str, separator: str
+) -> str:
     """Return a path-like environment variable definition that appends.
 
     :param str envvar: The environment variable in question.
@@ -40,16 +41,18 @@ def format_path_variable(envvar: str, paths: List[str],
     """
 
     if not paths:
-        raise ValueError(
-            "Failed to format '${}': no paths supplied".format(envvar))
+        raise ValueError("Failed to format '${}': no paths supplied".format(envvar))
 
     return '{envvar}="${envvar}{separator}{paths}"'.format(
-        envvar=envvar, separator=separator, paths=combine_paths(
-            paths, prepend, separator))
+        envvar=envvar,
+        separator=separator,
+        paths=combine_paths(paths, prepend, separator),
+    )
 
 
-def humanize_list(items: List[str], conjunction: str,
-                  item_format: str = '{!r}') -> str:
+def humanize_list(
+    items: Iterable[str], conjunction: str, item_format: str = "{!r}"
+) -> str:
     """Format a list into a human-readable string.
 
     :param list items: List to humanize.
@@ -58,22 +61,22 @@ def humanize_list(items: List[str], conjunction: str,
     :param str item_format: Format string to use per item.
     """
 
-    if len(items) == 0:
-        return ''
+    if not items:
+        return ""
 
     quoted_items = [item_format.format(item) for item in sorted(items)]
-    if len(items) == 1:
+    if len(quoted_items) == 1:
         return quoted_items[0]
 
-    humanized = ', '.join(quoted_items[:-1])
+    humanized = ", ".join(quoted_items[:-1])
 
-    if len(items) > 2:
-        humanized += ','
+    if len(quoted_items) > 2:
+        humanized += ","
 
-    return '{} {} {}'.format(humanized, conjunction, quoted_items[-1])
+    return "{} {} {}".format(humanized, conjunction, quoted_items[-1])
 
 
-def pluralize(container: Set[str], if_one: str, if_multiple: str) -> str:
+def pluralize(container: Sized, if_one: str, if_multiple: str) -> str:
     if len(container) == 1:
         return if_one
     else:

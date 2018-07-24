@@ -25,14 +25,20 @@ def _stage_state_constructor(loader, node):
     return StageState(**parameters)
 
 
-yaml.add_constructor(u'!StageState', _stage_state_constructor)
+yaml.add_constructor(u"!StageState", _stage_state_constructor)
 
 
 class StageState(PartState):
-    yaml_tag = u'!StageState'
+    yaml_tag = u"!StageState"
 
-    def __init__(self, files, directories, part_properties=None, project=None,
-                 scriptlet_metadata=None):
+    def __init__(
+        self,
+        files,
+        directories,
+        part_properties=None,
+        project=None,
+        scriptlet_metadata=None,
+    ):
         super().__init__(part_properties, project)
 
         if not scriptlet_metadata:
@@ -50,9 +56,9 @@ class StageState(PartState):
         """
 
         return {
-            'filesets': part_properties.get('filesets', {}) or {},
-            'override-stage': part_properties.get('override-stage'),
-            'stage': part_properties.get('stage', ['*']) or ['*'],
+            "filesets": part_properties.get("filesets", {}) or {},
+            "override-stage": part_properties.get("override-stage"),
+            "stage": part_properties.get("stage", ["*"]) or ["*"],
         }
 
     def project_options_of_interest(self, project):

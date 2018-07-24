@@ -35,18 +35,15 @@ import snapcraft
 
 
 class SconsPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['scons-options'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': []
+        schema["properties"]["scons-options"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
         return schema
 
@@ -54,15 +51,15 @@ class SconsPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['scons-options']
+        return ["scons-options"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('scons')
+        self.build_packages.append("scons")
 
     def build(self):
         super().build()
         env = os.environ.copy()
-        env['DESTDIR'] = self.installdir
-        self.run(['scons', ] + self.options.scons_options)
-        self.run(['scons', 'install'] + self.options.scons_options, env=env)
+        env["DESTDIR"] = self.installdir
+        self.run(["scons"] + self.options.scons_options)
+        self.run(["scons", "install"] + self.options.scons_options, env=env)

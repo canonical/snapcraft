@@ -18,19 +18,15 @@ import subprocess
 
 from testtools.matchers import Equals
 
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import fixture_setup, integration
 
 
 class NodeJSTestCase(integration.SnapdIntegrationTestCase):
-
     def test_install_and_execution(self):
-        with fixture_setup.WithoutSnapInstalled('nodejs-hello'):
-            self.run_snapcraft(project_dir='nodejs-hello')
+        with fixture_setup.WithoutSnapInstalled("nodejs-hello"):
+            self.run_snapcraft(project_dir="nodejs-hello")
             self.install_snap()
             self.assertThat(
-                subprocess.check_output(
-                    ['nodejs-hello'], universal_newlines=True),
-                Equals('Hello world!\n'))
+                subprocess.check_output(["nodejs-hello"], universal_newlines=True),
+                Equals("Hello world!\n"),
+            )

@@ -19,25 +19,21 @@ from unittest import mock
 import requests.exceptions
 from testtools.matchers import Equals
 
-from snapcraft.internal import (
-    errors,
-    remote_parts,
-)
+from snapcraft.internal import errors, remote_parts
 from tests import unit
 
 
 class TestRemoteParts(unit.TestCase):
-
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_update_handles_connection_errors(self, mock_requests_get):
-
         def _fake_get(*args, **kwargs):
             raise requests.exceptions.ConnectionError("I'm a naughty error")
 
         mock_requests_get.side_effect = _fake_get
 
         raised = self.assertRaises(
-            errors.RemotePartsUpdateConnectionError, remote_parts.update)
+            errors.RemotePartsUpdateConnectionError, remote_parts.update
+        )
         self.assertThat(
-            raised.message, Equals(
-                requests.exceptions.ConnectionError.__doc__))
+            raised.message, Equals(requests.exceptions.ConnectionError.__doc__)
+        )

@@ -29,103 +29,132 @@ from tests import unit
 class AppstreamTestCase(unit.TestCase):
 
     scenarios = testscenarios.multiply_scenarios(
-        [('summary', {
-            'key': 'summary',
-            'attributes': {},
-            'value': 'test-summary',
-            'param_name': 'summary'
-        }),
-         ('description', {
-             'key': 'description',
-             'attributes': {},
-             'value': 'test-description',
-             'param_name': 'description',
-         }),
-         ('local icon', {
-            'key': 'icon',
-            'attributes': {'type': 'local'},
-            'param_name': 'icon',
-            'value': '/test/path',
-         }),
-         ('common id', {
-             'key': 'id',
-             'attributes': {},
-             'param_name': 'common_id',
-             'value': 'test-id'
-         })],
-        [('metainfo', {'file_extension': 'metainfo.xml'}),
-         ('appdata', {'file_extension': 'appdata.xml'})]
+        [
+            (
+                "summary",
+                {
+                    "key": "summary",
+                    "attributes": {},
+                    "value": "test-summary",
+                    "param_name": "summary",
+                },
+            ),
+            (
+                "description",
+                {
+                    "key": "description",
+                    "attributes": {},
+                    "value": "test-description",
+                    "param_name": "description",
+                },
+            ),
+            (
+                "local icon",
+                {
+                    "key": "icon",
+                    "attributes": {"type": "local"},
+                    "param_name": "icon",
+                    "value": "/test/path",
+                },
+            ),
+            (
+                "common id",
+                {
+                    "key": "id",
+                    "attributes": {},
+                    "param_name": "common_id",
+                    "value": "test-id",
+                },
+            ),
+        ],
+        [
+            ("metainfo", {"file_extension": "metainfo.xml"}),
+            ("appdata", {"file_extension": "appdata.xml"}),
+        ],
     )
 
     def test_appstream(self):
-        file_name = 'foo.{}'.format(self.file_extension)
-        attributes = ' '.join(
+        file_name = "foo.{}".format(self.file_extension)
+        attributes = " ".join(
             '{attribute_name}="{attribute_value}"'.format(
-                attribute_name=attribute,
-                attribute_value=self.attributes[attribute])
-            for attribute in self.attributes)
-        with open(file_name, 'w') as f:
-            f.write(textwrap.dedent("""\
+                attribute_name=attribute, attribute_value=self.attributes[attribute]
+            )
+            for attribute in self.attributes
+        )
+        with open(file_name, "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component>
                   <{key} {attributes}>{value}</{key}>
                 </component>""".format(
-                    key=self.key, value=self.value, attributes=attributes)))
+                        key=self.key, value=self.value, attributes=attributes
+                    )
+                )
+            )
 
         kwargs = {self.param_name: self.value}
         expected = ExtractedMetadata(**kwargs)
 
-        self.assertThat(
-            appstream.extract(file_name), Equals(expected))
+        self.assertThat(appstream.extract(file_name), Equals(expected))
 
 
 class AppstreamUnhandledFileTestCase(unit.TestCase):
-
     def test_unhandled_file_test_case(self):
         raised = self.assertRaises(
-            _errors.UnhandledFileError, appstream.extract,
-            'unhandled-file')
+            _errors.UnhandledFileError, appstream.extract, "unhandled-file"
+        )
 
-        self.assertThat(raised.path, Equals('unhandled-file'))
-        self.assertThat(raised.extractor_name, Equals('appstream'))
+        self.assertThat(raised.path, Equals("unhandled-file"))
+        self.assertThat(raised.extractor_name, Equals("appstream"))
 
 
 class AppstreamLaunchableTestCase(unit.TestCase):
 
     scenarios = (
-        ('usr/share',
-         {'desktop_file_path':
-          'usr/share/applications/com.example.test/app.desktop'}),
-        ('usr/local/share',
-         {'desktop_file_path':
-          'usr/local/share/applications/com.example.test/app.desktop'})
+        (
+            "usr/share",
+            {
+                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop"
+            },
+        ),
+        (
+            "usr/local/share",
+            {
+                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop"
+            },
+        ),
     )
 
     def test_appstream_with_launchable(self):
-        with open('foo.metainfo.xml', 'w') as f:
-            f.write(textwrap.dedent("""\
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component>
                   <launchable type="desktop-id">
                     com.example.test-app.desktop
                   </launchable>
-                </component>"""))
+                </component>"""
+                )
+            )
 
         os.makedirs(os.path.dirname(self.desktop_file_path))
-        open(self.desktop_file_path, 'w').close()
+        open(self.desktop_file_path, "w").close()
 
-        expected = ExtractedMetadata(
-            desktop_file_paths=[self.desktop_file_path])
+        expected = ExtractedMetadata(desktop_file_paths=[self.desktop_file_path])
 
-        self.assertThat(
-            appstream.extract('foo.metainfo.xml'), Equals(expected))
+        self.assertThat(appstream.extract("foo.metainfo.xml"), Equals(expected))
 
 
 class AppstreamMultipleLaunchableTestCase(unit.TestCase):
-
     def test_appstream_with_multiple_launchables(self):
-        with open('foo.metainfo.xml', 'w') as f:
-            f.write(textwrap.dedent("""\
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component>
                   <launchable type="desktop-id">
@@ -140,18 +169,19 @@ class AppstreamMultipleLaunchableTestCase(unit.TestCase):
                   <launchable type="desktop-id">
                     unexisting
                   </launchable>
-                </component>"""))
+                </component>"""
+                )
+            )
 
-        os.makedirs('usr/local/share/applications/com.example.test/')
-        open('usr/local/share/applications/com.example.test/app1.desktop',
-             'w').close()
-        open('usr/local/share/applications/com.example.test/app2.desktop',
-             'w').close()
+        os.makedirs("usr/local/share/applications/com.example.test/")
+        open("usr/local/share/applications/com.example.test/app1.desktop", "w").close()
+        open("usr/local/share/applications/com.example.test/app2.desktop", "w").close()
 
         expected = ExtractedMetadata(
             desktop_file_paths=[
-                'usr/local/share/applications/com.example.test/app1.desktop',
-                'usr/local/share/applications/com.example.test/app2.desktop'])
+                "usr/local/share/applications/com.example.test/app1.desktop",
+                "usr/local/share/applications/com.example.test/app2.desktop",
+            ]
+        )
 
-        self.assertThat(
-            appstream.extract('foo.metainfo.xml'), Equals(expected))
+        self.assertThat(appstream.extract("foo.metainfo.xml"), Equals(expected))

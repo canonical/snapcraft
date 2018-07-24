@@ -27,18 +27,17 @@ def discoverycli():
     pass
 
 
-@discoverycli.command('list-plugins')
+@discoverycli.command("list-plugins")
 def list_plugins():
     """List the available plugins that handle different types of part.
 
     This command has an alias of `plugins`.
     """
     plugins = []
-    for _, modname, _ in pkgutil.iter_modules(
-            snapcraft.plugins.__path__):
+    for _, modname, _ in pkgutil.iter_modules(snapcraft.plugins.__path__):
         # Only add non-private modules/packages to the plugin list
-        if not modname.startswith('_'):
-            plugins.append(modname.replace('_', '-'))
+        if not modname.startswith("_"):
+            plugins.append(modname.replace("_", "-"))
 
     # we wrap the output depending on terminal size
     width = get_terminal_width()

@@ -25,7 +25,7 @@ project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
 "$script_path/run_lxd_container.sh" test-trigger
-$lxc file push --recursive $project_path/tools test-trigger/root/
+$lxc file push --recursive "$project_path/tools" test-trigger/root/
 $lxc exec test-trigger -- sh -c "apt install --yes python python-launchpadlib"
 $lxc exec test-trigger -- sh -c "/root/tools/run_ppa_autopkgtests.py"
 

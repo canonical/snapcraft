@@ -23,31 +23,43 @@ from . import CommandBaseTestCase
 
 
 class DefineCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
-
     def test_defining_a_part_that_exists(self):
-        result = self.run_command(['define', 'curl'])
+        result = self.run_command(["define", "curl"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(dedent("""\
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
             Maintainer: 'none'
             Description: test entry for curl
 
             curl:
               plugin: autotools
-              source: http://curl.org""")))
+              source: http://curl.org"""
+                )
+            ),
+        )
 
     def test_defining_unexisting_part_raises_exception(self):
         raised = self.assertRaises(
             snapcraft.internal.errors.PartNotInCacheError,
-            self.run_command, ['define', 'curler'])
+            self.run_command,
+            ["define", "curler"],
+        )
 
-        self.assertThat(raised.part_name, Equals('curler'))
+        self.assertThat(raised.part_name, Equals("curler"))
 
     def test_defining_a_part_with_multiline_description(self):
-        result = self.run_command(['define', 'multiline-part'])
+        result = self.run_command(["define", "multiline-part"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(dedent("""\
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
             Maintainer: 'none'
             Description: this is a multiline description
             this is a multiline description
@@ -56,4 +68,7 @@ class DefineCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
             multiline-part:
               plugin: go
-              source: http://source.tar.gz""")))
+              source: http://source.tar.gz"""
+                )
+            ),
+        )

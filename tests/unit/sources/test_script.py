@@ -26,15 +26,15 @@ from tests import unit
 class TestScript(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.source = Script('source', 'destination')
+        self.source = Script("source", "destination")
 
-        os.mkdir('destination')
-        self.source.file = os.path.join('destination', 'file')
-        open(self.source.file, 'w').close()
+        os.mkdir("destination")
+        self.source.file = os.path.join("destination", "file")
+        open(self.source.file, "w").close()
 
-    @mock.patch('snapcraft.internal.sources._script.FileBase.download')
+    @mock.patch("snapcraft.internal.sources._script.FileBase.download")
     def test_download_makes_executable(self, mock_download):
-        self.source.file = os.path.join('destination', 'file')
+        self.source.file = os.path.join("destination", "file")
         self.source.download()
         self.assertThat(self.source.file, FileExists())
         self.assertThat(self.source.file, unit.IsExecutable())

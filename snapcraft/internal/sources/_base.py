@@ -21,16 +21,24 @@ import snapcraft.internal.common
 from snapcraft.internal.cache import FileCache
 from snapcraft.internal.indicators import (
     download_requests_stream,
-    download_urllib_source
+    download_urllib_source,
 )
 from ._checksum import split_checksum, verify_checksum
+from .errors import SourceUpdateUnsupportedError
 
 
 class Base:
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None,
-                 source_checksum=None, command=None):
+    def __init__(
+        self,
+        source,
+        source_dir,
+        source_tag=None,
+        source_commit=None,
+        source_branch=None,
+        source_depth=None,
+        source_checksum=None,
+        command=None,
+    ):
         self.source = source
         self.source_dir = source_dir
         self.source_tag = source_tag
@@ -41,10 +49,39 @@ class Base:
         self.source_details = None
 
         self.command = command
+        self._checked = False
+
+    def check(self, target: str):
+        """Check if pulled sources have changed since target was created.
+
+        :param str target: Path to target file.
+        """
+        self._checked = True
+        return self._check(target)
+
+    def update(self):
+        """Update pulled source.
+
+        :raises RuntimeError: If this function is called before `check()`.
+        """
+        if not self._checked:
+            # This is programmer error
+            raise RuntimeError("source must be checked before it's updated")
+        self._update()
+
+    def _check(self, target: str):
+        """Check if pulled sources have changed since target was created.
+
+        :param str target: Path to target file.
+        """
+        raise SourceUpdateUnsupportedError(self)
+
+    def _update(self):
+        """Update pulled source."""
+        raise SourceUpdateUnsupportedError(self)
 
 
 class FileBase(Base):
-
     def pull(self):
         source_file = None
         is_source_url = snapcraft.internal.common.isurl(self.source)
@@ -75,22 +112,19 @@ class FileBase(Base):
             algorithm, hash = split_checksum(self.source_checksum)
             cache_file = file_cache.get(algorithm=algorithm, hash=hash)
             if cache_file:
-                self.file = os.path.join(self.source_dir,
-                                         os.path.basename(cache_file))
+                self.file = os.path.join(self.source_dir, os.path.basename(cache_file))
                 # We make this copy as the provisioning logic can delete
                 # this file and we don't want that.
                 shutil.copy2(cache_file, self.file)
                 return self.file
 
         # If not we download and store
-        self.file = os.path.join(
-                self.source_dir, os.path.basename(self.source))
+        self.file = os.path.join(self.source_dir, os.path.basename(self.source))
 
-        if snapcraft.internal.common.get_url_scheme(self.source) == 'ftp':
+        if snapcraft.internal.common.get_url_scheme(self.source) == "ftp":
             download_urllib_source(self.source, self.file)
         else:
-            request = requests.get(
-                self.source, stream=True, allow_redirects=True)
+            request = requests.get(self.source, stream=True, allow_redirects=True)
             request.raise_for_status()
 
             download_requests_stream(request, self.file)
@@ -98,9 +132,6 @@ class FileBase(Base):
         # We verify the file if source_checksum is defined
         # and we cache the file for future reuse.
         if self.source_checksum:
-            algorithm, digest = verify_checksum(
-                self.source_checksum, self.file)
-            file_cache.cache(filename=self.file,
-                             algorithm=algorithm,
-                             hash=hash)
+            algorithm, digest = verify_checksum(self.source_checksum, self.file)
+            file_cache.cache(filename=self.file, algorithm=algorithm, hash=hash)
         return self.file

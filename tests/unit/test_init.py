@@ -22,10 +22,7 @@ from tests import unit
 
 
 class VersionTestCase(unit.TestCase):
-
     def test_version_from_snap(self):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', 'snapcraft'))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_VERSION', '3.14'))
-        self.assertThat(snapcraft._get_version(), Equals('3.14'))
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_NAME", "snapcraft"))
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "3.14"))
+        self.assertThat(snapcraft._get_version(), Equals("3.14"))

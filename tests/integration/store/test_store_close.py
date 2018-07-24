@@ -16,27 +16,25 @@
 
 from testtools.matchers import FileExists
 
-from testtools.matchers import (
-    Equals,
-)
+from testtools.matchers import Equals
 
 from tests import integration
 
 
 class ChannelClosingTestCase(integration.StoreTestCase):
-
     def test_missing_login(self):
         expected = 'run "snapcraft login"'
-        status = self.close('basic', 'beta', expected=expected)
+        status = self.close("basic", "beta", expected=expected)
         self.assertThat(status, Equals(2))
 
     def test_missing_permission(self):
         self.addCleanup(self.logout)
         self.login()
         expected = (
-            'Make sure the logged in account has upload permissions on '
-            "'missing' in series '16'.")
-        status = self.close('missing', 'beta', expected=expected)
+            "Make sure the logged in account has upload permissions on "
+            "'missing' in series '16'."
+        )
+        status = self.close("missing", "beta", expected=expected)
         self.assertThat(status, Equals(2))
 
     def test_close_channel(self):
@@ -46,14 +44,14 @@ class ChannelClosingTestCase(integration.StoreTestCase):
         # Build a random snap, register, push and release it.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
+        self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
-        self.run_snapcraft('snap')
-        snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.run_snapcraft("snap")
+        snap_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertThat(self.push(snap_path, release='edge,beta'), Equals(0))
+        self.assertThat(self.push(snap_path, release="edge,beta"), Equals(0))
 
-        expected = 'The beta channel is now closed.'
-        status = self.close(name, 'beta', expected=expected)
+        expected = "The beta channel is now closed."
+        status = self.close(name, "beta", expected=expected)
         self.assertThat(status, Equals(0))

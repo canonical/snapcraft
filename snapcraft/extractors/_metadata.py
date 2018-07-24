@@ -21,12 +21,19 @@ from typing import Any, Dict, List, Set, Union
 class ExtractedMetadata(yaml.YAMLObject):
     """Collection of metadata extracted from a part."""
 
-    yaml_tag = u'!ExtractedMetadata'
+    yaml_tag = u"!ExtractedMetadata"
 
     def __init__(
-            self, *, common_id: str='', summary: str='', description: str='',
-            version: str='', grade: str='', icon: str='',
-            desktop_file_paths: List[str]=None) -> None:
+        self,
+        *,
+        common_id: str = "",
+        summary: str = "",
+        description: str = "",
+        version: str = "",
+        grade: str = "",
+        icon: str = "",
+        desktop_file_paths: List[str] = None
+    ) -> None:
         """Create a new ExtractedMetadata instance.
 
         :param str: common_id: The common identifier across multiple packaging
@@ -42,21 +49,21 @@ class ExtractedMetadata(yaml.YAMLObject):
         self._data = {}  # type: Dict[str, Union[str, List[str]]]
 
         if common_id:
-            self._data['common_id'] = common_id
+            self._data["common_id"] = common_id
         if summary:
-            self._data['summary'] = summary
+            self._data["summary"] = summary
         if description:
-            self._data['description'] = description
+            self._data["description"] = description
         if version:
-            self._data['version'] = version
+            self._data["version"] = version
         if grade:
-            self._data['grade'] = grade
+            self._data["grade"] = grade
         if icon:
-            self._data['icon'] = icon
+            self._data["icon"] = icon
         if desktop_file_paths:
-            self._data['desktop_file_paths'] = desktop_file_paths
+            self._data["desktop_file_paths"] = desktop_file_paths
 
-    def update(self, other: 'ExtractedMetadata') -> None:
+    def update(self, other: "ExtractedMetadata") -> None:
         """Update this metadata with other metadata.
 
         Note that the other metadata will take precedence, and may overwrite
@@ -72,7 +79,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted common_id
         :rtype: str
         """
-        common_id = self._data.get('common_id')
+        common_id = self._data.get("common_id")
         return str(common_id) if common_id else None
 
     def get_summary(self) -> str:
@@ -81,7 +88,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted summary
         :rtype: str
         """
-        summary = self._data.get('summary')
+        summary = self._data.get("summary")
         return str(summary) if summary else None
 
     def get_description(self) -> str:
@@ -90,7 +97,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted description
         :rtype: str
         """
-        description = self._data.get('description')
+        description = self._data.get("description")
         return str(description) if description else None
 
     def get_version(self) -> str:
@@ -99,7 +106,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted version
         :rtype: str
         """
-        version = self._data.get('version')
+        version = self._data.get("version")
         return str(version) if version else None
 
     def get_grade(self) -> str:
@@ -108,7 +115,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted grade
         :rtype: str
         """
-        grade = self._data.get('grade')
+        grade = self._data.get("grade")
         return str(grade) if grade else None
 
     def get_icon(self) -> str:
@@ -117,7 +124,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted icon
         :rtype: str
         """
-        icon = self._data.get('icon')
+        icon = self._data.get("icon")
         return str(icon) if icon else None
 
     def get_desktop_file_paths(self) -> List[str]:
@@ -126,7 +133,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted desktop files paths
         :rtype: list
         """
-        desktop_file_paths = self._data.get('desktop_file_paths')
+        desktop_file_paths = self._data.get("desktop_file_paths")
         return list(desktop_file_paths) if desktop_file_paths else None
 
     def to_dict(self) -> Dict[str, Union[str, List[str]]]:
@@ -137,7 +144,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         """
         return self._data.copy()
 
-    def overlap(self, other: 'ExtractedMetadata') -> Set[str]:
+    def overlap(self, other: "ExtractedMetadata") -> Set[str]:
         """Return all overlapping keys between this and other.
 
         :returns: All overlapping keys between this and other

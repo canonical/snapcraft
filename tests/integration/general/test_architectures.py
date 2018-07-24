@@ -23,37 +23,34 @@ from tests import integration
 
 
 class ArchitecturesTestCase(integration.TestCase):
-
     def test_simple_architecture(self):
         self.construct_yaml(architectures=[self.deb_arch])
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['architectures'], Equals([self.deb_arch]))
+        self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
     def test_build_and_run_on_architecture(self):
-        self.construct_yaml(architectures=[
-            {'build-on': [self.deb_arch], 'run-on': [self.deb_arch]},
-        ])
+        self.construct_yaml(
+            architectures=[{"build-on": [self.deb_arch], "run-on": [self.deb_arch]}]
+        )
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['architectures'], Equals([self.deb_arch]))
+        self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
     def test_default_architecture(self):
-        self.construct_yaml(architectures=[
-            {'build-on': ['other-arch']},
-        ])
+        self.construct_yaml(architectures=[{"build-on": ["other-arch"]}])
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['architectures'], Equals([self.deb_arch]))
+        self.assertThat(y["architectures"], Equals([self.deb_arch]))

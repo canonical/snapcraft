@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 class AmentPlugin(snapcraft.BasePlugin):
-
     @property
     def PLUGIN_STAGE_SOURCES(self):
         """Specify the sources used for stage-packages.
@@ -55,7 +54,9 @@ deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
 deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
 deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
 deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
-""".format('xenial')
+""".format(
+            "xenial"
+        )
 
     @classmethod
     def schema(cls):
@@ -67,10 +68,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         schema = super().schema()
 
-        schema['properties']['version'] = {
-            'type': 'string',
-            'default': 'release-beta3'
-        }
+        schema["properties"]["version"] = {"type": "string", "default": "release-beta3"}
 
         return schema
 
@@ -81,7 +79,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         If these change in the YAML, Snapcraft will consider the pull step
         dirty.
         """
-        return ['version']
+        return ["version"]
 
     def __init__(self, name, options, project):
         """Initialize a new AmentPlugin.
@@ -96,16 +94,19 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # FIXME: Remove this warning once the plugin (and indeed ROS2) is
         # considered stable
-        logger.warn('The ament plugin is currently in beta, its API may '
-                    'break. Use at your own risk')
+        logger.warn(
+            "The ament plugin is currently in beta, its API may "
+            "break. Use at your own risk"
+        )
 
-        self._bootstrap_dir = os.path.join(self.partdir, 'bootstrap')
+        self._bootstrap_dir = os.path.join(self.partdir, "bootstrap")
 
         self._bootstrapper = _ros.ros2.Bootstrapper(
             version=self.options.version,
             bootstrap_path=self._bootstrap_dir,
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
-            project=self.project)
+            project=self.project,
+        )
 
         self.stage_packages.extend(self._bootstrapper.get_stage_packages())
         self.build_packages.extend(self._bootstrapper.get_build_packages())
@@ -135,34 +136,47 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         self._prepare_build()
 
-        self.run([
-            'ament', 'build', self.sourcedir, '--build-space', self.builddir,
-            '--install-space', self.installdir, '--cmake-args',
-            '-DCMAKE_BUILD_TYPE=Release'], env=self._build_env())
+        self.run(
+            [
+                "ament",
+                "build",
+                self.sourcedir,
+                "--build-space",
+                self.builddir,
+                "--install-space",
+                self.installdir,
+                "--cmake-args",
+                "-DCMAKE_BUILD_TYPE=Release",
+            ],
+            env=self._build_env(),
+        )
 
         self._finish_build()
 
     def _prepare_build(self):
         # Bootstrap ros2, and migrate it into our installdir
         ros2_install_dir = self._bootstrapper.build()
-        snapcraft.file_utils.link_or_copy_tree(
-            ros2_install_dir, self.installdir)
+        snapcraft.file_utils.link_or_copy_tree(ros2_install_dir, self.installdir)
 
         # Also rewrite the prefixes to point to the part installdir rather
         # than the bootstrap area. Otherwise Ament embeds absolute paths which
         # makes the resulting code non-relocatable.
         snapcraft.file_utils.replace_in_file(
-            self.installdir, re.compile(r''),
-            re.compile(r'\${AMENT_CURRENT_PREFIX:=.*}'),
-            '${{AMENT_CURRENT_PREFIX:={}}}'.format(self.installdir))
+            self.installdir,
+            re.compile(r""),
+            re.compile(r"\${AMENT_CURRENT_PREFIX:=.*}"),
+            "${{AMENT_CURRENT_PREFIX:={}}}".format(self.installdir),
+        )
 
     def _finish_build(self):
         # Set the AMENT_CURRENT_PREFIX throughout to a sensible default,
         # removing part-specific directories that will clash with other parts.
         snapcraft.file_utils.replace_in_file(
-            self.installdir, re.compile(r''),
-            re.compile(r'\${AMENT_CURRENT_PREFIX:=.*}'),
-            '${AMENT_CURRENT_PREFIX:=$SNAP}')
+            self.installdir,
+            re.compile(r""),
+            re.compile(r"\${AMENT_CURRENT_PREFIX:=.*}"),
+            "${AMENT_CURRENT_PREFIX:=$SNAP}",
+        )
 
     def env(self, root):
         """Runtime environment for ROS2 apps."""
@@ -170,28 +184,33 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         env = []
 
         env.append('PYTHONUSERBASE="{}"'.format(root))
-        env.append('PYTHONPATH="{}:{}${{PYTHONPATH:+:$PYTHONPATH}}"'.format(
-            os.path.join(root, 'usr', 'lib', 'python3', 'dist-packages'),
-            os.path.join(root, 'lib', 'python3', 'dist-packages')))
+        env.append(
+            'PYTHONPATH="{}:{}${{PYTHONPATH:+:$PYTHONPATH}}"'.format(
+                os.path.join(root, "usr", "lib", "python3", "dist-packages"),
+                os.path.join(root, "lib", "python3", "dist-packages"),
+            )
+        )
 
         # Each of these lines is prepended with an `export` when the
         # environment is actually generated. In order to inject real shell code
         # we have to hack it in by appending it on the end of an item already
         # in the environment. FIXME: There should be a better way to do this.
-        env[-1] = env[-1] + '\n\n' + self._source_setup_sh(root)
+        env[-1] = env[-1] + "\n\n" + self._source_setup_sh(root)
 
         return env
 
     def _build_env(self):
         env = os.environ.copy()
-        env['PYTHONPATH'] = os.path.join(
-            os.path.sep, 'usr', 'lib', 'python3', 'dist-packages')
+        env["PYTHONPATH"] = os.path.join(
+            os.path.sep, "usr", "lib", "python3", "dist-packages"
+        )
         return env
 
     def _source_setup_sh(self, root):
-        return textwrap.dedent('''
+        return textwrap.dedent(
+            """
             if [ -f {ros_setup} ]; then
                 . {ros_setup}
             fi
-        ''').format(
-            ros_setup=os.path.join(root, 'setup.sh'))
+        """
+        ).format(ros_setup=os.path.join(root, "setup.sh"))

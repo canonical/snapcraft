@@ -25,52 +25,65 @@ from tests import integration
 
 
 class SnapcraftctlSetGradeTestCase(integration.TestCase):
-
     def test_set_grade(self):
         self.construct_yaml(
-            grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
+            grade=None,
+            adopt_info="my-part",
+            parts=textwrap.dedent(
+                """\
                 my-part:
                   plugin: nil
                   override-pull: snapcraftctl set-grade devel
-                """))
+                """
+            ),
+        )
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['grade'], Equals('devel'))
+        self.assertThat(y["grade"], Equals("devel"))
 
     def test_set_grade_no_overwrite(self):
         self.construct_yaml(
-            grade='devel', adopt_info='my-part',
-            parts=textwrap.dedent("""\
+            grade="devel",
+            adopt_info="my-part",
+            parts=textwrap.dedent(
+                """\
                 my-part:
                   plugin: nil
                   override-pull: snapcraftctl set-grade stable
-                """))
+                """
+            ),
+        )
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['grade'], Equals('devel'))
+        self.assertThat(y["grade"], Equals("devel"))
 
     def test_set_grade_twice_errors(self):
         self.construct_yaml(
-            grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
+            grade=None,
+            adopt_info="my-part",
+            parts=textwrap.dedent(
+                """\
                 my-part:
                   plugin: nil
                   override-pull: snapcraftctl set-grade stable
                   override-prime: snapcraftctl set-grade devel
-                """))
+                """
+            ),
+        )
 
         raised = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, 'prime')
+            subprocess.CalledProcessError, self.run_snapcraft, "prime"
+        )
         self.assertThat(
-            raised.output, Contains(
-                "Unable to set grade: it was already set in the 'pull' "
-                "step"))
-        self.assertThat(
-            raised.output, Contains("Failed to run 'override-prime'"))
+            raised.output,
+            Contains("Unable to set grade: it was already set in the 'pull' step"),
+        )
+        self.assertThat(raised.output, Contains("Failed to run 'override-prime'"))

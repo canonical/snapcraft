@@ -18,24 +18,19 @@ import snapcraft
 
 
 class TestPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {
-                'test-property': {
-                    'type': 'string'
-                }
-            },
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {"test-property": {"type": "string"}},
         }
 
     @classmethod
     def get_pull_properties(cls):
-        return ['test-property']
+        return ["test-property"]
 
     @classmethod
     def get_build_properties(cls):
-        return ['test-property']
+        return ["test-property"]

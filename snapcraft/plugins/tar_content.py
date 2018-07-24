@@ -25,32 +25,27 @@ logger = logging.getLogger(__name__)
 
 
 class TarContentPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
-        return {
-            'properties': {
-                'destination': {
-                    'type': 'string',
-                },
-            },
-        }
+        return {"properties": {"destination": {"type": "string"}}}
 
     @classmethod
     def get_build_properties(cls):
-        return ['destination']
+        return ["destination"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        logger.warning("DEPRECATED: The 'tar-content' plugin's functionality "
-                       "has been replaced by the 'dump' plugin, and it will "
-                       "soon be removed.")
+        logger.warning(
+            "DEPRECATED: The 'tar-content' plugin's functionality "
+            "has been replaced by the 'dump' plugin, and it will "
+            "soon be removed."
+        )
 
-        if (self.options.destination and
-                os.path.isabs(self.options.destination)):
-            raise ValueError('path {!r} must be relative'.format(
-                self.options.destination))
+        if self.options.destination and os.path.isabs(self.options.destination):
+            raise ValueError(
+                "path {!r} must be relative".format(self.options.destination)
+            )
 
     def enable_cross_compilation(self):
         pass
@@ -60,8 +55,7 @@ class TarContentPlugin(snapcraft.BasePlugin):
 
         installdir = self.installdir
         if self.options.destination:
-            installdir = os.path.join(self.installdir,
-                                      self.options.destination)
+            installdir = os.path.join(self.installdir, self.options.destination)
 
         if os.path.exists(installdir):
             shutil.rmtree(installdir)

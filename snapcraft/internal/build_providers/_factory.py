@@ -20,14 +20,14 @@ from . import errors
 from ._multipass import Multipass
 
 if TYPE_CHECKING:
-    from typing import Type                   # noqa: F401
+    from typing import Type  # noqa: F401
 
     from ._base_provider import Provider  # noqa: F401
 
 
-def get_provider_for(provider_name: str) -> 'Type[Provider]':
+def get_provider_for(provider_name: str) -> "Type[Provider]":
     """Returns a Type that can build with provider_name."""
-    if provider_name == 'multipass':
+    if provider_name == "multipass":
         return Multipass
     else:
         raise errors.ProviderNotSupportedError(provider=provider_name)

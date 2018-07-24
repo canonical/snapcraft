@@ -26,16 +26,16 @@ from tests import unit
 class FileCacheTestCase(unit.TestCase):
 
     scenarios = [
-        ('sha384', dict(algo='sha384')),
-        ('md5', dict(algo='md5')),
-        ('sha1', dict(algo='sha1')),
-        ('sha224', dict(algo='sha224')),
-        ('sha256', dict(algo='sha256')),
-        ('sha384', dict(algo='sha384')),
-        ('sha512', dict(algo='sha512')),
-        ('sha3_256', dict(algo='sha3_256')),
-        ('sha3_384', dict(algo='sha3_384')),
-        ('sha3_512', dict(algo='sha3_512')),
+        ("sha384", dict(algo="sha384")),
+        ("md5", dict(algo="md5")),
+        ("sha1", dict(algo="sha1")),
+        ("sha224", dict(algo="sha224")),
+        ("sha256", dict(algo="sha256")),
+        ("sha384", dict(algo="sha384")),
+        ("sha512", dict(algo="sha512")),
+        ("sha3_256", dict(algo="sha3_256")),
+        ("sha3_384", dict(algo="sha3_384")),
+        ("sha3_512", dict(algo="sha3_512")),
     ]
 
     def setUp(self):
@@ -43,42 +43,41 @@ class FileCacheTestCase(unit.TestCase):
         self.file_cache = cache.FileCache()
 
     def test_get_nothing_cached(self):
-        file = self.file_cache.get(algorithm=self.algo, hash='1')
+        file = self.file_cache.get(algorithm=self.algo, hash="1")
         self.assertThat(file, Is(None))
 
     def test_cache_and_retrieve(self):
-        with open('hash_file', 'w') as f:
-            f.write('random stub data')
+        with open("hash_file", "w") as f:
+            f.write("random stub data")
 
-        calculated_hash = calculate_hash('hash_file', algorithm=self.algo)
-        file = self.file_cache.cache(filename='hash_file',
-                                     algorithm=self.algo,
-                                     hash=calculated_hash)
+        calculated_hash = calculate_hash("hash_file", algorithm=self.algo)
+        file = self.file_cache.cache(
+            filename="hash_file", algorithm=self.algo, hash=calculated_hash
+        )
         leaf_path = os.path.join(self.algo, calculated_hash)
         self.assertThat(file, EndsWith(leaf_path))
 
-        retrieved_file = self.file_cache.get(algorithm=self.algo,
-                                             hash=calculated_hash)
+        retrieved_file = self.file_cache.get(algorithm=self.algo, hash=calculated_hash)
         self.assertThat(retrieved_file, EndsWith(leaf_path))
 
     def test_cache_not_possible(self):
-        with open('hash_file', 'w') as f:
-            f.write('random stub data')
+        with open("hash_file", "w") as f:
+            f.write("random stub data")
 
-        bad_calculated_hash = '1'
-        file = self.file_cache.cache(filename='hash_file',
-                                     algorithm=self.algo,
-                                     hash=bad_calculated_hash)
+        bad_calculated_hash = "1"
+        file = self.file_cache.cache(
+            filename="hash_file", algorithm=self.algo, hash=bad_calculated_hash
+        )
         self.assertThat(file, Is(None))
 
     def test_cache_file_copy_error(self):
-        with open('hash_file', 'w') as f:
-            f.write('random stub data')
+        with open("hash_file", "w") as f:
+            f.write("random stub data")
 
-        calculated_hash = calculate_hash('hash_file', algorithm=self.algo)
-        with patch('shutil.copyfile') as mock_copyfile:
+        calculated_hash = calculate_hash("hash_file", algorithm=self.algo)
+        with patch("shutil.copyfile") as mock_copyfile:
             mock_copyfile.side_effect = OSError()
-            file = self.file_cache.cache(filename='hash_file',
-                                         algorithm=self.algo,
-                                         hash=calculated_hash)
+            file = self.file_cache.cache(
+                filename="hash_file", algorithm=self.algo, hash=calculated_hash
+            )
         self.assertThat(file, Is(None))

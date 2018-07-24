@@ -19,34 +19,37 @@ from textwrap import dedent
 from testtools.matchers import Equals
 
 from snapcraft.internal.build_providers import errors
-from snapcraft.internal.build_providers._multipass._instance_info import InstanceInfo  # noqa: E501
+from snapcraft.internal.build_providers._multipass._instance_info import (
+    InstanceInfo
+)  # noqa: E501
 from tests import unit
 
 
 class InstanceInfoGeneralTest(unit.TestCase):
-
     def test_initialize(self):
-        instance_info = InstanceInfo(name='instance-name', state='RUNNING',
-                                     image_release='16.04 LTS')
+        instance_info = InstanceInfo(
+            name="instance-name", state="RUNNING", image_release="16.04 LTS"
+        )
 
-        self.assertThat(instance_info.name, Equals('instance-name'))
-        self.assertThat(instance_info.state, Equals('RUNNING'))
-        self.assertThat(instance_info.image_release, Equals('16.04 LTS'))
+        self.assertThat(instance_info.name, Equals("instance-name"))
+        self.assertThat(instance_info.state, Equals("RUNNING"))
+        self.assertThat(instance_info.image_release, Equals("16.04 LTS"))
         self.assertThat(instance_info.is_stopped(), Equals(False))
 
     def test_instance_is_stopped(self):
-        instance_info = InstanceInfo(name='instance-name', state='STOPPED',
-                                     image_release='16.04 LTS')
+        instance_info = InstanceInfo(
+            name="instance-name", state="STOPPED", image_release="16.04 LTS"
+        )
 
         self.assertThat(instance_info.is_stopped(), Equals(True))
 
 
 class InstanceInfoFromJSONTest(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        self.json_string = dedent("""\
+        self.json_string = dedent(
+            """\
             {
                 "errors": [
                 ],
@@ -79,30 +82,35 @@ class InstanceInfoFromJSONTest(unit.TestCase):
                     }
                 }
             }
-        """)  # noqa: E501
-        self.instance_name = 'announceable-rodney'
+        """
+        )  # noqa: E501
+        self.instance_name = "announceable-rodney"
 
     def test_new_instance_from_unmarshalled_json(self):
         instance_info = InstanceInfo.from_json(
-            instance_name=self.instance_name,
-            json_info=self.json_string)
+            instance_name=self.instance_name, json_info=self.json_string
+        )
 
         self.assertThat(instance_info.name, Equals(self.instance_name))
-        self.assertThat(instance_info.state, Equals('RUNNING'))
-        self.assertThat(instance_info.image_release, Equals('16.04 LTS'))
+        self.assertThat(instance_info.state, Equals("RUNNING"))
+        self.assertThat(instance_info.image_release, Equals("16.04 LTS"))
 
     def test_new_instance_from_unmarshalled_json_wrong_instance_fails(self):
-        raised = self.assertRaises(errors.ProviderInfoDataKeyError,
-                                   InstanceInfo.from_json,
-                                   instance_name='wrong-name',
-                                   json_info=self.json_string)
-        self.assertThat(raised.provider_name, Equals('multipass'))
+        raised = self.assertRaises(
+            errors.ProviderInfoDataKeyError,
+            InstanceInfo.from_json,
+            instance_name="wrong-name",
+            json_info=self.json_string,
+        )
+        self.assertThat(raised.provider_name, Equals("multipass"))
         self.assertThat(raised.missing_key, Equals("'wrong-name'"))
 
     def test_new_instance_from_unmarshalled_json_empty_fails(self):
-        raised = self.assertRaises(errors.ProviderBadDataError,
-                                   InstanceInfo.from_json,
-                                   instance_name=self.instance_name,
-                                   json_info='bad-json')
-        self.assertThat(raised.provider_name, Equals('multipass'))
-        self.assertThat(raised.data, Equals('bad-json'))
+        raised = self.assertRaises(
+            errors.ProviderBadDataError,
+            InstanceInfo.from_json,
+            instance_name=self.instance_name,
+            json_info="bad-json",
+        )
+        self.assertThat(raised.provider_name, Equals("multipass"))
+        self.assertThat(raised.data, Equals("bad-json"))

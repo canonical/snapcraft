@@ -30,13 +30,16 @@ from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 
 
-_MESSAGE_REGISTER_PRIVATE = dedent("""\
+_MESSAGE_REGISTER_PRIVATE = dedent(
+    """\
     Even though this is private snap, you should think carefully about
     the choice of name and make sure you are confident nobody else will
     have a stronger claim to that particular name. If you are unsure
     then we suggest you prefix the name with your developer identity,
-    As ‘nessita-yoyodyne-www-site-content’.""")
-_MESSAGE_REGISTER_CONFIRM = dedent("""
+    As ‘nessita-yoyodyne-www-site-content’."""
+)
+_MESSAGE_REGISTER_CONFIRM = dedent(
+    """
     We always want to ensure that users get the software they expect
     for a particular name.
 
@@ -48,12 +51,15 @@ _MESSAGE_REGISTER_CONFIRM = dedent("""
     Thunderbird as 'thunderbird-$username'.
 
     Would you say that MOST users will expect {!r} to come from
-    you, and be the software you intend to publish there?""")
-_MESSAGE_REGISTER_SUCCESS = 'Congrats! You are now the publisher of {!r}.'
-_MESSAGE_REGISTER_NO = dedent("""
+    you, and be the software you intend to publish there?"""
+)
+_MESSAGE_REGISTER_SUCCESS = "Congrats! You are now the publisher of {!r}."
+_MESSAGE_REGISTER_NO = dedent(
+    """
     Thank you! {!r} will remain available.
 
-    In the meantime you can register an alternative name.""")
+    In the meantime you can register an alternative name."""
+)
 
 
 @click.group()
@@ -65,32 +71,35 @@ def storecli():
 def _human_readable_acls(store: storeapi.StoreClient) -> str:
     acl = store.acl()
     snap_names = []
-    if acl['snap_ids']:
-        for snap_id in acl['snap_ids']:
+    if acl["snap_ids"]:
+        for snap_id in acl["snap_ids"]:
             snap_names.append(store.get_snap_name_for_id(snap_id))
-    acl['snap_names'] = snap_names
+    acl["snap_names"] = snap_names
 
     human_readable_acl = {
-        'expires': str(acl['expires'])
+        "expires": str(acl["expires"])
     }  # type: Dict[str, Union[str, List[str]]]
 
-    for key in ('snap_names', 'channels', 'permissions'):
+    for key in ("snap_names", "channels", "permissions"):
         human_readable_acl[key] = acl[key]
         if not acl[key]:
-            human_readable_acl[key] = 'No restriction'
+            human_readable_acl[key] = "No restriction"
 
-    return dedent("""\
+    return dedent(
+        """\
         snaps:       {snap_names}
         channels:    {channels}
         permissions: {permissions}
         expires:     {expires}
-    """.format(**human_readable_acl))
+    """.format(
+            **human_readable_acl
+        )
+    )
 
 
 @storecli.command()
-@click.argument('snap-name', metavar='<snap-name>')
-@click.option('--private', is_flag=True,
-              help='Register the snap as a private one')
+@click.argument("snap-name", metavar="<snap-name>")
+@click.option("--private", is_flag=True, help="Register the snap as a private one")
 def register(snap_name, private):
     """Register <snap-name> with the store.
 
@@ -111,14 +120,16 @@ def register(snap_name, private):
 
 
 @storecli.command()
-@click.option('--release', metavar='<channels>',
-              help='Optional comma separated list of channels to release '
-                   '<snap-file>')
-@click.argument('snap-file', metavar='<snap-file>',
-                type=click.Path(exists=True,
-                                readable=True,
-                                resolve_path=True,
-                                dir_okay=False))
+@click.option(
+    "--release",
+    metavar="<channels>",
+    help="Optional comma separated list of channels to release <snap-file>",
+)
+@click.argument(
+    "snap-file",
+    metavar="<snap-file>",
+    type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
+)
 def push(snap_file, release):
     """Push <snap-file> to the store.
 
@@ -138,25 +149,29 @@ def push(snap_file, release):
         snapcraft push my-snap_0.2_amd64.snap --release edge
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo('Pushing {}'.format(os.path.basename(snap_file)))
+    click.echo("Pushing {}".format(os.path.basename(snap_file)))
     channel_list = []
     if release:
-        channel_list = release.split(',')
+        channel_list = release.split(",")
         click.echo(
-            'After pushing, an attempt will be made to release to {}'
-            ''.format(formatting_utils.humanize_list(channel_list, 'and')))
+            "After pushing, an attempt will be made to release to {}"
+            "".format(formatting_utils.humanize_list(channel_list, "and"))
+        )
 
     snapcraft.push(snap_file, channel_list)
 
 
-@storecli.command('push-metadata')
-@click.option('--force', is_flag=True,
-              help="Force metadata update to override any possible conflict")
-@click.argument('snap-file', metavar='<snap-file>',
-                type=click.Path(exists=True,
-                                readable=True,
-                                resolve_path=True,
-                                dir_okay=False))
+@storecli.command("push-metadata")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force metadata update to override any possible conflict",
+)
+@click.argument(
+    "snap-file",
+    metavar="<snap-file>",
+    type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
+)
 def push_metadata(snap_file, force):
     """Push metadata from <snap-file> to the store.
 
@@ -168,14 +183,14 @@ def push_metadata(snap_file, force):
         snapcraft push-metadata my-snap_0.1_amd64.snap
         snapcraft push-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo('Pushing metadata from {}'.format(os.path.basename(snap_file)))
+    click.echo("Pushing metadata from {}".format(os.path.basename(snap_file)))
     snapcraft.push_metadata(snap_file, force)
 
 
 @storecli.command()
-@click.argument('snap-name', metavar='<snap-name>')
-@click.argument('revision', metavar='<revision>')
-@click.argument('channels', metavar='<channels>')
+@click.argument("snap-name", metavar="<snap-name>")
+@click.argument("revision", metavar="<revision>")
+@click.argument("channels", metavar="<channels>")
 def release(snap_name, revision, channels):
     """Release <snap-name> on <revision> to the selected store <channels>.
     <channels> is a comma separated list of valid channels on the
@@ -207,12 +222,12 @@ def release(snap_name, revision, channels):
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    snapcraft.release(snap_name, revision, channels.split(','))
+    snapcraft.release(snap_name, revision, channels.split(","))
 
 
 @storecli.command()
-@click.argument('snap-name', metavar='<snap-name>')
-@click.argument('channels', metavar='<channel>...', nargs=-1)
+@click.argument("snap-name", metavar="<snap-name>")
+@click.argument("channels", metavar="<channel>...", nargs=-1)
 def close(snap_name, channels):
     """Close <channel> for <snap-name>.
     Closing a channel allows the <channel> that is closed to track the channel
@@ -230,12 +245,16 @@ def close(snap_name, channels):
 
 
 @storecli.command()
-@click.option('--arch', metavar='<arch>',
-              help='The snap architecture to get the status for')
-@click.option('--series', metavar='<series>',
-              default=DEFAULT_SERIES,
-              help='The snap series to get the status for')
-@click.argument('snap-name', metavar='<snap-name>')
+@click.option(
+    "--arch", metavar="<arch>", help="The snap architecture to get the status for"
+)
+@click.option(
+    "--series",
+    metavar="<series>",
+    default=DEFAULT_SERIES,
+    help="The snap series to get the status for",
+)
+@click.argument("snap-name", metavar="<snap-name>")
 def status(snap_name, series, arch):
     """Get the status on the store for <snap-name>.
 
@@ -247,13 +266,17 @@ def status(snap_name, series, arch):
     snapcraft.status(snap_name, series, arch)
 
 
-@storecli.command('list-revisions')
-@click.option('--arch', metavar='<arch>',
-              help='The snap architecture to get the status for')
-@click.option('--series', metavar='<series>',
-              default=DEFAULT_SERIES,
-              help='The snap series to get the status for')
-@click.argument('snap-name', metavar='<snap-name>')
+@storecli.command("list-revisions")
+@click.option(
+    "--arch", metavar="<arch>", help="The snap architecture to get the status for"
+)
+@click.option(
+    "--series",
+    metavar="<series>",
+    default=DEFAULT_SERIES,
+    help="The snap series to get the status for",
+)
+@click.argument("snap-name", metavar="<snap-name>")
 def list_revisions(snap_name, series, arch):
     """Get the history on the store for <snap-name>.
 
@@ -268,7 +291,7 @@ def list_revisions(snap_name, series, arch):
     snapcraft.revisions(snap_name, series, arch)
 
 
-@storecli.command('list-registered')
+@storecli.command("list-registered")
 def list_registered():
     """List snap names registered or shared with you.
 
@@ -282,19 +305,27 @@ def list_registered():
     snapcraft.list_registered()
 
 
-@storecli.command('export-login')
-@click.argument('login_file', metavar='FILE',
-                type=click.Path(dir_okay=False, writable=True))
-@click.option('--snaps', metavar='<snaps>',
-              help='Comma-separated list of snaps to limit access')
-@click.option('--channels', metavar='<channels>',
-              help='Comma-separated list of channels to limit access')
-@click.option('--acls', metavar='<acls>',
-              help='Comma-separated list of ACLs to limit access')
-@click.option('--expires', metavar='<expiration date>',
-              help='Date/time (in ISO 8601) when this exported login expires')
-def export_login(login_file: str, snaps: str, channels: str, acls: str,
-                 expires: str):
+@storecli.command("export-login")
+@click.argument(
+    "login_file", metavar="FILE", type=click.Path(dir_okay=False, writable=True)
+)
+@click.option(
+    "--snaps", metavar="<snaps>", help="Comma-separated list of snaps to limit access"
+)
+@click.option(
+    "--channels",
+    metavar="<channels>",
+    help="Comma-separated list of channels to limit access",
+)
+@click.option(
+    "--acls", metavar="<acls>", help="Comma-separated list of ACLs to limit access"
+)
+@click.option(
+    "--expires",
+    metavar="<expiration date>",
+    help="Date/time (in ISO 8601) when this exported login expires",
+)
+def export_login(login_file: str, snaps: str, channels: str, acls: str, expires: str):
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
@@ -323,65 +354,77 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
 
     if snaps:
         snap_list = []
-        for package in snaps.split(','):
-            snap_list.append({'name': package, 'series': '16'})
+        for package in snaps.split(","):
+            snap_list.append({"name": package, "series": "16"})
 
     if channels:
-        channel_list = channels.split(',')
+        channel_list = channels.split(",")
 
     if acls:
-        acl_list = acls.split(',')
+        acl_list = acls.split(",")
 
     store = storeapi.StoreClient()
-    if not snapcraft.login(store=store,
-                           packages=snap_list,
-                           channels=channel_list,
-                           acls=acl_list,
-                           expires=expires,
-                           save=False):
+    if not snapcraft.login(
+        store=store,
+        packages=snap_list,
+        channels=channel_list,
+        acls=acl_list,
+        expires=expires,
+        save=False,
+    ):
         sys.exit(1)
 
     # Support a login_file of '-', which indicates a desire to print to stdout
-    if login_file.strip() == '-':
+    if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
         store.conf.save(config_fd=sys.stdout, encode=True)
         print()
 
-        preamble = 'Login successfully exported and printed above'
+        preamble = "Login successfully exported and printed above"
         login_action = 'echo "<login>" | snapcraft login --with -'
     else:
         # This is sensitive-- it should only be accessible by the owner
         private_open = functools.partial(os.open, mode=0o600)
 
         # mypy doesn't have the opener arg in its stub. Ignore its warning
-        with open(login_file, 'w', opener=private_open) as f:  # type: ignore
+        with open(login_file, "w", opener=private_open) as f:  # type: ignore
             store.conf.save(config_fd=f)
 
         # Now that the file has been written, we can just make it
         # owner-readable
         os.chmod(login_file, stat.S_IRUSR)
 
-        preamble = 'Login successfully exported to {0!r}'.format(login_file)
-        login_action = 'snapcraft login --with {0}'.format(login_file)
+        preamble = "Login successfully exported to {0!r}".format(login_file)
+        login_action = "snapcraft login --with {0}".format(login_file)
 
     print()
-    echo.info(dedent("""\
+    echo.info(
+        dedent(
+            """\
         {}. This can now be used with
 
             {}
 
         to log in to this account with no password and have these
-        capabilities:\n""".format(preamble, login_action)))
+        capabilities:\n""".format(
+                preamble, login_action
+            )
+        )
+    )
     echo.info(_human_readable_acls(store))
     echo.warning(
-        'This exported login is not encrypted. Do not commit it to version '
-        'control!')
+        "This exported login is not encrypted. Do not commit it to version control!"
+    )
 
 
 @storecli.command()
-@click.option('--with', 'login_file', metavar='<login file>',
-              type=click.File('r'),
-              help="Path to file created with 'snapcraft export-login'")
+@click.option(
+    "--with",
+    "login_file",
+    metavar="<login file>",
+    type=click.File("r"),
+    help="Path to file created with 'snapcraft export-login'",
+)
 def login(login_file):
     """Login with your Ubuntu One e-mail address and password.
 
@@ -395,11 +438,10 @@ def login(login_file):
     print()
 
     if login_file:
-        echo.info(
-            'Login successful. You now have these capabilities:\n')
+        echo.info("Login successful. You now have these capabilities:\n")
         echo.info(_human_readable_acls(store))
     else:
-        echo.info('Login successful.')
+        echo.info("Login successful.")
 
 
 @storecli.command()
@@ -407,7 +449,7 @@ def logout():
     """Clear session credentials."""
     store = storeapi.StoreClient()
     store.logout()
-    echo.info('Credentials cleared.')
+    echo.info("Credentials cleared.")
 
 
 @storecli.command()
@@ -416,14 +458,22 @@ def whoami():
     try:
         account_data = storeapi.StoreClient().whoami()
     except storeapi.errors.InvalidCredentialsError:
-        echo.error('You need to first login to use this command.')
+        echo.error("You need to first login to use this command.")
         sys.exit(1)
 
-    click.echo(dedent("""\
+    click.echo(
+        dedent(
+            """\
         email:        {email}
-        developer-id: {account_id}""".format(**account_data)))
+        developer-id: {account_id}""".format(
+                **account_data
+            )
+        )
+    )
 
     # This is needed because we originally did not store the login information.
-    if account_data['email'] == 'unknown':
-        echo.warning('In order to view the correct email you will need to '
-                     'logout and login again.')
+    if account_data["email"] == "unknown":
+        echo.warning(
+            "In order to view the correct email you will need to "
+            "logout and login again."
+        )

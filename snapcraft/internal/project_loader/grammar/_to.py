@@ -25,8 +25,8 @@ from ._statement import Statement
 if TYPE_CHECKING:
     from ._processor import GrammarProcessor  # noqa: F401
 
-_SELECTOR_PATTERN = re.compile(r'\Ato\s+([^,\s](?:,?[^,]+)*)\Z')
-_WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
+_SELECTOR_PATTERN = re.compile(r"\Ato\s+([^,\s](?:,?[^,]+)*)\Z")
+_WHITESPACE_PATTERN = re.compile(r"\A.*\s.*\Z")
 
 
 class ToStatement(Statement):
@@ -46,9 +46,14 @@ class ToStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, to: str, body: typing.Grammar,
-                 processor: 'GrammarProcessor',
-                 call_stack: typing.CallStack=None) -> None:
+    def __init__(
+        self,
+        *,
+        to: str,
+        body: typing.Grammar,
+        processor: "GrammarProcessor",
+        call_stack: typing.CallStack = None
+    ) -> None:
         """Create a ToStatement instance.
 
         :param str to: The 'to <selectors>' part of the clause.
@@ -82,7 +87,7 @@ class ToStatement(Statement):
         return False
 
     def __str__(self) -> str:
-        return 'to {}'.format(','.join(sorted(self.selectors)))
+        return "to {}".format(",".join(sorted(self.selectors)))
 
 
 def _extract_to_clause_selectors(to: str) -> Set[str]:
@@ -103,7 +108,7 @@ def _extract_to_clause_selectors(to: str) -> Set[str]:
     try:
         selector_group = match.group(1)
     except AttributeError:
-        raise ToStatementSyntaxError(to, message='selectors are missing')
+        raise ToStatementSyntaxError(to, message="selectors are missing")
     except IndexError:
         raise ToStatementSyntaxError(to)
 
@@ -111,6 +116,7 @@ def _extract_to_clause_selectors(to: str) -> Set[str]:
     # to provide a very generic error when we can try to be more helpful.
     if _WHITESPACE_PATTERN.match(selector_group):
         raise ToStatementSyntaxError(
-            to, message='spaces are not allowed in the selectors')
+            to, message="spaces are not allowed in the selectors"
+        )
 
-    return {selector.strip() for selector in selector_group.split(',')}
+    return {selector.strip() for selector in selector_group.split(",")}

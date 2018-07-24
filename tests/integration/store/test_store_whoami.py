@@ -22,15 +22,15 @@ from tests import integration
 
 
 class WhoamiTestCase(integration.StoreTestCase):
-
     def test_whoami_must_print_email_and_developer_id(self):
         self.addCleanup(self.logout)
         self.login(expect_success=True)
-        output = self.run_snapcraft('whoami')
+        output = self.run_snapcraft("whoami")
         self.assertThat(
             output,
             MatchesRegex(
-                '.*email: +{}\n'
-                'developer-id: +.+\n'.format(
-                    re.escape(self.test_store.user_email)),
-                flags=re.DOTALL))
+                ".*email: +{}\n"
+                "developer-id: +.+\n".format(re.escape(self.test_store.user_email)),
+                flags=re.DOTALL,
+            ),
+        )

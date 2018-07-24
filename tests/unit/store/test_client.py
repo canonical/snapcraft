@@ -27,23 +27,23 @@ from tests import unit
 
 
 class ClientTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        self.client = _client.Client('conf', 'root_url')
+        self.client = _client.Client("conf", "root_url")
 
-    @mock.patch.object(requests.Session, 'request')
+    @mock.patch.object(requests.Session, "request")
     def test_generic_network_error(self, mock_request):
-        mock_request.side_effect = exceptions.ConnectionError('naughty error')
+        mock_request.side_effect = exceptions.ConnectionError("naughty error")
         self.assertRaises(
-            errors.StoreNetworkError, self.client.request, 'GET',
-            'test-url')
+            errors.StoreNetworkError, self.client.request, "GET", "test-url"
+        )
 
-    @mock.patch.object(requests.Session, 'request')
+    @mock.patch.object(requests.Session, "request")
     def test_max_retries_error(self, mock_request):
         mock_request.side_effect = exceptions.ConnectionError(
-            urllib3.exceptions.MaxRetryError(pool='test-pool', url='test-url'))
+            urllib3.exceptions.MaxRetryError(pool="test-pool", url="test-url")
+        )
         self.assertRaises(
-            errors.StoreNetworkError, self.client.request, 'GET',
-            'test-url')
+            errors.StoreNetworkError, self.client.request, "GET", "test-url"
+        )

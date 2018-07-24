@@ -22,10 +22,8 @@ class LocalPlugin(BasePlugin):
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['foo'] = {
-            'type': 'string',
-        }
+        schema["properties"]["foo"] = {"type": "string"}
 
-        schema['build-properties'] = ['foo', 'stage-packages']
+        schema["build-properties"] = ["foo", "stage-packages"]
 
         return schema

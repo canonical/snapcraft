@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class BasePlugin:
-
     @classmethod
     def schema(cls):
         """Return a json-schema for the plugin's properties as a dictionary.
@@ -38,33 +37,35 @@ class BasePlugin:
         override in custom implementations if required.
         """
         return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {},
-            'pull-properties': [],
-            'build-properties': [],
-            'required': [],
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {},
+            "pull-properties": [],
+            "build-properties": [],
+            "required": [],
         }
 
     @classmethod
     def get_pull_properties(cls):
-        schema_pull_properties = cls.schema().get('pull-properties', [])
+        schema_pull_properties = cls.schema().get("pull-properties", [])
         if schema_pull_properties:
             logger.warning(
-                'Use of pull-properties in the schema is deprecated.\n'
-                'Plugins should now implement get_pull_properties')
+                "Use of pull-properties in the schema is deprecated.\n"
+                "Plugins should now implement get_pull_properties"
+            )
             return schema_pull_properties
 
         return []
 
     @classmethod
     def get_build_properties(cls):
-        schema_build_properties = cls.schema().get('build-properties', [])
+        schema_build_properties = cls.schema().get("build-properties", [])
         if schema_build_properties:
             logger.warning(
-                'Use of build-properties in the schema is deprecated.\n'
-                'Plugins should now implement get_build_properties')
+                "Use of build-properties in the schema is deprecated.\n"
+                "Plugins should now implement get_build_properties"
+            )
             return schema_build_properties
 
         return []
@@ -72,7 +73,7 @@ class BasePlugin:
     @property
     def PLUGIN_STAGE_SOURCES(self):
         """Define alternative sources.list."""
-        return getattr(self, '_PLUGIN_STAGE_SOURCES', [])
+        return getattr(self, "_PLUGIN_STAGE_SOURCES", [])
 
     @property
     def stage_packages(self):
@@ -102,23 +103,27 @@ class BasePlugin:
         # part with the subparts. This is rather unfortunate as it affects the
         # the layout of parts inside the parts directory causing collisions
         # between the main project part and its subparts.
-        part_dir = name.replace('/', '\N{BIG SOLIDUS}')
+        part_dir = name.replace("/", "\N{BIG SOLIDUS}")
         if project:
             self.partdir = os.path.join(project.parts_dir, part_dir)
         else:
-            self.partdir = os.path.join(os.getcwd(), 'parts', part_dir)
+            self.partdir = os.path.join(os.getcwd(), "parts", part_dir)
 
-        self.sourcedir = os.path.join(self.partdir, 'src')
-        self.installdir = os.path.join(self.partdir, 'install')
-        self.statedir = os.path.join(self.partdir, 'state')
-        self.osrepodir = os.path.join(self.partdir, 'ubuntu')
+        self.sourcedir = os.path.join(self.partdir, "src")
+        self.installdir = os.path.join(self.partdir, "install")
+        self.statedir = os.path.join(self.partdir, "state")
+        self.osrepodir = os.path.join(self.partdir, "ubuntu")
 
-        self.build_basedir = os.path.join(self.partdir, 'build')
-        source_subdir = getattr(self.options, 'source_subdir', None)
+        self.build_basedir = os.path.join(self.partdir, "build")
+        source_subdir = getattr(self.options, "source_subdir", None)
         if source_subdir:
             self.builddir = os.path.join(self.build_basedir, source_subdir)
         else:
             self.builddir = self.build_basedir
+
+        # By default, snapcraft does an in-source build. Set this property to
+        # True if that's not desired.
+        self.out_of_source_build = False
 
     # The API
     def pull(self):
@@ -163,7 +168,7 @@ class BasePlugin:
         For example::
             (['bin', 'lib', '-include'])
         """
-        return ([])
+        return []
 
     def env(self, root):
         """Return a list with the execution environment for building.
@@ -179,8 +184,9 @@ class BasePlugin:
     def enable_cross_compilation(self):
         """Enable cross compilation for the plugin."""
         raise NotImplementedError(
-            'The plugin used by {!r} does not support cross-compiling '
-            'to a different target architecture'.format(self.name))
+            "The plugin used by {!r} does not support cross-compiling "
+            "to a different target architecture".format(self.name)
+        )
 
     @property
     def parallel_build_count(self):
@@ -189,7 +195,7 @@ class BasePlugin:
         Number comes from `project.parallel_build_count` unless the part
         has defined `disable-parallel` as `True`.
         """
-        if getattr(self.options, 'disable_parallel', False):
+        if getattr(self.options, "disable_parallel", False):
             return 1
         else:
             return self.project.parallel_build_count
@@ -198,14 +204,14 @@ class BasePlugin:
     def run(self, cmd, cwd=None, **kwargs):
         if not cwd:
             cwd = self.builddir
-        print(' '.join(cmd))
+        print(" ".join(cmd))
         os.makedirs(cwd, exist_ok=True)
         try:
             return common.run(cmd, cwd=cwd, **kwargs)
         except CalledProcessError as process_error:
             raise errors.SnapcraftPluginCommandError(
-                command=cmd, part_name=self.name,
-                exit_code=process_error.returncode) from process_error
+                command=cmd, part_name=self.name, exit_code=process_error.returncode
+            ) from process_error
 
     def run_output(self, cmd, cwd=None, **kwargs):
         if not cwd:
@@ -215,5 +221,5 @@ class BasePlugin:
             return common.run_output(cmd, cwd=cwd, **kwargs)
         except CalledProcessError as process_error:
             raise errors.SnapcraftPluginCommandError(
-                command=cmd, part_name=self.name,
-                exit_code=process_error.returncode) from process_error
+                command=cmd, part_name=self.name, exit_code=process_error.returncode
+            ) from process_error

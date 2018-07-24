@@ -18,10 +18,9 @@ from tests import integration, skip
 
 
 class MavenPluginTestCase(integration.TestCase):
-
-    @skip.skip_unless_codename('xenial', 'LP: #1764406')
+    @skip.skip_unless_codename("xenial", "LP: #1764406")
     def test_build_maven_plugin(self):
-        if self.deb_arch == 'armhf':
+        if self.deb_arch == "armhf":
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
-            self.skipTest('The maven plugin does not support armhf')
-        self.run_snapcraft('build', 'maven-with-options')
+            self.skipTest("The maven plugin does not support armhf")
+        self.run_snapcraft("build", "maven-with-options")

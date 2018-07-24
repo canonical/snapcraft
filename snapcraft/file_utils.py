@@ -32,7 +32,7 @@ from snapcraft.internal.errors import (
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
     SnapcraftEnvironmentError,
-    SnapcraftCopyFileNotFoundError
+    SnapcraftCopyFileNotFoundError,
 )
 
 if sys.version_info < (3, 6):
@@ -42,9 +42,9 @@ if sys.version_info < (3, 6):
 logger = logging.getLogger(__name__)
 
 
-def replace_in_file(directory: str, file_pattern: Pattern,
-                    search_pattern: Pattern,
-                    replacement: str) -> None:
+def replace_in_file(
+    directory: str, file_pattern: Pattern, search_pattern: Pattern, replacement: str
+) -> None:
     """Searches and replaces patterns that match a file pattern.
 
     :param str directory: The directory to look for files.
@@ -62,13 +62,12 @@ def replace_in_file(directory: str, file_pattern: Pattern,
                 # Don't bother trying to rewrite a symlink. It's either invalid
                 # or the linked file will be rewritten on its own.
                 if not os.path.islink(file_path):
-                    search_and_replace_contents(
-                        file_path, search_pattern, replacement)
+                    search_and_replace_contents(file_path, search_pattern, replacement)
 
 
-def search_and_replace_contents(file_path: str,
-                                search_pattern: Pattern,
-                                replacement: str) -> None:
+def search_and_replace_contents(
+    file_path: str, search_pattern: Pattern, replacement: str
+) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 
     :param str file_path: Path of file to be searched.
@@ -76,7 +75,7 @@ def search_and_replace_contents(file_path: str,
     :param str replacement: The string to replace pattern.
     """
     try:
-        with open(file_path, 'r+') as f:
+        with open(file_path, "r+") as f:
             try:
                 original = f.read()
             except UnicodeDecodeError:
@@ -89,12 +88,12 @@ def search_and_replace_contents(file_path: str,
                 f.truncate()
                 f.write(replaced)
     except PermissionError as e:
-        logger.warning('Unable to open {path} for writing: {error}'.format(
-            path=file_path, error=e))
+        logger.warning(
+            "Unable to open {path} for writing: {error}".format(path=file_path, error=e)
+        )
 
 
-def link_or_copy(source: str, destination: str,
-                 follow_symlinks: bool=False) -> None:
+def link_or_copy(source: str, destination: str, follow_symlinks: bool = False) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
     Hard-linking may fail (e.g. a cross-device link, or permission denied), so
@@ -106,7 +105,7 @@ def link_or_copy(source: str, destination: str,
     """
 
     try:
-        _link(source, destination, follow_symlinks)
+        link(source, destination, follow_symlinks=follow_symlinks)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
             # os.link will fail if the destination already exists, so let's
@@ -114,10 +113,18 @@ def link_or_copy(source: str, destination: str,
             os.remove(destination)
             link_or_copy(source, destination, follow_symlinks)
         else:
-            _copy(source, destination, follow_symlinks)
+            copy(source, destination, follow_symlinks=follow_symlinks)
 
 
-def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def link(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
+    """Hard-link source and destination files.
+
+    :param str source: The source to which destination will be linked.
+    :param str destination: The destination to be linked to source.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    """
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
     source_path = source
@@ -126,8 +133,8 @@ def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
 
     if not os.path.exists(os.path.dirname(destination)):
         create_similar_directory(
-            os.path.dirname(source_path),
-            os.path.dirname(destination))
+            os.path.dirname(source_path), os.path.dirname(destination)
+        )
     # Setting follow_symlinks=False in case this bug is ever fixed
     # upstream-- we want this function to continue supporting NOT following
     # symlinks.
@@ -137,15 +144,25 @@ def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
         raise SnapcraftCopyFileNotFoundError(source)
 
 
-def _copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
+    """Copy source and destination files.
+
+    This function overwrites the destination if it already exists, and also
+    tries to copy ownership information.
+
+    :param str source: The source to be copied to destination.
+    :param str destination: Where to put the copy.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    """
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with suppress(OSError):
         os.unlink(destination)
 
     try:
-        shutil.copy2(
-            source, destination, follow_symlinks=follow_symlinks)
+        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
     except FileNotFoundError:
         raise SnapcraftCopyFileNotFoundError(source)
     uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
@@ -153,13 +170,19 @@ def _copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as e:
-        logger.debug('Unable to chown {destination}: {error}'.format(
-            destination=destination, error=e))
+        logger.debug(
+            "Unable to chown {destination}: {error}".format(
+                destination=destination, error=e
+            )
+        )
 
 
-def link_or_copy_tree(source_tree: str, destination_tree: str,
-                      ignore: Callable[[str, List[str]], List[str]]=None,
-                      copy_function: Callable[..., None]=link_or_copy) -> None:
+def link_or_copy_tree(
+    source_tree: str,
+    destination_tree: str,
+    ignore: Callable[[str, List[str]], List[str]] = None,
+    copy_function: Callable[..., None] = link_or_copy,
+) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
 
     :param str source_tree: Source directory to be copied.
@@ -173,14 +196,15 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
     """
 
     if not os.path.isdir(source_tree):
-        raise NotADirectoryError('{!r} is not a directory'.format(source_tree))
+        raise NotADirectoryError("{!r} is not a directory".format(source_tree))
 
-    if (not os.path.isdir(destination_tree) and
-            (os.path.exists(destination_tree) or
-                os.path.islink(destination_tree))):
+    if not os.path.isdir(destination_tree) and (
+        os.path.exists(destination_tree) or os.path.islink(destination_tree)
+    ):
         raise NotADirectoryError(
-            'Cannot overwrite non-directory {!r} with directory '
-            '{!r}'.format(destination_tree, source_tree))
+            "Cannot overwrite non-directory {!r} with directory "
+            "{!r}".format(destination_tree, source_tree)
+        )
 
     create_similar_directory(source_tree, destination_tree)
 
@@ -211,20 +235,23 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
                 continue
 
             destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
+                destination_tree, os.path.relpath(source, source_tree)
+            )
 
             create_similar_directory(source, destination)
 
-        for file_name in (set(files) - ignored):
+        for file_name in set(files) - ignored:
             source = os.path.join(root, file_name)
             destination = os.path.join(
-                destination_tree, os.path.relpath(source, source_tree))
+                destination_tree, os.path.relpath(source, source_tree)
+            )
 
             copy_function(source, destination)
 
 
-def create_similar_directory(source: str, destination: str,
-                             follow_symlinks: bool=False) -> None:
+def create_similar_directory(
+    source: str, destination: str, follow_symlinks: bool = False
+) -> None:
     """Create a directory with the same permission bits and owner information.
 
     :param str source: Directory from which to copy name, permission bits, and
@@ -241,7 +268,7 @@ def create_similar_directory(source: str, destination: str,
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as exception:
-        logger.debug('Unable to chown {}: {}'.format(destination, exception))
+        logger.debug("Unable to chown {}: {}".format(destination, exception))
 
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
@@ -252,41 +279,40 @@ def executable_exists(path: str) -> bool:
 
 
 @contextmanager
-def requires_command_success(command: str, not_found_fmt: str=None,
-                             failure_fmt: str=None) -> Generator:
+def requires_command_success(
+    command: str, not_found_fmt: str = None, failure_fmt: str = None
+) -> Generator:
     if isinstance(command, str):
         cmd_list = command.split()
     else:
-        raise TypeError('command must be a string.')
+        raise TypeError("command must be a string.")
     kwargs = dict(command=command, cmd_list=cmd_list)
     try:
-        subprocess.check_call(
-            cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.check_call(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except FileNotFoundError:
         if not_found_fmt is not None:
-            kwargs['fmt'] = not_found_fmt
+            kwargs["fmt"] = not_found_fmt
         raise RequiredCommandNotFound(**kwargs)
     except subprocess.CalledProcessError:
         if failure_fmt is not None:
-            kwargs['fmt'] = failure_fmt
+            kwargs["fmt"] = failure_fmt
         raise RequiredCommandFailure(**kwargs)
     yield
 
 
 @contextmanager
-def requires_path_exists(path: str,
-                         error_fmt: str=None) -> Generator:
+def requires_path_exists(path: str, error_fmt: str = None) -> Generator:
     if not os.path.exists(path):
         kwargs = dict(path=path)
         if error_fmt is not None:
-            kwargs['fmt'] = error_fmt
+            kwargs["fmt"] = error_fmt
         raise RequiredPathDoesNotExist(**kwargs)
     yield
 
 
 def calculate_sha3_384(path: str) -> str:
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
-    return calculate_hash(path, algorithm='sha3_384')
+    return calculate_hash(path, algorithm="sha3_384")
 
 
 def calculate_hash(path: str, *, algorithm: str) -> str:
@@ -294,8 +320,8 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
     # This will raise an AttributeError if algorithm is unsupported
     hasher = getattr(hashlib, algorithm)()
 
-    blocksize = 2**20
-    with open(path, 'rb') as f:
+    blocksize = 2 ** 20
+    with open(path, "rb") as f:
         while True:
             buf = f.read(blocksize)
             if not buf:
@@ -317,10 +343,11 @@ def get_tool_path(command_name):
     path = command_name
 
     if common.is_snap():
-        path = _command_path_in_root(os.getenv('SNAP'), command_name)
+        path = _command_path_in_root(os.getenv("SNAP"), command_name)
     elif common.is_docker_instance():
-        path = _command_path_in_root(os.path.join(
-            os.sep, 'snap', 'snapcraft', 'current'), command_name)
+        path = _command_path_in_root(
+            os.path.join(os.sep, "snap", "snapcraft", "current"), command_name
+        )
 
     if path:
         return path
@@ -329,17 +356,19 @@ def get_tool_path(command_name):
 
 
 def _command_path_in_root(root, command_name):
-    for bin_directory in (os.path.join('usr', 'local', 'sbin'),
-                          os.path.join('usr', 'local', 'bin'),
-                          os.path.join('usr', 'sbin'),
-                          os.path.join('usr', 'bin'),
-                          os.path.join('sbin'),
-                          os.path.join('bin')):
+    for bin_directory in (
+        os.path.join("usr", "local", "sbin"),
+        os.path.join("usr", "local", "bin"),
+        os.path.join("usr", "sbin"),
+        os.path.join("usr", "bin"),
+        os.path.join("sbin"),
+        os.path.join("bin"),
+    ):
         path = os.path.join(root, bin_directory, command_name)
         if os.path.exists(path):
             return path
 
-    return ''
+    return ""
 
 
 def get_linker_version_from_file(linker_file: str) -> str:
@@ -354,15 +383,15 @@ def get_linker_version_from_file(linker_file: str) -> str:
     :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
        if linker_file is not of the expected format.
     """
-    m = re.search(r'ld-(?P<linker_version>[\d.]+).so$', linker_file)
+    m = re.search(r"ld-(?P<linker_version>[\d.]+).so$", linker_file)
     if not m:
         # This is a programmatic error, we don't want to be friendly
         # about this.
         raise SnapcraftEnvironmentError(
-            'The format for the linker should be of the of the form '
-            '<root>/ld-<X>.<Y>.so. {!r} does not match that format. '
-            'Ensure you are targeting an appropriate base'.format(
-                linker_file))
-    linker_version = m.group('linker_version')
+            "The format for the linker should be of the of the form "
+            "<root>/ld-<X>.<Y>.so. {!r} does not match that format. "
+            "Ensure you are targeting an appropriate base".format(linker_file)
+        )
+    linker_version = m.group("linker_version")
 
     return linker_version

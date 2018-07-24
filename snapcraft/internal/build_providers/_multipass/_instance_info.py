@@ -21,10 +21,10 @@ from snapcraft.internal.build_providers import errors
 
 
 class InstanceInfo:
-
     @classmethod
-    def from_json(cls: Type['InstanceInfo'], *, instance_name: str,
-                  json_info: str) -> 'InstanceInfo':
+    def from_json(
+        cls: Type["InstanceInfo"], *, instance_name: str, json_info: str
+    ) -> "InstanceInfo":
         """Create an InstanceInfo from json_info retrieved from multipass.
 
         :param str instance_name: the name of the instance.
@@ -41,24 +41,26 @@ class InstanceInfo:
             json_data = json.loads(json_info)
         except json.decoder.JSONDecodeError as decode_error:
             raise errors.ProviderBadDataError(
-                provider_name='multipass',
-                data=json_info) from decode_error
+                provider_name="multipass", data=json_info
+            ) from decode_error
         try:
-            instance_info = json_data['info'][instance_name]
+            instance_info = json_data["info"][instance_name]
         except KeyError as missing_key:
             raise errors.ProviderInfoDataKeyError(
-                provider_name='multipass',
-                missing_key=str(missing_key),
-                data=json_data) from missing_key
+                provider_name="multipass", missing_key=str(missing_key), data=json_data
+            ) from missing_key
         try:
-            return cls(name=instance_name,
-                       state=instance_info['state'],
-                       image_release=instance_info['image_release'])
+            return cls(
+                name=instance_name,
+                state=instance_info["state"],
+                image_release=instance_info["image_release"],
+            )
         except KeyError as missing_key:
             raise errors.ProviderInfoDataKeyError(
-                provider_name='multipass',
+                provider_name="multipass",
                 missing_key=str(missing_key),
-                data=instance_info) from missing_key
+                data=instance_info,
+            ) from missing_key
 
     def __init__(self, *, name: str, state: str, image_release: str) -> None:
         """Initialize an InstanceInfo.
@@ -76,4 +78,4 @@ class InstanceInfo:
         self.image_release = image_release
 
     def is_stopped(self):
-        return self.state == 'STOPPED'
+        return self.state == "STOPPED"

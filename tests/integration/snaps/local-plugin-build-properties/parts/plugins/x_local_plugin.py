@@ -22,12 +22,10 @@ class LocalPlugin(BasePlugin):
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['foo'] = {
-            'type': 'string',
-        }
+        schema["properties"]["foo"] = {"type": "string"}
 
         return schema
 
     @classmethod
     def get_build_properties(cls):
-        return ['foo', 'stage-packages']
+        return ["foo", "stage-packages"]

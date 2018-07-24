@@ -27,22 +27,23 @@ from tests import integration
 # requires snapd v2.20 to be available everywhere (it's not). We'll just make
 # sure it builds instead.
 class AliasTestCase(integration.TestCase):
-
     def test_alias(self):
-        self.run_snapcraft('prime', 'alias')
-        file_path = os.path.join(self.prime_dir, 'bin', 'hello.sh')
+        self.run_snapcraft("prime", "alias")
+        file_path = os.path.join(self.prime_dir, "bin", "hello.sh")
         self.assertThat(file_path, FileExists())
-        self.assertTrue(os.stat(file_path).st_mode & stat.S_IEXEC,
-                        'Expected hello.sh to be executable')
+        self.assertTrue(
+            os.stat(file_path).st_mode & stat.S_IEXEC,
+            "Expected hello.sh to be executable",
+        )
 
-        snap_yaml = os.path.join(self.prime_dir, 'meta', 'snap.yaml')
+        snap_yaml = os.path.join(self.prime_dir, "meta", "snap.yaml")
         self.assertThat(snap_yaml, FileExists())
 
         data = {}
         with open(snap_yaml) as fp:
             data = yaml.load(fp)
 
-        expected_aliases = ['hi.sh', 'howdy.sh']
+        expected_aliases = ["hi.sh", "howdy.sh"]
         self.assertThat(
-            set(data['apps']['hello']['aliases']),
-            Equals(set(expected_aliases)))
+            set(data["apps"]["hello"]["aliases"]), Equals(set(expected_aliases))
+        )

@@ -30,7 +30,8 @@ from . import CommandBaseTestCase
 
 class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
-    yaml_template = dedent("""\
+    yaml_template = dedent(
+        """\
         name: snap-test
         version: 1.0
         summary: test snapping
@@ -43,51 +44,52 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         parts:
             part1:
                 plugin: nil
-        """)
+        """
+    )
 
     def setUp(self):
         super().setUp()
-        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
-        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
-        self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, "snapcraft")
+        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
+        self.headers_yaml = os.path.join(self.parts_dir, "headers.yaml")
 
-    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
+    def make_snapcraft_yaml(self, n=1, snap_type="app", snapcraft_yaml=None):
         if not snapcraft_yaml:
             snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
-        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
+        self.state_dir = os.path.join(self.parts_dir, "part1", "state")
 
 
 class RefreshCommandTestCase(RefreshCommandBaseTestCase):
 
-    scenarios = [
-         ('local', dict(snapcraft_container_builds='1', remote='local')),
-    ]
+    scenarios = [("local", dict(snapcraft_container_builds="1", remote="local"))]
 
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
     def test_refresh(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_filesystem = fixture_setup.FakeFilesystem()
         self.useFixture(fake_filesystem)
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_BUILD_ENVIRONMENT', 'lxd'))
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
+        )
         self.make_snapcraft_yaml()
 
-        self.run_command(['refresh'])
+        self.run_command(["refresh"])
 
-        mock_container_run.assert_has_calls([
-            call(['apt-get', 'update']),
-            call(['apt-get', 'upgrade', '-y']),
-            call(['snap', 'refresh']),
-        ])
-        self.assertThat(fake_lxd.name, Equals('local:snapcraft-snap-test'))
+        mock_container_run.assert_has_calls(
+            [
+                call(["apt-get", "update"]),
+                call(["apt-get", "upgrade", "-y"]),
+                call(["snap", "refresh"]),
+            ]
+        )
+        self.assertThat(fake_lxd.name, Equals("local:snapcraft-snap-test"))
 
 
 class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
-
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
     def test_refresh_fails_without_env_var(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = fixture_setup.FakeLXD()
@@ -96,7 +98,5 @@ class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
         self.useFixture(fake_filesystem)
         self.make_snapcraft_yaml()
 
-        self.assertRaises(SnapcraftEnvironmentError,
-                          self.run_command,
-                          ['refresh'])
+        self.assertRaises(SnapcraftEnvironmentError, self.run_command, ["refresh"])
         mock_container_run.assert_not_called()

@@ -194,8 +194,9 @@ class BaseRepo:
 
     def _remove_useless_files(self, unpackdir):
         """Remove files that aren't useful or will clash with other parts."""
-        sitecustomize_files = glob.glob(os.path.join(
-            unpackdir, 'usr', 'lib', 'python*', 'sitecustomize.py'))
+        sitecustomize_files = glob.glob(
+            os.path.join(unpackdir, "usr", "lib", "python*", "sitecustomize.py")
+        )
         for sitecustomize_file in sitecustomize_files:
             os.remove(sitecustomize_file)
 
@@ -219,35 +220,36 @@ class BaseRepo:
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
-                if path.endswith('.pc') and not os.path.islink(path):
+                if path.endswith(".pc") and not os.path.islink(path):
                     fix_pkg_config(unpackdir, path)
 
     def _fix_xml_tools(self, unpackdir):
-        xml2_config_path = os.path.join(
-            unpackdir, 'usr', 'bin', 'xml2-config')
+        xml2_config_path = os.path.join(unpackdir, "usr", "bin", "xml2-config")
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
-                xml2_config_path, re.compile(r'prefix=/usr'),
-                'prefix={}/usr'.format(unpackdir))
+                xml2_config_path,
+                re.compile(r"prefix=/usr"),
+                "prefix={}/usr".format(unpackdir),
+            )
 
-        xslt_config_path = os.path.join(
-            unpackdir, 'usr', 'bin', 'xslt-config')
+        xslt_config_path = os.path.join(unpackdir, "usr", "bin", "xslt-config")
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
-                xslt_config_path, re.compile(r'prefix=/usr'),
-                'prefix={}/usr'.format(unpackdir))
+                xslt_config_path,
+                re.compile(r"prefix=/usr"),
+                "prefix={}/usr".format(unpackdir),
+            )
 
     def _fix_symlink(self, path, unpackdir, root):
         host_target = os.readlink(path)
-        if host_target in self.get_package_libraries('libc6'):
+        if host_target in self.get_package_libraries("libc6"):
             logger.debug(
-                "Not fixing symlink {!r}: it's pointing to libc".format(
-                    host_target))
+                "Not fixing symlink {!r}: it's pointing to libc".format(host_target)
+            )
             return
 
         target = os.path.join(unpackdir, os.readlink(path)[1:])
-        if (not os.path.exists(target) and not
-                _try_copy_local(path, target)):
+        if not os.path.exists(target) and not _try_copy_local(path, target):
             return
         os.remove(path)
         os.symlink(os.path.relpath(target, root), path)
@@ -258,7 +260,6 @@ class BaseRepo:
 
 
 class DummyRepo(BaseRepo):
-
     def get_packages_for_source_type(*args, **kwargs):
         return set()
 
@@ -267,13 +268,13 @@ def _try_copy_local(path, target):
     real_path = os.path.realpath(path)
     if os.path.exists(real_path):
         logger.warning(
-            'Copying needed target link from the system {}'.format(real_path))
+            "Copying needed target link from the system {}".format(real_path)
+        )
         os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.readlink(path), target)
         return True
     else:
-        logger.warning(
-            '{} will be a dangling symlink'.format(path))
+        logger.warning("{} will be a dangling symlink".format(path))
         return False
 
 
@@ -281,9 +282,8 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
     """Opens a pkg_config_file and prefixes the prefix with root."""
     pattern_trim = None
     if prefix_trim:
-        pattern_trim = re.compile(
-            '^prefix={}(?P<prefix>.*)'.format(prefix_trim))
-    pattern = re.compile('^prefix=(?P<prefix>.*)')
+        pattern_trim = re.compile("^prefix={}(?P<prefix>.*)".format(prefix_trim))
+    pattern = re.compile("^prefix=(?P<prefix>.*)")
 
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
@@ -291,15 +291,15 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
             if prefix_trim:
                 match_trim = pattern_trim.search(line)
             if prefix_trim and match_trim:
-                print('prefix={}{}'.format(root, match_trim.group('prefix')))
+                print("prefix={}{}".format(root, match_trim.group("prefix")))
             elif match:
-                print('prefix={}{}'.format(root, match.group('prefix')))
+                print("prefix={}{}".format(root, match.group("prefix")))
             else:
-                print(line, end='')
+                print(line, end="")
 
 
 def _fix_filemode(path):
     mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
     if mode & 0o4000 or mode & 0o2000:
-        logger.warning('Removing suid/guid from {}'.format(path))
+        logger.warning("Removing suid/guid from {}".format(path))
         os.chmod(path, mode & 0o1777)

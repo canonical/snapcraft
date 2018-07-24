@@ -18,11 +18,7 @@ import subprocess
 
 from testtools.matchers import Contains
 
-from tests import (
-    fixture_setup,
-    integration,
-    skip,
-)
+from tests import fixture_setup, integration, skip
 
 
 class AmentTestCase(integration.SnapdIntegrationTestCase):
@@ -30,14 +26,18 @@ class AmentTestCase(integration.SnapdIntegrationTestCase):
     slow_test = True
 
     @skip.skip_unless_codename(
-        'xenial', 'Anything later than xenial will die with NO_PUBKEY')
+        "xenial", "Anything later than xenial will die with NO_PUBKEY"
+    )
     def test_ament_support(self):
-        self.useFixture(fixture_setup.WithoutSnapInstalled('ros2-example'))
-        self.run_snapcraft(project_dir='ros2')
+        self.useFixture(fixture_setup.WithoutSnapInstalled("ros2-example"))
+        self.run_snapcraft(project_dir="ros2")
         self.install_snap()
 
         self.assertThat(
             subprocess.check_output(
-                ['ros2-example.launch-project'],
-                universal_newlines=True, stderr=subprocess.STDOUT),
-            Contains('I heard: Hello world'))
+                ["ros2-example.launch-project"],
+                universal_newlines=True,
+                stderr=subprocess.STDOUT,
+            ),
+            Contains("I heard: Hello world"),
+        )

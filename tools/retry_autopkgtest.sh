@@ -29,17 +29,17 @@ if [ -z "${SNAPCRAFT_AUTOPKGTEST_SECRET}" ]; then
 fi
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: "$0" <PR> [release[:architecture[:test]] ...]"
+    echo "Usage: $0 <PR> [release[:architecture[:test]] ...]"
     exit 1
 fi
 
 pr="$1"
 shift
-tests=( "$@" )
-[ ${#tests[@]} -eq 0 ] && tests='xenial:amd64'
+tests=("$@")
+[ ${#tests[@]} -eq 0 ] && tests=('xenial:amd64')
 
 temp_dir="$(mktemp -d)"
-trap "rm -rf ${temp_dir}" EXIT
+trap 'rm -rf ${temp_dir}' EXIT
 
 # Download the retry script.
 wget https://git.launchpad.net/autopkgtest-cloud/plain/tools/retry-github-test -O "${temp_dir}/retry-github-test"

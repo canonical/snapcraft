@@ -54,10 +54,11 @@ logger = logging.getLogger(__name__)
 
 
 class Python3Plugin(python.PythonPlugin):
-
     def __init__(self, name, options, project):
-        options.python_version = 'python3'
+        options.python_version = "python3"
         super().__init__(name, options, project)
-        logger.warning("DEPRECATED: The 'python3' plugin's functionality "
-                       "has been replaced by the 'python' plugin, and it will "
-                       "soon be removed.")
+        logger.warning(
+            "DEPRECATED: The 'python3' plugin's functionality "
+            "has been replaced by the 'python' plugin, and it will "
+            "soon be removed."
+        )

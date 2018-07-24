@@ -18,7 +18,7 @@ import click
 
 import snapcraft
 
-SNAPCRAFT_VERSION_TEMPLATE = 'snapcraft, version %(version)s'
+SNAPCRAFT_VERSION_TEMPLATE = "snapcraft, version %(version)s"
 
 
 @click.group()
@@ -27,7 +27,7 @@ def versioncli():
     pass
 
 
-@versioncli.command('version')
+@versioncli.command("version")
 def version():
     """Obtain snapcraft's version number.
 
@@ -35,4 +35,4 @@ def version():
         snapcraft version
         snapcraft --version
     """
-    click.echo(SNAPCRAFT_VERSION_TEMPLATE % {'version': snapcraft.__version__})
+    click.echo(SNAPCRAFT_VERSION_TEMPLATE % {"version": snapcraft.__version__})

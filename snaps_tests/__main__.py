@@ -49,23 +49,25 @@ def main():
 
     arguments = docopt.docopt(__doc__)
 
-    if snapcraft.ProjectOptions().deb_arch == 'armhf':
+    if snapcraft.ProjectOptions().deb_arch == "armhf":
         # snaps can't yet be installed in a lxc container.
-        snaps_tests.config['skip-install'] = True
+        snaps_tests.config["skip-install"] = True
     else:
-        snaps_tests.config['skip-install'] = arguments['--skip-install']
-    snaps_tests.config['ip'] = arguments['--ip']
-    snaps_tests.config['port'] = arguments['--port']
-    snaps_tests.config['filter'] = arguments['--filter']
-    snaps_tests.config['proxy'] = arguments['--proxy']
+        snaps_tests.config["skip-install"] = arguments["--skip-install"]
+    snaps_tests.config["ip"] = arguments["--ip"]
+    snaps_tests.config["port"] = arguments["--port"]
+    snaps_tests.config["filter"] = arguments["--filter"]
+    snaps_tests.config["proxy"] = arguments["--proxy"]
 
-    if arguments['--subunit']:
+    if arguments["--subunit"]:
         from subunit import run
+
         runner = run.SubunitTestProgram
-        stdout = open('results.subunit', 'wb')
+        stdout = open("results.subunit", "wb")
         test_runner = run.SubunitTestRunner
     else:
         from testtools import run
+
         runner = run.TestProgram
         stdout = None
         test_runner = None
@@ -73,11 +75,10 @@ def main():
     # Strip all the command line arguments, so the test runner does not handle
     # them again.
     argv = [sys.argv[0]]
-    argv.append('discover')
+    argv.append("discover")
     argv.append(os.path.basename(os.path.dirname(__file__)))
-    runner(module=None, verbosity=2, stdout=stdout,
-           testRunner=test_runner, argv=argv)
+    runner(module=None, verbosity=2, stdout=stdout, testRunner=test_runner, argv=argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -70,53 +70,46 @@ from snapcraft.plugins import _python
 
 class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
 
-    fmt = 'Unsupported python version: {python_version!r}'
+    fmt = "Unsupported python version: {python_version!r}"
 
 
-class SnapcraftPluginPythonFileMissing(
-        snapcraft.internal.errors.SnapcraftError):
+class SnapcraftPluginPythonFileMissing(snapcraft.internal.errors.SnapcraftError):
 
     fmt = (
-        'Failed to find the referred {plugin_property} file at the given '
-        'path: {plugin_property_value!r}.\n'
-        'Check the property and ensure the file exists.'
+        "Failed to find the referred {plugin_property} file at the given "
+        "path: {plugin_property_value!r}.\n"
+        "Check the property and ensure the file exists."
     )
 
     def __init__(self, *, plugin_property, plugin_property_value):
-        super().__init__(plugin_property=plugin_property,
-                         plugin_property_value=plugin_property_value)
+        super().__init__(
+            plugin_property=plugin_property, plugin_property_value=plugin_property_value
+        )
 
 
 class PythonPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['requirements'] = {
-            'type': 'string',
+        schema["properties"]["requirements"] = {"type": "string"}
+        schema["properties"]["constraints"] = {"type": "string"}
+        schema["properties"]["python-packages"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
-        schema['properties']['constraints'] = {
-            'type': 'string',
+        schema["properties"]["process-dependency-links"] = {
+            "type": "boolean",
+            "default": False,
         }
-        schema['properties']['python-packages'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string'
-            },
-            'default': [],
+        schema["properties"]["python-version"] = {
+            "type": "string",
+            "default": "python3",
+            "enum": ["python2", "python3"],
         }
-        schema['properties']['process-dependency-links'] = {
-            'type': 'boolean',
-            'default': False,
-        }
-        schema['properties']['python-version'] = {
-            'type': 'string',
-            'default': 'python3',
-            'enum': ['python2', 'python3']
-        }
-        schema.pop('required')
+        schema.pop("required")
 
         return schema
 
@@ -124,45 +117,40 @@ class PythonPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return [
-            'requirements',
-            'constraints',
-            'python-packages',
-            'python-version',
-        ]
+        return ["requirements", "constraints", "python-packages", "python-version"]
 
     @property
     def plugin_build_packages(self):
-        if self.options.python_version == 'python3':
+        if self.options.python_version == "python3":
             return [
-                'python3-dev',
-                'python3-pip',
-                'python3-pkg-resources',
-                'python3-setuptools',
+                "python3-dev",
+                "python3-pip",
+                "python3-pkg-resources",
+                "python3-setuptools",
             ]
-        elif self.options.python_version == 'python2':
+        elif self.options.python_version == "python2":
             return [
-                'python-dev',
-                'python-pip',
-                'python-pkg-resources',
-                'python-setuptools',
+                "python-dev",
+                "python-pip",
+                "python-pkg-resources",
+                "python-setuptools",
             ]
 
     @property
     def plugin_stage_packages(self):
         release_codename = os_release.OsRelease().version_codename()
-        if self.options.python_version == 'python2':
-            python_base = 'python'
-        elif self.options.python_version == 'python3':
-            python_base = 'python3'
+        if self.options.python_version == "python2":
+            python_base = "python"
+        elif self.options.python_version == "python3":
+            python_base = "python3"
         else:
             return
 
         stage_packages = [python_base]
         # In bionic, python3's pip started requiring python-distutils
         # to be installed.
-        if python_base == 'python3' and release_codename == 'bionic':
-            stage_packages.append('{}-distutils'.format(python_base))
+        if python_base == "python3" and release_codename == "bionic":
+            stage_packages.append("{}-distutils".format(python_base))
         return stage_packages
 
     # ignore mypy error: Read-only property cannot override read-write property
@@ -170,8 +158,10 @@ class PythonPlugin(snapcraft.BasePlugin):
     def stage_packages(self):
         try:
             _python.get_python_command(
-                self._python_major_version, stage_dir=self.project.stage_dir,
-                install_dir=self.installdir)
+                self._python_major_version,
+                stage_dir=self.project.stage_dir,
+                install_dir=self.installdir,
+            )
         except _python.errors.MissingPythonCommandError:
             return super().stage_packages + self.plugin_stage_packages
         else:
@@ -184,7 +174,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                 python_major_version=self._python_major_version,
                 part_dir=self.partdir,
                 install_dir=self.installdir,
-                stage_dir=self.project.stage_dir)
+                stage_dir=self.project.stage_dir,
+            )
         return self.__pip
 
     def __init__(self, name, options, project):
@@ -194,13 +185,13 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         # Pip requires only the major version of python rather than the command
         # name like our option requires.
-        match = re.match(
-            'python(?P<major_version>\d).*', self.options.python_version)
+        match = re.match(r"python(?P<major_version>\d).*", self.options.python_version)
         if not match:
             raise UnsupportedPythonVersionError(
-                python_version=self.options.python_version)
+                python_version=self.options.python_version
+            )
 
-        self._python_major_version = match.group('major_version')
+        self._python_major_version = match.group("major_version")
         self.__pip = None
 
     def pull(self):
@@ -208,7 +199,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         self._pip.setup()
 
-        with simple_env_bzr(os.path.join(self.installdir, 'bin')):
+        with simple_env_bzr(os.path.join(self.installdir, "bin")):
             # Download this project, using its setup.py if present. This will
             # also download any python-packages requested.
             self._download_project()
@@ -220,26 +211,30 @@ class PythonPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        with simple_env_bzr(os.path.join(self.installdir, 'bin')):
+        with simple_env_bzr(os.path.join(self.installdir, "bin")):
             # Install the packages that have already been downloaded
             installed_pipy_packages = self._install_project()
 
         # We record the requirements and constraints files only if they are
         # remote. If they are local, they are already tracked with the source.
         if self.options.requirements:
-            self._manifest['requirements-contents'] = (
-                self._get_file_contents(self.options.requirements))
+            self._manifest["requirements-contents"] = self._get_file_contents(
+                self.options.requirements
+            )
         if self.options.constraints:
-            self._manifest['constraints-contents'] = (
-                self._get_file_contents(self.options.constraints))
-        self._manifest['python-packages'] = [
-            '{}={}'.format(name, installed_pipy_packages[name])
+            self._manifest["constraints-contents"] = self._get_file_contents(
+                self.options.constraints
+            )
+        self._manifest["python-packages"] = [
+            "{}={}".format(name, installed_pipy_packages[name])
             for name in installed_pipy_packages
         ]
 
         _python.generate_sitecustomize(
-            self._python_major_version, stage_dir=self.project.stage_dir,
-            install_dir=self.installdir)
+            self._python_major_version,
+            stage_dir=self.project.stage_dir,
+            install_dir=self.installdir,
+        )
 
     def _find_file(self, *, filename: str) -> str:
         # source-subdir defaults to ''
@@ -249,7 +244,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # TODO add consistency
                 source_subdir = self.options.source_subdir
             else:
-                source_subdir = ''
+                source_subdir = ""
             filepath = os.path.join(basepath, source_subdir, filename)
             if os.path.exists(filepath):
                 return filepath
@@ -258,7 +253,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _get_setup_py_dir(self):
         setup_py_dir = None
-        setup_py_path = self._find_file(filename='setup.py')
+        setup_py_path = self._find_file(filename="setup.py")
         if setup_py_path:
             setup_py_dir = os.path.dirname(setup_py_path)
 
@@ -270,12 +265,12 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.constraints):
                 constraints = {self.options.constraints}
             else:
-                constraints_file = self._find_file(
-                    filename=self.options.constraints)
+                constraints_file = self._find_file(filename=self.options.constraints)
                 if not constraints_file:
                     raise SnapcraftPluginPythonFileMissing(
-                        plugin_property='constraints',
-                        plugin_property_value=self.options.constraints)
+                        plugin_property="constraints",
+                        plugin_property_value=self.options.constraints,
+                    )
                 constraints = {constraints_file}
         return constraints
 
@@ -285,27 +280,29 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.requirements):
                 requirements = {self.options.requirements}
             else:
-                requirements_file = self._find_file(
-                    filename=self.options.requirements)
+                requirements_file = self._find_file(filename=self.options.requirements)
                 if not requirements_file:
                     raise SnapcraftPluginPythonFileMissing(
-                        plugin_property='requirements',
-                        plugin_property_value=self.options.requirements)
+                        plugin_property="requirements",
+                        plugin_property_value=self.options.requirements,
+                    )
                 requirements = {requirements_file}
 
         return requirements
 
     def _install_wheels(self, wheels):
         installed = self._pip.list()
-        wheel_names = [os.path.basename(w).split('-')[0]
-                       for w in wheels]
+        wheel_names = [os.path.basename(w).split("-")[0] for w in wheels]
 
         # we want to avoid installing what is already provided in
         # stage-packages
         need_install = [k for k in wheel_names if k not in installed]
         self._pip.install(
-            need_install, upgrade=True, install_deps=False,
-            process_dependency_links=self.options.process_dependency_links)
+            need_install,
+            upgrade=True,
+            install_deps=False,
+            process_dependency_links=self.options.process_dependency_links,
+        )
 
     def _download_project(self):
         setup_py_dir = self._get_setup_py_dir()
@@ -313,9 +310,12 @@ class PythonPlugin(snapcraft.BasePlugin):
         requirements = self._get_requirements()
 
         self._pip.download(
-            self.options.python_packages, setup_py_dir=setup_py_dir,
-            constraints=constraints, requirements=requirements,
-            process_dependency_links=self.options.process_dependency_links)
+            self.options.python_packages,
+            setup_py_dir=setup_py_dir,
+            constraints=constraints,
+            requirements=requirements,
+            process_dependency_links=self.options.process_dependency_links,
+        )
 
     def _install_project(self):
         setup_py_dir = self._get_setup_py_dir()
@@ -323,15 +323,18 @@ class PythonPlugin(snapcraft.BasePlugin):
         requirements = self._get_requirements()
 
         wheels = self._pip.wheel(
-            self.options.python_packages, setup_py_dir=setup_py_dir,
-            constraints=constraints, requirements=requirements,
-            process_dependency_links=self.options.process_dependency_links)
+            self.options.python_packages,
+            setup_py_dir=setup_py_dir,
+            constraints=constraints,
+            requirements=requirements,
+            process_dependency_links=self.options.process_dependency_links,
+        )
 
         if wheels:
             self._install_wheels(wheels)
 
         if setup_py_dir is not None:
-            setup_py_path = os.path.join(setup_py_dir, 'setup.py')
+            setup_py_path = os.path.join(setup_py_dir, "setup.py")
             if os.path.exists(setup_py_path):
                 # pbr and others don't work using `pip install .`
                 # LP: #1670852
@@ -346,14 +349,19 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _setup_tools_install(self, setup_file):
         command = [
             _python.get_python_command(
-                self._python_major_version, stage_dir=self.project.stage_dir,
-                install_dir=self.installdir),
-            os.path.basename(setup_file), '--no-user-cfg', 'install',
-            '--single-version-externally-managed',
-            '--user', '--record', 'install.txt']
-        self.run(
-            command, env=self._pip.env(),
-            cwd=os.path.dirname(setup_file))
+                self._python_major_version,
+                stage_dir=self.project.stage_dir,
+                install_dir=self.installdir,
+            ),
+            os.path.basename(setup_file),
+            "--no-user-cfg",
+            "install",
+            "--single-version-externally-managed",
+            "--user",
+            "--record",
+            "install.txt",
+        ]
+        self.run(command, env=self._pip.env(), cwd=os.path.dirname(setup_file))
 
         # Fix all shebangs to use the in-snap python. The stuff installed from
         # pip has already been fixed, but anything done in this step has not.
@@ -372,21 +380,21 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
-        fileset.append('-bin/pip')
-        fileset.append('-bin/pip2')
-        fileset.append('-bin/pip3')
-        fileset.append('-bin/pip2.7')
-        fileset.append('-bin/pip3.*')
-        fileset.append('-bin/easy_install*')
-        fileset.append('-bin/wheel')
+        fileset.append("-bin/pip")
+        fileset.append("-bin/pip2")
+        fileset.append("-bin/pip3")
+        fileset.append("-bin/pip2.7")
+        fileset.append("-bin/pip3.*")
+        fileset.append("-bin/easy_install*")
+        fileset.append("-bin/wheel")
         # Holds all the .pyc files. It is a major cause of inter part
         # conflict.
-        fileset.append('-**/__pycache__')
-        fileset.append('-**/*.pyc')
+        fileset.append("-**/__pycache__")
+        fileset.append("-**/*.pyc")
         # The RECORD files include hashes useful when uninstalling packages.
         # In the snap they will cause conflicts when more than one part uses
         # the python plugin.
-        fileset.append('-lib/python*/site-packages/*/RECORD')
+        fileset.append("-lib/python*/site-packages/*/RECORD")
         return fileset
 
 
@@ -399,19 +407,24 @@ def simple_env_bzr(bin_dir):
        variables will make bzr look for modules in the wrong location.
        """
     os.makedirs(bin_dir, exist_ok=True)
-    bzr_bin = os.path.join(bin_dir, 'bzr')
-    real_bzr_bin = which('bzr')
+    bzr_bin = os.path.join(bin_dir, "bzr")
+    real_bzr_bin = which("bzr")
     if real_bzr_bin:
         exec_line = 'exec {} "$@"'.format(real_bzr_bin)
     else:
-        exec_line = 'echo bzr needs to be in PATH; exit 1'
-    with open(bzr_bin, 'w') as f:
-        f.write(dedent(
-            """#!/bin/sh
+        exec_line = "echo bzr needs to be in PATH; exit 1"
+    with open(bzr_bin, "w") as f:
+        f.write(
+            dedent(
+                """#!/bin/sh
                unset PYTHONUSERBASE
                unset PYTHONHOME
                {}
-            """.format(exec_line)))
+            """.format(
+                    exec_line
+                )
+            )
+        )
     os.chmod(bzr_bin, 0o777)
     try:
         yield

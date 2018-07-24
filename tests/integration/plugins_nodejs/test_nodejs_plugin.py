@@ -22,12 +22,11 @@ from testtools.matchers import FileExists
 from tests import integration
 
 
-class NodeJSPluginTestCase(testscenarios.WithScenarios,
-                           integration.TestCase):
+class NodeJSPluginTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ('npm', dict(package_manager='npm')),
-        ('yarn', dict(package_manager='yarn')),
+        ("npm", dict(package_manager="npm")),
+        ("yarn", dict(package_manager="yarn")),
     ]
 
     def _set_node_package_manager(self, snapcraft_yaml_file):
@@ -36,32 +35,30 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios,
 
         with open(snapcraft_yaml_file) as f:
             snapcraft_yaml = yaml.load(f)
-        snapcraft_yaml['parts']['nodejs-part']['node-package-manager'] = \
-            self.package_manager
-        with open(snapcraft_yaml_file, 'w') as f:
+        snapcraft_yaml["parts"]["nodejs-part"][
+            "node-package-manager"
+        ] = self.package_manager
+        with open(snapcraft_yaml_file, "w") as f:
             yaml.dump(snapcraft_yaml, f)
 
     def test_rebuilding_possible(self):
-        self.copy_project_to_cwd('nodejs-hello')
-        self._set_node_package_manager('snapcraft.yaml')
+        self.copy_project_to_cwd("nodejs-hello")
+        self._set_node_package_manager("snapcraft.yaml")
 
-        self.run_snapcraft('build')
-        self.run_snapcraft(['clean', '-s', 'build'])
-        self.run_snapcraft('build')
+        self.run_snapcraft("build")
+        self.run_snapcraft(["clean", "-s", "build"])
+        self.run_snapcraft("build")
 
     def test_build_with_run_commands(self):
-        self.copy_project_to_cwd('nodejs-with-run-commands')
-        self._set_node_package_manager('snapcraft.yaml')
+        self.copy_project_to_cwd("nodejs-with-run-commands")
+        self._set_node_package_manager("snapcraft.yaml")
 
-        self.run_snapcraft('build')
-        part_builddir = os.path.join(self.parts_dir, 'nodejs-part', 'build')
-        self.assertThat(os.path.join(part_builddir, 'command-one-run'),
-                        FileExists())
-        self.assertThat(os.path.join(part_builddir, 'command-two-run'),
-                        FileExists())
+        self.run_snapcraft("build")
+        part_builddir = os.path.join(self.parts_dir, "nodejs-part", "build")
+        self.assertThat(os.path.join(part_builddir, "command-one-run"), FileExists())
+        self.assertThat(os.path.join(part_builddir, "command-two-run"), FileExists())
 
         # Ensure the bin entry makes it to bin in the part's install directory
-        part_installdir = os.path.join(
-            self.parts_dir, 'nodejs-part', 'install')
-        print_binary_path = os.path.join(part_installdir, 'bin', 'node-print')
+        part_installdir = os.path.join(self.parts_dir, "nodejs-part", "install")
+        print_binary_path = os.path.join(part_installdir, "bin", "node-print")
         self.assertThat(print_binary_path, FileExists())

@@ -15,15 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._project_options import ProjectOptions
-from ._project_info import ProjectInfo                 # noqa: F401
+from ._project_info import ProjectInfo  # noqa: F401
 
 
 class Project(ProjectOptions):
     """All details around building a project concerning the build environment
     and the snap being built."""
 
-    def __init__(self, *, use_geoip=False, parallel_builds=True,
-                 target_deb_arch: str=None, debug=False) -> None:
-        self.info = None  # type: ProjectInfo
+    def __init__(
+        self,
+        *,
+        use_geoip=False,
+        parallel_builds=True,
+        target_deb_arch: str = None,
+        debug=False,
+        snapcraft_yaml_file_path=None
+    ) -> None:
+        # This here check is mostly for backwards compatibility with the
+        # rest of the code base.
+        if snapcraft_yaml_file_path is None:
+            self.info = None  # type: ProjectInfo
+        else:
+            self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         super().__init__(use_geoip, parallel_builds, target_deb_arch, debug)

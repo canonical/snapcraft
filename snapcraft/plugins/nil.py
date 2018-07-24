@@ -24,14 +24,13 @@ import snapcraft
 
 
 class NilPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {},
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {},
         }
 
     def enable_cross_compilation(self):

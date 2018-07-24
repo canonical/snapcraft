@@ -17,15 +17,16 @@
 import os
 import yaml
 
+from snapcraft.internal import steps
+
 
 class State(yaml.YAMLObject):
-
     def __repr__(self):
         items = sorted(self.__dict__.items())
-        strings = (': '.join((key, repr(value))) for key, value in items)
-        representation = ', '.join(strings)
+        strings = (": ".join((key, repr(value))) for key, value in items)
+        representation = ", ".join(strings)
 
-        return '{}({})'.format(self.__class__.__name__, representation)
+        return "{}({})".format(self.__class__.__name__, representation)
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -35,7 +36,6 @@ class State(yaml.YAMLObject):
 
 
 class PartState(State):
-
     def __init__(self, part_properties, project):
         super().__init__()
         if not part_properties:
@@ -61,14 +61,16 @@ class PartState(State):
         """Return set of properties that differ."""
 
         return _get_differing_keys(
-            self.properties, self.properties_of_interest(other_properties))
+            self.properties, self.properties_of_interest(other_properties)
+        )
 
     def diff_project_options_of_interest(self, other_project_options):
         """Return set of project options that differ."""
 
         return _get_differing_keys(
-            self.project_options, self.project_options_of_interest(
-                other_project_options))
+            self.project_options,
+            self.project_options_of_interest(other_project_options),
+        )
 
 
 def _get_differing_keys(dict1, dict2):
@@ -87,19 +89,19 @@ def _get_differing_keys(dict1, dict2):
 
 
 def get_global_state():
-    with open(os.path.join('snap', '.snapcraft', 'state'), 'r') as state_file:
+    with open(os.path.join("snap", ".snapcraft", "state"), "r") as state_file:
         return yaml.load(state_file)
 
 
-def get_state(state_dir, step):
+def get_state(state_dir: str, step: steps.Step):
     state = None
     state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
-        with open(state_file, 'r') as f:
+        with open(state_file, "r") as f:
             state = yaml.load(f.read())
 
     return state
 
 
-def get_step_state_file(state_dir: str, step: str) -> str:
-    return os.path.join(state_dir, step)
+def get_step_state_file(state_dir: str, step: steps.Step) -> str:
+    return os.path.join(state_dir, step.name)

@@ -28,30 +28,36 @@ from tests import unit
 class SetupPyTestCase(unit.TestCase):
 
     metadata = [
-        ('description', dict(params=dict(
-            version=None,
-            description='test-description'))),
-        ('version', dict(params=dict(
-            version='test-version',
-            description=None))),
-        ('key and version', dict(params=dict(
-            description='test-description',
-            version='test-version')))
+        (
+            "description",
+            dict(params=dict(version=None, description="test-description")),
+        ),
+        ("version", dict(params=dict(version="test-version", description=None))),
+        (
+            "key and version",
+            dict(params=dict(description="test-description", version="test-version")),
+        ),
     ]
 
     tools = [
-        ('setuptools', dict(
-            import_statement='import setuptools',
-            method='setuptools.setup')),
-        ('from setuptools', dict(
-            import_statement='from setuptools import setup',
-            method='setup')),
-        ('distutils', dict(
-            import_statement='import distutils.core',
-            method='distutils.core.setup')),
-        ('from distutils.core', dict(
-            import_statement='from distutils.core import setup',
-            method='setup')),
+        (
+            "setuptools",
+            dict(import_statement="import setuptools", method="setuptools.setup"),
+        ),
+        (
+            "from setuptools",
+            dict(import_statement="from setuptools import setup", method="setup"),
+        ),
+        (
+            "distutils",
+            dict(
+                import_statement="import distutils.core", method="distutils.core.setup"
+            ),
+        ),
+        (
+            "from distutils.core",
+            dict(import_statement="from distutils.core import setup", method="setup"),
+        ),
     ]
 
     scenarios = multiply_scenarios(metadata, tools)
@@ -59,17 +65,18 @@ class SetupPyTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        params = ['    {}="{}",'.format(k, v)
-                  for k, v in self.params.items() if v]
+        params = ['    {}="{}",'.format(k, v) for k, v in self.params.items() if v]
 
         fmt = dict(
-            params='\n'.join(params),
+            params="\n".join(params),
             import_statement=self.import_statement,
             method=self.method,
         )
 
-        with open('setup.py', 'w') as setup_file:
-            print(dedent("""\
+        with open("setup.py", "w") as setup_file:
+            print(
+                dedent(
+                    """\
                 {import_statement}
 
                 {method}(
@@ -78,43 +85,46 @@ class SetupPyTestCase(unit.TestCase):
                     author='Canonical LTD',
                     author_email='snapcraft@lists.snapcraft.io',
                 )
-            """).format(**fmt), file=setup_file)
+            """
+                ).format(**fmt),
+                file=setup_file,
+            )
 
     def test_info_extraction(self):
         expected = ExtractedMetadata(**self.params)
-        actual = setuppy.extract('setup.py')
+        actual = setuppy.extract("setup.py")
         self.assertThat(str(actual), Equals(str(expected)))
         self.assertThat(actual, Equals(expected))
 
 
 class SetupPyErrorsTestCase(unit.TestCase):
-
     def test_unhandled_file_test_case(self):
         raised = self.assertRaises(
-            _errors.UnhandledFileError, setuppy.extract,
-            'unhandled-file')
+            _errors.UnhandledFileError, setuppy.extract, "unhandled-file"
+        )
 
-        self.assertThat(raised.path, Equals('unhandled-file'))
-        self.assertThat(raised.extractor_name, Equals('setup.py'))
+        self.assertThat(raised.path, Equals("unhandled-file"))
+        self.assertThat(raised.extractor_name, Equals("setup.py"))
 
     def test_bad_import(self):
-        with open('setup.py', 'w') as setup_file:
-            print('import bad_module', file=setup_file)
+        with open("setup.py", "w") as setup_file:
+            print("import bad_module", file=setup_file)
 
-        self.assertRaises(
-            _errors.SetupPyImportError, setuppy.extract,
-            'setup.py')
+        self.assertRaises(_errors.SetupPyImportError, setuppy.extract, "setup.py")
 
     def test_unsupported_setup(self):
-        with open('setup.py', 'w') as setup_file:
-            print(dedent("""\
+        with open("setup.py", "w") as setup_file:
+            print(
+                dedent(
+                    """\
                 def setup(**kwargs):
                     # Raise what setuptools and distutils raise
                     raise SystemExit()
 
                 setup(name='name', version='version')
-                """), file=setup_file)
+                """
+                ),
+                file=setup_file,
+            )
 
-        self.assertRaises(
-            _errors.SetupPyFileParseError, setuppy.extract,
-            'setup.py')
+        self.assertRaises(_errors.SetupPyFileParseError, setuppy.extract, "setup.py")

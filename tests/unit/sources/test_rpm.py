@@ -26,34 +26,39 @@ from tests.file_utils import get_snapcraft_path
 
 
 class TestRpm(unit.TestCase):
-
     def setUp(self):
         super().setUp()
-        self.rpm_file_path = (os.path.join(
-            get_snapcraft_path(), 'tests', 'integration', 'snaps',
-            'rpm-hello', 'small-0.1-1.noarch.rpm'))
+        self.rpm_file_path = os.path.join(
+            get_snapcraft_path(),
+            "tests",
+            "integration",
+            "snaps",
+            "rpm-hello",
+            "small-0.1-1.noarch.rpm",
+        )
 
-        self.dest_dir = 'dst'
+        self.dest_dir = "dst"
         os.makedirs(self.dest_dir)
 
     def test_pull_rpm_file_must_extract(self):
         rpm_source = sources.Rpm(self.rpm_file_path, self.dest_dir)
         rpm_source.pull()
 
-        self.assertThat(os.path.join(self.dest_dir, 'bin', 'hello'),
-                        FileExists())
+        self.assertThat(os.path.join(self.dest_dir, "bin", "hello"), FileExists())
 
-    @mock.patch.object(sources.Rpm, 'provision')
+    @mock.patch.object(sources.Rpm, "provision")
     def test_pull_rpm_must_not_clean_targets(self, mock_provision):
         rpm_source = sources.Rpm(self.rpm_file_path, self.dest_dir)
         rpm_source.pull()
 
         mock_provision.assert_called_once_with(
-            self.dest_dir, clean_target=False, src=os.path.join(
-                self.dest_dir, 'small-0.1-1.noarch.rpm'))
+            self.dest_dir,
+            clean_target=False,
+            src=os.path.join(self.dest_dir, "small-0.1-1.noarch.rpm"),
+        )
 
     def test_has_source_handler_entry_on_linux(self):
-        if sys.platform == 'linux':
-            self.assertTrue(sources._source_handler['rpm'] is sources.Rpm)
+        if sys.platform == "linux":
+            self.assertTrue(sources._source_handler["rpm"] is sources.Rpm)
         else:
-            self.assertRaises(KeyError, sources._source_handler['rpm'])
+            self.assertRaises(KeyError, sources._source_handler["rpm"])

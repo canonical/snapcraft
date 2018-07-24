@@ -22,15 +22,12 @@ from tests import unit
 
 class _TestState(PartState):
     def properties_of_interest(self, part_properties):
-        return {
-            'foo': part_properties.get('foo'),
-            'baz': part_properties.get('baz')
-        }
+        return {"foo": part_properties.get("foo"), "baz": part_properties.get("baz")}
 
     def project_options_of_interest(self, project):
         return {
-            'foo': getattr(project, 'foo', None),
-            'baz': getattr(project, 'baz', None)
+            "foo": getattr(project, "foo", None),
+            "baz": getattr(project, "baz", None),
         }
 
 
@@ -42,11 +39,9 @@ class _TestProject:
 
 class StateTestCase(unit.TestCase):
     scenarios = [
-        ('change existing', dict(old={'foo': 'bar'}, new={'foo': 'baz'})),
-        ('add new', dict(
-            old={'baz': 'qux'}, new={'foo': 'bar', 'baz': 'qux'})),
-        ('remove old', dict(
-            old={'foo': 'bar', 'baz': 'qux'}, new={'baz': 'qux'})),
+        ("change existing", dict(old={"foo": "bar"}, new={"foo": "baz"})),
+        ("add new", dict(old={"baz": "qux"}, new={"foo": "bar", "baz": "qux"})),
+        ("remove old", dict(old={"foo": "bar", "baz": "qux"}, new={"baz": "qux"})),
     ]
 
     def setUp(self):
@@ -60,11 +55,11 @@ class StateTestCase(unit.TestCase):
         self.state.project_options = self.old
 
     def test_diff_properties_of_interest(self):
-        differing_properties = self.state.diff_properties_of_interest(
-            self.new)
-        self.assertThat(differing_properties, Equals({'foo'}))
+        differing_properties = self.state.diff_properties_of_interest(self.new)
+        self.assertThat(differing_properties, Equals({"foo"}))
 
     def test_diff_project_options_of_interest(self):
         differing_properties = self.state.diff_project_options_of_interest(
-            _TestProject(self.new))
-        self.assertThat(differing_properties, Equals({'foo'}))
+            _TestProject(self.new)
+        )
+        self.assertThat(differing_properties, Equals({"foo"}))

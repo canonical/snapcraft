@@ -16,11 +16,7 @@
 
 import json
 
-from testtools.matchers import (
-    Contains,
-    Equals,
-    FileExists,
-)
+from testtools.matchers import Contains, Equals, FileExists
 
 from snapcraft.internal import errors
 
@@ -28,40 +24,44 @@ from . import CommandBaseTestCase, CommandBaseNoFifoTestCase
 
 
 class SetVersionCommandTestCase(CommandBaseTestCase):
-
     def test_set_version(self):
-        self.run_command(['set-version', 'test-version'])
+        self.run_command(["set-version", "test-version"])
         self.assertThat(self.call_fifo, FileExists())
 
-        with open(self.call_fifo, 'r') as f:
+        with open(self.call_fifo, "r") as f:
             data = json.loads(f.read())
 
-        self.assertThat(data, Contains('function'))
-        self.assertThat(data, Contains('args'))
+        self.assertThat(data, Contains("function"))
+        self.assertThat(data, Contains("args"))
 
-        self.assertThat(data['function'], Equals('set-version'))
-        self.assertThat(data['args'], Equals({'version': 'test-version'}))
+        self.assertThat(data["function"], Equals("set-version"))
+        self.assertThat(data["args"], Equals({"version": "test-version"}))
 
     def test_set_version_error(self):
         # If there is a string in the feedback, it should be considered an
         # error
-        with open(self.feedback_fifo, 'w') as f:
-            f.write('this is an error\n')
+        with open(self.feedback_fifo, "w") as f:
+            f.write("this is an error\n")
 
         raised = self.assertRaises(
-            errors.SnapcraftctlError, self.run_command,
-            ['set-version', 'test-version'])
+            errors.SnapcraftctlError, self.run_command, ["set-version", "test-version"]
+        )
 
-        self.assertThat(str(raised), Equals('this is an error'))
+        self.assertThat(str(raised), Equals("this is an error"))
 
 
 class SetVersionCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):
-
     def test_set_version_without_fifo(self):
         raised = self.assertRaises(
-            errors.SnapcraftEnvironmentError, self.run_command,
-            ['set-version', 'test-version'])
+            errors.SnapcraftEnvironmentError,
+            self.run_command,
+            ["set-version", "test-version"],
+        )
 
-        self.assertThat(str(raised), Contains(
-            'environment variable must be defined. Note that this utility is '
-            'only designed for use within a snapcraft.yaml'))
+        self.assertThat(
+            str(raised),
+            Contains(
+                "environment variable must be defined. Note that this utility is "
+                "only designed for use within a snapcraft.yaml"
+            ),
+        )

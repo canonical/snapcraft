@@ -49,83 +49,80 @@ logger = logging.getLogger(__name__)
 
 
 class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['ant-properties'] = {
-            'type': 'object',
-            'default': {},
-        }
-        schema['properties']['ant-build-targets'] = {
-            'type': 'array',
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["ant-properties"] = {"type": "object", "default": {}}
+        schema["properties"]["ant-build-targets"] = {
+            "type": "array",
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
         return schema
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('ant')
+        self.build_packages.append("ant")
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['ant-build-targets', 'ant-properties']
+        return ["ant-build-targets", "ant-properties"]
 
     def build(self):
         super().build()
 
-        command = ['ant']
+        command = ["ant"]
 
         if self.options.ant_build_targets:
             command.extend(self.options.ant_build_targets)
 
         for prop, value in self.options.ant_properties.items():
-            command.extend(['-D{}={}'.format(prop, value)])
+            command.extend(["-D{}={}".format(prop, value)])
 
         self.run(command)
-        files = glob.glob(os.path.join(self.builddir, 'target', '*.jar'))
+        files = glob.glob(os.path.join(self.builddir, "target", "*.jar"))
         if files:
-            jardir = os.path.join(self.installdir, 'jar')
+            jardir = os.path.join(self.installdir, "jar")
             os.makedirs(jardir)
             for f in files:
                 base = os.path.basename(f)
                 os.link(f, os.path.join(jardir, base))
 
     def get_proxy_options(self, scheme):
-        proxy = os.environ.get('{}_proxy'.format(scheme))
+        proxy = os.environ.get("{}_proxy".format(scheme))
         if proxy:
             parsed = urlsplit(proxy)
             if parsed.hostname is not None:
-                yield '-D{}.proxyHost={}'.format(scheme, parsed.hostname)
+                yield "-D{}.proxyHost={}".format(scheme, parsed.hostname)
             if parsed.port is not None:
-                yield '-D{}.proxyPort={}'.format(scheme, parsed.port)
+                yield "-D{}.proxyPort={}".format(scheme, parsed.port)
             if parsed.username is not None:
-                yield '-D{}.proxyUser={}'.format(scheme, parsed.username)
+                yield "-D{}.proxyUser={}".format(scheme, parsed.username)
             if parsed.password is not None:
-                yield '-D{}.proxyPassword={}'.format(scheme, parsed.password)
+                yield "-D{}.proxyPassword={}".format(scheme, parsed.password)
 
     def env(self, root):
         env = super().env(root)
-        jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))
+        jars = glob.glob(os.path.join(self.installdir, "jar", "*.jar"))
         if jars:
-            jars = [os.path.join(root, 'jar',
-                    os.path.basename(x)) for x in sorted(jars)]
-            env.extend(
-                ['CLASSPATH={}:$CLASSPATH'.format(':'.join(jars))])
+            jars = [
+                os.path.join(root, "jar", os.path.basename(x)) for x in sorted(jars)
+            ]
+            env.extend(["CLASSPATH={}:$CLASSPATH".format(":".join(jars))])
         # Getting ant to use a proxy requires a little work; the JRE doesn't
         # help as much as it should.  (java.net.useSystemProxies=true ought
         # to do the trick, but it relies on desktop configuration rather
         # than using the standard environment variables.)
         ant_opts = []
-        ant_opts.extend(self.get_proxy_options('http'))
-        ant_opts.extend(self.get_proxy_options('https'))
+        ant_opts.extend(self.get_proxy_options("http"))
+        ant_opts.extend(self.get_proxy_options("https"))
         if ant_opts:
-            env.append("ANT_OPTS='{}'".format(
-                ' '.join(opt.replace("'", "'\\''") for opt in ant_opts)))
+            env.append(
+                "ANT_OPTS='{}'".format(
+                    " ".join(opt.replace("'", "'\\''") for opt in ant_opts)
+                )
+            )
         return env

@@ -27,8 +27,7 @@ from tests import unit
 
 
 class DumbTerminalTests(unit.TestCase):
-
-    @patch('os.isatty')
+    @patch("os.isatty")
     def setUp(self, mock_os_isatty):
         super().setUp()
         self.mock_os_isatty = mock_os_isatty
@@ -42,22 +41,19 @@ class DumbTerminalTests(unit.TestCase):
         self.assertFalse(indicators.is_dumb_terminal())
 
     def test_dumb_terminal_environment(self):
-        self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
+        self.useFixture(fixtures.EnvironmentVariable("TERM", "dumb"))
         self.assertTrue(indicators.is_dumb_terminal())
 
     def test_vt100_terminal_environmment(self):
-        self.useFixture(fixtures.EnvironmentVariable('TERM', 'vt100'))
+        self.useFixture(fixtures.EnvironmentVariable("TERM", "vt100"))
         self.assertFalse(indicators.is_dumb_terminal())
 
 
 class ProgressBarInitializationTests(unit.TestCase):
 
-    scenarios = [
-        ('Terminal', {'dumb': True}),
-        ('Dumb Terminal', {'dumb': False}),
-    ]
+    scenarios = [("Terminal", {"dumb": True}), ("Dumb Terminal", {"dumb": False})]
 
-    @patch('snapcraft.internal.indicators.is_dumb_terminal')
+    @patch("snapcraft.internal.indicators.is_dumb_terminal")
     def test_init_progress_bar_with_length(self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = self.dumb
         pb = indicators._init_progress_bar(10, "destination", "message")
@@ -66,11 +62,11 @@ class ProgressBarInitializationTests(unit.TestCase):
         pb_widgets_types = [type(w) for w in pb.widgets]
         self.assertTrue(type(progressbar.Percentage()) in pb_widgets_types)
         self.assertThat(
-            type(progressbar.Bar()) in pb_widgets_types, Equals(not self.dumb))
+            type(progressbar.Bar()) in pb_widgets_types, Equals(not self.dumb)
+        )
 
-    @patch('snapcraft.internal.indicators.is_dumb_terminal')
-    def test_init_progress_bar_with_unknown_length(
-            self, mock_is_dumb_terminal):
+    @patch("snapcraft.internal.indicators.is_dumb_terminal")
+    def test_init_progress_bar_with_unknown_length(self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = self.dumb
         pb = indicators._init_progress_bar(0, "destination", "message")
         self.assertThat(pb.maxval, Equals(progressbar.UnknownLength))
@@ -78,20 +74,21 @@ class ProgressBarInitializationTests(unit.TestCase):
         pb_widgets_types = [type(w) for w in pb.widgets]
         self.assertThat(
             type(progressbar.AnimatedMarker()) in pb_widgets_types,
-            Equals(not self.dumb))
+            Equals(not self.dumb),
+        )
 
 
 class IndicatorsDownloadTests(unit.FakeFileHTTPServerBasedTestCase):
-
     def setUp(self):
         super().setUp()
 
-        dest_dir = 'dst'
+        dest_dir = "dst"
         os.makedirs(dest_dir)
-        self.file_name = 'snapcraft.yaml'
+        self.file_name = "snapcraft.yaml"
         self.dest_file = os.path.join(dest_dir, self.file_name)
-        self.source = 'http://{}:{}/{file_name}'.format(
-            *self.server.server_address, file_name=self.file_name)
+        self.source = "http://{}:{}/{file_name}".format(
+            *self.server.server_address, file_name=self.file_name
+        )
 
     def test_download_request_stream(self):
         request = requests.get(self.source, stream=True, allow_redirects=True)

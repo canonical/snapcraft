@@ -20,20 +20,19 @@ from tests import unit
 
 
 class SourceTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('subprocess.check_call')
+        patcher = mock.patch("subprocess.check_call")
         self.mock_run = patcher.start()
         self.mock_run.return_value = True
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('os.rmdir')
+        patcher = mock.patch("os.rmdir")
         self.mock_rmdir = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('os.path.exists')
+        patcher = mock.patch("os.path.exists")
         self.mock_path_exists = patcher.start()
         self.mock_path_exists.return_value = False
         self.addCleanup(patcher.stop)

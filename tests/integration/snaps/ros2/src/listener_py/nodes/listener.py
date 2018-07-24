@@ -3,13 +3,12 @@ from std_msgs.msg import String
 
 
 class ListenerNode:
-
     def __init__(self, node_name):
         self._node = rclpy.Node(node_name)
-        self._node.create_subscription(String, 'chatter', self.callback)
+        self._node.create_subscription(String, "chatter", self.callback)
 
     def callback(self, message):
-        print('I heard: {}'.format(message.data))
+        print("I heard: {}".format(message.data))
         self._node.destroy_node()
         rclpy.shutdown()
 
@@ -20,9 +19,9 @@ class ListenerNode:
 def main():
     rclpy.init()
 
-    node = ListenerNode('listener')
+    node = ListenerNode("listener")
     node.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

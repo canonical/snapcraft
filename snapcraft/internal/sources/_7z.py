@@ -25,28 +25,40 @@ from ._base import FileBase
 
 
 class SevenZip(FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, source_checksum,
-                         '7zip')
+    def __init__(
+        self,
+        source,
+        source_dir,
+        source_tag=None,
+        source_commit=None,
+        source_branch=None,
+        source_depth=None,
+        source_checksum=None,
+    ):
+        super().__init__(
+            source,
+            source_dir,
+            source_tag,
+            source_commit,
+            source_branch,
+            source_depth,
+            source_checksum,
+            "7zip",
+        )
         if source_tag:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                '7z', 'source-tag')
+            raise errors.SnapcraftSourceInvalidOptionError("7z", "source-tag")
         elif source_commit:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                '7z', 'source-commit')
+            raise errors.SnapcraftSourceInvalidOptionError("7z", "source-commit")
         elif source_branch:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                '7z', 'source-branch')
+            raise errors.SnapcraftSourceInvalidOptionError("7z", "source-branch")
 
     def provision(self, dst, clean_target=True, keep_7z=False, src=None):
         if src:
             seven_zip_file = src
         else:
             seven_zip_file = os.path.join(
-                self.source_dir, os.path.basename(self.source))
+                self.source_dir, os.path.basename(self.source)
+            )
         seven_zip_file = os.path.realpath(seven_zip_file)
 
         if clean_target:
@@ -56,7 +68,7 @@ class SevenZip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_7z, seven_zip_file)
 
-        extract_command = ['7z', 'x', seven_zip_file]
+        extract_command = ["7z", "x", seven_zip_file]
         subprocess.check_output(extract_command, cwd=dst)
 
         if not keep_7z:

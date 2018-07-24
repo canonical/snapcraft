@@ -25,7 +25,6 @@ from tests.fake_servers import snapd
 
 
 class UnixHTTPServer(socketserver.UnixStreamServer):
-
     def get_request(self):
         request, client_address = self.socket.accept()
         # BaseHTTPRequestHandler expects a tuple with the client address at
@@ -36,7 +35,6 @@ class UnixHTTPServer(socketserver.UnixStreamServer):
 
 
 class FakeSnapd(fixtures.Fixture):
-
     @property
     def snaps_result(self):
         self.request_handler.snaps_result
@@ -74,10 +72,12 @@ class FakeSnapd(fixtures.Fixture):
         os.unlink(snapd_fake_socket_path)
 
         socket_path_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+            "snapcraft.internal.repo.snaps.get_snapd_socket_path_template"
+        )
         mock_socket_path = socket_path_patcher.start()
-        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
-            snapd_fake_socket_path.replace('/', '%2F'))
+        mock_socket_path.return_value = "http+unix://{}/v2/{{}}".format(
+            snapd_fake_socket_path.replace("/", "%2F")
+        )
         self.addCleanup(socket_path_patcher.stop)
 
         self._start_fake_server(snapd_fake_socket_path)

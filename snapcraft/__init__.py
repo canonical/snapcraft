@@ -362,28 +362,30 @@ of the choice of plugin.
         build in Debug mode.
 """
 
-from collections import OrderedDict                 # noqa
-import pkg_resources                                # noqa
-import yaml                                         # noqa
+from collections import OrderedDict  # noqa
+import pkg_resources  # noqa
+import yaml  # noqa
 
 
 def _get_version():
     import os as _os
-    if _os.environ.get('SNAP_NAME') == 'snapcraft':
-        return _os.environ['SNAP_VERSION']
+
+    if _os.environ.get("SNAP_NAME") == "snapcraft":
+        return _os.environ["SNAP_VERSION"]
     try:
-        return pkg_resources.require('snapcraft')[0].version
+        return pkg_resources.require("snapcraft")[0].version
     except pkg_resources.DistributionNotFound:
-        return 'devel'
+        return "devel"
 
 
 # Set this early so that the circular imports aren't too painful
 __version__ = _get_version()
 
 
-from snapcraft._baseplugin import BasePlugin        # noqa
+from snapcraft._baseplugin import BasePlugin  # noqa
+
 # FIXME LP: #1662658
-from snapcraft._store import (                      # noqa
+from snapcraft._store import (  # noqa
     create_key,
     close,
     download,
@@ -401,16 +403,14 @@ from snapcraft._store import (                      # noqa
     status,
     validate,
 )
-from snapcraft import common                        # noqa
-from snapcraft import extractors                    # noqa
-from snapcraft import plugins                       # noqa
-from snapcraft import sources                       # noqa
-from snapcraft import file_utils                    # noqa
-from snapcraft import shell_utils                   # noqa
-from snapcraft.internal import repo                 # noqa
-from snapcraft.project._project_options import (    # noqa
-    ProjectOptions
-)
+from snapcraft import common  # noqa
+from snapcraft import extractors  # noqa
+from snapcraft import plugins  # noqa
+from snapcraft import sources  # noqa
+from snapcraft import file_utils  # noqa
+from snapcraft import shell_utils  # noqa
+from snapcraft.internal import repo  # noqa
+from snapcraft.project._project_options import ProjectOptions  # noqa
 
 
 # Setup yaml module globally
@@ -431,9 +431,8 @@ def dict_constructor(loader, node):
 
 def str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data,
-                                       style='|')
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
 yaml.add_representer(str, str_presenter)
