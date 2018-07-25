@@ -26,84 +26,94 @@ from . import CommandBaseTestCase, get_sample_key, mock_snap_output
 class ListKeysCommandTestCase(CommandBaseTestCase):
 
     scenarios = [
-        ('list-keys', {'command_name': 'list-keys'}),
-        ('keys alias', {'command_name': 'keys'}),
+        ("list-keys", {"command_name": "list-keys"}),
+        ("keys alias", {"command_name": "keys"}),
     ]
 
-    @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
-    def test_list_keys_snapd_not_installed(self, mock_installed,
-                                           mock_check_output):
+    @mock.patch("subprocess.check_output")
+    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    def test_list_keys_snapd_not_installed(self, mock_installed, mock_check_output):
         mock_installed.return_value = False
 
         raised = self.assertRaises(
-            storeapi.errors.MissingSnapdError,
-            self.run_command, [self.command_name])
+            storeapi.errors.MissingSnapdError, self.run_command, [self.command_name]
+        )
 
-        self.assertThat(str(raised), Contains(
-            'The snapd package is not installed.'))
-        mock_installed.assert_called_with('snapd')
+        self.assertThat(str(raised), Contains("The snapd package is not installed."))
+        mock_installed.assert_called_with("snapd")
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
+    @mock.patch("subprocess.check_output")
+    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
     def test_list_keys_without_login(self, mock_installed, mock_check_output):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
         raised = self.assertRaises(
             storeapi.errors.InvalidCredentialsError,
-            self.run_command, [self.command_name])
+            self.run_command,
+            [self.command_name],
+        )
 
-        self.assertThat(str(raised), Contains('Invalid credentials'))
+        self.assertThat(str(raised), Contains("Invalid credentials"))
 
-    @mock.patch.object(storeapi._sca_client.SCAClient,
-                       'get_account_information')
-    @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
-    def test_list_keys_successfully(self, mock_installed, mock_check_output,
-                                    mock_get_account_information):
+    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch("subprocess.check_output")
+    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    def test_list_keys_successfully(
+        self, mock_installed, mock_check_output, mock_get_account_information
+    ):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {
-            'account_id': 'abcd',
-            'account_keys': [
+            "account_id": "abcd",
+            "account_keys": [
                 {
-                    'name': 'default',
-                    'public-key-sha3-384': (
-                        get_sample_key('default')['sha3-384']),
-                },
+                    "name": "default",
+                    "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
+                }
             ],
         }
 
         result = self.run_command([self.command_name])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(dedent("""\
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
                 Name     SHA3-384 fingerprint
             *   default  {default_sha3_384}
             -   another  {another_sha3_384}  (not registered)
-            """).format(
-                default_sha3_384=get_sample_key('default')['sha3-384'],
-                another_sha3_384=get_sample_key('another')['sha3-384'])))
+            """
+                ).format(
+                    default_sha3_384=get_sample_key("default")["sha3-384"],
+                    another_sha3_384=get_sample_key("another")["sha3-384"],
+                )
+            ),
+        )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient,
-                       'get_account_information')
-    @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
-    def test_list_keys_without_registered(self, mock_installed,
-                                          mock_check_output,
-                                          mock_get_account_information):
+    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
+    @mock.patch("subprocess.check_output")
+    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    def test_list_keys_without_registered(
+        self, mock_installed, mock_check_output, mock_get_account_information
+    ):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {
-            'account_id': 'abcd',
-            'account_keys': [],
+            "account_id": "abcd",
+            "account_keys": [],
         }
 
         result = self.run_command([self.command_name])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            "No keys have been registered. "
-            "See \'snapcraft register-key --help\' to register a key."))
+        self.assertThat(
+            result.output,
+            Contains(
+                "No keys have been registered. "
+                "See 'snapcraft register-key --help' to register a key."
+            ),
+        )

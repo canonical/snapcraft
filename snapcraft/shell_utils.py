@@ -24,18 +24,18 @@ from snapcraft.internal import common
 
 def which(command, **kwargs):
     """Returns the result of `which` run with the correct environment."""
-    return run_script('which {}'.format(command), **kwargs)
+    return run_script("which {}".format(command), **kwargs)
 
 
 def getenv(envvar, **kwargs):
     """Return the specified envrionment variable."""
-    return run_script('echo ${}'.format(envvar), **kwargs)
+    return run_script("echo ${}".format(envvar), **kwargs)
 
 
 def run_script(script, **kwargs):
     """Run the script and return the output."""
-    with tempfile.NamedTemporaryFile('w+') as tempf:
-        print('#!/bin/sh', file=tempf)
+    with tempfile.NamedTemporaryFile("w+") as tempf:
+        print("#!/bin/sh", file=tempf)
         print(script, file=tempf)
         tempf.flush()
-        return common.run_output(['/bin/sh', tempf.name], **kwargs)
+        return common.run_output(["/bin/sh", tempf.name], **kwargs)

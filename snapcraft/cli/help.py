@@ -24,10 +24,7 @@ from . import echo
 from snapcraft.internal import sources
 
 
-_TOPICS = {
-    'sources': sources,
-    'plugins': snapcraft,
-}
+_TOPICS = {"sources": sources, "plugins": snapcraft}
 
 
 @click.group()
@@ -36,10 +33,11 @@ def helpcli():
     pass
 
 
-@helpcli.command('help')
-@click.argument('topic', metavar='<topic>', required=False)
-@click.option('--devel', is_flag=True,
-              help='Show more details for snapcraft developers')
+@helpcli.command("help")
+@click.argument("topic", metavar="<topic>", required=False)
+@click.option(
+    "--devel", is_flag=True, help="Show more details for snapcraft developers"
+)
 @click.pass_context
 def help_command(ctx, topic, devel):
     """Obtain help for a certain topic, plugin or command.
@@ -61,17 +59,21 @@ def help_command(ctx, topic, devel):
     """
     if not topic:
         click.echo(ctx.parent.get_help())
-        click.echo(dedent("""\
+        click.echo(
+            dedent(
+                """\
 
             For more help, use:
                 snapcraft help topics
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
                 snapcraft help <command-name>
-        """))
+        """
+            )
+        )
     elif topic in ctx.parent.command.commands:
         click.echo(ctx.parent.command.commands[topic].get_help(ctx))
-    elif topic == 'topics':
+    elif topic == "topics":
         for key in _TOPICS:
             click.echo(key)
     elif topic in _TOPICS:
@@ -82,8 +84,10 @@ def help_command(ctx, topic, devel):
         except ImportError:
             # 10 is the limit which determines ellipsis is needed
             if len(topic) > 10:
-                topic = '{}...'.format(topic[:10])
-            echo.wrapped(dedent("""\
+                topic = "{}...".format(topic[:10])
+            echo.wrapped(
+                dedent(
+                    """\
     There is no help topic, plugin or command {!r}. Try:
 
     For topics:
@@ -97,7 +101,9 @@ def help_command(ctx, topic, devel):
     Or for general help:
 
         snapcraft help
-    """).format(topic))
+    """
+                ).format(topic)
+            )
             sys.exit(1)
 
 
@@ -110,10 +116,11 @@ def _topic_help(module_name, devel):
 
 def _module_help(module_name, devel):
     module = importlib.import_module(
-        'snapcraft.plugins.{}'.format(module_name.replace('-', '_')))
+        "snapcraft.plugins.{}".format(module_name.replace("-", "_"))
+    )
     if module.__doc__ and devel:
         help(module)
     elif module.__doc__:
         click.echo(module.__doc__)
     else:
-        click.echo('The plugin has no documentation')
+        click.echo("The plugin has no documentation")

@@ -22,55 +22,54 @@ from tests import integration
 
 
 class BzrSourceTestCase(integration.BzrSourceBaseTestCase):
-
     def test_pull_bzr_head(self):
-        self.copy_project_to_cwd('bzr-head')
+        self.copy_project_to_cwd("bzr-head")
 
         self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         # test initial branch
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")
         revno = subprocess.check_output(
-            ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
-            universal_newlines=True).strip()
-        self.assertThat(revno, Equals('2'))
+            ["bzr", "revno", "-r", "-1", "parts/bzr/src"], universal_newlines=True
+        ).strip()
+        self.assertThat(revno, Equals("2"))
         # test pull doesn't fail
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")
         revno = subprocess.check_output(
-            ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
-            universal_newlines=True).strip()
-        self.assertThat(revno, Equals('2'))
+            ["bzr", "revno", "-r", "-1", "parts/bzr/src"], universal_newlines=True
+        ).strip()
+        self.assertThat(revno, Equals("2"))
 
     def test_pull_bzr_tag(self):
-        self.copy_project_to_cwd('bzr-tag')
+        self.copy_project_to_cwd("bzr-tag")
 
         self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         subprocess.check_call(
-            ['bzr', 'tag', '-r', '1', 'initial'],
-            stderr=subprocess.DEVNULL)
+            ["bzr", "tag", "-r", "1", "initial"], stderr=subprocess.DEVNULL
+        )
         # test initial branch
-        self.run_snapcraft('pull')
-        revno = self.get_revno('parts/bzr/src')
-        self.assertThat(revno, Equals('1'))
+        self.run_snapcraft("pull")
+        revno = self.get_revno("parts/bzr/src")
+        self.assertThat(revno, Equals("1"))
         # test pull doesn't fail
-        self.run_snapcraft('pull')
-        revno = self.get_revno('parts/bzr/src')
-        self.assertThat(revno, Equals('1'))
+        self.run_snapcraft("pull")
+        revno = self.get_revno("parts/bzr/src")
+        self.assertThat(revno, Equals("1"))
 
     def test_pull_bzr_commit(self):
-        self.copy_project_to_cwd('bzr-commit')
+        self.copy_project_to_cwd("bzr-commit")
 
         self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         # test initial branch
-        self.run_snapcraft('pull')
-        revno = self.get_revno('parts/bzr/src')
-        self.assertThat(revno, Equals('1'))
+        self.run_snapcraft("pull")
+        revno = self.get_revno("parts/bzr/src")
+        self.assertThat(revno, Equals("1"))
         # test pull doesn't fail
-        self.run_snapcraft('pull')
-        revno = self.get_revno('parts/bzr/src')
-        self.assertThat(revno, Equals('1'))
+        self.run_snapcraft("pull")
+        revno = self.get_revno("parts/bzr/src")
+        self.assertThat(revno, Equals("1"))

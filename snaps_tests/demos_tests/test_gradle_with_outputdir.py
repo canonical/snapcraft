@@ -19,12 +19,12 @@ from snaps_tests import SnapsTestCase, skip
 
 class GradleTestCase(SnapsTestCase):
 
-    snap_content_dir = 'gradle-with-outputdir'
+    snap_content_dir = "gradle-with-outputdir"
 
-    @skip.skip_unless_codename('xenial', 'LP: #1683761')
+    @skip.skip_unless_codename("xenial", "LP: #1683761")
     def test_gradle_with_output_dir(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'java-hello-gradle-with-outputdir', '1.0')
+        self.install_snap(snap_path, "java-hello-gradle-with-outputdir", "1.0")
         self.assert_command_in_snappy_testbed(
-            '/snap/bin/java-hello-gradle-with-outputdir.hello',
-            'Hello Gradle\n')
+            "/snap/bin/java-hello-gradle-with-outputdir.hello", "Hello Gradle\n"
+        )

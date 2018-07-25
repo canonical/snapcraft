@@ -22,67 +22,63 @@ from tests import integration, fixture_setup
 
 
 class PartsGrammarTestCase(integration.TestCase):
-
     def setUp(self):
         super().setUp()
-        self.test_source = (
-            'https://github.com/snapcrafters/fork-and-rename-me.git')
+        self.test_source = "https://github.com/snapcrafters/fork-and-rename-me.git"
 
     def test_plain_source_string(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-            'source': self.test_source,
-        })
+        snapcraft_yaml.update_part(
+            "my-part", {"plugin": "nil", "source": self.test_source}
+        )
         self.useFixture(snapcraft_yaml)
-        self.run_snapcraft(['pull'])
+        self.run_snapcraft(["pull"])
 
     def test_source_on_current_arch(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-            'source': [
-                {'on {}'.format(self.deb_arch): self.test_source},
-                {'else': 'invalid'},
-            ]
-        })
+        snapcraft_yaml.update_part(
+            "my-part",
+            {
+                "plugin": "nil",
+                "source": [
+                    {"on {}".format(self.deb_arch): self.test_source},
+                    {"else": "invalid"},
+                ],
+            },
+        )
         self.useFixture(snapcraft_yaml)
-        self.run_snapcraft(['pull'])
+        self.run_snapcraft(["pull"])
 
     def test_source_try(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-            'source': [
-                {'try': self.test_source},
-                {'else': 'invalid'},
-            ]
-        })
+        snapcraft_yaml.update_part(
+            "my-part",
+            {
+                "plugin": "nil",
+                "source": [{"try": self.test_source}, {"else": "invalid"}],
+            },
+        )
         self.useFixture(snapcraft_yaml)
-        self.run_snapcraft(['pull'])
+        self.run_snapcraft(["pull"])
 
     def test_source_on_other_arch(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-            'source': [
-                {'on other-arch': 'invalid'},
-            ]
-        })
+        snapcraft_yaml.update_part(
+            "my-part", {"plugin": "nil", "source": [{"on other-arch": "invalid"}]}
+        )
         self.useFixture(snapcraft_yaml)
-        self.run_snapcraft(['pull'])
+        self.run_snapcraft(["pull"])
 
     def test_source_on_other_arch_else_fail(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part('my-part', {
-            'plugin': 'nil',
-            'source': [
-                {'on other-arch': 'invalid'},
-                'else fail',
-            ]
-        })
+        snapcraft_yaml.update_part(
+            "my-part",
+            {"plugin": "nil", "source": [{"on other-arch": "invalid"}, "else fail"]},
+        )
         self.useFixture(snapcraft_yaml)
-        self.assertThat(self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['pull']).output, Contains(
-                "Unable to satisfy 'on other-arch', failure forced"))
+        self.assertThat(
+            self.assertRaises(
+                subprocess.CalledProcessError, self.run_snapcraft, ["pull"]
+            ).output,
+            Contains("Unable to satisfy 'on other-arch', failure forced"),
+        )

@@ -11,11 +11,10 @@ from . import errors
 
 # Set urllib3's logger to only emit errors, not warnings. Otherwise even
 # retries are printed, and they're nasty.
-logging.getLogger(requests.packages.urllib3.__package__).setLevel(
-    logging.ERROR)
+logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 
 
-class Client():
+class Client:
     """A base class to define clients for the ols servers.
     This is a simple wrapper around requests.Session so we inherit all good
     bits while providing a simple point for tests to override when needed.
@@ -32,15 +31,15 @@ class Client():
         self.root_url = root_url
         self.session = requests.Session()
         # Setup max retries for all store URLs and the CDN
-        retries = Retry(total=int(os.environ.get('STORE_RETRIES', 5)),
-                        backoff_factor=int(os.environ.get('STORE_BACKOFF', 2)),
-                        status_forcelist=[104, 500, 502, 503, 504])
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
+        retries = Retry(
+            total=int(os.environ.get("STORE_RETRIES", 5)),
+            backoff_factor=int(os.environ.get("STORE_BACKOFF", 2)),
+            status_forcelist=[104, 500, 502, 503, 504],
+        )
+        self.session.mount("http://", HTTPAdapter(max_retries=retries))
+        self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
-        self._snapcraft_headers = {
-            'User-Agent': _agent.get_user_agent(),
-        }
+        self._snapcraft_headers = {"User-Agent": _agent.get_user_agent()}
 
     def request(self, method, url, params=None, headers=None, **kwargs):
         """Send a request to url relative to the root url.
@@ -63,8 +62,8 @@ class Client():
         final_url = urllib.parse.urljoin(self.root_url, url)
         try:
             response = self.session.request(
-                method, final_url, headers=headers,
-                params=params, **kwargs)
+                method, final_url, headers=headers, params=params, **kwargs
+            )
         except (ConnectionError, RetryError) as e:
             raise errors.StoreNetworkError(e) from e
 
@@ -84,7 +83,7 @@ class Client():
         :param str url: url to send the request.
         :return Response of the request.
         """
-        return self.request('GET', url, **kwargs)
+        return self.request("GET", url, **kwargs)
 
     def post(self, url, **kwargs):
         """Perform a POST request with the given arguments.
@@ -95,7 +94,7 @@ class Client():
         :param str url: url to send the request.
         :return Response of the request.
         """
-        return self.request('POST', url, **kwargs)
+        return self.request("POST", url, **kwargs)
 
     def put(self, url, **kwargs):
         """Perform a PUT request with the given arguments.
@@ -106,4 +105,4 @@ class Client():
         :param str url: url to send the request.
         :return Response of the request.
         """
-        return self.request('PUT', url, **kwargs)
+        return self.request("PUT", url, **kwargs)

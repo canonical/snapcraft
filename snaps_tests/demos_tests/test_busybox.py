@@ -19,22 +19,24 @@ import snaps_tests
 
 class BusyBoxTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'busybox'
+    snap_content_dir = "busybox"
 
     def test_busybox(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'busybox', '1.0')
+        self.install_snap(snap_path, "busybox", "1.0")
         # Run the binary once to create the data dir.
-        self.run_command_in_snappy_testbed([
-            '/snap/bin/busybox.touch', '/tmp/'])
+        self.run_command_in_snappy_testbed(["/snap/bin/busybox.touch", "/tmp/"])
         self.assert_command_in_snappy_testbed(
-            ['/snap/bin/busybox.touch',
-             '~/snap/busybox/$(ls ~/snap/busybox | grep x | tail -n 1)/'
-             'busybox.test'],
-            '')
+            [
+                "/snap/bin/busybox.touch",
+                "~/snap/busybox/$(ls ~/snap/busybox | grep x | tail -n 1)/"
+                "busybox.test",
+            ],
+            "",
+        )
         self.addCleanup(
-            self.run_command_in_snappy_testbed,
-            ['rm', '~/snap/busybox/x*/busybox.test'])
+            self.run_command_in_snappy_testbed, ["rm", "~/snap/busybox/x*/busybox.test"]
+        )
         self.assert_command_in_snappy_testbed(
-            ['/snap/bin/busybox.ls', '~/snap/busybox/x*/'],
-            'busybox.test\n')
+            ["/snap/bin/busybox.ls", "~/snap/busybox/x*/"], "busybox.test\n"
+        )

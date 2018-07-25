@@ -22,15 +22,14 @@ from tests import integration
 
 
 class DownloadTestCase(integration.StoreTestCase):
-
     def setUp(self):
-        if os.getenv('TEST_STORE') == 'staging':
+        if os.getenv("TEST_STORE") == "staging":
             # TODO add the snap to the staging server.
-            self.skipTest('There is no core snap in the staging server')
+            self.skipTest("There is no core snap in the staging server")
         super().setUp()
 
     def test_download_os_snap(self):
-        self.run_snapcraft('pull', 'kernel-download')
+        self.run_snapcraft("pull", "kernel-download")
         self.assertThat(
-            os.path.join(self.parts_dir, 'kernel', 'src', 'os.snap'),
-            FileExists())
+            os.path.join(self.parts_dir, "kernel", "src", "os.snap"), FileExists()
+        )

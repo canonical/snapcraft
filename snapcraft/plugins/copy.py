@@ -45,22 +45,18 @@ logger = logging.getLogger(__name__)
 
 
 class CopyPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['files'] = {
-            'type': 'object',
-            'additionalProperties': {
-                'type': 'string',
-                'minLength': 1
-            }
+        schema["properties"]["files"] = {
+            "type": "object",
+            "additionalProperties": {"type": "string", "minLength": 1},
         }
 
         # The `files` keyword is required here, but the `source` keyword is
         # not. It should default to the current working directory.
-        schema['required'].append('files')
+        schema["required"].append("files")
 
         return schema
 
@@ -68,14 +64,16 @@ class CopyPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return super().get_build_properties() + ['files']
+        return super().get_build_properties() + ["files"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        logger.warning("DEPRECATED: The 'copy' plugin's functionality "
-                       "has been replaced by the 'dump' plugin, and it will "
-                       "soon be removed.")
+        logger.warning(
+            "DEPRECATED: The 'copy' plugin's functionality "
+            "has been replaced by the 'dump' plugin, and it will "
+            "soon be removed."
+        )
 
     def enable_cross_compilation(self):
         pass
@@ -85,20 +83,23 @@ class CopyPlugin(snapcraft.BasePlugin):
 
         files = self.options.files
         globs = {f: files[f] for f in files if glob.has_magic(f)}
-        filepaths = {os.path.join(self.builddir, f): files[f] for f in files
-                     if not glob.has_magic(f)}
+        filepaths = {
+            os.path.join(self.builddir, f): files[f]
+            for f in files
+            if not glob.has_magic(f)
+        }
 
         for src in globs:
             paths = glob.glob(os.path.join(self.builddir, src))
             if not paths:
                 raise errors.SnapcraftEnvironmentError(
-                    'no matches for {!r}'.format(src))
+                    "no matches for {!r}".format(src)
+                )
             for path in paths:
-                filepaths.update(
-                    {os.path.join(self.builddir, path): globs[src]})
+                filepaths.update({os.path.join(self.builddir, path): globs[src]})
 
         for src in sorted(filepaths):
-            dst = os.path.join(self.installdir, filepaths[src].lstrip('/'))
+            dst = os.path.join(self.installdir, filepaths[src].lstrip("/"))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             _recursively_link(src, dst, self.installdir)
 
@@ -117,11 +118,10 @@ def _link_or_copy(source, destination, boundary):
         normalized = os.path.normpath(os.path.join(destination_dirname, link))
         if os.path.isabs(link) or not normalized.startswith(boundary):
             # Only follow symlinks that are NOT pointing at libc (LP: #1658774)
-            if link not in snapcraft.repo.Repo.get_package_libraries('libc6'):
+            if link not in snapcraft.repo.Repo.get_package_libraries("libc6"):
                 follow_symlinks = True
 
-    snapcraft.common.link_or_copy(source, destination,
-                                  follow_symlinks=follow_symlinks)
+    snapcraft.common.link_or_copy(source, destination, follow_symlinks=follow_symlinks)
 
 
 def _recursively_link(source, destination, boundary):
@@ -130,10 +130,13 @@ def _recursively_link(source, destination, boundary):
             destination = os.path.join(destination, os.path.basename(source))
         elif os.path.exists(destination):
             raise NotADirectoryError(
-                'Cannot overwrite non-directory {!r} with directory '
-                '{!r}'.format(destination, source))
+                "Cannot overwrite non-directory {!r} with directory "
+                "{!r}".format(destination, source)
+            )
         snapcraft.file_utils.link_or_copy_tree(
-            source, destination,
-            copy_function=lambda src, dst: _link_or_copy(src, dst, boundary))
+            source,
+            destination,
+            copy_function=lambda src, dst: _link_or_copy(src, dst, boundary),
+        )
     else:
         _link_or_copy(source, destination, boundary)

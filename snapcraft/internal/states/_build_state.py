@@ -25,30 +25,37 @@ def _build_state_constructor(loader, node):
     return BuildState(**parameters)
 
 
-yaml.add_constructor(u'!BuildState', _build_state_constructor)
+yaml.add_constructor(u"!BuildState", _build_state_constructor)
 
 
 def _schema_properties():
     return {
-        'after',
-        'build',
-        'build-attributes',
-        'build-packages',
-        'disable-parallel',
-        'install',
-        'organize',
-        'override-build',
-        'prepare',
+        "after",
+        "build",
+        "build-attributes",
+        "build-packages",
+        "disable-parallel",
+        "install",
+        "organize",
+        "override-build",
+        "prepare",
     }
 
 
 class BuildState(PartState):
-    yaml_tag = u'!BuildState'
+    yaml_tag = u"!BuildState"
 
     def __init__(
-            self, property_names, part_properties=None, project=None,
-            plugin_assets=None, machine_assets=None, metadata=None,
-            metadata_files=None, scriptlet_metadata=None):
+        self,
+        property_names,
+        part_properties=None,
+        project=None,
+        plugin_assets=None,
+        machine_assets=None,
+        metadata=None,
+        metadata_files=None,
+        scriptlet_metadata=None,
+    ):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -69,10 +76,7 @@ class BuildState(PartState):
         if not metadata_files:
             metadata_files = []
 
-        self.extracted_metadata = {
-            'metadata': metadata,
-            'files': metadata_files
-        }
+        self.extracted_metadata = {"metadata": metadata, "files": metadata_files}
 
         self.scriptlet_metadata = scriptlet_metadata
 
@@ -96,4 +100,4 @@ class BuildState(PartState):
         The build step only cares about the target architecture.
         """
 
-        return {'deb_arch': getattr(project, 'deb_arch', None)}
+        return {"deb_arch": getattr(project, "deb_arch", None)}

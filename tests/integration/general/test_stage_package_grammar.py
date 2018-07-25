@@ -19,99 +19,90 @@ import subprocess
 from textwrap import dedent
 
 from tests import integration
-from testtools.matchers import (
-    Contains,
-    FileExists,
-    Not
-)
+from testtools.matchers import Contains, FileExists, Not
 
 
 class StagePackageGrammarTestCase(integration.TestCase):
-
     def test_simple(self):
         """Test that 'simple' fetches stage package."""
 
-        self.run_snapcraft(['prime', 'simple'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "simple"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_try(self):
         """Test that 'try' fetches stage package."""
 
-        self.run_snapcraft(['prime', 'try'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "try"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_try_skipped(self):
         """Test that 'try-skipped' fetches nothing."""
 
-        self.run_snapcraft(['prime', 'try-skipped'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "try-skipped"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            Not(FileExists()))
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), Not(FileExists()))
 
     def test_try_else(self):
         """Test that 'try-else' fetches stage package."""
 
-        self.run_snapcraft(['prime', 'try-else'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "try-else"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_on_other_arch(self):
         """Test that 'on-other-arch' fetches nothing."""
 
-        self.run_snapcraft(['prime', 'on-other-arch'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "on-other-arch"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            Not(FileExists()))
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), Not(FileExists()))
 
     def test_on_other_arch_else(self):
         """Test that 'on-other-arch-else' fetches stage package."""
 
-        self.run_snapcraft(
-            ['prime', 'on-other-arch-else'], 'stage-package-grammar')
+        self.run_snapcraft(["prime", "on-other-arch-else"], "stage-package-grammar")
 
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_on_other_arch_else_fail(self):
         """Test that 'on-other-arch-else-fail' fails with an error."""
 
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['prime', 'on-other-arch-else-fail'], 'stage-package-grammar')
+            subprocess.CalledProcessError,
+            self.run_snapcraft,
+            ["prime", "on-other-arch-else-fail"],
+            "stage-package-grammar",
+        )
 
-        self.assertThat(exception.output, Contains(
-            "Unable to satisfy 'on other-arch', failure forced"))
+        self.assertThat(
+            exception.output,
+            Contains("Unable to satisfy 'on other-arch', failure forced"),
+        )
 
     def test_to_other_arch(self):
         """Test that 'to' for the other arch fetches nothing."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
               - to other-arch:
                 - hello
-            '''))
-        self.run_snapcraft(['prime', 'simple'])
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            Not(FileExists()))
+            """
+            )
+        )
+        self.run_snapcraft(["prime", "simple"])
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), Not(FileExists()))
 
     def test_to_other_arch_else(self):
         """Test that 'else' for the other arch fetches hello."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
@@ -119,49 +110,59 @@ class StagePackageGrammarTestCase(integration.TestCase):
                 - foo
               - else:
                 - hello
-            '''))
-        self.run_snapcraft(['prime', 'simple'])
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+            """
+            )
+        )
+        self.run_snapcraft(["prime", "simple"])
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_to_other_arch_else_fail(self):
         """Test that 'else' for the other arch fails."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
               - to other-arch:
                 - foo
               - else fail
-            '''))
+            """
+            )
+        )
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['prime', 'simple'])
+            subprocess.CalledProcessError, self.run_snapcraft, ["prime", "simple"]
+        )
 
-        self.assertThat(exception.output, Contains(
-            "Unable to satisfy 'to other-arch', failure forced"))
+        self.assertThat(
+            exception.output,
+            Contains("Unable to satisfy 'to other-arch', failure forced"),
+        )
 
     def test_on_to_other_arch(self):
         """Test that 'on to' for the other arch fetches nothing."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
               - on i386 to other-arch:
                 - hello
-            '''))
-        self.run_snapcraft(['prime', 'simple'])
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            Not(FileExists()))
+            """
+            )
+        )
+        self.run_snapcraft(["prime", "simple"])
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), Not(FileExists()))
 
     def test_on_to_other_arch_else(self):
         """Test that 'else' for the other arch fetches hello."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
@@ -169,26 +170,32 @@ class StagePackageGrammarTestCase(integration.TestCase):
                 - foo
               - else:
                 - hello
-            '''))
-        self.run_snapcraft(['prime', 'simple'])
-        self.assertThat(
-            os.path.join('prime', 'usr', 'bin', 'hello'),
-            FileExists())
+            """
+            )
+        )
+        self.run_snapcraft(["prime", "simple"])
+        self.assertThat(os.path.join("prime", "usr", "bin", "hello"), FileExists())
 
     def test_on_to_other_arch_else_fail(self):
         """Test that 'else' for the other arch fails."""
 
-        self.construct_yaml(parts=dedent('''\
+        self.construct_yaml(
+            parts=dedent(
+                """\
             simple:
               plugin: nil
               stage-packages:
               - on i386 to other-arch:
                 - foo
               - else fail
-            '''))
+            """
+            )
+        )
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['prime', 'simple'])
+            subprocess.CalledProcessError, self.run_snapcraft, ["prime", "simple"]
+        )
 
-        self.assertThat(exception.output, Contains(
-            "Unable to satisfy 'on i386 to other-arch', failure forced"))
+        self.assertThat(
+            exception.output,
+            Contains("Unable to satisfy 'on i386 to other-arch', failure forced"),
+        )

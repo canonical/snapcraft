@@ -20,18 +20,19 @@ import snaps_tests
 
 class HookCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'hooks'
+    snap_content_dir = "hooks"
 
     def test_hooks(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'hooks', '1.0')
+        self.install_snap(snap_path, "hooks", "1.0")
 
         # Regular `snap set` should succeed.
-        self.run_command_in_snappy_testbed('sudo snap set hooks foo=bar')
+        self.run_command_in_snappy_testbed("sudo snap set hooks foo=bar")
 
-        if not snaps_tests.config.get('skip-install', False):
+        if not snaps_tests.config.get("skip-install", False):
             # Setting fail=true should fail.
             self.assertRaises(
                 subprocess.CalledProcessError,
                 self.run_command_in_snappy_testbed,
-                'sudo snap set hooks fail=true')
+                "sudo snap set hooks fail=true",
+            )

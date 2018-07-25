@@ -23,7 +23,6 @@ from tests import unit
 
 
 class RepoBaseTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

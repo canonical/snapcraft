@@ -81,48 +81,48 @@ import sys
 
 from . import errors
 
-if sys.platform == 'linux':
-    from ._bazaar import Bazaar          # noqa
-    from ._git import Git                # noqa
-    from ._local import Local            # noqa
-    from ._mercurial import Mercurial    # noqa
-    from ._script import Script          # noqa
+if sys.platform == "linux":
+    from ._bazaar import Bazaar  # noqa
+    from ._git import Git  # noqa
+    from ._local import Local  # noqa
+    from ._mercurial import Mercurial  # noqa
+    from ._script import Script  # noqa
     from ._subversion import Subversion  # noqa
-    from ._tar import Tar                # noqa
-    from ._zip import Zip                # noqa
-    from ._7z import SevenZip            # noqa
-    from ._deb import Deb                # noqa
-    from ._rpm import Rpm                # noqa
+    from ._tar import Tar  # noqa
+    from ._zip import Zip  # noqa
+    from ._7z import SevenZip  # noqa
+    from ._deb import Deb  # noqa
+    from ._rpm import Rpm  # noqa
 
     _source_handler = {
-        'bzr': Bazaar,
-        'git': Git,
-        'hg': Mercurial,
-        'mercurial': Mercurial,
-        'subversion': Subversion,
-        'svn': Subversion,
-        'tar': Tar,
-        'zip': Zip,
-        '7z': SevenZip,
-        'local': Local,
-        'deb': Deb,
-        'rpm': Rpm,
-        '': Local,
+        "bzr": Bazaar,
+        "git": Git,
+        "hg": Mercurial,
+        "mercurial": Mercurial,
+        "subversion": Subversion,
+        "svn": Subversion,
+        "tar": Tar,
+        "zip": Zip,
+        "7z": SevenZip,
+        "local": Local,
+        "deb": Deb,
+        "rpm": Rpm,
+        "": Local,
     }
 
 
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 
 __SOURCE_DEFAULTS = {
-    'source': '.',
-    'source-commit': None,
-    'source-checksum': None,
-    'source-depth': None,
-    'source-tag': None,
-    'source-type': None,
-    'source-branch': None,
-    'source-subdir': None,
+    "source": ".",
+    "source-commit": None,
+    "source-checksum": None,
+    "source-depth": None,
+    "source-tag": None,
+    "source-type": None,
+    "source-branch": None,
+    "source-subdir": None,
 }
 
 
@@ -137,13 +137,13 @@ def get(sourcedir, builddir, options):
     :param str builddir: The build directory to use.
     :param options: source options.
     """
-    source_type = getattr(options, 'source_type', None)
+    source_type = getattr(options, "source_type", None)
     source_attributes = dict(
-        source_depth=getattr(options, 'source_depth', None),
-        source_checksum=getattr(options, 'source_checksum', None),
-        source_tag=getattr(options, 'source_tag', None),
-        source_commit=getattr(options, 'source_commit', None),
-        source_branch=getattr(options, 'source_branch', None),
+        source_depth=getattr(options, "source_depth", None),
+        source_checksum=getattr(options, "source_checksum", None),
+        source_tag=getattr(options, "source_tag", None),
+        source_commit=getattr(options, "source_commit", None),
+        source_branch=getattr(options, "source_branch", None),
     )
 
     handler_class = get_source_handler(options.source, source_type=source_type)
@@ -156,32 +156,35 @@ def get_source_handler_from_type(source_type):
     return _source_handler.get(source_type)
 
 
-def get_source_handler(source, *, source_type=''):
+def get_source_handler(source, *, source_type=""):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 
     return _source_handler[source_type]
 
 
-_tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
+_tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
 def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
-    for extension in ['zip', 'deb', 'rpm', '7z']:
-        if source.endswith('.{}'.format(extension)):
+    for extension in ["zip", "deb", "rpm", "7z"]:
+        if source.endswith(".{}".format(extension)):
             return extension
-    source_type = ''
-    if source.startswith('bzr:') or source.startswith('lp:'):
-        source_type = 'bzr'
-    elif source.startswith('git:') or source.startswith('git@') or \
-            source.endswith('.git'):
-        source_type = 'git'
-    elif source.startswith('svn:'):
-        source_type = 'subversion'
+    source_type = ""
+    if source.startswith("bzr:") or source.startswith("lp:"):
+        source_type = "bzr"
+    elif (
+        source.startswith("git:")
+        or source.startswith("git@")
+        or source.endswith(".git")
+    ):
+        source_type = "git"
+    elif source.startswith("svn:"):
+        source_type = "subversion"
     elif _tar_type_regex.match(source):
-        source_type = 'tar'
+        source_type = "tar"
     elif os.path.isdir(source):
-        source_type = 'local'
+        source_type = "local"
     elif not ignore_errors:
         raise errors.SnapcraftSourceUnhandledError(source)
 

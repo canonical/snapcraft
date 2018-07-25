@@ -19,11 +19,11 @@ import snaps_tests
 
 class BaseExampleTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'base-example'
+    snap_content_dir = "base-example"
 
     def test_base_example(self):
         # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
         # Install snap will raise an exception in case of error.
-        self.install_snap(snap_path, 'base-example', '1.0')
+        self.install_snap(snap_path, "base-example", "1.0")
         # more testing is done in test_base-consumer

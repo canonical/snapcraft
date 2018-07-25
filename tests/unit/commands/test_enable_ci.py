@@ -22,41 +22,42 @@ from . import CommandBaseTestCase
 
 
 class EnableCITestCase(CommandBaseTestCase):
-
     def test_enable_ci_empty(self):
-        result = self.run_command(['enable-ci'])
+        result = self.run_command(["enable-ci"])
 
         self.assertThat(result.exit_code, Equals(2))
-        self.assertThat(result.output, Contains(
-            'Missing argument "ci-system".  Choose from travis.'))
+        self.assertThat(
+            result.output,
+            Contains('Missing argument "ci-system".  Choose from travis.'),
+        )
 
     def test_enable_ci_unknown(self):
-        result = self.run_command(['enable-ci', 'bazinga'])
+        result = self.run_command(["enable-ci", "bazinga"])
 
         self.assertThat(result.exit_code, Equals(2))
-        self.assertThat(result.output, Contains(
-            'invalid choice: bazinga. (choose from travis)'))
+        self.assertThat(
+            result.output, Contains("invalid choice: bazinga. (choose from travis)")
+        )
 
-    @mock.patch.object(travis, '__doc__')
-    @mock.patch.object(travis, 'enable')
+    @mock.patch.object(travis, "__doc__")
+    @mock.patch.object(travis, "enable")
     def test_enable_ci_travis(self, mock_enable, mock_doc):
-        self.make_snapcraft_yaml('name: foo')
+        self.make_snapcraft_yaml("name: foo")
 
-        mock_doc.__str__.return_value = '<module docstring>'
+        mock_doc.__str__.return_value = "<module docstring>"
 
-        result = self.run_command(['enable-ci', 'travis'], input='y\n')
+        result = self.run_command(["enable-ci", "travis"], input="y\n")
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            '<module docstring>'))
+        self.assertThat(result.output, Contains("<module docstring>"))
         self.assertThat(mock_enable.call_count, Equals(1))
 
-    @mock.patch.object(travis, 'refresh')
+    @mock.patch.object(travis, "refresh")
     def test_enable_ci_travis_refresh(self, mock_refresh):
-        self.make_snapcraft_yaml('name: foo')
+        self.make_snapcraft_yaml("name: foo")
 
-        result = self.run_command(['enable-ci', 'travis', '--refresh'])
+        result = self.run_command(["enable-ci", "travis", "--refresh"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Equals(''))
+        self.assertThat(result.output, Equals(""))
         self.assertThat(mock_refresh.call_count, Equals(1))

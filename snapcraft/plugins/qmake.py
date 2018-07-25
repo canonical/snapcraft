@@ -42,35 +42,30 @@ from snapcraft import common
 
 
 class QmakePlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['options'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["options"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
-        schema['properties']['qt-version'] = {
-            'type': 'string',
-            'enum': ['qt4', 'qt5'],
-            'default': 'qt5'
+        schema["properties"]["qt-version"] = {
+            "type": "string",
+            "enum": ["qt4", "qt5"],
+            "default": "qt5",
         }
-        schema['properties']['project-files'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["project-files"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
-        schema.pop('required')
+        schema.pop("required")
 
         return schema
 
@@ -78,25 +73,26 @@ class QmakePlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ['qt-version']
+        return ["qt-version"]
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['options', 'project-files']
+        return ["options", "project-files"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self.build_packages.append('make')
-        if self.options.qt_version == 'qt5':
-            self.build_packages.extend(['qt5-qmake', 'qtbase5-dev'])
-        elif self.options.qt_version == 'qt4':
-            self.build_packages.extend(['qt4-qmake', 'libqt4-dev'])
+        self.build_packages.append("make")
+        if self.options.qt_version == "qt5":
+            self.build_packages.extend(["qt5-qmake", "qtbase5-dev"])
+        elif self.options.qt_version == "qt4":
+            self.build_packages.extend(["qt4-qmake", "libqt4-dev"])
         else:
-            raise RuntimeError('Unsupported Qt version: {!r}'.format(
-                self.options.qt_version))
+            raise RuntimeError(
+                "Unsupported Qt version: {!r}".format(self.options.qt_version)
+            )
 
     def build(self):
         super().build()
@@ -106,20 +102,21 @@ class QmakePlugin(snapcraft.BasePlugin):
         sources = []
         if self.options.project_files:
             sourcedir = self.sourcedir
-            source_subdir = getattr(self.options, 'source_subdir', None)
+            source_subdir = getattr(self.options, "source_subdir", None)
             if source_subdir:
                 sourcedir = os.path.join(sourcedir, source_subdir)
-            sources = [os.path.join(sourcedir, project_file)
-                       for project_file in self.options.project_files]
+            sources = [
+                os.path.join(sourcedir, project_file)
+                for project_file in self.options.project_files
+            ]
 
-        self.run(['qmake'] + self._extra_config() + self.options.options +
-                 sources, env=env)
+        self.run(
+            ["qmake"] + self._extra_config() + self.options.options + sources, env=env
+        )
 
-        self.run(['make', '-j{}'.format(
-            self.parallel_build_count)], env=env)
+        self.run(["make", "-j{}".format(self.parallel_build_count)], env=env)
 
-        self.run(['make', 'install', 'INSTALL_ROOT=' + self.installdir],
-                 env=env)
+        self.run(["make", "install", "INSTALL_ROOT=" + self.installdir], env=env)
 
     def _extra_config(self):
         extra_config = []
@@ -127,16 +124,16 @@ class QmakePlugin(snapcraft.BasePlugin):
         for root in [self.installdir, self.project.stage_dir]:
             paths = common.get_library_paths(root, self.project.arch_triplet)
             for path in paths:
-                extra_config.append("LIBS+=\"-L{}\"".format(path))
+                extra_config.append('LIBS+="-L{}"'.format(path))
 
             paths = common.get_include_paths(root, self.project.arch_triplet)
             for path in paths:
-                extra_config.append("INCLUDEPATH+=\"{}\"".format(path))
+                extra_config.append('INCLUDEPATH+="{}"'.format(path))
 
         return extra_config
 
     def _build_environment(self):
         env = os.environ.copy()
-        env['QT_SELECT'] = self.options.qt_version
+        env["QT_SELECT"] = self.options.qt_version
 
         return env

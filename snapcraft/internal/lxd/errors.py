@@ -129,27 +129,24 @@ class ContainerNetworkError(ContainerError):
 
 class ContainerRunError(ContainerError):
 
-    fmt = (
-        'The following command failed to run: '
-        '{command!r} exited with {exit_code}'
-    )
+    fmt = "The following command failed to run: {command!r} exited with {exit_code}"
 
     def __init__(self, *, command, exit_code):
         if isinstance(command, list):
-            command = ' '.join(command)
+            command = " ".join(command)
         super().__init__(command=command, exit_code=exit_code)
 
 
 class ContainerSnapcraftCmdError(ContainerRunError):
 
     fmt = (
-        'Snapcraft command failed in the container: '
-        '{command!r} exited with {exit_code}'
+        "Snapcraft command failed in the container: "
+        "{command!r} exited with {exit_code}"
     )
 
     def __init__(self, *, command, exit_code):
         if isinstance(command, list):
-            command = ' '.join(command)
+            command = " ".join(command)
         super().__init__(command=command, exit_code=exit_code)
 
 

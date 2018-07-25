@@ -34,9 +34,7 @@ from snapcraft.internal.deltas.errors import (
 logger = logging.getLogger(__name__)
 
 
-delta_format_options = [
-    'xdelta3'
-]
+delta_format_options = ["xdelta3"]
 
 
 class BaseDeltasGenerator:
@@ -47,9 +45,15 @@ class BaseDeltasGenerator:
 
     delta_size_min_pct = 90
 
-    def __init__(self, *, source_path, target_path,
-                 delta_file_extname='delta', delta_format=None,
-                 delta_tool_path=None):
+    def __init__(
+        self,
+        *,
+        source_path,
+        target_path,
+        delta_file_extname="delta",
+        delta_format=None,
+        delta_tool_path=None
+    ):
 
         self.source_path = source_path
         self.target_path = target_path
@@ -69,19 +73,21 @@ class BaseDeltasGenerator:
             raise DeltaToolError()
         if self.delta_format not in delta_format_options:
             raise DeltaFormatOptionError(
-                delta_format=self.delta_format,
-                format_options_list=delta_format_options)
+                delta_format=self.delta_format, format_options_list=delta_format_options
+            )
 
     def _check_file_existence(self):
         if not os.path.exists(self.source_path):
             raise ValueError(
-                'source file {!r} does not exist, '
-                'please specify a valid source file'.format(self.source_path))
+                "source file {!r} does not exist, "
+                "please specify a valid source file".format(self.source_path)
+            )
 
         if not os.path.exists(self.target_path):
             raise ValueError(
-                'target file {!r} does not exist, '
-                'please specify a valid target file'.format(self.target_path))
+                "target file {!r} does not exist, "
+                "please specify a valid target file".format(self.target_path)
+            )
 
     def _check_delta_gen_tool(self):
         """Check if the delta generation tool exists"""
@@ -107,7 +113,8 @@ class BaseDeltasGenerator:
         ratio = int((delta_size / target_size) * 100)
         if ratio >= self.delta_size_min_pct:
             raise DeltaGenerationTooBigError(
-                    delta_min_percentage=100-self.delta_size_min_pct)
+                delta_min_percentage=100 - self.delta_size_min_pct
+            )
 
     def find_unique_file_name(self, path_hint):
         """Return a path on disk similar to 'path_hint' that does not exist.
@@ -125,16 +132,18 @@ class BaseDeltasGenerator:
 
     def _setup_std_output(self, delta_file):
         """Helper to setup the stdout and stderr for subprocess"""
-        workdir = '/tmp/'
+        workdir = "/tmp/"
         _, delta_name = os.path.split(delta_file)
 
         stdout_path = self.find_unique_file_name(
-            os.path.join(workdir, '{}.out'.format(delta_name)))
-        stdout_file = open(stdout_path, 'wb')
+            os.path.join(workdir, "{}.out".format(delta_name))
+        )
+        stdout_file = open(stdout_path, "wb")
 
         stderr_path = self.find_unique_file_name(
-            os.path.join(workdir, '{}.err'.format(delta_name)))
-        stderr_file = open(stderr_path, 'wb')
+            os.path.join(workdir, "{}.err".format(delta_name))
+        )
+        stderr_file = open(stderr_path, "wb")
 
         return workdir, stdout_path, stdout_file, stderr_path, stderr_file
 
@@ -152,18 +161,19 @@ class BaseDeltasGenerator:
             count += 1
             time.sleep(.2)
             ret = proc.poll()
-        print('')
+        print("")
         # the caller should finish the progressbar outside
 
-    def make_delta(self, output_dir=None, progress_indicator=None,
-                   is_for_test=False):
+    def make_delta(self, output_dir=None, progress_indicator=None, is_for_test=False):
         """Call the delta generation tool to create the delta file.
 
         returns: generated delta file path
         """
-        logger.info('Generating {} delta for {}.'.format(
-            self.delta_format,
-            os.path.basename(self.target_path)))
+        logger.info(
+            "Generating {} delta for {}.".format(
+                self.delta_format, os.path.basename(self.target_path)
+            )
+        )
 
         if output_dir is not None:
             # consider creating the delta file in the specified output_dir
@@ -174,25 +184,23 @@ class BaseDeltasGenerator:
             _, _file_name = os.path.split(self.target_path)
             full_filename = os.path.join(output_dir, _file_name)
             delta_file = self.find_unique_file_name(
-                '{}.{}'.format(full_filename, self.delta_file_extname))
+                "{}.{}".format(full_filename, self.delta_file_extname)
+            )
         else:
             # create the delta file under the target_path with
             # the generated filename.
             delta_file = self.find_unique_file_name(
-                '{}.{}'.format(self.target_path, self.delta_file_extname))
+                "{}.{}".format(self.target_path, self.delta_file_extname)
+            )
 
-        delta_cmd = self.get_delta_cmd(self.source_path,
-                                       self.target_path,
-                                       delta_file)
+        delta_cmd = self.get_delta_cmd(self.source_path, self.target_path, delta_file)
 
-        workdir, stdout_path, stdout_file, \
-            stderr_path, stderr_file = self._setup_std_output(delta_file)
+        workdir, stdout_path, stdout_file, stderr_path, stderr_file = self._setup_std_output(
+            delta_file
+        )
 
         proc = subprocess.Popen(
-            delta_cmd,
-            stdout=stdout_file,
-            stderr=stderr_file,
-            cwd=workdir
+            delta_cmd, stdout=stdout_file, stderr=stderr_file, cwd=workdir
         )
 
         if progress_indicator:
@@ -204,7 +212,7 @@ class BaseDeltasGenerator:
         stderr_file.close()
 
         if proc.returncode != 0:
-            _stdout = _stderr = ''
+            _stdout = _stderr = ""
             with open(stdout_path) as f:
                 _stdout = f.read()
             with open(stderr_path) as f:
@@ -217,9 +225,11 @@ class BaseDeltasGenerator:
 
             raise DeltaGenerationError(
                 delta_format=self.delta_format,
-                stdout_path=stdout_path, stdout=_stdout,
-                stderr_path=stderr_path, stderr=_stderr,
-                returncode=proc.returncode
+                stdout_path=stdout_path,
+                stdout=_stdout,
+                stderr_path=stderr_path,
+                stderr=_stderr,
+                returncode=proc.returncode,
             )
 
         self._check_delta_size_constraint(delta_file)

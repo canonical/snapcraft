@@ -18,12 +18,8 @@ import logging
 import functools
 import os
 
-from progressbar import (
-    Bar,
-    Percentage,
-    ProgressBar,
-)
-from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
+from progressbar import Bar, Percentage, ProgressBar
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from snapcraft.storeapi.errors import StoreUploadError
 
@@ -44,23 +40,27 @@ def upload_files(binary_filename, updown_client):
     """
     try:
         binary_file_size = os.path.getsize(binary_filename)
-        binary_file = open(binary_filename, 'rb')
+        binary_file = open(binary_filename, "rb")
         encoder = MultipartEncoder(
-            fields={
-                'binary': ('filename', binary_file, 'application/octet-stream')
-            }
+            fields={"binary": ("filename", binary_file, "application/octet-stream")}
         )
 
         # Create a progress bar that looks like: Uploading foo [==  ] 50%
         progress_bar = ProgressBar(
-            widgets=['Pushing {} '.format(os.path.basename(binary_filename)),
-                     Bar(marker='=', left='[', right=']'), ' ', Percentage()],
-            maxval=os.path.getsize(binary_filename))
+            widgets=[
+                "Pushing {} ".format(os.path.basename(binary_filename)),
+                Bar(marker="=", left="[", right="]"),
+                " ",
+                Percentage(),
+            ],
+            maxval=os.path.getsize(binary_filename),
+        )
         progress_bar.start()
         # Create a monitor for this upload, so that progress can be displayed
         monitor = MultipartEncoderMonitor(
-            encoder, functools.partial(_update_progress_bar, progress_bar,
-                                       binary_file_size))
+            encoder,
+            functools.partial(_update_progress_bar, progress_bar, binary_file_size),
+        )
 
         # Begin upload
         response = updown_client.upload(monitor)
@@ -76,7 +76,7 @@ def upload_files(binary_filename, updown_client):
 
     response_data = response.json()
     return {
-        'upload_id': response_data['upload_id'],
-        'binary_filesize': binary_file_size,
-        'source_uploaded': False,
+        "upload_id": response_data["upload_id"],
+        "binary_filesize": binary_file_size,
+        "source_uploaded": False,
     }

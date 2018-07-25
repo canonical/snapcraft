@@ -19,40 +19,37 @@ from snapcraft.project import Project, get_snapcraft_yaml
 
 
 class HiddenOption(click.Option):
-
     def get_help_record(self, ctx):
         pass
 
 
-_BUILD_OPTION_NAMES = [
-    '--enable-geoip',
-    '--no-parallel-builds',
-    '--target-arch',
-]
+_BUILD_OPTION_NAMES = ["--enable-geoip", "--no-parallel-builds", "--target-arch"]
 
 _BUILD_OPTIONS = [
-    dict(is_flag=True,
-         help=('Detect best candidate location for stage-packages using '
-               'geoip')),
-    dict(is_flag=True,
-         help='Force a sequential build.'),
-    dict(metavar='<arch>',
-         help='Target architecture to cross compile to'),
+    dict(
+        is_flag=True,
+        help=("Detect best candidate location for stage-packages using geoip"),
+    ),
+    dict(is_flag=True, help="Force a sequential build."),
+    dict(metavar="<arch>", help="Target architecture to cross compile to"),
 ]
 
 
 def add_build_options(hidden=False):
     def _add_build_options(func):
-        for name, params in zip(reversed(_BUILD_OPTION_NAMES),
-                                reversed(_BUILD_OPTIONS)):
-            option = click.option(name, **params,
-                                  cls=HiddenOption if hidden else click.Option)
+        for name, params in zip(
+            reversed(_BUILD_OPTION_NAMES), reversed(_BUILD_OPTIONS)
+        ):
+            option = click.option(
+                name, **params, cls=HiddenOption if hidden else click.Option
+            )
             func = option(func)
         return func
+
     return _add_build_options
 
 
-def get_project(*, skip_snapcraft_yaml: bool=False, **kwargs):
+def get_project(*, skip_snapcraft_yaml: bool = False, **kwargs):
     if skip_snapcraft_yaml:
         snapcraft_yaml_file_path = None
     else:
@@ -64,9 +61,10 @@ def get_project(*, skip_snapcraft_yaml: bool=False, **kwargs):
             kwargs[key] = value
 
     project = Project(
-        debug=kwargs.pop('debug'),
-        use_geoip=kwargs.pop('enable_geoip'),
-        parallel_builds=not kwargs.pop('no_parallel_builds'),
-        target_deb_arch=kwargs.pop('target_arch'),
-        snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        debug=kwargs.pop("debug"),
+        use_geoip=kwargs.pop("enable_geoip"),
+        parallel_builds=not kwargs.pop("no_parallel_builds"),
+        target_deb_arch=kwargs.pop("target_arch"),
+        snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+    )
     return project

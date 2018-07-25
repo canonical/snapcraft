@@ -26,16 +26,14 @@ import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
 
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
 from . import CommandBaseTestCase
 
 
 class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
 
-    yaml_template = dedent("""\
+    yaml_template = dedent(
+        """\
         name: snap-test
         version: 1.0
         summary: test snapping
@@ -48,38 +46,40 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         parts:
             part1:
                 plugin: nil
-        """)
+        """
+    )
 
     def _parts_dir(self):
-        parts_uri = os.environ.get('SNAPCRAFT_PARTS_URI')
+        parts_uri = os.environ.get("SNAPCRAFT_PARTS_URI")
         return os.path.join(
-            BaseDirectory.xdg_data_home, 'snapcraft',
-            hashlib.sha384(parts_uri.encode(
-                sys.getfilesystemencoding())).hexdigest())
+            BaseDirectory.xdg_data_home,
+            "snapcraft",
+            hashlib.sha384(parts_uri.encode(sys.getfilesystemencoding())).hexdigest(),
+        )
 
     def setUp(self):
         super().setUp()
         self.parts_dir = self._parts_dir()
-        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
-        self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
+        self.headers_yaml = os.path.join(self.parts_dir, "headers.yaml")
 
     def test_changed_parts_uri(self):
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
         self.useFixture(fixture_setup.FakeParts())
-        self.useFixture(fixtures.EnvironmentVariable('CUSTOM_PARTS', '1'))
+        self.useFixture(fixtures.EnvironmentVariable("CUSTOM_PARTS", "1"))
         self.parts_dir = self._parts_dir()
-        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
-        result = self.run_command(['update'])
+        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
         expected_parts = OrderedDict()
-        expected_parts['curl-custom'] = p = OrderedDict()
-        p['plugin'] = 'autotools'
-        p['source'] = 'http://curl.org'
-        p['description'] = 'custom curl part'
-        p['maintainer'] = 'none'
+        expected_parts["curl-custom"] = p = OrderedDict()
+        p["plugin"] = "autotools"
+        p["source"] = "http://curl.org"
+        p["description"] = "custom curl part"
+        p["maintainer"] = "none"
 
         with open(self.parts_yaml) as parts_file:
             parts = yaml.load(parts_file)
@@ -87,40 +87,38 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         self.assertThat(parts, Equals(expected_parts))
 
     def test_update(self):
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
 
         expected_parts = OrderedDict()
-        expected_parts['curl'] = p = OrderedDict()
-        p['plugin'] = 'autotools'
-        p['source'] = 'http://curl.org'
-        p['description'] = 'test entry for curl'
-        p['maintainer'] = 'none'
+        expected_parts["curl"] = p = OrderedDict()
+        p["plugin"] = "autotools"
+        p["source"] = "http://curl.org"
+        p["description"] = "test entry for curl"
+        p["maintainer"] = "none"
 
-        expected_parts['part1'] = p = OrderedDict()
-        p['plugin'] = 'go'
-        p['source'] = 'http://source.tar.gz'
-        p['description'] = 'test entry for part1'
-        p['maintainer'] = 'none'
+        expected_parts["part1"] = p = OrderedDict()
+        p["plugin"] = "go"
+        p["source"] = "http://source.tar.gz"
+        p["description"] = "test entry for part1"
+        p["maintainer"] = "none"
 
-        expected_parts['long-described-part'] = p = OrderedDict()
-        p['plugin'] = 'go'
-        p['source'] = 'http://source.tar.gz'
-        p['description'] = 'this is a repetitive description ' * 3
-        p['maintainer'] = 'none'
+        expected_parts["long-described-part"] = p = OrderedDict()
+        p["plugin"] = "go"
+        p["source"] = "http://source.tar.gz"
+        p["description"] = "this is a repetitive description " * 3
+        p["maintainer"] = "none"
 
-        expected_parts['multiline-part'] = p = OrderedDict()
-        p['plugin'] = 'go'
-        p['source'] = 'http://source.tar.gz'
-        p['description'] = 'this is a multiline description\n' * 3
-        p['maintainer'] = 'none'
+        expected_parts["multiline-part"] = p = OrderedDict()
+        p["plugin"] = "go"
+        p["source"] = "http://source.tar.gz"
+        p["description"] = "this is a multiline description\n" * 3
+        p["maintainer"] = "none"
 
-        expected_headers = {
-            'If-Modified-Since': 'Thu, 07 Jul 2016 10:00:20 GMT',
-        }
+        expected_headers = {"If-Modified-Since": "Thu, 07 Jul 2016 10:00:20 GMT"}
 
         with open(self.parts_yaml) as parts_file:
             parts = yaml.load(parts_file)
@@ -131,53 +129,51 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         self.assertThat(headers, Equals(expected_headers))
 
     def test_update_with_unchanged_date_does_not_download_again(self):
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
-        self.assertThat(result.output, Contains(
-            'The parts cache is already up to date.'))
+        self.assertThat(
+            result.output, Contains("The parts cache is already up to date.")
+        )
 
     def test_update_with_changed_date_downloads_again(self):
         os.makedirs(self.parts_dir)
-        with open(self.headers_yaml, 'w') as headers_file:
+        with open(self.headers_yaml, "w") as headers_file:
             yaml.dump(
-                {'If-Modified-Since': 'Fri, 01 Jan 2016 12:00:00 GMT'},
-                headers_file)
+                {"If-Modified-Since": "Fri, 01 Jan 2016 12:00:00 GMT"}, headers_file
+            )
 
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
     def test_update_with_no_content_length_is_supported(self):
-        self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
-        result = self.run_command(['update'])
+        self.useFixture(fixtures.EnvironmentVariable("NO_CONTENT_LENGTH", "1"))
+        result = self.run_command(["update"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
 
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('os.getuid')
-    def test_update_containerized_exists_running(self,
-                                                 mock_getuid,
-                                                 mock_container_run):
+    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
+    @mock.patch("os.getuid")
+    def test_update_containerized_exists_running(self, mock_getuid, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         # Container was created before and is running
-        fake_lxd.name = 'local:snapcraft-snap-test'
-        fake_lxd.status = 'Running'
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        fake_lxd.name = "local:snapcraft-snap-test"
+        fake_lxd.status = "Running"
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
         self.make_snapcraft_yaml(self.yaml_template)
 
-        result = self.run_command(['update'])
+        result = self.run_command(["update"])
         self.assertThat(result.exit_code, Equals(0))
 
-        project_folder = '/root/build_snap-test'
-        mock_container_run.assert_has_calls([
-            call(['snapcraft', 'update'], cwd=project_folder, user='root'),
-        ])
+        project_folder = "/root/build_snap-test"
+        mock_container_run.assert_has_calls(
+            [call(["snapcraft", "update"], cwd=project_folder, user="root")]
+        )

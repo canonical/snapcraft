@@ -34,27 +34,27 @@ def get_local_snap_info(snap):
 
 
 def _get_parsed_snap(snap):
-    if '/' in snap:
-        sep_index = snap.find('/')
+    if "/" in snap:
+        sep_index = snap.find("/")
         snap_name = snap[:sep_index]
-        snap_channel = snap[sep_index+1:]
+        snap_channel = snap[sep_index + 1 :]
     else:
         snap_name = snap
-        snap_channel = ''
+        snap_channel = ""
     return snap_name, snap_channel
 
 
 def _get_snapd_socket_path_template():
-    return 'http+unix://%2Frun%2Fsnapd.socket/v2/{}'
+    return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
 def _get_local_snap_info(name):
-    slug = 'snaps/{}'.format(parse.quote(name, safe=''))
+    slug = "snaps/{}".format(parse.quote(name, safe=""))
     url = _get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
     snap_info.raise_for_status()
-    return snap_info.json()['result']
+    return snap_info.json()["result"]
 
 
 def is_package_installed(name):

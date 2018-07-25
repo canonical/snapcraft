@@ -19,15 +19,15 @@ import snaps_tests
 
 class BaseExampleConsumerTestCase(snaps_tests.SnapsTestCase):
 
-    base_content_dir = 'base-example'
-    base_consumer_content_dir = 'base-example-consumer'
+    base_content_dir = "base-example"
+    base_consumer_content_dir = "base-example-consumer"
 
     def test_base_example(self):
         # build/install the alternative base
         snap_path = self.build_snap(self.base_content_dir)
-        self.install_snap(snap_path, 'base-example', '1.0')
+        self.install_snap(snap_path, "base-example", "1.0")
         # build the consumer
         snap_path = self.build_snap(self.base_consumer_content_dir)
-        self.install_snap(snap_path, 'base-example-consumer', '1.0')
+        self.install_snap(snap_path, "base-example-consumer", "1.0")
         # FIXME: once snapd supports bases fully run hello against
         #        the alternative base

@@ -22,44 +22,42 @@ from typing import Any, Dict  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import errors, os_release, steps
-from snapcraft.internal.states import (
-    get_global_state,
-    get_state
-)
+from snapcraft.internal.states import get_global_state, get_state
 
 
 def annotate_snapcraft(data, parts_dir: str):
     manifest = OrderedDict()  # type: Dict[str, Any]
-    manifest['snapcraft-version'] = snapcraft._get_version()
+    manifest["snapcraft-version"] = snapcraft._get_version()
 
     release = os_release.OsRelease()
     with contextlib.suppress(errors.OsReleaseIdError):
-        manifest['snapcraft-os-release-id'] = release.id()
+        manifest["snapcraft-os-release-id"] = release.id()
     with contextlib.suppress(errors.OsReleaseVersionIdError):
-        manifest['snapcraft-os-release-version-id'] = release.version_id()
+        manifest["snapcraft-os-release-version-id"] = release.version_id()
 
     for k, v in data.items():
         manifest[k] = v
-    image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')
+    image_info = os.environ.get("SNAPCRAFT_IMAGE_INFO")
     if image_info:
         try:
             image_info_dict = json.loads(image_info)
         except json.decoder.JSONDecodeError as exception:
-            raise errors.InvalidContainerImageInfoError(
-                image_info) from exception
-        manifest['image-info'] = image_info_dict
-    for field in ('build-packages', 'build-snaps'):
+            raise errors.InvalidContainerImageInfoError(image_info) from exception
+        manifest["image-info"] = image_info_dict
+    for field in ("build-packages", "build-snaps"):
         manifest[field] = get_global_state().assets.get(field, [])
-    for part in data['parts']:
-        state_dir = os.path.join(parts_dir, part, 'state')
+    for part in data["parts"]:
+        state_dir = os.path.join(parts_dir, part, "state")
         pull_state = get_state(state_dir, steps.PULL)
-        manifest['parts'][part]['build-packages'] = (
-           pull_state.assets.get('build-packages', []))
-        manifest['parts'][part]['stage-packages'] = (
-            pull_state.assets.get('stage-packages', []))
-        source_details = pull_state.assets.get('source-details', {})
+        manifest["parts"][part]["build-packages"] = pull_state.assets.get(
+            "build-packages", []
+        )
+        manifest["parts"][part]["stage-packages"] = pull_state.assets.get(
+            "stage-packages", []
+        )
+        source_details = pull_state.assets.get("source-details", {})
         if source_details:
-            manifest['parts'][part].update(source_details)
+            manifest["parts"][part].update(source_details)
         build_state = get_state(state_dir, steps.BUILD)
-        manifest['parts'][part].update(build_state.assets)
+        manifest["parts"][part].update(build_state.assets)
     return manifest

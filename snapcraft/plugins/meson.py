@@ -35,32 +35,29 @@ import snapcraft
 
 
 class MesonPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['meson-parameters'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["meson-parameters"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
         return schema
 
     @classmethod
     def get_build_properties(cls):
-        return ['meson-parameters']
+        return ["meson-parameters"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.snapbuildname = 'snapbuild'
+        self.snapbuildname = "snapbuild"
         self.mesonbuilddir = os.path.join(self.builddir, self.snapbuildname)
-        self.build_packages.append('meson')
-        self.build_packages.append('ninja-build')
+        self.build_packages.append("meson")
+        self.build_packages.append("ninja-build")
 
     def build(self):
         super().build()
@@ -70,18 +67,18 @@ class MesonPlugin(snapcraft.BasePlugin):
 
     def _run_meson(self):
         os.makedirs(self.mesonbuilddir, exist_ok=True)
-        meson_command = ['meson']
+        meson_command = ["meson"]
         if self.options.meson_parameters:
             meson_command.extend(self.options.meson_parameters)
         meson_command.append(self.snapbuildname)
         self.run(meson_command)
 
     def _run_ninja_build_default(self):
-        ninja_command = ['ninja']
+        ninja_command = ["ninja"]
         self.run(ninja_command, cwd=self.mesonbuilddir)
 
     def _run_ninja_install(self):
         env = os.environ.copy()
-        env['DESTDIR'] = self.installdir
-        ninja_install_command = ['ninja', 'install']
+        env["DESTDIR"] = self.installdir
+        ninja_install_command = ["ninja", "install"]
         self.run(ninja_install_command, env=env, cwd=self.mesonbuilddir)

@@ -17,28 +17,20 @@ import os
 import sys
 
 from urllib.request import urlretrieve
-from progressbar import (
-    AnimatedMarker,
-    Bar,
-    Percentage,
-    ProgressBar,
-    UnknownLength,
-)
+from progressbar import AnimatedMarker, Bar, Percentage, ProgressBar, UnknownLength
 
 
 def _init_progress_bar(total_length, destination, message=None):
     if not message:
-        message = 'Downloading {!r}'.format(os.path.basename(destination))
+        message = "Downloading {!r}".format(os.path.basename(destination))
 
     valid_length = total_length and total_length > 0
 
     if valid_length and is_dumb_terminal():
-        widgets = [message, ' ', Percentage()]
+        widgets = [message, " ", Percentage()]
         maxval = total_length
     elif valid_length and not is_dumb_terminal():
-        widgets = [message,
-                   Bar(marker='=', left='[', right=']'),
-                   ' ', Percentage()]
+        widgets = [message, Bar(marker="=", left="[", right="]"), " ", Percentage()]
         maxval = total_length
     elif not valid_length and is_dumb_terminal():
         widgets = [message]
@@ -50,15 +42,14 @@ def _init_progress_bar(total_length, destination, message=None):
     return ProgressBar(widgets=widgets, maxval=maxval)
 
 
-def download_requests_stream(request_stream, destination, message=None,
-                             total_read=0):
+def download_requests_stream(request_stream, destination, message=None, total_read=0):
     """This is a facility to download a request with nice progress bars."""
 
     # Doing len(request_stream.content) may defeat the purpose of a
     # progress bar
     total_length = 0
-    if not request_stream.headers.get('Content-Encoding', ''):
-        total_length = int(request_stream.headers.get('Content-Length', '0'))
+    if not request_stream.headers.get("Content-Encoding", ""):
+        total_length = int(request_stream.headers.get("Content-Length", "0"))
         # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
@@ -69,9 +60,9 @@ def download_requests_stream(request_stream, destination, message=None,
     progress_bar.start()
 
     if os.path.exists(destination):
-        mode = 'ab'
+        mode = "ab"
     else:
-        mode = 'wb'
+        mode = "wb"
     with open(destination, mode) as destination_file:
         for buf in request_stream.iter_content(1024):
             destination_file.write(buf)
@@ -98,12 +89,14 @@ class UrllibDownloader(object):
     def _progress_callback(self, block_num, block_size, total_length):
         if not self.progress_bar:
             self.progress_bar = _init_progress_bar(
-                total_length, self.destination, self.message)
+                total_length, self.destination, self.message
+            )
             self.progress_bar.start()
 
         total_read = block_num * block_size
         self.progress_bar.update(
-            min(total_read, total_length) if total_length > 0 else total_read)
+            min(total_read, total_length) if total_length > 0 else total_read
+        )
 
 
 def download_urllib_source(uri, destination, message=None):
@@ -113,6 +106,6 @@ def download_urllib_source(uri, destination, message=None):
 def is_dumb_terminal():
     """Return True if on a dumb terminal."""
     is_stdout_tty = os.isatty(1)
-    is_term_dumb = os.environ.get('TERM', '') == 'dumb'
-    is_windows = sys.platform == 'win32'
+    is_term_dumb = os.environ.get("TERM", "") == "dumb"
+    is_windows = sys.platform == "win32"
     return not is_stdout_tty or is_term_dumb or is_windows

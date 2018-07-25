@@ -21,20 +21,21 @@ from tests import integration
 
 
 class StagePackageVersionTestCase(integration.TestCase):
-
     def test_stage_package_with_invalid_version_must_fail(self):
-        self.copy_project_to_cwd('stage-packages-missing-dependency')
+        self.copy_project_to_cwd("stage-packages-missing-dependency")
         self.set_stage_package_version(
-            os.path.join('snap', 'snapcraft.yaml'),
-            part='part-with-stage-packages',
-            package='haskell-doc', version='invalid')
+            os.path.join("snap", "snapcraft.yaml"),
+            part="part-with-stage-packages",
+            package="haskell-doc",
+            version="invalid",
+        )
         error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull')
+            subprocess.CalledProcessError, self.run_snapcraft, "pull"
+        )
         self.assertIn(
             "Failed to fetch stage packages: "
             "Error downloading packages for part "
             "'part-with-stage-packages': "
             "The package 'haskell-doc=invalid' was not found.",
-            str(error.output)
+            str(error.output),
         )

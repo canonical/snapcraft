@@ -39,18 +39,15 @@ import snapcraft.plugins.make
 
 
 class CMakePlugin(snapcraft.plugins.make.MakePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['configflags'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["configflags"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
         return schema
@@ -59,15 +56,15 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return super().get_build_properties() + ['configflags']
+        return super().get_build_properties() + ["configflags"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('cmake')
+        self.build_packages.append("cmake")
         self.out_of_source_build = True
 
     def build(self):
-        source_subdir = getattr(self.options, 'source_subdir', None)
+        source_subdir = getattr(self.options, "source_subdir", None)
         if source_subdir:
             sourcedir = os.path.join(self.sourcedir, source_subdir)
         else:
@@ -75,22 +72,23 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
 
         env = self._build_environment()
 
-        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
-                 self.options.configflags, env=env)
+        self.run(
+            ["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + self.options.configflags,
+            env=env,
+        )
 
         self.make(env=env)
 
     def _build_environment(self):
         env = os.environ.copy()
-        env['CMAKE_PREFIX_PATH'] = '$CMAKE_PREFIX_PATH:{}'.format(
-            self.project.stage_dir)
-        env['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
-            ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
-             '{0}/usr/include/{1}']).format(
-                 self.project.stage_dir, self.project.arch_triplet)
-        env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
-            ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
-             '{0}/usr/lib/{1}']).format(
-                 self.project.stage_dir, self.project.arch_triplet)
+        env["CMAKE_PREFIX_PATH"] = "$CMAKE_PREFIX_PATH:{}".format(
+            self.project.stage_dir
+        )
+        env["CMAKE_INCLUDE_PATH"] = "$CMAKE_INCLUDE_PATH:" + ":".join(
+            ["{0}/include", "{0}/usr/include", "{0}/include/{1}", "{0}/usr/include/{1}"]
+        ).format(self.project.stage_dir, self.project.arch_triplet)
+        env["CMAKE_LIBRARY_PATH"] = "$CMAKE_LIBRARY_PATH:" + ":".join(
+            ["{0}/lib", "{0}/usr/lib", "{0}/lib/{1}", "{0}/usr/lib/{1}"]
+        ).format(self.project.stage_dir, self.project.arch_triplet)
 
         return env

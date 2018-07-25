@@ -27,23 +27,22 @@ logger = logging.getLogger(__name__)
 
 
 class FakeStoreUploadServer(base.BaseFakeServer):
-
     def configure(self, configurator):
         configurator.add_route(
-            'unscanned-upload', '/unscanned-upload/',
-            request_method='POST')
-        configurator.add_view(
-            self.unscanned_upload, route_name='unscanned-upload')
+            "unscanned-upload", "/unscanned-upload/", request_method="POST"
+        )
+        configurator.add_view(self.unscanned_upload, route_name="unscanned-upload")
 
     def unscanned_upload(self, request):
-        logger.info('Handling upload request')
-        if 'UPDOWN_BROKEN' in os.environ:
+        logger.info("Handling upload request")
+        if "UPDOWN_BROKEN" in os.environ:
             response_code = 500
-            content_type = 'text/plain'
-            payload = b'Broken'
+            content_type = "text/plain"
+            payload = b"Broken"
         else:
             response_code = 200
-            content_type = 'application/octet-stream'
-            payload = json.dumps({'upload_id': 'test-upload-id'}).encode()
+            content_type = "application/octet-stream"
+            payload = json.dumps({"upload_id": "test-upload-id"}).encode()
         return response.Response(
-            payload, response_code, [('Content-Type', content_type)])
+            payload, response_code, [("Content-Type", content_type)]
+        )

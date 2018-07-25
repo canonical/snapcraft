@@ -50,11 +50,12 @@ command_groups = [
 
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
-@click.version_option(message=SNAPCRAFT_VERSION_TEMPLATE,  # type: ignore
-                      version=snapcraft.__version__)
+@click.version_option(
+    message=SNAPCRAFT_VERSION_TEMPLATE, version=snapcraft.__version__  # type: ignore
+)
 @click.pass_context
 @add_build_options(hidden=True)
-@click.option('--debug', '-d', is_flag=True, envvar='SNAPCRAFT_DEBUG')
+@click.option("--debug", "-d", is_flag=True, envvar="SNAPCRAFT_DEBUG")
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
@@ -63,9 +64,12 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
         # Setting this here so that tools run within this are also in debug
         # mode (e.g. snapcraftctl)
-        os.environ['SNAPCRAFT_DEBUG'] = 'true'
-        click.echo('Starting snapcraft {} from {}.'.format(
-            snapcraft.__version__, os.path.dirname(__file__)))
+        os.environ["SNAPCRAFT_DEBUG"] = "true"
+        click.echo(
+            "Starting snapcraft {} from {}.".format(
+                snapcraft.__version__, os.path.dirname(__file__)
+            )
+        )
     else:
         log_level = logging.INFO
 
@@ -76,7 +80,7 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
     log.configure(log_level=log_level)
     # The default command
     if not ctx.invoked_subcommand:
-        ctx.forward(lifecyclecli.commands['snap'])
+        ctx.forward(lifecyclecli.commands["snap"])
 
 
 # This would be much easier if they were subcommands

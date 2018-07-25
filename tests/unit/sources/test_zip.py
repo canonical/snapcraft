@@ -24,26 +24,28 @@ from tests import unit
 
 
 class TestZip(unit.FakeFileHTTPServerBasedTestCase):
-
-    @mock.patch('zipfile.ZipFile')
+    @mock.patch("zipfile.ZipFile")
     def test_pull_zipfile_must_download_and_extract(self, mock_zip):
-        dest_dir = 'src'
+        dest_dir = "src"
         os.makedirs(dest_dir)
-        zip_file_name = 'test.zip'
-        source = 'http://{}:{}/{file_name}'.format(
-            *self.server.server_address, file_name=zip_file_name)
+        zip_file_name = "test.zip"
+        source = "http://{}:{}/{file_name}".format(
+            *self.server.server_address, file_name=zip_file_name
+        )
         zip_source = sources.Zip(source, dest_dir)
 
         zip_source.pull()
 
         mock_zip.assert_called_once_with(
-            os.path.join(zip_source.source_dir, zip_file_name), 'r')
+            os.path.join(zip_source.source_dir, zip_file_name), "r"
+        )
 
-    @mock.patch('zipfile.ZipFile')
+    @mock.patch("zipfile.ZipFile")
     def test_extract_and_keep_zipfile(self, mock_zip):
-        zip_file_name = 'test.zip'
-        source = 'http://{}:{}/{file_name}'.format(
-            *self.server.server_address, file_name=zip_file_name)
+        zip_file_name = "test.zip"
+        source = "http://{}:{}/{file_name}".format(
+            *self.server.server_address, file_name=zip_file_name
+        )
         dest_dir = os.path.abspath(os.curdir)
         zip_source = sources.Zip(source, dest_dir)
 
@@ -51,10 +53,10 @@ class TestZip(unit.FakeFileHTTPServerBasedTestCase):
         zip_source.provision(dst=dest_dir, keep_zip=True)
 
         zip_download = os.path.join(zip_source.source_dir, zip_file_name)
-        mock_zip.assert_called_once_with(zip_download, 'r')
+        mock_zip.assert_called_once_with(zip_download, "r")
 
-        with open(zip_download, 'r') as zip_file:
-            self.assertThat(zip_file.read(), Equals('Test fake file'))
+        with open(zip_download, "r") as zip_file:
+            self.assertThat(zip_file.read(), Equals("Test fake file"))
 
     def test_has_source_handler_entry(self):
-        self.assertTrue(sources._source_handler['zip'] is sources.Zip)
+        self.assertTrue(sources._source_handler["zip"] is sources.Zip)

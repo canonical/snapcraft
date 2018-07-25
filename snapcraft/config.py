@@ -29,7 +29,7 @@ from xdg import BaseDirectory
 from snapcraft.internal.errors import SnapcraftInvalidCLIConfigError
 from snapcraft.storeapi import constants, errors
 
-LOCAL_CONFIG_FILENAME = '.snapcraft/snapcraft.cfg'
+LOCAL_CONFIG_FILENAME = ".snapcraft/snapcraft.cfg"
 
 logger = logging.getLogger(__name__)
 
@@ -47,14 +47,16 @@ class CLIConfig:
     Setting data takes the convention of set_<section>_<option> and
     getting data takes a similar form get_<section>_<option>.
     """
-    def __init__(self, *, read_only: bool=False) -> None:
+
+    def __init__(self, *, read_only: bool = False) -> None:
         """Initialize an instance of CLIConfig.
 
         :param bool read_only: if set, attempts to set data will fail.
         """
         self.parser = configparser.ConfigParser()
         self.config_path = os.path.join(
-            BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
+            BaseDirectory.save_config_path("snapcraft"), "cli.cfg"
+        )
         self._read_only = read_only
 
     def __enter__(self):
@@ -82,8 +84,8 @@ class CLIConfig:
                 self.parser.read_string(config)
             except configparser.Error as parse_error:
                 raise SnapcraftInvalidCLIConfigError(
-                    config_file=self.config_path,
-                    error=str(parse_error)) from parse_error
+                    config_file=self.config_path, error=str(parse_error)
+                ) from parse_error
 
     def save(self) -> None:
         """Save config parser data.
@@ -91,24 +93,22 @@ class CLIConfig:
         :raises RuntimeError: if trying to save when operating with read_only.
         """
         if self._read_only:
-            raise RuntimeError('CLIConfig was instantiated with read_only.')
+            raise RuntimeError("CLIConfig was instantiated with read_only.")
         # Make sure the directory exists before saving
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             self.parser.write(f)
 
     def _get_option(self, section_name: str, option_name: str) -> str:
         try:
             return self.parser.get(section_name, option_name)
-        except (configparser.NoSectionError,
-                configparser.NoOptionError,
-                KeyError):
+        except (configparser.NoSectionError, configparser.NoOptionError, KeyError):
             return None
 
     def _set_option(self, section_name, option_name: str, value: str) -> None:
         if self._read_only:
-            raise RuntimeError('CLIConfig was instantiated with read_only.')
+            raise RuntimeError("CLIConfig was instantiated with read_only.")
 
         section_name = section_name
         if not self.parser.has_section(section_name):
@@ -121,10 +121,10 @@ class CLIConfig:
         :param bool value: if true, errors should automatically be sent.
         """
         if value:
-            string_value = 'true'
+            string_value = "true"
         else:
-            string_value = 'false'
-        self._set_option('Sentry', 'always_send', string_value)
+            string_value = "false"
+        self._set_option("Sentry", "always_send", string_value)
 
     def get_sentry_send_always(self) -> bool:
         """Getter to define if errors should automatically be sent to sentry.
@@ -132,17 +132,16 @@ class CLIConfig:
         :returns: True if errors should automatically be sent.
         :rtype: bool.
         """
-        string_value = self._get_option('Sentry', 'always_send')
+        string_value = self._get_option("Sentry", "always_send")
         # Anything but "true" for string_value is considered False.
-        return string_value == 'true'
+        return string_value == "true"
 
     def set_outdated_step_action(self, action: OutdatedStepAction) -> None:
         """Setter to define action to take if outdated step is encountered.
 
         :param OutdatedStepAction value: The action to take
         """
-        self._set_option(
-            'Lifecycle', 'outdated_step_action', action.name.lower())
+        self._set_option("Lifecycle", "outdated_step_action", action.name.lower())
 
     def get_outdated_step_action(self) -> OutdatedStepAction:
         """Getter to define action to take if outdated step is encountered.
@@ -150,7 +149,7 @@ class CLIConfig:
         :returns: The action to take
         :rtype: OutdatedStepAction.
         """
-        action = self._get_option('Lifecycle', 'outdated_step_action')
+        action = self._get_option("Lifecycle", "outdated_step_action")
         if action:
             return OutdatedStepAction[action.upper()]
         else:
@@ -173,16 +172,15 @@ class Config(object):
 
     def _section_name(self) -> str:
         # The only section we care about is the host from the SSO url
-        url = os.environ.get('UBUNTU_SSO_API_ROOT_URL',
-                             constants.UBUNTU_SSO_API_ROOT_URL)
+        url = os.environ.get(
+            "UBUNTU_SSO_API_ROOT_URL", constants.UBUNTU_SSO_API_ROOT_URL
+        )
         return urllib.parse.urlparse(url).netloc
 
     def get(self, option_name: str) -> str:
         try:
             return self.parser.get(self._section_name(), option_name)
-        except (configparser.NoSectionError,
-                configparser.NoOptionError,
-                KeyError):
+        except (configparser.NoSectionError, configparser.NoOptionError, KeyError):
             return None
 
     def set(self, option_name: str, value: str) -> None:
@@ -200,7 +198,7 @@ class Config(object):
         return True
 
     def load(self, *, config_fd: TextIO = None) -> None:
-        config = ''
+        config = ""
         if config_fd:
             config = config_fd.read()
         else:
@@ -209,20 +207,22 @@ class Config(object):
             # Essentially, all authentication-related changes, like
             # login/logout or macaroon-refresh, will not be persisted for the
             # next runs.
-            file_path = ''
+            file_path = ""
             if os.path.exists(LOCAL_CONFIG_FILENAME):
                 file_path = LOCAL_CONFIG_FILENAME
 
                 # FIXME: We don't know this for sure when loading the config.
                 # Need a better separation of concerns.
                 logger.warn(
-                    'Using local configuration ({!r}), changes will not be '
-                    'persisted.'.format(file_path))
+                    "Using local configuration ({!r}), changes will not be "
+                    "persisted.".format(file_path)
+                )
             else:
                 file_path = BaseDirectory.load_first_config(
-                    'snapcraft', 'snapcraft.cfg')
+                    "snapcraft", "snapcraft.cfg"
+                )
             if file_path and os.path.exists(file_path):
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     config = f.read()
 
         if config:
@@ -230,23 +230,24 @@ class Config(object):
 
     @staticmethod
     def save_path() -> str:
-        return os.path.join(BaseDirectory.save_config_path('snapcraft'),
-                            'snapcraft.cfg')
+        return os.path.join(
+            BaseDirectory.save_config_path("snapcraft"), "snapcraft.cfg"
+        )
 
-    def save(self, *, config_fd: TextIO=None, encode: bool=False) -> None:
+    def save(self, *, config_fd: TextIO = None, encode: bool = False) -> None:
         with io.StringIO() as config_buffer:
             self.parser.write(config_buffer)
             config = config_buffer.getvalue()
             if encode:
                 # Encode config using base64
                 config = base64.b64encode(
-                    config.encode(sys.getfilesystemencoding())).decode(
-                        sys.getfilesystemencoding())
+                    config.encode(sys.getfilesystemencoding())
+                ).decode(sys.getfilesystemencoding())
 
             if config_fd:
                 config_fd.write(config)
             else:
-                with open(self.save_path(), 'w') as f:
+                with open(self.save_path(), "w") as f:
                     f.write(config)
 
     def clear(self) -> None:
@@ -259,8 +260,7 @@ def _load_potentially_base64_config(parser, config):
     except configparser.Error as e:
         # The config may be base64-encoded, try decoding it
         try:
-            config = base64.b64decode(config).decode(
-                sys.getfilesystemencoding())
+            config = base64.b64decode(config).decode(sys.getfilesystemencoding())
         except base64.binascii.Error:  # type: ignore
             # It wasn't base64, so use the original error
             raise errors.InvalidLoginConfig(e) from e

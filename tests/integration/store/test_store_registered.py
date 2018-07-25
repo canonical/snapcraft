@@ -18,16 +18,13 @@ from tests import integration
 
 
 class RegisteredTestCase(integration.StoreTestCase):
-
     def test_registered_status_and_privacy_private(self):
         self.login()
 
         snap_private = self.get_unique_name()
         self.register(snap_private, private=True)
 
-        expected_snaps = [
-            (snap_private, 'private', '-', '-'),
-        ]
+        expected_snaps = [(snap_private, "private", "-", "-")]
         self.list_registered(expected_snaps)
 
     def test_registered_status_and_privacy_public(self):
@@ -36,7 +33,5 @@ class RegisteredTestCase(integration.StoreTestCase):
         snap_public = self.get_unique_name()
         self.register(snap_public)
 
-        expected_snaps = [
-            (snap_public, 'public', '-', '-'),
-        ]
+        expected_snaps = [(snap_public, "public", "-", "-")]
         self.list_registered(expected_snaps)

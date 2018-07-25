@@ -18,59 +18,62 @@ import os
 
 from testtools.matchers import Equals
 
-from snapcraft.project import (get_snapcraft_yaml, errors)
+from snapcraft.project import get_snapcraft_yaml, errors
 from tests import unit
 
 
 class GetSnapcraftYamlTest(unit.TestCase):
 
     scenarios = [
-        ('snapcraft.yaml',
-         dict(file_path='snapcraft.yaml')),
-        ('snap/snapcraft.yaml',
-         dict(file_path=os.path.join('snap', 'snapcraft.yaml'))),
-        ('.snapcraft.yaml',
-         dict(file_path='.snapcraft.yaml'))
+        ("snapcraft.yaml", dict(file_path="snapcraft.yaml")),
+        ("snap/snapcraft.yaml", dict(file_path=os.path.join("snap", "snapcraft.yaml"))),
+        (".snapcraft.yaml", dict(file_path=".snapcraft.yaml")),
     ]
 
     def test_get(self):
         if os.path.dirname(self.file_path):
             os.makedirs(os.path.dirname(self.file_path))
-        open(self.file_path, 'w').close()
+        open(self.file_path, "w").close()
         self.assertThat(get_snapcraft_yaml(), Equals(self.file_path))
 
 
 class GetSnapcraftYamlMissingErrorsTest(unit.TestCase):
-
     def test_config_raises_on_missing_snapcraft_yaml(self):
         """Test that an error is raised if snap/snapcraft.yaml is missing"""
 
-        self.assertRaises(errors.MissingSnapcraftYamlError,
-                          get_snapcraft_yaml)
+        self.assertRaises(errors.MissingSnapcraftYamlError, get_snapcraft_yaml)
 
 
 class GetSnapcraftYamlDuplicateErrorsTest(unit.TestCase):
 
     scenarios = [
-        ('snapcraft.yaml and .snapcraft.yaml',
-         dict(file_path1='snapcraft.yaml',
-              file_path2='.snapcraft.yaml')),
-        ('snapcraft.yaml and snap/snapcraft.yaml',
-         dict(file_path1='snapcraft.yaml',
-              file_path2=os.path.join('snap', 'snapcraft.yaml'))),
-        ('.snapcraft.yaml and snap/snapcraft.yaml',
-         dict(file_path1='.snapcraft.yaml',
-              file_path2=os.path.join('snap', 'snapcraft.yaml'))),
+        (
+            "snapcraft.yaml and .snapcraft.yaml",
+            dict(file_path1="snapcraft.yaml", file_path2=".snapcraft.yaml"),
+        ),
+        (
+            "snapcraft.yaml and snap/snapcraft.yaml",
+            dict(
+                file_path1="snapcraft.yaml",
+                file_path2=os.path.join("snap", "snapcraft.yaml"),
+            ),
+        ),
+        (
+            ".snapcraft.yaml and snap/snapcraft.yaml",
+            dict(
+                file_path1=".snapcraft.yaml",
+                file_path2=os.path.join("snap", "snapcraft.yaml"),
+            ),
+        ),
     ]
 
     def test_duplicates(self):
         if os.path.dirname(self.file_path1):
             os.makedirs(os.path.dirname(self.file_path1))
-        open(self.file_path1, 'w').close()
+        open(self.file_path1, "w").close()
 
         if os.path.dirname(self.file_path2):
             os.makedirs(os.path.dirname(self.file_path2))
-        open(self.file_path2, 'w').close()
+        open(self.file_path2, "w").close()
 
-        self.assertRaises(errors.DuplicateSnapcraftYamlError,
-                          get_snapcraft_yaml)
+        self.assertRaises(errors.DuplicateSnapcraftYamlError, get_snapcraft_yaml)

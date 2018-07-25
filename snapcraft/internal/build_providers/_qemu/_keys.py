@@ -21,7 +21,7 @@ from paramiko import RSAKey
 
 from snapcraft.internal.build_providers import errors
 
-SSHKeyT = TypeVar('SSHKeyT', bound='SSHKey')
+SSHKeyT = TypeVar("SSHKeyT", bound="SSHKey")
 
 
 class SSHKey:
@@ -41,7 +41,7 @@ class SSHKey:
         :returns: an instance of SSHKey using the newly generated key.
         :rtype: SSHKey
         """
-        private_key_file_path = os.path.join(root_dir, 'id_rsa')
+        private_key_file_path = os.path.join(root_dir, "id_rsa")
 
         # Keep the amount of bits up to date with latest trends.
         key = RSAKey.generate(bits=4096)
@@ -58,10 +58,11 @@ class SSHKey:
             raised when the private key cannot be found. This exception should
             generally be handled by the use of new_key.
         """
-        private_key_file_path = os.path.join(root_dir, 'id_rsa')
+        private_key_file_path = os.path.join(root_dir, "id_rsa")
         if not os.path.exists(private_key_file_path):
             raise errors.SSHKeyFileNotFoundError(
-                private_key_file_path=private_key_file_path)
+                private_key_file_path=private_key_file_path
+            )
 
         self._key = RSAKey.from_private_key_file(private_key_file_path)
         self.private_key_file_path = private_key_file_path
@@ -75,4 +76,4 @@ class SSHKey:
         :returns: the public key formatted as 'ssh-rsa <hash>'.
         :rtype: str.
         """
-        return '{} {}'.format(self._key.get_name(), self._key.get_base64())
+        return "{} {}".format(self._key.get_name(), self._key.get_base64())

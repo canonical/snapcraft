@@ -23,23 +23,24 @@ from tests import integration
 
 
 class ContainerBuildsTestCase(integration.TestCase):
-
     def setUp(self):
         super().setUp()
-        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
-            self.skipTest('container build tests when running from a snap are '
-                          'currently broken LP: #1738210')
-        self.useFixture(
-            fixtures.EnvironmentVariable('SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+            self.skipTest(
+                "container build tests when running from a snap are "
+                "currently broken LP: #1738210"
+            )
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
 
     def run_snapcraft(self, project_dir):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
-        command = [self.snapcraft_command, '--debug']
+        command = [self.snapcraft_command, "--debug"]
         popen = subprocess.Popen(
-            command, stdout=subprocess.PIPE, universal_newlines=True)
-        for line in iter(popen.stdout.readline, ''):
+            command, stdout=subprocess.PIPE, universal_newlines=True
+        )
+        for line in iter(popen.stdout.readline, ""):
             print(line)
         popen.stdout.close()
         return_code = popen.wait()
@@ -47,7 +48,7 @@ class ContainerBuildsTestCase(integration.TestCase):
             raise subprocess.CalledProcessError(return_code, command)
 
     def test_container_build(self):
-        self.run_snapcraft('basic')
+        self.run_snapcraft("basic")
 
-        snap_file_path = 'basic_0.1_all.snap'
+        snap_file_path = "basic_0.1_all.snap"
         self.assertThat(snap_file_path, FileExists())

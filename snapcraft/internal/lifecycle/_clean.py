@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 
 def _clean_part(part_name, step, config, staged_state, primed_state):
     if step.next_step() is None:
-        template = 'Cleaning {step} step for {part}'
+        template = "Cleaning {step} step for {part}"
     else:
-        template = 'Cleaning {step} step (and all subsequent steps) for {part}'
+        template = "Cleaning {step} step (and all subsequent steps) for {part}"
 
     logger.info(template.format(step=step.name, part=part_name))
     config.parts.clean_part(part_name, staged_state, primed_state, step)
@@ -45,7 +45,8 @@ def get_dirty_reverse_dependencies(part_name, step, config):
     # dirty
     dirty_reverse_dependencies = set()
     reverse_dependencies = config.parts.get_reverse_dependencies(
-        part_name, recursive=True)
+        part_name, recursive=True
+    )
     dirty_step = steps.dirty_step_if_dependency_changes(step)
     for reverse_dependency in reverse_dependencies:
         if not reverse_dependency.should_step_run(dirty_step):
@@ -59,19 +60,21 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         step = steps.next_step(None)
 
     for part_name in part_names:
-        dirty_parts = _clean_part(
-            part_name, step, config, staged_state, primed_state)
+        dirty_parts = _clean_part(part_name, step, config, staged_state, primed_state)
         dirty_part_names = {p.name for p in dirty_parts}
 
         parts_not_being_cleaned = dirty_part_names.difference(part_names)
         if parts_not_being_cleaned:
             logger.warning(
-                'Cleaned {!r}, which makes the following {} out of date: '
-                '{}'.format(
-                    part_name, formatting_utils.pluralize(
-                        parts_not_being_cleaned, 'part', 'parts'),
-                    formatting_utils.humanize_list(
-                        parts_not_being_cleaned, 'and')))
+                "Cleaned {!r}, which makes the following {} out of date: "
+                "{}".format(
+                    part_name,
+                    formatting_utils.pluralize(
+                        parts_not_being_cleaned, "part", "parts"
+                    ),
+                    formatting_utils.humanize_list(parts_not_being_cleaned, "and"),
+                )
+            )
 
 
 def _remove_directory_if_empty(directory):
@@ -85,7 +88,7 @@ def _cleanup_common_directories(config, project_options):
         with contextlib.suppress(errors.NoLatestStepError):
             step = part.latest_step()
             if not max_step or step > max_step:
-                    max_step = step
+                max_step = step
 
     next_step = steps.next_step(max_step)
     if next_step:
@@ -106,27 +109,33 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
             mounts.for_root(project_options.prime_dir)
         except errors.RootNotMountedError:
             remove_dir = True
-            message = 'Cleaning up priming area'
+            message = "Cleaning up priming area"
         else:
             remove_dir = False
-            message = ("Cleaning up priming area, but not removing as it's in "
-                       "use by 'snap try'")
+            message = (
+                "Cleaning up priming area, but not removing as it's in "
+                "use by 'snap try'"
+            )
             being_tried = True
         _cleanup_common(
-            project_options.prime_dir, steps.PRIME, message, parts,
-            remove_dir=remove_dir)
+            project_options.prime_dir,
+            steps.PRIME,
+            message,
+            parts,
+            remove_dir=remove_dir,
+        )
 
     if step <= steps.STAGE:
         # Remove the staging area.
         _cleanup_common(
-            project_options.stage_dir, steps.STAGE, 'Cleaning up staging area',
-            parts)
+            project_options.stage_dir, steps.STAGE, "Cleaning up staging area", parts
+        )
 
     if step <= steps.PULL:
         # Remove the parts directory (but leave local plugins alone).
         _cleanup_parts_dir(
-            project_options.parts_dir, project_options.local_plugins_dir,
-            parts)
+            project_options.parts_dir, project_options.local_plugins_dir, parts
+        )
         _cleanup_internal_snapcraft_dir()
 
     if not being_tried:
@@ -153,7 +162,7 @@ def _cleanup_common(directory, step, message, parts, *, remove_dir=True):
 
 def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     if os.path.exists(parts_dir):
-        logger.info('Cleaning up parts directory')
+        logger.info("Cleaning up parts directory")
         for subdirectory in os.listdir(parts_dir):
             path = os.path.join(parts_dir, subdirectory)
             if path != local_plugins_dir:
@@ -188,7 +197,8 @@ def clean(project_options, parts, step=None):
         # specific parts, just blow away those directories instead of
         # doing it per part (it would just be a waste of time).
         _cleanup_common_directories_for_step(
-            step, project_options, parts=config.all_parts)
+            step, project_options, parts=config.all_parts
+        )
 
         # No need to continue if that's all that was required
         if step >= steps.STAGE:

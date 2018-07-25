@@ -24,9 +24,9 @@ class SnapcraftCache:
 
     This class is responsible for cache location, notification and pruning.
     """
+
     def __init__(self):
-        self.cache_root = os.path.join(
-            BaseDirectory.xdg_cache_home, 'snapcraft')
+        self.cache_root = os.path.join(BaseDirectory.xdg_cache_home, "snapcraft")
 
     def cache(self):
         raise NotImplementedError
@@ -40,15 +40,17 @@ class SnapcraftCache:
 
 class SnapcraftProjectCache(SnapcraftCache):
     """Project specific cache"""
+
     def __init__(self, *, project_name):
         super().__init__()
         self.project_cache_root = os.path.join(
-            self.cache_root, 'projects', project_name)
+            self.cache_root, "projects", project_name
+        )
 
 
 class SnapcraftStagePackageCache(SnapcraftCache):
     """Cache specific to stage-packages."""
+
     def __init__(self):
         super().__init__()
-        self.stage_package_cache_root = os.path.join(
-            self.cache_root, 'stage-packages')
+        self.stage_package_cache_root = os.path.join(self.cache_root, "stage-packages")

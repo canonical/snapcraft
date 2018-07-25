@@ -32,7 +32,8 @@ class SconsPluginTestCase(unit.TestCase):
 
         class Options:
             """Internal Options Class matching the Scons plugin"""
-            scons_options = ['--debug=explain']
+
+            scons_options = ["--debug=explain"]
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -42,61 +43,73 @@ class SconsPluginTestCase(unit.TestCase):
         schema = scons.SconsPlugin.schema()
 
         # Verify the presence of all properties
-        properties = schema['properties']
-        self.assertTrue('scons-options' in properties,
-                        'Expected "scons-options" to be included in '
-                        'properties')
-
-        scons_options = properties['scons-options']
-
+        properties = schema["properties"]
         self.assertTrue(
-            'type' in scons_options,
-            'Expected "type" to be included in "scons-options"')
-        self.assertThat(scons_options['type'], Equals('array'),
-                        'Expected "scons-options" "type" to be "array", but '
-                        'it was "{}"'.format(scons_options['type']))
+            "scons-options" in properties,
+            'Expected "scons-options" to be included in ' "properties",
+        )
+
+        scons_options = properties["scons-options"]
 
         self.assertTrue(
-            'minitems' in scons_options,
-            'Expected "minitems" to be included in "scons-options"')
-        self.assertThat(scons_options['minitems'], Equals(1),
-                        'Expected "scons-options" "minitems" to be 1, but '
-                        'it was "{}"'.format(scons_options['minitems']))
+            "type" in scons_options, 'Expected "type" to be included in "scons-options"'
+        )
+        self.assertThat(
+            scons_options["type"],
+            Equals("array"),
+            'Expected "scons-options" "type" to be "array", but '
+            'it was "{}"'.format(scons_options["type"]),
+        )
 
         self.assertTrue(
-            'uniqueItems' in scons_options,
-            'Expected "uniqueItems" to be included in "scons-options"')
+            "minitems" in scons_options,
+            'Expected "minitems" to be included in "scons-options"',
+        )
+        self.assertThat(
+            scons_options["minitems"],
+            Equals(1),
+            'Expected "scons-options" "minitems" to be 1, but '
+            'it was "{}"'.format(scons_options["minitems"]),
+        )
+
         self.assertTrue(
-            scons_options['uniqueItems'],
-            'Expected "scons-options" "uniqueItems" to be "True"')
+            "uniqueItems" in scons_options,
+            'Expected "uniqueItems" to be included in "scons-options"',
+        )
+        self.assertTrue(
+            scons_options["uniqueItems"],
+            'Expected "scons-options" "uniqueItems" to be "True"',
+        )
 
     def test_get_build_properties(self):
-        expected_build_properties = ['scons-options']
+        expected_build_properties = ["scons-options"]
         resulting_build_properties = scons.SconsPlugin.get_build_properties()
 
-        self.assertThat(resulting_build_properties,
-                        HasLength(len(expected_build_properties)))
+        self.assertThat(
+            resulting_build_properties, HasLength(len(expected_build_properties))
+        )
 
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
     def scons_build(self):
         """Helper to call a full build"""
-        plugin = scons.SconsPlugin('test-part', self.options,
-                                   self.project_options)
+        plugin = scons.SconsPlugin("test-part", self.options, self.project_options)
         # Create fake scons
         plugin.build()
         return plugin
 
-    @mock.patch.object(scons.SconsPlugin, 'run')
+    @mock.patch.object(scons.SconsPlugin, "run")
     def test_build_with_destdir(self, run_mock):
         """Test building via scons and check for known calls and destdir"""
         plugin = self.scons_build()
         env = os.environ.copy()
-        env['DESTDIR'] = plugin.installdir
+        env["DESTDIR"] = plugin.installdir
 
         self.assertThat(run_mock.call_count, Equals(2))
-        run_mock.assert_has_calls([
-            mock.call(['scons', '--debug=explain']),
-            mock.call(['scons', 'install', '--debug=explain'], env=env)
-        ])
+        run_mock.assert_has_calls(
+            [
+                mock.call(["scons", "--debug=explain"]),
+                mock.call(["scons", "install", "--debug=explain"], env=env),
+            ]
+        )

@@ -16,62 +16,57 @@
 
 import subprocess
 
-from testtools.matchers import (
-    Contains,
-    DirExists,
-    Equals,
-    Not
-)
+from testtools.matchers import Contains, DirExists, Equals, Not
 
 from tests import integration
 
 
 class CleanTestCase(integration.TestCase):
-
     def test_clean(self):
-        self.copy_project_to_cwd('make-hello')
-        self.run_snapcraft('snap')
+        self.copy_project_to_cwd("make-hello")
+        self.run_snapcraft("snap")
 
         snap_dirs = (self.parts_dir, self.stage_dir, self.prime_dir)
         for dir_ in snap_dirs:
             self.assertThat(dir_, DirExists())
 
-        self.run_snapcraft('clean')
+        self.run_snapcraft("clean")
         for dir_ in snap_dirs:
             self.assertThat(dir_, Not(DirExists()))
 
     def _clean_invalid_part(self, debug):
-        self.copy_project_to_cwd('make-hello')
-        self.run_snapcraft('snap')
+        self.copy_project_to_cwd("make-hello")
+        self.run_snapcraft("snap")
 
         raised = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'invalid-part'], debug=debug)
+            subprocess.CalledProcessError,
+            self.run_snapcraft,
+            ["clean", "invalid-part"],
+            debug=debug,
+        )
         self.assertThat(raised.returncode, Equals(2))
         self.assertThat(
-            raised.output,
-            Contains("The part named 'invalid-part' is not defined"))
+            raised.output, Contains("The part named 'invalid-part' is not defined")
+        )
         return raised.output
 
     def test_clean_invalid_part_no_traceback_without_debug(self):
-        self.assertThat(
-            self._clean_invalid_part(False), Not(Contains("Traceback")))
+        self.assertThat(self._clean_invalid_part(False), Not(Contains("Traceback")))
 
     def test_clean_invalid_part_traceback_with_debug(self):
-        self.assertThat(
-            self._clean_invalid_part(True), Contains("Traceback"))
+        self.assertThat(self._clean_invalid_part(True), Contains("Traceback"))
 
     def test_clean_again(self):
         # Clean a second time doesn't fail.
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1497371
-        self.copy_project_to_cwd('make-hello')
-        self.run_snapcraft('snap')
-        self.run_snapcraft('clean')
-        self.run_snapcraft('clean')
+        self.copy_project_to_cwd("make-hello")
+        self.run_snapcraft("snap")
+        self.run_snapcraft("clean")
+        self.run_snapcraft("clean")
 
     # Regression test for LP: #1596596
     def test_clean_invalid_yaml(self):
-        self.run_snapcraft('clean', 'invalid-snap')
+        self.run_snapcraft("clean", "invalid-snap")
         self.assertThat(self.parts_dir, Not(DirExists()))
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))

@@ -33,82 +33,88 @@ def load_tests(loader, tests, ignore):
 class TryStatementGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
-        ('followed body', {
-            'body': ['foo', 'bar'],
-            'else_bodies': [],
-            'expected_packages': {'foo', 'bar'}
-        }),
-        ('followed else', {
-            'body': ['invalid'],
-            'else_bodies': [
-                ['valid']
-            ],
-            'expected_packages': {'valid'}
-        }),
-        ('optional without else', {
-            'body': ['invalid'],
-            'else_bodies': [],
-            'expected_packages': set(),
-        }),
-        ('followed chained else', {
-            'body': ['invalid1'],
-            'else_bodies': [
-                ['invalid2'],
-                ['finally-valid']
-            ],
-            'expected_packages': {'finally-valid'}
-        }),
-        ('nested body followed body', {
-            'body': [
-                {'try': ['foo']},
-                {'else': ['bar']},
-            ],
-            'else_bodies': [],
-            'expected_packages': {'foo'}
-        }),
-        ('nested body followed else', {
-            'body': [
-                {'try': ['invalid']},
-                {'else': ['bar']},
-            ],
-            'else_bodies': [],
-            'expected_packages': {'bar'}
-        }),
-        ('nested else followed body', {
-            'body': ['invalid'],
-            'else_bodies': [
-                [{'try': ['foo']}, {'else': ['bar']}],
-            ],
-            'expected_packages': {'foo'}
-        }),
-        ('nested else followed else', {
-            'body': ['invalid'],
-            'else_bodies': [
-                [{'try': ['invalid']}, {'else': ['bar']}],
-            ],
-            'expected_packages': {'bar'}
-        }),
-        ('multiple elses', {
-            'body': ['invalid1'],
-            'else_bodies': [
-                ['invalid2'],
-                ['valid']
-            ],
-            'expected_packages': {'valid'}
-        }),
-        ('multiple elses all invalid', {
-            'body': ['invalid1'],
-            'else_bodies': [
-                ['invalid2'],
-                ['invalid3']
-            ],
-            'expected_packages': {'invalid3'}
-        }),
+        (
+            "followed body",
+            {
+                "body": ["foo", "bar"],
+                "else_bodies": [],
+                "expected_packages": {"foo", "bar"},
+            },
+        ),
+        (
+            "followed else",
+            {
+                "body": ["invalid"],
+                "else_bodies": [["valid"]],
+                "expected_packages": {"valid"},
+            },
+        ),
+        (
+            "optional without else",
+            {"body": ["invalid"], "else_bodies": [], "expected_packages": set()},
+        ),
+        (
+            "followed chained else",
+            {
+                "body": ["invalid1"],
+                "else_bodies": [["invalid2"], ["finally-valid"]],
+                "expected_packages": {"finally-valid"},
+            },
+        ),
+        (
+            "nested body followed body",
+            {
+                "body": [{"try": ["foo"]}, {"else": ["bar"]}],
+                "else_bodies": [],
+                "expected_packages": {"foo"},
+            },
+        ),
+        (
+            "nested body followed else",
+            {
+                "body": [{"try": ["invalid"]}, {"else": ["bar"]}],
+                "else_bodies": [],
+                "expected_packages": {"bar"},
+            },
+        ),
+        (
+            "nested else followed body",
+            {
+                "body": ["invalid"],
+                "else_bodies": [[{"try": ["foo"]}, {"else": ["bar"]}]],
+                "expected_packages": {"foo"},
+            },
+        ),
+        (
+            "nested else followed else",
+            {
+                "body": ["invalid"],
+                "else_bodies": [[{"try": ["invalid"]}, {"else": ["bar"]}]],
+                "expected_packages": {"bar"},
+            },
+        ),
+        (
+            "multiple elses",
+            {
+                "body": ["invalid1"],
+                "else_bodies": [["invalid2"], ["valid"]],
+                "expected_packages": {"valid"},
+            },
+        ),
+        (
+            "multiple elses all invalid",
+            {
+                "body": ["invalid1"],
+                "else_bodies": [["invalid2"], ["invalid3"]],
+                "expected_packages": {"invalid3"},
+            },
+        ),
     ]
 
     def test_try_statement_grammar(self):
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), self.checker)
+            None, snapcraft.ProjectOptions(), self.checker
+        )
         statement = _try.TryStatement(body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
@@ -118,15 +124,16 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
 
 
 class TryStatementElseFail(GrammarBaseTestCase):
-
     def test_else_fail(self):
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), self.checker)
-        statement = _try.TryStatement(body=['invalid'], processor=processor)
+            None, snapcraft.ProjectOptions(), self.checker
+        )
+        statement = _try.TryStatement(body=["invalid"], processor=processor)
 
         statement.add_else(None)
 
         with testtools.ExpectedException(
-                grammar.errors.UnsatisfiedStatementError,
-                "Unable to satisfy 'try', failure forced"):
+            grammar.errors.UnsatisfiedStatementError,
+            "Unable to satisfy 'try', failure forced",
+        ):
             statement.process()

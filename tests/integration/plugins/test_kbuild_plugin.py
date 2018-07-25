@@ -23,20 +23,17 @@ from tests.matchers import HasArchitecture
 
 
 class KBuildPluginTestCase(integration.TestCase):
-
     def test_stage(self):
-        self.run_snapcraft('stage', 'kbuild-hello')
+        self.run_snapcraft("stage", "kbuild-hello")
 
-        binary = os.path.join(self.parts_dir, 'kbuild-hello', 'install', 'bin',
-                              'myapp')
+        binary = os.path.join(self.parts_dir, "kbuild-hello", "install", "bin", "myapp")
         self.assertThat(binary, FileExists())
 
     def test_cross_compiling(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to arm64')
+        if self.deb_arch != "amd64":
+            self.skipTest("The test only handles amd64 to arm64")
 
-        self.run_snapcraft(['build', '--target-arch=arm64'], 'kbuild-hello')
+        self.run_snapcraft(["build", "--target-arch=arm64"], "kbuild-hello")
 
-        binary = os.path.join(self.parts_dir, 'kbuild-hello', 'install', 'bin',
-                              'myapp')
-        self.assertThat(binary, HasArchitecture('aarch64'))
+        binary = os.path.join(self.parts_dir, "kbuild-hello", "install", "bin", "myapp")
+        self.assertThat(binary, HasArchitecture("aarch64"))

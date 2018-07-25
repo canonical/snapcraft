@@ -23,28 +23,22 @@ logger = logging.getLogger(__name__)
 
 
 class XDelta3Generator(BaseDeltasGenerator):
-
     def __init__(self, *, source_path, target_path):
-        delta_format = 'xdelta3'
-        delta_tool_path = file_utils.get_tool_path('xdelta3')
-        super().__init__(source_path=source_path,
-                         target_path=target_path,
-                         delta_file_extname='xdelta3',
-                         delta_format=delta_format,
-                         delta_tool_path=delta_tool_path)
+        delta_format = "xdelta3"
+        delta_tool_path = file_utils.get_tool_path("xdelta3")
+        super().__init__(
+            source_path=source_path,
+            target_path=target_path,
+            delta_file_extname="xdelta3",
+            delta_format=delta_format,
+            delta_tool_path=delta_tool_path,
+        )
 
     def get_delta_cmd(self, source_path, target_path, delta_file):
-        return [
-            self.delta_tool_path,
-            '-s',
-            source_path,
-            target_path,
-            delta_file
-        ]
+        return [self.delta_tool_path, "-s", source_path, target_path, delta_file]
 
     def log_delta_file(self, delta_file):
         xdelta_output = subprocess.check_output(
-            [self.delta_tool_path, 'printhdr', delta_file],
-            universal_newlines=True)
-        logger.debug('xdelta3 delta diff generation:\n{}'.format(
-            xdelta_output))
+            [self.delta_tool_path, "printhdr", delta_file], universal_newlines=True
+        )
+        logger.debug("xdelta3 delta diff generation:\n{}".format(xdelta_output))

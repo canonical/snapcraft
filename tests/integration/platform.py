@@ -19,57 +19,33 @@ import sys
 
 
 _32BIT_USERSPACE_ARCHITECTURE = {
-    'aarch64': 'armv7l',
-    'armv8l': 'armv7l',
-    'ppc64le': 'ppc',
-    'x86_64': 'i686',
+    "aarch64": "armv7l",
+    "armv8l": "armv7l",
+    "ppc64le": "ppc",
+    "x86_64": "i686",
 }
 
 
 _ARCH_TRANSLATIONS = {
-    'armv7l': {
-        'deb': 'armhf',
-        'triplet': 'arm-linux-gnueabihf',
-    },
-    'aarch64': {
-        'deb': 'arm64',
-        'triplet': 'aarch64-linux-gnu',
-    },
-    'i686': {
-        'deb': 'i386',
-        'triplet': 'i386-linux-gnu',
-    },
-    'ppc64le': {
-        'deb': 'ppc64el',
-        'triplet': 'powerpc64le-linux-gnu',
-    },
-    'ppc': {
-        'deb': 'powerpc',
-        'triplet': 'powerpc-linux-gnu',
-    },
-    'x86_64': {
-        'deb': 'amd64',
-        'triplet': 'x86_64-linux-gnu',
-
-    },
-    's390x': {
-        'deb': 's390x',
-        'triplet': 's390x-linux-gnu',
-    }
+    "armv7l": {"deb": "armhf", "triplet": "arm-linux-gnueabihf"},
+    "aarch64": {"deb": "arm64", "triplet": "aarch64-linux-gnu"},
+    "i686": {"deb": "i386", "triplet": "i386-linux-gnu"},
+    "ppc64le": {"deb": "ppc64el", "triplet": "powerpc64le-linux-gnu"},
+    "ppc": {"deb": "powerpc", "triplet": "powerpc-linux-gnu"},
+    "x86_64": {"deb": "amd64", "triplet": "x86_64-linux-gnu"},
+    "s390x": {"deb": "s390x", "triplet": "s390x-linux-gnu"},
 }
 
 
-_WINDOWS_TRANSLATIONS = {
-    'AMD64': 'x86_64'
-}
+_WINDOWS_TRANSLATIONS = {"AMD64": "x86_64"}
 
 
 def get_deb_arch():
-    return _ARCH_TRANSLATIONS[_get_platform_architecture()]['deb']
+    return _ARCH_TRANSLATIONS[_get_platform_architecture()]["deb"]
 
 
 def get_arch_triplet():
-    return _ARCH_TRANSLATIONS[_get_platform_architecture()]['triplet']
+    return _ARCH_TRANSLATIONS[_get_platform_architecture()]["triplet"]
 
 
 def _get_platform_architecture():
@@ -77,10 +53,10 @@ def _get_platform_architecture():
 
     # Translate the windows architectures we know of to architectures
     # we can work with.
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         architecture = _WINDOWS_TRANSLATIONS.get(architecture)
 
-    if platform.architecture()[0] == '32bit':
+    if platform.architecture()[0] == "32bit":
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
             architecture = userspace

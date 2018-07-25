@@ -29,10 +29,10 @@ from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal import errors
 
 
-PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
+PARTS_URI = "https://parts.snapcraft.io/v1/parts.yaml"
 _MATCH_RATIO = 0.6
-_HEADER_PART_NAME = 'PART NAME'
-_HEADER_DESCRIPTION = 'DESCRIPTION'
+_HEADER_PART_NAME = "PART NAME"
+_HEADER_DESCRIPTION = "DESCRIPTION"
 
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
@@ -47,11 +47,10 @@ def define(part_name):
         remote_part = _RemoteParts().get_part(part_name, full=True)
     except errors.SnapcraftPartMissingError as e:
         raise errors.PartNotInCacheError(part_name=part_name) from e
-    print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
-    print('Description: {}'.format(remote_part.pop('description')))
-    print('')
-    yaml.dump({part_name: remote_part},
-              default_flow_style=False, stream=sys.stdout)
+    print("Maintainer: {!r}".format(remote_part.pop("maintainer")))
+    print("Description: {}".format(remote_part.pop("description")))
+    print("")
+    yaml.dump({part_name: remote_part}, default_flow_style=False, stream=sys.stdout)
 
 
 def search(part_match):
@@ -65,18 +64,20 @@ def search(part_match):
 
     if not matches:
         # apt search does not return error, we probably shouldn't either.
-        logger.info('No matches found, try to run `snapcraft update` to '
-                    'refresh the remote parts cache.')
+        logger.info(
+            "No matches found, try to run `snapcraft update` to "
+            "refresh the remote parts cache."
+        )
         return
 
-    print('{}  {}'.format(
-        _HEADER_PART_NAME.ljust(part_length, ' '), _HEADER_DESCRIPTION))
+    print(
+        "{}  {}".format(_HEADER_PART_NAME.ljust(part_length, " "), _HEADER_DESCRIPTION)
+    )
     for part_key in sorted(matches.keys()):
-        description = matches[part_key]['description'].split('\n')[0]
+        description = matches[part_key]["description"].split("\n")[0]
         if len(description) > description_space:
-            description = '{}...'.format(description[0:description_space])
-        print('{}  {}'.format(
-            part_key.ljust(part_length, ' '), description))
+            description = "{}...".format(description[0:description_space])
+        print("{}  {}".format(part_key.ljust(part_length, " "), description))
 
 
 def get_remote_parts():
@@ -84,39 +85,40 @@ def get_remote_parts():
 
 
 class _Base:
-
     def __init__(self):
-        self._parts_uri = os.environ.get('SNAPCRAFT_PARTS_URI', PARTS_URI)
+        self._parts_uri = os.environ.get("SNAPCRAFT_PARTS_URI", PARTS_URI)
         self.parts_dir = os.path.join(
-            BaseDirectory.xdg_data_home, 'snapcraft',
-            hashlib.sha384(self._parts_uri.encode(
-               sys.getfilesystemencoding())).hexdigest())
+            BaseDirectory.xdg_data_home,
+            "snapcraft",
+            hashlib.sha384(
+                self._parts_uri.encode(sys.getfilesystemencoding())
+            ).hexdigest(),
+        )
         os.makedirs(self.parts_dir, exist_ok=True)
-        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
+        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
 
 
 class _Update(_Base):
-
     def __init__(self):
         super().__init__()
-        self._headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+        self._headers_yaml = os.path.join(self.parts_dir, "headers.yaml")
 
     def execute(self):
         headers = self._load_headers()
 
         try:
-            self._request = requests.get(self._parts_uri, stream=True,
-                                         headers=headers)
+            self._request = requests.get(self._parts_uri, stream=True, headers=headers)
         except requests.exceptions.RequestException as e:
             raise errors.RemotePartsUpdateConnectionError(e) from e
 
         if self._request.status_code == 304:
-            logger.info('The parts cache is already up to date.')
+            logger.info("The parts cache is already up to date.")
             return
         self._request.raise_for_status()
 
-        download_requests_stream(self._request, self.parts_yaml,
-                                 'Downloading parts list')
+        download_requests_stream(
+            self._request, self.parts_yaml, "Downloading parts list"
+        )
         self._save_headers()
 
     def _load_headers(self):
@@ -127,15 +129,13 @@ class _Update(_Base):
             return yaml.safe_load(headers_file)
 
     def _save_headers(self):
-        headers = {
-            'If-Modified-Since': self._request.headers.get('Last-Modified')}
+        headers = {"If-Modified-Since": self._request.headers.get("Last-Modified")}
 
-        with open(self._headers_yaml, 'w') as headers_file:
+        with open(self._headers_yaml, "w") as headers_file:
             headers_file.write(yaml.dump(headers))
 
 
 class _RemoteParts(_Base):
-
     def __init__(self):
         super().__init__()
 
@@ -151,7 +151,7 @@ class _RemoteParts(_Base):
         except KeyError:
             raise errors.SnapcraftPartMissingError(part_name=part_name)
         if not full:
-            for key in ['description', 'maintainer']:
+            for key in ["description", "maintainer"]:
                 remote_part.pop(key)
         return remote_part
 

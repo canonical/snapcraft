@@ -23,18 +23,21 @@ from tests import integration
 
 
 class NilPluginTestCase(integration.TestCase):
-
     def test_snap_nil_plugin(self):
-        self.run_snapcraft('snap', 'nil-basic')
+        self.run_snapcraft("snap", "nil-basic")
 
         dirs = os.listdir(self.prime_dir)
-        self.assertThat(dirs, Equals(['meta']))
+        self.assertThat(dirs, Equals(["meta"]))
 
     def test_nil_no_additional_properties(self):
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, 'snap',
-            'nil-with-additional-properties')
+            subprocess.CalledProcessError,
+            self.run_snapcraft,
+            "snap",
+            "nil-with-additional-properties",
+        )
 
         self.assertTrue(
             "Additional properties are not allowed ('extra-property' was "
-            "unexpected)" in exception.output.replace('\n', ' ').strip())
+            "unexpected)" in exception.output.replace("\n", " ").strip()
+        )

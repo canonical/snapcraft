@@ -24,22 +24,22 @@ from testtools.matchers import Equals
 from tests import integration
 
 
-class BuildPackageVersionTestCase(testscenarios.WithScenarios,
-                                  integration.TestCase):
+class BuildPackageVersionTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = (
-        ('global', dict(
-            project='build-package', package='hello', part='hello')),
-        ('local', dict(
-            project='build-package-global', package='haskell-doc', part=None)),
+        ("global", dict(project="build-package", package="hello", part="hello")),
+        (
+            "local",
+            dict(project="build-package-global", package="haskell-doc", part=None),
+        ),
     )
 
     def test_build_package_gets_version(self):
         self.copy_project_to_cwd(self.project)
         version = self.set_build_package_version(
-            os.path.join('snap', 'snapcraft.yaml'), self.part,
-            package=self.package)
-        self.run_snapcraft('pull')
+            os.path.join("snap", "snapcraft.yaml"), self.part, package=self.package
+        )
+        self.run_snapcraft("pull")
 
         with apt.Cache() as apt_cache:
             installed_version = apt_cache[self.package].candidate.version
@@ -47,17 +47,19 @@ class BuildPackageVersionTestCase(testscenarios.WithScenarios,
 
 
 class BuildPackageVersionErrorsTestCase(integration.TestCase):
-
     def test_build_package_with_invalid_version_must_fail(self):
-        self.copy_project_to_cwd('build-package-global')
+        self.copy_project_to_cwd("build-package-global")
         self.set_build_package_version(
-            os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='haskell-doc', version='invalid')
+            os.path.join("snap", "snapcraft.yaml"),
+            part=None,
+            package="haskell-doc",
+            version="invalid",
+        )
         error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull')
+            subprocess.CalledProcessError, self.run_snapcraft, "pull"
+        )
         self.assertIn(
             "Could not find a required package in 'build-packages': "
             "haskell-doc=invalid",
-            str(error.output)
+            str(error.output),
         )

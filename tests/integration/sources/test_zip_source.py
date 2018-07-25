@@ -16,45 +16,29 @@
 
 import os
 
-from testtools.matchers import (
-    Equals,
-    DirExists,
-    FileExists
-)
+from testtools.matchers import Equals, DirExists, FileExists
 
 from tests import integration
 
 
 class TarPluginTestCase(integration.TestCase):
-
     def test_stage_zip_source(self):
-        self.copy_project_to_cwd('zip')
-        self.run_snapcraft('stage')
+        self.copy_project_to_cwd("zip")
+        self.run_snapcraft("stage")
 
-        expected_files = [
-            'exec',
-            'top-simple',
-            os.path.join('dir-simple', 'sub')
-        ]
+        expected_files = ["exec", "top-simple", os.path.join("dir-simple", "sub")]
         for expected_file in expected_files:
-            self.assertThat(
-                os.path.join(self.stage_dir, expected_file),
-                FileExists())
-        self.assertThat(os.access(
-            os.path.join(self.stage_dir, 'exec'), os.X_OK),
-            Equals(True))
-        self.assertThat(os.access(
-            os.path.join(self.stage_dir, 'non-unix'), os.X_OK),
-            Equals(True))
-        expected_dirs = [
-            'dir-simple',
-            'non-unix',
-        ]
+            self.assertThat(os.path.join(self.stage_dir, expected_file), FileExists())
+        self.assertThat(
+            os.access(os.path.join(self.stage_dir, "exec"), os.X_OK), Equals(True)
+        )
+        self.assertThat(
+            os.access(os.path.join(self.stage_dir, "non-unix"), os.X_OK), Equals(True)
+        )
+        expected_dirs = ["dir-simple", "non-unix"]
         for expected_dir in expected_dirs:
-            self.assertThat(
-                os.path.join(self.stage_dir, expected_dir),
-                DirExists())
+            self.assertThat(os.path.join(self.stage_dir, expected_dir), DirExists())
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")

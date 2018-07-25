@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._global_grammar_processor import GlobalGrammarProcessor  # noqa
-from ._part_grammar_processor import PartGrammarProcessor    # noqa
+from ._part_grammar_processor import PartGrammarProcessor  # noqa

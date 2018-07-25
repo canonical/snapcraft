@@ -40,9 +40,13 @@ class TryStatement(Statement):
     {'valid'}
     """
 
-    def __init__(self, *, body: typing.Grammar,
-                 processor: 'GrammarProcessor',
-                 call_stack: typing.CallStack=None) -> None:
+    def __init__(
+        self,
+        *,
+        body: typing.Grammar,
+        processor: "GrammarProcessor",
+        call_stack: typing.CallStack = None
+    ) -> None:
         """Create a TryStatement instance.
 
         :param list body: The body of the clause.
@@ -51,8 +55,8 @@ class TryStatement(Statement):
         :param list call_stack: Call stack leading to this statement.
         """
         super().__init__(
-            body=body, processor=processor, call_stack=call_stack,
-            check_primitives=True)
+            body=body, processor=processor, call_stack=call_stack, check_primitives=True
+        )
 
     def _check(self) -> bool:
         """Check if a statement main body should be processed.
@@ -67,4 +71,4 @@ class TryStatement(Statement):
         return False
 
     def __str__(self) -> str:
-        return 'try'
+        return "try"

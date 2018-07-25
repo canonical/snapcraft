@@ -21,13 +21,14 @@ import snaps_tests
 
 class GradleTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'gradle'
+    snap_content_dir = "gradle"
 
     def test_gradle(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armhf':
+        if snapcraft.ProjectOptions().deb_arch == "armhf":
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
-            self.skipTest('The gradle plugin does not support armhf')
+            self.skipTest("The gradle plugin does not support armhf")
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'java-hello-gradle', '1.0')
+        self.install_snap(snap_path, "java-hello-gradle", "1.0")
         self.assert_command_in_snappy_testbed(
-            '/snap/bin/java-hello-gradle.hello', 'Hello Gradle\n')
+            "/snap/bin/java-hello-gradle.hello", "Hello Gradle\n"
+        )

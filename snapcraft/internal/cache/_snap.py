@@ -35,27 +35,33 @@ class SnapCache(SnapcraftProjectCache):
         self.snap_cache_root = self._setup_snap_cache_root()
 
     def _setup_snap_cache_root(self):
-        snap_cache_root = os.path.join(self.project_cache_root, 'snap_hashes')
+        snap_cache_root = os.path.join(self.project_cache_root, "snap_hashes")
         os.makedirs(snap_cache_root, exist_ok=True)
         return snap_cache_root
 
     def _get_snap_deb_arch(self, snap_filename):
         with tempfile.TemporaryDirectory() as temp_dir:
-            unsquashfs_path = file_utils.get_tool_path('unsquashfs')
+            unsquashfs_path = file_utils.get_tool_path("unsquashfs")
             output = subprocess.check_output(
-                [unsquashfs_path, '-d',
-                 os.path.join(temp_dir, 'squashfs-root'),
-                 snap_filename, '-e', os.path.join('meta', 'snap.yaml')])
+                [
+                    unsquashfs_path,
+                    "-d",
+                    os.path.join(temp_dir, "squashfs-root"),
+                    snap_filename,
+                    "-e",
+                    os.path.join("meta", "snap.yaml"),
+                ]
+            )
             logger.debug(output)
-            with open(os.path.join(
-                    temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
+            with open(
+                os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
             ) as yaml_file:
                 snap_yaml = yaml.safe_load(yaml_file)
         # XXX: add multiarch support later
         try:
-            return snap_yaml['architectures'][0]
+            return snap_yaml["architectures"][0]
         except KeyError:
-            return 'all'
+            return "all"
 
     def _get_snap_cache_path(self, snap_filename):
         snap_hash = file_utils.calculate_sha3_384(snap_filename)
@@ -75,8 +81,7 @@ class SnapCache(SnapcraftProjectCache):
                 # using fileutils.link_or_copy.
                 shutil.copyfile(snap_filename, cached_snap_path)
         except OSError:
-            logger.warning(
-                'Unable to cache snap {}.'.format(snap_filename))
+            logger.warning("Unable to cache snap {}.".format(snap_filename))
         return cached_snap_path
 
     def get(self, *, deb_arch, snap_hash=None):
@@ -101,8 +106,7 @@ class SnapCache(SnapcraftProjectCache):
                     return os.path.join(snap_cache_dir, cached_hash)
             return None
 
-        cached_snaps = [os.path.join(snap_cache_dir, f)
-                        for f in cached_hashes]
+        cached_snaps = [os.path.join(snap_cache_dir, f) for f in cached_hashes]
         return max(cached_snaps, key=os.path.getctime)
 
     def prune(self, *, deb_arch, keep_hash):
@@ -121,6 +125,5 @@ class SnapCache(SnapcraftProjectCache):
                     os.remove(cached_snap)
                     pruned_files_list.append(cached_snap)
                 except OSError:
-                    logger.warning(
-                        'Unable to prune snap {}.'.format(cached_snap))
+                    logger.warning("Unable to prune snap {}.".format(cached_snap))
         return pruned_files_list

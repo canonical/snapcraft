@@ -14,6 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.meta._snap_packaging import (  # noqa
-    create_snap_packaging
-)
+from snapcraft.internal.meta._snap_packaging import create_snap_packaging  # noqa

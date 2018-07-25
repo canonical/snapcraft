@@ -21,19 +21,15 @@ import fixtures
 from testtools.matchers import Equals, Is
 
 from snapcraft.internal.repo import errors, snaps
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
 
 
 class FakeSnapCommand(fixtures.Fixture):
-
     def __init__(self):
         self.calls = []
         self.install_success = True
         self.refresh_success = True
-        self._email = '-'
+        self._email = "-"
 
     def _setUp(self):
         original_check_call = snaps.check_call
@@ -53,14 +49,16 @@ class FakeSnapCommand(fixtures.Fixture):
                 return original(cmd, *args, **kwargs)
 
         check_call_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.check_call',
-            side_effect=side_effect_check_call)
+            "snapcraft.internal.repo.snaps.check_call",
+            side_effect=side_effect_check_call,
+        )
         self.mock_call = check_call_patcher.start()
         self.addCleanup(check_call_patcher.stop)
 
         check_output_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.check_output',
-            side_effect=side_effect_check_output)
+            "snapcraft.internal.repo.snaps.check_output",
+            side_effect=side_effect_check_output,
+        )
         self.mock_call = check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
@@ -69,30 +67,29 @@ class FakeSnapCommand(fixtures.Fixture):
 
     def _get_snap_cmd(self, snap_cmd):
         try:
-            snap_cmd_index = snap_cmd.index('snap')
+            snap_cmd_index = snap_cmd.index("snap")
         except ValueError:
-            return ''
+            return ""
 
         try:
-            return snap_cmd[snap_cmd_index+1]
+            return snap_cmd[snap_cmd_index + 1]
         except IndexError:
-            return ''
+            return ""
 
     def _is_snap_command(self, cmd):
-        return self._get_snap_cmd(cmd) in ['install', 'refresh', 'whoami']
+        return self._get_snap_cmd(cmd) in ["install", "refresh", "whoami"]
 
     def _fake_snap_command(self, cmd, *args, **kwargs):
         cmd = self._get_snap_cmd(cmd)
-        if cmd == 'install' and not self.install_success:
+        if cmd == "install" and not self.install_success:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        elif cmd == 'refresh' and not self.refresh_success:
+        elif cmd == "refresh" and not self.refresh_success:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        elif cmd == 'whoami':
-            return 'email: {}'.format(self._email).encode()
+        elif cmd == "whoami":
+            return "email: {}".format(self._email).encode()
 
 
 class SnapPackageBaseTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -103,67 +100,98 @@ class SnapPackageBaseTestCase(unit.TestCase):
 class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
 
     scenarios = [
-        ('stable',
-         dict(snap='fake-snap-stable/stable',
-              installed_snaps=[
-                  {'name': 'fake-snap-stable', 'channel': 'stable'}],
-              expected='latest/stable')),
-        ('latest/stable',
-         dict(snap='fake-snap-stable/latest/stable',
-              installed_snaps=[
-                  {'name': 'fake-snap-stable', 'channel': 'stable'}],
-              expected='latest/stable')),
-        ('candidate/branch',
-         dict(snap='fake-snap-branch/candidate/branch',
-              installed_snaps=[
-                  {'name': 'fake-snap-branch', 'channel': 'candidate/branch'}],
-              expected='latest/candidate/branch')),
-        ('track/stable/branch',
-         dict(snap='fake-snap-track-stable-branch/track/stable/branch',
-              installed_snaps=[
-                  {'name': 'fake-snap-track-stable-branch',
-                   'channel': 'track/stable/branch'}],
-              expected='track/stable/branch')),
-        ('edge',
-         dict(snap='fake-snap-edge/stable',
-              installed_snaps=[{'name': 'fake-snap-edge', 'channel': 'edge'}],
-              expected='latest/edge')),
-        ('track/stable',
-         dict(snap='fake-snap-track-stable/track/stable',
-              installed_snaps=[
-                  {'name': 'fake-snap-track-stable',
-                   'channel': 'track/stable'}],
-              expected='track/stable')),
+        (
+            "stable",
+            dict(
+                snap="fake-snap-stable/stable",
+                installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
+                expected="latest/stable",
+            ),
+        ),
+        (
+            "latest/stable",
+            dict(
+                snap="fake-snap-stable/latest/stable",
+                installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
+                expected="latest/stable",
+            ),
+        ),
+        (
+            "candidate/branch",
+            dict(
+                snap="fake-snap-branch/candidate/branch",
+                installed_snaps=[
+                    {"name": "fake-snap-branch", "channel": "candidate/branch"}
+                ],
+                expected="latest/candidate/branch",
+            ),
+        ),
+        (
+            "track/stable/branch",
+            dict(
+                snap="fake-snap-track-stable-branch/track/stable/branch",
+                installed_snaps=[
+                    {
+                        "name": "fake-snap-track-stable-branch",
+                        "channel": "track/stable/branch",
+                    }
+                ],
+                expected="track/stable/branch",
+            ),
+        ),
+        (
+            "edge",
+            dict(
+                snap="fake-snap-edge/stable",
+                installed_snaps=[{"name": "fake-snap-edge", "channel": "edge"}],
+                expected="latest/edge",
+            ),
+        ),
+        (
+            "track/stable",
+            dict(
+                snap="fake-snap-track-stable/track/stable",
+                installed_snaps=[
+                    {"name": "fake-snap-track-stable", "channel": "track/stable"}
+                ],
+                expected="track/stable",
+            ),
+        ),
     ]
 
     def test_get_current_channel(self):
         self.fake_snapd.snaps_result = self.installed_snaps
         snap_pkg = snaps.SnapPackage(self.snap)
-        self.assertThat(snap_pkg.get_current_channel(),
-                        Equals(self.expected))
+        self.assertThat(snap_pkg.get_current_channel(), Equals(self.expected))
 
 
 class SnapPackageIsInstalledTest(SnapPackageBaseTestCase):
 
     scenarios = [
-        ('installed stable',
-         dict(snap='fake-snap-stable',
-              installed_snaps=[
-                  {'name': 'fake-snap-stable', 'channel': 'stable'}],
-              expected=True)),
-        ('installed stable with channel',
-         dict(snap='fake-snap-stable/latest/stable',
-              installed_snaps=[
-                  {'name': 'fake-snap-stable', 'channel': 'stable'}],
-              expected=True)),
-        ('not installed',
-         dict(snap='missing-snap',
-              installed_snaps=[],
-              expected=False)),
-        ('not installed with channel',
-         dict(snap='missing-snap/latest/stable',
-              installed_snaps=[],
-              expected=False)),
+        (
+            "installed stable",
+            dict(
+                snap="fake-snap-stable",
+                installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
+                expected=True,
+            ),
+        ),
+        (
+            "installed stable with channel",
+            dict(
+                snap="fake-snap-stable/latest/stable",
+                installed_snaps=[{"name": "fake-snap-stable", "channel": "stable"}],
+                expected=True,
+            ),
+        ),
+        (
+            "not installed",
+            dict(snap="missing-snap", installed_snaps=[], expected=False),
+        ),
+        (
+            "not installed with channel",
+            dict(snap="missing-snap/latest/stable", installed_snaps=[], expected=False),
+        ),
     ]
 
     def test_is_installed(self):
@@ -173,29 +201,31 @@ class SnapPackageIsInstalledTest(SnapPackageBaseTestCase):
 
     def test_is_installed_classmethod(self):
         self.fake_snapd.snaps_result = self.installed_snaps
-        self.assertThat(snaps.SnapPackage.is_snap_installed(self.snap),
-                        Is(self.expected))
+        self.assertThat(
+            snaps.SnapPackage.is_snap_installed(self.snap), Is(self.expected)
+        )
 
 
 class SnapPackageIsInStoreTest(SnapPackageBaseTestCase):
 
     scenarios = [
-        ('in store',
-         dict(snap='fake-snap',
-              find_result=[{'fake-snap': 'dummy'}],
-              expected=True)),
-        ('in store with channel',
-         dict(snap='fake-snap/latest/stable',
-              find_result=[{'fake-snap': 'dummy'}],
-              expected=True)),
-        ('not in store',
-         dict(snap='missing-snap',
-              find_result=[],
-              expected=False)),
-        ('not in store with channel',
-         dict(snap='missing-snap/latest/stable',
-              find_result=[],
-              expected=False)),
+        (
+            "in store",
+            dict(snap="fake-snap", find_result=[{"fake-snap": "dummy"}], expected=True),
+        ),
+        (
+            "in store with channel",
+            dict(
+                snap="fake-snap/latest/stable",
+                find_result=[{"fake-snap": "dummy"}],
+                expected=True,
+            ),
+        ),
+        ("not in store", dict(snap="missing-snap", find_result=[], expected=False)),
+        (
+            "not in store with channel",
+            dict(snap="missing-snap/latest/stable", find_result=[], expected=False),
+        ),
     ]
 
     def test_is_in_store(self):
@@ -207,24 +237,48 @@ class SnapPackageIsInStoreTest(SnapPackageBaseTestCase):
 class SnapPackageIsClassicTest(SnapPackageBaseTestCase):
 
     scenarios = [
-        ('classic', dict(
-            snap='fake-snap/classic/stable',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'classic/stable': {'confinement': 'classic'}}}}],
-            expected=True)),
-        ('strict', dict(
-            snap='fake-snap/strict/stable',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'strict/stable': {'confinement': 'strict'}}}}],
-            expected=False)),
-        ('devmode', dict(
-            snap='fake-snap/devmode/stable',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'devmode/stable': {'confinement': 'devmode'}}}}],
-            expected=False)),
+        (
+            "classic",
+            dict(
+                snap="fake-snap/classic/stable",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"classic/stable": {"confinement": "classic"}}
+                        }
+                    }
+                ],
+                expected=True,
+            ),
+        ),
+        (
+            "strict",
+            dict(
+                snap="fake-snap/strict/stable",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"strict/stable": {"confinement": "strict"}}
+                        }
+                    }
+                ],
+                expected=False,
+            ),
+        ),
+        (
+            "devmode",
+            dict(
+                snap="fake-snap/devmode/stable",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"devmode/stable": {"confinement": "devmode"}}
+                        }
+                    }
+                ],
+                expected=False,
+            ),
+        ),
     ]
 
     def test_is_classic(self):
@@ -236,32 +290,53 @@ class SnapPackageIsClassicTest(SnapPackageBaseTestCase):
 class SnapPackageIsValidTest(SnapPackageBaseTestCase):
 
     scenarios = [
-        ('valid', dict(
-            snap='fake-snap',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'latest/stable': {'confinement': 'strict'}}}}],
-            expected=True)),
-        ('valid with channel', dict(
-            snap='fake-snap/strict/stable',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'strict/stable': {'confinement': 'strict'}}}}],
-            expected=True)),
-        ('valid but invalid channel', dict(
-            snap='fake-snap/non-existent/edge',
-            find_result=[{
-                'fake-snap': {'channels': {
-                    'strict/stable': {'confinement': 'strict'}}}}],
-            expected=False)),
-        ('invalid', dict(
-            snap='missing-snap',
-            find_result=[],
-            expected=False)),
-        ('invalid with channel', dict(
-            snap='missing-snap/strict/stable',
-            find_result=[],
-            expected=False)),
+        (
+            "valid",
+            dict(
+                snap="fake-snap",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"latest/stable": {"confinement": "strict"}}
+                        }
+                    }
+                ],
+                expected=True,
+            ),
+        ),
+        (
+            "valid with channel",
+            dict(
+                snap="fake-snap/strict/stable",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"strict/stable": {"confinement": "strict"}}
+                        }
+                    }
+                ],
+                expected=True,
+            ),
+        ),
+        (
+            "valid but invalid channel",
+            dict(
+                snap="fake-snap/non-existent/edge",
+                find_result=[
+                    {
+                        "fake-snap": {
+                            "channels": {"strict/stable": {"confinement": "strict"}}
+                        }
+                    }
+                ],
+                expected=False,
+            ),
+        ),
+        ("invalid", dict(snap="missing-snap", find_result=[], expected=False)),
+        (
+            "invalid with channel",
+            dict(snap="missing-snap/strict/stable", find_result=[], expected=False),
+        ),
     ]
 
     def test_is_valid(self):
@@ -271,192 +346,262 @@ class SnapPackageIsValidTest(SnapPackageBaseTestCase):
 
     def test_is_valid_classmethod(self):
         self.fake_snapd.find_result = self.find_result
-        self.assertThat(snaps.SnapPackage.is_valid_snap(self.snap),
-                        Is(self.expected))
+        self.assertThat(snaps.SnapPackage.is_valid_snap(self.snap), Is(self.expected))
 
 
 class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
-
     def setUp(self):
         super().setUp()
         self.fake_snap_command = FakeSnapCommand()
         self.useFixture(self.fake_snap_command)
 
     def test_install_classic(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'classic/stable': {'confinement': 'classic'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+        ]
 
-        snap_pkg = snaps.SnapPackage('fake-snap/classic/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.install()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'install', 'fake-snap',
-             '--channel', 'classic/stable', '--classic']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "fake-snap",
+                        "--channel",
+                        "classic/stable",
+                        "--classic",
+                    ],
+                ]
+            ),
+        )
 
     def test_install_non_classic(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.install()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'install', 'fake-snap',
-             '--channel', 'strict/stable']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "fake-snap",
+                        "--channel",
+                        "strict/stable",
+                    ],
+                ]
+            ),
+        )
 
     def test_install_logged_in(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
-        self.fake_snap_command.login('user@email.com')
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        self.fake_snap_command.login("user@email.com")
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.install()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['snap', 'install', 'fake-snap',
-             '--channel', 'strict/stable']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    ["snap", "install", "fake-snap", "--channel", "strict/stable"],
+                ]
+            ),
+        )
 
     def test_install_fails(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
         self.fake_snap_command.install_success = False
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         self.assertRaises(errors.SnapInstallError, snap_pkg.install)
 
     def test_refresh(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.refresh()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'refresh', 'fake-snap',
-             '--channel', 'strict/stable']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    [
+                        "sudo",
+                        "snap",
+                        "refresh",
+                        "fake-snap",
+                        "--channel",
+                        "strict/stable",
+                    ],
+                ]
+            ),
+        )
 
     def test_refresh_to_classic(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'classic/stable': {'confinement': 'classic'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+        ]
 
-        snap_pkg = snaps.SnapPackage('fake-snap/classic/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/classic/stable")
         snap_pkg.refresh()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'refresh', 'fake-snap',
-             '--channel', 'classic/stable', '--classic']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    [
+                        "sudo",
+                        "snap",
+                        "refresh",
+                        "fake-snap",
+                        "--channel",
+                        "classic/stable",
+                        "--classic",
+                    ],
+                ]
+            ),
+        )
 
     def test_refresh_logged_in(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
-        self.fake_snap_command.login('user@email.com')
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        self.fake_snap_command.login("user@email.com")
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         snap_pkg.refresh()
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['snap', 'refresh', 'fake-snap',
-             '--channel', 'strict/stable']]))
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    ["snap", "refresh", "fake-snap", "--channel", "strict/stable"],
+                ]
+            ),
+        )
 
     def test_refresh_fails(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'strict/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
 
-        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
         self.fake_snap_command.refresh_success = False
         self.assertRaises(errors.SnapRefreshError, snap_pkg.refresh)
 
     def test_install_snaps_returns_revision(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'latest/stable': {'confinement': 'strict'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}}
+        ]
         self.fake_snapd.snaps_result = [
-            {'name': 'fake-snap',
-             'channel': 'stable',
-             'revision': 'test-fake-snap-revision'}]
+            {
+                "name": "fake-snap",
+                "channel": "stable",
+                "revision": "test-fake-snap-revision",
+            }
+        ]
 
-        installed_snaps = snaps.install_snaps(['fake-snap'])
-        self.assertThat(
-            installed_snaps,
-            Equals(['fake-snap=test-fake-snap-revision']))
+        installed_snaps = snaps.install_snaps(["fake-snap"])
+        self.assertThat(installed_snaps, Equals(["fake-snap=test-fake-snap-revision"]))
 
     def test_install_snaps_non_existent_snap(self):
         self.fake_snapd.find_code = 404
-        self.assertRaises(errors.SnapUnavailableError,
-                          snaps.install_snaps, ['fake-snap'])
+        self.assertRaises(
+            errors.SnapUnavailableError, snaps.install_snaps, ["fake-snap"]
+        )
 
     def test_install_snaps_non_existent_channel(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'classic/stable': {'confinement': 'classic'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+        ]
 
-        self.assertRaises(errors.SnapUnavailableError,
-                          snaps.install_snaps, ['fake-snap/non-existent/edge'])
+        self.assertRaises(
+            errors.SnapUnavailableError,
+            snaps.install_snaps,
+            ["fake-snap/non-existent/edge"],
+        )
 
     def test_install_multiple_snaps(self):
-        self.fake_snapd.find_result = [{
-            'fake-snap': {'channels': {
-                'classic/stable': {'confinement': 'classic'}}}}]
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+        ]
 
         def snap_details(handler_instance, snap_name):
-            if snap_name == 'fake-snap':
-                return (200, {'channel': 'stable', 'revision': 'dummy'})
+            if snap_name == "fake-snap":
+                return (200, {"channel": "stable", "revision": "dummy"})
             # XXX The query for the new-fake-snap details must fail the first
             # time, but succeed the second.
-            elif snap_name == 'new-fake-snap':
-                if not handler_instance._private_data[
-                        'new_fake_snap_installed']:
-                    handler_instance._private_data[
-                        'new_fake_snap_installed'] = True
+            elif snap_name == "new-fake-snap":
+                if not handler_instance._private_data["new_fake_snap_installed"]:
+                    handler_instance._private_data["new_fake_snap_installed"] = True
                     return (404, {})
                 else:
-                    return (200, {'channel': 'stable', 'revision': 'dummy'})
+                    return (200, {"channel": "stable", "revision": "dummy"})
 
         self.fake_snapd.snap_details_func = snap_details
-        snaps.install_snaps([
-            'fake-snap/classic/stable',
-            'new-fake-snap'
-        ])
-        self.assertThat(self.fake_snap_command.calls, Equals([
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'refresh', 'fake-snap',
-             '--channel', 'classic/stable', '--classic'],
-            ['snap', 'whoami'],
-            ['sudo', 'snap', 'install', 'new-fake-snap']]))
+        snaps.install_snaps(["fake-snap/classic/stable", "new-fake-snap"])
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "whoami"],
+                    [
+                        "sudo",
+                        "snap",
+                        "refresh",
+                        "fake-snap",
+                        "--channel",
+                        "classic/stable",
+                        "--classic",
+                    ],
+                    ["snap", "whoami"],
+                    ["sudo", "snap", "install", "new-fake-snap"],
+                ]
+            ),
+        )
 
 
 class InstalledSnapsTestCase(SnapPackageBaseTestCase):
-
     def test_get_installed_snaps(self):
         self.fake_snapd.snaps_result = [
-            {'name': 'test-snap-1',
-             'revision': 'test-snap-1-revision'},
-            {'name': 'test-snap-2',
-             'revision': 'test-snap-2-revision'},
+            {"name": "test-snap-1", "revision": "test-snap-1-revision"},
+            {"name": "test-snap-2", "revision": "test-snap-2-revision"},
         ]
         installed_snaps = snaps.get_installed_snaps()
         self.assertThat(
             installed_snaps,
-            Equals(['test-snap-1=test-snap-1-revision',
-                    'test-snap-2=test-snap-2-revision']))
+            Equals(
+                ["test-snap-1=test-snap-1-revision", "test-snap-2=test-snap-2-revision"]
+            ),
+        )
 
 
 class SnapdNotInstalledTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
         socket_path_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+            "snapcraft.internal.repo.snaps.get_snapd_socket_path_template"
+        )
         mock_socket_path = socket_path_patcher.start()
-        mock_socket_path.return_value = 'http+unix://nonexisting'
+        mock_socket_path.return_value = "http+unix://nonexisting"
         self.addCleanup(socket_path_patcher.stop)
 
     def test_get_installed_snaps(self):

@@ -24,7 +24,6 @@ from tests import unit
 
 
 class LifecycleTestBase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -32,8 +31,9 @@ class LifecycleTestBase(unit.TestCase):
         self.useFixture(self.fake_logger)
         self.project_options = snapcraft.ProjectOptions()
 
-    def make_snapcraft_project(self, parts, snap_type=''):
-        yaml = textwrap.dedent("""\
+    def make_snapcraft_project(self, parts, snap_type=""):
+        yaml = textwrap.dedent(
+            """\
             name: test
             version: 0
             summary: test
@@ -43,10 +43,13 @@ class LifecycleTestBase(unit.TestCase):
             {type}
 
             {parts}
-            """)
+            """
+        )
 
         self.snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            yaml.format(parts=parts, type=snap_type))
+            yaml.format(parts=parts, type=snap_type)
+        )
         project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
+            snapcraft_yaml_file_path=self.snapcraft_yaml_file_path
+        )
         return project_loader.load_config(project)

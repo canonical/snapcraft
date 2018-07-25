@@ -20,7 +20,6 @@ from typing import List
 
 
 class CommandError(errors.SnapcraftError):
-
     def __init__(self, message: str) -> None:
         self.fmt = message
 
@@ -32,13 +31,14 @@ class SnapMetaGenerationError(errors.SnapcraftError):
 class MissingSnapcraftYamlKeysError(SnapMetaGenerationError):
 
     fmt = (
-        'Failed to generate snap metadata: '
-        'Missing required key(s) in snapcraft.yaml: {keys}. '
+        "Failed to generate snap metadata: "
+        "Missing required key(s) in snapcraft.yaml: {keys}. "
         "Either specify the missing key(s), or use 'adopt-info' to get them "
-        'from a part.')
+        "from a part."
+    )
 
     def __init__(self, keys: list) -> None:
-        super().__init__(keys=formatting_utils.humanize_list(keys, 'and'))
+        super().__init__(keys=formatting_utils.humanize_list(keys, "and"))
 
 
 class AdoptedPartMissingError(SnapMetaGenerationError):
@@ -46,7 +46,8 @@ class AdoptedPartMissingError(SnapMetaGenerationError):
     fmt = (
         "Failed to generate snap metadata: "
         "'adopt-info' refers to a part named {part!r}, but it is not defined "
-        "in the 'snapcraft.yaml' file.")
+        "in the 'snapcraft.yaml' file."
+    )
 
     def __init__(self, part: str) -> None:
         super().__init__(part=part)
@@ -57,7 +58,8 @@ class AdoptedPartNotParsingInfo(SnapMetaGenerationError):
     fmt = (
         "Failed to generate snap metadata: "
         "'adopt-info' refers to part {part!r}, but that part is lacking the "
-        "'parse-info' property.")
+        "'parse-info' property."
+    )
 
     def __init__(self, part: str) -> None:
         super().__init__(part=part)
@@ -73,4 +75,4 @@ class AmbiguousPassthroughKeyError(SnapMetaGenerationError):
     )
 
     def __init__(self, keys: List[str]) -> None:
-        super().__init__(keys=formatting_utils.humanize_list(keys, 'and'))
+        super().__init__(keys=formatting_utils.humanize_list(keys, "and"))

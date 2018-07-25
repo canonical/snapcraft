@@ -18,19 +18,15 @@ import subprocess
 
 from testtools.matchers import Equals
 
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import fixture_setup, integration
 
 
 class CmakeTestCase(integration.SnapdIntegrationTestCase):
-
     def test_install_and_execution(self):
-        with fixture_setup.WithoutSnapInstalled('cmake-hello'):
-            self.run_snapcraft(project_dir='cmake-hello')
+        with fixture_setup.WithoutSnapInstalled("cmake-hello"):
+            self.run_snapcraft(project_dir="cmake-hello")
             self.install_snap()
             self.assertThat(
-                subprocess.check_output(
-                    ['cmake-hello'], universal_newlines=True),
-                Equals("It's a CMake world\n"))
+                subprocess.check_output(["cmake-hello"], universal_newlines=True),
+                Equals("It's a CMake world\n"),
+            )

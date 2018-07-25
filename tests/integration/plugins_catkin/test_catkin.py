@@ -24,60 +24,54 @@ from tests import integration, skip
 
 
 class CatkinTestCase(integration.TestCase):
-
-    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    @skip.skip_unless_codename("xenial", "ROS Kinetic only targets Xenial")
     def test_shared_ros_builds_without_catkin_in_underlay(self):
         # Build the producer until we have a good staging area
-        self.copy_project_to_cwd(os.path.join('catkin-shared-ros', 'producer'))
-        self.run_snapcraft('stage')
+        self.copy_project_to_cwd(os.path.join("catkin-shared-ros", "producer"))
+        self.run_snapcraft("stage")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            underlay_tarball = os.path.join(tmpdir, 'underlay.tar.bz2')
+            underlay_tarball = os.path.join(tmpdir, "underlay.tar.bz2")
 
             # Now tar up the producer's staging area to be used in the consumer
-            subprocess.check_call(['tar', 'czf', underlay_tarball, 'stage/'])
+            subprocess.check_call(["tar", "czf", underlay_tarball, "stage/"])
 
             # Blow away the entire producer project
-            self.run_snapcraft('clean')
-            subprocess.check_call(['rm', '-rf', '*'])
+            self.run_snapcraft("clean")
+            subprocess.check_call(["rm", "-rf", "*"])
 
             # Copy the tarball back into cwd
-            os.rename(underlay_tarball, 'underlay.tar.bz2')
+            os.rename(underlay_tarball, "underlay.tar.bz2")
 
         # Now copy in and build the consumer. This should not throw exceptions.
-        self.copy_project_to_cwd(os.path.join('catkin-shared-ros', 'consumer'))
-        self.run_snapcraft('build')
+        self.copy_project_to_cwd(os.path.join("catkin-shared-ros", "consumer"))
+        self.run_snapcraft("build")
 
-    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    @skip.skip_unless_codename("xenial", "ROS Kinetic only targets Xenial")
     def test_catkin_part_builds_after_python_part(self):
-        self.copy_project_to_cwd('catkin-with-python-part')
+        self.copy_project_to_cwd("catkin-with-python-part")
 
         # This snap should be staged with no errors
-        self.run_snapcraft('stage')
+        self.run_snapcraft("stage")
 
-    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    @skip.skip_unless_codename("xenial", "ROS Kinetic only targets Xenial")
     def test_catkin_recursively_parses_rosinstall_files(self):
-        self.copy_project_to_cwd('catkin-recursive-rosinstall')
+        self.copy_project_to_cwd("catkin-recursive-rosinstall")
 
         # Unpack the git repos for the test
-        subprocess.check_call(['tar', 'xf', 'repos.tar'])
+        subprocess.check_call(["tar", "xf", "repos.tar"])
 
         # Pull should have no errors
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")
 
-        repo1_path = os.path.join(
-            self.parts_dir, 'catkin-part', 'src', 'src', 'repo1')
-        repo2_path = os.path.join(
-            self.parts_dir, 'catkin-part', 'src', 'src', 'repo2')
-        repo3_path = os.path.join(
-            self.parts_dir, 'catkin-part', 'src', 'src', 'repo3')
+        repo1_path = os.path.join(self.parts_dir, "catkin-part", "src", "src", "repo1")
+        repo2_path = os.path.join(self.parts_dir, "catkin-part", "src", "src", "repo2")
+        repo3_path = os.path.join(self.parts_dir, "catkin-part", "src", "src", "repo3")
 
-        self.assertThat(
-            os.path.join(repo1_path, 'repo1.rosinstall'), FileExists())
-        self.assertThat(os.path.join(repo1_path, 'file1'), FileContains('1\n'))
+        self.assertThat(os.path.join(repo1_path, "repo1.rosinstall"), FileExists())
+        self.assertThat(os.path.join(repo1_path, "file1"), FileContains("1\n"))
 
-        self.assertThat(
-            os.path.join(repo2_path, 'repo2.rosinstall'), FileExists())
-        self.assertThat(os.path.join(repo2_path, 'file2'), FileContains('2\n'))
+        self.assertThat(os.path.join(repo2_path, "repo2.rosinstall"), FileExists())
+        self.assertThat(os.path.join(repo2_path, "file2"), FileContains("2\n"))
 
-        self.assertThat(os.path.join(repo3_path, 'file3'), FileContains('3\n'))
+        self.assertThat(os.path.join(repo3_path, "file3"), FileContains("3\n"))

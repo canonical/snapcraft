@@ -42,9 +42,11 @@ from ._status_cache import StatusCache
 logger = logging.getLogger(__name__)
 
 
-def execute(step: steps.Step,
-            project_config: 'snapcraft.internal.project_loader._config.Config',
-            part_names: Sequence[str]=None):
+def execute(
+    step: steps.Step,
+    project_config: "snapcraft.internal.project_loader._config.Config",
+    part_names: Sequence[str] = None,
+):
     """Execute until step in the lifecycle for part_names or all parts.
 
     Lifecycle execution will happen for each step iterating over all
@@ -64,47 +66,51 @@ def execute(step: steps.Step,
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
-    installed_packages = repo.Repo.install_build_packages(
-        project_config.build_tools)
+    installed_packages = repo.Repo.install_build_packages(project_config.build_tools)
     if installed_packages is None:
         raise ValueError(
-            'The repo backend is not returning the list of installed packages')
+            "The repo backend is not returning the list of installed packages"
+        )
 
     installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
 
     os.makedirs(constants.SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
-    state_path = os.path.join(constants.SNAPCRAFT_INTERNAL_DIR, 'state')
-    with open(state_path, 'w') as state_file:
-        state_file.write(yaml.dump(
-            states.GlobalState(installed_packages, installed_snaps)))
+    state_path = os.path.join(constants.SNAPCRAFT_INTERNAL_DIR, "state")
+    with open(state_path, "w") as state_file:
+        state_file.write(
+            yaml.dump(states.GlobalState(installed_packages, installed_snaps))
+        )
 
-    if _should_get_core(project_config.data.get('confinement')):
-        _setup_core(project_config.project.deb_arch,
-                    project_config.data.get('base', 'core'))
+    if _should_get_core(project_config.data.get("confinement")):
+        _setup_core(
+            project_config.project.deb_arch, project_config.data.get("base", "core")
+        )
 
     executor = _Executor(project_config)
     executor.run(step, part_names)
     if not executor.steps_were_run:
         logger.warn(
-            'The requested action has already been taken. Consider\n'
-            'specifying parts, or clean the steps you want to run again.')
+            "The requested action has already been taken. Consider\n"
+            "specifying parts, or clean the steps you want to run again."
+        )
 
-    return {'name': project_config.data['name'],
-            'version': project_config.data.get('version'),
-            'arch': project_config.data['architectures'],
-            'type': project_config.data.get('type', '')}
+    return {
+        "name": project_config.data["name"],
+        "version": project_config.data.get("version"),
+        "arch": project_config.data["architectures"],
+        "type": project_config.data.get("type", ""),
+    }
 
 
 def _setup_core(deb_arch, base):
     core_path = common.get_core_path(base)
     if os.path.exists(core_path) and os.listdir(core_path):
-        logger.debug('{!r} already exists, skipping core setup'.format(
-            core_path))
+        logger.debug("{!r} already exists, skipping core setup".format(core_path))
         return
 
     # for backwards compatibility
-    if base == 'core':
-        snap_cache = SnapCache(project_name='snapcraft-core')
+    if base == "core":
+        snap_cache = SnapCache(project_name="snapcraft-core")
     else:
         snap_cache = SnapCache(project_name=base)
 
@@ -114,12 +120,13 @@ def _setup_core(deb_arch, base):
         # The current hash matches the filename
         current_hash = os.path.splitext(os.path.basename(core_snap))[0]
     else:
-        current_hash = ''
+        current_hash = ""
 
     with TemporaryDirectory() as d:
-        download_path = os.path.join(d, '{}.snap'.format(base))
-        download_hash = snapcraft.download(base, 'stable', download_path,
-                                           deb_arch, except_hash=current_hash)
+        download_path = os.path.join(d, "{}.snap".format(base))
+        download_hash = snapcraft.download(
+            base, "stable", download_path, deb_arch, except_hash=current_hash
+        )
         if download_hash != current_hash:
             snap_cache.cache(snap_filename=download_path)
             snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
@@ -127,20 +134,20 @@ def _setup_core(deb_arch, base):
     core_snap = snap_cache.get(deb_arch=deb_arch)
 
     # Now unpack
-    logger.info('Setting up {!r} in {!r}'.format(core_snap, core_path))
+    logger.info("Setting up {!r} in {!r}".format(core_snap, core_path))
     if os.path.exists(core_path) and not os.listdir(core_path):
-        check_call(['sudo', 'rmdir', core_path])
-    check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
-    unsquashfs_path = snapcraft.file_utils.get_tool_path('unsquashfs')
-    check_call(['sudo', unsquashfs_path, '-d', core_path, core_snap])
+        check_call(["sudo", "rmdir", core_path])
+    check_call(["sudo", "mkdir", "-p", os.path.dirname(core_path)])
+    unsquashfs_path = snapcraft.file_utils.get_tool_path("unsquashfs")
+    check_call(["sudo", unsquashfs_path, "-d", core_path, core_snap])
 
 
 def _should_get_core(confinement: str) -> bool:
-    is_env_var_set = os.environ.get('SNAPCRAFT_SETUP_CORE', False) is not False
+    is_env_var_set = os.environ.get("SNAPCRAFT_SETUP_CORE", False) is not False
     # This is a quirk so that docker users not using the Dockerfile
     # we distribute and create can automatically build classic
     is_docker_instance = common.is_docker_instance()  # type: bool
-    is_classic = (confinement == 'classic')  # type: bool
+    is_classic = confinement == "classic"  # type: bool
 
     return is_classic and (is_env_var_set or is_docker_instance)
 
@@ -148,7 +155,8 @@ def _should_get_core(confinement: str) -> bool:
 def _replace_in_part(part):
     for key, value in part.plugin.options.__dict__.items():
         replacements = project_loader.environment_to_replacements(
-            project_loader.snapcraft_part_environment(part))
+            project_loader.snapcraft_part_environment(part)
+        )
 
         value = project_loader.replace_attr(value, replacements)
         setattr(part.plugin.options, key, value)
@@ -157,7 +165,6 @@ def _replace_in_part(part):
 
 
 class _Executor:
-
     def __init__(self, project_config):
         self.config = project_config
         self.project = project_config.project
@@ -184,18 +191,21 @@ class _Executor:
                     # already been built --elopio - 20170713
                     pluginhandler.check_for_collisions(self.config.all_parts)
                 for part in parts:
-                    self._handle_step(
-                        part_names, part, step, current_step, cli_config)
+                    self._handle_step(part_names, part, step, current_step, cli_config)
 
         self._create_meta(step, processed_part_names)
 
-    def _handle_step(self, requested_part_names: Sequence[str],
-                     part: pluginhandler.PluginHandler,
-                     requested_step: steps.Step,
-                     current_step: steps.Step, cli_config) -> None:
+    def _handle_step(
+        self,
+        requested_part_names: Sequence[str],
+        part: pluginhandler.PluginHandler,
+        requested_step: steps.Step,
+        current_step: steps.Step,
+        cli_config,
+    ) -> None:
         # If this step hasn't yet run, all we need to do is run it
         if not self._cache.has_step_run(part, current_step):
-            getattr(self, '_run_{}'.format(current_step.name))(part)
+            getattr(self, "_run_{}".format(current_step.name))(part)
             return
 
         # Alright, this step has already run. In that case, a few different
@@ -208,9 +218,12 @@ class _Executor:
         #      1.1. The step is the exact step that was requested (not an
         #           earlier one).
         #      1.2. The part was explicitly specified.
-        if (requested_part_names and current_step == requested_step and
-                part.name in requested_part_names):
-            getattr(self, '_re{}'.format(current_step.name))(part)
+        if (
+            requested_part_names
+            and current_step == requested_step
+            and part.name in requested_part_names
+        ):
+            getattr(self, "_re{}".format(current_step.name))(part)
             return
 
         # 2. If a step has already run, it might be dirty, in which case we
@@ -222,77 +235,84 @@ class _Executor:
 
         # 3. If a step has already run, it might be outdated, in which case we
         #    need to update it (without cleaning if possible).
-        outdated_report = self._cache.get_outdated_report(
-            part, current_step)
+        outdated_report = self._cache.get_outdated_report(part, current_step)
         if outdated_report:
-            self._handle_outdated(
-                part, current_step, outdated_report, cli_config)
+            self._handle_outdated(part, current_step, outdated_report, cli_config)
             return
 
         # 4. The step has already run, and is up-to-date, no need to run it
         #    again.
         notify_part_progress(
-            part, 'Skipping {}'.format(current_step.name), '(already ran)')
+            part, "Skipping {}".format(current_step.name), "(already ran)"
+        )
 
     def _run_pull(self, part):
-        self._run_step(step=steps.PULL, part=part, progress='Pulling')
+        self._run_step(step=steps.PULL, part=part, progress="Pulling")
 
-    def _repull(self, part, hint=''):
+    def _repull(self, part, hint=""):
         self._rerun_step(
-            step=steps.PULL, part=part,
-            progress='Cleaning later steps and re-pulling', hint=hint)
+            step=steps.PULL,
+            part=part,
+            progress="Cleaning later steps and re-pulling",
+            hint=hint,
+        )
 
     def _run_build(self, part):
-        self._run_step(step=steps.BUILD, part=part, progress='Building')
+        self._run_step(step=steps.BUILD, part=part, progress="Building")
 
-    def _rebuild(self, part, hint=''):
+    def _rebuild(self, part, hint=""):
         self._rerun_step(
-            step=steps.BUILD, part=part,
-            progress='Cleaning later steps and re-building', hint=hint)
+            step=steps.BUILD,
+            part=part,
+            progress="Cleaning later steps and re-building",
+            hint=hint,
+        )
 
     def _run_stage(self, part):
-        self._run_step(step=steps.STAGE, part=part, progress='Staging')
+        self._run_step(step=steps.STAGE, part=part, progress="Staging")
 
-    def _restage(self, part, hint=''):
+    def _restage(self, part, hint=""):
         self._rerun_step(
-            step=steps.STAGE, part=part,
-            progress='Cleaning later steps and re-staging', hint=hint)
+            step=steps.STAGE,
+            part=part,
+            progress="Cleaning later steps and re-staging",
+            hint=hint,
+        )
 
     def _run_prime(self, part):
-        self._run_step(
-            step=steps.PRIME, part=part, progress='Priming')
+        self._run_step(step=steps.PRIME, part=part, progress="Priming")
 
-    def _reprime(self, part, hint=''):
-        self._rerun_step(
-            step=steps.PRIME, part=part, progress='Re-priming', hint=hint)
+    def _reprime(self, part, hint=""):
+        self._rerun_step(step=steps.PRIME, part=part, progress="Re-priming", hint=hint)
 
-    def _prepare_step(self, *, step: steps.Step,
-                      part: pluginhandler.PluginHandler):
+    def _prepare_step(self, *, step: steps.Step, part: pluginhandler.PluginHandler):
         common.reset_env()
         all_dependencies = self.parts_config.get_dependencies(part.name)
 
         # Filter dependencies down to only those that need to run the
         # prerequisite step
         prerequisite_step = steps.get_dependency_prerequisite_step(step)
-        dependencies = {p for p in all_dependencies
-                        if self._cache.should_step_run(p, prerequisite_step)}
+        dependencies = {
+            p
+            for p in all_dependencies
+            if self._cache.should_step_run(p, prerequisite_step)
+        }
 
         if dependencies:
             dependency_names = {p.name for p in dependencies}
             # Dependencies need to go all the way to the prerequisite step to
             # be able to share the common assets that make them a dependency
             logger.info(
-                '{!r} has dependencies that need to be {}d: {}'.format(
-                    part.name, prerequisite_step.name, ' '.join(
-                        dependency_names)))
+                "{!r} has dependencies that need to be {}d: {}".format(
+                    part.name, prerequisite_step.name, " ".join(dependency_names)
+                )
+            )
             self.run(prerequisite_step, dependency_names)
 
         # Run the preparation function for this step (if implemented)
-        preparation_function = getattr(
-            part, 'prepare_{}'.format(step.name), None)
+        preparation_function = getattr(part, "prepare_{}".format(step.name), None)
         if preparation_function:
-            notify_part_progress(
-                part, 'Preparing to {}'.format(step.name), debug=True)
+            notify_part_progress(part, "Preparing to {}".format(step.name), debug=True)
             preparation_function()
 
         common.env = self.parts_config.build_env_for_part(part)
@@ -300,7 +320,7 @@ class _Executor:
 
         part = _replace_in_part(part)
 
-    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
+    def _run_step(self, *, step: steps.Step, part, progress, hint=""):
         self._prepare_step(step=step, part=part)
 
         notify_part_progress(part, progress, hint)
@@ -315,7 +335,7 @@ class _Executor:
         self._cache.add_step_run(part, step)
         self.steps_were_run = True
 
-    def _rerun_step(self, *, step: steps.Step, part, progress, hint=''):
+    def _rerun_step(self, *, step: steps.Step, part, progress, hint=""):
         staged_state = self.config.get_project_state(steps.STAGE)
         primed_state = self.config.get_project_state(steps.PRIME)
 
@@ -333,44 +353,53 @@ class _Executor:
         if step == steps.PRIME and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
-                self.config.data, self.config.parts, self.project,
-                self.config.validator.schema)
+                self.config.data,
+                self.config.parts,
+                self.project,
+                self.config.validator.schema,
+            )
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()
         if not step.clean_if_dirty:
             if dirty_action == config.OutdatedStepAction.ERROR:
                 raise errors.StepOutdatedError(
-                    step=step, part=part.name, dirty_report=dirty_report)
+                    step=step, part=part.name, dirty_report=dirty_report
+                )
 
-        getattr(self, '_re{}'.format(step.name))(part, hint='({})'.format(
-            dirty_report.get_summary()))
+        getattr(self, "_re{}".format(step.name))(
+            part, hint="({})".format(dirty_report.get_summary())
+        )
 
     def _handle_outdated(self, part, step, outdated_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()
         if not step.clean_if_dirty:
             if dirty_action == config.OutdatedStepAction.ERROR:
                 raise errors.StepOutdatedError(
-                    step=step, part=part.name, outdated_report=outdated_report)
+                    step=step, part=part.name, outdated_report=outdated_report
+                )
 
-        update_function = getattr(part, 'update_{}'.format(step.name), None)
+        update_function = getattr(part, "update_{}".format(step.name), None)
         if update_function:
             self._prepare_step(step=step, part=part)
             notify_part_progress(
-                part, 'Updating {} step for'.format(step.name), '({})'.format(
-                    outdated_report.get_summary()))
+                part,
+                "Updating {} step for".format(step.name),
+                "({})".format(outdated_report.get_summary()),
+            )
             update_function()
 
             # We know we just ran this step, so rather than check, manually
             # twiddle the cache
             self._complete_step(part, step)
         else:
-            getattr(self, '_re{}'.format(step.name))(part, '({})'.format(
-                outdated_report.get_summary()))
+            getattr(self, "_re{}".format(step.name))(
+                part, "({})".format(outdated_report.get_summary())
+            )
 
 
-def notify_part_progress(part, progress, hint='', debug=False):
+def notify_part_progress(part, progress, hint="", debug=False):
     if debug:
-        logger.debug('%s %s %s', progress, part.name, hint)
+        logger.debug("%s %s %s", progress, part.name, hint)
     else:
-        logger.info('%s %s %s', progress, part.name, hint)
+        logger.info("%s %s %s", progress, part.name, hint)
