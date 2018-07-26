@@ -1,0 +1,14 @@
+summary: Cross-compile Go snaps
+
+environment:
+  SNAP_DIR: ../snaps/go-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage --target-arch=armhf
+  file stage/bin/go-hello | MATCH ",\s*ARM\s*,"

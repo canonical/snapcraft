@@ -10,7 +10,3 @@ parts:
       source: .
       plugin: go
       go-importpath: main
-      go-packages:
-        - main/main1
-        - main/main2
-        - main/main3

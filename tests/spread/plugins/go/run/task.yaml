@@ -1,0 +1,15 @@
+summary: Build and run a basic Go snap
+
+environment:
+  SNAP_DIR: ../snaps/go-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install go-hello_*.snap --dangerous
+  [ "$(go-hello)" = "hello world" ]

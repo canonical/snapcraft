@@ -1,0 +1,32 @@
+summary: Build and run a basic Go snap
+
+# Classic snaps don't build on 14.04
+systems: [-ubuntu-14*]
+
+environment:
+  SNAP_DIR: ../snaps/go-gotty
+
+prepare: |
+  apt install patchelf -y
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # If the system isn't Ubuntu 16.04, we'll need to stage libc6
+  if [[ "$SPREAD_SYSTEM" != ubuntu-16* ]] ; then
+    echo "    stage-packages: [libc6]" >> snap/snapcraft.yaml
+  fi
+
+  snapcraft prime
+
+  # Ensure binaries are properly patched
+  if [[ "$SPREAD_SYSTEM" = ubuntu-16* ]] ; then
+    patchelf --print-interpreter prime/bin/gotty | MATCH "/snap/core/current"
+  else
+    patchelf --print-interpreter prime/bin/gotty | MATCH "/snap/gotty/current"
+  fi
