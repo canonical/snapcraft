@@ -26,10 +26,14 @@ backends:
     key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-west1-b
     systems:
-      - ubuntu-14.04-64
-      - ubuntu-16.04-64
-      - ubuntu-17.10-64
-      - ubuntu-18.04-64
+      - ubuntu-14.04-64:
+          workers: 2
+      - ubuntu-16.04-64:
+          workers: 2
+      - ubuntu-17.10-64:
+          workers: 2
+      - ubuntu-18.04-64:
+          workers: 2
 
 exclude: [snaps-cache/]
 
@@ -79,8 +83,10 @@ prepare: |
 restore: $SETUP_DIR/restore.sh
 
 suites:
+ tests/spread/plugins/autotools/:
+   summary: tests of snapcraft's Autotools plugin
  tests/spread/plugins/go/:
-   summary: tests of snapcraft's plugins
+   summary: tests of snapcraft's Go plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out

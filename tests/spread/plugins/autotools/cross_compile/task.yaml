@@ -1,0 +1,14 @@
+summary: Cross-compile Autotools snaps
+
+environment:
+  SNAP_DIR: ../snaps/autotools-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage --target-arch=armhf
+  file stage/bin/hello | MATCH ",\s*ARM\s*,"
