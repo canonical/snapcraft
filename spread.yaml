@@ -85,6 +85,8 @@ restore: $SETUP_DIR/restore.sh
 suites:
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
+ tests/spread/plugins/cmake/:
+   summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
 

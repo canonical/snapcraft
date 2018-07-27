@@ -10,3 +10,4 @@ parts:
   my-part:
     plugin: cmake
     source: src/
+    build-packages: [g++]
