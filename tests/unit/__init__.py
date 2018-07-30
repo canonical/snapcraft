@@ -162,8 +162,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.base_environment = fixture_setup.FakeBaseEnvironment(machine=machine)
         self.useFixture(self.base_environment)
 
-        # Make sure SNAPCRAFT_DEBUG is reset between tests
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_DEBUG"))
+        # Make sure "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" is reset between tests
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG")
+        )
         self.useFixture(fixture_setup.FakeSnapcraftctl())
 
     def make_snapcraft_yaml(self, content, encoding="utf-8"):
