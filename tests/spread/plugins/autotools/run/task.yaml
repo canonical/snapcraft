@@ -1,0 +1,15 @@
+summary: Build and run a basic Autotools snap
+
+environment:
+  SNAP_DIR: ../snaps/autotools-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install autotools-hello_*.snap --dangerous
+  [ "$(autotools-hello)" = "Hello, world!" ]
