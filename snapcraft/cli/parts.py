@@ -141,11 +141,17 @@ def inspect(*, provides: str, latest_step: bool, use_json: bool, **kwargs):
             echo.info("\n".join(providing_parts))
 
     elif latest_step:
-        part_name, step, timestamp = _latest_step(config)
+        part, step, timestamp = _latest_step(config)
+        directory = part.working_directory_for_step(step)
         if use_json:
             print(
                 json.dumps(
-                    {"part": part_name, "step": step.name, "timestamp": timestamp},
+                    {
+                        "part": part.name,
+                        "step": step.name,
+                        "directory": directory,
+                        "timestamp": timestamp,
+                    },
                     sort_keys=True,
                     indent=4,
                 )
@@ -153,10 +159,11 @@ def inspect(*, provides: str, latest_step: bool, use_json: bool, **kwargs):
         else:
             echo.info(
                 "The latest step that was run is the {!r} step of the {!r} part, "
-                "which ran at {}".format(
+                "which ran at {}. The working directory for this step is {!r}".format(
                     step.name,
-                    part_name,
+                    part.name,
                     datetime.fromtimestamp(timestamp).strftime("%c"),
+                    directory,
                 )
             )
 
@@ -220,7 +227,7 @@ def _latest_step(config):
             step = part.latest_step()
             timestamp = part.step_timestamp(step)
             if latest_timestamp < timestamp:
-                latest_part = part.name
+                latest_part = part
                 latest_step = step
                 latest_timestamp = timestamp
 

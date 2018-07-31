@@ -216,6 +216,13 @@ class InspectLatestStepTest(CommandBaseTestCase):
                 "The latest step that was run is the 'build' step of the 'part1' part"
             ),
         )
+        part1_build_dir = os.path.abspath(os.path.join("parts", "part1", "build"))
+        self.expectThat(
+            result.output,
+            Contains(
+                "The working directory for this step is {!r}".format(part1_build_dir)
+            ),
+        )
 
         self.run_command(["build", "part2"])
         result = self.run_command(["inspect", "--latest-step"])
@@ -223,6 +230,13 @@ class InspectLatestStepTest(CommandBaseTestCase):
             result.output,
             Contains(
                 "The latest step that was run is the 'build' step of the 'part2' part"
+            ),
+        )
+        part2_build_dir = os.path.abspath(os.path.join("parts", "part2", "build"))
+        self.expectThat(
+            result.output,
+            Contains(
+                "The working directory for this step is {!r}".format(part2_build_dir)
             ),
         )
 
@@ -233,15 +247,19 @@ class InspectLatestStepTest(CommandBaseTestCase):
         result = json.loads(
             self.run_command(["inspect", "--json", "--latest-step"]).output
         )
+        part1_build_dir = os.path.abspath(os.path.join("parts", "part1", "build"))
         self.expectThat(result["part"], Equals("part1"))
         self.expectThat(result["step"], Equals("build"))
+        self.expectThat(result["directory"], Equals(part1_build_dir))
 
         self.run_command(["build", "part2"])
         result = json.loads(
             self.run_command(["inspect", "--json", "--latest-step"]).output
         )
+        part2_build_dir = os.path.abspath(os.path.join("parts", "part2", "build"))
         self.expectThat(result["part"], Equals("part2"))
         self.expectThat(result["step"], Equals("build"))
+        self.expectThat(result["directory"], Equals(part2_build_dir))
 
     def test_inspect_latest_step_no_steps_run(self):
         self.assertRaises(
