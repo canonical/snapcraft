@@ -62,7 +62,7 @@ class GlobalState(State):
         new_snaps = [b for b in build_snaps if b not in current_build_snaps]
         self.assets["build-snaps"] = current_build_snaps + new_snaps
 
-    def __init__(self, *, assets: Dict[str, List[str]]= None) -> None:
+    def __init__(self, *, assets: Dict[str, List[str]] = None) -> None:
         super().__init__()
         if assets is None:
             self.assets = dict()
