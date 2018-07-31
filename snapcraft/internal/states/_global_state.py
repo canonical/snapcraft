@@ -15,11 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Type, TypeVar
 
 import yaml
 
 from snapcraft.internal.states._state import State
+
+
+GlobalStateT = TypeVar("GlobalStateT", bound="GlobalState")
 
 
 def _global_state_constructor(loader, node):
@@ -35,7 +38,7 @@ class GlobalState(State):
     yaml_tag = u"!GlobalState"
 
     @classmethod
-    def load(cls, *, filepath: str):
+    def load(cls: Type[GlobalStateT], *, filepath: str) -> GlobalStateT:
         with open(filepath) as state_file:
             return yaml.load(state_file)
 
@@ -65,6 +68,6 @@ class GlobalState(State):
     def __init__(self, *, assets: Dict[str, List[str]] = None) -> None:
         super().__init__()
         if assets is None:
-            self.assets = dict()
+            self.assets = dict()  # type: Dict[str, List[str]]
         else:
             self.assets = assets
