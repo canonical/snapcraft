@@ -20,7 +20,6 @@ import shutil
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors, project_loader, mountinfo, steps
-from . import constants
 
 
 logger = logging.getLogger(__name__)
@@ -75,6 +74,11 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
                     formatting_utils.humanize_list(parts_not_being_cleaned, "and"),
                 )
             )
+
+
+def _remove_directory(directory: str) -> None:
+    if os.path.isdir(directory):
+        shutil.rmtree(directory)
 
 
 def _remove_directory_if_empty(directory):
@@ -136,7 +140,8 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir, parts
         )
-        _cleanup_internal_snapcraft_dir()
+
+        _remove_directory(project_options.internal_dir)
 
     if not being_tried:
         _remove_directory_if_empty(project_options.prime_dir)
@@ -173,11 +178,6 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     for part in parts:
         part.mark_cleaned(steps.BUILD)
         part.mark_cleaned(steps.PULL)
-
-
-def _cleanup_internal_snapcraft_dir():
-    if os.path.exists(constants.SNAPCRAFT_INTERNAL_DIR):
-        shutil.rmtree(constants.SNAPCRAFT_INTERNAL_DIR)
 
 
 def clean(project_options, parts, step=None):

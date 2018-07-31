@@ -20,8 +20,6 @@ from subprocess import check_call
 from tempfile import TemporaryDirectory
 from typing import Sequence
 
-import yaml
-
 import snapcraft
 from snapcraft import config
 from snapcraft.internal import (
@@ -35,7 +33,6 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.internal.cache import SnapCache
-from . import constants
 from ._status_cache import StatusCache
 
 
@@ -74,12 +71,10 @@ def execute(
 
     installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
 
-    os.makedirs(constants.SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
-    state_path = os.path.join(constants.SNAPCRAFT_INTERNAL_DIR, "state")
-    with open(state_path, "w") as state_file:
-        state_file.write(
-            yaml.dump(states.GlobalState(installed_packages, installed_snaps))
-        )
+    # TODO add appending functionality.
+    states.GlobalState(
+        build_packages=installed_packages, build_snaps=installed_snaps
+    ).save(filepath=project_config.project.global_state_file)
 
     if _should_get_core(project_config.data.get("confinement")):
         _setup_core(

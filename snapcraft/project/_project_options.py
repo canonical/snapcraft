@@ -231,6 +231,10 @@ class ProjectOptions:
         self._set_machine(target_deb_arch)
         self.__debug = debug
 
+        # These paths maintain backwards compatibility.
+        self.internal_dir = os.path.join(self.__project_dir, "snap", ".snapcraft")
+        self.global_state_file = os.path.join(self.internal_dir, "state")
+
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.
 
