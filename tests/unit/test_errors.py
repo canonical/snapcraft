@@ -863,6 +863,14 @@ class ErrorFormattingTestCase(unit.TestCase):
                 ),
             },
         ),
+        (
+            "NoStepsRunError",
+            {
+                "exception": errors.NoStepsRunError,
+                "kwargs": {},
+                "expected_message": "Failed to get latest step: no steps have run",
+            },
+        ),
     )
 
     def test_error_formatting(self):

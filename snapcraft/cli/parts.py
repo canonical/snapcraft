@@ -216,13 +216,16 @@ def _latest_step(config):
     latest_step = None
     latest_timestamp = 0
     for part in config.all_parts:
-        for step in steps.STEPS:
-            with contextlib.suppress(errors.StepHasNotRunError):
-                timestamp = part.step_timestamp(step)
-                if latest_timestamp < timestamp:
-                    latest_part = part.name
-                    latest_step = step
-                    latest_timestamp = timestamp
+        with contextlib.suppress(errors.NoLatestStepError):
+            step = part.latest_step()
+            timestamp = part.step_timestamp(step)
+            if latest_timestamp < timestamp:
+                latest_part = part.name
+                latest_step = step
+                latest_timestamp = timestamp
+
+    if not latest_part:
+        raise errors.NoStepsRunError()
 
     return (latest_part, latest_step, latest_timestamp)
 

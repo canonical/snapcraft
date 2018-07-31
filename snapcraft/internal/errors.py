@@ -666,3 +666,7 @@ class InvalidMountinfoFormat(SnapcraftError):
 
     def __init__(self, row):
         super().__init__(row=row)
+
+
+class NoStepsRunError(SnapcraftError):
+    fmt = "Failed to get latest step: no steps have run"

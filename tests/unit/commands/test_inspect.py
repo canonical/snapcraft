@@ -243,6 +243,13 @@ class InspectLatestStepTest(CommandBaseTestCase):
         self.expectThat(result["part"], Equals("part2"))
         self.expectThat(result["step"], Equals("build"))
 
+    def test_inspect_latest_step_no_steps_run(self):
+        self.assertRaises(
+            snapcraft.internal.errors.NoStepsRunError,
+            self.run_command,
+            ["inspect", "--latest-step"],
+        )
+
 
 class InspectLifecycleStatusTest(CommandBaseTestCase):
     def setUp(self):
