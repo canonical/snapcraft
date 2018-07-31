@@ -17,6 +17,7 @@
 import os
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Contains, Equals, Not
 
 from snapcraft import storeapi
@@ -93,9 +94,12 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
+        )
         # push metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["--debug", "push-metadata", self.snap_file])
+            result = self.run_command(["push-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertThat(
@@ -152,9 +156,11 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
-        result = self.run_command(
-            ["--debug", "push-metadata", self.snap_file, "--force"]
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
+
+        result = self.run_command(["push-metadata", self.snap_file, "--force"])
 
         self.assertThat(
             result.output, Contains("Pushing metadata to the Store (force=True)")
