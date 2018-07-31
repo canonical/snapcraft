@@ -38,14 +38,15 @@ _scenarios = [
 ]
 
 
-class _GlobalStateSaveTest(unit.TestCase):
+class GlobalStateSaveTest(unit.TestCase):
 
     scenarios = _scenarios
 
     def test_save(self):
-        global_state = GlobalState(
-            build_packages=self.build_packages, build_snaps=self.build_snaps
-        )
+        global_state = GlobalState()
+        global_state.append_build_packages(self.build_packages)
+        global_state.append_build_snaps(self.build_snaps)
+
         global_state.save(filepath="state")
 
         build_packages_str = ", ".join(self.build_packages)
@@ -66,7 +67,7 @@ class _GlobalStateSaveTest(unit.TestCase):
         )
 
 
-class _GlobalStateLoadTest(unit.TestCase):
+class GlobalStateLoadTest(unit.TestCase):
 
     scenarios = _scenarios
 
@@ -90,7 +91,7 @@ class _GlobalStateLoadTest(unit.TestCase):
         self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
 
 
-class _GlobalStateLoadMissingKeysTest(unit.TestCase):
+class GlobalStateLoadMissingKeysTest(unit.TestCase):
 
     scenarios = _scenarios
 

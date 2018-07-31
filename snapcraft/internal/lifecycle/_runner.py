@@ -71,10 +71,10 @@ def execute(
 
     installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
 
-    # TODO add appending functionality.
-    states.GlobalState(
-        build_packages=installed_packages, build_snaps=installed_snaps
-    ).save(filepath=project_config.project.global_state_file)
+    global_state = states.GlobalState()
+    global_state.append_build_packages(installed_packages)
+    global_state.append_build_snaps(installed_snaps)
+    global_state.save(filepath=project_config.project.global_state_file)
 
     if _should_get_core(project_config.data.get("confinement")):
         _setup_core(

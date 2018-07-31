@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import List
+from typing import Dict, List
 
 import yaml
 
@@ -49,9 +49,22 @@ class GlobalState(State):
     def get_build_packages(self) -> List[str]:
         return self.assets.get("build-packages", [])
 
+    def append_build_packages(self, build_packages: List[str]) -> None:
+        current_build_packages = self.get_build_packages()
+        new_packages = [b for b in build_packages if b not in current_build_packages]
+        self.assets["build-packages"] = current_build_packages + new_packages
+
     def get_build_snaps(self) -> List[str]:
         return self.assets.get("build-snaps", [])
 
-    def __init__(self, *, build_packages: List[str], build_snaps: List[str]) -> None:
+    def append_build_snaps(self, build_snaps: List[str]) -> None:
+        current_build_snaps = self.get_build_snaps()
+        new_snaps = [b for b in build_snaps if b not in current_build_snaps]
+        self.assets["build-snaps"] = current_build_snaps + new_snaps
+
+    def __init__(self, *, assets: Dict[str, List[str]]= None) -> None:
         super().__init__()
-        self.assets = {"build-packages": build_packages, "build-snaps": build_snaps}
+        if assets is None:
+            self.assets = dict()
+        else:
+            self.assets = assets
