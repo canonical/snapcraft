@@ -78,7 +78,9 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
         log_level = logging.INFO
 
     # Setup global exception handler (to be called for unhandled exceptions)
-    sys.excepthook = functools.partial(exception_handler, debug=debug)
+    sys.excepthook = functools.partial(
+        exception_handler, debug=is_snapcraft_developer_debug
+    )
 
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
