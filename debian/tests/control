@@ -8,14 +8,17 @@ Tests: integrationtests-general,
        integrationtests-plugins-java,
        integrationtests-plugins-catkin,
        integrationtests-snapd,
-       integrationtests-snapd-slow
+       integrationtests-snapd-slow,
+       integrationtests-spread
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
+         gcc,
          git,
          curl,
          mercurial,
          subversion,
+         libc6-dev,
          lxd,
          snapd (>= 2.15~),
          squashfuse,

@@ -4,8 +4,13 @@ environment:
   # FIXME: This variable is only used by the spread_tests/ suite.
   SNAPCRAFT_FROM_SNAP: "1"
 
-  # If this variable is defined, spread will install snapcraft from that
-  # channel. Otherwise, it'll look for a snap in the source tree.
+  # This variable can be set to either "deb" or "snap". It defaults to "snap".
+  SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
+
+  # If SNAPCRAFT_PACKAGE_TYPE is "snap" and this variable is defined, spread
+  # will install snapcraft from that channel. Otherwise, it'll look for a snap
+  # in the source tree. If SNAPCRAFT_PACKAGE_TYPE is "deb" this variable does
+  # nothing.
   SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
 
   SETUP_DIR: /snapcraft/tests/spread/setup
@@ -34,6 +39,89 @@ backends:
           workers: 2
       - ubuntu-18.04-64:
           workers: 2
+  autopkgtest:
+    type: adhoc
+    allocate: |
+      echo "Allocating ad-hoc $SPREAD_SYSTEM"
+      if [ -z "${ADT_ARTIFACTS}" ]; then
+        FATAL "adhoc only works inside autopkgtest"
+        exit 1
+      fi
+      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
+      ADDRESS localhost:22
+    discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
+    systems:
+      # No Trusty systems since the deb doesn't exist there
+      # Xenial
+      - ubuntu-16.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-16.04-i386:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-16.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-16.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-16.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      # Artful
+      - ubuntu-17.10-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-17.10-i386:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-17.10-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-17.10-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-17.10-s390x:
+          username: ubuntu
+          password: ubuntu
+      # Bionic
+      - ubuntu-18.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.04-i386:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.04-arm64:
+          username: ubuntu
+          password: ubuntu
+      # Cosmic
+      - ubuntu-18.10-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.10-i386:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.10-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.10-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.10-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-18.10-arm64:
+          username: ubuntu
+          password: ubuntu
 
 exclude: [snaps-cache/]
 
@@ -66,18 +154,26 @@ prepare: |
 
   apt install -y snapd
 
-  # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
-  # Otherwise, look for it in /snapcraft/.
-  if [ -z "$SNAPCRAFT_CHANNEL" ]; then
-      if stat /snapcraft/*.snap 2>/dev/null; then
-          snap install --classic --dangerous /snapcraft/*.snap
+  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
+      apt install -y snapcraft
+  elif [ "$SNAPCRAFT_PACKAGE_TYPE" = "snap" ]; then
+      # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
+      # Otherwise, look for it in /snapcraft/.
+      if [ -z "$SNAPCRAFT_CHANNEL" ]; then
+          if stat /snapcraft/*.snap 2>/dev/null; then
+              snap install --classic --dangerous /snapcraft/*.snap
+          else
+              echo "Expected a snap to exist in /snapcraft/. If your intention"\
+                   "was to install from the store, set \$SNAPCRAFT_CHANNEL."
+              exit 1
+          fi
       else
-          echo "Expected a snap to exist in /snapcraft/. If your intention"\
-               "was to install from the store, set \$SNAPCRAFT_CHANNEL."
-          exit 1
+          snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
       fi
   else
-      snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
+    echo "'$SNAPCRAFT_PACKAGE_TYPE' is not a supported snapcraft package type."\
+         " Supported types are 'deb' and 'snap'."
+    exit 1
   fi
 
 restore: $SETUP_DIR/restore.sh
