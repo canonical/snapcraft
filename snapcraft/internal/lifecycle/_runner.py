@@ -74,7 +74,7 @@ def execute(
     global_state = states.GlobalState()
     global_state.append_build_packages(installed_packages)
     global_state.append_build_snaps(installed_snaps)
-    global_state.save(filepath=project_config.project.global_state_file)
+    global_state.save(filepath=project_config.project._global_state_file)
 
     if _should_get_core(project_config.data.get("confinement")):
         _setup_core(

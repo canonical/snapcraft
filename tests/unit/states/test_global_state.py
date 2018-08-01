@@ -100,8 +100,13 @@ class GlobalStateTest(unit.TestCase):
         global_state.append_build_packages(new_packages)
         global_state.append_build_snaps(new_snaps)
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages + new_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps + new_snaps))
+        self.assertThat(
+            global_state.get_build_packages(),
+            Equals(self.build_packages + new_packages),
+        )
+        self.assertThat(
+            global_state.get_build_snaps(), Equals(self.build_snaps + new_snaps)
+        )
 
     def test_append_duplicate(self):
         global_state = GlobalState()
