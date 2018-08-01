@@ -52,6 +52,12 @@ _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     Would you like send this error data? (Yes/No/Always)"""
 )
 _MSG_SEND_TO_SENTRY_THANKS = "Thank you, sent."
+_MSG_SILENT_REPORT = "Sending an error report because SNAPCRAFT_ENABLE_SILENT_REPORT is set."
+_MSG_ALWAYS_REPORT = dedent(
+    """\
+    Sending an error report because ALWAYS was selected in a past prompt.
+    This behavior can be changed by changing the always_send entry in {}."""
+)
 
 _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
@@ -115,9 +121,7 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
 def _is_send_to_sentry() -> bool:
     # Check the environment to see if we should allow for silent reporting
     if distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
-        click.echo(
-            "Sending an error report because SNAPCRAFT_ENABLE_SILENT_REPORT is set."
-        )
+        click.echo(_MSG_SILENT_REPORT)
         return True
 
     # If ALWAYS has already been selected from before do not even bother to
@@ -126,9 +130,7 @@ def _is_send_to_sentry() -> bool:
     try:
         with _CLIConfig(read_only=True) as cli_config:
             if cli_config.get_sentry_send_always():
-                click.echo(
-                    "Sending an error report because ALWAYS was selected in a past prompt."
-                )
+                click.echo(_MSG_ALWAYS_REPORT.format(cli_config.config_path))
                 return True
     except errors.SnapcraftInvalidCLIConfigError as config_error:
         echo.warning(
@@ -183,8 +185,8 @@ def _submit_trace(exc_info):
         # Should Raven automatically log frame stacks (including locals)
         # for all calls as it would for exceptions.
         auto_log_stacks=False,
-        # Use the machine-id as the server_name value.
-        name="",
+        # Set a name to not send the real hostname.
+        name="snapcraft",
         # Removes all stacktrace context variables. This will cripple the
         # functionality of Sentry, as you’ll only get raw tracebacks,
         # but it will ensure no local scoped information is available to the
