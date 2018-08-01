@@ -38,7 +38,7 @@ _scenarios = [
 ]
 
 
-class GlobalStateSaveTest(unit.TestCase):
+class GlobalStateTest(unit.TestCase):
 
     scenarios = _scenarios
 
@@ -66,11 +66,6 @@ class GlobalStateSaveTest(unit.TestCase):
             ),
         )
 
-
-class GlobalStateLoadTest(unit.TestCase):
-
-    scenarios = _scenarios
-
     def test_load(self):
         with open("state", "w") as state_file:
             print(
@@ -90,12 +85,39 @@ class GlobalStateLoadTest(unit.TestCase):
         self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
         self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
 
+    def test_save_load_and_append(self):
+        global_state = GlobalState()
+        global_state.append_build_packages(self.build_packages)
+        global_state.append_build_snaps(self.build_snaps)
+        global_state.save(filepath="state")
 
-class GlobalStateLoadMissingKeysTest(unit.TestCase):
+        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
+        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
 
-    scenarios = _scenarios
+        new_packages = ["new-pkg1", "new-pkg2"]
+        new_snaps = ["new-snap1", "new-snap2"]
+        global_state = GlobalState.load(filepath="state")
+        global_state.append_build_packages(new_packages)
+        global_state.append_build_snaps(new_snaps)
 
-    def test_load(self):
+        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages + new_packages))
+        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps + new_snaps))
+
+    def test_append_duplicate(self):
+        global_state = GlobalState()
+        global_state.append_build_packages(self.build_packages)
+        global_state.append_build_snaps(self.build_snaps)
+
+        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
+        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+
+        global_state.append_build_packages(self.build_packages)
+        global_state.append_build_snaps(self.build_snaps)
+
+        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
+        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+
+    def test_load_with_missing(self):
         with open("state", "w") as state_file:
             print("!GlobalState", file=state_file)
             print("assets: ", file=state_file)
