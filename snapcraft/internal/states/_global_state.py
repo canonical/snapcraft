@@ -15,14 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict, List, Type, TypeVar
+from typing import Dict, List, Type
 
 import yaml
 
 from snapcraft.internal.states._state import State
-
-
-GlobalStateT = TypeVar("GlobalStateT", bound="GlobalState")
 
 
 class _GlobalStateLoader(yaml.Loader):
@@ -41,7 +38,7 @@ class GlobalState(State):
     yaml_tag = u"!GlobalState"
 
     @classmethod
-    def load(cls: Type[GlobalStateT], *, filepath: str) -> GlobalStateT:
+    def load(cls: Type["GlobalState"], *, filepath: str) -> "GlobalState":
         with open(filepath) as state_file:
             return yaml.load(state_file, _GlobalStateLoader)
 
