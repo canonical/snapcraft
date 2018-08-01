@@ -71,7 +71,12 @@ def execute(
 
     installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
 
-    global_state = states.GlobalState()
+    try:
+        global_state = states.GlobalState.load(
+            filepath=project_config.project._global_state_file
+        )
+    except FileNotFoundError:
+        global_state = states.GlobalState()
     global_state.append_build_packages(installed_packages)
     global_state.append_build_snaps(installed_snaps)
     global_state.save(filepath=project_config.project._global_state_file)
