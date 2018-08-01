@@ -25,12 +25,15 @@ from snapcraft.internal.states._state import State
 GlobalStateT = TypeVar("GlobalStateT", bound="GlobalState")
 
 
-def _global_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return GlobalState(**parameters)
+class _GlobalStateLoader(yaml.Loader):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
+        self.add_constructor(u"!GlobalState", type(self).construct_global_state)
 
-yaml.add_constructor(u"!GlobalState", _global_state_constructor)
+    def construct_global_state(self, node) -> "GlobalState":
+        parameters = self.construct_mapping(node)
+        return GlobalState(**parameters)
 
 
 class GlobalState(State):
@@ -40,7 +43,7 @@ class GlobalState(State):
     @classmethod
     def load(cls: Type[GlobalStateT], *, filepath: str) -> GlobalStateT:
         with open(filepath) as state_file:
-            return yaml.load(state_file)
+            return yaml.load(state_file, _GlobalStateLoader)
 
     def save(self, *, filepath: str) -> None:
         dirpath = os.path.dirname(filepath)
