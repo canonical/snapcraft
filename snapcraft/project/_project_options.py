@@ -222,10 +222,20 @@ class ProjectOptions:
         return self.__debug
 
     def __init__(
-        self, use_geoip=False, parallel_builds=True, target_deb_arch=None, debug=False
-    ):
-        # TODO: allow setting a different project dir
-        self.__project_dir = os.getcwd()
+        self,
+        use_geoip=False,
+        parallel_builds=True,
+        target_deb_arch=None,
+        debug=False,
+        *,
+        project_dir: str = None
+    ) -> None:
+
+        if project_dir is None:
+            self.__project_dir = os.getcwd()
+        else:
+            self.__project_dir = project_dir
+
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)

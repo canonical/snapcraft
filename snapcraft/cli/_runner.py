@@ -17,6 +17,7 @@ import functools
 import logging
 import os
 import sys
+from distutils import util
 
 import click
 
@@ -55,16 +56,19 @@ command_groups = [
 )
 @click.pass_context
 @add_build_options(hidden=True)
-@click.option("--debug", "-d", is_flag=True, envvar="SNAPCRAFT_DEBUG")
+@click.option("--debug", "-d", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
-    if debug:
+    # Debugging snapcraft itself is not tied to debugging a snapcraft project.
+    try:
+        is_snapcraft_developer_debug = util.strtobool(
+            os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n")
+        )
+    except ValueError:
+        is_snapcraft_developer_debug = False
+    if is_snapcraft_developer_debug:
         log_level = logging.DEBUG
-
-        # Setting this here so that tools run within this are also in debug
-        # mode (e.g. snapcraftctl)
-        os.environ["SNAPCRAFT_DEBUG"] = "true"
         click.echo(
             "Starting snapcraft {} from {}.".format(
                 snapcraft.__version__, os.path.dirname(__file__)
