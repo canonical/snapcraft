@@ -64,6 +64,13 @@ _MSG_ALWAYS_REPORT = dedent(
     Sending an error report because ALWAYS was selected in a past prompt.
     This behavior can be changed by changing the always_send entry in {}."""
 )
+_MSG_RAVEN_MISSING = dedent(
+    """\
+    "Submitting this error to the Snapcraft developers is not possible through the CLI
+    without Raven installed.
+    If you wish to report this issue, please copy the contents of the previous traceback
+    and submit manually at https://launchpad.net/snapcraft/+filebug."""
+)
 
 _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
@@ -99,9 +106,7 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
     if not is_snapcraft_error:
         _handle_trace_output(exc_info, is_snapcraft_managed_host)
         if not is_raven_setup:
-            echo.warning(
-                "raven is not installed on this system, cannot send data to sentry"
-            )
+            echo.warning(_MSG_RAVEN_MISSING)
         elif _is_send_to_sentry():
             _submit_trace(exc_info)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
