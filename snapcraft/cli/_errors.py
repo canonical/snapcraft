@@ -38,8 +38,12 @@ except ImportError:
 # TODO:
 # - annotate the part and lifecycle step in the message
 # - add link to privacy policy
-# - add Always option
-_MSG_TRACEBACK = dedent(
+_MSG_TRACEBACK_PRINT = dedent(
+    """\
+    Sorry, Snapcraft ran into an error when trying to running through its
+    lifecycle that generated the following traceback:"""
+)
+_MSG_TRACEBACK_FILE = dedent(
     """\
     Sorry, Snapcraft ran into an error when trying to running through its
     lifecycle that generated a trace that has been put in {!r}."""
@@ -47,12 +51,14 @@ _MSG_TRACEBACK = dedent(
 _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     """\
     You can anonymously report this issue to the snapcraft developers.
-    No other data than this traceback, this host's machine-id and the
-    version of snapcraft in use will be sent.
+    No other data than this traceback and the version of snapcraft in
+    use will be sent.
     Would you like send this error data? (Yes/No/Always)"""
 )
 _MSG_SEND_TO_SENTRY_THANKS = "Thank you, sent."
-_MSG_SILENT_REPORT = "Sending an error report because SNAPCRAFT_ENABLE_SILENT_REPORT is set."
+_MSG_SILENT_REPORT = (
+    "Sending an error report because SNAPCRAFT_ENABLE_SILENT_REPORT is set."
+)
 _MSG_ALWAYS_REPORT = dedent(
     """\
     Sending an error report because ALWAYS was selected in a past prompt.
@@ -62,8 +68,6 @@ _MSG_ALWAYS_REPORT = dedent(
 _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
-
-_MACHINE_ID_FILEPATH = os.path.join(os.path.sep, "etc", "machine-id")
 
 
 def exception_handler(exception_type, exception, exception_traceback, *, debug=False):
@@ -83,27 +87,27 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
         - a snapcraft handled error occurs, debug=False so only the
           exception message is shown
     """
+    # TODO pickle the traceback if on a manged host so the actual host can deal with it.
+    exc_info = (exception_type, exception, exception_traceback)
     exit_code = 1
     is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
     is_raven_setup = RavenClient is not None
+    is_snapcraft_managed_host = (
+        distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
+    )
 
     if not is_snapcraft_error:
-        trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
-        with open(trace_filepath, "w") as trace_file:
-            traceback.print_exception(
-                exception_type, exception, exception_traceback, file=trace_file
-            )
-        click.echo(_MSG_TRACEBACK.format(trace_filepath))
+        _handle_trace_output(exc_info, is_snapcraft_managed_host)
         if not is_raven_setup:
             echo.warning(
                 "raven is not installed on this system, cannot send data to sentry"
             )
         elif _is_send_to_sentry():
-            _submit_trace((exception_type, exception, exception_traceback))
+            _submit_trace(exc_info)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
     elif is_snapcraft_error and debug:
         exit_code = exception.get_exit_code()
-        traceback.print_exception(exception_type, exception, exception_traceback)
+        traceback.print_exception(*exc_info)
     elif is_snapcraft_error and not debug:
         exit_code = exception.get_exit_code()
         # if the error comes from running snapcraft in the container, it
@@ -116,6 +120,21 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
         exit_code = -1
 
     sys.exit(exit_code)
+
+
+def _handle_trace_output(exc_info, is_snapcraft_managed_host: bool) -> None:
+    if is_snapcraft_managed_host:
+        click.echo(_MSG_TRACEBACK_PRINT)
+        traceback.print_exception(*exc_info)
+    else:
+        trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
+        with open(trace_filepath, "w") as trace_file:
+            # mypy does not like *exc_info with a kwarg that follows
+            # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
+            traceback.print_exception(
+                exc_info[0], exc_info[1], exc_info[2], file=trace_file
+            )
+        click.echo(_MSG_TRACEBACK_FILE.format(trace_filepath))
 
 
 def _is_send_to_sentry() -> bool:
