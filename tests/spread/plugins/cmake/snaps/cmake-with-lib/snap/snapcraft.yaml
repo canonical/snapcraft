@@ -1,5 +1,5 @@
 name: cmake-with-lib
-version: '0.1'
+version: '1.0'
 summary: Test cmake rebuilds
 description: Test cmake rebuilds
 
