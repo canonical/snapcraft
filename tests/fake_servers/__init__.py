@@ -43,12 +43,16 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        data = "Test fake file"
-        self.send_response(200)
-        self.send_header("Content-Length", len(data))
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        self.wfile.write(data.encode())
+        if self.path.endswith("404-not-found"):
+            self.send_response(404)
+            self.end_headers()
+        else:
+            data = "Test fake file"
+            self.send_response(200)
+            self.send_header("Content-Length", len(data))
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(data.encode())
 
 
 class FakePartsServer(http.server.HTTPServer):

@@ -174,3 +174,48 @@ class SSHKeyFileNotFoundError(_SnapcraftError):
 
     def __init__(self, *, private_key_file_path: str) -> None:
         super().__init__(private_key_file_path=private_key_file_path)
+
+
+class BuildImageRequestError(_SnapcraftError):
+
+    fmt = (
+        "An issue was encountered when trying to retrieve the build image for {base!r}.\n"
+        "The server responded with HTTP status code {status_code!r}.\n"
+        "Contact the creator of {base!r} for further assistance."
+    )
+
+    def __init__(self, *, base: str, status_code: int) -> None:
+        super().__init__(base=base, status_code=status_code)
+
+
+class BuildImageSetupError(_SnapcraftError):
+
+    fmt = (
+        "An issue occurred when setting up the build image for this project.\n"
+        "The command exited with exit code {exit_code!r}."
+    )
+
+    def __init__(self, *, exit_code: int) -> None:
+        super().__init__(exit_code=exit_code)
+
+
+class BuildImageForBaseMissing(_SnapcraftError):
+    fmt = (
+        "Cannot find a suitable build image to use to create snaps for the "
+        "base {base!r} and architecture {snap_arch!r}.\n"
+        "Contact the creator of {base!r} for further assistance."
+    )
+
+    def __init__(self, *, base: str, snap_arch: str) -> None:
+        super().__init__(base=base, snap_arch=snap_arch)
+
+
+class BuildImageChecksumError(_SnapcraftError):
+    fmt = (
+        "Expected the {algorithm!r} calculated digest for the build image to be {expected!r}, "
+        "but it was {calculated!r}.\n"
+        "Please verify there are no network issues and try again."
+    )
+
+    def __init__(self, *, expected: str, calculated: str, algorithm: str) -> None:
+        super().__init__(expected=expected, calculated=calculated, algorithm=algorithm)

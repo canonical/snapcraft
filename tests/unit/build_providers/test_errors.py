@@ -185,6 +185,55 @@ class ErrorFormattingTest(unit.TestCase):
                 ),
             ),
         ),
+        (
+            "BuildImageRequestError",
+            dict(
+                exception=errors.BuildImageRequestError,
+                kwargs=dict(base="core18", status_code=404),
+                expected_message=(
+                    "An issue was encountered when trying to retrieve the build image for 'core18'.\n"
+                    "The server responded with HTTP status code 404.\n"
+                    "Contact the creator of 'core18' for further assistance."
+                ),
+            ),
+        ),
+        (
+            "BuildImageSetupError",
+            dict(
+                exception=errors.BuildImageSetupError,
+                kwargs=dict(exit_code=1),
+                expected_message=(
+                    "An issue occurred when setting up the build image for this project.\n"
+                    "The command exited with exit code 1."
+                ),
+            ),
+        ),
+        (
+            "BuildImageForBaseMissing",
+            dict(
+                exception=errors.BuildImageForBaseMissing,
+                kwargs=dict(base="core18", snap_arch="armhf"),
+                expected_message=(
+                    "Cannot find a suitable build image to use to create snaps for the "
+                    "base 'core18' and architecture 'armhf'.\n"
+                    "Contact the creator of 'core18' for further assistance."
+                ),
+            ),
+        ),
+        (
+            "BuildImageChecksumError",
+            dict(
+                exception=errors.BuildImageChecksumError,
+                kwargs=dict(
+                    expected="1234567890", calculated="0987654321", algorithm="sha256"
+                ),
+                expected_message=(
+                    "Expected the 'sha256' calculated digest for the build image to be '1234567890', "
+                    "but it was '0987654321'.\n"
+                    "Please verify there are no network issues and try again."
+                ),
+            ),
+        ),
     ]
 
     def test_error_formatting(self):

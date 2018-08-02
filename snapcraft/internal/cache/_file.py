@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 class FileCache(SnapcraftCache):
     """Generic file cache."""
 
-    def __init__(self):
+    def __init__(self, *, taxonomy: str = "files") -> None:
         """Create a FileCache."""
         super().__init__()
-        self.file_cache = os.path.join(self.cache_root, "files")
+        self.file_cache = os.path.join(self.cache_root, taxonomy)
 
-    def cache(self, *, filename, algorithm, hash):
+    def cache(self, *, filename: str, algorithm: str, hash: str) -> str:
         """Cache a file revision with hash in XDG cache, unless it already exists.
         :param str filename: path to the file to cache.
         :param str algorithm: algorithm used to calculate the hash as
@@ -61,7 +61,7 @@ class FileCache(SnapcraftCache):
             return None
         return cached_file_path
 
-    def get(self, *, algorithm, hash):
+    def get(self, *, algorithm: str, hash: str):
         """Get the filepath which matches the hash calculated with algorithm.
 
         :param str algorithm: algorithm used to calculate the hash as
