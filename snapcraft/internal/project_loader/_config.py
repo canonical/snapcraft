@@ -23,12 +23,12 @@ import re
 import jsonschema
 from typing import Set  # noqa: F401
 
-
 from snapcraft import project, formatting_utils
 from snapcraft.internal import deprecations, remote_parts, states, steps
 
 from ._schema import Validator
 from ._parts_config import PartsConfig
+from ._templates import apply_templates
 from ._env import (
     build_env_for_stage,
     runtime_env,
@@ -207,7 +207,7 @@ class Config:
         self.project = project
 
         # raw_snapcraft_yaml is read only, create a new copy
-        snapcraft_yaml = project.info.get_raw_snapcraft()
+        snapcraft_yaml = apply_templates(project.info.get_raw_snapcraft())
 
         self.validator = Validator(snapcraft_yaml)
         self.validator.validate()

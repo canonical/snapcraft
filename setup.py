@@ -99,6 +99,7 @@ if sys.platform == "win32":
         "include_files": [
             ("libraries", os.path.join("share", "snapcraft", "libraries")),
             ("schema", os.path.join("share", "snapcraft", "schema")),
+            ("templates", os.path.join("share", "snapcraft", "templates")),
         ],
     }
 
@@ -147,6 +148,10 @@ else:
             (
                 "share/snapcraft/libraries",
                 ["libraries/" + x for x in os.listdir("libraries")],
+            ),
+            (
+                "share/snapcraft/template-data",
+                ["templates/" + x for x in os.listdir("templates")],
             ),
         ],
         install_requires=["pysha3", "pyxdg", "requests"],
