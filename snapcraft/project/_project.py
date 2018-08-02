@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from ._project_options import ProjectOptions
 from ._project_info import ProjectInfo  # noqa: F401
 
@@ -27,10 +29,17 @@ class Project(ProjectOptions):
         *,
         use_geoip=False,
         parallel_builds=True,
-        target_deb_arch: str = None,
+        target_deb_arch=None,
         debug=False,
-        snapcraft_yaml_file_path=None
+        snapcraft_yaml_file_path=None,
+        project_dir: str = None
     ) -> None:
+
+        if project_dir is None:
+            self.project_dir = os.getcwd()
+        else:
+            self.project_dir = project_dir
+
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
@@ -38,4 +47,10 @@ class Project(ProjectOptions):
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
-        super().__init__(use_geoip, parallel_builds, target_deb_arch, debug)
+        # These paths maintain backwards compatibility.
+        self._internal_dir = os.path.join(self.project_dir, "snap", ".snapcraft")
+        self._global_state_file = os.path.join(self._internal_dir, "state")
+
+        super().__init__(
+            use_geoip, parallel_builds, target_deb_arch, debug, project_dir=project_dir
+        )

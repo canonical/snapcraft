@@ -17,6 +17,7 @@
 import os
 import subprocess
 
+import fixtures
 from testtools.matchers import Contains, FileExists
 
 from tests import integration
@@ -53,6 +54,10 @@ class PushMetadataTestCase(integration.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
 
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
+        )
+
         # Build and register the snap
         name, snap_file_path = self._build_snap()
         self.register(name)
@@ -70,6 +75,10 @@ class PushMetadataTestCase(integration.StoreTestCase):
     def test_no_push_needed_first(self):
         self.addCleanup(self.logout)
         self.login()
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
+        )
 
         # Build and register the snap
         name, snap_file_path = self._build_snap()

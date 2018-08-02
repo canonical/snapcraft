@@ -22,10 +22,10 @@ from typing import Any, Dict  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import errors, os_release, steps
-from snapcraft.internal.states import get_global_state, get_state
+from snapcraft.internal.states import GlobalState, get_state
 
 
-def annotate_snapcraft(data, parts_dir: str):
+def annotate_snapcraft(data, parts_dir: str, global_state_path: str):
     manifest = OrderedDict()  # type: Dict[str, Any]
     manifest["snapcraft-version"] = snapcraft._get_version()
 
@@ -44,8 +44,11 @@ def annotate_snapcraft(data, parts_dir: str):
         except json.decoder.JSONDecodeError as exception:
             raise errors.InvalidContainerImageInfoError(image_info) from exception
         manifest["image-info"] = image_info_dict
-    for field in ("build-packages", "build-snaps"):
-        manifest[field] = get_global_state().assets.get(field, [])
+
+    global_state = GlobalState.load(filepath=global_state_path)
+    manifest["build-packages"] = global_state.get_build_packages()
+    manifest["build-snaps"] = global_state.get_build_snaps()
+
     for part in data["parts"]:
         state_dir = os.path.join(parts_dir, part, "state")
         pull_state = get_state(state_dir, steps.PULL)

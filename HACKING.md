@@ -89,3 +89,7 @@ snap run:
 e.g.; to update the list for 16.04,
 
     ./libraries/generate_lib_list.py libraries/16.04
+
+### Enabling debug output
+
+Given that the `--debug` option in snapcraft is reserved for project specific debugging, enabling for the `logger.debug` calls is achieved by setting the "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" environment variable to a truthful value. Snapcraft's internal tools, e.g.; `snapraftctl` should pick up this environment variable as well.
