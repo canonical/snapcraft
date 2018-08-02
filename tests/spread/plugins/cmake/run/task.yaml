@@ -1,0 +1,15 @@
+summary: Build and run a basic cmake snap
+
+environment:
+  SNAP_DIR: ../snaps/cmake-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install cmake-hello_*.snap --dangerous
+  [ "$(cmake-hello)" = "hello world" ]

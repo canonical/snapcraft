@@ -1,0 +1,40 @@
+summary: Build and run a basic cmake snap
+
+environment:
+  SNAP_DIR: ../snaps/cmake-with-lib
+
+prepare: |
+  . "$SETUP_DIR/config.sh"
+  set_outdated_step_action "clean"
+
+restore: |
+  . "$SETUP_DIR/config.sh"
+  clear_config
+
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft prime)"
+
+  # Assert that cmake actually configured and built from scratch
+  echo "$output" | MATCH "The CXX compiler identification"
+  echo "$output" | MATCH "Building CXX object CMakeFiles/foo.dir/foo.cpp.o"
+  echo "$output" | MATCH "Building CXX object CMakeFiles/usefoo.dir/main.cpp.o"
+
+  [ "$(./prime/bin/usefoo)" = "foo" ]
+
+  # Modify the source code
+  cp new_foo.cpp src/foo.cpp
+
+  # Prime again. This should rebuild
+  output="$(snapcraft prime)"
+
+  # Assert that cmake did not start from scratch, and reused everything it could
+  echo "$output" | MATCH -v "The CXX compiler identification"
+  echo "$output" | MATCH -v "Building CXX object CMakeFiles/usefoo.dir/main.cpp.o"
+  echo "$output" | MATCH "Building CXX object CMakeFiles/foo.dir/foo.cpp.o"
+
+  [ "$(./prime/bin/usefoo)" = "new foo" ]
