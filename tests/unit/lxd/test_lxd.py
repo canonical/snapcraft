@@ -119,6 +119,16 @@ class CleanbuilderTestCase(LXDTestCase):
                         "config",
                         "set",
                         container_name,
+                        "environment.SNAPCRAFT_MANAGED_HOST",
+                        "yes",
+                    ]
+                ),
+                call(
+                    [
+                        "lxc",
+                        "config",
+                        "set",
+                        container_name,
                         "environment.LC_ALL",
                         "C.UTF-8",
                     ]

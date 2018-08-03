@@ -299,6 +299,7 @@ class _SnapPackaging:
         self._prime_dir = project.prime_dir
         self._parts_dir = project.parts_dir
         self._arch_triplet = project.arch_triplet
+        self._global_state_file = project._global_state_file
         self._is_host_compatible_with_base = project.is_host_compatible_with_base
         self._meta_dir = os.path.join(self._prime_dir, "meta")
         self._config_data = config_data.copy()
@@ -352,7 +353,9 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(
-                copy.deepcopy(self._config_data), self._parts_dir
+                copy.deepcopy(self._config_data),
+                self._parts_dir,
+                self._global_state_file,
             )
             with open(manifest_file_path, "w") as manifest_file:
                 yaml.dump(annotated_snapcraft, manifest_file, default_flow_style=False)

@@ -17,6 +17,7 @@
 import distutils.util
 import os
 import sys
+import tempfile
 import traceback
 from textwrap import dedent
 
@@ -37,20 +38,39 @@ except ImportError:
 # TODO:
 # - annotate the part and lifecycle step in the message
 # - add link to privacy policy
-# - add Always option
-_MSG_TRACEBACK = dedent(
+_MSG_TRACEBACK_PRINT = dedent(
     """\
     Sorry, Snapcraft ran into an error when trying to running through its
     lifecycle that generated the following traceback:"""
 )
+_MSG_TRACEBACK_FILE = dedent(
+    """\
+    Sorry, Snapcraft ran into an error when trying to running through its
+    lifecycle that generated a trace that has been put in {!r}."""
+)
 _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     """\
     You can anonymously report this issue to the snapcraft developers.
-    No other data than this traceback and the version of snapcraft in use will
-    be sent.
+    No other data than this traceback and the version of snapcraft in
+    use will be sent.
     Would you like send this error data? (Yes/No/Always)"""
 )
-_MSG_SEND_TO_SENTRY_THANKS = "Thank you for sending the report."
+_MSG_SEND_TO_SENTRY_THANKS = "Thank you, sent."
+_MSG_SILENT_REPORT = (
+    "Sending an error report because SNAPCRAFT_ENABLE_SILENT_REPORT is set."
+)
+_MSG_ALWAYS_REPORT = dedent(
+    """\
+    Sending an error report because ALWAYS was selected in a past prompt.
+    This behavior can be changed by changing the always_send entry in {}."""
+)
+_MSG_RAVEN_MISSING = dedent(
+    """\
+    "Submitting this error to the Snapcraft developers is not possible through the CLI
+    without Raven installed.
+    If you wish to report this issue, please copy the contents of the previous traceback
+    and submit manually at https://launchpad.net/snapcraft/+filebug."""
+)
 
 _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
@@ -74,30 +94,25 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
         - a snapcraft handled error occurs, debug=False so only the
           exception message is shown
     """
+    # TODO pickle the traceback if on a manged host so the actual host can deal with it.
+    exc_info = (exception_type, exception, exception_traceback)
     exit_code = 1
     is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
     is_raven_setup = RavenClient is not None
-    is_sentry_enabled = (
-        distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SENTRY", "n")) == 1
+    is_snapcraft_managed_host = (
+        distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
     )
 
-    if is_sentry_enabled and not is_snapcraft_error:
-        click.echo(_MSG_TRACEBACK)
-        traceback.print_exception(exception_type, exception, exception_traceback)
+    if not is_snapcraft_error:
+        _handle_trace_output(exc_info, is_snapcraft_managed_host)
         if not is_raven_setup:
-            echo.warning(
-                "raven is not installed on this system, cannot send data to sentry"
-            )
+            echo.warning(_MSG_RAVEN_MISSING)
         elif _is_send_to_sentry():
-            echo.info("Sending this error report.")
-            _submit_trace(exception)
+            _submit_trace(exc_info)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
-    elif not is_snapcraft_error:
-        click.echo(_MSG_TRACEBACK)
-        traceback.print_exception(exception_type, exception, exception_traceback)
     elif is_snapcraft_error and debug:
         exit_code = exception.get_exit_code()
-        traceback.print_exception(exception_type, exception, exception_traceback)
+        traceback.print_exception(*exc_info)
     elif is_snapcraft_error and not debug:
         exit_code = exception.get_exit_code()
         # if the error comes from running snapcraft in the container, it
@@ -112,13 +127,34 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
     sys.exit(exit_code)
 
 
+def _handle_trace_output(exc_info, is_snapcraft_managed_host: bool) -> None:
+    if is_snapcraft_managed_host:
+        click.echo(_MSG_TRACEBACK_PRINT)
+        traceback.print_exception(*exc_info)
+    else:
+        trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
+        with open(trace_filepath, "w") as trace_file:
+            # mypy does not like *exc_info with a kwarg that follows
+            # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
+            traceback.print_exception(
+                exc_info[0], exc_info[1], exc_info[2], file=trace_file
+            )
+        click.echo(_MSG_TRACEBACK_FILE.format(trace_filepath))
+
+
 def _is_send_to_sentry() -> bool:
+    # Check the environment to see if we should allow for silent reporting
+    if distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
+        click.echo(_MSG_SILENT_REPORT)
+        return True
+
     # If ALWAYS has already been selected from before do not even bother to
     # prompt again.
     config_errors = None
     try:
         with _CLIConfig(read_only=True) as cli_config:
             if cli_config.get_sentry_send_always():
+                click.echo(_MSG_ALWAYS_REPORT.format(cli_config.config_path))
                 return True
     except errors.SnapcraftInvalidCLIConfigError as config_error:
         echo.warning(
@@ -165,7 +201,7 @@ def _prompt_sentry():
     return click.prompt(msg, default="no", value_proc=validate).lower()
 
 
-def _submit_trace(exception):
+def _submit_trace(exc_info):
     client = RavenClient(
         "https://b0fef3e0ced2443c92143ae0d038b0a4:"
         "b7c67d7fa4ee46caae12b29a80594c54@sentry.io/277754",
@@ -173,13 +209,15 @@ def _submit_trace(exception):
         # Should Raven automatically log frame stacks (including locals)
         # for all calls as it would for exceptions.
         auto_log_stacks=False,
+        # Set a name to not send the real hostname.
+        name="snapcraft",
         # Removes all stacktrace context variables. This will cripple the
         # functionality of Sentry, as you’ll only get raw tracebacks,
         # but it will ensure no local scoped information is available to the
         # server.
-        processors=("raven.processors.RemoveStackLocalsProcessor",),
+        processors=(
+            "raven.processors.RemoveStackLocalsProcessor",
+            "raven.processors.SanitizePasswordsProcessor",
+        ),
     )
-    try:
-        raise exception
-    except Exception:
-        client.captureException()
+    client.captureException(exc_info=exc_info)

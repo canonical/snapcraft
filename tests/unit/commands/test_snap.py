@@ -629,6 +629,16 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                         "lxc",
                         "config",
                         "set",
+                        "local:snapcraft-snap-test",
+                        "environment.SNAPCRAFT_MANAGED_HOST",
+                        "yes",
+                    ]
+                ),
+                call(
+                    [
+                        "lxc",
+                        "config",
+                        "set",
                         container_name,
                         "environment.LC_ALL",
                         "C.UTF-8",
@@ -782,6 +792,16 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                         container_name,
                         "environment.SNAPCRAFT_SETUP_CORE",
                         "1",
+                    ]
+                ),
+                call(
+                    [
+                        "lxc",
+                        "config",
+                        "set",
+                        "local:snapcraft-snap-test",
+                        "environment.SNAPCRAFT_MANAGED_HOST",
+                        "yes",
                     ]
                 ),
                 call(
