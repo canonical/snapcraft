@@ -108,6 +108,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
             "requirements",
             "constraints",
             "python-packages",
+            "process-dependency-links",
             "python-version",
         ]
         resulting_pull_properties = python.PythonPlugin.get_pull_properties()

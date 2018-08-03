@@ -117,7 +117,13 @@ class PythonPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ["requirements", "constraints", "python-packages", "python-version"]
+        return [
+            "requirements",
+            "constraints",
+            "python-packages",
+            "process-dependency-links",
+            "python-version",
+        ]
 
     @property
     def plugin_build_packages(self):
