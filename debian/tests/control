@@ -13,23 +13,24 @@ Tests: integrationtests-general,
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
+         curl,
          gcc,
          git,
-         curl,
-         mercurial,
-         subversion,
          libc6-dev,
          lxd,
-         snapd (>= 2.15~),
-         squashfuse,
-         python3-pep8,
+         openssh-server,
+         mercurial,
          pyflakes,
          python-flake8,
          python3-fixtures,
+         python3-pep8,
          python3-pexpect,
          python3-pyftpdlib,
          python3-pyramid,
-         python3-testscenarios
+         python3-testscenarios,
+         snapd (>= 2.15~),
+         squashfuse,
+         subversion
 
 Tests: snapstests
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
