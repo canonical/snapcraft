@@ -827,6 +827,17 @@ class ErrorFormattingTestCase(unit.TestCase):
                 ),
             },
         ),
+        (
+            "ToolMissingError",
+            {
+                "exception": errors.ToolMissingError,
+                "kwargs": {"command_name": "runnable"},
+                "expected_message": (
+                    "A tool snapcraft depends on could not be found: 'runnable'.\n"
+                    "Ensure the tool is installed and available, and try again."
+                ),
+            },
+        ),
     )
 
     def test_error_formatting(self):

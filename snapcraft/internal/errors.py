@@ -295,6 +295,17 @@ class PluginOutdatedError(SnapcraftError):
         super().__init__(message=message)
 
 
+class ToolMissingError(SnapcraftError):
+
+    fmt = (
+        "A tool snapcraft depends on could not be found: {command_name!r}.\n"
+        "Ensure the tool is installed and available, and try again."
+    )
+
+    def __init__(self, *, command_name: str) -> None:
+        super().__init__(command_name=command_name)
+
+
 class RequiredCommandFailure(SnapcraftError):
 
     fmt = "{command!r} failed."
