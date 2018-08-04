@@ -100,7 +100,29 @@ def _get_build_images(base: str) -> Dict[str, _Image]:
 
 
 def setup(*, base: str, snap_arch: str, size: str, image_path: str) -> None:
-    """Setup an instance for base and snap_arch on sized size image_path."""
+    """Setup a build image for base and snap_arch of size at image_path.
+
+    Example usage:
+    >>> from snapcraft.internal.build_providers import _images
+    >>> _images.setup(base="core18", snap_arch="amd64", size="10G",
+                      image_path="images/core18.qcow2")
+
+    :param str base: the base of the build image to setup.
+    :param str snap_arch: the architecture of the base for the build image.
+    :param str size: the size of the disk for the build image.
+    :param str image_path: the path to create the build image.
+    :raises errors.BuildImageForBaseMissing:
+        if there is no build image defined for the requested base or snap
+        architecture.
+    :raises errors.BuildImageRequestError:
+        upon a network related issue that prevents download of the build image.
+    :raises errors.BuildImageChecksumError:
+        if the resulting downloaded build image does not match the expected
+        checksum.
+    :raises errors.BuildImageSetupError:
+        if a build image cannot be created due to tooling or other system
+        issues (e.g.; space issues).
+    """
     try:
         image = _get_build_images(base)[snap_arch]
     except KeyError as key_error:

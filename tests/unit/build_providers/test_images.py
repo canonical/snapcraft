@@ -19,13 +19,13 @@ from unittest import mock
 
 from testtools.matchers import Equals, FileExists
 
-from snapcraft.internal.build_providers import errors, images
+from snapcraft.internal.build_providers import errors, _images
 from tests import unit
 
 
 class ImageTest(unit.FakeFileHTTPServerBasedTestCase):
     def test_get(self):
-        image = images._Image(
+        image = _images._Image(
             base="core18",
             snap_arch="amd64",
             url="http://{}:{}/image".format(*self.server.server_address),
@@ -36,7 +36,7 @@ class ImageTest(unit.FakeFileHTTPServerBasedTestCase):
         self.assertThat(image_filepath, FileExists())
 
     def test_get_twice_uses_cached_file(self):
-        image = images._Image(
+        image = _images._Image(
             base="core18",
             snap_arch="amd64",
             url="http://{}:{}/image".format(*self.server.server_address),
@@ -52,7 +52,7 @@ class ImageTest(unit.FakeFileHTTPServerBasedTestCase):
             self.assertThat(download_spy.call_count, Equals(1))
 
     def test_get_bad_request(self):
-        image = images._Image(
+        image = _images._Image(
             base="core18",
             snap_arch="amd64",
             url="http://{}:{}/404-not-found".format(*self.server.server_address),
@@ -62,7 +62,7 @@ class ImageTest(unit.FakeFileHTTPServerBasedTestCase):
         self.assertRaises(errors.BuildImageRequestError, image.get)
 
     def test_get_bad_checksum(self):
-        image = images._Image(
+        image = _images._Image(
             base="core18",
             snap_arch="amd64",
             url="http://{}:{}/image".format(*self.server.server_address),
@@ -74,7 +74,7 @@ class ImageTest(unit.FakeFileHTTPServerBasedTestCase):
 
 class SetupTest(unit.TestCase):
     def test_setup(self):
-        patcher = mock.patch.object(images._Image, "get")
+        patcher = mock.patch.object(_images._Image, "get")
         image_get_mock = patcher.start()
         image_get_mock.return_value = "base-build-image.qcow2"
         self.addCleanup(patcher.stop)
@@ -83,12 +83,12 @@ class SetupTest(unit.TestCase):
         call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.object(images, "get_tool_path")
+        patcher = mock.patch.object(_images, "get_tool_path")
         tool_mock = patcher.start()
         tool_mock.return_value = "qemu-img-fake-tool"
         self.addCleanup(patcher.stop)
 
-        images.setup(
+        _images.setup(
             base="core16", snap_arch="amd64", size="1G", image_path="image.qcow2"
         )
 
@@ -110,7 +110,7 @@ class SetupTest(unit.TestCase):
     def test_setup_bad_base(self):
         self.assertRaises(
             errors.BuildImageForBaseMissing,
-            images.setup,
+            _images.setup,
             base="bad-base",
             snap_arch="amd64",
             size="1G",
@@ -120,7 +120,7 @@ class SetupTest(unit.TestCase):
     def test_setup_bad_snap_arch(self):
         self.assertRaises(
             errors.BuildImageForBaseMissing,
-            images.setup,
+            _images.setup,
             base="core18",
             snap_arch="bad-arch",
             size="1G",
