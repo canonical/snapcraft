@@ -191,9 +191,9 @@ class ErrorFormattingTest(unit.TestCase):
                 exception=errors.BuildImageRequestError,
                 kwargs=dict(base="core18", status_code=404),
                 expected_message=(
-                    "An issue was encountered when trying to retrieve the build image for 'core18'.\n"
+                    "Failed to retrieve build image for 'core18': "
                     "The server responded with HTTP status code 404.\n"
-                    "Contact the creator of 'core18' for further assistance."
+                    "Contact the creator of 'core18' for assistance if the issue persists."
                 ),
             ),
         ),
@@ -203,7 +203,7 @@ class ErrorFormattingTest(unit.TestCase):
                 exception=errors.BuildImageSetupError,
                 kwargs=dict(exit_code=1),
                 expected_message=(
-                    "An issue occurred when setting up the build image for this project.\n"
+                    "Failed to set up the build image for this project: "
                     "The command exited with exit code 1."
                 ),
             ),
@@ -214,9 +214,8 @@ class ErrorFormattingTest(unit.TestCase):
                 exception=errors.BuildImageForBaseMissing,
                 kwargs=dict(base="core18", snap_arch="armhf"),
                 expected_message=(
-                    "Cannot find a suitable build image to use to create snaps for the "
-                    "base 'core18' and architecture 'armhf'.\n"
-                    "Contact the creator of 'core18' for further assistance."
+                    "Cannot find suitable build image for base 'core18' and architecture 'armhf'.\n"
+                    "Contact the creator of 'core18' for assistance."
                 ),
             ),
         ),

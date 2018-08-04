@@ -179,9 +179,9 @@ class SSHKeyFileNotFoundError(_SnapcraftError):
 class BuildImageRequestError(_SnapcraftError):
 
     fmt = (
-        "An issue was encountered when trying to retrieve the build image for {base!r}.\n"
+        "Failed to retrieve build image for {base!r}: "
         "The server responded with HTTP status code {status_code!r}.\n"
-        "Contact the creator of {base!r} for further assistance."
+        "Contact the creator of {base!r} for assistance if the issue persists."
     )
 
     def __init__(self, *, base: str, status_code: int) -> None:
@@ -191,7 +191,7 @@ class BuildImageRequestError(_SnapcraftError):
 class BuildImageSetupError(_SnapcraftError):
 
     fmt = (
-        "An issue occurred when setting up the build image for this project.\n"
+        "Failed to set up the build image for this project: "
         "The command exited with exit code {exit_code!r}."
     )
 
@@ -201,9 +201,8 @@ class BuildImageSetupError(_SnapcraftError):
 
 class BuildImageForBaseMissing(_SnapcraftError):
     fmt = (
-        "Cannot find a suitable build image to use to create snaps for the "
-        "base {base!r} and architecture {snap_arch!r}.\n"
-        "Contact the creator of {base!r} for further assistance."
+        "Cannot find suitable build image for base {base!r} and architecture {snap_arch!r}.\n"
+        "Contact the creator of {base!r} for assistance."
     )
 
     def __init__(self, *, base: str, snap_arch: str) -> None:
