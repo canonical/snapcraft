@@ -37,7 +37,7 @@ class _Image:
         self.checksum = checksum
         self.algorithm = algorithm
 
-        self._image_cache = FileCache(taxonomy="build-images-{}".format(self.base))
+        self._image_cache = FileCache(namespace="build-images-{}".format(self.base))
 
     def _download_and_cache(self) -> str:
         request = requests.get(self.url, stream=True, allow_redirects=True)

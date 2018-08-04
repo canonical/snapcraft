@@ -26,10 +26,14 @@ logger = logging.getLogger(__name__)
 class FileCache(SnapcraftCache):
     """Generic file cache."""
 
-    def __init__(self, *, taxonomy: str = "files") -> None:
-        """Create a FileCache."""
+    def __init__(self, *, namespace: str = "files") -> None:
+        """Create a FileCache under namespace.
+
+        :param str namespace: set the namespace for the cache
+                              (default: "files").
+        """
         super().__init__()
-        self.file_cache = os.path.join(self.cache_root, taxonomy)
+        self.file_cache = os.path.join(self.cache_root, namespace)
 
     def cache(self, *, filename: str, algorithm: str, hash: str) -> str:
         """Cache a file revision with hash in XDG cache, unless it already exists.
