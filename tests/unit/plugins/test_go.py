@@ -604,3 +604,28 @@ class GoPluginTestCase(unit.TestCase):
             cwd=plugin._gopath_src,
             env=mock.ANY,
         )
+
+    def test_build_stage_packages_default(self):
+        class Options:
+            source = "dir"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        self.assertIn("golang-go", plugin.build_packages)
+
+    def test_build_stage_packages_with_go_build_snap(self):
+        class Options:
+            source = "dir"
+            go_importpath = ""
+            build_snaps = ["go"]
+
+        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        self.assertNotIn("golang-go", plugin.build_packages)
+
+    def test_build_stage_packages_with_go_build_snap_channel(self):
+        class Options:
+            source = "dir"
+            go_importpath = ""
+            build_snaps = ["go/foo"]
+
+        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        self.assertNotIn("golang-go", plugin.build_packages)
