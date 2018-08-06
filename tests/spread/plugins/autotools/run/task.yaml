@@ -8,10 +8,6 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-# Snaps can't install in armhf autopkgtest runners (get a "connection
-# refused").
-systems: [-ubuntu-*-armhf]
-
 execute: |
   cd "$SNAP_DIR"
   snapcraft
