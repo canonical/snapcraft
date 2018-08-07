@@ -8,18 +8,14 @@ Tests: integrationtests-general,
        integrationtests-plugins-java,
        integrationtests-plugins-catkin,
        integrationtests-snapd,
-       integrationtests-snapd-slow,
-       integrationtests-spread
+       integrationtests-snapd-slow
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,
          curl,
          fuse,
-         gcc,
          git,
-         libc6-dev,
          lxd,
-         openssh-server,
          mercurial,
          pyflakes,
          python-flake8,
@@ -33,11 +29,21 @@ Depends: @,
          squashfuse,
          subversion
 
+Tests: integrationtests-spread
+Restrictions: needs-root, allow-stderr, isolation-machine, rw-build-tree
+Depends: @,
+         gcc,
+         fuse,
+         libc6-dev,
+         openssh-server,
+         snapd (>= 2.15~),
+
 Tests: snapstests
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          git,
          curl,
+         fuse,
          python3-fixtures,
          python3-pexpect,
          python3-requests-unixsocket,
