@@ -33,6 +33,7 @@ from snapcraft.internal.errors import (
     RequiredPathDoesNotExist,
     SnapcraftEnvironmentError,
     SnapcraftCopyFileNotFoundError,
+    ToolMissingError,
 )
 
 if sys.version_info < (3, 6):
@@ -330,29 +331,32 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
     return hasher.hexdigest()
 
 
-def get_tool_path(command_name):
+def get_tool_path(command_name: str) -> str:
     """Return the path to the given command
 
-    By default this utilizes the PATH, but if Snapcraft is running out of the
-    snap or out of Docker, it ensures it's using the one in the snap, not the
-    host.
+    Return a path to command_name, if Snapcraft is running out of the snap or out
+    of Docker, it ensures it is using the one in the snap, not the host.
+    If a path cannot be resolved, ToolMissingError is raised.
 
+    : param str command_name: the name of the command to resolve a path for.
+    :raises ToolMissingError: if command_name cannot be resolved to a path.
     :return: Path to command
     :rtype: str
     """
-    path = command_name
-
     if common.is_snap():
-        path = _command_path_in_root(os.getenv("SNAP"), command_name)
+        command_path = _command_path_in_root(os.getenv("SNAP"), command_name)
     elif common.is_docker_instance():
-        path = _command_path_in_root(
+        command_path = _command_path_in_root(
             os.path.join(os.sep, "snap", "snapcraft", "current"), command_name
         )
-
-    if path:
-        return path
     else:
-        return command_name
+        command_path = shutil.which(command_name)
+
+    # shutil.which will return None if it cannot find command_name
+    if command_path is None:
+        raise ToolMissingError(command_name=command_name)
+
+    return command_path
 
 
 def _command_path_in_root(root, command_name):
