@@ -41,6 +41,18 @@ class SnapcraftError(Exception):
         return 2
 
 
+class SnapcraftReportableError(SnapcraftError):
+    """Base class for all snapcraft exceptions that integrate with Sentry.
+
+    An exception class inheriting from this will get a prompt to report
+    to sentry if raised and is handled by the exception handler on program
+    exit.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
+
+
 class MissingStateCleanError(SnapcraftError):
     fmt = (
         "Failed to clean: "
@@ -295,7 +307,7 @@ class PluginOutdatedError(SnapcraftError):
         super().__init__(message=message)
 
 
-class ToolMissingError(SnapcraftError):
+class ToolMissingError(SnapcraftReportableError):
 
     fmt = (
         "A tool snapcraft depends on could not be found: {command_name!r}.\n"
