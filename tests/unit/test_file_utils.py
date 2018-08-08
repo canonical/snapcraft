@@ -20,6 +20,8 @@ import subprocess
 from unittest import mock
 
 import fixtures
+import testtools
+import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft import file_utils
@@ -30,7 +32,7 @@ from snapcraft.internal.errors import (
     SnapcraftEnvironmentError,
     SnapcraftError,
 )
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class ReplaceInFileTestCase(unit.TestCase):
@@ -343,4 +345,83 @@ class TestGetLinkerFromFileErrors(unit.TestCase):
             SnapcraftEnvironmentError,
             file_utils.get_linker_version_from_file,
             linker_file="lib64/ld-linux-x86-64.so.2",
+        )
+
+
+_BIN_PATHS = [
+    os.path.join("usr", "local", "sbin"),
+    os.path.join("usr", "local", "bin"),
+    os.path.join("usr", "sbin"),
+    os.path.join("usr", "bin"),
+    os.path.join("sbin"),
+    os.path.join("bin"),
+]
+
+
+class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
+
+    scenarios = [
+        (i, dict(tool_path=os.path.join(i, "tool-command"))) for i in _BIN_PATHS
+    ]
+
+    def _patch(self, root: str):
+        tool_path = os.path.join(root, self.tool_path)
+        original_exists = os.path.exists
+
+        def _fake_exists(path):
+            if path == tool_path:
+                return True
+            else:
+                return original_exists(path)
+
+        patcher = mock.patch("os.path.exists", side_effect=_fake_exists)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_get_tool_from_host_path(self):
+        self._patch(os.path.sep)
+
+        patcher = mock.patch(
+            "shutil.which", return_value=os.path.join(os.path.sep, self.tool_path)
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.assertThat(
+            file_utils.get_tool_path("tool-command"),
+            Equals(os.path.join(os.path.sep, self.tool_path)),
+        )
+
+    def test_get_tool_from_snapcraft_snap_path(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
+        snap_root = os.path.join(os.path.sep, "snap", "snapcraft", "current")
+        self._patch(snap_root)
+
+        self.assertThat(
+            file_utils.get_tool_path("tool-command"),
+            Equals(os.path.join(snap_root, self.tool_path)),
+        )
+
+    def test_get_tool_from_docker_snap_path(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
+        snap_root = os.path.join(os.path.sep, "snap", "snapcraft", "current")
+        self._patch(snap_root)
+
+        with mock.patch(
+            "snapcraft.internal.common.is_docker_instance", return_value=True
+        ):
+            self.assertThat(
+                file_utils.get_tool_path("tool-command"),
+                Equals(os.path.join(snap_root, self.tool_path)),
+            )
+
+
+class GetToolPathErrorsTest(testtools.TestCase):
+    def test_get_tool_path_fails(self):
+        self.assertRaises(
+            file_utils.ToolMissingError,
+            file_utils.get_tool_path,
+            "non-existent-tool-command",
         )

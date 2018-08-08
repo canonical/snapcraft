@@ -19,7 +19,6 @@ backends:
   lxd:
     systems:
       - ubuntu-16.04
-      - ubuntu-17.10
       - ubuntu-18.04
   linode:
     key: "$(HOST: echo $SPREAD_LINODE_KEY)"
@@ -34,8 +33,6 @@ backends:
       - ubuntu-14.04-64:
           workers: 2
       - ubuntu-16.04-64:
-          workers: 2
-      - ubuntu-17.10-64:
           workers: 2
       - ubuntu-18.04-64:
           workers: 2
