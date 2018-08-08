@@ -1,0 +1,16 @@
+summary: Stage a copy pluginpart
+
+environment:
+  SNAP_DIR: ../snaps/copy-plugin-test
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage
+
+  # Verify that the copy plugin arranged things correctly
+  [ "$(cat stage/dst)" = "I got copied" ]
+  [ "$(cat stage/dstdir/srcdirfile.txt)" = "A file in the source directory" ]
