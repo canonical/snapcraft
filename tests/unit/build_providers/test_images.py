@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import requests
+import subprocess
 from unittest import mock
 
-from testtools.matchers import Equals, FileExists
+from testtools.matchers import Equals, DirExists, FileExists
 
 from snapcraft.internal.build_providers import errors, _images
 from tests import unit
@@ -105,6 +107,68 @@ class SetupTest(unit.TestCase):
                 "image.qcow2",
                 "1G",
             ]
+        )
+
+    def test_setup_with_dir(self):
+        patcher = mock.patch.object(_images._Image, "get")
+        image_get_mock = patcher.start()
+        image_get_mock.return_value = "base-build-image.qcow2"
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("subprocess.check_call")
+        call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.object(_images, "get_tool_path")
+        tool_mock = patcher.start()
+        tool_mock.return_value = "qemu-img-fake-tool"
+        self.addCleanup(patcher.stop)
+
+        _images.setup(
+            base="core16",
+            snap_arch="amd64",
+            size="1G",
+            image_path=os.path.join("dir", "image.qcow2"),
+        )
+
+        self.assertThat("dir", DirExists())
+        call_mock.assert_called_once_with(
+            [
+                "qemu-img-fake-tool",
+                "create",
+                "-q",
+                "-f",
+                "qcow2",
+                "-b",
+                "base-build-image.qcow2",
+                os.path.join("dir", "image.qcow2"),
+                "1G",
+            ]
+        )
+
+    def test_qemu_img_call_fails(self):
+        patcher = mock.patch.object(_images._Image, "get")
+        image_get_mock = patcher.start()
+        image_get_mock.return_value = "base-build-image.qcow2"
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("subprocess.check_call")
+        call_mock = patcher.start()
+        call_mock.side_effect = subprocess.CalledProcessError(1, ["qemu-img"])
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.object(_images, "get_tool_path")
+        tool_mock = patcher.start()
+        tool_mock.return_value = "qemu-img-fake-tool"
+        self.addCleanup(patcher.stop)
+
+        self.assertRaises(
+            errors.BuildImageSetupError,
+            _images.setup,
+            base="core16",
+            snap_arch="amd64",
+            size="1G",
+            image_path="image.qcow2",
         )
 
     def test_setup_bad_base(self):
