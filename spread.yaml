@@ -14,7 +14,6 @@ backends:
   lxd:
     systems:
       - ubuntu-16.04
-      - ubuntu-17.10
       - ubuntu-18.04
   linode:
     key: "$(HOST: echo $SPREAD_LINODE_KEY)"
@@ -29,8 +28,6 @@ backends:
       - ubuntu-14.04-64:
           workers: 2
       - ubuntu-16.04-64:
-          workers: 2
-      - ubuntu-17.10-64:
           workers: 2
       - ubuntu-18.04-64:
           workers: 2
@@ -85,10 +82,14 @@ restore: $SETUP_DIR/restore.sh
 suites:
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
+ tests/spread/plugins/copy/:
+   summary: tests of snapcraft's Copy plugin
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
+ tests/spread/plugins/nil/:
+   summary: tests of snapcraft's Nil plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out

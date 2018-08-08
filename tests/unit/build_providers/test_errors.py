@@ -185,6 +185,54 @@ class ErrorFormattingTest(unit.TestCase):
                 ),
             ),
         ),
+        (
+            "BuildImageRequestError",
+            dict(
+                exception=errors.BuildImageRequestError,
+                kwargs=dict(base="core18", status_code=404),
+                expected_message=(
+                    "Failed to retrieve build image for 'core18': "
+                    "The server responded with HTTP status code 404.\n"
+                    "Contact the creator of 'core18' for assistance if the issue persists."
+                ),
+            ),
+        ),
+        (
+            "BuildImageSetupError",
+            dict(
+                exception=errors.BuildImageSetupError,
+                kwargs=dict(exit_code=1),
+                expected_message=(
+                    "Failed to set up the build image for this project: "
+                    "The command exited with exit code 1."
+                ),
+            ),
+        ),
+        (
+            "BuildImageForBaseMissing",
+            dict(
+                exception=errors.BuildImageForBaseMissing,
+                kwargs=dict(base="core18", snap_arch="armhf"),
+                expected_message=(
+                    "Cannot find suitable build image for base 'core18' and architecture 'armhf'.\n"
+                    "Contact the creator of 'core18' for assistance."
+                ),
+            ),
+        ),
+        (
+            "BuildImageChecksumError",
+            dict(
+                exception=errors.BuildImageChecksumError,
+                kwargs=dict(
+                    expected="1234567890", calculated="0987654321", algorithm="sha256"
+                ),
+                expected_message=(
+                    "Expected the 'sha256' calculated digest for the build image to be '1234567890', "
+                    "but it was '0987654321'.\n"
+                    "Please verify there are no network issues and try again."
+                ),
+            ),
+        ),
     ]
 
     def test_error_formatting(self):

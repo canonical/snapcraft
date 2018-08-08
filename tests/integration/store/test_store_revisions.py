@@ -149,7 +149,6 @@ class RevisionsTestCase(integration.StoreTestCase):
         datetime_re = "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"
         expected = "\n".join(
             (
-                ".*",
                 "Rev.    Uploaded              Arch       Version    Channels",
                 "1       {datetime_re}  Arch: All  1          candidate\*, beta\*.*",
             )
