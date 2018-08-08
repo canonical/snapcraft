@@ -31,11 +31,11 @@ backends:
     location: computeengine/us-west1-b
     systems:
       - ubuntu-14.04-64:
-          workers: 2
+          workers: 3
       - ubuntu-16.04-64:
-          workers: 2
+          workers: 3
       - ubuntu-18.04-64:
-          workers: 2
+          workers: 3
   autopkgtest:
     type: adhoc
     allocate: |
@@ -178,6 +178,8 @@ restore: $SETUP_DIR/restore.sh
 suites:
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
+ tests/spread/plugins/catkin/:
+   summary: tests of snapcraft's Catkin plugin
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin
  tests/spread/plugins/cmake/:
