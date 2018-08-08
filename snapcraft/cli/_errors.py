@@ -157,7 +157,7 @@ def _handle_trace_output(
         click.echo(trace_file_msg_tmpl.format(trace_filepath))
 
 
-def _is_send_to_sentry() -> bool:
+def _is_send_to_sentry() -> bool:  # noqa: C901
     # Check the environment to see if we should allow for silent reporting
     if distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
         click.echo(_MSG_SILENT_REPORT)
@@ -181,7 +181,13 @@ def _is_send_to_sentry() -> bool:
     # Either ALWAYS has not been selected in a previous run or the
     # configuration for where that value is stored cannot be read, so
     # resort to prompting.
-    response = _prompt_sentry()
+    try:
+        response = _prompt_sentry()
+    except click.exceptions.Abort:
+        # This was most likely triggered by a KeyboardInterrupt so
+        # adding a new line makes things look nice.
+        print()
+        return False
     if response in _YES_VALUES:
         return True
     elif response in _NO_VALUES:
