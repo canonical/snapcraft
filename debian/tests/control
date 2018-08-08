@@ -32,8 +32,9 @@ Depends: @,
 Tests: integrationtests-spread
 Restrictions: needs-root, allow-stderr, isolation-machine, rw-build-tree
 Depends: @,
-         gcc,
          fuse,
+         gcc,
+         git,
          libc6-dev,
          openssh-server,
          snapd (>= 2.15~),
