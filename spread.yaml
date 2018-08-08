@@ -88,6 +88,8 @@ suites:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
+ tests/spread/plugins/nil/:
+   summary: tests of snapcraft's Nil plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out
