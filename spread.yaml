@@ -184,6 +184,8 @@ suites:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
+ tests/spread/plugins/godeps/:
+   summary: tests of snapcraft's Godeps plugin
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
  tests/spread/plugins/nil/:
