@@ -1,0 +1,22 @@
+summary: Stage a Ruby part and verify all binaries are there
+
+environment:
+  SNAP_DIR: ../snaps/ruby-bins-exist
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage
+
+  # Verify all important binaries are present (and executable)
+  [ -x "stage/bin/erb" ]
+  [ -x "stage/bin/gem" ]
+  [ -x "stage/bin/irb" ]
+  [ -x "stage/bin/rake" ]
+  [ -x "stage/bin/rdoc" ]
+  [ -x "stage/bin/ri" ]
+  [ -x "stage/bin/ruby" ]
