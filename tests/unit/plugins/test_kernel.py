@@ -963,12 +963,19 @@ ACCEPT=n
         branch = "master"
         flavour = "vanilla"
         self.options.kconfigflavour = flavour
-        os.mkdir("debian")
-        with open("debian/debian.env", "w") as f:
+
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        debiandir = os.path.join(plugin.sourcedir, "debian")
+        os.mkdir(debiandir)
+        with open(os.path.join(debiandir, "debian.env"), "w") as f:
             f.write("DEBIAN=debian.{}".format(branch))
-        os.mkdir("debian.{}".format(branch))
-        basedir = os.path.join("debian.{}".format(branch), "config")
-        archdir = os.path.join("debian.{}".format(branch), "config", arch)
+        os.mkdir(os.path.join(plugin.sourcedir, "debian.{}".format(branch)))
+        basedir = os.path.join(plugin.sourcedir, "debian.{}".format(branch), "config")
+        archdir = os.path.join(
+            plugin.sourcedir, "debian.{}".format(branch), "config", arch
+        )
         os.mkdir(basedir)
         os.mkdir(archdir)
         commoncfg = os.path.join(basedir, "config.common.ports")
@@ -984,10 +991,6 @@ ACCEPT=n
             f.write("ACCEPT=y\n")
         with open(flavourcfg, "w") as f:
             f.write("# ACCEPT is not set\n")
-
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
-
-        self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         plugin.build()
 

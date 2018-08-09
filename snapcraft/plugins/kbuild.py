@@ -124,7 +124,7 @@ class KBuildPlugin(BasePlugin):
 
     def assemble_ubuntu_config(self, config_path):
         try:
-            with open(os.path.join("debian", "debian.env"), "r") as f:
+            with open(os.path.join(self.sourcedir, "debian", "debian.env"), "r") as f:
                 env = f.read()
         except OSError as e:
             raise RuntimeError("Unable to access {}: {}".format(e.filename, e.strerror))
@@ -136,8 +136,12 @@ class KBuildPlugin(BasePlugin):
         flavour = self.options.kconfigflavour
 
         configfiles = []
-        baseconfigdir = os.path.join("debian.{}".format(branch), "config")
-        archconfigdir = os.path.join("debian.{}".format(branch), "config", arch)
+        baseconfigdir = os.path.join(
+            self.sourcedir, "debian.{}".format(branch), "config"
+        )
+        archconfigdir = os.path.join(
+            self.sourcedir, "debian.{}".format(branch), "config", arch
+        )
         commonconfig = os.path.join(baseconfigdir, "config.common.ports")
         ubuntuconfig = os.path.join(baseconfigdir, "config.common.ubuntu")
         archconfig = os.path.join(archconfigdir, "config.common.{}".format(arch))
