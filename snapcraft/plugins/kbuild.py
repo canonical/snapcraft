@@ -178,7 +178,8 @@ class KBuildPlugin(BasePlugin):
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
         if self.options.kconfigfile:
-            snapcraft.file_utils.link_or_copy(self.options.kconfigfile, config_path)
+            # This file gets modified, no hard links here
+            snapcraft.file_utils.copy(self.options.kconfigfile, config_path)
         elif self.options.kconfigflavour:
             self.assemble_ubuntu_config(config_path)
         else:
