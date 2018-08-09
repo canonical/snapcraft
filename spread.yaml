@@ -188,6 +188,8 @@ suites:
    summary: tests of snapcraft's Kbuild plugin
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
+ tests/spread/plugins/scons/:
+   summary: tests of snapcraft's SCons plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out

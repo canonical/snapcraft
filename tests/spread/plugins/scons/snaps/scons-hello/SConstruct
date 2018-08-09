@@ -10,7 +10,7 @@ AddOption('--prefix',
           help='installation prefix')
 
 env = Environment()
-hello = env.Program('main.c')
+hello = env.Program('hello', 'main.c')
 DESTDIR = os.environ.get('DESTDIR', '')
 
 if DESTDIR:
