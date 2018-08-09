@@ -176,6 +176,8 @@ prepare: |
 restore: $SETUP_DIR/restore.sh
 
 suites:
+ tests/spread/plugins/ament/:
+   summary: tests of snapcraft's Ament plugin
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
  tests/spread/plugins/catkin/:
