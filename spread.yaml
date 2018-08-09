@@ -186,6 +186,8 @@ suites:
    summary: tests of snapcraft's Go plugin
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
+ tests/spread/plugins/meson/:
+   summary: tests of snapcraft's Meson plugin
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
 

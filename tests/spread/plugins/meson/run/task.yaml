@@ -1,0 +1,18 @@
+summary: Build and run a basic meson snap
+
+environment:
+  SNAP_DIR: ../snaps/meson-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+# There is no meson on trusty
+systems: [-ubuntu-14.04*]
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install meson-hello_*.snap --dangerous
+  [ "$(meson-hello)" = "hello world" ]
