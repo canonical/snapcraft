@@ -100,70 +100,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stdout=subprocess.PIPE,
         )
 
-    @mock.patch("snapcraft.internal.repo.check_for_command")
-    @mock.patch("snapcraft.internal.lifecycle._packer._run_mksquashfs")
-    def test_mksquashfs_from_snap_used_if_using_snap(
-        self, mock_run_mksquashfs, mock_check_command
-    ):
-        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
-
-        self.make_snapcraft_yaml()
-
-        original_exists = os.path.exists
-
-        def _fake_exists(path):
-            if path == "/snap/snapcraft/current/usr/bin/mksquashfs":
-                return True
-            else:
-                return original_exists(path)
-
-        with mock.patch("os.path.exists", side_effect=_fake_exists):
-            self.run_command(["snap"])
-
-        mksquashfs_path = os.path.join(
-            "/snap", "snapcraft", "current", "usr", "bin", "mksquashfs"
-        )
-
-        mock_run_mksquashfs.assert_called_once_with(
-            mksquashfs_path,
-            directory=self.prime_dir,
-            snap_name="snap-test",
-            snap_type="app",
-            output_snap_name="snap-test_1.0_amd64.snap",
-        )
-
-    @mock.patch("snapcraft.internal.common.is_docker_instance")
-    @mock.patch("snapcraft.internal.repo.check_for_command")
-    @mock.patch("snapcraft.internal.lifecycle._packer._run_mksquashfs")
-    def test_mksquashfs_from_snap_used_if_docker(
-        self, mock_run_mksquashfs, mock_check_command, mock_is_docker
-    ):
-        mock_is_docker.return_value = True
-        self.make_snapcraft_yaml()
-
-        original_exists = os.path.exists
-
-        def _fake_exists(path):
-            if path == "/snap/snapcraft/current/usr/bin/mksquashfs":
-                return True
-            else:
-                return original_exists(path)
-
-        with mock.patch("os.path.exists", side_effect=_fake_exists):
-            self.run_command(["snap"])
-
-        mksquashfs_path = os.path.join(
-            "/snap", "snapcraft", "current", "usr", "bin", "mksquashfs"
-        )
-
-        mock_run_mksquashfs.assert_called_once_with(
-            mksquashfs_path,
-            directory=self.prime_dir,
-            snap_name="snap-test",
-            snap_type="app",
-            output_snap_name="snap-test_1.0_amd64.snap",
-        )
-
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type="bad-type")
 
@@ -629,6 +565,16 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                         "lxc",
                         "config",
                         "set",
+                        "local:snapcraft-snap-test",
+                        "environment.SNAPCRAFT_MANAGED_HOST",
+                        "yes",
+                    ]
+                ),
+                call(
+                    [
+                        "lxc",
+                        "config",
+                        "set",
                         container_name,
                         "environment.LC_ALL",
                         "C.UTF-8",
@@ -782,6 +728,16 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                         container_name,
                         "environment.SNAPCRAFT_SETUP_CORE",
                         "1",
+                    ]
+                ),
+                call(
+                    [
+                        "lxc",
+                        "config",
+                        "set",
+                        "local:snapcraft-snap-test",
+                        "environment.SNAPCRAFT_MANAGED_HOST",
+                        "yes",
                     ]
                 ),
                 call(

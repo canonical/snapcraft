@@ -149,18 +149,30 @@ For manual exploratory testing, the team has one mac machine available.
 
 Autopkgtests are tests for the project packaged as a deb. The unit tests are run during autopkgtests while the snapcraft deb is being built. Then the resulting deb is installed, and the integration and snaps suites are executed using the installed snapcraft.
 
-To run them locally, the easiest way is to use a LXC container. Note however that snaps in LXC need squashfuse installed, which we need to do via the `--setup-commands` option. From the root of the project, run:
+
+### How to run on Xenial
+
+The easiest way is to use a LXC container. From the root of the project, run:
 
     sudo apt install autopkgtest
-    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --- lxd ubuntu:xenial
+    adt-run --unbuilt-tree . --apt-upgrade --- lxd ubuntu:xenial
 
-It's possible to select only one of the suites, with:
+It's possible to select only one of the suites using `--testname`, for example:
 
-    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --testname=integrationtests --- lxd ubuntu:xenial
+    adt-run --unbuilt-tree . --apt-upgrade --testname=integrationtests --- lxd ubuntu:xenial
 
-or:
 
-    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --testname=snapstests --- lxd ubuntu:xenial
+### How to run on Bionic
+
+The easiest way is to use a LXC container. From the root of the project, run:
+
+    sudo apt install autopkgtest
+    autopkgtest . -U -- lxd ubuntu:xenial
+
+It's possible to select only one of the suites using `--test-name`, for example:
+
+    autopkgtest . -U --test-name=integrationtests-spread -- lxd ubuntu:xenial
+
 
 ## Spread tests for the snapcraft snap
 

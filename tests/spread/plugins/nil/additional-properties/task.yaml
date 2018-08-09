@@ -1,0 +1,15 @@
+summary: Try to build a nil snap with additional properties
+
+environment:
+  SNAP_DIR: ../snaps/nil-with-additional-properties
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  if snapcraft; then
+    ERROR "Expected snapcraft to fail due to additional property"
+  fi

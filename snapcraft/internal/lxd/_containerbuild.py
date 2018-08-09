@@ -139,7 +139,21 @@ class Containerbuild:
                 "1",
             ]
         )
-        for snapcraft_env_var in ("SNAPCRAFT_PARTS_URI", "SNAPCRAFT_BUILD_INFO"):
+        subprocess.check_call(
+            [
+                "lxc",
+                "config",
+                "set",
+                self._container_name,
+                "environment.SNAPCRAFT_MANAGED_HOST",
+                "yes",
+            ]
+        )
+        for snapcraft_env_var in (
+            "SNAPCRAFT_ENABLE_SILENT_REPORT",
+            "SNAPCRAFT_PARTS_URI",
+            "SNAPCRAFT_BUILD_INFO",
+        ):
             if os.getenv(snapcraft_env_var):
                 subprocess.check_call(
                     [

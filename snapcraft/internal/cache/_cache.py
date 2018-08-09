@@ -28,15 +28,6 @@ class SnapcraftCache:
     def __init__(self):
         self.cache_root = os.path.join(BaseDirectory.xdg_cache_home, "snapcraft")
 
-    def cache(self):
-        raise NotImplementedError
-
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def prune(self, *args, **kwargs):
-        raise NotImplementedError
-
 
 class SnapcraftProjectCache(SnapcraftCache):
     """Project specific cache"""
