@@ -1,0 +1,40 @@
+summary: Stage a complex tar-content snap
+
+environment:
+  SNAP_DIR: ../snaps/tar-content-test
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+
+  # Verify that expected directories exist
+  [ -d "stage/dir-simple" ]
+  [ -d "stage/notopdir" ]
+  [ -d "stage/onedeepdir" ]
+  [ -d "stage/destdir1" ]
+  [ -d "stage/destdir1/destdir2" ]
+
+  # Verify that expected files exist
+  [ -f "stage/flat" ]
+  [ -f "stage/flatdir/flat2" ]
+  [ -f "stage/onedeep" ]
+  [ -f "stage/onedeepdir/onedeep2" ]
+  [ -f "stage/oneflat" ]
+  [ -f "stage/top-simple" ]
+  [ -f "stage/notop" ]
+  [ -f "stage/parent" ]
+  [ -f "stage/slash" ]
+  [ -f "stage/readonly_file" ]
+  [ -f "stage/destdir1/destdir2/top-simple" ]
+
+  # Install the snap and test it
+  sudo snap install tar-content-test_*.snap --dangerous
+  [ "$(tar-content-test)" = "tarproject" ]
+
+  # Regression test for LP: #1500728
+  snapcraft pull
