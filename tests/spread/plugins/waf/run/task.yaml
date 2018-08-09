@@ -1,0 +1,15 @@
+summary: Build and run a basic waf snap
+
+environment:
+  SNAP_DIR: ../snaps/waf-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install waf-hello_*.snap --dangerous
+  [ "$(waf-hello)" = "hello world" ]

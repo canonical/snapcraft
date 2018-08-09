@@ -196,6 +196,8 @@ suites:
    summary: tests of snapcraft's Nil plugin
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
+ tests/spread/plugins/waf/:
+   summary: tests of snapcraft's Waf plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out
