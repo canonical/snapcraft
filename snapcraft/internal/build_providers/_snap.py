@@ -174,6 +174,18 @@ _STORE_ASSERTION = [
 
 
 class SnapInjector:
+    """Handle the process of adding snaps into the build environment.
+
+    The specific knowledge of the build environment where these snaps will
+    be injected is not required, instead runnables to execute the required
+    operations against the build environment are provided upon initialization.
+
+    The snaps to install or refresh in the build environment are added by calling
+    add and finally applied by calling apply. If an operation is required, the
+    revision that eventually made it into the environment is recorded in the
+    registry.
+    """
+
     def __init__(
         self,
         *,
@@ -184,6 +196,22 @@ class SnapInjector:
         snap_dir_unmounter,
         file_pusher
     ) -> None:
+        """
+        Initialize a SnapInjector instance.
+
+        :param str snap_dir: directory where snaps from the host live for the cases
+                             where injection of the snap into the build environment
+                             is possible.
+        :param str registry_filepath: path to where recordings of previusly installed
+                                      revisions of a snap can be queried and recorded.
+        :param runner: a callable which can run commands in the build environment.
+        :param snap_dir_mounter: a callable which can mount the directory where snaps live
+                                 on the host into the build environment. This callable
+                                 must mount into snap_dir.
+        :param snap_dir_unmounter: a callable which can unmount snap_dir from the environment.
+        :param file_pusher: a callable that can push file from the host into the build
+                            environment.
+        """
 
         self._snaps = []  # type: List["_SnapManager"]
         self._snap_dir = snap_dir
