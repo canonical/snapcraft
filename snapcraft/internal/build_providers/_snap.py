@@ -58,28 +58,42 @@ class _SnapManager:
         if self.__required_operation is not None:
             return self.__required_operation
 
-        snap_repo = self._get_snap_repo()
+        # Get information from the host.
+        host_snap_repo = self._get_snap_repo()
+        host_snap_info = host_snap_repo.get_local_snap_info()
 
-        # The latest revision is used in two ways:
-        # - if there is no snapcraft on the host, used to determine if
-        #   a refresh is needed (instead of a fresh install).
-        # - if there is a snapcraft on the host, used to determine if
-        #   re-injecting is required.
-        snap_info = snap_repo.get_local_snap_info()
-
-        if not snap_repo.installed and self._latest_revision is None:
+        # The evaluations for the required operation is as follows:
+        # - if the snap is not installed on the host (host_snap_repo.installed == False),
+        #   and the snap is not installed in the build environment
+        #   (_latest_revision is None), then a store install will take place.
+        # - else if the snap is not installed on the host (host_snap_repo.installed == False),
+        #   but the is previously installed revision in the build environment
+        #   (_latest_revision is not None), then a store install will take place.
+        # - else if the snap is installed on the host (host_snap_repo.installed == True),
+        #   and the snap installed in the build environment (_latest_revision) matches
+        #   the one on the host, no operation takes place.
+        # - else if the snap is installed on the host (host_snap_repo.installed == True),
+        #   and the snap installed in the build environment (_latest_revision) does not
+        #   match the one on the host, then a snap injection from the host will take place.
+        if not host_snap_repo.installed and self._latest_revision is None:
             op = _SnapOp.INSTALL
-        elif not snap_repo.installed and self._latest_revision is not None:
+        elif not host_snap_repo.installed and self._latest_revision is not None:
             op = _SnapOp.REFRESH
-        elif snap_repo.installed and self._latest_revision == snap_info["revision"]:
+        elif (
+            host_snap_repo.installed
+            and self._latest_revision == host_snap_info["revision"]
+        ):
             op = _SnapOp.NOP
-        elif snap_repo.installed and self._latest_revision != snap_info["revision"]:
+        elif (
+            host_snap_repo.installed
+            and self._latest_revision != host_snap_info["revision"]
+        ):
             op = _SnapOp.INJECT
         else:
             # This is a programmatic error
             raise RuntimeError(
                 "Unhandled scenario for {!r} (host installed: {}, latest_revision {})".format(
-                    self.snap_name, snap_repo.installed, self._latest_revision
+                    self.snap_name, host_snap_repo.installed, self._latest_revision
                 )
             )
 
@@ -90,49 +104,51 @@ class _SnapManager:
         op = self.get_op()
         if op != op.INJECT:
             return []
-        snap_repo = self._get_snap_repo()
-        snap_info = snap_repo.get_local_snap_info()
+        host_snap_repo = self._get_snap_repo()
+        host_snap_info = host_snap_repo.get_local_snap_info()
 
-        if snap_info["revision"].startswith("x"):
+        if host_snap_info["revision"].startswith("x"):
             return []
 
         assertions = []  # type: List[List[str]]
-        assertions.append(["snap-declaration", "snap-name={}".format(snap_repo.name)])
+        assertions.append(
+            ["snap-declaration", "snap-name={}".format(host_snap_repo.name)]
+        )
         assertions.append(
             [
                 "snap-revision",
-                "snap-revision={}".format(snap_info["revision"]),
-                "snap-id={}".format(snap_info["id"]),
+                "snap-revision={}".format(host_snap_info["revision"]),
+                "snap-id={}".format(host_snap_info["id"]),
             ]
         )
         return assertions
 
     def _set_data(self) -> None:
         op = self.get_op()
-        snap_repo = self._get_snap_repo()
+        host_snap_repo = self._get_snap_repo()
         install_cmd = ["sudo", "snap"]
 
         if op == _SnapOp.INJECT:
             install_cmd.append("install")
-            snap_info = snap_repo.get_local_snap_info()
-            snap_revision = snap_info["revision"]
+            host_snap_info = host_snap_repo.get_local_snap_info()
+            snap_revision = host_snap_info["revision"]
 
             if snap_revision.startswith("x"):
                 install_cmd.append("--dangerous")
 
-            if snap_info["confinement"] == "classic":
+            if host_snap_info["confinement"] == "classic":
                 install_cmd.append("--classic")
 
-            snap_file_name = "{}_{}.snap".format(snap_repo.name, snap_revision)
+            snap_file_name = "{}_{}.snap".format(host_snap_repo.name, snap_revision)
             install_cmd.append(os.path.join(self._snap_dir, snap_file_name))
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd.append(op.name.lower())
-            snap_info = snap_repo.get_store_snap_info()
-            snap_revision = snap_info["channels"]["latest/stable"]["revision"]
-            confinement = snap_info["channels"]["latest/stable"]["confinement"]
+            host_snap_info = host_snap_repo.get_store_snap_info()
+            snap_revision = host_snap_info["channels"]["latest/stable"]["revision"]
+            confinement = host_snap_info["channels"]["latest/stable"]["confinement"]
             if confinement == "classic":
                 install_cmd.append("--classic")
-            install_cmd.append(snap_repo.name)
+            install_cmd.append(host_snap_repo.name)
         elif op == _SnapOp.NOP:
             install_cmd = []
             snap_revision = None
