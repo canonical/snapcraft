@@ -1,0 +1,13 @@
+name: cmake-with-lib
+version: '1.0'
+summary: Test cmake rebuilds
+description: Test cmake rebuilds
+
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: cmake
+    source: src/
+    build-packages: [g++]

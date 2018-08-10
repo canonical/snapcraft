@@ -1,0 +1,16 @@
+summary: Build a nil snap
+
+environment:
+  SNAP_DIR: ../snaps/nil-basic
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft prime
+
+  # Verify that the only thing here is the snap metadata
+  [ "$(find prime -printf "%p ")" = "prime prime/meta prime/meta/snap.yaml " ]

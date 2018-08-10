@@ -1,0 +1,18 @@
+name: godeps
+version: '1.0'
+summary: A simple godeps project.
+description: |
+  Proves that it is possible to build a snap using godeps.
+
+grade: devel
+confinement: strict
+
+apps:
+  bcrypt:
+    command: bcrypt
+
+parts:
+  simple-godeps:
+    plugin: godeps
+    go-importpath: bcrypt
+    source: .

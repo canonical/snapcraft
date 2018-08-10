@@ -1,0 +1,17 @@
+name: copy-plugin-test
+version: '1.0'
+summary: test the copy plugin
+description: |
+  This is a basic copy snap. It just copies a file and a directory.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+
+grade: devel
+confinement: strict
+
+parts:
+  copy-example:
+    plugin: copy
+    files:
+      src: dst
+      srcdir: dstdir

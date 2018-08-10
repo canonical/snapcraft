@@ -1,0 +1,28 @@
+name: kbuild-hello
+version: '1.0'
+summary: simple example using the kbuild build system
+description: this is a basic snap using kbuild to build a hello-world
+   example program
+
+grade: devel
+confinement: strict
+
+apps:
+  myapp:
+    command: myapp
+
+parts:
+  kbuild-hello:
+    plugin: kbuild
+    source: https://github.com/embedded-it/kbuild-template
+    source-type: git
+    build-packages: [gcc, libc6-dev]
+    kconfigfile: defconfig
+    kconfigs:
+      # This is enabled in the defconfig, make sure we can override
+      - CONFIG_BAR=n
+    build-attributes: [no-install]
+    override-build: |
+      snapcraftctl build
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp myapp $SNAPCRAFT_PART_INSTALL/bin/

@@ -22,7 +22,6 @@ import fixtures
 import testscenarios
 from testtools.matchers import (
     Contains,
-    Equals,
     FileContains,
     FileExists,
     MatchesRegex,
@@ -153,28 +152,6 @@ class PrimeTestCase(integration.TestCase):
         desktop_path = os.path.join(self.prime_dir, "meta", "gui", "test-app.desktop")
 
         self.expectThat(desktop_path, FileContains(matcher=Contains("non ascíí")))
-
-    def _prime_invalid_part(self, debug):
-        exception = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft,
-            ["prime", "invalid-part-name"],
-            "prime-from-stage",
-            debug=debug,
-        )
-
-        self.assertThat(exception.returncode, Equals(2))
-        self.assertThat(
-            exception.output, Contains("part named 'invalid-part-name' is not defined")
-        )
-
-        return exception.output
-
-    def test_prime_invalid_part_no_traceback_without_debug(self):
-        self.assertThat(self._prime_invalid_part(False), Not(Contains("Traceback")))
-
-    def test_prime_invalid_part_does_traceback_with_debug(self):
-        self.assertThat(self._prime_invalid_part(True), Contains("Traceback"))
 
 
 class PrimedAssetsTestCase(testscenarios.WithScenarios, integration.TestCase):
