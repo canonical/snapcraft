@@ -1,0 +1,21 @@
+summary: Build and run catkin snap using pip dependencies
+warn-timeout: 10m
+kill-timeout: 20m
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/ros-pip
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+# ROS Kinetic only supports 16.04
+systems: [ubuntu-16.04*]
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install ros-pip_*.snap --dangerous
+  ros-pip | MATCH "Local timezone:"

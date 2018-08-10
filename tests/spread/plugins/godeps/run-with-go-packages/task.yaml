@@ -1,0 +1,27 @@
+summary: Build and run a Godeps snap using go-packages
+
+environment:
+  SNAP_DIR: ../snaps/godeps-with-go-packages
+  GOBIN/gobin: gobin
+  GOBIN/no_gobin:
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  if [ -z "$GOBIN" ]; then
+    unset GOBIN
+  fi
+
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install godeps-with-go-packages_*.snap --dangerous
+
+  # Verify that bcrypt was not built
+  [ ! -e "prime/bin/bcrypt" ]
+
+  hash="$(godeps-with-go-packages.bcrypt hash 10 password)"
+  check="$(godeps-with-go-packages.bcrypt check "$hash" password)"
+  [ "$check" = "Equal" ]
