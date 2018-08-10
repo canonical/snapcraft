@@ -6,7 +6,7 @@ follows this syntax:
 
 ```yaml
 # Keys in the root of the yaml specify the supported bases
-core:
+core16:
   apps:
     '*':
       # YAML snippet you want to add to apps using this template (e.g. `plugs`)
