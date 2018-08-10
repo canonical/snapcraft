@@ -20,8 +20,8 @@ import enum
 import logging
 import os
 import tempfile
-from typing import Callable, List
-from typing import Any, Dict, Optional  # noqa: F401
+from typing import Callable, Generator, List, Optional
+from typing import Any, Dict  # noqa: F401
 
 import yaml
 
@@ -223,7 +223,7 @@ class SnapInjector:
 
         self._registry_data = dict()  # type: Optional[Dict[str, List[Any]]]
 
-    def _load_registry(self):
+    def _load_registry(self) -> None:
         if self._registry_filepath is None or self._registry_data:
             return
         if not os.path.exists(self._registry_filepath):
@@ -232,7 +232,7 @@ class SnapInjector:
         with open(self._registry_filepath) as registry_file:
             self._registry_data = yaml.load(registry_file)
 
-    def _save_registry(self):
+    def _save_registry(self) -> None:
         if self._registry_filepath is None or self._registry_data is None:
             return
 
@@ -244,7 +244,7 @@ class SnapInjector:
             yaml.dump(self._registry_data, stream=registry_file)
 
     @contextlib.contextmanager
-    def _mounted_dir(self):
+    def _mounted_dir(self) -> Generator:
         if any((s.get_op() == _SnapOp.INJECT for s in self._snaps)):
             self._snap_dir_mounter()
             try:
@@ -254,7 +254,7 @@ class SnapInjector:
         else:
             yield
 
-    def _disable_and_wait_for_refreshes(self):
+    def _disable_and_wait_for_refreshes(self) -> None:
         # Disable autorefresh for 15 minutes,
         # https://github.com/snapcore/snapd/pull/5436/files
         now_plus_15 = datetime.datetime.now() + datetime.timedelta(minutes=15)
@@ -296,7 +296,7 @@ class SnapInjector:
             )
             self._runner(["sudo", "snap", "ack", assertion_file.name])
 
-    def _get_latest_revision(self, snap_name):
+    def _get_latest_revision(self, snap_name) -> Optional[str]:
         self._load_registry()
         try:
             return self._registry_data[snap_name][-1]["revision"]
@@ -320,7 +320,7 @@ class SnapInjector:
             )
         )
 
-    def apply(self):
+    def apply(self) -> None:
         if all((s.get_op() == _SnapOp.NOP for s in self._snaps)):
             return
 
