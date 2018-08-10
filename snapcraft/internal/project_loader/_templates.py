@@ -48,8 +48,8 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
 
-    # Get the base being used for this project (defaults to "core")
-    base = yaml_data.get("base", "core")
+    # Get the base being used for this project (defaults to "core16")
+    base = yaml_data.get("base", "core16")
 
     applied_template_names = set()  # type: Set[str]
     global_template_names = yaml_data.get("templates", [])

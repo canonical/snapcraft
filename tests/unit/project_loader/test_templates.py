@@ -39,7 +39,7 @@ class TemplateTestBase(ProjectLoaderBaseTest):
             f.write(
                 textwrap.dedent(
                     """\
-                core:
+                core16:
                     apps:
                         '*':
                             environment:
@@ -61,7 +61,7 @@ class TemplateTestBase(ProjectLoaderBaseTest):
             f.write(
                 textwrap.dedent(
                     """\
-                core:
+                core16:
                     apps:
                         '*':
                             plugs: [test-plug]
@@ -75,7 +75,7 @@ class TemplateTestBase(ProjectLoaderBaseTest):
             f.write(
                 textwrap.dedent(
                     """\
-                core:
+                core16:
                     apps:
                         '*':
                             daemon: simple
@@ -89,7 +89,7 @@ class TemplateTestBase(ProjectLoaderBaseTest):
             f.write(
                 textwrap.dedent(
                     """\
-                core:
+                core16:
                     apps:
                         '*':
                             unsupported-key: value
