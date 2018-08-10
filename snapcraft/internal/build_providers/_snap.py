@@ -20,8 +20,8 @@ import enum
 import logging
 import os
 import tempfile
-from typing import List
-from typing import Any, Dict, Union  # noqa: F401
+from typing import Callable, List
+from typing import Any, Dict, Optional  # noqa: F401
 
 import yaml
 
@@ -44,10 +44,10 @@ class _SnapManager:
         self._snap_dir = snap_dir
 
         self._latest_revision = latest_revision
-        self.__required_operation = None  # type: Union[None, _SnapOp]
-        self.__repo = None  # type: Union[None, repo.snaps.SnapPackage]
-        self.__revision = None  # type: Union[None, str]
-        self.__install_cmd = None  # type: Union[None, List[str]]
+        self.__required_operation = None  # type: Optional[_SnapOp]
+        self.__repo = None  # type: Optional[repo.snaps.SnapPackage]
+        self.__revision = None  # type: Optional[str]
+        self.__install_cmd = None  # type: Optional[List[str]]
 
     def _get_snap_repo(self):
         if self.__repo is None:
@@ -191,10 +191,10 @@ class SnapInjector:
         *,
         snap_dir: str,
         registry_filepath: str,
-        runner,
-        snap_dir_mounter,
-        snap_dir_unmounter,
-        file_pusher
+        runner: Callable[..., None],
+        snap_dir_mounter: Callable[[], None],
+        snap_dir_unmounter: Callable[[], None],
+        file_pusher: Callable[..., None]
     ) -> None:
         """
         Initialize a SnapInjector instance.
@@ -221,7 +221,7 @@ class SnapInjector:
         self._snap_dir_unmounter = snap_dir_unmounter
         self._file_pusher = file_pusher
 
-        self._registry_data = dict()  # type: Union[None, Dict[str, List[Any]]]
+        self._registry_data = dict()  # type: Optional[Dict[str, List[Any]]]
 
     def _load_registry(self):
         if self._registry_filepath is None or self._registry_data:
@@ -303,7 +303,7 @@ class SnapInjector:
         except (IndexError, KeyError):
             return None
 
-    def _add_latest_revision(self, snap_name: str, snap_revision: str) -> None:
+    def _record_revision(self, snap_name: str, snap_revision: str) -> None:
         entry = dict(revision=snap_revision)
 
         if snap_name not in self._registry_data:
@@ -335,6 +335,6 @@ class SnapInjector:
             for snap in self._snaps:
                 install_cmd = snap.get_install_cmd()
                 self._runner(install_cmd)
-                self._add_latest_revision(snap.snap_name, snap.get_revision())
+                self._record_revision(snap.snap_name, snap.get_revision())
 
         self._dump_registry()
