@@ -185,18 +185,6 @@ class SnapcraftPartMissingError(SnapcraftError):
     )
 
 
-class NoSuchFileError(SnapcraftError):
-
-    fmt = (
-        "Failed to find part that provided path: {path!r} does not "
-        "exist.\n"
-        "Check the file path and try again."
-    )
-
-    def __init__(self, path):
-        super().__init__(path=path)
-
-
 class RemotePartsError(SnapcraftError):
     pass
 
@@ -644,34 +632,3 @@ class InvalidMountinfoFormat(SnapcraftError):
 
     def __init__(self, row):
         super().__init__(row=row)
-
-
-class SnapcraftInspectError(SnapcraftError):
-    # Use a different exit code for these errors so the orchestrating snapcraft can
-    # differentiate them.
-    def get_exit_code(self):
-        return 3
-
-
-class ProvidesInvalidFilePathError(SnapcraftInspectError):
-
-    fmt = (
-        "Failed to find part that provides path: {path!r} is not in the "
-        "staging or priming area.\n"
-        "Ensure the path is in the staging or priming area and try again."
-    )
-
-    def __init__(self, path):
-        super().__init__(path=path)
-
-
-class UntrackedFileError(SnapcraftInspectError):
-
-    fmt = "No known parts provided {path!r}. It may have been provided by a scriptlet."
-
-    def __init__(self, path):
-        super().__init__(path=path)
-
-
-class NoStepsRunError(SnapcraftInspectError):
-    fmt = "Failed to get latest step: no steps have run"

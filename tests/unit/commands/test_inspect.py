@@ -21,6 +21,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals, MatchesRegex
 import snapcraft.internal.errors
+from snapcraft.internal.project_loader.inspection import errors
 
 from . import CommandBaseTestCase
 
@@ -130,14 +131,9 @@ class InspectProvidesCommandTest(CommandBaseTestCase):
             ["inspect", "--provides", os.path.join("prime", "dir")]
         )
 
-        # Using MatchesRegex since the order is non-deterministic
         self.expectThat(
             result.output,
-            MatchesRegex(".*provided by the following parts.*part1", re.DOTALL),
-        )
-        self.expectThat(
-            result.output,
-            MatchesRegex(".*provided by the following parts.*part2", re.DOTALL),
+            MatchesRegex(".*provided by the following parts.*part1.*part2", re.DOTALL),
         )
 
     def test_inspect_provides_json(self):
@@ -149,36 +145,6 @@ class InspectProvidesCommandTest(CommandBaseTestCase):
             self.expectThat(
                 json.loads(result.output), Equals({"path": file_path, "parts": [part]})
             )
-
-    def test_inspect_provides_file_outside_stage_or_prime(self):
-        file_path = os.path.join(self.parts_dir, "part1", "src", "dir", "file1")
-        raised = self.assertRaises(
-            snapcraft.internal.errors.ProvidesInvalidFilePathError,
-            self.run_command,
-            ["inspect", "--provides", file_path],
-        )
-
-        self.assertThat(raised.path, Equals(file_path))
-
-    def ttest_inspect_provides_untracked_file(self):
-        file_path = os.path.join("stage", "file3")
-        raised = self.assertRaises(
-            snapcraft.internal.errors.UntrackedFileError,
-            self.run_command,
-            ["inspect", "--provides", file_path],
-        )
-
-        self.assertThat(raised.path, Equals(file_path))
-
-    def test_inspect_provides_no_such_file(self):
-        file_path = os.path.join("stage", "foo")
-        raised = self.assertRaises(
-            snapcraft.internal.errors.NoSuchFileError,
-            self.run_command,
-            ["inspect", "--provides", file_path],
-        )
-
-        self.assertThat(raised.path, Equals(file_path))
 
 
 class InspectLatestStepTest(CommandBaseTestCase):
@@ -224,22 +190,6 @@ class InspectLatestStepTest(CommandBaseTestCase):
             ),
         )
 
-        self.run_command(["build", "part2"])
-        result = self.run_command(["inspect", "--latest-step"])
-        self.expectThat(
-            result.output,
-            Contains(
-                "The latest step that was run is the 'build' step of the 'part2' part"
-            ),
-        )
-        part2_build_dir = os.path.abspath(os.path.join("parts", "part2", "build"))
-        self.expectThat(
-            result.output,
-            Contains(
-                "The working directory for this step is {!r}".format(part2_build_dir)
-            ),
-        )
-
     def test_inspect_latest_step_json(self):
         self.run_command(["pull"])
         self.run_command(["build", "part1"])
@@ -251,22 +201,6 @@ class InspectLatestStepTest(CommandBaseTestCase):
         self.expectThat(result["part"], Equals("part1"))
         self.expectThat(result["step"], Equals("build"))
         self.expectThat(result["directory"], Equals(part1_build_dir))
-
-        self.run_command(["build", "part2"])
-        result = json.loads(
-            self.run_command(["inspect", "--json", "--latest-step"]).output
-        )
-        part2_build_dir = os.path.abspath(os.path.join("parts", "part2", "build"))
-        self.expectThat(result["part"], Equals("part2"))
-        self.expectThat(result["step"], Equals("build"))
-        self.expectThat(result["directory"], Equals(part2_build_dir))
-
-    def test_inspect_latest_step_no_steps_run(self):
-        self.assertRaises(
-            snapcraft.internal.errors.NoStepsRunError,
-            self.run_command,
-            ["inspect", "--latest-step"],
-        )
 
 
 class InspectLifecycleStatusTest(CommandBaseTestCase):
@@ -302,8 +236,8 @@ class InspectLifecycleStatusTest(CommandBaseTestCase):
     def test_inspect_lifecycle_status(self):
         self.run_command(["pull"])
 
-        # Not even going to bother testing the table output: it's too hard to keep in sync.
-        # JSON should be the same data.
+        # Not even going to bother testing the table output: it's too hard to keep in
+        # sync. JSON should be the same data.
         result = json.loads(self.run_command(["inspect", "--json"]).output)
         self.expectThat(
             result,
