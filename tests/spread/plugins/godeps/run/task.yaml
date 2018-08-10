@@ -1,0 +1,24 @@
+summary: Build and run a basic Godeps snap
+
+environment:
+  SNAP_DIR: ../snaps/godeps
+  GOBIN/gobin: gobin
+  GOBIN/no_gobin:
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  if [ -z "$GOBIN" ]; then
+    unset GOBIN
+  fi
+
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install godeps_*.snap --dangerous
+
+  hash="$(godeps.bcrypt hash 10 password)"
+  check="$(godeps.bcrypt check "$hash" password)"
+  [ "$check" = "Equal" ]
