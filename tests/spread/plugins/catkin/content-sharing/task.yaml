@@ -1,0 +1,39 @@
+summary: Build two catkin snaps using content sharing
+warn-timeout: 10m
+kill-timeout: 20m
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  PRODUCER_DIR: ../snaps/catkin-shared-ros/producer
+  CONSUMER_DIR: ../snaps/catkin-shared-ros/consumer
+
+restore: |
+  CWD="$(pwd)"
+  PRODUCER_DIR="$CWD/$PRODUCER_DIR"
+  CONSUMER_DIR="$CWD/$CONSUMER_DIR"
+
+  cd "$PRODUCER_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  cd "$CONSUMER_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+# ROS Kinetic only supports 16.04
+systems: [ubuntu-16.04*]
+
+execute: |
+  CWD="$(pwd)"
+  PRODUCER_DIR="$CWD/$PRODUCER_DIR"
+  CONSUMER_DIR="$CWD/$CONSUMER_DIR"
+
+  cd "$PRODUCER_DIR"
+  snapcraft stage
+
+  # Now tar up the producer's staging area to be used in the consumer
+  tar czf "$CONSUMER_DIR/underlay.tar.bz2" stage/
+
+  # Now cd over to the consumer and build it
+  cd "$CONSUMER_DIR"
+  snapcraft build

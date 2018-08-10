@@ -67,8 +67,6 @@ jobs:
     - if: type != cron
       script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_catkin
-    - if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/integration/store
     - if: type != cron
       script:
