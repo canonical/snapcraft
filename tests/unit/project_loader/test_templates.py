@@ -109,6 +109,7 @@ class BasicTemplateTest(TemplateTestBase):
                     version: "1"
                     summary: test
                     description: test
+                    base: core16
                     grade: stable
                     confinement: strict
 
@@ -133,6 +134,7 @@ class BasicTemplateTest(TemplateTestBase):
                     version: "1"
                     summary: test
                     description: test
+                    base: core16
                     grade: stable
                     confinement: strict
 
@@ -231,6 +233,7 @@ class TemplateMergeTest(TemplateTestBase):
             version: "1"
             summary: test
             description: test
+            base: core16
             grade: stable
             confinement: strict
 
@@ -268,6 +271,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -302,6 +306,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -335,6 +340,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -362,6 +368,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -387,6 +394,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -404,6 +412,31 @@ class InvalidTemplateTest(TemplateTestBase):
 
         self.assertThat(raised.template_name, Equals("test-template"))
         self.assertThat(raised.part_name, Equals("template-part"))
+
+    def test_no_base(self):
+        self.assertRaises(
+            errors.TemplateBaseRequiredError,
+            self.make_snapcraft_project,
+            textwrap.dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                grade: stable
+                confinement: strict
+
+                apps:
+                    test-app:
+                        command: echo "hello"
+                        templates: [test-template]
+
+                parts:
+                    template-part:
+                        plugin: nil
+                """
+            ),
+        )
 
     def test_unsupported_base(self):
         raised = self.assertRaises(

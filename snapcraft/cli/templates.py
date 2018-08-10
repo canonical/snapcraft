@@ -18,6 +18,7 @@ import click
 import os
 import yaml
 import sys
+import tabulate
 
 from ._options import get_project
 from snapcraft.internal import common, project_loader
@@ -37,12 +38,17 @@ def templates(**kwargs):
         click.echo("No templates supported")
         return
 
-    # Wrap the output depending on terminal size
-    width = common.get_terminal_width()
-    for line in common.format_output_in_columns(
-        sorted(template_names), max_width=width
-    ):
-        click.echo(line)
+    templates = []
+    for template_name in sorted(template_names):
+        template = project_loader.load_template(template_name)
+        templates.append(
+            {
+                "Template name": template_name,
+                "Supported bases": ", ".join(sorted(template.keys())),
+            }
+        )
+
+    click.echo(tabulate.tabulate(templates, headers="keys"))
 
 
 @templatecli.command()

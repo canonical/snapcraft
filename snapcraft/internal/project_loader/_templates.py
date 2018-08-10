@@ -48,8 +48,11 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
 
-    # Get the base being used for this project (defaults to "core16")
-    base = yaml_data.get("base", "core16")
+    # Get the base being used for this project. This is required in order to use
+    # templates, so raise an error if not specified.
+    base = yaml_data.get("base")
+    if not base:
+        raise errors.TemplateBaseRequiredError()
 
     applied_template_names = set()  # type: Set[str]
     global_template_names = yaml_data.get("templates", [])
@@ -92,6 +95,12 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def template_yaml_path(template_name: str) -> str:
+    """Return the file path to the template's template.yaml
+
+    :param str template_name: The name of the template
+    :returns: File path to the template.yaml
+    :raises: errors.TemplateNotFoundError if the template is not found
+    """
     template_yaml_path = os.path.join(
         common.get_templatesdir(), template_name, "template.yaml"
     )
@@ -102,16 +111,27 @@ def template_yaml_path(template_name: str) -> str:
     return template_yaml_path
 
 
-# Don't load the same template multiple times
-@functools.lru_cache()
-def _find_template(base: str, template_name: str) -> Dict[str, Any]:
-    with open(template_yaml_path(template_name), "r") as f:
-        full_template = yaml.safe_load(f)
+def load_template(template_name: str) -> Dict[str, Any]:
+    """Load and return the template with the given name.
 
+    :param str template_name: The name of the template to load
+    :raises: errors.TemplateNotFoundError if the template is not found
+    """
+    return copy.deepcopy(__template_loader(template_name))
+
+
+def _find_template(base: str, template_name: str) -> Dict[str, Any]:
     try:
-        return full_template[base]
+        return load_template(template_name)[base]
     except KeyError:
         raise errors.TemplateUnsupportedBaseError(template_name, base)
+
+
+# Don't load the same template multiple times
+@functools.lru_cache()
+def __template_loader(template_name: str) -> Dict[str, Any]:
+    with open(template_yaml_path(template_name), "r") as f:
+        return yaml.safe_load(f)
 
 
 def _apply_template(
@@ -120,9 +140,6 @@ def _apply_template(
     template_name: str,
     template_data: Dict[str, Any],
 ):
-    # Don't modify the template data
-    template_data = copy.deepcopy(template_data)
-
     # Apply the app-specific components of the template (if any)
     template_app_components = template_data.pop("apps", None)
     if template_app_components:

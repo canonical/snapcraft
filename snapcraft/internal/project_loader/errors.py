@@ -92,6 +92,10 @@ class SnapcraftLogicError(ProjectLoaderError):
         super().__init__(message=message)
 
 
+class TemplateBaseRequiredError(ProjectLoaderError):
+    fmt = "Templates can only be used if the snapcraft.yaml specifies a 'base'"
+
+
 class TemplateNotFoundError(ProjectLoaderError):
     fmt = (
         "Failed to find template {template_name!r}: "

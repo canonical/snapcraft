@@ -40,7 +40,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                 f.write(
                     textwrap.dedent(
                         """\
-                        core:
+                        core16:
                             apps:
                                 '*':
                                     environment:
@@ -56,11 +56,42 @@ class TemplatesCommandTest(CommandBaseTestCase):
                     ).format(template_name)
                 )
 
+        template_dir = os.path.join(templates_dir, "template3")
+        os.mkdir(template_dir)
+        with open(os.path.join(template_dir, "template.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                    core16:
+                        parts:
+                            template-part:
+                                plugin: nil
+                    core18:
+                        parts:
+                            template-part:
+                                plugin: nil
+                    """
+                ).format(template_name)
+            )
+
     def test_list_templates(self):
         result = self.run_command(["templates"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Equals("template1  template2\n"))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    Template name    Supported bases
+                    ---------------  -----------------
+                    template1        core16
+                    template2        core16
+                    template3        core16, core18
+                    """
+                )
+            ),
+        )
 
     def test_template(self):
         result = self.run_command(["template", "template1"])
@@ -71,7 +102,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    core:
+                    core16:
                         apps:
                             '*':
                                 environment:
@@ -97,6 +128,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                 version: '1'
                 summary: test
                 description: test
+                base: core16
                 grade: stable
                 confinement: strict
 
@@ -124,6 +156,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                     version: '1'
                     summary: test
                     description: test
+                    base: core16
                     grade: stable
                     confinement: strict
                     apps:
