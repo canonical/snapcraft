@@ -48,7 +48,7 @@ class Provider:
                 project.info.name, project.deb_arch
             )
         self.provider_project_dir = os.path.join(
-            BaseDirectory.xdg_data_home, "snapcraft", "projects", project.info.name
+            BaseDirectory.save_data_path("snapcraft"), "projects", project.info.name
         )
 
     def __enter__(self):
