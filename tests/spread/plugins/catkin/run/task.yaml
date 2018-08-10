@@ -1,0 +1,34 @@
+summary: Build and run a basic catkin snap
+warn-timeout: 10m
+kill-timeout: 20m
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/ros-talker-listener
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+# ROS Indigo doesn't support arm64 (there are no packages in the archive). Also,
+# Indigo snaps have trouble building past 16.04.
+systems: [-ubuntu-*-arm64, -ubuntu-18.04*]
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install ros-talker-listener_*.snap --dangerous
+
+  # Verify that the hardcoded /usr/bin/python in rosversion is changed to
+  # use /usr/bin/env
+  [ "$(head -n 1 prime/usr/bin/rosversion)" = "#!/usr/bin/env python" ]
+
+  # Regression test for LP: #1660852. Make sure --help actually gets passed to
+  # roslaunch instead of being eaten by setup.sh.
+  ros-talker-listener --help | MATCH "Usage: roslaunch"
+
+  # Run the ROS system. By default this will never exit, but the demo supports
+  # an `exit-after-receive` parameter that, if true, will cause the system to
+  # shutdown after the listener has successfully received a message.
+  ros-talker-listener exit-after-receive:=true | MATCH "I heard Hello world"

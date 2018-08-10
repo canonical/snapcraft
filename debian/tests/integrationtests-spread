@@ -1,0 +1,48 @@
+#!/bin/sh
+
+set -ex
+
+# required for the debian adt host
+mkdir -p /etc/systemd/system/snapd.service.d/
+if [ "${http_proxy:-}" != "" ]; then
+	cat <<-EOF | tee /etc/systemd/system/snapd.service.d/proxy.conf
+		[Service]
+		Environment=http_proxy=$http_proxy
+		Environment=https_proxy=$http_proxy
+		EOF
+
+	# ensure environment is updated
+	echo "http_proxy=$http_proxy" >> /etc/environment
+	echo "https_proxy=$http_proxy" >> /etc/environment
+fi
+systemctl daemon-reload
+
+# ensure we are not killed too easily
+printf '%s\n' "-950" > /proc/$$/oom_score_adj || true
+
+# see what mem we have (for debugging)
+cat /proc/meminfo
+
+# ensure we can do a connect to localhost
+echo ubuntu:ubuntu | chpasswd
+sed -i 's/\(PermitRootLogin\|PasswordAuthentication\)\>.*/\1 yes/' /etc/ssh/sshd_config
+systemctl reload sshd.service
+
+# Spread will only build with recent go
+snap install --classic go
+
+export GOPATH=/tmp/go
+/snap/bin/go get -u github.com/snapcore/spread/cmd/spread
+
+# Remove the go snap since we want to test (among other things) the Go plugin
+sudo snap remove go
+
+# and now run spread against localhost
+# shellcheck disable=SC1091
+. /etc/os-release
+export SNAPCRAFT_PACKAGE_TYPE="deb"
+/tmp/go/bin/spread -v "autopkgtest:${ID}-${VERSION_ID}-$(dpkg --print-architecture)"
+
+# store journal info for inspection
+journalctl --sync
+journalctl -ab > "$ADT_ARTIFACTS/journal.txt"

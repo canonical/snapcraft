@@ -1,0 +1,22 @@
+name: scons-hello
+version: '1.0'
+summary: test the scons plugin
+description: |
+  This is a basic scons snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+
+grade: devel
+confinement: strict
+
+apps:
+  scons-hello:
+    command: hello
+
+parts:
+  scons-project:
+    plugin: scons
+    source: .
+    scons-options:
+      - --prefix=/
+    build-packages: [gcc, libc6-dev]

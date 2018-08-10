@@ -22,7 +22,7 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 from snapcraft import file_utils
-from snapcraft.internal import common, repo
+from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
 
 
@@ -43,9 +43,6 @@ def _snap_data_from_dir(directory):
 
 def pack(directory, output=None):
     mksquashfs_path = file_utils.get_tool_path("mksquashfs")
-
-    # Check for our prerequesite external command early
-    repo.check_for_command(mksquashfs_path)
 
     snap = _snap_data_from_dir(directory)
     output_snap_name = output or common.format_snap_name(snap)

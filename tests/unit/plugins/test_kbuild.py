@@ -217,6 +217,11 @@ ACCEPT=n
 """
         self.assertThat(config_contents, Equals(expected_config))
 
+        # Finally, ensure that the original kconfigfile was not modified (it's back in
+        # the source tree)
+        with open(self.options.kconfigfile, "r") as f:
+            self.assertThat(f.read(), Equals("ACCEPT=y\n"))
+
     @mock.patch("subprocess.check_call")
     @mock.patch.object(kbuild.KBuildPlugin, "run")
     def test_build_with_defconfig_and_kconfigs(self, run_mock, check_call_mock):

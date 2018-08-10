@@ -1,0 +1,14 @@
+summary: Cross-compile a Kbuild snap
+
+environment:
+  SNAP_DIR: ../snaps/kbuild-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage --target-arch=armhf
+  file stage/bin/myapp | MATCH ",\s*ARM\s*,"

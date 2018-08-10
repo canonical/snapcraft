@@ -1,0 +1,16 @@
+name: ros-talker-listener
+version: '1.0'
+summary: ROS Example
+description: Contains talker/listener ROS packages and a .launch file.
+confinement: strict
+
+apps:
+  ros-talker-listener:
+    command: roslaunch listener talk_and_listen.launch
+    plugs: [network-bind]
+
+parts:
+  ros-project:
+    plugin: catkin
+    source: .
+    rosdistro: indigo

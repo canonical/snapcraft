@@ -124,7 +124,7 @@ class KBuildPlugin(BasePlugin):
 
     def assemble_ubuntu_config(self, config_path):
         try:
-            with open(os.path.join("debian", "debian.env"), "r") as f:
+            with open(os.path.join(self.sourcedir, "debian", "debian.env"), "r") as f:
                 env = f.read()
         except OSError as e:
             raise RuntimeError("Unable to access {}: {}".format(e.filename, e.strerror))
@@ -136,8 +136,12 @@ class KBuildPlugin(BasePlugin):
         flavour = self.options.kconfigflavour
 
         configfiles = []
-        baseconfigdir = os.path.join("debian.{}".format(branch), "config")
-        archconfigdir = os.path.join("debian.{}".format(branch), "config", arch)
+        baseconfigdir = os.path.join(
+            self.sourcedir, "debian.{}".format(branch), "config"
+        )
+        archconfigdir = os.path.join(
+            self.sourcedir, "debian.{}".format(branch), "config", arch
+        )
         commonconfig = os.path.join(baseconfigdir, "config.common.ports")
         ubuntuconfig = os.path.join(baseconfigdir, "config.common.ubuntu")
         archconfig = os.path.join(archconfigdir, "config.common.{}".format(arch))
@@ -174,7 +178,8 @@ class KBuildPlugin(BasePlugin):
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
         if self.options.kconfigfile:
-            snapcraft.file_utils.link_or_copy(self.options.kconfigfile, config_path)
+            # This file gets modified, no hard links here
+            snapcraft.file_utils.copy(self.options.kconfigfile, config_path)
         elif self.options.kconfigflavour:
             self.assemble_ubuntu_config(config_path)
         else:

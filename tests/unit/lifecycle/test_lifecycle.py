@@ -26,7 +26,6 @@ from unittest import mock
 
 import fixtures
 from testtools.matchers import (
-    Contains,
     DirExists,
     Equals,
     FileContains,
@@ -1362,13 +1361,3 @@ class CoreSetupTestCase(unit.TestCase):
             print("description: description", file=f)
 
         return lifecycle.pack(directory=core_path)
-
-
-class SnapErrorsTestCase(LifecycleTestBase):
-    def test_mksquashfs_missing(self):
-        with mock.patch("shutil.which") as which_mock:
-            which_mock.return_value = None
-            raised = self.assertRaises(
-                errors.MissingCommandError, lifecycle.pack, mock.Mock()
-            )
-        self.assertThat(str(raised), Contains("mksquashfs"))

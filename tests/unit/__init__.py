@@ -137,6 +137,13 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.cpu_count.return_value = 2
         self.addCleanup(patcher.stop)
 
+        # We do not want the paths to affect every test we have.
+        patcher = mock.patch(
+            "snapcraft.file_utils.get_tool_path", side_effect=lambda x: x
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch(
             "snapcraft.internal.indicators.ProgressBar", new=SilentProgressBar
         )

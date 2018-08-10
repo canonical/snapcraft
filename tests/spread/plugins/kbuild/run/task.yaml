@@ -1,0 +1,19 @@
+summary: Build and run a basic Kbuild snap
+
+environment:
+  SNAP_DIR: ../snaps/kbuild-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install kbuild-hello_*.snap --dangerous
+
+  # Verify that Foo was configured, and Bar was not
+  output="$(kbuild-hello.myapp | grep "You have configured" -A2)"
+  echo "$output" | MATCH "Foo"
+  echo "$output" | MATCH -v "Bar"
