@@ -232,7 +232,7 @@ class SnapInjector:
         with open(self._registry_filepath) as registry_file:
             self._registry_data = yaml.load(registry_file)
 
-    def _dump_registry(self):
+    def _save_registry(self):
         if self._registry_filepath is None or self._registry_data is None:
             return
 
@@ -337,4 +337,4 @@ class SnapInjector:
                 self._runner(install_cmd)
                 self._record_revision(snap.snap_name, snap.get_revision())
 
-        self._dump_registry()
+        self._save_registry()
