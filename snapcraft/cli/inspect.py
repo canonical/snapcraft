@@ -76,10 +76,7 @@ def inspect(*, provides: str, latest_step: bool, use_json: bool, **kwargs):
         if use_json:
             print(
                 json.dumps(
-                    {
-                        "path": provides,
-                        "parts": providing_part_names,
-                    },
+                    {"path": provides, "parts": providing_part_names},
                     sort_keys=True,
                     indent=4,
                 )

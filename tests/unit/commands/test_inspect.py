@@ -21,7 +21,6 @@ import textwrap
 
 from testtools.matchers import Contains, Equals, MatchesRegex
 import snapcraft.internal.errors
-from snapcraft.internal.project_loader.inspection import errors
 
 from . import CommandBaseTestCase
 

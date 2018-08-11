@@ -55,4 +55,5 @@ class LatestStepTest(unit.TestCase):
 
     def test_latest_step_no_steps_run(self):
         self.assertRaises(
-            inspection.errors.NoStepsRunError, inspection.latest_step, self.parts)
+            inspection.errors.NoStepsRunError, inspection.latest_step, self.parts
+        )

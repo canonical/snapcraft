@@ -17,11 +17,9 @@
 import os
 
 from snapcraft import project
-from snapcraft.internal import steps
 from snapcraft.internal.project_loader import inspection
 
 from testtools.matchers import Equals
-from unittest import mock
 
 from tests import unit
 
