@@ -6,7 +6,8 @@
 
 #include <stdio.h>
 
-int main() {
-	printf("Hello Waf!\n");
-	return 0;
+int main()
+{
+    printf("hello world\n");
+    return 0;
 }
