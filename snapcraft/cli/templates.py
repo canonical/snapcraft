@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import collections
 import os
 import yaml
 import sys
@@ -41,12 +42,10 @@ def templates(**kwargs):
     templates = []
     for template_name in sorted(template_names):
         template = project_loader.load_template(template_name)
-        templates.append(
-            {
-                "Template name": template_name,
-                "Supported bases": ", ".join(sorted(template.keys())),
-            }
-        )
+        template_info = collections.OrderedDict()
+        template_info["Template name"] = template_name
+        template_info["Supported bases"] = ", ".join(sorted(template.keys()))
+        templates.append(template_info)
 
     click.echo(tabulate.tabulate(templates, headers="keys"))
 
