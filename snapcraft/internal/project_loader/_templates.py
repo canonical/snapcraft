@@ -47,12 +47,7 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
-
-    # Get the base being used for this project. This is required in order to use
-    # templates, so raise an error if not specified.
     base = yaml_data.get("base")
-    if not base:
-        raise errors.TemplateBaseRequiredError()
 
     applied_template_names = set()  # type: Set[str]
     global_template_names = yaml_data.get("templates", [])
@@ -121,6 +116,10 @@ def load_template(template_name: str) -> Dict[str, Any]:
 
 
 def _find_template(base: str, template_name: str) -> Dict[str, Any]:
+    # A bade is required in order to use templates, so raise an error if not specified.
+    if not base:
+        raise errors.TemplateBaseRequiredError()
+
     try:
         return load_template(template_name)[base]
     except KeyError:
