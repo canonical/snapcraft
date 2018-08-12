@@ -31,12 +31,15 @@ systemctl reload sshd.service
 # Spread will only build with recent go
 snap install --classic go
 
-# and now run spread against localhost
-# shellcheck disable=SC1091
-. /etc/os-release
 export GOPATH=/tmp/go
 /snap/bin/go get -u github.com/snapcore/spread/cmd/spread
 
+# Remove the go snap since we want to test (among other things) the Go plugin
+sudo snap remove go
+
+# and now run spread against localhost
+# shellcheck disable=SC1091
+. /etc/os-release
 export SNAPCRAFT_PACKAGE_TYPE="deb"
 /tmp/go/bin/spread -v "autopkgtest:${ID}-${VERSION_ID}-$(dpkg --print-architecture)"
 

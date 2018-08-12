@@ -1,0 +1,23 @@
+name: waf-hello
+version: '1.0'
+summary: test the waf plugin
+description: |
+  This is a basic waf snap with configflags.
+confinement: strict
+
+apps:
+  waf-hello:
+    command: usr/local/bin/myprogram
+
+build-packages: [gcc]
+# so far there is no packaged waf, projects usually carry it in their git
+# for versioning, the plugin as well as this integration test reflect this
+
+# this uses the c based demo of waf as an integration test
+parts:
+  waf-project:
+    plugin: waf
+    source: .
+    configflags:
+      - --progress
+      - --verbose

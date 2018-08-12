@@ -531,3 +531,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 os.path.join(self.installdir, "lib", "firmware"), self.installdir
             )
         os.rmdir(os.path.join(self.installdir, "lib"))
+        # install .config as config-$version
+        config = "config-{}".format(self.kernel_release)
+        config_path = os.path.join(self.installdir, config)
+        dot_config_path = self.get_config_path()
+        os.link(dot_config_path, config_path)

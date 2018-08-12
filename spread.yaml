@@ -31,11 +31,11 @@ backends:
     location: computeengine/us-west1-b
     systems:
       - ubuntu-14.04-64:
-          workers: 2
+          workers: 3
       - ubuntu-16.04-64:
-          workers: 2
+          workers: 3
       - ubuntu-18.04-64:
-          workers: 2
+          workers: 3
   autopkgtest:
     type: adhoc
     allocate: |
@@ -178,16 +178,26 @@ restore: $SETUP_DIR/restore.sh
 suites:
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
+ tests/spread/plugins/catkin/:
+   summary: tests of snapcraft's Catkin plugin
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
+ tests/spread/plugins/godeps/:
+   summary: tests of snapcraft's Godeps plugin
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
+ tests/spread/plugins/meson/:
+   summary: tests of snapcraft's Meson plugin
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
+ tests/spread/plugins/scons/:
+   summary: tests of snapcraft's SCons plugin
+ tests/spread/plugins/waf/:
+   summary: tests of snapcraft's Waf plugin
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out

@@ -1,0 +1,15 @@
+summary: Build and run a basic SCons snap
+
+environment:
+  SNAP_DIR: ../snaps/scons-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install scons-hello_*.snap --dangerous
+  [ "$(scons-hello)" = "hello world" ]
