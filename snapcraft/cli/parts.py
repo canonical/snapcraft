@@ -68,3 +68,11 @@ def search(ctx, query):
 
     """
     remote_parts.search(" ".join(query))
+
+
+# Implemented as a generator since loading up the state could be heavy
+def _part_states_for_step(step, parts_config):
+    for part in parts_config.all_parts:
+        state = part.get_state(step)
+        if state:
+            yield (part.name, state)
