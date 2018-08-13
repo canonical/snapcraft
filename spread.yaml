@@ -198,6 +198,8 @@ suites:
    summary: tests of snapcraft's Ruby plugin
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
+ tests/spread/plugins/tar-content/:
+   summary: tests of snapcraft's tar-content plugin
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
 

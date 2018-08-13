@@ -1,9 +1,14 @@
-name: test-package
-version: 0.1
+name: tar-content-test
+version: '1.0'
 summary: one line summary
 description: a longer description
-icon: icon.png
+
+grade: devel
 confinement: strict
+
+apps:
+  tar-content-test:
+    command: test
 
 build-packages: [gcc, libc6-dev]
 
