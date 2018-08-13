@@ -24,6 +24,7 @@ from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
+from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from tests import unit
 
 
@@ -836,6 +837,50 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "A tool snapcraft depends on could not be found: 'runnable'.\n"
                     "Ensure the tool is installed and available, and try again."
                 ),
+            },
+        ),
+        (
+            "NoSuchFileError",
+            {
+                "exception": inspection_errors.NoSuchFileError,
+                "kwargs": {"path": "test-path"},
+                "expected_message": (
+                    "Failed to find part that provided path: 'test-path' does not "
+                    "exist.\n"
+                    "Check the file path and try again."
+                ),
+            },
+        ),
+        (
+            "ProvidesInvalidFilePathError",
+            {
+                "exception": inspection_errors.ProvidesInvalidFilePathError,
+                "kwargs": {"path": "test-path"},
+                "expected_message": (
+                    "Failed to find part that provides path: 'test-path' is not "
+                    "in the staging or priming area.\n"
+                    "Ensure the path is in the staging or priming area and try "
+                    "again."
+                ),
+            },
+        ),
+        (
+            "UntrackedFileError",
+            {
+                "exception": inspection_errors.UntrackedFileError,
+                "kwargs": {"path": "test-path"},
+                "expected_message": (
+                    "No known parts provided 'test-path'. It may have been "
+                    "provided by a scriptlet."
+                ),
+            },
+        ),
+        (
+            "NoStepsRunError",
+            {
+                "exception": inspection_errors.NoStepsRunError,
+                "kwargs": {},
+                "expected_message": "Failed to get latest step: no steps have run",
             },
         ),
     )
