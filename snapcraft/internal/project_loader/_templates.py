@@ -116,7 +116,7 @@ def load_template(template_name: str) -> Dict[str, Any]:
 
 
 def _find_template(base: str, template_name: str) -> Dict[str, Any]:
-    # A bade is required in order to use templates, so raise an error if not specified.
+    # A base is required in order to use templates, so raise an error if not specified.
     if not base:
         raise errors.TemplateBaseRequiredError()
 

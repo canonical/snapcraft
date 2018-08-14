@@ -16,7 +16,7 @@ core18:
       # Yaml snippet you want to add to parts in the `snapcraft.yaml` (e.g.
       # `after`)
 
-    # You can also put whatever parts here you want, and they will be put
+    # You can also put any required part definitions here, and they will be put
     # alongside the other parts in the `snapcraft.yaml`. Take note of the
     # `$SNAPCRAFT_TEMPLATES_DIR` variable that is pointing to the directory
     # containing this README.
