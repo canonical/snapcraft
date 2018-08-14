@@ -31,6 +31,11 @@ from snapcraft.internal import repo
 
 logger = logging.getLogger(__name__)
 
+_STORE_ASSERTION = [
+    "account-key",
+    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+]
+
 
 class _SnapOp(enum.Enum):
     NOP = 0
@@ -170,12 +175,6 @@ class _SnapManager:
         if self.__install_cmd is None:
             self._set_data()
         return self.__install_cmd
-
-
-_STORE_ASSERTION = [
-    "account-key",
-    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
-]
 
 
 def _load_registry(registry_filepath: Optional[str]) -> Dict[str, List[Any]]:
