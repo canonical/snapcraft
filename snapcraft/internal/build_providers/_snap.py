@@ -26,6 +26,7 @@ from typing import Any, Dict  # noqa: F401
 import yaml
 
 from . import errors
+from snapcraft import storeapi
 from snapcraft.internal import repo
 
 logger = logging.getLogger(__name__)
@@ -39,9 +40,12 @@ class _SnapOp(enum.Enum):
 
 
 class _SnapManager:
-    def __init__(self, *, snap_name: str, snap_dir: str, latest_revision: str) -> None:
+    def __init__(
+        self, *, snap_name: str, snap_dir: str, latest_revision: str, snap_arch: str
+    ) -> None:
         self.snap_name = snap_name
         self._snap_dir = snap_dir
+        self._snap_arch = snap_arch
 
         self._latest_revision = latest_revision
         self.__required_operation = None  # type: Optional[_SnapOp]
@@ -60,40 +64,39 @@ class _SnapManager:
 
         # Get information from the host.
         host_snap_repo = self._get_snap_repo()
-        host_snap_info = host_snap_repo.get_local_snap_info()
+        try:
+            host_snap_info = host_snap_repo.get_local_snap_info()
+            is_installed = host_snap_repo.installed
+        except repo.errors.SnapdConnectionError:
+            # This maybe because we are in a docker instance or another OS.
+            is_installed = False
 
         # The evaluations for the required operation is as follows:
-        # - if the snap is not installed on the host (host_snap_repo.installed == False),
+        # - if the snap is not installed on the host (is_installed == False),
         #   and the snap is not installed in the build environment
         #   (_latest_revision is None), then a store install will take place.
-        # - else if the snap is not installed on the host (host_snap_repo.installed == False),
+        # - else if the snap is not installed on the host (is_installed == False),
         #   but the is previously installed revision in the build environment
         #   (_latest_revision is not None), then a store install will take place.
-        # - else if the snap is installed on the host (host_snap_repo.installed == True),
+        # - else if the snap is installed on the host (is_installed == True),
         #   and the snap installed in the build environment (_latest_revision) matches
         #   the one on the host, no operation takes place.
-        # - else if the snap is installed on the host (host_snap_repo.installed == True),
+        # - else if the snap is installed on the host (is_installed == True),
         #   and the snap installed in the build environment (_latest_revision) does not
         #   match the one on the host, then a snap injection from the host will take place.
-        if not host_snap_repo.installed and self._latest_revision is None:
+        if not is_installed and self._latest_revision is None:
             op = _SnapOp.INSTALL
-        elif not host_snap_repo.installed and self._latest_revision is not None:
+        elif not is_installed and self._latest_revision is not None:
             op = _SnapOp.REFRESH
-        elif (
-            host_snap_repo.installed
-            and self._latest_revision == host_snap_info["revision"]
-        ):
+        elif is_installed and self._latest_revision == host_snap_info["revision"]:
             op = _SnapOp.NOP
-        elif (
-            host_snap_repo.installed
-            and self._latest_revision != host_snap_info["revision"]
-        ):
+        elif is_installed and self._latest_revision != host_snap_info["revision"]:
             op = _SnapOp.INJECT
         else:
             # This is a programmatic error
             raise RuntimeError(
                 "Unhandled scenario for {!r} (host installed: {}, latest_revision {})".format(
-                    self.snap_name, host_snap_repo.installed, self._latest_revision
+                    self.snap_name, is_installed, self._latest_revision
                 )
             )
 
@@ -143,9 +146,11 @@ class _SnapManager:
             install_cmd.append(os.path.join(self._snap_dir, snap_file_name))
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd.append(op.name.lower())
-            host_snap_info = host_snap_repo.get_store_snap_info()
-            snap_revision = host_snap_info["channels"]["latest/stable"]["revision"]
-            confinement = host_snap_info["channels"]["latest/stable"]["confinement"]
+            store_snap_info = storeapi.StoreClient().cpi.get_package(
+                self.snap_name, "latest/stable", self._snap_arch
+            )
+            snap_revision = store_snap_info["revision"]
+            confinement = store_snap_info["confinement"]
             if confinement == "classic":
                 install_cmd.append("--classic")
             install_cmd.append(host_snap_repo.name)
@@ -311,12 +316,13 @@ class SnapInjector:
         else:
             self._registry_data[snap_name].append(entry)
 
-    def add(self, snap_name: str) -> None:
+    def add(self, snap_name: str, snap_arch: str) -> None:
         self._snaps.append(
             _SnapManager(
                 snap_name=snap_name,
                 snap_dir=self._snap_dir,
                 latest_revision=self._get_latest_revision(snap_name),
+                snap_arch=snap_arch,
             )
         )
 
