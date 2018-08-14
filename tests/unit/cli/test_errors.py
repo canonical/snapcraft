@@ -135,8 +135,6 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         self.raven_client_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_SENTRY", "yes"))
-
 
 class SendToSentryIsYesTest(SendToSentryBaseTest):
 
@@ -276,3 +274,19 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
 
         # Given the corruption, ensure it hasn't been written to
         self.assertThat(config_path, FileContains("bad data"))
+
+
+class SendToSentryDisabledTest(SendToSentryBaseTest):
+    def test_disabled_no_send(self):
+        self.prompt_mock.return_value = "yes"
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "no")
+        )
+
+        try:
+            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+        except Exception:
+            self.fail("Exception unexpectedly raised")
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_not_called()

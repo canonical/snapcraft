@@ -99,7 +99,7 @@ class TestCase(testtools.TestCase):
         # Disable Sentry reporting for tests, otherwise they'll hang waiting
         # for input
         self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_SENTRY", "false")
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "false")
         )
 
         # Note that these directories won't exist when the test starts,

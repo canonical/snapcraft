@@ -162,7 +162,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         # Disable Sentry reporting for tests, otherwise they'll hang waiting
         # for input
         self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_SENTRY", "false")
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "false")
         )
 
         machine = os.environ.get("SNAPCRAFT_TEST_MOCK_MACHINE", None)
