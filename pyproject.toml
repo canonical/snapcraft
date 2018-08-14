@@ -6,8 +6,10 @@ exclude = '''
   | \.mypy_cache
   | \.tox
   | \.venv
+  | \.vscode
   | _build
   | buck-out
+  | __pycache__
   | build
   | dist
 

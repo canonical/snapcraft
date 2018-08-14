@@ -72,7 +72,7 @@ run_static_tests(){
     mypy -p snapcraft
 
     echo "Running codespell"
-    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,.mypy_cache,.vscode,parts,stage,prime" -q4
+    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime" -q4
 
     echo "Running shellcheck"
     # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has

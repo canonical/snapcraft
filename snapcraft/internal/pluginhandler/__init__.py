@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import Dict, Set, Sequence  # noqa: F401
+from typing import cast, Dict, Set, Sequence  # noqa: F401
 
 import yaml
 
@@ -126,23 +126,26 @@ class PluginHandler:
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
-            self._pull_state = states.get_state(self.plugin.statedir, steps.PULL)
+            self._pull_state = cast(states.PullState, self.get_state(steps.PULL))
         return self._pull_state
 
     def get_build_state(self) -> states.BuildState:
         if not self._build_state:
-            self._build_state = states.get_state(self.plugin.statedir, steps.BUILD)
+            self._build_state = cast(states.BuildState, self.get_state(steps.BUILD))
         return self._build_state
 
     def get_stage_state(self) -> states.StageState:
         if not self._stage_state:
-            self._stage_state = states.get_state(self.plugin.statedir, steps.STAGE)
+            self._stage_state = cast(states.StageState, self.get_state(steps.STAGE))
         return self._stage_state
 
     def get_prime_state(self) -> states.PrimeState:
         if not self._prime_state:
-            self._prime_state = states.get_state(self.plugin.statedir, steps.PRIME)
+            self._prime_state = cast(states.PrimeState, self.get_state(steps.PRIME))
         return self._prime_state
+
+    def get_state(self, step) -> states.PartState:
+        return states.get_state(self.plugin.statedir, step)
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -229,6 +232,18 @@ class PluginHandler:
                 os.remove(self.plugin.statedir)
                 os.makedirs(self.plugin.statedir)
                 self.mark_done(steps.get_step_by_name(step))
+
+    def working_directory_for_step(self, step: steps.Step) -> str:
+        if step == steps.PULL:
+            return self.plugin.sourcedir
+        elif step == steps.BUILD:
+            return self.plugin.builddir
+        elif step == steps.STAGE:
+            return self.stagedir
+        elif step == steps.PRIME:
+            return self.primedir
+
+        raise errors.InvalidStepError(step.name)
 
     def latest_step(self):
         for step in reversed(steps.STEPS):
