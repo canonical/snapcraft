@@ -239,7 +239,7 @@ class SnapInjector:
                             environment.
         """
 
-        self._snaps = []  # type: List["_SnapManager"]
+        self._snaps = []  # type: List[_SnapManager]
         self._snap_dir = snap_dir
         self._registry_filepath = registry_filepath
         self._runner = runner
