@@ -178,6 +178,28 @@ _STORE_ASSERTION = [
 ]
 
 
+def _load_registry(registry_filepath: Optional[str]) -> Dict[str, List[Any]]:
+    if registry_filepath is None or not os.path.exists(registry_filepath):
+        return dict()
+
+    with open(registry_filepath) as registry_file:
+        return yaml.load(registry_file)
+
+
+def _save_registry(
+    registry_data: Dict[str, List[Any]], registry_filepath: Optional[str]
+) -> None:
+    if registry_filepath is None:
+        return
+
+    dirpath = os.path.dirname(registry_filepath)
+    if dirpath:
+        os.makedirs(dirpath, exist_ok=True)
+
+    with open(registry_filepath, "w") as registry_file:
+        yaml.dump(registry_data, stream=registry_file)
+
+
 class SnapInjector:
     """Handle the process of adding snaps into the build environment.
 
@@ -226,27 +248,7 @@ class SnapInjector:
         self._snap_dir_unmounter = snap_dir_unmounter
         self._file_pusher = file_pusher
 
-        self._registry_data = dict()  # type: Optional[Dict[str, List[Any]]]
-
-    def _load_registry(self) -> None:
-        if self._registry_filepath is None or self._registry_data:
-            return
-        if not os.path.exists(self._registry_filepath):
-            return
-
-        with open(self._registry_filepath) as registry_file:
-            self._registry_data = yaml.load(registry_file)
-
-    def _save_registry(self) -> None:
-        if self._registry_filepath is None or self._registry_data is None:
-            return
-
-        dirpath = os.path.dirname(self._registry_filepath)
-        if dirpath:
-            os.makedirs(dirpath, exist_ok=True)
-
-        with open(self._registry_filepath, "w") as registry_file:
-            yaml.dump(self._registry_data, stream=registry_file)
+        self._registry_data = _load_registry(registry_filepath)
 
     @contextlib.contextmanager
     def _mounted_dir(self) -> Generator:
@@ -302,7 +304,6 @@ class SnapInjector:
             self._runner(["sudo", "snap", "ack", assertion_file.name])
 
     def _get_latest_revision(self, snap_name) -> Optional[str]:
-        self._load_registry()
         try:
             return self._registry_data[snap_name][-1]["revision"]
         except (IndexError, KeyError):
@@ -343,4 +344,4 @@ class SnapInjector:
                 self._runner(install_cmd)
                 self._record_revision(snap.snap_name, snap.get_revision())
 
-        self._save_registry()
+        _save_registry(self._registry_data, self._registry_filepath)
