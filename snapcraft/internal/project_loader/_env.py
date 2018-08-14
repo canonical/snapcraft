@@ -128,6 +128,7 @@ def snapcraft_global_environment(project: project.Project) -> Dict[str, str]:
         "SNAPCRAFT_PROJECT_GRADE": grade,
         "SNAPCRAFT_STAGE": project.stage_dir,
         "SNAPCRAFT_PRIME": project.prime_dir,
+        "SNAPCRAFT_TEMPLATES_DIR": common.get_templatesdir(),
     }
 
 

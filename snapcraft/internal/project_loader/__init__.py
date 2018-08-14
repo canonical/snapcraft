@@ -24,6 +24,7 @@ from ._env import (  # noqa: F401
 )
 from ._schema import Validator  # noqa: F401
 from ._parts_config import PartsConfig  # noqa: F401
+from ._templates import apply_templates, load_template, template_yaml_path  # noqa: F401
 
 if TYPE_CHECKING:
     from snapcraft.project import Project  # noqa: F401
