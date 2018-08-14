@@ -1,0 +1,18 @@
+summary: Build and run a basic Ruby snap
+
+# This snap only builds and runs on 16.04
+systems: [ubuntu-16.04*]
+
+environment:
+  SNAP_DIR: ../snaps/ruby-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install ruby-hello_*.snap --dangerous
+  [ "$(ruby-hello)" = "hello world" ]

@@ -1,0 +1,18 @@
+summary: Build and run a ruby snap using gems
+
+# This snap only builds and runs on 16.04
+systems: [ubuntu-16.04*]
+
+environment:
+  SNAP_DIR: ../snaps/ruby-gem-install
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install ruby-gem-install_*.snap --dangerous
+  [ "$(ruby-gem-install)" = "this is executable hello-world" ]
