@@ -17,7 +17,6 @@
 from textwrap import dedent
 from unittest import mock
 
-from tests.unit import fixture_setup
 from tests.unit.build_providers import BaseProviderBaseTest
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
@@ -77,30 +76,6 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
 
     def test_instance_with_contextmanager(self):
-        fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(fake_snapd)
-        fake_snapd.snaps_result = []
-        fake_snapd.find_result = [
-            {
-                "core": {
-                    "id": "2kkitQ",
-                    "channels": {
-                        "latest/stable": {"confinement": "strict", "revision": "123"}
-                    },
-                }
-            },
-            {
-                "snapcraft": {
-                    "id": "3lljuR",
-                    "channels": {
-                        "latest/stable": {"confinement": "classic", "revision": "345"}
-                    },
-                }
-            },
-        ]
-
-        self.get_assertion_mock.side_effect = [b"fake-assertion-account-store"]
-
         with Multipass(project=self.project, echoer=self.echoer_mock) as instance:
             instance.provision_project("source.tar")
             instance.build_project()
@@ -109,28 +84,10 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().launch.assert_called_once_with(
             image="16.04", instance_name=self.instance_name
         )
+        # Given SnapInjector is mocked, we only need to verify the commands
+        # called from the Multipass class.
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "snap", "set", "core", mock.ANY],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "snap", "watch", "--last=auto-refresh"],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "snap", "ack", mock.ANY],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "snap", "install", "core"],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "snap", "install", "--classic", "snapcraft"],
-                ),
                 mock.call(
                     instance_name=self.instance_name, command=["mkdir", "project-name"]
                 ),

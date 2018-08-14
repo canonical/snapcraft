@@ -77,9 +77,15 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             "d22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b"
             "fda4128234e4c201f28fe9"
         )
+        revision = "10000"
+        confinement = "strict"
 
         if snap in ("test-snap", "core"):
             sha512 = test_sha512
+        elif snap == "snapcraft":
+            sha512 = test_sha512
+            revision = "25"
+            confinement = "classic"
         elif snap == "test-snap-with-wrong-sha":
             sha512 = "wrong sha"
         elif snap == "test-snap-branded-store":
@@ -104,6 +110,8 @@ class FakeStoreSearchServer(base.BaseFakeServer):
                 "snap_id": "good",
                 "developer_id": snap + "-developer-id",
                 "release": ["16"],
+                "revision": revision,
+                "confinement": confinement,
             }
         ).encode()
 

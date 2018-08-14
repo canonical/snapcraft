@@ -30,6 +30,9 @@ _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
 
 
+# TODO https://bugs.launchpad.net/snapcraft/+bug/1786868
+
+
 class SnapPackage:
     """SnapPackage acts as a mediator to install or refresh a snap.
 
@@ -247,18 +250,6 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
         ) from call_error
 
 
-def get_installed_snaps():
-    """Return all the snaps installed in the system.
-
-    :return: a list of "name=revision" for the snaps installed.
-    """
-    try:
-        local_snaps = _get_local_snaps()
-    except exceptions.ConnectionError as e:
-        local_snaps = []
-    return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]
-
-
 def _get_parsed_snap(snap):
     if "/" in snap:
         sep_index = snap.find("/")
@@ -277,11 +268,10 @@ def get_snapd_socket_path_template():
 def _get_local_snap_info(snap_name):
     slug = "snaps/{}".format(parse.quote(snap_name, safe=""))
     url = get_snapd_socket_path_template().format(slug)
-    with requests_unixsocket.Session() as session:
-        try:
-            snap_info = session.get(url)
-        except exceptions.ConnectionError as e:
-            raise errors.SnapdConnectionError(snap_name, url) from e
+    try:
+        snap_info = requests_unixsocket.get(url)
+    except exceptions.ConnectionError as e:
+        raise errors.SnapdConnectionError(snap_name, url) from e
     snap_info.raise_for_status()
     return snap_info.json()["result"]
 
@@ -291,16 +281,22 @@ def _get_store_snap_info(snap_name):
     # we do a strict search either 1 result or a 404 will be returned.
     slug = "find?{}".format(parse.urlencode(dict(name=snap_name)))
     url = get_snapd_socket_path_template().format(slug)
-    with requests_unixsocket.Session() as session:
-        snap_info = session.get(url)
+    snap_info = requests_unixsocket.get(url)
     snap_info.raise_for_status()
     return snap_info.json()["result"][0]
 
 
-def _get_local_snaps():
+def get_installed_snaps():
+    """Return all the snaps installed in the system.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
     slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
-    with requests_unixsocket.Session() as session:
-        snap_info = session.get(url)
-    snap_info.raise_for_status()
-    return snap_info.json()["result"]
+    try:
+        snap_info = requests_unixsocket.get(url)
+        snap_info.raise_for_status()
+        local_snaps = snap_info.json()["result"]
+    except exceptions.ConnectionError as e:
+        local_snaps = []
+    return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]
