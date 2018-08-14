@@ -1,8 +1,10 @@
 name: ruby-bins-exist
-version: 0.1
+version: '1.0'
 summary: Test ruby binary exists in stage
 description: |
   Snap to run ruby-exists test against
+
+grade: devel
 confinement: strict
 
 parts:
