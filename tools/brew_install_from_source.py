@@ -64,11 +64,11 @@ def sha256_checksum(filename):
 
 
 def download_brew_formula(destination_path):
-    brew_formula_url = "https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/snapcraft.rb"
+    brew_formula_url = (
+        "https://raw.githubusercontent.com/Homebrew/homebrew-core/master/"
+        "Formula/snapcraft.rb"
+    )
     urllib.request.urlretrieve(brew_formula_url, destination_path)
-    print("Downloaded formula:")
-    with open(destination_path) as formula_file:
-        print(formula_file.read())
 
 
 def patch_brew_formula_source(
@@ -88,9 +88,6 @@ def patch_brew_formula_source(
                     destination_file.write('  sha256 "{}"\n'.format(compressed_sha256))
                 else:
                     destination_file.write(line)
-    print("Modified formula:")
-    with open(destination_formula_path) as formula_file:
-        print(formula_file.read())
 
 
 def install_brew_formula(formula_path):
