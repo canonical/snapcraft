@@ -29,6 +29,7 @@ from .discovery import discoverycli
 from .lifecycle import lifecyclecli
 from .store import storecli
 from .parts import partscli
+from .inspect import inspectcli
 from .help import helpcli
 from .templates import templatecli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
@@ -49,6 +50,7 @@ command_groups = [
     partscli,
     templatecli,
     versioncli,
+    inspectcli,
 ]
 
 

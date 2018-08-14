@@ -1,0 +1,17 @@
+name: ruby-bundle-install
+version: '1.0'
+summary: Test bundle install
+description: |
+  Snap to test 'bundle install' command
+
+grade: devel
+confinement: strict
+
+apps:
+  ruby-bundle-install:
+    command: hello-world
+
+parts:
+  ruby-bundle-install:
+    plugin: ruby
+    use-bundler: true

@@ -1,0 +1,17 @@
+name: ruby-gem-install
+version: '1.0'
+summary: Test gem install
+description: |
+  Snap to test 'gem install <gem>' command
+
+grade: devel
+confinement: strict
+
+apps:
+  ruby-gem-install:
+    command: hello-world
+
+parts:
+  ruby-gem-install:
+    plugin: ruby
+    gems: ['hello-world']

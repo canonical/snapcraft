@@ -11,9 +11,17 @@ max-complexity = 10
 exclude =
     # No need to traverse our git directory
     .git,
+    .hg,
+    .mypy_cache,
+    .tox,
+    .venv,
+    .vscode,
+    _build,
+    buck-out,
     # There's no value in checking cache directories
     __pycache__,
     # This contains builds of flake8 that we don't want to check
+    build,
     dist,
     # snapcraft generated
     parts,

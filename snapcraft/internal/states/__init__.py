@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft.internal.states._state import PartState  # noqa
 from snapcraft.internal.states._build_state import BuildState  # noqa
 from snapcraft.internal.states._global_state import GlobalState  # noqa
 from snapcraft.internal.states._prime_state import PrimeState  # noqa

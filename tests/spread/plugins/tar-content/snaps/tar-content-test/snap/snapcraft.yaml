@@ -1,0 +1,47 @@
+name: tar-content-test
+version: '1.0'
+summary: one line summary
+description: a longer description
+
+grade: devel
+confinement: strict
+
+apps:
+  tar-content-test:
+    command: test
+
+build-packages: [gcc, libc6-dev]
+
+parts:
+  oneflat:
+    plugin: tar-content
+    source: oneflat.tar.bz2
+  onedeep:
+    plugin: tar-content
+    source: onedeep.tar.gz
+  nodir:
+    plugin: tar-content
+    source: nodir.tar.xz
+  flat:
+    plugin: tar-content
+    source: flat.tar.xz
+  simple:
+    plugin: tar-content
+    source: simple.tar.bz2
+  evil-parent:
+    plugin: tar-content
+    source: evil-parent.tar.gz
+  evil-slash:
+    plugin: tar-content
+    source: evil-slash.tar.gz
+  readonly-files:
+    plugin: tar-content
+    source: readonly-files.tar.gz
+  project:
+    plugin: make
+    source: project.tar.xz
+    source-type: tar
+  destination-dir:
+    plugin: tar-content
+    source: simple.tar.bz2
+    destination: destdir1/destdir2
