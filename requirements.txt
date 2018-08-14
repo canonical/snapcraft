@@ -4,7 +4,8 @@ docopt==0.6.2
 jsonschema==2.5.1
 paramiko==2.4.1
 progressbar33==2.4
-PyYAML==3.11
+PyYAML==3.11; sys.platform != 'darwin'
+PyYAML==3.13; sys.platform == 'darwin'
 pyxdg==0.25
 requests==2.9.1
 requests_unixsocket==0.1.5
