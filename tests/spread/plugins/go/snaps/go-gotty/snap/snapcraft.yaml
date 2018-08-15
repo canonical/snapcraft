@@ -12,10 +12,11 @@ parts:
   go:
     source-tag: go1.9.2
     source-depth: 1
+
+  # Pulled https://github.com/yudai/gotty, commit
+  # 2c50c432906f1034fa1efec8f7866315f8c81025
   gotty:
-    source: https://github.com/yudai/gotty
-    source-type: git
-    source-commit: 2c50c432906f1034fa1efec8f7866315f8c81025
+    source: gotty.tar.gz
     plugin: go
     go-importpath: github.com/yudai/gotty
     after: [go]
