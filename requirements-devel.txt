@@ -6,6 +6,7 @@ fixtures==3.0.0
 mccabe==0.6.1
 mypy==0.590
 testscenarios==0.5.0
-pexpect==4.2.0
+pexpect==4.2.0; sys.platform != 'darwin'
+pexpect==4.6.0; sys.platform == 'darwin'
 pyftpdlib==1.4.0
 pyramid==1.6
