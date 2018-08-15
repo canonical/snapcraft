@@ -56,6 +56,10 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.print_exception_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "yes")
+        )
+
     def call_handler(self, exception, debug):
         try:
             raise exception
