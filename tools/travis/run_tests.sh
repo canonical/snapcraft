@@ -65,6 +65,17 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     ./runtests.sh "$test_suite" "$use_run"
 elif [ "$test_suite" = "spread" ]; then
     ./runtests.sh "$test_suite"
+elif [ "$test_suite" = "static" ] || [ "$test_suite" = "tests/unit" ]; then
+    $dependencies
+    ./runtests.sh "$test_suite" "$use_run"
+
+    # By checking for SNAPCRAFT_TEST_MOCK_MACHINE we ensure coverage results are uploaded
+    # only once.
+    if [ "$test_suite" = "tests/unit" ] && [ -z "$SNAPCRAFT_TEST_MOCK_MACHINE" ]; then
+        # Report code coverage.
+        python3 -m coverage xml
+        codecov --token="$CODECOV_TOKEN"
+    fi
 else
     project_path="$(readlink -f "$script_path/../..")"
     lxc="/snap/bin/lxc"
@@ -76,14 +87,6 @@ else
     $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
     $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
     $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"
-
-    # By checking for SNAPCRAFT_TEST_MOCK_MACHINE we ensure coverage results are uploaded
-    # only once.
-    if [ "$test_suite" = "tests/unit" ] && [ -z "$SNAPCRAFT_TEST_MOCK_MACHINE" ]; then
-        # Report code coverage.
-        $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
-        $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
-    fi
 
     $lxc stop test-runner
 fi
