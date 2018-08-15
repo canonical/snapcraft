@@ -17,17 +17,35 @@ matrix:
 cache:
   directories:
     - $TRAVIS_BUILD_DIR/snaps-cache
+    - $HOME/.pyenv
 
 jobs:
   include:
+    - stage: prepare
+      if: type != cron
+      script:
+        - sudo apt install libssl-dev
+        - export PATH=$HOME/.pyenv/bin:$PATH
+        - pyenv install 3.5.6
+
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh static
+      script:
+        - export PATH=$HOME/.pyenv/bin:$PATH
+        - pyenv init - >> $HOME/.bashrc
+        - source $HOME/.bashrc
+        - pyenv global 3.5.6
+        - ./tools/travis/run_tests.sh static
 
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/unit
+      script:
+        - export PATH=$HOME/.pyenv/bin:$PATH
+        - pyenv init - >> $HOME/.bashrc
+        - source $HOME/.bashrc
+        - pyenv global 3.5.6
+        - ./tools/travis/run_tests.sh tests/unit
     - if: type != cron
       script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
     - if: type != cron

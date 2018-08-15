@@ -59,7 +59,8 @@ parseargs(){
     fi
 }
 
-python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
+python3 -m coverage 1>/dev/null 2>&1 && coverage_cmd="true"
+coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
     echo "Running black"

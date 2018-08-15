@@ -42,10 +42,6 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     python3 ./tools/brew_install_from_source.py
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-devel.txt
-elif [ "$test_suite" = "static" ]; then
-    dependencies="snap install black --devmode --edge && apt install -y python3-pip shellcheck && python3 -m pip install -r requirements-devel.txt"
-elif [ "$test_suite" = "tests/unit" ]; then
-    dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
 elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
@@ -65,15 +61,19 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     ./runtests.sh "$test_suite" "$use_run"
 elif [ "$test_suite" = "spread" ]; then
     ./runtests.sh "$test_suite"
-elif [ "$test_suite" = "static" ] || [ "$test_suite" = "tests/unit" ]; then
-    $dependencies
+elif [ "$test_suite" = "static" ];then
+    sudo apt install -y snapd shellcheck
+    sudo snap install black --devmode --edge
+    pip3 install -r requirements-devel.txt
     ./runtests.sh "$test_suite" "$use_run"
-
+elif [ "$test_suite" = "tests/unit" ]; then
+    sudo apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
+    python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov coverage
     # By checking for SNAPCRAFT_TEST_MOCK_MACHINE we ensure coverage results are uploaded
     # only once.
     if [ "$test_suite" = "tests/unit" ] && [ -z "$SNAPCRAFT_TEST_MOCK_MACHINE" ]; then
         # Report code coverage.
-        python3 -m coverage xml
+        coverage xml
         codecov --token="$CODECOV_TOKEN"
     fi
 else
