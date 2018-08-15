@@ -33,7 +33,7 @@ jobs:
       if: type != cron
       script:
         - export PATH=$HOME/.pyenv/bin:$PATH
-        - pyenv init - >> $HOME/.bashrc
+        - echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc
         - source $HOME/.bashrc
         - pyenv global 3.5.6
         - sudo apt install -y snapd shellcheck
