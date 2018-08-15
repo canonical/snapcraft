@@ -56,10 +56,6 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.print_exception_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "yes")
-        )
-
     def call_handler(self, exception, debug):
         try:
             raise exception
@@ -138,6 +134,10 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         patcher = mock.patch("snapcraft.cli._errors.RavenClient")
         self.raven_client_mock = patcher.start()
         self.addCleanup(patcher.stop)
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "yes")
+        )
 
 
 class SendToSentryIsYesTest(SendToSentryBaseTest):
