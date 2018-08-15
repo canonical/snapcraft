@@ -24,7 +24,7 @@ jobs:
     - stage: prepare
       if: type != cron
       script:
-        - sudo apt install libssl-dev
+        - sudo apt-get install -y make libssl-dev build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
         - export PATH=$HOME/.pyenv/bin:$PATH
         - pyenv install 3.5.6
 
@@ -36,7 +36,10 @@ jobs:
         - pyenv init - >> $HOME/.bashrc
         - source $HOME/.bashrc
         - pyenv global 3.5.6
-        - ./tools/travis/run_tests.sh static
+        - sudo apt install -y snapd shellcheck
+        - sudo snap install black --devmode --edge
+        - pip3 install -r requirements-devel.txt
+        - ./runtests.sh "$test_suite" "$use_run"
 
     - stage: unit
       if: type != cron
