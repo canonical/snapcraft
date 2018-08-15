@@ -15,31 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-import contextlib
-import datetime
 import os
 import shlex
-import tempfile
 from typing import List
 
 import petname
+from xdg import BaseDirectory
 
-from . import errors
-from snapcraft.internal import common, repo
-
-
-_STORE_ASSERTION_KEY = (
-    "BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul"
-)
+from ._snap import SnapInjector
 
 
 class Provider:
 
     _SNAPS_MOUNTPOINT = os.path.join(os.path.sep, "var", "cache", "snapcraft", "snaps")
 
-    def __init__(self, *, project, echoer) -> None:
+    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         self.project = project
         self.echoer = echoer
+        self._is_ephemeral = is_ephemeral
+
         # Once https://github.com/CanonicalLtd/multipass/issues/220 is
         # closed we can prepend snapcraft- again.
         self.instance_name = petname.Generate(2, "-")
@@ -53,6 +47,9 @@ class Provider:
             self.snap_filename = "{}_{}.snap".format(
                 project.info.name, project.deb_arch
             )
+        self.provider_project_dir = os.path.join(
+            BaseDirectory.save_data_path("snapcraft"), "projects", project.info.name
+        )
 
     def __enter__(self):
         self.create()
@@ -74,8 +71,15 @@ class Provider:
         """Mount a path from the host inside the instance."""
 
     @abc.abstractmethod
-    def _mount_snaps_directory(self) -> str:
+    def _umount(self, *, mountpoint: str) -> None:
+        """Unmount the mountpoint from the instance."""
+
+    @abc.abstractmethod
+    def _mount_snaps_directory(self) -> None:
         """Mount the host directory with snaps into the provider."""
+
+    def _unmount_snaps_directory(self) -> None:
+        self._umount(mountpoint=self._SNAPS_MOUNTPOINT)
 
     @abc.abstractmethod
     def _push_file(self, *, source: str, destination: str) -> None:
@@ -116,96 +120,25 @@ class Provider:
         """
 
     def launch_instance(self) -> None:
-        self.echoer.info(
-            "Creating a build environment named {!r}".format(self.instance_name)
-        )
         self._launch()
+        self._setup_snapcraft()
 
-    def _disable_and_wait_for_refreshes(self):
-        # Disable autorefresh for 15 minutes,
-        # https://github.com/snapcore/snapd/pull/5436/files
-        now_plus_15 = datetime.datetime.now() + datetime.timedelta(minutes=15)
-        self._run(
-            [
-                "sudo",
-                "snap",
-                "set",
-                "core",
-                "refresh.hold={}Z".format(now_plus_15.isoformat()),
-            ]
-        )
-        # Auto refresh may have kicked in while setting the hold.
-        self.echoer.info("Waiting for pending snap auto refreshes.")
-        with contextlib.suppress(errors.ProviderExecError):
-            self._run(["sudo", "snap", "watch", "--last=auto-refresh"])
-
-    def setup_snapcraft(self) -> None:
-        self._disable_and_wait_for_refreshes()
-        self.echoer.info("Setting up snapcraft in {!r}".format(self.instance_name))
-
-        # Add the store assertion, common to all snaps.
-        self._inject_assertions(
-            [["account-key", "public-key-sha3-384={}".format(_STORE_ASSERTION_KEY)]]
-        )
-
-        # TODO make mounting requirement smarter and depend on is_installed
-        if common.is_snap():
-            # Make the snaps available to the provider
-            self._mount_snaps_directory()
-
-        # Now install the snapcraft required base/core.
-        self.echoer.info("Setting up core")
-        self._install_snap("core")
-
-        # And finally install snapcraft itself.
-        self.echoer.info("Setting up snapcraft")
-        self._install_snap("snapcraft")
-
-    def _inject_assertions(self, assertions: List[List[str]]):
-        with tempfile.NamedTemporaryFile() as assertion_file:
-            for assertion in assertions:
-                assertion_file.write(repo.snaps.get_assertion(assertion))
-                assertion_file.write(b"\n")
-            assertion_file.flush()
-
-            self._push_file(source=assertion_file.name, destination=assertion_file.name)
-            self._run(["sudo", "snap", "ack", assertion_file.name])
-
-    def _install_snap(self, snap_name: str) -> None:
-        snap = repo.snaps.SnapPackage(snap_name)
-
-        args = []
-
-        if snap.installed:
-            snap_info = snap.get_local_snap_info()
-
-            if snap_info["revision"].startswith("x"):
-                args.append("--dangerous")
-            else:
-                self._inject_assertions(
-                    [
-                        ["snap-declaration", "snap-name={}".format(snap_name)],
-                        [
-                            "snap-revision",
-                            "snap-revision={}".format(snap_info["revision"]),
-                            "snap-id={}".format(snap_info["id"]),
-                        ],
-                    ]
-                )
-
-            if snap_info["confinement"] == "classic":
-                args.append("--classic")
-
-            # https://github.com/snapcore/snapd/blob/master/snap/info.go
-            # MountFile
-            snap_file_name = "{}_{}.snap".format(snap_name, snap_info["revision"])
-            args.append(os.path.join(self._SNAPS_MOUNTPOINT, snap_file_name))
+    def _setup_snapcraft(self) -> None:
+        if self._is_ephemeral:
+            registry_filepath = None
         else:
-            snap_info = snap.get_store_snap_info()
-            # TODO support other channels
-            confinement = snap_info["channels"]["latest/stable"]["confinement"]
-            if confinement == "classic":
-                args.append("--classic")
-            args.append(snap_name)
+            registry_filepath = os.path.join(
+                self.provider_project_dir, "snap-registry.yaml"
+            )
+        snap_injector = SnapInjector(
+            snap_dir=self._SNAPS_MOUNTPOINT,
+            registry_filepath=registry_filepath,
+            runner=self._run,
+            snap_dir_mounter=self._mount_snaps_directory,
+            snap_dir_unmounter=self._unmount_snaps_directory,
+            file_pusher=self._push_file,
+        )
+        snap_injector.add(snap_name="core", snap_arch=self.project.deb_arch)
+        snap_injector.add(snap_name="snapcraft", snap_arch=self.project.deb_arch)
 
-        self._run(["sudo", "snap", "install"] + args)
+        snap_injector.apply()

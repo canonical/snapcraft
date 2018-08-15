@@ -31,6 +31,7 @@ from .store import storecli
 from .parts import partscli
 from .inspect import inspectcli
 from .help import helpcli
+from .templates import templatecli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
 from .ci import cicli
 from ._command_group import SnapcraftGroup
@@ -47,6 +48,7 @@ command_groups = [
     helpcli,
     lifecyclecli,
     partscli,
+    templatecli,
     versioncli,
     inspectcli,
 ]

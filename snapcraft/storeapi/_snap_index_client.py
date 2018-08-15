@@ -46,7 +46,7 @@ class SnapIndexClient(Client):
 
         return headers
 
-    def get_package(self, snap_name, channel, arch=None):
+    def get_package(self, snap_name, channel=None, arch=None):
         """Get the details for the specified snap.
 
         :param str snap_name: Name of the snap.
@@ -67,12 +67,13 @@ class SnapIndexClient(Client):
             headers["X-Ubuntu-Architecture"] = arch
 
         params = {
-            "channel": channel,
             # FIXME LP: #1662665
-            "fields": "status,anon_download_url,download_url,"
+            "fields": "status,confinement,anon_download_url,download_url,"
             "download_sha3_384,download_sha512,snap_id,"
-            "revision,release",
+            "revision,release"
         }
+        if channel is not None:
+            params["channel"] = channel
         logger.debug("Getting details for {}".format(snap_name))
         url = "api/v1/snaps/details/{}".format(snap_name)
         resp = self.get(url, headers=headers, params=params)

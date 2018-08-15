@@ -63,7 +63,7 @@ class Validator:
                 "snapcraft validation file is missing from installation path"
             )
 
-    def validate(self, *, source=None):
+    def validate(self, *, source="snapcraft.yaml"):
         format_check = jsonschema.FormatChecker()
         try:
             jsonschema.validate(

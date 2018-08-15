@@ -92,6 +92,44 @@ class SnapcraftLogicError(ProjectLoaderError):
         super().__init__(message=message)
 
 
+class TemplateBaseRequiredError(ProjectLoaderError):
+    fmt = "Templates can only be used if the snapcraft.yaml specifies a 'base'"
+
+
+class TemplateNotFoundError(ProjectLoaderError):
+    fmt = (
+        "Failed to find template {template_name!r}: "
+        "a template by that name does not exist.\n"
+        "Check the template name and try again."
+    )
+
+    def __init__(self, template_name: str) -> None:
+        super().__init__(template_name=template_name)
+
+
+class TemplatePartConflictError(ProjectLoaderError):
+    fmt = (
+        "Failed to apply template {template_name!r}: "
+        "this template adds a part named {part_name!r}, but a part by that name "
+        "already exists.\n"
+        "Rename the {part_name!r} part to something else and try again."
+    )
+
+    def __init__(self, template_name: str, part_name: str) -> None:
+        super().__init__(template_name=template_name, part_name=part_name)
+
+
+class TemplateUnsupportedBaseError(ProjectLoaderError):
+    fmt = (
+        "Failed to load template {template_name!r}: "
+        "this template does not support the {base!r} base.\n"
+        "Either use a different template, or use a base supported by this template."
+    )
+
+    def __init__(self, template_name: str, base: str) -> None:
+        super().__init__(template_name=template_name, base=base)
+
+
 def _determine_preamble(error):
     messages = []
     path = _determine_property_path(error)

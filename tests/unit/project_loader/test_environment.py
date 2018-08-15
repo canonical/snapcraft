@@ -25,6 +25,7 @@ import fixtures
 from testtools.matchers import Contains, Equals, Not, StartsWith
 
 import snapcraft
+from snapcraft.internal import common
 from . import ProjectLoaderBaseTest
 from tests.fixture_setup.os_release import FakeOsRelease
 
@@ -258,6 +259,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_PROJECT_NAME="test"',
                     'SNAPCRAFT_PROJECT_VERSION="1"',
                     'SNAPCRAFT_STAGE="{}/stage"'.format(self.path),
+                    'SNAPCRAFT_TEMPLATES_DIR="{}"'.format(common.get_templatesdir()),
                 ]
             ),
         )
@@ -533,3 +535,12 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         ][0]
         env = project_config.parts.build_env_for_part(part1)
         self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="42"'))
+
+    def test_template_dir(self):
+        common.set_templatesdir("/foo")
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        part1 = [
+            part for part in project_config.parts.all_parts if part.name == "part1"
+        ][0]
+        env = project_config.parts.build_env_for_part(part1)
+        self.assertThat(env, Contains('SNAPCRAFT_TEMPLATES_DIR="/foo"'))

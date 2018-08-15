@@ -45,6 +45,8 @@ _DEFAULT_SCHEMADIR = os.path.join(sys.prefix, "share", "snapcraft", "schema")
 _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, "share", "snapcraft", "libraries")
 _librariesdir = _DEFAULT_LIBRARIESDIR
+_DEFAULT_TEMPLATESDIR = os.path.join(sys.prefix, "share", "snapcraft", "templates")
+_templatesdir = _DEFAULT_TEMPLATESDIR
 _DOCKERENV_FILE = "/.dockerenv"
 
 MAX_CHARACTERS_WRAP = 120
@@ -147,6 +149,15 @@ def set_schemadir(schemadir):
 
 def get_schemadir():
     return _schemadir
+
+
+def set_templatesdir(templatesdir):
+    global _templatesdir
+    _templatesdir = templatesdir
+
+
+def get_templatesdir():
+    return _templatesdir
 
 
 def get_arch_triplet():
