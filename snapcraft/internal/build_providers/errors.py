@@ -72,6 +72,13 @@ class ProviderLaunchError(_GenericProviderError):
         )
 
 
+class ProviderStartError(_GenericProviderError):
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(
+            action="start", provider_name=provider_name, exit_code=exit_code
+        )
+
+
 class ProviderStopError(_GenericProviderError):
     def __init__(self, *, provider_name: str, exit_code: int) -> None:
         super().__init__(

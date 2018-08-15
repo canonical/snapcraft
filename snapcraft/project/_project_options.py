@@ -131,19 +131,22 @@ def _get_platform_architecture():
     return architecture
 
 
+def _get_local_plugins_dir(project_dir: str, parts_dir: str) -> str:
+    deprecated_plugins_dir = os.path.join(parts_dir, "plugins")
+    if os.path.exists(deprecated_plugins_dir):
+        handle_deprecation_notice("dn2")
+        local_plugins_dir = deprecated_plugins_dir
+    else:
+        local_plugins_dir = os.path.join(project_dir, "snap", "plugins")
+
+    return local_plugins_dir
+
+
 class ProjectOptions:
-    @property
-    def use_geoip(self):
-        return self.__use_geoip
-
-    @property
-    def parallel_builds(self):
-        return self.__parallel_builds
-
     @property
     def parallel_build_count(self):
         build_count = 1
-        if self.__parallel_builds:
+        if self.parallel_builds:
             try:
                 build_count = multiprocessing.cpu_count()
             except NotImplementedError:
@@ -197,30 +200,6 @@ class ProjectOptions:
     def kernel_arch(self):
         return self.__machine_info["kernel"]
 
-    @property
-    def local_plugins_dir(self):
-        deprecated_plugins_dir = os.path.join(self.parts_dir, "plugins")
-        if os.path.exists(deprecated_plugins_dir):
-            handle_deprecation_notice("dn2")
-            return deprecated_plugins_dir
-        return os.path.join(self.__project_dir, "snap", "plugins")
-
-    @property
-    def parts_dir(self):
-        return os.path.join(self.__project_dir, "parts")
-
-    @property
-    def stage_dir(self):
-        return os.path.join(self.__project_dir, "stage")
-
-    @property
-    def prime_dir(self):
-        return os.path.join(self.__project_dir, "prime")
-
-    @property
-    def debug(self):
-        return self.__debug
-
     def __init__(
         self,
         use_geoip=False,
@@ -228,18 +207,28 @@ class ProjectOptions:
         target_deb_arch=None,
         debug=False,
         *,
-        project_dir: str = None
+        work_dir: str = None
     ) -> None:
 
-        if project_dir is None:
-            self.__project_dir = os.getcwd()
-        else:
-            self.__project_dir = project_dir
+        # Here for backwards compatibility.
+        project_dir = os.getcwd()
+        if work_dir is None:
+            work_dir = project_dir
 
-        self.__use_geoip = use_geoip
-        self.__parallel_builds = parallel_builds
+        self.use_geoip = use_geoip
+        self.parallel_builds = parallel_builds
+        self.debug = debug
+
+        self.parts_dir = os.path.join(work_dir, "parts")
+        self.stage_dir = os.path.join(work_dir, "stage")
+        self.prime_dir = os.path.join(work_dir, "prime")
+        self.local_plugins_dir = _get_local_plugins_dir(project_dir, self.parts_dir)
+
+        logger.debug("Parts dir {}".format(self.parts_dir))
+        logger.debug("Stage dir {}".format(self.stage_dir))
+        logger.debug("Prime dir {}".format(self.prime_dir))
+
         self._set_machine(target_deb_arch)
-        self.__debug = debug
 
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.

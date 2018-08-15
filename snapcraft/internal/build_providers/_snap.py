@@ -357,8 +357,11 @@ class SnapInjector:
         # are acked.
         self._inject_assertions()
 
+        # Filter out snaps with no operations
+        snaps = [snap for snap in self._snaps if snap.get_op() != _SnapOp.NOP]
+
         with self._mounted_dir():
-            for snap in self._snaps:
+            for snap in snaps:
                 install_cmd = snap.get_install_cmd()
                 self._runner(install_cmd)
                 self._record_revision(snap.snap_name, snap.get_revision())

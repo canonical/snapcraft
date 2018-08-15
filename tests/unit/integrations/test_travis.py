@@ -264,6 +264,15 @@ class TravisSuccessfulTestCase(unit.TestCase):
                     """\
                 Enabling Travis testbeds to push and release 'foo' snaps to edge channel in series '16'
                 Acquiring specific authorization information ...
+                """
+                )
+            ),
+        )
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                dedent(
+                    """\
                 Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
                 Configuring "deploy" phase to build and release the snap in the Store.
                 Done. Now you just have to review and commit changes in your Travis project (`.travis.yml`).
@@ -348,9 +357,18 @@ class TravisSuccessfulTestCase(unit.TestCase):
                     """\
                 Refreshing credentials to push and release "foo" snaps to edge channel in series 16
                 Acquiring specific authorization information ...
+                """
+                )
+            ),
+        )
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                dedent(
+                    """\
                 Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
                 Done. Please commit the changes to `.snapcraft/travis_snapcraft.cfg` file.
-            """
+                """
                 )
             ),
         )  # noqa TODO this type of test should not be done
