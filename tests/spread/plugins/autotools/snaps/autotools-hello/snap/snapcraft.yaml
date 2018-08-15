@@ -18,4 +18,4 @@ build-packages: [gcc]
 parts:
   make-project:
     plugin: autotools
-    source: http://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
+    source: hello-2.10.tar.gz
