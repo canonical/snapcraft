@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import click
 import os
+import sys
+
+import click
 
 from . import echo
 from . import env
@@ -234,8 +236,13 @@ def cleanbuild(remote, debug, **kwargs):
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
+    if sys.platform == "darwin":
+        default_provider = "multipass"
+    else:
+        default_provider = "lxd"
+
     build_environment = env.BuilderEnvironmentConfig(
-        default="lxd", additional_providers=["multipass"]
+        default=default_provider, additional_providers=["multipass"]
     )
 
     lifecycle.cleanbuild(
