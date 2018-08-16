@@ -1,3 +1,96 @@
+snapcraft (2.43) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * recording: expose the version of snapcraft (#2147)
+  * tests: add a fixture for OsRelease to simplify test setup
+  * recording: add the os-release ID and VERSION_ID to manifest.yaml
+  * nodejs plugin: update to the latest 6.x LTS point release (#2157)
+  * snap: use apt from the archive instead of compiling (#2156)
+  * build_providers: support for communicating with a qemu VM (#2155)
+  * many: refactor snapcraft.yaml loading out of load_config (#2160)
+  * tests: update codespell, the scope of checks and ordering of static
+           tests (#2162)
+  * rust plugin: fix cargo builds and run tests (#2170)
+  * build_providers: add ssh key managemet to the qemu build provider (#2168)
+  * ci: disable osx tests until a new pyyaml is released
+  * build_providers: inject snaps when running from a snap (#2174)
+  * code: use black as the standard style (#2180)
+  * cli: reserve the --debug option for snapcraft projects (#2185)
+  * state: allow parametrization of the global state file (#2186)
+  * errors: enable sentry by default (#2187)
+  * file_utils: get_tool_path to always return an absolute path (#2193)
+  * errors: support keyboard interrupts (#2198)
+  * build_providers: add a build image setup facility (#2192)
+  * build providers: better injection logic (#2196)
+  * Revert "ci: disable osx tests until a new pyyaml is released" (#2213)
+  * providers: multipass by default on darwin (#2215)
+  * New upstream release (LP: #1787419)
+
+  [ Kyle Fazzari ]
+  * lifecycle: automatically stage dependencies (#2144)
+  * lifecycle: automatically clean dirty steps (#2145)
+  * travis: use LXD from 3.0 track (#2149)
+  * project_loader: process parts in consistent order (#2146)
+  * project_loader: allow loading null parts (#2153)
+  * tests: disable sentry (#2154)
+  * lifecycle: don't clean priming area if the snap is being tried (#2143)
+  * many: extract lifecycle ordering into own module (#2159)
+  * many: automatically redo step for specified part (#2152)
+  * tests: add lifecycle ordering tests (#2163)
+  * many: automatically detect dependency changes (#2165)
+  * project_loader: replace dict keys as well as values (#2166)
+  * {catkin,python} plugin: support cleaning (#2171)
+  * many: add shellcheck to static tests (#2172)
+  * lifecycle: detect local source changes (#2167)
+  * lifecycle: pass commands to containerbuild, not steps (#2178)
+  * cli: SNAPCRAFT_BUILD_ENVIRONMENT isn't deprecated (#2179)
+  * pluginhandler: use uname from the host (#2177)
+  * store: properly handle disabled deltas (#2181)
+  * tests: create basic integration test spread infrastructure (#2173)
+  * tests: add spread suite for autotools plugin (#2182)
+  * tests: add spread suite for cmake plugin (#2183)
+  * spread: stop testing 17.10 (#2197)
+  * tests: add spread suite for copy plugin (#2199)
+  * tests: add spread suite for nil plugin (#2201)
+  * tests: add spread suite for kbuild plugin (#2203)
+  * kbuild plugin: stop modifying kconfigfile (#2204)
+  * tests: support running spread suite in autopkgtests (#2188)
+  * tests: add spread suite for meson plugin (#2205)
+  * tests: add spread suite for godeps plugin (#2200)
+  * tests: add spread suite for scons plugin (#2208)
+  * tests: add spread suite for catkin plugin (#2206)
+  * tests: add spread suite for waf plugin (#2210)
+  * cli: add inspect subcommand (#2184)
+  * tests: add spread suite for tar-content plugin (#2209)
+  * tests: add spread suite for ament plugin (#2211)
+  * tests: add spread suite for ruby plugin (#2212)
+  * project_loader: add basic template support (#2189)
+  * spread tests: vendor gotty
+  * spread tests: vendor kbuild-template
+  * spread tests: vendor hello
+  * sentry: support disabling error reporting (#2214)
+
+  [ Daniel Llewellyn ]
+  * jhbuild plugin: allow running as 'root' (#2141)
+
+  [ Emmanuel Leblond ]
+  * python plugin: add process-dependency-links to the pull_properties (#2190)
+  * ci: improve pr template and tools' ignored files list (#2191)
+
+  [ Celso Providelo ]
+  * tests: stricter match when running snapcraft revisions (#2195)
+
+  [ Michael Vogt ]
+  * go plugin: do not install go debs if go snap is used (#2194)
+
+  [ Jesse Sung ]
+  * kbuild plugin: read configs from source directory instead (#2202)
+
+  [ Paolo Pisati ]
+  * kernel plugin: install .config as config-$kernelversion (#2207)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 16 Aug 2018 14:12:55 +0000
+
 snapcraft (2.42.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
