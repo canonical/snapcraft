@@ -70,10 +70,11 @@ jobs:
     - stage: snap
       if: type != cron
       install:
+        - sudo apt update
+        - sudo apt install -y snapd
         - sudo snap install lxd
         - sudo snap install snapcraft --candidate --classic
-        - export PATH=/snap/bin:$PATH
-        - sudo lxd init --auto
+        - sudo /snap/bin/lxd init --auto
       script:
         - export PATH=/snap/bin:$PATH
         - snapcraft cleanbuild
@@ -81,7 +82,7 @@ jobs:
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
         - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
         - sudo snap install transfer
-        - timeout 180 transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
+        - timeout 180 /snap/bin/transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
 
     - stage: integration
       if: type != cron
