@@ -12,10 +12,11 @@ apps:
     command: myapp
 
 parts:
+  # Pulled https://github.com/embedded-it/kbuild-template at commit
+  # bf468d463c48444818c0828b86e97be244c3ed5c
   kbuild-hello:
     plugin: kbuild
-    source: https://github.com/embedded-it/kbuild-template
-    source-type: git
+    source: kbuild-template.tar.gz
     build-packages: [gcc, libc6-dev]
     kconfigfile: defconfig
     kconfigs:

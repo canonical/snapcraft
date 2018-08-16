@@ -158,6 +158,13 @@ def _handle_trace_output(
 
 
 def _is_send_to_sentry() -> bool:  # noqa: C901
+    # Check to see if error reporting has been disabled
+    if (
+        distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
+        == 0
+    ):
+        return False
+
     # Check the environment to see if we should allow for silent reporting
     if distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_SILENT_REPORT", "n")) == 1:
         click.echo(_MSG_SILENT_REPORT)

@@ -13,6 +13,12 @@ environment:
   # nothing.
   SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
 
+  # Show error tracebacks
+  SNAPCRAFT_MANAGED_HOST: "yes"
+
+  # Disable all Sentry error reporting
+  SNAPCRAFT_ENABLE_ERROR_REPORTING: "no"
+
   SETUP_DIR: /snapcraft/tests/spread/setup
 
 backends:
