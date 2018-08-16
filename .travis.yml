@@ -24,6 +24,7 @@ jobs:
     - stage: static
       if: type != cron
       script:
+        - export PATH="/snap/bin:$PATH"
         - sudo apt update
         - sudo apt install -y python3.5-dev snapd shellcheck
         - sudo snap install black --devmode --edge
