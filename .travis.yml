@@ -28,7 +28,7 @@ jobs:
         - sudo apt install -y python3.5-dev snapd shellcheck
         - sudo snap install black --devmode --edge
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
-        - curl https://bootstrap.pypa.io/get-pip.py| python3
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install -r requirements-devel.txt
         - ./runtests.sh static
 
@@ -38,7 +38,7 @@ jobs:
         - sudo apt update
         - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
-        - curl https://bootstrap.pypa.io/get-pip.py| python3
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov coverage
         - ./runtests.sh tests/unit
         - coverage xml
@@ -48,7 +48,7 @@ jobs:
         - sudo apt update
         - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
-        - curl https://bootstrap.pypa.io/get-pip.py| python3
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - python3 -m pip install -r requirements-devel.txt -r requirements.txt
         - SNAPCRAFT_TEST_MOCK_MACHINE=armv7l ./runtests.sh tests/unit
     - if: type != cron
@@ -56,7 +56,7 @@ jobs:
         - sudo apt update
         - sudo apt install -y git python3.5-dev bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
-        - curl https://bootstrap.pypa.io/get-pip.py| python3
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - python3 -m pip install -r requirements-devel.txt -r requirements.txt
         - SNAPCRAFT_TEST_MOCK_MACHINE=aarch64 ./runtests.sh tests/unit
 
