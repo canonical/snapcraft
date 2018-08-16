@@ -120,8 +120,6 @@ jobs:
       script:
         - sudo apt install -y git python-launchpadlib
         - ./tools/cla_check.py
-
-    - stage: spread
       if: type != cron
       script:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
