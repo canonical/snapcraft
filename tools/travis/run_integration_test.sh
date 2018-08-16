@@ -20,13 +20,13 @@
 
 set -ev
 
-lxc="/snap/bin/lxc"
-test_suite=$1
-script_path="$(dirname "$0")"
-project_path="$(readlink -f "$script_path/../..")"
+export lxc="/snap/bin/lxc"
+export test_suite=$1
+project_path="$(readlink -f "$(dirname "$0")/../..")"
+export project_path
 
 
-func setup_lxd() {
+setup_lxd() {
     name="$1"
     image="$2"
 

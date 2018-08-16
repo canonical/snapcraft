@@ -59,7 +59,6 @@ parseargs(){
     fi
 }
 
-python3 -m coverage 1>/dev/null 2>&1 && coverage_cmd="true"
 coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
@@ -122,7 +121,7 @@ fi
 parseargs "$@"
 
 if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
-    python3 -m coverage report
+    coverage report
 
     echo
     echo "Run 'python3-coverage html' to get a nice report"
