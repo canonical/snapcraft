@@ -88,7 +88,7 @@ def _get_origin_data(origin_dir):
     yaml_file = project.get_snapcraft_yaml(base_dir=origin_dir)
     try:
         with open(yaml_file) as fp:
-            origin_data = yaml.safe_load(fp)
+            origin_data = yaml.load(fp, Loader=yaml.CSafeLoader)
     except ScannerError as e:
         raise errors.InvalidWikiEntryError(e) from e
 
@@ -222,7 +222,7 @@ def _process_wiki_entry(
     """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
-        data = yaml.safe_load(entry)
+        data = yaml.load(entry, Loader=yaml.CSafeLoader)
     except (ScannerError, ParserError) as e:
         raise errors.InvalidWikiEntryError(
             "Bad wiki entry, possibly malformed YAML for entry: {}".format(e)

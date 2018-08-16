@@ -126,7 +126,7 @@ class _Update(_Base):
             return None
 
         with open(self._headers_yaml) as headers_file:
-            return yaml.safe_load(headers_file)
+            return yaml.load(headers_file, Loader=yaml.CSafeLoader)
 
     def _save_headers(self):
         headers = {"If-Modified-Since": self._request.headers.get("Last-Modified")}
@@ -143,7 +143,7 @@ class _RemoteParts(_Base):
             update()
 
         with open(self.parts_yaml) as parts_file:
-            self._parts = yaml.safe_load(parts_file)
+            self._parts = yaml.load(parts_file, Loader=yaml.CSafeLoader)
 
     def get_part(self, part_name, full=False):
         try:

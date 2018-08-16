@@ -130,7 +130,7 @@ def _find_template(base: str, template_name: str) -> Dict[str, Any]:
 @functools.lru_cache()
 def __template_loader(template_name: str) -> Dict[str, Any]:
     with open(template_yaml_path(template_name), "r") as f:
-        return yaml.safe_load(f)
+        return yaml.load(f, Loader=yaml.CSafeLoader)
 
 
 def _apply_template(
