@@ -51,8 +51,6 @@ parseargs(){
             run_snaps "$@"
         elif [ "$test_suite" == "spread" ] ; then
             run_spread
-        elif [ "$test_suite" == "old-spread" ] ; then
-            run_old_spread
         else
             run_snapcraft_tests "$@"
         fi
@@ -102,15 +100,6 @@ run_spread(){
     ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
 
     spread -v google:
-}
-
-run_old_spread(){
-    TMP_SPREAD="$(mktemp -d)"
-
-    export PATH=$TMP_SPREAD:$PATH
-    ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
-
-    SNAPCRAFT_CHANNEL=edge spread -v linode:spread_tests/
 }
 
 if [ "$test_suite" == "-h" ] || [ "$test_suite" == "--help" ]; then

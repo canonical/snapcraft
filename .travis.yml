@@ -118,9 +118,3 @@ jobs:
       script:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
       - ./runtests.sh spread
-
-    # Trigger nightly tests, only in cron.
-    - stage: nightly
-    # Run spread tests for the snapcraft snap in edge.
-      if: type = cron
-      script: ./runtests.sh old-spread
