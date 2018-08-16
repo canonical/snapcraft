@@ -25,8 +25,7 @@ jobs:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
-      script:
-        - export PATH="/snap/bin:$PATH"
+      install:
         - sudo apt update
         - sudo apt install -y python3.5-dev snapd shellcheck
         # workaround for "cannot locate the core snap: No such file or directory"
@@ -35,11 +34,13 @@ jobs:
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt
+      script:
+        - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
 
     - stage: unit
       if: type != cron
-      script:
+      install:
         # Here until we have our snapcraft testing toolkit snap
         - sudo add-apt-repository -y ppa:chris-lea/libsodium
         - sudo apt update
@@ -47,34 +48,40 @@ jobs:
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
+      script:
         - ./runtests.sh tests/unit
+      after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
 
     - stage: osx-integration-store
       if: type != cron
       os: osx
+      install:
+        - brew upgrade python
+        # readlink -f doesn't work on osx.
+        - brew upgrade coreutils || brew install coreutils
+        - python3 ./tools/brew_install_from_source.py
+        - python3 -m pip install -r requirements.txt
+        - python3 -m pip install -r requirements-devel.txt
       script:
-      - brew upgrade python
-      # readlink -f doesn't work on osx.
-      - brew upgrade coreutils || brew install coreutils
-      - python3 ./tools/brew_install_from_source.py
-      - python3 -m pip install -r requirements.txt
-      - python3 -m pip install -r requirements-devel.txt
-      - SNAPCRAFT_FROM_BREW=1 ./runtests.sh tests.integration.store.test_store_login_logout use-run
+        - SNAPCRAFT_FROM_BREW=1 ./runtests.sh tests.integration.store.test_store_login_logout use-run
 
     - stage: snap
       if: type != cron
+      install:
+        - sudo snap install lxd
+        - sudo snap install snapcraft --candidate --classic
+        - export PATH=/snap/bin:$PATH
+        - sudo lxd init --auto
       script:
-      - sudo snap install lxd
-      - sudo snap install snapcraft --candidate --classic
-      - export PATH=/snap/bin:$PATH
-      - sudo lxd init --auto
-      - snapcraft cleanbuild
-      - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
-      - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-      - sudo snap install transfer
-      - timeout 180 transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
+        - export PATH=/snap/bin:$PATH
+        - snapcraft cleanbuild
+      after_success:
+        - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+        - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo snap install transfer
+        - timeout 180 transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
 
     - stage: integration
       if: type != cron
