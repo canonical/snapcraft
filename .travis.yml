@@ -79,9 +79,9 @@ jobs:
       script:
         - export PATH=/snap/bin:$PATH
         - sudo snapcraft cleanbuild
-      after_success:
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
         - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+      after_success:
         - sudo snap install transfer
         - timeout 180 /snap/bin/transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
       after_failure:
