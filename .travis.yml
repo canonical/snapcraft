@@ -74,6 +74,7 @@ jobs:
         - sudo apt install -y snapd
         - sudo snap install lxd
         - sudo snap install snapcraft --candidate --classic
+        - sudo /snap/bin/lxd waitready
         - sudo /snap/bin/lxd init --auto
       script:
         - export PATH=/snap/bin:$PATH
