@@ -78,7 +78,7 @@ jobs:
         - sudo /snap/bin/lxd init --auto
       script:
         - export PATH=/snap/bin:$PATH
-        - snapcraft cleanbuild
+        - sudo snapcraft cleanbuild
       after_success:
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
         - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
