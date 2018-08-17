@@ -72,7 +72,7 @@ jobs:
       install:
         - sudo apt update
         - sudo apt install -y snapd
-        - sudo snap install lxd
+        - sudo snap install lxd --channel 3.0/stable
         - sudo snap install snapcraft --candidate --classic
         - sudo /snap/bin/lxd waitready
         - sudo /snap/bin/lxd init --auto
@@ -84,6 +84,10 @@ jobs:
         - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
         - sudo snap install transfer
         - timeout 180 /snap/bin/transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
+      after_failure:
+        - sudo journalctl -u snapd
+        - sudo snap install http
+        - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
       if: type != cron
