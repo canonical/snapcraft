@@ -91,35 +91,35 @@ jobs:
 
     - stage: integration
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/general
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
-      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_tests.sh tests/integration/general
+      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/lifecycle
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/lifecycle
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/sources
-    - if: type != cron
-      script:
-      - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests/integration/plugins
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/sources
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_nodejs
+      - sudo ./tools/travis/run_integration_test.sh tests/integration/plugins
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_java
+      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_nodejs
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_java
     - if: type != cron
-      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
+      script: sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/store
+      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
+    - if: type != cron
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
     - if: type != cron
       script:
       - "travis_wait 20 sleep 1200 &"
-      - sudo ./tools/travis/run_tests.sh tests/integration/snapd
+      - sudo ./tools/travis/run_integration_test.sh tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script:
