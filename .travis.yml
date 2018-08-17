@@ -80,10 +80,11 @@ jobs:
         - export PATH=/snap/bin:$PATH
         - sudo snapcraft cleanbuild
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
-        - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - mv snapcraft_git_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - sudo snap install transfer
-        - timeout 180 /snap/bin/transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true
+        - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
         - sudo journalctl -u snapd
         - sudo snap install http
