@@ -6,6 +6,8 @@ env:
   global:
     # SPREAD_GOOGLE_KEY
     - secure: "uWKJdJlHc8tg+98jGpcc/FvsssEbw2FARqtgO0smBp5x8JWCmAt5fAVPB8qRbbirdHS5Yjpk8SSSa3vWVizYeTIOV+Vo3w8/1oqymPnMEEMtcLkyGZP+fNMDgNnX+icOU/bmh8werhOn9+qiZfKmFuXgpjrXzYoWzrhn55EuDN68Yhe6gB1zznHihDtSKjwQrbZFlgNnTh13Wk9lY8y2XYsWZZVfQ25dP4PaQQv647nBhcWPvrB0N/vMmDS/twvUBcbbEjRg5yKtsqzuT2lEqdIpwosp3/gZjWAWK0FjjmnzRcSHbugtaxWHmghHDLHSpP4GF7bzYL01tklFWDSW9DDvVfZ3HgiN058LL1jsk+VjcMCgu7csUWUj2kib3/TjKQy32R1vALpgDOrLHutdVDXoED33qxcyAYLODNRwW9o+QQM2HoZD4PKVDcKW4WOvAKp7Z1NK+ag26WdA/bM7ZgAll40dY9yPtgg0fdMM9N1X9e4v2TJmjnSLXF8v0jXIwp3VL01c/RpsmD7ubTUp0ixSaiKK0cCvxdflsDSUGojckeA4OsGOf9X+anqxmJsiY7vW/TKULMgToKEYDIPB0EfJ0Tf8P/ve4veEZSnhFinrDk46jwSP2m4kpR2FHAMtjCwqWEXZWouIJOOclAk4IqUWGT88Iomdz/LFbQa2rdo="
+    - LC_ALL: C.UTF-8
+    - LANG: C.UTF-8
 
 matrix:
   include:
@@ -23,64 +25,108 @@ jobs:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh static
+      install:
+        - sudo apt update
+        - sudo apt install -y python3.5-dev snapd shellcheck
+        # workaround for "cannot locate the core snap: No such file or directory"
+        - sudo snap install core
+        - sudo snap install black --devmode --edge
+        - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
+        - pip3 install --user -r requirements-devel.txt
+      script:
+        - export PATH="/snap/bin:$PATH"
+        - ./runtests.sh static
 
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/unit
-    - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
-    - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=aarch64 sudo ./tools/travis/run_tests.sh tests/unit
+      install:
+        # Here until we have our snapcraft testing toolkit snap
+        - sudo add-apt-repository -y ppa:chris-lea/libsodium
+        - sudo apt update
+        - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
+        - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
+        - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
+      script:
+        - ./runtests.sh tests/unit
+      after_success:
+        - coverage xml
+        - codecov --token="$CODECOV_TOKEN"
+
     - stage: osx-integration-store
       if: type != cron
       os: osx
-      script: SNAPCRAFT_FROM_BREW=1 ./tools/travis/run_tests.sh tests.integration.store.test_store_login_logout use-run
+      install:
+        - brew upgrade python
+        # readlink -f doesn't work on osx.
+        - brew upgrade coreutils || brew install coreutils
+        - python3 ./tools/brew_install_from_source.py
+        - python3 -m pip install -r requirements.txt
+        - python3 -m pip install -r requirements-devel.txt
+      script:
+        - SNAPCRAFT_FROM_BREW=1 ./runtests.sh tests.integration.store.test_store_login_logout use-run
+
     - stage: snap
       if: type != cron
-      script: sudo ./tools/travis/build_snapcraft_snap.sh
+      install:
+        - sudo apt update
+        - sudo apt install -y snapd
+        - sudo snap install lxd --channel 3.0/stable
+        - sudo snap install snapcraft --candidate --classic
+        - sudo /snap/bin/lxd waitready
+        - sudo /snap/bin/lxd init --auto
+      script:
+        - export PATH=/snap/bin:$PATH
+        - sudo snapcraft cleanbuild
+        - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+        - mv snapcraft_git_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+      after_success:
+        - sudo snap install transfer
+        - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
+      after_failure:
+        - sudo journalctl -u snapd
+        - sudo snap install http
+        - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/general
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
-      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_tests.sh tests/integration/general
+      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/lifecycle
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/lifecycle
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/sources
-    - if: type != cron
-      script:
-      - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests/integration/plugins
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/sources
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_nodejs
+      - sudo ./tools/travis/run_integration_test.sh tests/integration/plugins
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_java
+      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_nodejs
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_java
     - if: type != cron
-      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
+      script: sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/store
+      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
+    - if: type != cron
+      script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
     - if: type != cron
       script:
       - "travis_wait 20 sleep 1200 &"
-      - sudo ./tools/travis/run_tests.sh tests/integration/snapd
+      - sudo ./tools/travis/run_integration_test.sh tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
-      script: ./tools/travis/run_cla_check.sh
-
-    - stage: spread
+      script:
+        - sudo apt install -y git python-launchpadlib
+        - ./tools/cla_check.py
       if: type != cron
-      script: ./tools/travis/run_tests.sh spread
-
-    # Trigger nightly tests, only in cron.
-    - stage: nightly
-    # Run spread tests for the snapcraft snap in edge.
-      if: type = cron
-      script: ./runtests.sh old-spread
+      script:
+      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+      - ./runtests.sh spread

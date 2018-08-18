@@ -21,7 +21,7 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
-from tests import unit
+from tests import unit, skip
 from tests.subprocess_utils import call
 
 
@@ -168,6 +168,9 @@ class SubversionDetailsTestCase(SubversionBaseTestCase):
 
         self.source_details = self.svn._get_source_details()
 
+    @skip.skip_unless_codename(
+        ["xenial", "bionic"], "only supported where bases are defined"
+    )
     def test_svn_details_commit(self):
         self.assertThat(
             self.source_details["source-commit"], Equals(self.expected_commit)
