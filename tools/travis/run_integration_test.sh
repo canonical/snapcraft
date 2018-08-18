@@ -69,7 +69,7 @@ setup_lxd() {
 
 echo "Going to run $test_suite on $TRAVIS_OS_NAME"
 
-setup_lxd test_runner "${LXD_IMAGE:-ubuntu:16.04}"
+setup_lxd test-runner "${LXD_IMAGE:-ubuntu:16.04}"
 
 $lxc file push --recursive "$project_path" test-runner/root/
 $lxc exec test-runner -- sh -c "apt install -y bzr git libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd"
