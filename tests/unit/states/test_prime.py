@@ -14,12 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
-
 from testtools.matchers import Equals
 
 import snapcraft.internal
-from tests import unit
+from tests import unit, yaml_utils
 
 
 class PrimeStateBaseTestCase(unit.TestCase):
@@ -49,7 +47,7 @@ class PrimeStateBaseTestCase(unit.TestCase):
 
 class PrimeStateTestCase(PrimeStateBaseTestCase):
     def test_yaml_conversion(self):
-        state_from_yaml = yaml.load(yaml.dump(self.state))
+        state_from_yaml = yaml_utils.load(yaml_utils.dump(self.state))
         self.assertThat(state_from_yaml, Equals(self.state))
 
     def test_comparison(self):

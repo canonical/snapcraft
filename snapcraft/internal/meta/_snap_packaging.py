@@ -26,10 +26,9 @@ import shutil
 import stat
 import subprocess
 from typing import Any, Dict, List, Set  # noqa
-
 import yaml
 
-from snapcraft import file_utils, formatting_utils
+from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
 from snapcraft.project import Project
 from snapcraft.internal import common, errors, project_loader
@@ -312,7 +311,7 @@ class _SnapPackaging:
         snap_yaml = self._compose_snap_yaml()
 
         with open(package_snap_path, "w") as f:
-            yaml.dump(snap_yaml, stream=f, default_flow_style=False)
+            yaml_utils.safe_dump(snap_yaml, stream=f)
 
         return snap_yaml
 
@@ -358,7 +357,7 @@ class _SnapPackaging:
                 self._global_state_file,
             )
             with open(manifest_file_path, "w") as manifest_file:
-                yaml.dump(annotated_snapcraft, manifest_file, default_flow_style=False)
+                yaml_utils.safe_dump(annotated_snapcraft, stream=manifest_file)
 
     def write_snap_directory(self) -> None:
         # First migrate the snap directory. It will overwrite any conflicting

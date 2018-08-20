@@ -21,9 +21,8 @@ import jsonschema
 import logging
 import os
 from typing import Any, Dict, List, Set  # noqa: F401
-import yaml
 
-from snapcraft import formatting_utils
+from snapcraft import formatting_utils, yaml_utils
 from snapcraft.internal import common
 from . import errors
 
@@ -130,7 +129,7 @@ def _find_template(base: str, template_name: str) -> Dict[str, Any]:
 @functools.lru_cache()
 def __template_loader(template_name: str) -> Dict[str, Any]:
     with open(template_yaml_path(template_name), "r") as f:
-        return yaml.load(f, Loader=yaml.CSafeLoader)
+        return yaml_utils.safe_load(f)
 
 
 def _apply_template(

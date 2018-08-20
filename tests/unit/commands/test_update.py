@@ -22,11 +22,10 @@ from unittest.mock import call
 import fixtures
 import hashlib
 import sys
-import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
 
-from tests import fixture_setup, unit
+from tests import fixture_setup, unit, yaml_utils
 from . import CommandBaseTestCase
 
 
@@ -82,7 +81,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         p["maintainer"] = "none"
 
         with open(self.parts_yaml) as parts_file:
-            parts = yaml.load(parts_file)
+            parts = yaml_utils.safe_load(parts_file)
 
         self.assertThat(parts, Equals(expected_parts))
 
@@ -121,9 +120,9 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         expected_headers = {"If-Modified-Since": "Thu, 07 Jul 2016 10:00:20 GMT"}
 
         with open(self.parts_yaml) as parts_file:
-            parts = yaml.load(parts_file)
+            parts = yaml_utils.safe_load(parts_file)
         with open(self.headers_yaml) as headers_file:
-            headers = yaml.load(headers_file)
+            headers = yaml_utils.safe_load(headers_file)
 
         self.assertThat(parts, Equals(expected_parts))
         self.assertThat(headers, Equals(expected_headers))
@@ -142,8 +141,9 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
     def test_update_with_changed_date_downloads_again(self):
         os.makedirs(self.parts_dir)
         with open(self.headers_yaml, "w") as headers_file:
-            yaml.dump(
-                {"If-Modified-Since": "Fri, 01 Jan 2016 12:00:00 GMT"}, headers_file
+            yaml_utils.safe_dump(
+                {"If-Modified-Since": "Fri, 01 Jan 2016 12:00:00 GMT"},
+                stream=headers_file,
             )
 
         result = self.run_command(["update"])

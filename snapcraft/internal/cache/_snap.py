@@ -19,10 +19,9 @@ import os
 import shutil
 import subprocess
 import tempfile
-import yaml
 
 from ._cache import SnapcraftProjectCache
-from snapcraft import file_utils
+from snapcraft import file_utils, yaml_utils
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ class SnapCache(SnapcraftProjectCache):
             with open(
                 os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
             ) as yaml_file:
-                snap_yaml = yaml.load(yaml_file, Loader=yaml.CSafeLoader)
+                snap_yaml = yaml_utils.safe_load(yaml_file)
         # XXX: add multiarch support later
         try:
             return snap_yaml["architectures"][0]

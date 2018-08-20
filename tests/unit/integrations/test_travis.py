@@ -20,7 +20,6 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-import yaml
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
@@ -32,7 +31,7 @@ from snapcraft.internal.errors import (
 )
 from snapcraft.project import Project
 import tests
-from tests import unit
+from tests import unit, yaml_utils
 
 
 test_snapcraft_yaml = """
@@ -233,7 +232,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated for snap CI.
         with open(".travis.yml") as fd:
-            travis_conf = yaml.load(fd)
+            travis_conf = yaml_utils.safe_load(fd)
             self.assertThat(travis_conf["sudo"], Equals("required"))
             self.assertThat(travis_conf["services"], Equals(["docker"]))
             self.assertThat(
@@ -335,7 +334,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated only with the decrypt command.
         with open(".travis.yml") as fd:
-            travis_conf = yaml.load(fd)
+            travis_conf = yaml_utils.safe_load(fd)
             self.assertThat(
                 travis_conf["after_success"], Equals(["<travis-cli-decrypt>"])
             )

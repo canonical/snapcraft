@@ -17,11 +17,10 @@
 import os
 import subprocess
 import textwrap
-import yaml
 
 from testtools.matchers import Equals, Contains
 
-from tests import integration
+from tests import integration, yaml_utils
 
 
 class SnapcraftctlSetVersionTestCase(integration.TestCase):
@@ -41,7 +40,7 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.safe_load(f)
 
         self.assertThat(y["version"], Equals("override-version"))
 
@@ -61,7 +60,7 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.safe_load(f)
 
         self.assertThat(y["version"], Equals("test-version"))
 

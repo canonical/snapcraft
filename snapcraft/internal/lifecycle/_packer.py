@@ -18,10 +18,9 @@ import os
 import time
 from subprocess import Popen, PIPE, STDOUT
 
-import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
-from snapcraft import file_utils
+from snapcraft import file_utils, yaml_utils
 from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -31,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def _snap_data_from_dir(directory):
     with open(os.path.join(directory, "meta", "snap.yaml")) as f:
-        snap = yaml.load(f, Loader=yaml.CSafeLoader)
+        snap = yaml_utils.safe_load(f)
 
     return {
         "name": snap["name"],

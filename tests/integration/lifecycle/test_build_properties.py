@@ -15,11 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import yaml
 
 from testtools.matchers import Equals, FileExists
 
-from tests import integration
+from tests import integration, yaml_utils
 
 
 class BuildPropertiesTestCase(integration.TestCase):
@@ -35,7 +34,7 @@ class BuildPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "x-local-plugin", "state", "build")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         # Verify that the correct schema dependencies made it into the state.
         self.assertTrue("foo" in state.schema_properties)
@@ -54,7 +53,7 @@ class BuildPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "go-hello", "state", "build")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertThat(state.project_options["deb_arch"], Equals("i386"))
 
     def test_arch_with_build(self):
@@ -64,5 +63,5 @@ class BuildPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "go-hello", "state", "build")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertThat(state.project_options["deb_arch"], Equals("i386"))

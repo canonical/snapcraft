@@ -16,9 +16,9 @@
 
 import os
 from typing import Dict, List, Type
-
 import yaml
 
+from snapcraft import yaml_utils
 from snapcraft.internal.states._state import State
 
 
@@ -47,7 +47,7 @@ class GlobalState(State):
         if dirpath:
             os.makedirs(dirpath, exist_ok=True)
         with open(filepath, "w") as state_file:
-            yaml.dump(self, stream=state_file)
+            yaml_utils.dump(self, stream=state_file)
 
     def get_build_packages(self) -> List[str]:
         return self.assets.get("build-packages", [])

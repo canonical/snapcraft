@@ -21,11 +21,9 @@ import logging
 import http.server
 import os
 import urllib.parse
-
-
 import pymacaroons
-import yaml
 
+from tests import yaml_utils
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +153,7 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Last-Modified", self._parts_date.strftime(self._date_format))
         self.send_header("ETag", "1111")
         self.end_headers()
-        self.wfile.write(yaml.dump(response).encode())
+        self.wfile.write(yaml_utils.safe_dump(response).encode())
 
 
 class FakePartsWikiServer(http.server.HTTPServer):

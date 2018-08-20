@@ -20,10 +20,9 @@ import subprocess
 
 import fixtures
 import testscenarios
-import yaml
 from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
-from tests import integration
+from tests import integration, yaml_utils
 from tests.matchers import HasArchitecture
 
 
@@ -83,11 +82,11 @@ class RustPluginTestCase(RustPluginBaseTestCase):
     def test_stage_rust_with_source_and_source_subdir(self):
         self.copy_project_to_cwd("rust-subdir")
         with open("snapcraft.yaml") as snapcraft_yaml_file:
-            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+            snapcraft_yaml = yaml_utils.safe_load(snapcraft_yaml_file)
         snapcraft_yaml["parts"]["rust-subdir"]["source"] = "."
         snapcraft_yaml["parts"]["rust-subdir"]["source-subdir"] = "subdir"
         with open("snapcraft.yaml", "w") as snapcraft_yaml_file:
-            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.safe_dump(snapcraft_yaml, stream=snapcraft_yaml_file)
 
         self.run_snapcraft("pull")
 
@@ -118,10 +117,10 @@ class RustPluginConfinementTestCase(
 
     def _set_confinement(self, snapcraft_yaml_file):
         with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml.load(f)
+            snapcraft_yaml = yaml_utils.safe_load(f)
         snapcraft_yaml["confinement"] = self.confinement
         with open(snapcraft_yaml_file, "w") as f:
-            yaml.dump(snapcraft_yaml, f)
+            yaml_utils.safe_dump(snapcraft_yaml, f)
 
     def test_prime(self):
         if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":

@@ -19,10 +19,9 @@ import os
 import sys
 import xdg
 
-import yaml
 from testtools.matchers import Contains, Equals
 
-from tests import integration
+from tests import integration, yaml_utils
 
 
 class PartsTestCase(integration.TestCase):
@@ -59,7 +58,7 @@ class PartsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml.load(output[idx:], Loader=yaml.CSafeLoader)
+        part = yaml_utils.safe_load(output[idx:])
         expected_part = {
             "curl": {
                 "plugin": "autotools",
@@ -96,7 +95,7 @@ class PartsWithFilesetsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml.load(output[idx:], Loader=yaml.CSafeLoader)
+        part = yaml_utils.safe_load(output[idx:])
         expected_part = {
             "simple-make-filesets": {
                 "plugin": "make",

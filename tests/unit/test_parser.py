@@ -21,7 +21,6 @@ from unittest import mock
 import requests
 import fixtures
 import tempfile
-import yaml
 from collections import OrderedDict
 from testtools.matchers import Equals
 
@@ -30,7 +29,7 @@ from snapcraft.project.errors import DuplicateSnapcraftYamlError
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal import parser
 from snapcraft.internal.parser import _get_origin_data, _encode_origin, PARTS_FILE, main
-from tests import fixture_setup, unit
+from tests import fixture_setup, unit, yaml_utils
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), "test_output.wiki")
 
@@ -42,7 +41,7 @@ def _create_example_output(output):
 
 def _get_part_list(path=PARTS_FILE):
     with open(path) as fp:
-        return yaml.load(fp)
+        return yaml_utils.safe_load(fp)
 
 
 def _get_part(name, path=PARTS_FILE):
@@ -94,9 +93,9 @@ class TestParser(unit.TestCase):
         data["name"] = "test"
         data["description"] = "description"
 
-        output = yaml.dump(data)
+        output = yaml_utils.safe_dump(data)
 
-        self.assertTrue(isinstance(yaml.load(output), OrderedDict))
+        self.assertTrue(isinstance(yaml_utils.safe_load(output), OrderedDict))
 
     def test_merge_tag_yaml(self):
         test_yaml = """
@@ -105,7 +104,7 @@ base: &base
 test:
     <<: *base
 """
-        doc = yaml.load(test_yaml)
+        doc = yaml_utils.safe_load(test_yaml)
 
         self.assertTrue(isinstance(doc, OrderedDict))
         self.assertThat(doc["test"]["property"], Equals("value"))

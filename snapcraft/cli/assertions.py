@@ -21,11 +21,10 @@ from textwrap import dedent
 from typing import List, Dict
 
 import click
-import yaml
 
 import snapcraft
 from . import echo
-from snapcraft import storeapi
+from snapcraft import storeapi, yaml_utils
 from snapcraft.storeapi import assertions
 
 
@@ -156,10 +155,10 @@ def _edit_developers(developers: List[Dict[str, str]]) -> List[Dict[str, str]]:
         ft.close()
         with open(ft.name, "w") as fw:
             print(_COLLABORATION_HEADER, file=fw)
-            yaml.dump(developer_wrapper, stream=fw, default_flow_style=False)
+            yaml_utils.safe_dump(developer_wrapper, stream=fw)
         subprocess.check_call([editor_cmd, ft.name])
         with open(ft.name, "r") as fr:
-            developers = yaml.load(fr, Loader=yaml.CSafeLoader).get("developers")
+            developers = yaml_utils.safe_load(fr).get("developers")
     return developers
 
 

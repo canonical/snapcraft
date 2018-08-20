@@ -26,10 +26,8 @@ import sys
 from glob import glob, iglob
 from typing import cast, Dict, Set, Sequence  # noqa: F401
 
-import yaml
-
 import snapcraft.extractors
-from snapcraft import file_utils
+from snapcraft import file_utils, yaml_utils
 from snapcraft.internal import common, elf, errors, repo, sources, states, steps
 from snapcraft.internal.mangling import clear_execstack
 
@@ -370,7 +368,9 @@ class PluginHandler:
             state = {}
 
         with open(states.get_step_state_file(self.plugin.statedir, step), "w") as f:
-            f.write(yaml.dump(state))
+            # Not safe_dump since the state contains objects. This is okay since it's
+            # all generated and consumed by the snapcraft CLI itself.
+            f.write(yaml_utils.dump(state))
 
     def mark_cleaned(self, step):
         state_file = states.get_step_state_file(self.plugin.statedir, step)

@@ -17,10 +17,9 @@
 import os
 import stat
 
-import yaml
 from testtools.matchers import Equals, FileExists
 
-from tests import integration
+from tests import integration, yaml_utils
 
 
 # FIXME: Ideally this would be a snaps test so we can run the aliases, but that
@@ -41,7 +40,7 @@ class AliasTestCase(integration.TestCase):
 
         data = {}
         with open(snap_yaml) as fp:
-            data = yaml.load(fp)
+            data = yaml_utils.safe_load(fp)
 
         expected_aliases = ["hi.sh", "howdy.sh"]
         self.assertThat(

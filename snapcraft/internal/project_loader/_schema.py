@@ -18,8 +18,8 @@
 import os
 
 import jsonschema
-import yaml
 
+from snapcraft import yaml_utils
 from snapcraft.internal import common
 
 
@@ -55,7 +55,7 @@ class Validator:
         )
         try:
             with open(schema_file) as fp:
-                self._schema = yaml.load(fp, Loader=yaml.CSafeLoader)
+                self._schema = yaml_utils.safe_load(fp)
         except FileNotFoundError:
             from snapcraft.internal.project_loader import errors
 

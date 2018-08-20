@@ -16,10 +16,9 @@
 import os
 
 import testscenarios
-import yaml
 from testtools.matchers import FileExists
 
-from tests import integration
+from tests import integration, yaml_utils
 
 
 class NodeJSPluginTestCase(testscenarios.WithScenarios, integration.TestCase):
@@ -34,12 +33,12 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios, integration.TestCase):
             return
 
         with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml.load(f)
+            snapcraft_yaml = yaml_utils.safe_load(f)
         snapcraft_yaml["parts"]["nodejs-part"][
             "node-package-manager"
         ] = self.package_manager
         with open(snapcraft_yaml_file, "w") as f:
-            yaml.dump(snapcraft_yaml, f)
+            yaml_utils.safe_dump(snapcraft_yaml, stream=f)
 
     def test_rebuilding_possible(self):
         self.copy_project_to_cwd("nodejs-hello")

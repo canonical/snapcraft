@@ -17,12 +17,11 @@
 import os
 import textwrap
 import shutil
-import yaml
 
 from testtools.matchers import Equals, FileExists
 
 import tests
-from tests import fixture_setup, integration
+from tests import fixture_setup, integration, yaml_utils
 
 
 class AppstreamMetadataTestCase(integration.TestCase):
@@ -57,7 +56,7 @@ class AppstreamMetadataTestCase(integration.TestCase):
 
         self.run_snapcraft("prime")
         with open(os.path.join("prime", "meta", "snap.yaml")) as snap_yaml_file:
-            snap_yaml = yaml.load(snap_yaml_file)
+            snap_yaml = yaml_utils.safe_load(snap_yaml_file)
         self.assertThat(snap_yaml["description"], Equals("test-appstream-description"))
         self.assertThat(snap_yaml["summary"], Equals("test-appstream-summary"))
 
@@ -71,7 +70,7 @@ class AppstreamMetadataTestCase(integration.TestCase):
 
         self.run_snapcraft("prime")
         with open(os.path.join("prime", "meta", "snap.yaml")) as snap_yaml_file:
-            snap_yaml = yaml.load(snap_yaml_file)
+            snap_yaml = yaml_utils.safe_load(snap_yaml_file)
         self.assertThat(snap_yaml["description"], Equals("test-appstream-description"))
         self.assertThat(snap_yaml["summary"], Equals("test-summary"))
 

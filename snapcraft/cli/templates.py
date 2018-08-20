@@ -17,12 +17,12 @@
 import click
 import collections
 import os
-import yaml
 import sys
 import tabulate
 
-from ._options import get_project
+from snapcraft import yaml_utils
 from snapcraft.internal import common, project_loader
+from ._options import get_project
 
 
 @click.group()
@@ -70,4 +70,4 @@ def expand_templates(**kwargs):
     )
 
     # Loading the config applied all the templates, so just dump it back out
-    yaml.safe_dump(yaml_with_templates, stream=sys.stdout, default_flow_style=False)
+    yaml_utils.safe_dump(yaml_with_templates, stream=sys.stdout)

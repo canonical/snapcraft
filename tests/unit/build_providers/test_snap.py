@@ -129,9 +129,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '123'}
+                    - revision: '123'
                     snapcraft:
-                    - {revision: '345'}
+                    - revision: '345'
                     """
                 )
             ),
@@ -217,9 +217,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '123'}
+                    - revision: '123'
                     snapcraft:
-                    - {revision: x20}
+                    - revision: x20
                     """
                 )
             ),
@@ -258,9 +258,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
                     """
                 )
             ),
@@ -439,9 +439,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
                     """
                 )
             ),
