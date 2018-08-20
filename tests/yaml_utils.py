@@ -39,8 +39,8 @@ def safe_load(file_object: TextIO) -> Dict[str, Any]:
 
 
 def dump(data: Dict[str, Any], *, stream: TextIO = None) -> str:
-    return yaml.dump(data, stream=stream, Dumper=SafeDumper, default_flow_style=False)
+    return yaml.dump(data, stream=stream, Dumper=Dumper, default_flow_style=False)
 
 
 def safe_dump(data: Dict[str, Any], *, stream: TextIO = None) -> str:
-    return yaml.dump(data, stream=stream, Dumper=Dumper, default_flow_style=False)
+    return yaml.dump(data, stream=stream, Dumper=SafeDumper, default_flow_style=False)
