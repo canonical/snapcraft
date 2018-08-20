@@ -71,6 +71,9 @@ backends:
       - ubuntu-16.04-s390x:
           username: ubuntu
           password: ubuntu
+      - ubuntu-16.04-arm64:
+          username: ubuntu
+          password: ubuntu
       # Artful
       - ubuntu-17.10-amd64:
           username: ubuntu
