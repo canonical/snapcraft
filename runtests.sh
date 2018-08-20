@@ -51,15 +51,13 @@ parseargs(){
             run_snaps "$@"
         elif [ "$test_suite" == "spread" ] ; then
             run_spread
-        elif [ "$test_suite" == "old-spread" ] ; then
-            run_old_spread
         else
             run_snapcraft_tests "$@"
         fi
     fi
 }
 
-python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
+coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
     echo "Running black"
@@ -104,15 +102,6 @@ run_spread(){
     spread -v google:
 }
 
-run_old_spread(){
-    TMP_SPREAD="$(mktemp -d)"
-
-    export PATH=$TMP_SPREAD:$PATH
-    ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
-
-    SNAPCRAFT_CHANNEL=edge spread -v linode:spread_tests/
-}
-
 if [ "$test_suite" == "-h" ] || [ "$test_suite" == "--help" ]; then
     printhelp
     exit 0
@@ -121,7 +110,7 @@ fi
 parseargs "$@"
 
 if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
-    python3 -m coverage report
+    coverage report
 
     echo
     echo "Run 'python3-coverage html' to get a nice report"

@@ -22,14 +22,15 @@ from unittest import skipUnless
 from tests import os_release
 
 
-def skip_unless_codename(
-    codename: str, message: str
-) -> Callable[..., Callable[..., None]]:
+def skip_unless_codename(codename, message: str) -> Callable[..., Callable[..., None]]:
+    if type(codename) is str:
+        codename = [codename]
+
     def _wrap(func: Callable[..., None]) -> Callable[..., None]:
         actual_codename = os_release.get_version_codename()
 
         @functools.wraps(func)
-        @skipUnless(actual_codename == codename, message)
+        @skipUnless(actual_codename in codename, message)
         def _skip_test(*args: Any, **kwargs: Any) -> None:
             func(*args, **kwargs)
 
