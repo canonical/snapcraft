@@ -1,6 +1,5 @@
 summary: Build two catkin snaps using content sharing
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-kill-timeout: 20m
 priority: 100  # Run this test early so we're not waiting for it
 
 environment:
