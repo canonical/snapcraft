@@ -1237,9 +1237,9 @@ class WrapExeTestCase(unit.TestCase):
         snapcraft_yaml = dict(name="fake", confinement="devmode")
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
             yaml.dump(snapcraft_yaml, stream=snapcraft_file)
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         # TODO move to use outer interface
-        self.packager = _snap_packaging._SnapPackaging(snapcraft_yaml, project)
+        self.packager = _snap_packaging._SnapPackaging(snapcraft_yaml, self.project)
         self.packager._is_host_compatible_with_base = True
 
     @patch("snapcraft.internal.common.assemble_env")
@@ -1411,41 +1411,57 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
     def test_command_does_not_exist(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-does-not-exist"}}
-
-        raised = self.assertRaises(
-            errors.InvalidAppCommandError, self.packager._wrap_apps, apps
+        apps = {"app1": {"command": "command-does-not-exist", "adapter": "legacy"}}
+        packager = _snap_packaging._SnapPackaging(
+            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
         )
+        packager._is_host_compatible_with_base = True
+
+        # Verify that apps can be wrapped even if they don't exist
+        packager._wrap_apps(apps)
+
+        raised = self.assertRaises(errors.InvalidAppCommandError, packager.verify_apps)
         self.assertThat(raised.command, Equals("command-does-not-exist"))
         self.assertThat(raised.app, Equals("app1"))
 
     def test_command_is_not_executable(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-not-executable"}}
+        apps = {"app1": {"command": "command-not-executable", "adapter": "legacy"}}
+        packager = _snap_packaging._SnapPackaging(
+            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
+        )
+        packager._is_host_compatible_with_base = True
 
         cmd_path = os.path.join(self.prime_dir, "bin", apps["app1"]["command"])
         _create_file(cmd_path)
 
-        raised = self.assertRaises(
-            errors.InvalidAppCommandError, self.packager._wrap_apps, apps
-        )
+        # Verify that apps can be wrapped even if they don't exist
+        packager._wrap_apps(apps)
+
+        raised = self.assertRaises(errors.InvalidAppCommandError, packager.verify_apps)
         self.assertThat(raised.command, Equals("command-not-executable"))
         self.assertThat(raised.app, Equals("app1"))
 
     def test_command_found(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-executable"}}
+        apps = {"app1": {"command": "command-executable", "adapter": "legacy"}}
+        packager = _snap_packaging._SnapPackaging(
+            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
+        )
+        packager._is_host_compatible_with_base = True
 
         cmd_path = os.path.join(self.prime_dir, "bin", apps["app1"]["command"])
         _create_file(cmd_path, executable=True)
 
-        wrapped_apps = self.packager._wrap_apps(apps)
+        wrapped_apps = packager._wrap_apps(apps)
 
         self.assertThat(
             wrapped_apps, Equals({"app1": {"command": "command-app1.wrapper"}})
         )
+
+        packager.verify_apps()
 
 
 def _create_file(path, *, content="", executable=False):

@@ -18,11 +18,13 @@ import contextlib
 import json
 import os
 import subprocess
+import shlex
 import sys
 import tempfile
 import textwrap
 import time
-from typing import Any, Callable, Dict  # noqa
+from typing import Any, Dict, List
+from typing import Callable  # noqa: F401
 
 from snapcraft.internal import common, deprecations, errors
 
@@ -121,6 +123,16 @@ class Runner:
             call_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "function_call"))
             feedback_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "call_feedback"))
 
+            # Putting this in tempdir means we don't need to clean it up
+            scriptlet_file = tempfile.NamedTemporaryFile(
+                mode="w+", dir=tempdir, delete=False
+            )
+            print("set -e", file=scriptlet_file)
+            print(scriptlet, file=scriptlet_file)
+            scriptlet_file.flush()
+            scriptlet_file.close()
+            os.chmod(scriptlet_file.name, 0o500)
+
             # snapcraftctl only works consistently if it's using the exact same
             # interpreter as that used by snapcraft itself, thus the definition
             # of SNAPCRAFT_INTERPRETER.
@@ -130,22 +142,23 @@ class Runner:
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
-                {env}
-                {scriptlet}"""
+                {command_runner}"""
             ).format(
                 interpreter=sys.executable,
                 call_fifo=call_fifo.path,
                 feedback_fifo=feedback_fifo.path,
                 scriptlet=scriptlet,
-                env=_get_env(),
+                command_runner=_command_runner([scriptlet_file.name]),
             )
 
-            with tempfile.TemporaryFile(mode="w+") as script_file:
-                print(script, file=script_file)
-                script_file.flush()
-                script_file.seek(0)
+            with tempfile.TemporaryFile(mode="w+") as environment_file:
+                print(script, file=environment_file)
+                environment_file.flush()
+                environment_file.seek(0)
 
-                process = subprocess.Popen(["/bin/sh"], stdin=script_file, cwd=workdir)
+                process = subprocess.Popen(
+                    ["/bin/sh"], stdin=environment_file, cwd=workdir
+                )
 
             status = None
             try:
@@ -248,15 +261,22 @@ class _NonBlockingRWFifo:
             os.close(self._fd)
 
 
-def _get_env():
-    env = ""
+def _command_runner(command: List[str]):
+    runner = ""
     if common.is_snap():
-        # Since the snap is classic, $SNAP/bin is not on the $PATH.
-        # Let's set an alias to make sure it's found (but only if it
-        # exists).
-        snapcraftctl_path = os.path.join(os.getenv("SNAP"), "bin", "snapcraftctl")
-        if os.path.exists(snapcraftctl_path):
-            env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
-    env += common.assemble_env()
+        # Since the snap is classic, there is no $PATH pointing into the snap, which
+        # means snapcraftctl won't be found. We can't use aliases since they don't
+        # persist into subshells. However, we know that snapcraftctl lives in its own
+        # directory, so adding that to the PATH should have no ill side effects.
+        runner += 'export PATH="$PATH:$SNAP/bin/snapcraft-utils"\n'
 
-    return env
+    runner += common.assemble_env()
+
+    command_chain = common.assemble_command_chain()
+    command_string = " ".join([shlex.quote(c) for c in command])
+    if command_chain:
+        command_string = "{} {}".format(command_chain, command_string)
+
+    runner += "\nexec {}".format(command_string)
+
+    return runner

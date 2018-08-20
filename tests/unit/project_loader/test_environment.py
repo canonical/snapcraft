@@ -25,7 +25,7 @@ import fixtures
 from testtools.matchers import Contains, Equals, Not, StartsWith
 
 import snapcraft
-from snapcraft.internal import common
+from snapcraft.internal import common, steps
 from . import ProjectLoaderBaseTest
 from tests.fixture_setup.os_release import FakeOsRelease
 
@@ -226,7 +226,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
         project_config = self.make_snapcraft_project(snapcraft_yaml)
         part = project_config.parts.get_part("main")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
+        environment = project_config.parts.get_part_env(part, steps.PULL)
         # We sort here for equality checking but they should not be sorted
         # for a real case scenario.
         environment.sort()
@@ -284,7 +284,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
         project_config = self.make_snapcraft_project(snapcraft_yaml)
         part = project_config.parts.get_part("part1")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
+        environment = project_config.parts.get_part_env(part, steps.PULL)
         self.assertIn(
             'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{base_core_path}/lib:'
             "{base_core_path}/usr/lib:{base_core_path}/lib/{arch_triplet}:"
@@ -315,7 +315,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
         project_config = self.make_snapcraft_project(snapcraft_yaml)
         part = project_config.parts.get_part("part1")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
+        environment = project_config.parts.get_part_env(part, steps.PULL)
         for env_item in environment:
             self.assertThat(env_item, Not(StartsWith("LD_LIBRARY_PATH")))
 
@@ -335,89 +335,9 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         """
         project_config = self.make_snapcraft_project(snapcraft_yaml)
         part = project_config.parts.get_part("part1")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
+        environment = project_config.parts.get_part_env(part, steps.PULL)
         for env_item in environment:
             self.assertThat(env_item, Not(StartsWith("LD_LIBRARY_PATH")))
-
-    def test_config_stage_environment(self):
-        arch_triplet = snapcraft.ProjectOptions().arch_triplet
-        paths = [
-            os.path.join(self.stage_dir, "lib"),
-            os.path.join(self.stage_dir, "lib", arch_triplet),
-            os.path.join(self.stage_dir, "usr", "lib"),
-            os.path.join(self.stage_dir, "usr", "lib", arch_triplet),
-            os.path.join(self.stage_dir, "include"),
-            os.path.join(self.stage_dir, "usr", "include"),
-            os.path.join(self.stage_dir, "include", arch_triplet),
-            os.path.join(self.stage_dir, "usr", "include", arch_triplet),
-        ]
-        for path in paths:
-            os.makedirs(path)
-
-        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
-        environment = project_config.stage_env()
-
-        self.assertTrue(
-            'PATH="{0}/usr/sbin:{0}/usr/bin:{0}/sbin:{0}/bin:$PATH"'.format(
-                self.stage_dir
-            )
-            in environment
-        )
-        self.assertTrue(
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{stage_dir}/lib:'
-            "{stage_dir}/usr/lib:{stage_dir}/lib/{arch_triplet}:"
-            '{stage_dir}/usr/lib/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir,
-                arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
-        )
-        self.assertTrue(
-            'CFLAGS="$CFLAGS -I{stage_dir}/include -I{stage_dir}/usr/include '
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir,
-                arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
-        )
-        self.assertTrue(
-            'CPPFLAGS="$CPPFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir,
-                arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
-        )
-        self.assertTrue(
-            'CXXFLAGS="$CXXFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir,
-                arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
-        )
-        self.assertTrue(
-            'LDFLAGS="$LDFLAGS -L{stage_dir}/lib -L{stage_dir}/usr/lib '
-            "-L{stage_dir}/lib/{arch_triplet} "
-            '-L{stage_dir}/usr/lib/{arch_triplet}"'.format(
-                stage_dir=self.stage_dir,
-                arch_triplet=project_config.project.arch_triplet,
-            )
-            in environment,
-            "Current environment is {!r}".format(environment),
-        )
-        self.assertTrue(
-            'PERL5LIB="{}/usr/share/perl5/"'.format(self.stage_dir) in environment
-        )
 
     def test_parts_build_env_ordering_with_deps(self):
         snapcraft_yaml = dedent(
@@ -463,7 +383,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         part2 = [
             part for part in project_config.parts.all_parts if part.name == "part2"
         ][0]
-        env = project_config.parts.build_env_for_part(part2)
+        env = project_config.parts.get_part_env(part2, steps.PULL)
         env_lines = "\n".join(["export {}\n".format(e) for e in env])
 
         shell_env = {
@@ -533,7 +453,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         part1 = [
             part for part in project_config.parts.all_parts if part.name == "part1"
         ][0]
-        env = project_config.parts.build_env_for_part(part1)
+        env = project_config.parts.get_part_env(part1, steps.PULL)
         self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="42"'))
 
     def test_extension_dir(self):
@@ -542,5 +462,5 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         part1 = [
             part for part in project_config.parts.all_parts if part.name == "part1"
         ][0]
-        env = project_config.parts.build_env_for_part(part1)
+        env = project_config.parts.get_part_env(part1, steps.PULL)
         self.assertThat(env, Contains('SNAPCRAFT_EXTENSIONS_DIR="/foo"'))

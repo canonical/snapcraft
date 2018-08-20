@@ -17,11 +17,11 @@
 from collections import ChainMap
 import logging
 from os import path
-from typing import List
+from typing import List, Mapping
 from typing import Set  # noqa: F401
 
 import snapcraft
-from snapcraft.internal import deprecations, elf, pluginhandler, repo
+from snapcraft.internal import deprecations, elf, pluginhandler, repo, steps
 from ._env import (
     env_for_classic,
     build_env,
@@ -96,7 +96,7 @@ class PartsConfig:
             for dep in dep_names:
                 for i in range(len(self.all_parts)):
                     if dep == self.all_parts[i].name:
-                        part.deps.append(self.all_parts[i])
+                        part.add_dependency(self.all_parts[i])
                         break
 
     def _sort_parts(self):
@@ -114,7 +114,7 @@ class PartsConfig:
             for part in self.all_parts:
                 mentioned = False
                 for other in self.all_parts:
-                    if part in other.deps:
+                    if part in other.get_dependencies():
                         mentioned = True
                         break
                 if not mentioned:
@@ -253,48 +253,123 @@ class PartsConfig:
 
         return part
 
-    def build_env_for_part(self, part, root_part=True) -> List[str]:
-        """Return a build env of all the part's dependencies."""
+    def get_part_env(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> List[str]:
+        # The plugin environment needs to come before any {}/usr/bin
+        env = _dict_to_env(getattr(part.plugin, "get_{}_env".format(step.name))())
 
-        env = []  # type: List[str]
-        stagedir = self._project.stage_dir
-        is_host_compat = self._project.is_host_compatible_with_base(self._base)
+        env += self._common_env(part)
 
-        if root_part:
-            # this has to come before any {}/usr/bin
-            env += part.env(part.plugin.installdir)
-            env += runtime_env(part.plugin.installdir, self._project.arch_triplet)
-            env += runtime_env(stagedir, self._project.arch_triplet)
-            env += build_env(
-                part.plugin.installdir, self._snap_name, self._project.arch_triplet
-            )
-            env += build_env_for_stage(
-                stagedir, self._snap_name, self._project.arch_triplet
-            )
-            # Only set the paths to the base snap if we are building on the
-            # same host. Failing to do so will cause Segmentation Faults.
-            if self._confinement == "classic" and is_host_compat:
-                env += env_for_classic(self._base, self._project.arch_triplet)
-
-            global_env = snapcraft_global_environment(self._project)
-            part_env = snapcraft_part_environment(part)
-            for variable, value in ChainMap(part_env, global_env).items():
-                env.append('{}="{}"'.format(variable, value))
-        else:
-            env += part.env(stagedir)
-            env += runtime_env(stagedir, self._project.arch_triplet)
-
-        for dep_part in part.deps:
-            env += dep_part.env(stagedir)
-            env += self.build_env_for_part(dep_part, root_part=False)
+        for dep_part in part.get_dependencies():
+            env += self._get_part_dependency_env(dep_part)
 
         # LP: #1767625
         # Remove duplicates from using the same plugin in dependent parts.
-        seen = set()  # type: Set[str]
-        deduped_env = list()  # type: List[str]
-        for e in env:
-            if e not in seen:
-                deduped_env.append(e)
-                seen.add(e)
+        return _deduped_list(env)
 
-        return deduped_env
+    def get_part_command_chain(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> List[str]:
+        chain = []  # type: List[str]
+
+        for dep_part in part.get_dependencies():
+            chain += self._get_part_dependency_command_chain(dep_part)
+
+        chain += getattr(part.plugin, "get_{}_command_chain".format(step.name))()
+
+        return chain
+
+    def _get_part_dependency_env(self, part: pluginhandler.PluginHandler) -> List[str]:
+        env = _dict_to_env(part.plugin.get_dependency_env())
+
+        env += runtime_env(self._project.stage_dir, self._project.arch_triplet)
+
+        for dep_part in part.get_dependencies():
+            env += self._get_part_dependency_env(dep_part)
+
+        # LP: #1767625
+        # Remove duplicates from using the same plugin in dependent parts.
+        return _deduped_list(env)
+
+    def _get_part_dependency_command_chain(
+        self, part: pluginhandler.PluginHandler
+    ) -> List[str]:
+        chain = []  # type: List[str]
+
+        for dep_part in part.get_dependencies():
+            chain += self._get_part_dependency_command_chain(dep_part)
+
+        chain += part.plugin.get_dependency_command_chain()
+
+        return chain
+
+    def get_part_snap_env(self, part: pluginhandler.PluginHandler) -> List[str]:
+        env = []  # type: List[str]
+
+        # Maintain backward compatibility with the deprecated .env() function.
+        # The plugin environment needs to come before any {}/usr/bin
+        try:
+            env += part.plugin.env(self._project.prime_dir)  # type: ignore
+        except AttributeError:
+            env += _dict_to_env(part.plugin.get_snap_env())
+
+        env += self._common_env(part)
+
+        for dep_part in part.get_dependencies():
+            env += self.get_part_snap_env(dep_part)
+
+        # LP: #1767625
+        # Remove duplicates from using the same plugin in dependent parts.
+        return _deduped_list(env)
+
+    def get_part_snap_command_chain(
+        self, part: pluginhandler.PluginHandler
+    ) -> List[str]:
+        chain = []  # type: List[str]
+
+        for dep_part in part.get_dependencies():
+            chain += self.get_part_snap_command_chain(dep_part)
+
+        chain += part.plugin.get_snap_command_chain()
+
+        return chain
+
+    def _common_env(self, part: pluginhandler.PluginHandler) -> List[str]:
+        stagedir = self._project.stage_dir
+
+        env = runtime_env(part.plugin.installdir, self._project.arch_triplet)
+        env += runtime_env(stagedir, self._project.arch_triplet)
+        env += build_env(
+            part.plugin.installdir, self._snap_name, self._project.arch_triplet
+        )
+        env += build_env_for_stage(
+            stagedir, self._snap_name, self._project.arch_triplet
+        )
+
+        # Only set the paths to the base snap if we are building on the
+        # same host. Failing to do so will cause Segmentation Faults.
+        is_host_compat = self._project.is_host_compatible_with_base(self._base)
+        if self._confinement == "classic" and is_host_compat:
+            env += env_for_classic(self._base, self._project.arch_triplet)
+
+        global_env = snapcraft_global_environment(self._project)
+        part_env = snapcraft_part_environment(part)
+        env += _dict_to_env(ChainMap(part_env, global_env))
+
+        return env
+
+
+def _dict_to_env(d: Mapping[str, str]) -> List[str]:
+    return ['{}="{}"'.format(k, v) for k, v in d.items()]
+
+
+def _deduped_list(l: List[str]) -> List[str]:
+    seen = set()  # type: Set[str]
+    deduped_env = list()  # type: List[str]
+    for item in l:
+        if item not in seen:
+            deduped_env.append(item)
+            seen.add(item)
+
+    return deduped_env

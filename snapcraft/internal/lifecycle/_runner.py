@@ -153,11 +153,10 @@ def _should_get_core(confinement: str) -> bool:
 
 
 def _replace_in_part(part):
+    replacements = project_loader.environment_to_replacements(
+        project_loader.snapcraft_part_environment(part)
+    )
     for key, value in part.plugin.options.__dict__.items():
-        replacements = project_loader.environment_to_replacements(
-            project_loader.snapcraft_part_environment(part)
-        )
-
         value = project_loader.replace_attr(value, replacements)
         setattr(part.plugin.options, key, value)
 
@@ -165,7 +164,7 @@ def _replace_in_part(part):
 
 
 class _Executor:
-    def __init__(self, project_config):
+    def __init__(self, project_config: project_loader._config.Config) -> None:
         self.config = project_config
         self.project = project_config.project
         self.parts_config = project_config.parts
@@ -315,7 +314,8 @@ class _Executor:
             notify_part_progress(part, "Preparing to {}".format(step.name), debug=True)
             preparation_function()
 
-        common.env = self.parts_config.build_env_for_part(part)
+        common.command_chain = self.parts_config.get_part_command_chain(part, step)
+        common.env = self.parts_config.get_part_env(part, step)
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
@@ -351,6 +351,7 @@ class _Executor:
 
     def _create_meta(self, step, part_names):
         if step == steps.PRIME and part_names == self.config.part_names:
+            common.command_chain = self.config.snap_command_chain()
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
                 self.config.data,
@@ -358,6 +359,11 @@ class _Executor:
                 self.project,
                 self.config.validator.schema,
             )
+
+            # Now validate executables by using the priming environment
+            common.command_chain = self.config.prime_command_chain()
+            common.env = self.config.prime_env()
+            meta.verify_apps(self.config.data, self.project)
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()
