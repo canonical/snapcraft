@@ -53,6 +53,8 @@ def _ordered_load(stream, loader):
         yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
     )
 
+    _make_custom_classes_loadable(OrderedLoader)
+
     return yaml.load(stream, Loader=OrderedLoader)
 
 
@@ -80,3 +82,22 @@ def _str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+# FIXME: This should be removed once this stuff has been migrated to something better
+# than YAML.
+def _make_custom_classes_loadable(loader):
+    from snapcraft.internal import states
+
+    for cls in (
+        states.PullState,
+        states.BuildState,
+        states.StageState,
+        states.PrimeState,
+    ):
+
+        def _constructor(loader, node):
+            parameters = loader.construct_mapping(node)
+            return cls(**parameters)
+
+        loader.add_constructor(cls.yaml_tag, _constructor)
