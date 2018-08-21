@@ -20,7 +20,6 @@ import os.path
 import subprocess
 from textwrap import dedent
 from unittest import mock
-from unittest.mock import call
 import snapcraft.internal.errors
 import snapcraft.internal.project_loader.errors
 
@@ -99,6 +98,32 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
         )
+
+    def test_snap_with_lxd_build_environment(self):
+        self.make_snapcraft_yaml()
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
+        )
+
+        patcher = mock.patch("snapcraft.internal.lifecycle.pack")
+        pack_mock = patcher.start()
+        pack_mock.return_value = "snap-test_1.0.snap"
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("snapcraft.internal.lxd.Project")
+        lxd_project_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        result = self.run_command(["snap"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains("Snapped snap-test_1.0.snap"))
+        self.assertFalse(self.popen_spy.called)
+        lxd_project_mock.assert_called_once_with(
+            project=mock.ANY, source=".", output=None
+        )
+        lxd_project_mock().execute.assert_called_once_with("prime", [])
 
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type="bad-type")
@@ -487,327 +512,6 @@ type: os
         self.assertThat(snap_build, Not(FileExists()))
         self.assertThat(snap_build_renamed, FileExists())
         self.assertThat(snap_build_renamed, FileContains("signed assertion?"))
-
-
-class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
-
-    scenarios = (
-        (
-            "with SUDO_UID",
-            {
-                "SUDO_UID": "test_sudo_uid",
-                "getuid": None,
-                "expected_idmap": "test_sudo_uid",
-            },
-        ),
-        (
-            "without SUDO_UID",
-            {
-                "SUDO_UID": None,
-                "getuid": "test_getuid",
-                "expected_idmap": "test_getuid",
-            },
-        ),
-    )
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch("snapcraft.internal.lifecycle.pack")
-        self.pack_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    @mock.patch("os.getuid")
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._inject_snapcraft")
-    def test_snap_containerized(self, mock_inject, mock_container_run, mock_getuid):
-        self.useFixture(fixtures.EnvironmentVariable("SUDO_UID", self.SUDO_UID))
-        mock_getuid.return_value = self.getuid
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
-        self.make_snapcraft_yaml()
-
-        result = self.run_command(["snap"])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        source = os.path.realpath(os.path.curdir)
-        self.assertThat(
-            fake_logger.output,
-            Contains(
-                "Waiting for a network connection...\n"
-                "Network connection established\n"
-                "Mounting {} into container\n".format(source)
-            ),
-        )
-
-        container_name = "local:snapcraft-snap-test"
-        project_folder = "/root/build_snap-test"
-        fake_lxd.check_call_mock.assert_has_calls(
-            [
-                call(["lxc", "init", "ubuntu:xenial", container_name]),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.SNAPCRAFT_SETUP_CORE",
-                        "1",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        "local:snapcraft-snap-test",
-                        "environment.SNAPCRAFT_MANAGED_HOST",
-                        "yes",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.LC_ALL",
-                        "C.UTF-8",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.SNAPCRAFT_IMAGE_INFO",
-                        '{"fingerprint": "test-fingerprint", '
-                        '"architecture": "test-architecture", '
-                        '"created_at": "test-created-at"}',
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "raw.idmap",
-                        "both {} {}".format(self.expected_idmap, "0"),
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "device",
-                        "add",
-                        container_name,
-                        "fuse",
-                        "unix-char",
-                        "path=/dev/fuse",
-                    ]
-                ),
-                call(["lxc", "start", container_name]),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "device",
-                        "add",
-                        container_name,
-                        project_folder,
-                        "disk",
-                        "source={}".format(source),
-                        "path={}".format(project_folder),
-                    ]
-                ),
-                call(["lxc", "stop", "-f", container_name]),
-            ]
-        )
-        mock_container_run.assert_has_calls(
-            [
-                call(["python3", "-c", mock.ANY]),
-                call(["apt-get", "update"]),
-                call(["apt-get", "install", "squashfuse", "-y"]),
-                call(["snapcraft", "prime"], cwd=mock.ANY, user=mock.ANY),
-            ]
-        )
-
-        self.pack_mock.assert_called_once_with(self.prime_dir, None)
-
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    @mock.patch("os.getuid")
-    def test_snap_containerized_exists_running(self, mock_getuid, mock_container_run):
-        self.useFixture(fixtures.EnvironmentVariable("SUDO_UID", self.SUDO_UID))
-        mock_getuid.return_value = self.getuid
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        # Container was created before and is running
-        fake_lxd.name = "local:snapcraft-snap-test"
-        fake_lxd.status = "Running"
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
-        self.make_snapcraft_yaml()
-
-        self.run_command(["snap"])
-
-        source = os.path.realpath(os.path.curdir)
-        project_folder = "/root/build_snap-test"
-        fake_lxd.check_call_mock.assert_has_calls(
-            [
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "device",
-                        "add",
-                        fake_lxd.name,
-                        project_folder,
-                        "disk",
-                        "source={}".format(source),
-                        "path={}".format(project_folder),
-                    ]
-                ),
-                call(["lxc", "stop", "-f", fake_lxd.name]),
-            ]
-        )
-        mock_container_run.assert_has_calls(
-            [
-                call(["python3", "-c", mock.ANY]),
-                call(["snapcraft", "prime"], cwd=mock.ANY, user=mock.ANY),
-            ]
-        )
-
-        self.pack_mock.assert_called_once_with(self.prime_dir, None)
-
-    @mock.patch("os.getuid")
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._inject_snapcraft")
-    def test_snap_containerized_exists_stopped(
-        self, mock_inject, mock_container_run, mock_getuid
-    ):
-
-        self.useFixture(fixtures.EnvironmentVariable("SUDO_UID", self.SUDO_UID))
-        mock_getuid.return_value = self.getuid
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        # Container was created before, and isn't running
-        fake_lxd.devices = '{"/root/build_snap-test":[]}'
-        fake_lxd.name = "local:snapcraft-snap-test"
-        fake_lxd.status = "Stopped"
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
-        self.make_snapcraft_yaml()
-
-        result = self.run_command(["snap"])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        self.assertIn(
-            "Waiting for a network connection...\nNetwork connection established\n",
-            fake_logger.output,
-        )
-
-        container_name = "local:snapcraft-snap-test"
-        project_folder = "/root/build_snap-test"
-        fake_lxd.check_call_mock.assert_has_calls(
-            [
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.SNAPCRAFT_SETUP_CORE",
-                        "1",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        "local:snapcraft-snap-test",
-                        "environment.SNAPCRAFT_MANAGED_HOST",
-                        "yes",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.LC_ALL",
-                        "C.UTF-8",
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "environment.SNAPCRAFT_IMAGE_INFO",
-                        '{"fingerprint": "test-fingerprint", '
-                        '"architecture": "test-architecture", '
-                        '"created_at": "test-created-at"}',
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "set",
-                        container_name,
-                        "raw.idmap",
-                        "both {} {}".format(self.expected_idmap, 0),
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "device",
-                        "remove",
-                        container_name,
-                        project_folder,
-                    ]
-                ),
-                call(
-                    [
-                        "lxc",
-                        "config",
-                        "device",
-                        "add",
-                        container_name,
-                        "fuse",
-                        "unix-char",
-                        "path=/dev/fuse",
-                    ]
-                ),
-                call(["lxc", "start", container_name]),
-                call(["lxc", "stop", "-f", container_name]),
-            ]
-        )
-        mock_container_run.assert_has_calls(
-            [
-                call(["python3", "-c", mock.ANY]),
-                call(["snapcraft", "prime"], cwd=mock.ANY, user=mock.ANY),
-            ]
-        )
-        # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(2))
-
-        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):

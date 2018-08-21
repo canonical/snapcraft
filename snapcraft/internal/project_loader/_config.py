@@ -237,13 +237,6 @@ class Config:
             self.data.get("architectures"), project.deb_arch
         )
 
-    def get_metadata(self):
-        return {
-            "name": self.data["name"],
-            "version": self.data.get("version", None),
-            "arch": self.data["architectures"],
-        }
-
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names
         aliases = []

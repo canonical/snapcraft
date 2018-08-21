@@ -17,7 +17,7 @@
 import click
 import os
 
-from snapcraft.internal import errors, lxd, project_loader
+from snapcraft.internal import errors, lxd
 from ._options import get_project
 from . import env
 
@@ -53,10 +53,4 @@ def refresh(debug, **kwargs):
         )
 
     project = get_project(**kwargs, debug=debug)
-    config = project_loader.load_config(project)
-    lxd.Project(
-        project_options=project,
-        output=None,
-        source=os.path.curdir,
-        metadata=config.get_metadata(),
-    ).refresh()
+    lxd.Project(project=project, output=None, source=os.path.curdir).refresh()

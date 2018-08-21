@@ -46,11 +46,18 @@ class _SnapOp(enum.Enum):
 
 class _SnapManager:
     def __init__(
-        self, *, snap_name: str, snap_dir: str, latest_revision: str, snap_arch: str
+        self,
+        *,
+        snap_name: str,
+        snap_dir: str,
+        latest_revision: str,
+        snap_arch: str,
+        store_only: bool
     ) -> None:
         self.snap_name = snap_name
         self._snap_dir = snap_dir
         self._snap_arch = snap_arch
+        self._store_only = store_only
 
         self._latest_revision = latest_revision
         self.__required_operation = None  # type: Optional[_SnapOp]
@@ -67,14 +74,20 @@ class _SnapManager:
         if self.__required_operation is not None:
             return self.__required_operation
 
-        # Get information from the host.
-        host_snap_repo = self._get_snap_repo()
-        try:
-            host_snap_info = host_snap_repo.get_local_snap_info()
-            is_installed = host_snap_repo.installed
-        except repo.errors.SnapdConnectionError:
-            # This maybe because we are in a docker instance or another OS.
+        # From the point of view of multiple architectures if the target host (this)
+        # is different than that of where these snaps run from, then we always need to
+        # install from the store
+        if self._store_only:
             is_installed = False
+        else:
+            # Get information from the host.
+            host_snap_repo = self._get_snap_repo()
+            try:
+                host_snap_info = host_snap_repo.get_local_snap_info()
+                is_installed = host_snap_repo.installed
+            except repo.errors.SnapdConnectionError:
+                # This maybe because we are in a docker instance or another OS.
+                is_installed = False
 
         # The evaluations for the required operation is as follows:
         # - if the snap is not installed on the host (is_installed == False),
@@ -316,13 +329,14 @@ class SnapInjector:
         else:
             self._registry_data[snap_name].append(entry)
 
-    def add(self, snap_name: str, snap_arch: str) -> None:
+    def add(self, snap_name: str, snap_arch: str, store_only: bool = False) -> None:
         self._snaps.append(
             _SnapManager(
                 snap_name=snap_name,
                 snap_dir=self._snap_dir,
                 latest_revision=self._get_latest_revision(snap_name),
                 snap_arch=snap_arch,
+                store_only=store_only,
             )
         )
 
