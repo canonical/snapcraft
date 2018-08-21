@@ -187,7 +187,7 @@ restore: $SETUP_DIR/restore.sh
 suites:
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin
-   kill-timeout: 120m
+   kill-timeout: -1
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
  tests/spread/plugins/catkin/:
