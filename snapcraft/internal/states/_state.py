@@ -15,13 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import yaml
 
 from snapcraft import yaml_utils
 from snapcraft.internal import steps
 
 
-class State(yaml.YAMLObject):
+class State(yaml_utils.SnapcraftYAMLObject):
     def __repr__(self):
         items = sorted(self.__dict__.items())
         strings = (": ".join((key, repr(value))) for key, value in items)

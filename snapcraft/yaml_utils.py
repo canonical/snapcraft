@@ -28,44 +28,23 @@ except ImportError:
 
 
 def load(stream: TextIO) -> OrderedDict:
-    return _ordered_load(stream, Loader)
+    return yaml.load(stream, Loader=_ordered_loader(Loader))
 
 
 def safe_load(stream: TextIO) -> OrderedDict:
-    return _ordered_load(stream, SafeLoader)
+    return yaml.load(stream, Loader=_ordered_loader(SafeLoader))
 
 
 def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None) -> str:
-    return _ordered_dump(data, stream, Dumper)
+    return yaml.dump(data, stream, _ordered_dumper(Dumper), default_flow_style=False)
 
 
 def safe_dump(
     data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None
 ) -> str:
-    return _ordered_dump(data, stream, SafeDumper)
-
-
-def _ordered_load(stream, loader):
-    class OrderedLoader(loader):
-        pass
-
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
+    return yaml.dump(
+        data, stream, _ordered_dumper(SafeDumper), default_flow_style=False
     )
-
-    _make_custom_classes_loadable(OrderedLoader)
-
-    return yaml.load(stream, Loader=OrderedLoader)
-
-
-def _ordered_dump(data, stream, dumper):
-    class OrderedDumper(dumper):
-        pass
-
-    OrderedDumper.add_representer(str, _str_presenter)
-    OrderedDumper.add_representer(OrderedDict, _dict_representer)
-
-    return yaml.dump(data, stream, OrderedDumper, default_flow_style=False)
 
 
 def _dict_representer(dumper, data):
@@ -84,20 +63,46 @@ def _str_presenter(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
-# FIXME: This should be removed once this stuff has been migrated to something better
-# than YAML.
-def _make_custom_classes_loadable(loader):
-    from snapcraft.internal import states
+def _ordered_loader(base_loader_class):
+    class OrderedLoader(base_loader_class):
+        pass
 
-    for cls in (
-        states.PullState,
-        states.BuildState,
-        states.StageState,
-        states.PrimeState,
-    ):
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
+    )
 
-        def _constructor(loader, node):
-            parameters = loader.construct_mapping(node)
-            return cls(**parameters)
+    return OrderedLoader
 
-        loader.add_constructor(cls.yaml_tag, _constructor)
+
+def _ordered_dumper(base_loader_class):
+    class OrderedDumper(base_loader_class):
+        pass
+
+    OrderedDumper.add_representer(str, _str_presenter)
+    OrderedDumper.add_representer(OrderedDict, _dict_representer)
+
+    return OrderedDumper
+
+
+class OrderedDumper(Dumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(str, _str_presenter)
+        self.add_representer(OrderedDict, _dict_representer)
+
+
+class SnapcraftYAMLObject(yaml.YAMLObject):
+    yaml_loader = _ordered_loader(Loader)
+    yaml_dumper = OrderedDumper
+    yaml_tag = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, yaml_tag=self.yaml_tag, **kwargs)
+
+    @classmethod
+    def from_yaml(cls, loader, node):
+        """
+        Convert a representation node to a Python object.
+        """
+        parameters = loader.construct_mapping(node)
+        return cls(**parameters)

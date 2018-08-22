@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
 from typing import Any, Dict, List, Set, Union
 
+from snapcraft import yaml_utils
 
-class ExtractedMetadata(yaml.YAMLObject):
+
+class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
     """Collection of metadata extracted from a part."""
 
     yaml_tag = u"!ExtractedMetadata"
