@@ -50,6 +50,8 @@ class LXDBaseTestCase(unit.TestCase):
             target_deb_arch=self.target_arch,
         )
 
+        self.useFixture(fixtures.EnvironmentVariable("SUDO_UID", "1000"))
+
 
 class LXDTestCase(LXDBaseTestCase):
 
@@ -106,7 +108,9 @@ class CleanbuilderTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.assert_has_calls(
             [
                 call(["lxc", "launch", "-e", "ubuntu:xenial", container_name]),
-                call(["lxc", "config", "set", container_name, "raw.idmap", "both 0 0"]),
+                call(
+                    ["lxc", "config", "set", container_name, "raw.idmap", "both 1000 0"]
+                ),
                 call(
                     [
                         "lxc",
@@ -530,7 +534,11 @@ class SnapOutputTestCase(unit.TestCase):
         ),
     ]
 
-    def test_output_set_correctly(self):
+    @patch(
+        "snapcraft.internal.lxd._containerbuild._get_default_remote",
+        return_value="local",
+    )
+    def test_output_set_correctly(self, default_remote_mock):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
             self.path,
             name=self.name,
