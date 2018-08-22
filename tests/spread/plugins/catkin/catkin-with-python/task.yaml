@@ -1,6 +1,5 @@
 summary: Build a catkin snap that includes a python part
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-kill-timeout: 20m
 priority: 100  # Run this test early so we're not waiting for it
 
 environment:
