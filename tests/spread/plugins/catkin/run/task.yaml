@@ -12,7 +12,7 @@ restore: |
 
 # ROS Indigo doesn't support arm64 (there are no packages in the archive). Also,
 # Indigo snaps have trouble building past 16.04.
-systems: [-ubuntu-*-arm64, -ubuntu-18.04*]
+systems: [-ubuntu-*-arm64, -ubuntu-18*]
 
 execute: |
   cd "$SNAP_DIR"
