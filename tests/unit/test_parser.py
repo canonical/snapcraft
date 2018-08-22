@@ -41,7 +41,7 @@ def _create_example_output(output):
 
 def _get_part_list(path=PARTS_FILE):
     with open(path) as fp:
-        return yaml_utils.safe_load(fp)
+        return yaml_utils.load(fp)
 
 
 def _get_part(name, path=PARTS_FILE):
@@ -93,9 +93,9 @@ class TestParser(unit.TestCase):
         data["name"] = "test"
         data["description"] = "description"
 
-        output = yaml_utils.safe_dump(data)
+        output = yaml_utils.dump(data)
 
-        self.assertTrue(isinstance(yaml_utils.safe_load(output), OrderedDict))
+        self.assertTrue(isinstance(yaml_utils.load(output), OrderedDict))
 
     def test_merge_tag_yaml(self):
         test_yaml = """
@@ -104,7 +104,7 @@ base: &base
 test:
     <<: *base
 """
-        doc = yaml_utils.safe_load(test_yaml)
+        doc = yaml_utils.load(test_yaml)
 
         self.assertTrue(isinstance(doc, OrderedDict))
         self.assertThat(doc["test"]["property"], Equals("value"))

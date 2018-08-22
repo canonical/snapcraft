@@ -70,4 +70,4 @@ def expand_templates(**kwargs):
     )
 
     # Loading the config applied all the templates, so just dump it back out
-    yaml_utils.safe_dump(yaml_with_templates, stream=sys.stdout)
+    yaml_utils.dump(yaml_with_templates, stream=sys.stdout)

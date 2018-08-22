@@ -40,7 +40,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml_utils.safe_load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["grade"], Equals("devel"))
 
@@ -60,7 +60,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml_utils.safe_load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["grade"], Equals("devel"))
 

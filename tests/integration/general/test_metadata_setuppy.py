@@ -58,7 +58,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         self.run_snapcraft("prime")
         snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
-            snap_yaml = yaml_utils.safe_load(snap_yaml_file)
+            snap_yaml = yaml_utils.load(snap_yaml_file)
 
         self.assertThat(snap_yaml["version"], Equals("test-setuppy-version"))
         self.assertThat(snap_yaml["description"], Equals("test-setuppy-description"))
@@ -76,7 +76,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         self.run_snapcraft("prime")
         snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
-            snap_yaml = yaml_utils.safe_load(snap_yaml_file)
+            snap_yaml = yaml_utils.load(snap_yaml_file)
 
         self.assertThat(snap_yaml["version"], Equals("test-yaml-version"))
         self.assertThat(snap_yaml["description"], Equals("test-yaml-description"))
@@ -94,7 +94,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         self.run_snapcraft("prime")
         snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
-            snap_yaml = yaml_utils.safe_load(snap_yaml_file)
+            snap_yaml = yaml_utils.load(snap_yaml_file)
 
         self.assertThat(snap_yaml["version"], Equals("test-yaml-version"))
         self.assertThat(snap_yaml["description"], Equals("test-setuppy-description"))

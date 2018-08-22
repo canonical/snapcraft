@@ -33,12 +33,12 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios, integration.TestCase):
             return
 
         with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml_utils.safe_load(f)
+            snapcraft_yaml = yaml_utils.load(f)
         snapcraft_yaml["parts"]["nodejs-part"][
             "node-package-manager"
         ] = self.package_manager
         with open(snapcraft_yaml_file, "w") as f:
-            yaml_utils.safe_dump(snapcraft_yaml, stream=f)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
     def test_rebuilding_possible(self):
         self.copy_project_to_cwd("nodejs-hello")

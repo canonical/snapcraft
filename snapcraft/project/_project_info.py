@@ -61,7 +61,7 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
 
     try:
         with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = yaml_utils.safe_load(fp)  # type: ignore
+            yaml_contents = yaml_utils.load(fp)  # type: ignore
     except yaml.scanner.ScannerError as e:
         raise errors.YamlValidationError(
             "{} on line {} of {}".format(

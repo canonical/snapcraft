@@ -368,8 +368,6 @@ class PluginHandler:
             state = {}
 
         with open(states.get_step_state_file(self.plugin.statedir, step), "w") as f:
-            # Not safe_dump since the state contains objects. This is okay since it's
-            # all generated and consumed by the snapcraft CLI itself.
             f.write(yaml_utils.dump(state))
 
     def mark_cleaned(self, step):

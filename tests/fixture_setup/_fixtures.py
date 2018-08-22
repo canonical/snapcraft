@@ -1121,7 +1121,7 @@ class SnapcraftYaml(fixtures.Fixture):
         )
         os.makedirs(os.path.join(self.path, "snap"), exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as snapcraft_yaml_file:
-            yaml_utils.safe_dump(self.data, stream=snapcraft_yaml_file)
+            yaml_utils.dump(self.data, stream=snapcraft_yaml_file)
 
 
 class SharedCache(fixtures.Fixture):

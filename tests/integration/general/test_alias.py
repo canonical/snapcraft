@@ -40,7 +40,7 @@ class AliasTestCase(integration.TestCase):
 
         data = {}
         with open(snap_yaml) as fp:
-            data = yaml_utils.safe_load(fp)
+            data = yaml_utils.load(fp)
 
         expected_aliases = ["hi.sh", "howdy.sh"]
         self.assertThat(

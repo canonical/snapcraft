@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest import mock
 from testtools.matchers import Equals
 
+from snapcraft import yaml_utils
 import snapcraft.internal
-from tests import unit, yaml_utils
+from tests import unit
 
 
 class BuildStateBaseTestCase(unit.TestCase):
@@ -38,9 +40,23 @@ class BuildStateBaseTestCase(unit.TestCase):
 
 
 class BuildStateTestCase(BuildStateBaseTestCase):
-    def test_yaml_conversion(self):
-        state_from_yaml = yaml_utils.load(yaml_utils.dump(self.state))
+    @mock.patch.object(
+        snapcraft.internal.states.BuildState,
+        "__init__",
+        wraps=snapcraft.internal.states.BuildState.__init__,
+    )
+    def test_yaml_conversion(self, init_spy):
+        state_string = yaml_utils.dump(self.state)
+
+        # Verify that the dumped tag was correct
+        self.assertThat(state_string.splitlines()[0], Equals("!BuildState"))
+
+        # Now verify the conversion
+        state_from_yaml = yaml_utils.load(state_string)
         self.assertThat(state_from_yaml, Equals(self.state))
+
+        # Verify that init was not called
+        init_spy.assert_not_called()
 
     def test_comparison(self):
         other = snapcraft.internal.states.BuildState(

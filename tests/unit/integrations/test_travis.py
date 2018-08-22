@@ -232,7 +232,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated for snap CI.
         with open(".travis.yml") as fd:
-            travis_conf = yaml_utils.safe_load(fd)
+            travis_conf = yaml_utils.load(fd)
             self.assertThat(travis_conf["sudo"], Equals("required"))
             self.assertThat(travis_conf["services"], Equals(["docker"]))
             self.assertThat(
@@ -334,7 +334,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated only with the decrypt command.
         with open(".travis.yml") as fd:
-            travis_conf = yaml_utils.safe_load(fd)
+            travis_conf = yaml_utils.load(fd)
             self.assertThat(
                 travis_conf["after_success"], Equals(["<travis-cli-decrypt>"])
             )

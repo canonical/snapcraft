@@ -155,10 +155,10 @@ def _edit_developers(developers: List[Dict[str, str]]) -> List[Dict[str, str]]:
         ft.close()
         with open(ft.name, "w") as fw:
             print(_COLLABORATION_HEADER, file=fw)
-            yaml_utils.safe_dump(developer_wrapper, stream=fw)
+            yaml_utils.dump(developer_wrapper, stream=fw)
         subprocess.check_call([editor_cmd, ft.name])
         with open(ft.name, "r") as fr:
-            developers = yaml_utils.safe_load(fr).get("developers")
+            developers = yaml_utils.load(fr).get("developers")
     return developers
 
 

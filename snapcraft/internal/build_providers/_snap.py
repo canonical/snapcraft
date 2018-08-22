@@ -180,7 +180,7 @@ def _load_registry(registry_filepath: Optional[str]) -> Dict[str, List[Any]]:
         return dict()
 
     with open(registry_filepath) as registry_file:
-        return yaml_utils.safe_load(registry_file)
+        return yaml_utils.load(registry_file)
 
 
 def _save_registry(
@@ -194,7 +194,7 @@ def _save_registry(
         os.makedirs(dirpath, exist_ok=True)
 
     with open(registry_filepath, "w") as registry_file:
-        yaml_utils.safe_dump(registry_data, stream=registry_file)
+        yaml_utils.dump(registry_data, stream=registry_file)
 
 
 class SnapInjector:

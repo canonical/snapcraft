@@ -22,7 +22,7 @@ from snapcraft import yaml_utils
 class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
     """Collection of metadata extracted from a part."""
 
-    yaml_tag = u"!ExtractedMetadata"
+    yaml_tag = "!ExtractedMetadata"
 
     def __init__(
         self,
@@ -33,7 +33,8 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         version: str = "",
         grade: str = "",
         icon: str = "",
-        desktop_file_paths: List[str] = None
+        desktop_file_paths: List[str] = None,
+        _data: Dict[str, Union[str, List[str]]] = None,
     ) -> None:
         """Create a new ExtractedMetadata instance.
 
@@ -47,7 +48,10 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         :param list desktop_file_paths: Extracted desktop file paths
         """  # noqa
 
-        self._data = {}  # type: Dict[str, Union[str, List[str]]]
+        if _data:
+            self._data = _data
+        else:
+            self._data = {}
 
         if common_id:
             self._data["common_id"] = common_id

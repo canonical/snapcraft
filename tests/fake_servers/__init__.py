@@ -153,7 +153,7 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Last-Modified", self._parts_date.strftime(self._date_format))
         self.send_header("ETag", "1111")
         self.end_headers()
-        self.wfile.write(yaml_utils.safe_dump(response).encode())
+        self.wfile.write(yaml_utils.dump(response).encode())
 
 
 class FakePartsWikiServer(http.server.HTTPServer):

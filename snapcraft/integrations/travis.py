@@ -217,7 +217,7 @@ def enable(project):
         'Configuring "deploy" phase to build and release the snap in the ' "Store."
     )
     with open(TRAVIS_CONFIG_FILENAME, "r+") as fd:
-        travis_conf = yaml_utils.safe_load(fd)
+        travis_conf = yaml_utils.load(fd)
         # Enable 'sudo' capability and 'docker' service.
         travis_conf["sudo"] = "required"
         services = travis_conf.setdefault("services", [])
@@ -236,7 +236,7 @@ def enable(project):
             "on": {"branch": "master"},
         }
         fd.seek(0)
-        yaml_utils.safe_dump(travis_conf, stream=fd)
+        yaml_utils.dump(travis_conf, stream=fd)
 
     logger.info(
         "Done. Now you just have to review and commit changes in your "

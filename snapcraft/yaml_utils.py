@@ -21,30 +21,46 @@ from typing import Any, Dict, TextIO, Union
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
     # Use them if possible.
-    from yaml import CLoader as Loader, CSafeLoader as SafeLoader  # type: ignore
-    from yaml import Dumper, SafeDumper  # CDumper garbles custom class tags
+    from yaml import (  # type: ignore
+        CSafeLoader as SafeLoader,
+        CSafeDumper as SafeDumper,
+    )
 except ImportError:
-    from yaml import Loader, SafeLoader, Dumper, SafeDumper
+    from yaml import SafeLoader, SafeDumper
 
 
-def load(stream: TextIO) -> OrderedDict:
-    return yaml.load(stream, Loader=_ordered_loader(Loader))
-
-
-def safe_load(stream: TextIO) -> OrderedDict:
-    return yaml.load(stream, Loader=_ordered_loader(SafeLoader))
+def load(stream: TextIO) -> Any:
+    """Safely load YAML in ordered manner."""
+    return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
 def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None) -> str:
-    return yaml.dump(data, stream, _ordered_dumper(Dumper), default_flow_style=False)
+    """Safely dump YAML in ordered manner."""
+    return yaml.dump(data, stream, _SafeOrderedDumper, default_flow_style=False)
 
 
-def safe_dump(
-    data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None
-) -> str:
-    return yaml.dump(
-        data, stream, _ordered_dumper(SafeDumper), default_flow_style=False
-    )
+class _SafeOrderedLoader(SafeLoader):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_constructor(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
+        )
+
+
+class _SafeOrderedDumper(SafeDumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(str, _str_presenter)
+        self.add_representer(OrderedDict, _dict_representer)
+
+
+class SnapcraftYAMLObject(yaml.YAMLObject):
+    yaml_loader = _SafeOrderedLoader
+    yaml_dumper = _SafeOrderedDumper
+
+    # We could implement a from_yaml class method here which would force loading to
+    # go through constructors, but our previous method of doing that has been broken
+    # long enough that it would require a larger change.
 
 
 def _dict_representer(dumper, data):
@@ -61,48 +77,3 @@ def _str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-
-
-def _ordered_loader(base_loader_class):
-    class OrderedLoader(base_loader_class):
-        pass
-
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _dict_constructor
-    )
-
-    return OrderedLoader
-
-
-def _ordered_dumper(base_loader_class):
-    class OrderedDumper(base_loader_class):
-        pass
-
-    OrderedDumper.add_representer(str, _str_presenter)
-    OrderedDumper.add_representer(OrderedDict, _dict_representer)
-
-    return OrderedDumper
-
-
-class OrderedDumper(Dumper):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_representer(str, _str_presenter)
-        self.add_representer(OrderedDict, _dict_representer)
-
-
-class SnapcraftYAMLObject(yaml.YAMLObject):
-    yaml_loader = _ordered_loader(Loader)
-    yaml_dumper = OrderedDumper
-    yaml_tag = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, yaml_tag=self.yaml_tag, **kwargs)
-
-    @classmethod
-    def from_yaml(cls, loader, node):
-        """
-        Convert a representation node to a Python object.
-        """
-        parameters = loader.construct_mapping(node)
-        return cls(**parameters)

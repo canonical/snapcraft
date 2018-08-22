@@ -26,10 +26,10 @@ from tests import integration, yaml_utils
 class VersionScriptBaseTestCase(integration.TestCase):
     def _set_version_script(self, snapcraft_yaml_file):
         with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml_utils.safe_load(f)
+            snapcraft_yaml = yaml_utils.load(f)
         snapcraft_yaml["version-script"] = self.scripts[self.script]
         with open(snapcraft_yaml_file, "w") as f:
-            yaml_utils.safe_dump(snapcraft_yaml, stream=f)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
 
 class VersionScriptTestCase(testscenarios.WithScenarios, VersionScriptBaseTestCase):

@@ -26,7 +26,6 @@ import shutil
 import stat
 import subprocess
 from typing import Any, Dict, List, Set  # noqa
-import yaml
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
@@ -62,15 +61,23 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
-class OctInt(int):
+class OctInt(yaml_utils.SnapcraftYAMLObject):
     """An int represented in octal form."""
 
+    yaml_tag = u"!OctInt"
 
-def oct_int_representer(dumper, data):
-    return yaml.ScalarNode("tag:yaml.org,2002:int", "{:04o}".format(data))
+    def __init__(self, value):
+        super().__init__()
+        self._value = value
 
-
-yaml.add_representer(OctInt, oct_int_representer)
+    @classmethod
+    def to_yaml(cls, dumper, data):
+        """
+        Convert a Python object to a representation node.
+        """
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:int", "{:04o}".format(data._value)
+        )
 
 
 def create_snap_packaging(
@@ -311,7 +318,7 @@ class _SnapPackaging:
         snap_yaml = self._compose_snap_yaml()
 
         with open(package_snap_path, "w") as f:
-            yaml_utils.safe_dump(snap_yaml, stream=f)
+            yaml_utils.dump(snap_yaml, stream=f)
 
         return snap_yaml
 
@@ -357,7 +364,7 @@ class _SnapPackaging:
                 self._global_state_file,
             )
             with open(manifest_file_path, "w") as manifest_file:
-                yaml_utils.safe_dump(annotated_snapcraft, stream=manifest_file)
+                yaml_utils.dump(annotated_snapcraft, stream=manifest_file)
 
     def write_snap_directory(self) -> None:
         # First migrate the snap directory. It will overwrite any conflicting

@@ -58,7 +58,7 @@ class PartsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml_utils.safe_load(output[idx:])
+        part = yaml_utils.load(output[idx:])
         expected_part = {
             "curl": {
                 "plugin": "autotools",
@@ -95,7 +95,7 @@ class PartsWithFilesetsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml_utils.safe_load(output[idx:])
+        part = yaml_utils.load(output[idx:])
         expected_part = {
             "simple-make-filesets": {
                 "plugin": "make",

@@ -93,9 +93,6 @@ def get_state(state_dir: str, step: steps.Step):
     state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
         with open(state_file, "r") as f:
-            # This cannot be safe_load since objects are actually stored in the state.
-            # This is okay since these files are generated and consumed by the snapcraft CLI
-            # itself.
             state = yaml_utils.load(f)
 
     return state

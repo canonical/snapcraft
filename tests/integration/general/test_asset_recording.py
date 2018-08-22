@@ -60,7 +60,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         expected_uname = (
             subprocess.check_output(["uname", "-srvmpio"])
@@ -76,7 +76,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         with apt.Cache() as apt_cache:
             expected_package = "python3={}".format(
@@ -96,7 +96,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         expected_package = "core={}".format(
             repo.get_local_snap_info("core")["revision"]
@@ -116,7 +116,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["architectures"], Equals(["all"]))
 
@@ -131,7 +131,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["architectures"], Equals([self.deb_arch]))
 
@@ -151,7 +151,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         expected_revision = repo.get_local_snap_info("hello")["revision"]
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(
             recorded_yaml["build-snaps"], Equals(["hello={}".format(expected_revision)])
@@ -197,7 +197,7 @@ class ManifestRecordingBuildPackagesTestCase(
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(
             recorded_yaml["build-packages"], Equals(expected_packages_with_version)
@@ -222,11 +222,11 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("snap", "snapcraft.yaml")) as source_yaml_file:
-            source_yaml = yaml_utils.safe_load(source_yaml_file)
+            source_yaml = yaml_utils.load(source_yaml_file)
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(
             recorded_yaml["parts"][part_name]["stage-packages"],
@@ -243,7 +243,7 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
         self.run_snapcraft("prime", project_dir="stage-packages-without-dependencies")
 
         with open(os.path.join("snap", "snapcraft.yaml")) as source_yaml_file:
-            source_yaml = yaml_utils.safe_load(source_yaml_file)
+            source_yaml = yaml_utils.load(source_yaml_file)
         part_name = "part-with-stage-packages"
         expected_packages = [
             "{}={}".format(
@@ -257,7 +257,7 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(
             recorded_yaml["parts"][part_name]["stage-packages"],
@@ -288,7 +288,7 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(
             recorded_yaml["parts"][part_name]["stage-packages"],
@@ -309,7 +309,7 @@ class ManifestRecordingBzrSourceTestCase(
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         commit = self.get_revno()
         self.assertThat(recorded_yaml["parts"]["bzr"]["source-commit"], Equals(commit))
@@ -328,7 +328,7 @@ class ManifestRecordingGitSourceTestCase(
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         commit = self.get_revno()
         self.assertThat(recorded_yaml["parts"]["git"]["source-commit"], Equals(commit))
@@ -348,7 +348,7 @@ class ManifestRecordingHgSourceTestCase(
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         commit = self.get_id()
         self.assertThat(
@@ -375,6 +375,6 @@ class ManifestRecordingSubversionSourceTestCase(
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml_utils.safe_load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["parts"]["svn"]["source-commit"], Equals("1"))

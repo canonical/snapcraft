@@ -28,7 +28,7 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml_utils.safe_load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
@@ -40,7 +40,7 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml_utils.safe_load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
@@ -50,6 +50,6 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml_utils.safe_load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))

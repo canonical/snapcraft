@@ -50,7 +50,7 @@ def define(part_name):
     print("Maintainer: {!r}".format(remote_part.pop("maintainer")))
     print("Description: {}".format(remote_part.pop("description")))
     print("")
-    yaml_utils.safe_dump({part_name: remote_part}, stream=sys.stdout)
+    yaml_utils.dump({part_name: remote_part}, stream=sys.stdout)
 
 
 def search(part_match):
@@ -126,13 +126,13 @@ class _Update(_Base):
             return None
 
         with open(self._headers_yaml) as headers_file:
-            return yaml_utils.safe_load(headers_file)
+            return yaml_utils.load(headers_file)
 
     def _save_headers(self):
         headers = {"If-Modified-Since": self._request.headers.get("Last-Modified")}
 
         with open(self._headers_yaml, "w") as headers_file:
-            headers_file.write(yaml_utils.safe_dump(headers))
+            headers_file.write(yaml_utils.dump(headers))
 
 
 class _RemoteParts(_Base):
@@ -143,7 +143,7 @@ class _RemoteParts(_Base):
             update()
 
         with open(self.parts_yaml) as parts_file:
-            self._parts = yaml_utils.safe_load(parts_file)
+            self._parts = yaml_utils.load(parts_file)
 
     def get_part(self, part_name, full=False):
         try:

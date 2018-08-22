@@ -64,7 +64,7 @@ class CreateBaseTestCase(unit.TestCase):
     def generate_meta_yaml(self, *, build=False):
         os.makedirs("snap", exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as f:
-            f.write(yaml_utils.safe_dump(self.config_data))
+            f.write(yaml_utils.dump(self.config_data))
 
         self.project = Project(snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
 
@@ -90,7 +90,7 @@ class CreateBaseTestCase(unit.TestCase):
         self.assertTrue(os.path.exists(self.snap_yaml), "snap.yaml was not created")
 
         with open(self.snap_yaml) as f:
-            return yaml_utils.safe_load(f)
+            return yaml_utils.load(f)
 
 
 class CreateTestCase(CreateBaseTestCase):
@@ -1235,7 +1235,7 @@ class WrapExeTestCase(unit.TestCase):
         snapcraft_yaml_file_path = "snapcraft.yaml"
         snapcraft_yaml = dict(name="fake", confinement="devmode")
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml_utils.safe_dump(snapcraft_yaml, stream=snapcraft_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_file)
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         # TODO move to use outer interface
         self.packager = _snap_packaging._SnapPackaging(snapcraft_yaml, project)

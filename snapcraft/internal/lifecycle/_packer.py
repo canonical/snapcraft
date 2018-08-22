@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def _snap_data_from_dir(directory):
     with open(os.path.join(directory, "meta", "snap.yaml")) as f:
-        snap = yaml_utils.safe_load(f)
+        snap = yaml_utils.load(f)
 
     return {
         "name": snap["name"],
