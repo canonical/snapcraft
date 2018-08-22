@@ -33,8 +33,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         version: str = "",
         grade: str = "",
         icon: str = "",
-        desktop_file_paths: List[str] = None,
-        _data: Dict[str, Union[str, List[str]]] = None,
+        desktop_file_paths: List[str] = None
     ) -> None:
         """Create a new ExtractedMetadata instance.
 
@@ -48,10 +47,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         :param list desktop_file_paths: Extracted desktop file paths
         """  # noqa
 
-        if _data:
-            self._data = _data
-        else:
-            self._data = {}
+        self._data = {}  # type: Dict[str, Union[str, List[str]]]
 
         if common_id:
             self._data["common_id"] = common_id
