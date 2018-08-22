@@ -22,7 +22,6 @@ from testtools.matchers import Equals
 from xdg import BaseDirectory
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from tests import fixture_setup
 from tests.unit import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
 
@@ -86,4 +85,3 @@ class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
         self.make_snapcraft_yaml()
 
         self.assertRaises(SnapcraftEnvironmentError, self.run_command, ["refresh"])
-
