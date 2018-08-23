@@ -54,9 +54,15 @@ parts:
         snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
+        # Remove so the link can be recreated on re-builds
+        [ -f "$TRIPLET_PATH/libsodium.so" ] && rm "$TRIPLET_PATH/libsodium.so"
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
-        patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
-        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+        # These checks are ugly but allow us to rebuild.
+        [ -f $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/emitter.py.orig ] && mv $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/emitter.py.orig $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/emitter.py
+        [ -f $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/reader.py.orig ] && mv $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/reader.py.orig $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages/yaml/reader.py
+        patch -b -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
+        [ -f $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py.orig ] && mv $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py.orig $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py
+        patch -b $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
     override-prime: |
         snapcraftctl prime
         # Now that everything is built, let's disable user site-packages
