@@ -248,7 +248,7 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml["architectures"] = architectures
 
         with open("snapcraft.yaml", "w") as f:
-            yaml_utils.dump(snapcraft_yaml, f, default_flow_style=False)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.
