@@ -34,12 +34,12 @@ from testtools.matchers import (
 )
 
 from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
-from snapcraft import extractors
+from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
 from snapcraft.internal import common
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
-from tests import unit, fixture_setup, yaml_utils
+from tests import unit, fixture_setup
 
 
 class CreateBaseTestCase(unit.TestCase):

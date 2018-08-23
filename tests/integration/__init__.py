@@ -36,7 +36,8 @@ import testtools
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from tests import fixture_setup, os_release, subprocess_utils, yaml_utils
+from snapcraft import yaml_utils
+from tests import fixture_setup, os_release, subprocess_utils
 from tests.integration import platform
 
 
@@ -314,7 +315,7 @@ class TestCase(testtools.TestCase):
             self.fail("The part {} doesn't have a package {}".format(part, package))
 
         with open(snapcraft_yaml_path, "w") as snapcraft_yaml_file:
-            yaml_utils.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_yaml_file)
 
 
 class BzrSourceBaseTestCase(TestCase):
@@ -752,4 +753,4 @@ def add_stage_packages(
         else:
             y["parts"][part_name]["stage-packages"] = stage_packages
     with open(snapcraft_yaml_file, "w") as file_write:
-        yaml_utils.dump(y, file_write)
+        yaml_utils.dump(y, stream=file_write)

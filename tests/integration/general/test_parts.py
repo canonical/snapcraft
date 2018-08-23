@@ -21,7 +21,8 @@ import xdg
 
 from testtools.matchers import Contains, Equals
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 
 
 class PartsTestCase(integration.TestCase):

@@ -30,8 +30,9 @@ from snapcraft.internal.errors import (
     RequiredPathDoesNotExist,
 )
 from snapcraft.project import Project
+from snapcraft import yaml_utils
 import tests
-from tests import unit, yaml_utils
+from tests import unit
 
 
 test_snapcraft_yaml = """

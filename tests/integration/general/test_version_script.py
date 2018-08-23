@@ -20,7 +20,8 @@ from textwrap import dedent
 import testscenarios
 from testtools.matchers import Contains, FileExists
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 
 
 class VersionScriptBaseTestCase(integration.TestCase):

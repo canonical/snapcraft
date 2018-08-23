@@ -40,8 +40,9 @@ import fixtures
 import xdg
 
 import snapcraft
+from snapcraft import yaml_utils
 from snapcraft.internal import elf
-from tests import fake_servers, yaml_utils
+from tests import fake_servers
 from tests.fake_servers import api, search, upload
 from tests.file_utils import get_snapcraft_path
 from tests.subprocess_utils import call, call_with_output

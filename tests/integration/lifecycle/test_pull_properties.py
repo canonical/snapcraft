@@ -21,7 +21,8 @@ import subprocess
 import testscenarios
 from testtools.matchers import Equals, FileExists
 
-from tests import fixture_setup, integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import fixture_setup, integration
 
 
 class PullPropertiesTestCase(integration.TestCase):

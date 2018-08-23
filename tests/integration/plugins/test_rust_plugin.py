@@ -22,7 +22,8 @@ import fixtures
 import testscenarios
 from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 from tests.matchers import HasArchitecture
 
 

@@ -23,7 +23,7 @@ import os
 import urllib.parse
 import pymacaroons
 
-from tests import yaml_utils
+from snapcraft import yaml_utils
 
 logger = logging.getLogger(__name__)
 

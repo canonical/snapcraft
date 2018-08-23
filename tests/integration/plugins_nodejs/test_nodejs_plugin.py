@@ -18,7 +18,8 @@ import os
 import testscenarios
 from testtools.matchers import FileExists
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 
 
 class NodeJSPluginTestCase(testscenarios.WithScenarios, integration.TestCase):

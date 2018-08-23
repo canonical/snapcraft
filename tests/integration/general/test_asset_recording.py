@@ -24,8 +24,9 @@ import fixtures
 import testscenarios
 from testtools.matchers import Contains, Equals
 
+from snapcraft import yaml_utils
 from tests.integration import repo
-from tests import integration, fixture_setup, yaml_utils
+from tests import integration, fixture_setup
 
 
 class AssetRecordingBaseTestCase(integration.TestCase):

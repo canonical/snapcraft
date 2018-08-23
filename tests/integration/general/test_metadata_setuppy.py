@@ -19,7 +19,8 @@ from textwrap import dedent
 
 from testtools.matchers import Equals
 
-from tests import integration, fixture_setup, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration, fixture_setup
 
 
 class SetupPyMetadataTestCase(integration.TestCase):

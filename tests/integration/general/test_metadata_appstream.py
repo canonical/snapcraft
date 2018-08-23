@@ -20,8 +20,9 @@ import shutil
 
 from testtools.matchers import Equals, FileExists
 
+from snapcraft import yaml_utils
 import tests
-from tests import fixture_setup, integration, yaml_utils
+from tests import fixture_setup, integration
 
 
 class AppstreamMetadataTestCase(integration.TestCase):

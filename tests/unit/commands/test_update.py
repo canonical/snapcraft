@@ -25,7 +25,8 @@ import sys
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
 
-from tests import fixture_setup, unit, yaml_utils
+from snapcraft import yaml_utils
+from tests import fixture_setup, unit
 from . import CommandBaseTestCase
 
 

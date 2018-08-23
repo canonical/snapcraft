@@ -29,7 +29,8 @@ from snapcraft.project.errors import DuplicateSnapcraftYamlError
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal import parser
 from snapcraft.internal.parser import _get_origin_data, _encode_origin, PARTS_FILE, main
-from tests import fixture_setup, unit, yaml_utils
+from snapcraft import yaml_utils
+from tests import fixture_setup, unit
 
 TEST_OUTPUT_PATH = os.path.join(os.getcwd(), "test_output.wiki")
 

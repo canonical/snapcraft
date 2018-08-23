@@ -20,7 +20,8 @@ import textwrap
 
 from testtools.matchers import Equals, Contains
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 
 
 class SnapcraftctlSetGradeTestCase(integration.TestCase):

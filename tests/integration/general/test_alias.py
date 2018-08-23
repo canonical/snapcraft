@@ -19,7 +19,8 @@ import stat
 
 from testtools.matchers import Equals, FileExists
 
-from tests import integration, yaml_utils
+from snapcraft import yaml_utils
+from tests import integration
 
 
 # FIXME: Ideally this would be a snaps test so we can run the aliases, but that
