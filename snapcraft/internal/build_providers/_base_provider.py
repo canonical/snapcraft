@@ -133,12 +133,13 @@ class Provider:
         snap_injector = SnapInjector(
             snap_dir=self._SNAPS_MOUNTPOINT,
             registry_filepath=registry_filepath,
+            snap_arch=self.project.deb_arch,
             runner=self._run,
             snap_dir_mounter=self._mount_snaps_directory,
             snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
         )
-        snap_injector.add(snap_name="core", snap_arch=self.project.deb_arch)
-        snap_injector.add(snap_name="snapcraft", snap_arch=self.project.deb_arch)
+        snap_injector.add(snap_name="core")
+        snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()

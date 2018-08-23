@@ -52,12 +52,12 @@ class _SnapManager:
         snap_dir: str,
         latest_revision: str,
         snap_arch: str,
-        store_only: bool
+        inject_from_host: bool = True
     ) -> None:
         self.snap_name = snap_name
         self._snap_dir = snap_dir
         self._snap_arch = snap_arch
-        self._store_only = store_only
+        self._inject_from_host = inject_from_host
 
         self._latest_revision = latest_revision
         self.__required_operation = None  # type: Optional[_SnapOp]
@@ -77,9 +77,7 @@ class _SnapManager:
         # From the point of view of multiple architectures if the target host (this)
         # is different than that of where these snaps run from, then we always need to
         # install from the store
-        if self._store_only:
-            is_installed = False
-        else:
+        if self._inject_from_host:
             # Get information from the host.
             host_snap_repo = self._get_snap_repo()
             try:
@@ -88,6 +86,8 @@ class _SnapManager:
             except repo.errors.SnapdConnectionError:
                 # This maybe because we are in a docker instance or another OS.
                 is_installed = False
+        else:
+            is_installed = False
 
         # The evaluations for the required operation is as follows:
         # - if the snap is not installed on the host (is_installed == False),
@@ -230,10 +230,12 @@ class SnapInjector:
         *,
         snap_dir: str,
         registry_filepath: str,
+        snap_arch: str,
         runner: Callable[..., None],
         snap_dir_mounter: Callable[[], None],
         snap_dir_unmounter: Callable[[], None],
-        file_pusher: Callable[..., None]
+        file_pusher: Callable[..., None],
+        inject_from_host: bool = True
     ) -> None:
         """
         Initialize a SnapInjector instance.
@@ -241,6 +243,7 @@ class SnapInjector:
         :param str snap_dir: directory where snaps from the host live for the cases
                              where injection of the snap into the build environment
                              is possible.
+        :param str snap_arch: the snap architecture of the snaps to inject.
         :param str registry_filepath: path to where recordings of previusly installed
                                       revisions of a snap can be queried and recorded.
         :param runner: a callable which can run commands in the build environment.
@@ -250,11 +253,14 @@ class SnapInjector:
         :param snap_dir_unmounter: a callable which can unmount snap_dir from the environment.
         :param file_pusher: a callable that can push file from the host into the build
                             environment.
+        :param bool inject_from_host: whether to look for snaps on the host and inject them.
         """
 
         self._snaps = []  # type: List[_SnapManager]
         self._snap_dir = snap_dir
         self._registry_filepath = registry_filepath
+        self._snap_arch = snap_arch
+        self._inject_from_host = inject_from_host
         self._runner = runner
         self._snap_dir_mounter = snap_dir_mounter
         self._snap_dir_unmounter = snap_dir_unmounter
@@ -329,14 +335,14 @@ class SnapInjector:
         else:
             self._registry_data[snap_name].append(entry)
 
-    def add(self, snap_name: str, snap_arch: str, store_only: bool = False) -> None:
+    def add(self, snap_name: str) -> None:
         self._snaps.append(
             _SnapManager(
                 snap_name=snap_name,
                 snap_dir=self._snap_dir,
                 latest_revision=self._get_latest_revision(snap_name),
-                snap_arch=snap_arch,
-                store_only=store_only,
+                snap_arch=self._snap_arch,
+                inject_from_host=self._inject_from_host,
             )
         )
 

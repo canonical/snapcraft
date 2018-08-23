@@ -345,24 +345,16 @@ class Containerbuild:
             snap_dir_mounter=self._lxd_instance.mount_snaps_directory,
             snap_dir_unmounter=self._lxd_instance.unmount_snaps_directory,
             file_pusher=self._lxd_instance.push_file,
+            snap_arch=self._get_container_arch(),
+            # We cannot inject in unpriviledged containers without going an extra
+            # mile.
+            # TODO work with the snapd team for proper API to retrieve the current
+            #      snap installed on a host.
+            inject_from_host=False,
         )
 
-        # We cannot inject in unpriviledged containers without going an extra
-        # mile.
-        # TODO work with the snapd team for proper API to retrieve the current
-        #      snap installed on a host.
-        store_only = True
-
-        snap_injector.add(
-            snap_name="core",
-            snap_arch=self._get_container_arch(),
-            store_only=store_only,
-        )
-        snap_injector.add(
-            snap_name="snapcraft",
-            snap_arch=self._get_container_arch(),
-            store_only=store_only,
-        )
+        snap_injector.add(snap_name="core")
+        snap_injector.add(snap_name="snapcraft")
         snap_injector.apply()
 
     def _get_container_arch(self):
