@@ -20,13 +20,11 @@ from typing import Any, Dict, TextIO, Union
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
-    # Use them if possible.
-    from yaml import (  # type: ignore
-        CSafeLoader as SafeLoader,
-        CSafeDumper as SafeDumper,
-    )
+    # Use them if possible. If not, we could fallback to the normal loader/dumper, but
+    # they actually behave differently, so raise an error instead.
+    from yaml import CSafeLoader, CSafeDumper  # type: ignore
 except ImportError:
-    from yaml import SafeLoader, SafeDumper
+    raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
 
 
 def load(stream: TextIO) -> Any:
@@ -39,7 +37,7 @@ def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None)
     return yaml.dump(data, stream, _SafeOrderedDumper, default_flow_style=False)
 
 
-class _SafeOrderedLoader(SafeLoader):
+class _SafeOrderedLoader(CSafeLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_constructor(
@@ -47,7 +45,7 @@ class _SafeOrderedLoader(SafeLoader):
         )
 
 
-class _SafeOrderedDumper(SafeDumper):
+class _SafeOrderedDumper(CSafeDumper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_representer(str, _str_presenter)

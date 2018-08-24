@@ -121,7 +121,7 @@ class RustPluginConfinementTestCase(
             snapcraft_yaml = yaml_utils.load(f)
         snapcraft_yaml["confinement"] = self.confinement
         with open(snapcraft_yaml_file, "w") as f:
-            yaml_utils.dump(snapcraft_yaml, f)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
     def test_prime(self):
         if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
