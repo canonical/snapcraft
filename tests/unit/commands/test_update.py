@@ -17,7 +17,6 @@ import os
 from collections import OrderedDict
 from textwrap import dedent
 from unittest import mock
-from unittest.mock import call
 
 import fixtures
 import hashlib
@@ -157,23 +156,20 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
 
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    @mock.patch("os.getuid")
-    def test_update_containerized_exists_running(self, mock_getuid, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_getuid.return_value = 1234
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        # Container was created before and is running
-        fake_lxd.name = "local:snapcraft-snap-test"
-        fake_lxd.status = "Running"
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "1"))
+    def test_update_build_environment(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
+        )
+
+        patcher = mock.patch("snapcraft.internal.lxd.Project")
+        lxd_project_mock = patcher.start()
+        self.addCleanup(patcher.stop)
         self.make_snapcraft_yaml(self.yaml_template)
 
         result = self.run_command(["update"])
-        self.assertThat(result.exit_code, Equals(0))
 
-        project_folder = "/root/build_snap-test"
-        mock_container_run.assert_has_calls(
-            [call(["snapcraft", "update"], cwd=project_folder, user="root")]
+        self.assertThat(result.exit_code, Equals(0))
+        lxd_project_mock.assert_called_once_with(
+            project=mock.ANY, source=".", output=None
         )
+        lxd_project_mock().execute.assert_called_once_with("update", [])

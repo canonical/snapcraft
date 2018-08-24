@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,20 +20,22 @@ import json
 import logging
 import os
 import pipes
-import shutil
 import sys
-import tempfile
 import contextlib
 import subprocess
 import time
 from textwrap import dedent
 from typing import List
 
-from snapcraft.internal import common
+from xdg import BaseDirectory
+
 from . import errors
+from ._lxc_command import LXDInstanceProvider
+from snapcraft.project import Project
 from snapcraft.internal.errors import InvalidContainerImageInfoError
 from snapcraft.project._project_options import _get_deb_arch
-from snapcraft.internal.repo import snaps
+from snapcraft.internal.build_providers._snap import SnapInjector
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,31 +54,35 @@ _NETWORK_PROBE_COMMAND = dedent(
     """
 )
 _PROXY_KEYS = ["http_proxy", "https_proxy", "no_proxy", "ftp_proxy"]
-# Canonical store account key
-_STORE_KEY = "BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul"
 
 
 class Containerbuild:
     def __init__(
         self,
         *,
-        source,
-        project_options,
-        metadata,
-        container_name,
-        output=None,
-        remote=None
-    ):
-        if output is None:
-            output = common.format_snap_name(metadata, allow_empty_version=True)
-        self._snap_output = output
-        self._source = os.path.realpath(source)
-        self._project_options = project_options
-        self._metadata = metadata
-        self._user = "root"
-        self._project_folder = "/root/build_{}".format(metadata["name"])
+        source: str,
+        project: Project,
+        container_name: str,
+        output: str = None,
+        remote: str = None
+    ) -> None:
+        if output is None and project.info.version:
+            output = "{}_{}_{}.snap".format(
+                project.info.name, project.info.version, project.deb_arch
+            )
+        elif output is None:
+            output = "{}_{}.snap".format(project.info.name, project.deb_arch)
+        self.snap_filename = output
 
+        self._source = os.path.realpath(source)
+        self._project = project
+        self._user = "root"
+        self._project_folder = "/root/build_{}".format(project.info.name)
+
+        if remote is None:
+            remote = _get_default_remote()
         self._remote = remote
+
         self._container_name = "snapcraft-{}".format(container_name)
         self._image = "ubuntu:xenial"
         # Use a temporary folder the 'lxd' snap can access
@@ -85,23 +91,34 @@ class Containerbuild:
         )
         os.makedirs(self._lxd_common_dir, exist_ok=True)
 
+        self._lxd_instance = LXDInstanceProvider(
+            instance_name="{}:{}".format(remote, self._container_name)
+        )
+
+        # TODO migrate to an actual provider
+        self.provider_project_dir = os.path.join(
+            BaseDirectory.save_data_path("snapcraft"),
+            "projects",
+            "lxd",
+            project.info.name,
+        )
+
     @contextlib.contextmanager
     def _container_running(self):
         with self._ensure_started():
             try:
                 yield
             except errors.ContainerRunError as e:
-                if self._project_options.debug:
+                self._finish(success=False)
+                if self._project.debug:
                     logger.info("Debug mode enabled, dropping into a shell")
                     self._container_run(["bash", "-i"])
                 else:
                     raise e
-            else:
+            finally:
                 self._finish()
 
     def _ensure_remote(self):
-        if not self._remote:
-            self._remote = _get_default_remote()
         _verify_remote(self._remote)
         self._container_name = "{}:{}".format(self._remote, self._container_name)
 
@@ -129,6 +146,16 @@ class Containerbuild:
                 return container
 
     def _configure_container(self):
+        subprocess.check_call(
+            [
+                "lxc",
+                "config",
+                "set",
+                self._container_name,
+                "raw.idmap",
+                "both {} {}".format(os.getenv("SUDO_UID", os.getuid()), 0),
+            ]
+        )
         subprocess.check_call(
             [
                 "lxc",
@@ -242,11 +269,11 @@ class Containerbuild:
             self._setup_project()
             command = ["snapcraft", step]
             if step == "snap":
-                command += ["--output", self._snap_output]
+                command += ["--output", self.snap_filename]
             # Pass on target arch if specified
             # If not specified it defaults to the LXD architecture
-            if self._project_options.target_arch:
-                command += ["--target-arch", self._project_options.target_arch]
+            if self._project.target_arch:
+                command += ["--target-arch", self._project.target_arch]
             if args:
                 command += args
             self._container_run(command, cwd=self._project_folder, user=self._user)
@@ -284,6 +311,9 @@ class Containerbuild:
                     command=original_cmd, exit_code=e.returncode
                 )
 
+    def _finish(self, success=True):
+        """Run any cleanup tasks."""
+
     def _setup_project(self):
         # Must be implemented by subclasses
         raise NotImplementedError
@@ -303,77 +333,29 @@ class Containerbuild:
                     raise errors.ContainerNetworkError("start.ubuntu.com")
         logger.info("Network connection established")
 
-    def _inject_snapcraft(self, *, new_container: bool):
-        if common.is_snap():
-            with tempfile.TemporaryDirectory(
-                prefix="snapcraft", dir=self._lxd_common_dir
-            ) as tmp_dir:
-                # Wait for any on-going refreshes to finish.
-                # If there are no changes an error will be returned.
-                with contextlib.suppress(errors.ContainerRunError):
-                    self._container_run(["snap", "watch", "--last=auto-refresh"])
-                self._inject_snap("core", tmp_dir)
-                self._inject_snap("snapcraft", tmp_dir)
-        elif new_container:
-            self._container_run(["apt-get", "install", "snapcraft", "-y"])
-
-    def _inject_snap(self, name: str, tmp_dir: str):
-        snap = snaps.SnapPackage(name)
-        if not snap.installed:
-            raise errors.ContainerSnapNotFoundError(name)
-        snap_info = snap.get_local_snap_info()
-        id = snap_info["id"]
-        # Lookup confinement to know if we need to --classic when installing
-        is_classic = snap_info["confinement"] == "classic"
-
-        # If the server has a different arch we can't inject local snaps
-        target_arch = self._project_options.target_arch
-        if target_arch and target_arch != self._get_container_arch():
-            channel = snap_info["channel"]
-            return self._install_snap(name, channel, is_classic=is_classic)
-
-        # Revisions are unique, so we don't need to know the channel
-        rev = snap_info["revision"]
-
-        # https://github.com/snapcore/snapd/blob/master/snap/info.go
-        # MountFile
-        filename = "{}_{}.snap".format(name, rev)
-        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
-        # CoreLibExecDir
-        installed = os.path.join(os.path.sep, "var", "lib", "snapd", "snaps", filename)
-
-        filepath = os.path.join(tmp_dir, filename)
-        if rev.startswith("x"):
-            logger.info("Making {} user-accessible".format(filename))
-            subprocess.check_call(["sudo", "cp", installed, filepath])
-            subprocess.check_call(["sudo", "chown", str(os.getuid()), filepath])
-        else:
-            shutil.copyfile(installed, filepath)
-
-        if self._is_same_snap(filepath, name):
-            logger.debug("Not re-injecting same version of {!r}".format(name))
-            return
-
-        if not rev.startswith("x"):
-            self._inject_assertions(
-                "{}_{}.assert".format(name, rev),
-                [
-                    ["account-key", "public-key-sha3-384={}".format(_STORE_KEY)],
-                    ["snap-declaration", "snap-name={}".format(name)],
-                    [
-                        "snap-revision",
-                        "snap-revision={}".format(rev),
-                        "snap-id={}".format(id),
-                    ],
-                ],
-                tmp_dir,
-            )
-
-        container_filename = os.path.join(os.sep, "run", filename)
-        self._push_file(filepath, container_filename)
-        self._install_snap(
-            container_filename, is_dangerous=rev.startswith("x"), is_classic=is_classic
+    def _inject_snapcraft(self):
+        registry_filepath = os.path.join(
+            self.provider_project_dir, "snap-registry.yaml"
         )
+
+        snap_injector = SnapInjector(
+            snap_dir=self._lxd_instance._SNAPS_MOUNTPOINT,
+            registry_filepath=registry_filepath,
+            runner=self._lxd_instance.run,
+            snap_dir_mounter=self._lxd_instance.mount_snaps_directory,
+            snap_dir_unmounter=self._lxd_instance.unmount_snaps_directory,
+            file_pusher=self._lxd_instance.push_file,
+            snap_arch=self._get_container_arch(),
+            # We cannot inject in unpriviledged containers without going an extra
+            # mile.
+            # TODO work with the snapd team for proper API to retrieve the current
+            #      snap installed on a host.
+            inject_from_host=False,
+        )
+
+        snap_injector.add(snap_name="core")
+        snap_injector.add(snap_name="snapcraft")
+        snap_injector.apply()
 
     def _get_container_arch(self):
         info = subprocess.check_output(["lxc", "info", self._container_name]).decode(
@@ -384,85 +366,6 @@ class Containerbuild:
                 with contextlib.suppress(IndexError, KeyError):
                     return _get_deb_arch(line.split(None, 1)[1].strip())
         raise errors.ContainerArchitectureError(info)
-
-    def _pull_file(self, src, dst):
-        subprocess.check_call(
-            ["lxc", "file", "pull", "{}{}".format(self._container_name, src), dst]
-        )
-
-    def _push_file(self, src, dst):
-        subprocess.check_call(
-            ["lxc", "file", "push", src, "{}{}".format(self._container_name, dst)]
-        )
-
-    def _install_snap(self, name, channel=None, is_dangerous=False, is_classic=False):
-        logger.info("Installing {}".format(name))
-        # Install: will do nothing if already installed
-        args = []
-        if channel:
-            args.append("--channel")
-            args.append(channel)
-        if is_dangerous:
-            args.append("--dangerous")
-        if is_classic:
-            args.append("--classic")
-        self._container_run(["snap", "install", name] + args)
-        if channel:
-            # Switch channel if install was a no-op
-            self._container_run(["snap", "refresh", name] + args)
-
-    def _is_same_snap(self, filepath, name):
-        # Compare checksums: user-visible version may still match
-        checksum = (
-            subprocess.check_output(["sha384sum", filepath])
-            .decode(sys.getfilesystemencoding())
-            .split()[0]
-        )
-        try:
-            # Find the current version in use in the container
-            rev = (
-                subprocess.check_output(
-                    [
-                        "lxc",
-                        "exec",
-                        self._container_name,
-                        "--",
-                        "readlink",
-                        "/snap/{}/current".format(name),
-                    ]
-                )
-                .decode(sys.getfilesystemencoding())
-                .strip()
-            )
-            filename = "{}_{}.snap".format(name, rev)
-            installed = os.path.join(
-                os.path.sep, "var", "lib", "snapd", "snaps", filename
-            )
-            checksum_container = (
-                subprocess.check_output(
-                    ["lxc", "exec", self._container_name, "--", "sha384sum", installed]
-                )
-                .decode(sys.getfilesystemencoding())
-                .split()[0]
-            )
-        except subprocess.CalledProcessError:
-            # Snap not installed
-            checksum_container = None
-        return checksum == checksum_container
-
-    def _inject_assertions(
-        self, filename: str, assertions: List[List[str]], tmp_dir: str
-    ):
-        filepath = os.path.join(tmp_dir, filename)
-        with open(filepath, "wb") as f:
-            for assertion in assertions:
-                logger.info("Looking up assertion {}".format(assertion))
-                f.write(subprocess.check_output(["snap", "known", *assertion]))
-                f.write(b"\n")
-        container_filename = os.path.join(os.path.sep, "run", filename)
-        self._push_file(filepath, container_filename)
-        logger.info("Adding assertion {}".format(filename))
-        self._container_run(["snap", "ack", container_filename])
 
 
 def _get_default_remote():

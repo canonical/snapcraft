@@ -16,14 +16,12 @@
 import os
 from textwrap import dedent
 from unittest import mock
-from unittest.mock import call
 
 import fixtures
 from testtools.matchers import Equals
 from xdg import BaseDirectory
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from tests import fixture_setup
 from tests.unit import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
 
@@ -61,42 +59,29 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
 
 class RefreshCommandTestCase(RefreshCommandBaseTestCase):
-
-    scenarios = [("local", dict(snapcraft_container_builds="1", remote="local"))]
-
     @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
     def test_refresh(self, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        fake_filesystem = fixture_setup.FakeFilesystem()
-        self.useFixture(fake_filesystem)
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
         )
         self.make_snapcraft_yaml()
 
-        self.run_command(["refresh"])
+        patcher = mock.patch("snapcraft.internal.lxd.Project")
+        lxd_project_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.make_snapcraft_yaml(self.yaml_template)
 
-        mock_container_run.assert_has_calls(
-            [
-                call(["apt-get", "update"]),
-                call(["apt-get", "upgrade", "-y"]),
-                call(["snap", "refresh"]),
-            ]
+        result = self.run_command(["refresh"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        lxd_project_mock.assert_called_once_with(
+            project=mock.ANY, source=".", output=None
         )
-        self.assertThat(fake_lxd.name, Equals("local:snapcraft-snap-test"))
+        lxd_project_mock().refresh.assert_called_once_with()
 
 
 class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    def test_refresh_fails_without_env_var(self, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        fake_filesystem = fixture_setup.FakeFilesystem()
-        self.useFixture(fake_filesystem)
+    def test_refresh_fails_without_env_var(self):
         self.make_snapcraft_yaml()
 
         self.assertRaises(SnapcraftEnvironmentError, self.run_command, ["refresh"])
-        mock_container_run.assert_not_called()

@@ -14,25 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-import os
-import subprocess
-import tarfile
 from textwrap import dedent
+from unittest.mock import patch, ANY
 
-import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Equals, FileExists
 
-from snapcraft.internal.errors import InvalidContainerRemoteError
-from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
 class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
 
         self.make_snapcraft_yaml(
             dedent(
@@ -51,121 +43,34 @@ class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
         """
             )
         )
-        self.state_dir = os.path.join(self.parts_dir, "part1", "state")
 
-    def test_cleanbuild(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-        self.useFixture(fixture_setup.FakeLXD())
+        patcher = patch("snapcraft.internal.lxd.Cleanbuilder")
+        self.cleanbuilder_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
 
 class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
-    def setUp(self):
-        super().setUp()
-
-        # simulate build artifacts
-        dirs = [
-            os.path.join(self.parts_dir, "part1", "src"),
-            self.stage_dir,
-            self.prime_dir,
-            os.path.join(self.parts_dir, "plugins"),
-        ]
-        self.files_tar = [
-            os.path.join(self.parts_dir, "plugins", "x-plugin.py"),
-            "main.c",
-        ]
-        self.files_no_tar = [
-            os.path.join(self.stage_dir, "binary"),
-            os.path.join(self.prime_dir, "binary"),
-            "snap-test.snap",
-            "snap-test_1.0_source.tar.bz2",
-            "snap-test_0.9_source.tar.bz2",
-        ]
-        for d in dirs:
-            os.makedirs(d)
-        for f in self.files_tar + self.files_no_tar:
-            open(f, "w").close()
-
     def test_cleanbuild(self):
-        self.useFixture(fixture_setup.FakeLXD())
-
         result = self.run_command(["cleanbuild"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertIn(
-            "Setting up container with project assets\n"
-            "Retrieved snap-test_1.0_amd64.snap\n",
-            self.fake_logger.output,
+        self.cleanbuilder_mock.assert_called_once_with(
+            project=ANY, remote=None, source="snap-test_source.tar.bz2"
         )
+        self.assertThat("snap-test_source.tar.bz2", FileExists())
 
-        with tarfile.open("snap-test_source.tar.bz2") as tar:
-            tar_members = tar.getnames()
-
-        for f in self.files_no_tar:
-            f = os.path.relpath(f)
-            self.assertFalse(
-                "./{}".format(f) in tar_members,
-                "{} should not be in {}".format(f, tar_members),
-            )
-        for f in self.files_tar:
-            f = os.path.relpath(f)
-            self.assertTrue(
-                "./{}".format(f) in tar_members,
-                "{} should be in {}".format(f, tar_members),
-            )
-
-        # Also assert that the snapcraft.yaml made it into the cleanbuild tar
-        self.assertThat(
-            tar_members,
-            Contains(os.path.join(".", "snap", "snapcraft.yaml")),
-            "snap/snapcraft unexpectedly excluded from tarball",
-        )
-
-    def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-
-        def call_effect(*args, **kwargs):
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            if "snapcraft snap" in " ".join(args[0]):
-                raise subprocess.CalledProcessError(returncode=255, cmd=args[0])
-
-        fake_lxd.check_call_mock.side_effect = call_effect
-
+    def test_cleanbuild_debug_appended_works(self):
         result = self.run_command(["cleanbuild", "--debug"])
+
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            self.fake_logger.output,
-            Contains("Debug mode enabled, dropping into a shell"),
+        self.cleanbuilder_mock.assert_called_once_with(
+            project=ANY, remote=None, source="snap-test_source.tar.bz2"
         )
 
-    def test_cleanbuild_debug_prepended_goes_to_shell_on_errors(self):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-
-        def call_effect(*args, **kwargs):
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            if "snapcraft snap" in " ".join(args[0]):
-                raise subprocess.CalledProcessError(returncode=255, cmd=args[0])
-
-        fake_lxd.check_call_mock.side_effect = call_effect
-
+    def test_cleanbuild_debug_prepended_works(self):
         result = self.run_command(["--debug", "cleanbuild"])
+
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            self.fake_logger.output,
-            Contains("Debug mode enabled, dropping into a shell"),
+        self.cleanbuilder_mock.assert_called_once_with(
+            project=ANY, remote=None, source="snap-test_source.tar.bz2"
         )
-
-    def test_invalid_remote(self):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-
-        exception = self.assertRaises(
-            InvalidContainerRemoteError,
-            self.run_command,
-            ["cleanbuild", "--remote", "foo/bar"],
-        )
-        self.assertThat(exception.remote, Equals("foo/bar"))
