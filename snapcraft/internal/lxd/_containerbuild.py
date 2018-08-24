@@ -278,15 +278,11 @@ class Containerbuild:
                 command += args
             self._container_run(command, cwd=self._project_folder, user=self._user)
 
-    def _container_run(self, cmd: List[str], cwd=None, user="root", **kwargs):
+    def _container_run(
+        self, cmd: List[str], cwd=None, user="root", hide_output=False, **kwargs
+    ):
         sh = ""
         original_cmd = cmd.copy()
-        # Automatically wait on lock files before running commands
-        if cmd[0] == "apt-get":
-            lock_file = "/var/lib/dpkg/lock"
-            if cmd[1] == "update":
-                lock_file = "/var/lib/apt/lists/lock"
-            sh += "while fuser {} >/dev/null 2>&1; do sleep 1; done; ".format(lock_file)
         if cwd:
             sh += "cd {}; ".format(cwd)
         if sh:
@@ -297,10 +293,12 @@ class Containerbuild:
             ]
         if user != "root":
             cmd = ["sudo", "-H", "-E", "-u", user] + cmd
+        if hide_output:
+            runnable = subprocess.check_output
+        else:
+            runnable = subprocess.check_call
         try:
-            subprocess.check_call(
-                ["lxc", "exec", self._container_name, "--"] + cmd, **kwargs
-            )
+            runnable(["lxc", "exec", self._container_name, "--"] + cmd, **kwargs)
         except subprocess.CalledProcessError as e:
             if original_cmd[0] == "snapcraft":
                 raise errors.ContainerSnapcraftCmdError(
@@ -332,6 +330,9 @@ class Containerbuild:
                 if retry_count == 0:
                     raise errors.ContainerNetworkError("start.ubuntu.com")
         logger.info("Network connection established")
+
+    def _wait_for_cloud_init(self) -> None:
+        self._container_run(["cloud-init", "status", "--wait"], hide_output=True)
 
     def _inject_snapcraft(self):
         registry_filepath = os.path.join(

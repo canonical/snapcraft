@@ -53,6 +53,7 @@ class Project(Containerbuild):
             except subprocess.CalledProcessError:
                 raise errors.ContainerStartFailedError()
         self._wait_for_network()
+        self._wait_for_cloud_init()
         self._inject_snapcraft()
 
     def _configure_container(self):
