@@ -42,4 +42,5 @@ from ._fixtures import (  # noqa: F401
     TempXDG,
     TestStore,
     WithoutSnapInstalled,
+    FakeTemplate,
 )

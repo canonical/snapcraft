@@ -14,88 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import textwrap
 
-import fixtures
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft.internal import common
 from snapcraft.internal.project_loader import errors
-from . import ProjectLoaderBaseTest
+from snapcraft.internal.project_loader._templates._template import Template
+
+from tests import fixture_setup
+from .. import ProjectLoaderBaseTest
 
 
 class TemplateTestBase(ProjectLoaderBaseTest):
     def setUp(self):
         super().setUp()
 
-        template_dir = self.useFixture(fixtures.TempDir()).path
-        common.set_templatesdir(template_dir)
-
-        # Create fake templates
-        test_template_dir = os.path.join(template_dir, "test-template")
-        os.mkdir(test_template_dir)
-        with open(os.path.join(test_template_dir, "template.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                core16:
-                    apps:
-                        '*':
-                            environment:
-                                TEST_TEMPLATE: 1
-
-                    parts:
-                        '*':
-                            after: [template-part]
-
-                        template-part:
-                            plugin: nil
-                """
-                )
-            )
-
-        test_template_dir = os.path.join(template_dir, "plug-template")
-        os.mkdir(test_template_dir)
-        with open(os.path.join(test_template_dir, "template.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                core16:
-                    apps:
-                        '*':
-                            plugs: [test-plug]
-                """
-                )
-            )
-
-        test_template_dir = os.path.join(template_dir, "daemon-template")
-        os.mkdir(test_template_dir)
-        with open(os.path.join(test_template_dir, "template.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                core16:
-                    apps:
-                        '*':
-                            daemon: simple
-                """
-                )
-            )
-
-        test_template_dir = os.path.join(template_dir, "invalid-template")
-        os.mkdir(test_template_dir)
-        with open(os.path.join(test_template_dir, "template.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                core16:
-                    apps:
-                        '*':
-                            unsupported-key: value
-                """
-                )
-            )
+        # Create a few fake templates
+        self.useFixture(_environment_template_fixture())
+        self.useFixture(_plug_template_fixture())
+        self.useFixture(_daemon_template_fixture())
+        self.useFixture(_invalid_template_fixture())
 
 
 class BasicTemplateTest(TemplateTestBase):
@@ -109,7 +47,7 @@ class BasicTemplateTest(TemplateTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core16
+                    base: core18
                     grade: stable
                     confinement: strict
 
@@ -134,7 +72,7 @@ class BasicTemplateTest(TemplateTestBase):
                     version: "1"
                     summary: test
                     description: test
-                    base: core16
+                    base: core18
                     grade: stable
                     confinement: strict
 
@@ -155,7 +93,7 @@ class BasicTemplateTest(TemplateTestBase):
 
     def test_template(self):
         config = self.make_snapcraft_project(
-            self.snapcraft_yaml.format(templates="templates: [test-template]")
+            self.snapcraft_yaml.format(templates="templates: [environment]")
         )
 
         # Verify that the template was removed
@@ -188,7 +126,7 @@ class TemplateMergeTest(TemplateTestBase):
                 "app_definition": {
                     "command": "echo 'hello'",
                     "plugs": ["foo"],
-                    "templates": ["plug-template"],
+                    "templates": ["plug"],
                 },
                 "expected_app_definition": {
                     "command": "echo 'hello'",
@@ -202,7 +140,7 @@ class TemplateMergeTest(TemplateTestBase):
                 "app_definition": {
                     "command": "echo 'hello'",
                     "environment": {"FOO": "BAR"},
-                    "templates": ["test-template"],
+                    "templates": ["environment"],
                 },
                 "expected_app_definition": {
                     "command": "echo 'hello'",
@@ -216,7 +154,7 @@ class TemplateMergeTest(TemplateTestBase):
                 "app_definition": {
                     "command": "echo 'hello'",
                     "daemon": "forking",
-                    "templates": ["daemon-template"],
+                    "templates": ["daemon"],
                 },
                 "expected_app_definition": {
                     "command": "echo 'hello'",
@@ -233,7 +171,7 @@ class TemplateMergeTest(TemplateTestBase):
             version: "1"
             summary: test
             description: test
-            base: core16
+            base: core18
             grade: stable
             confinement: strict
 
@@ -271,7 +209,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core16
+                base: core18
                 grade: stable
                 confinement: strict
 
@@ -340,14 +278,14 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core16
+                base: core18
                 grade: stable
                 confinement: strict
 
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [invalid-template]
+                        templates: [invalid]
 
                 parts:
                     part1:
@@ -394,14 +332,14 @@ class InvalidTemplateTest(TemplateTestBase):
                 version: "1"
                 summary: test
                 description: test
-                base: core16
+                base: core18
                 grade: stable
                 confinement: strict
 
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [test-template]
+                        templates: [environment]
 
                 parts:
                     template-part:
@@ -410,7 +348,7 @@ class InvalidTemplateTest(TemplateTestBase):
             ),
         )
 
-        self.assertThat(raised.template_name, Equals("test-template"))
+        self.assertThat(raised.template_name, Equals("environment"))
         self.assertThat(raised.part_name, Equals("template-part"))
 
     def test_no_base(self):
@@ -429,7 +367,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [test-template]
+                        templates: [environment]
 
                 parts:
                     template-part:
@@ -455,7 +393,7 @@ class InvalidTemplateTest(TemplateTestBase):
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [test-template]
+                        templates: [environment]
 
                 parts:
                     template-part:
@@ -464,5 +402,59 @@ class InvalidTemplateTest(TemplateTestBase):
             ),
         )
 
-        self.assertThat(raised.template_name, Equals("test-template"))
+        self.assertThat(raised.template_name, Equals("environment"))
         self.assertThat(raised.base, Equals("unsupported"))
+
+
+def _environment_template_fixture():
+    class EnvironmentTemplate(Template):
+        @classmethod
+        def supported_bases(self):
+            return {"core18"}
+
+        def app_snippet(self):
+            return {"environment": {"TEST_TEMPLATE": 1}}
+
+        def part_snippet(self):
+            return {"after": ["template-part"]}
+
+        def parts(self):
+            return {"template-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeTemplate("environment", EnvironmentTemplate)
+
+
+def _plug_template_fixture():
+    class PlugTemplate(Template):
+        @classmethod
+        def supported_bases(self):
+            return {"core18"}
+
+        def app_snippet(self):
+            return {"plugs": ["test-plug"]}
+
+    return fixture_setup.FakeTemplate("plug", PlugTemplate)
+
+
+def _daemon_template_fixture():
+    class DaemonTemplate(Template):
+        @classmethod
+        def supported_bases(self):
+            return {"core18"}
+
+        def app_snippet(self):
+            return {"daemon": "simple"}
+
+    return fixture_setup.FakeTemplate("daemon", DaemonTemplate)
+
+
+def _invalid_template_fixture():
+    class InvalidTemplate(Template):
+        @classmethod
+        def supported_bases(self):
+            return {"core18"}
+
+        def app_snippet(self):
+            return {"unsupported-key": "value"}
+
+    return fixture_setup.FakeTemplate("invalid", InvalidTemplate)
