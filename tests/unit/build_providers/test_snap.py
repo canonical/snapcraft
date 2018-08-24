@@ -173,9 +173,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
                     """
                 )
             ),
