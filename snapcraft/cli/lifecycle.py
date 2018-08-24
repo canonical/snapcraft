@@ -28,14 +28,14 @@ from snapcraft.project.errors import YamlValidationError
 
 def _execute(step: steps.Step, parts, **kwargs):
     project = get_project(**kwargs)
-    project_config = project_loader.load_config(project)
     build_environment = env.BuilderEnvironmentConfig()
 
     if build_environment.is_host:
+        project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
     else:
         # containerbuild takes a snapcraft command name, not a step
-        lifecycle.containerbuild(step.name, project_config, parts)
+        lifecycle.containerbuild(command=step.name, project=project, args=parts)
     return project
 
 
@@ -196,13 +196,9 @@ def clean(parts, step_name, **kwargs):
     if build_environment.is_host:
         lifecycle.clean(project, parts, step)
     else:
-        project_config = project_loader.load_config(project)
-        lxd.Project(
-            project_options=project,
-            output=None,
-            source=os.path.curdir,
-            metadata=project_config.get_metadata(),
-        ).clean(parts, step)
+        lxd.Project(project=project, output=None, source=os.path.curdir).clean(
+            parts, step
+        )
 
 
 @lifecyclecli.command()
@@ -232,7 +228,6 @@ def cleanbuild(remote, debug, **kwargs):
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
     project = get_project(**kwargs, debug=debug)
-    project_config = project_loader.load_config(project)
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
@@ -245,13 +240,10 @@ def cleanbuild(remote, debug, **kwargs):
         default=default_provider, additional_providers=["multipass"]
     )
 
-    lifecycle.cleanbuild(
-        project=project,
-        project_config=project_config,
-        echoer=echo,
-        remote=remote,
-        build_environment=build_environment,
+    snap_filename = lifecycle.cleanbuild(
+        project=project, echoer=echo, remote=remote, build_environment=build_environment
     )
+    echo.info("Retrieved {!r}".format(snap_filename))
 
 
 if __name__ == "__main__":

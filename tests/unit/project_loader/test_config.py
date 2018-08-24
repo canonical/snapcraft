@@ -16,69 +16,13 @@
 
 from textwrap import dedent
 
-from testtools.matchers import Contains, Equals, Is
+from testtools.matchers import Contains, Equals
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest
 
 from snapcraft.internal.project_loader import errors
 import snapcraft.internal.project_loader._config as _config
 from tests import unit
-
-
-class GetMetadataTest(ProjectLoaderBaseTest):
-    def test_get_metadata(self):
-        project_config = self.make_snapcraft_project(
-            dedent(
-                """\
-            name: test
-            version: "1"
-            summary: test
-            description: nothing
-            architectures:
-              - build-on: all
-                run-on: amd64
-            confinement: strict
-            grade: stable
-
-            parts:
-              part1:
-                plugin: go
-                stage-packages: [fswebcam]
-        """
-            )
-        )
-        metadata = project_config.get_metadata()
-
-        self.assertThat(metadata["name"], Equals("test"))
-        self.assertThat(metadata["version"], Equals("1"))
-        self.assertThat(metadata["arch"], Equals(["amd64"]))
-
-    def test_get_metadata_version_adopted(self):
-        project_config = self.make_snapcraft_project(
-            dedent(
-                """\
-            name: test
-            summary: test
-            description: nothing
-            architectures:
-              - build-on: all
-                run-on: amd64
-            confinement: strict
-            grade: stable
-            adopt-info: part1
-
-            parts:
-              part1:
-                plugin: go
-                stage-packages: [fswebcam]
-            """
-            )
-        )
-        metadata = project_config.get_metadata()
-
-        self.assertThat(metadata["name"], Equals("test"))
-        self.assertThat(metadata["version"], Is(None))
-        self.assertThat(metadata["arch"], Equals(["amd64"]))
 
 
 class VariableExpansionTest(LoadPartBaseTest):

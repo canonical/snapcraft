@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,17 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import logging
+
 import os
 import tarfile
+from typing import Callable, Sequence
 
+from snapcraft.project import Project
 from snapcraft.internal import build_providers, errors, lxd
 
 
-logger = logging.getLogger(__name__)
-
-
-def _create_tar_filter(tar_filename):
+def _create_tar_filter(tar_filename) -> Callable:
     def _tar_filter(tarinfo):
         fn = tarinfo.name
         if fn.startswith("./parts/") and not fn.startswith("./parts/plugins"):
@@ -39,26 +38,22 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(command: str, project_config, output=None, args=None):
+def containerbuild(
+    *, command: str, project: Project, output: str = None, args: Sequence[str] = None
+) -> None:
     if args is None:
         args = []
 
-    lxd.Project(
-        output=output,
-        source=os.path.curdir,
-        project_options=project_config.project,
-        metadata=project_config.get_metadata(),
-    ).execute(command, args)
+    lxd.Project(output=output, source=os.path.curdir, project=project).execute(
+        command, args
+    )
 
 
-def cleanbuild(
-    *, project, project_config, echoer, build_environment, remote=""
-) -> None:
+def cleanbuild(*, project: Project, echoer, build_environment, remote: str = "") -> str:
     tar_filename = _create_tar_file(project.info.name)
 
     if build_environment.is_lxd:
-        _deprecated_cleanbuild(project, remote, project_config, tar_filename)
-        return
+        return _deprecated_cleanbuild(project, remote, tar_filename)
 
     build_provider_class = build_providers.get_provider_for("multipass")
     with build_provider_class(
@@ -67,6 +62,7 @@ def cleanbuild(
         instance.provision_project(tar_filename)
         instance.build_project()
         instance.retrieve_snap()
+        return instance.snap_filename
 
 
 def _create_tar_file(project_name: str) -> str:
@@ -77,13 +73,10 @@ def _create_tar_file(project_name: str) -> str:
     return tar_filename
 
 
-def _deprecated_cleanbuild(project_options, remote, config, tar_filename):
+def _deprecated_cleanbuild(project: Project, remote: str, tar_filename: str) -> str:
     if remote and not lxd._remote_is_valid(remote):
         raise errors.InvalidContainerRemoteError(remote)
 
-    lxd.Cleanbuilder(
-        source=tar_filename,
-        project_options=project_options,
-        metadata=config.get_metadata(),
-        remote=remote,
-    ).execute()
+    builder = lxd.Cleanbuilder(source=tar_filename, project=project, remote=remote)
+    builder.execute()
+    return builder.snap_filename

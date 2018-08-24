@@ -29,7 +29,6 @@ import tempfile
 import textwrap
 import threading
 import urllib.parse
-import uuid
 from functools import partial
 from types import ModuleType
 from unittest import mock
@@ -496,92 +495,6 @@ class FakeMetadataExtractor(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
-class FakeFilesystem(fixtures.Fixture):
-    """Keep track of created and removed directories"""
-
-    def __init__(self):
-        self.dirs = []
-
-    def _setUp(self):
-        patcher = mock.patch("os.makedirs")
-        self.makedirs_mock = patcher.start()
-        self.makedirs_mock.side_effect = self.makedirs_side_effect()
-        self.addCleanup(patcher.stop)
-
-        @contextlib.contextmanager
-        def tempdir(prefix: str, dir: str):
-            self.tmp_dir = os.path.join(dir, "{}-foo".format(prefix))
-            yield self.tmp_dir
-
-        patcher = mock.patch("tempfile.TemporaryDirectory")
-        self.tempdir_mock = patcher.start()
-        self.tempdir_mock.side_effect = tempdir
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("tempfile.mkdtemp")
-        self.mkdtemp_mock = patcher.start()
-        self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch(
-            "snapcraft.internal.lxd._containerbuild.open", mock.mock_open()
-        )
-        self.open_mock = patcher.start()
-        self.open_mock_default_side_effect = self.open_mock.side_effect
-        self.open_mock.side_effect = self.open_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("shutil.copyfile")
-        self.copyfile_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("shutil.rmtree")
-        self.rmtree_mock = patcher.start()
-        self.rmtree_mock.side_effect = self.rmtree_side_effect()
-        self.addCleanup(patcher.stop)
-
-    def makedirs_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0] not in self.dirs:
-                self.dirs.append(args[0])
-
-        return call_effect
-
-    def mkdtemp_side_effect(self):
-        def call_effect(*args, **kwargs):
-            dir = os.path.join(
-                kwargs["dir"],
-                "{}{}{}".format(
-                    kwargs.get("prefix", ""), uuid.uuid4(), kwargs.get("suffix", "")
-                ),
-            )
-            self.dirs.append(dir)
-            return dir
-
-        return call_effect
-
-    def open_side_effect(self):
-        def call_effect(*args, **kwargs):
-            for dir in self.dirs:
-                if args[0].startswith(dir):
-                    return self.open_mock_default_side_effect()
-            raise FileNotFoundError(
-                "[Errno 2] No such file or directory: {}".format(args[0])
-            )
-
-        return call_effect
-
-    def rmtree_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0] not in self.dirs:
-                raise FileNotFoundError(
-                    "[Errno 2] No such file or directory: {}".format(args[0])
-                )
-            self.dirs.remove(args[0])
-
-        return call_effect
-
-
 class FakeLXD(fixtures.Fixture):
     """..."""
 
@@ -600,29 +513,6 @@ class FakeLXD(fixtures.Fixture):
         patcher = mock.patch("subprocess.check_output")
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
-        self.addCleanup(patcher.stop)
-
-        self._real_popen = subprocess.Popen
-
-        # Don't over-mock Popen, more things use it than just LXD.
-        def _fake_popen(*args, **kwargs):
-            if "/usr/lib/sftp-server" in args[0]:
-                return self._popen(args[0])
-            elif (
-                args[0][:2] == ["lxc", "exec"]
-                and self.status
-                and args[0][2] == self.name
-                and args[0][8] == "sshfs"
-            ):
-                self.files = ["foo", "bar"]
-                return self._popen(args[0])
-
-            # Fall back to the real deal
-            return self._real_popen(*args, **kwargs)
-
-        patcher = mock.patch("subprocess.Popen")
-        self.popen_mock = patcher.start()
-        self.popen_mock.side_effect = _fake_popen
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch("time.sleep", lambda _: None)
@@ -1094,6 +984,7 @@ class SnapcraftYaml(fixtures.Fixture):
         summary="test-summary",
         description="test-description",
         confinement="strict",
+        architectures=None,
     ):
         super().__init__()
         self.path = path
@@ -1106,6 +997,8 @@ class SnapcraftYaml(fixtures.Fixture):
             self.data["summary"] = summary
         if description is not None:
             self.data["description"] = description
+        if architectures is not None:
+            self.data["architectures"] = architectures
 
     def update_part(self, name, data):
         part = {name: data}

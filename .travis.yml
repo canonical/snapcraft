@@ -76,12 +76,12 @@ jobs:
         - sudo snap install snapcraft --candidate --classic
         - sudo /snap/bin/lxd waitready
         - sudo /snap/bin/lxd init --auto
+        - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
       script:
         - export PATH=/snap/bin:$PATH
         - sudo snapcraft cleanbuild
-        - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
-        - mv snapcraft_git_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo cp snapcraft_git_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo cp snapcraft_git_amd64.snap "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - sudo snap install transfer
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap

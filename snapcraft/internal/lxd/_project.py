@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,34 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import logging
 import os
+import logging
+import shutil
 import subprocess
 from typing import List
 
 from . import errors
 from ._containerbuild import Containerbuild
+from snapcraft.project import Project as _Project
 from snapcraft.internal import lifecycle, steps
 
 logger = logging.getLogger(__name__)
 
 
 class Project(Containerbuild):
-    def __init__(self, *, output, source, project_options, metadata):
+    def __init__(self, *, output: str, source: str, project: _Project) -> None:
         super().__init__(
             output=output,
             source=source,
-            project_options=project_options,
-            metadata=metadata,
-            container_name=metadata["name"],
+            project=project,
+            container_name=project.info.name,
             remote="local",
         )
-        self._processes = []
 
     def _ensure_container(self):
-        new_container = not self._get_container_status()
-        if new_container:
+        if not self._get_container_status():
             try:
                 subprocess.check_call(
                     ["lxc", "init", self._image, self._container_name]
@@ -55,26 +53,10 @@ class Project(Containerbuild):
             except subprocess.CalledProcessError:
                 raise errors.ContainerStartFailedError()
         self._wait_for_network()
-        if new_container:
-            self._container_run(["apt-get", "update"])
-            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-            # Needed to run snapcraft as a snap and build-snaps
-            self._container_run(["apt-get", "install", "squashfuse", "-y"])
-        self._inject_snapcraft(new_container=new_container)
+        self._inject_snapcraft()
 
     def _configure_container(self):
         super()._configure_container()
-        # Map host user to root (0) inside container
-        subprocess.check_call(
-            [
-                "lxc",
-                "config",
-                "set",
-                self._container_name,
-                "raw.idmap",
-                "both {} {}".format(os.getenv("SUDO_UID", os.getuid()), 0),
-            ]
-        )
         # Remove existing device (to ensure we update old containers)
         devices = self._get_container_status()["devices"]
         if self._project_folder in devices:
@@ -120,14 +102,6 @@ class Project(Containerbuild):
                 ]
             )
 
-    def _background_process_run(self, cmd, **kwargs):
-        self._processes += [subprocess.Popen(cmd, **kwargs)]
-
-    def _finish(self):
-        for process in self._processes:
-            logger.debug("Terminating {}".format(process.args))
-            process.terminate()
-
     def refresh(self):
         with self._container_running():
             self._container_run(["apt-get", "update"])
@@ -138,10 +112,12 @@ class Project(Containerbuild):
         # clean with no parts deletes the container
         if not step:
             if not parts:
+                if os.path.exists(self.provider_project_dir):
+                    shutil.rmtree(self.provider_project_dir)
                 self._ensure_remote()
                 if self._get_container_status():
                     print("Deleting {}".format(self._container_name))
                     subprocess.check_call(["lxc", "delete", "-f", self._container_name])
             step = steps.PULL
 
-        lifecycle.clean(self._project_options, parts, step)
+        lifecycle.clean(self._project, parts, step)

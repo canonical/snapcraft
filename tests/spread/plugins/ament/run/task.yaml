@@ -1,6 +1,5 @@
 summary: Build and run a basic ROS2 snap
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-kill-timeout: 40m
 priority: 100  # Run this test early so we're not waiting for it
 
 # The ament plugin only supports 16.04

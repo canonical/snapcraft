@@ -1,6 +1,5 @@
 summary: Build and run a basic catkin snap
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-kill-timeout: 20m
 priority: 100  # Run this test early so we're not waiting for it
 
 environment:
@@ -13,7 +12,7 @@ restore: |
 
 # ROS Indigo doesn't support arm64 (there are no packages in the archive). Also,
 # Indigo snaps have trouble building past 16.04.
-systems: [-ubuntu-*-arm64, -ubuntu-18.04*]
+systems: [-ubuntu-*-arm64, -ubuntu-18*]
 
 execute: |
   cd "$SNAP_DIR"

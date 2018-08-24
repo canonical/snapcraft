@@ -68,13 +68,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         get_assertion_calls = [
@@ -137,6 +138,49 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    def test_snapcraft_installed_on_host_from_store_but_injection_disabled(self):
+        self.useFixture(fixture_setup.FakeStore())
+
+        snap_injector = SnapInjector(
+            snap_dir=self.provider._SNAPS_MOUNTPOINT,
+            registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
+            runner=self.provider._run,
+            snap_dir_mounter=self.provider._mount_snaps_directory,
+            snap_dir_unmounter=self.provider._unmount_snaps_directory,
+            file_pusher=self.provider._push_file,
+            inject_from_host=False,
+        )
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
+        snap_injector.apply()
+
+        self.get_assertion_mock.assert_not_called()
+        self.provider.run_mock.assert_has_calls(
+            [
+                call(["sudo", "snap", "set", "core", ANY]),
+                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
+                call(["sudo", "snap", "install", "core"]),
+                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+            ]
+        )
+        self.provider.mount_mock.assert_not_called()
+        self.provider.unmount_mock.assert_not_called()
+        self.provider.push_file_mock.assert_not_called()
+        self.assertThat(
+            self.registry_filepath,
+            FileContains(
+                dedent(
+                    """\
+                    core:
+                    - {revision: '10000'}
+                    snapcraft:
+                    - {revision: '25'}
+                    """
+                )
+            ),
+        )
+
     def test_snapcraft_installed_on_host_with_dangerous(self):
         self.fake_snapd.snaps_result = [
             {
@@ -157,13 +201,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         get_assertion_calls = [
@@ -231,13 +276,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         self.get_assertion_mock.assert_not_called()
@@ -272,13 +318,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=None,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         self.provider.run_mock.assert_has_calls(
@@ -294,13 +341,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         self.provider.run_mock.assert_has_calls(
@@ -340,26 +388,28 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
         self.provider.run_mock.reset_mock()
 
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         self.provider.run_mock.assert_not_called()
@@ -370,26 +420,28 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
         self.provider.run_mock.reset_mock()
 
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
         snap_injector.apply()
 
         self.provider.run_mock.assert_has_calls(
@@ -407,13 +459,14 @@ class SnapInjectionTest(unit.TestCase):
         snap_injector = SnapInjector(
             snap_dir=self.provider._SNAPS_MOUNTPOINT,
             registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
             runner=self.provider._run,
             snap_dir_mounter=self.provider._mount_snaps_directory,
             snap_dir_unmounter=self.provider._unmount_snaps_directory,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core", "amd64")
-        snap_injector.add("snapcraft", "amd64")
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
 
         with patch(
             "snapcraft.internal.repo.snaps.SnapPackage.get_local_snap_info",
