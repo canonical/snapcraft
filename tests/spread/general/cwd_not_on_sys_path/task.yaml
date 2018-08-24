@@ -1,0 +1,13 @@
+summary: Build a snap that would crash snapcraft if it loaded modules from cwd
+
+environment:
+  SNAP_DIR: snaps/sys-path-test
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
