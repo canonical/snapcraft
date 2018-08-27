@@ -46,7 +46,7 @@ packages = [
     "snapcraft.internal.project_loader.grammar",
     "snapcraft.internal.project_loader.grammar_processing",
     "snapcraft.internal.project_loader.inspection",
-    "snapcraft.internal.project_loader._templates",
+    "snapcraft.internal.project_loader._extensions",
     "snapcraft.internal.repo",
     "snapcraft.internal.sources",
     "snapcraft.internal.states",
@@ -101,7 +101,7 @@ if sys.platform == "win32":
         "include_files": [
             ("libraries", os.path.join("share", "snapcraft", "libraries")),
             ("schema", os.path.join("share", "snapcraft", "schema")),
-            ("templates", os.path.join("share", "snapcraft", "templates")),
+            ("extensions", os.path.join("share", "snapcraft", "extensions")),
         ],
     }
 
@@ -152,8 +152,8 @@ else:
                 ["libraries/" + x for x in os.listdir("libraries")],
             ),
             (
-                "share/snapcraft/template-data",
-                ["templates/" + x for x in os.listdir("templates")],
+                "share/snapcraft/extension-data",
+                ["extensions/" + x for x in os.listdir("extensions")],
             ),
         ],
         install_requires=["pysha3", "pyxdg", "requests"],

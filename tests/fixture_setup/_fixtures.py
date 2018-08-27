@@ -1301,20 +1301,20 @@ class FakeSnapcraftIsASnap(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "devel"))
 
 
-class FakeTemplate(fixtures.Fixture):
-    """Dynamically generate a new module containing the provided template"""
+class FakeExtension(fixtures.Fixture):
+    """Dynamically generate a new module containing the provided extension"""
 
-    def __init__(self, template_name, template_class):
+    def __init__(self, extension_name, extension_class):
         super().__init__()
-        self._import_name = "snapcraft.internal.project_loader._templates.{}".format(
-            template_name
+        self._import_name = "snapcraft.internal.project_loader._extensions.{}".format(
+            extension_name
         )
-        self._template_class = template_class
+        self._extension_class = extension_class
 
     def _setUp(self):
-        template_module = ModuleType(self._import_name)
-        setattr(template_module, self._template_class.__name__, self._template_class)
-        sys.modules[self._import_name] = template_module
+        extension_module = ModuleType(self._import_name)
+        setattr(extension_module, self._extension_class.__name__, self._extension_class)
+        sys.modules[self._import_name] = extension_module
         self.addCleanup(self._remove_module)
 
     def _remove_module(self):

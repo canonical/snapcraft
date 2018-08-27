@@ -18,25 +18,25 @@ from typing import Any, Dict
 from typing import Tuple  # noqa: F401
 
 
-class Template:
-    """Template is the class from which all templates inherit.
+class Extension:
+    """Extension is the class from which all extensions inherit.
 
-    Templates have the ability to add snippets to apps, parts, and indeed add new parts
+    Extensions have the ability to add snippets to apps, parts, and indeed add new parts
     to a given snapcraft.yaml. All they need to do is define the proper variables.
 
     :cvar supported_bases: Class variable, tuple of base names supported by the
-                           template.
+                           extension.
     :ivar app_snippet: Instance variable, dict of properties to apply to apps using this
-                       template.
+                       extension.
     :ivar part_snippet: Instance variable, dict of properties to apply to parts using
-                        this template.
-    :ivar parts: Instance variable, dict of part definitions required by this template.
+                        this extension.
+    :ivar parts: Instance variable, dict of part definitions required by this extension.
     """
 
     supported_bases = None  # type: Tuple[str]
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
-        """Create a new Template.
+        """Create a new Extension.
 
         :param dict yaml_data: Loaded snapcraft.yaml data.
         """

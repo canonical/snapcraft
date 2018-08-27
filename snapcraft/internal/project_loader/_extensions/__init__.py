@@ -14,4 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._utils import apply_templates, find_template  # noqa: F401
+from ._utils import apply_extensions, find_extension  # noqa: F401
