@@ -184,44 +184,35 @@ class TemplatesCommandTest(CommandBaseTestCase):
 
 def _test1_template_fixture():
     class Test1Template(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core16"}
+        supported_bases = ("core16",)
 
-        def app_snippet(self):
-            return {"environment": {"TEMPLATE_NAME": "test1"}}
-
-        def part_snippet(self):
-            return {"after": ["template-part"]}
-
-        def parts(self):
-            return {"template-part": {"plugin": "nil"}}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"environment": {"TEMPLATE_NAME": "test1"}}
+            self.part_snippet = {"after": ["template-part"]}
+            self.parts = {"template-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeTemplate("test1", Test1Template)
 
 
 def _test2_template_fixture():
     class Test2Template(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core16"}
+        supported_bases = ("core16",)
 
-        def part_snippet(self):
-            return {"after": ["template-part"]}
-
-        def parts(self):
-            return {"template-part": {"plugin": "nil"}}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.part_snippet = {"after": ["template-part"]}
+            self.parts = {"template-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeTemplate("test2", Test2Template)
 
 
 def _test3_template_fixture():
     class Test3Template(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core16", "core18"}
+        supported_bases = ("core16", "core18")
 
-        def parts(self):
-            return {"template-part": {"plugin": "nil"}}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.parts = {"template-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeTemplate("test3", Test3Template)

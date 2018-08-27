@@ -408,53 +408,45 @@ class InvalidTemplateTest(TemplateTestBase):
 
 def _environment_template_fixture():
     class EnvironmentTemplate(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core18"}
+        supported_bases = ("core18",)
 
-        def app_snippet(self):
-            return {"environment": {"TEST_TEMPLATE": 1}}
-
-        def part_snippet(self):
-            return {"after": ["template-part"]}
-
-        def parts(self):
-            return {"template-part": {"plugin": "nil"}}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"environment": {"TEST_TEMPLATE": 1}}
+            self.part_snippet = {"after": ["template-part"]}
+            self.parts = {"template-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeTemplate("environment", EnvironmentTemplate)
 
 
 def _plug_template_fixture():
     class PlugTemplate(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core18"}
+        supported_bases = ("core18",)
 
-        def app_snippet(self):
-            return {"plugs": ["test-plug"]}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"plugs": ["test-plug"]}
 
     return fixture_setup.FakeTemplate("plug", PlugTemplate)
 
 
 def _daemon_template_fixture():
     class DaemonTemplate(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core18"}
+        supported_bases = ("core18",)
 
-        def app_snippet(self):
-            return {"daemon": "simple"}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"daemon": "simple"}
 
     return fixture_setup.FakeTemplate("daemon", DaemonTemplate)
 
 
 def _invalid_template_fixture():
     class InvalidTemplate(Template):
-        @classmethod
-        def supported_bases(self):
-            return {"core18"}
+        supported_bases = ("core18",)
 
-        def app_snippet(self):
-            return {"unsupported-key": "value"}
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"unsupported-key": "value"}
 
     return fixture_setup.FakeTemplate("invalid", InvalidTemplate)

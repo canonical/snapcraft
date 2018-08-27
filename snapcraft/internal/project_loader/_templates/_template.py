@@ -14,46 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, Set
+from typing import Any, Dict
+from typing import Tuple  # noqa: F401
 
 
 class Template:
-    @classmethod
-    def supported_bases(cls) -> Set[str]:
-        """Bases that are supported by this template.
+    """Template is the class from which all templates inherit.
 
-        :returns: Set of base names supported by this template.
-        :rtype: set
-        """
-        return set()
+    Templates have the ability to add snippets to apps, parts, and indeed add new parts
+    to a given snapcraft.yaml. All they need to do is define the proper variables.
+
+    :cvar supported_bases: Class variable, tuple of base names supported by the
+                           template.
+    :ivar app_snippet: Instance variable, dict of properties to apply to apps using this
+                       template.
+    :ivar part_snippet: Instance variable, dict of properties to apply to parts using
+                        this template.
+    :ivar parts: Instance variable, dict of part definitions required by this template.
+    """
+
+    supported_bases = None  # type: Tuple[str]
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new Template.
 
         :param dict yaml_data: Loaded snapcraft.yaml data.
         """
-        pass
-
-    def app_snippet(self) -> Dict[str, Any]:
-        """App snippet for this template.
-
-        :returns: Dict of properties to apply to apps using this template.
-        :rtype: dict
-        """
-        return dict()
-
-    def part_snippet(self) -> Dict[str, Any]:
-        """Part snippet for this template.
-
-        :returns: Dict of properties to apply to parts using this template.
-        :rtype: dict
-        """
-        return dict()
-
-    def parts(self) -> Dict[str, Any]:
-        """Parts definitions required for this template.
-
-        :returns: Dict of part definitions required for this part.
-        :rtype: dict
-        """
-        return dict()
+        self.app_snippet = dict()  # type: Dict[str, Any]
+        self.part_snippet = dict()  # type: Dict[str, Any]
+        self.parts = dict()  # type: Dict[str, Any]

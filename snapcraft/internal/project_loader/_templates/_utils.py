@@ -115,7 +115,7 @@ def _load_template(base: str, template_name: str, yaml_data) -> Template:
         raise errors.TemplateBaseRequiredError()
 
     template_class = find_template(template_name)
-    if base not in template_class.supported_bases():
+    if base not in template_class.supported_bases:
         raise errors.TemplateUnsupportedBaseError(template_name, base)
 
     # Hand the template a copy of the yaml data so the only way they can modify it is
@@ -127,7 +127,7 @@ def _apply_template(
     yaml_data: Dict[str, Any], app_name: str, template_name: str, template: Template
 ):
     # Apply the app-specific components of the template (if any)
-    app_template = template.app_snippet()
+    app_template = template.app_snippet
     app_definition = yaml_data["apps"][app_name]
     for property_name, property_value in app_template.items():
         app_definition[property_name] = _apply_template_property(
@@ -135,7 +135,7 @@ def _apply_template(
         )
 
     # Next, apply the part-specific components
-    part_template = template.part_snippet()
+    part_template = template.part_snippet
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
         for property_name, property_value in part_template.items():
@@ -144,7 +144,7 @@ def _apply_template(
             )
 
     # Finally, add any parts specified in the template
-    for part_name, part_definition in template.parts().items():
+    for part_name, part_definition in template.parts.items():
         # If a template part name clashes with a part that already exists, error.
         if part_name in parts:
             raise errors.TemplatePartConflictError(template_name, part_name)

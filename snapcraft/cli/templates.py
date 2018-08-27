@@ -51,7 +51,7 @@ def templates(**kwargs):
         template = project_loader.find_template(template_name)
         template_info = collections.OrderedDict()
         template_info["Template name"] = template_name
-        template_info["Supported bases"] = ", ".join(sorted(template.supported_bases()))
+        template_info["Supported bases"] = ", ".join(sorted(template.supported_bases))
         templates.append(template_info)
 
     click.echo(tabulate.tabulate(templates, headers="keys"))
@@ -66,9 +66,9 @@ def template(name, **kwargs):
     dummy_data = lifecycle.get_init_data()
     template_instance = project_loader.find_template(name)(dummy_data)
 
-    app_snippet = template_instance.app_snippet()
-    part_snippet = template_instance.part_snippet()
-    parts = template_instance.parts()
+    app_snippet = template_instance.app_snippet
+    part_snippet = template_instance.part_snippet
+    parts = template_instance.parts
 
     intro = "The {} template".format(name)
     if app_snippet:
