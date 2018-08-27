@@ -296,7 +296,7 @@ class Containerbuild:
         if hide_output:
             runnable = subprocess.check_output
         else:
-            runnable = subprocess.check_call
+            runnable = subprocess.check_call  # type: ignore
         try:
             runnable(["lxc", "exec", self._container_name, "--"] + cmd, **kwargs)
         except subprocess.CalledProcessError as e:
