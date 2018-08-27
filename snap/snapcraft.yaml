@@ -16,11 +16,6 @@ apps:
     completer: snapcraft-completion
 
 parts:
-  patches:
-    source: patches
-    plugin: dump
-    prime:
-        - -*.diff
   bash-completion:
     source: debian
     plugin: dump
@@ -53,10 +48,30 @@ parts:
     override-build: |
         snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-        LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
-        ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
-        patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
-        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+        LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.18")"
+        # Remove so the link can be recreated on re-builds
+        rm -f "$TRIPLET_PATH/libsodium.so"
+        ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
+
+        # Restore patched files
+        PYTHON_PACKAGE_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/"
+        [ -f "patched/ctypes/__init__.py.orig" ] && mv "patched/ctypes/__init__.py.orig" "$PYTHON_PACKAGE_PATH/ctypes/__init__.py"
+
+        SITE_PACKAGES_PATH="$SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages"
+        [ -f "patched/yaml/emitter.py.orig" ] && mv "patched/yaml/emitter.py.orig" "$SITE_PACKAGES_PATH/yaml/emitter.py"
+        [ -f "patched/yaml/reader.py.orig" ] && mv "patched/yaml/reader.py.orig" "$SITE_PACKAGES_PATH/yaml/reader.py"
+
+        # Apply patches
+        patch -b "$PYTHON_PACKAGE_PATH/ctypes/__init__.py" patches/ctypes_init.diff
+        patch -b -d "$SITE_PACKAGES_PATH/" -p1 < patches/pyyaml-support-high-codepoints.diff
+
+        # Save patches to allow rebuilding
+        mkdir -p patched/ctypes
+        [ -f "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" ] && mv "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" patched/ctypes
+
+        mkdir -p patched/yaml
+        [ -f "$SITE_PACKAGES_PATH/yaml/emitter.py.orig" ] && mv "$SITE_PACKAGES_PATH/yaml/emitter.py.orig" patched/yaml
+        [ -f "$SITE_PACKAGES_PATH/yaml/reader.py.orig" ] && mv "$SITE_PACKAGES_PATH/yaml/reader.py.orig" patched/yaml
     override-prime: |
         snapcraftctl prime
         # Now that everything is built, let's disable user site-packages
@@ -64,4 +79,3 @@ parts:
         sed -i usr/lib/python3.5/site.py -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
         # This is the last step, let's now compile all our pyc files.
         ./usr/bin/python3 -m compileall .
-    after: [patches]
