@@ -32,7 +32,6 @@ class Project(ProjectOptions):
         target_deb_arch=None,
         debug=False,
         snapcraft_yaml_file_path=None,
-        project_dir: str = None,
         work_dir: str = None,
         is_managed_host: bool = False
     ) -> None:
@@ -53,7 +52,6 @@ class Project(ProjectOptions):
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self._global_state_file = os.path.join(internal_dir, "state")
-        self.project_dir = project_dir
         self._work_dir = work_dir
         self._internal_dir = internal_dir
 
