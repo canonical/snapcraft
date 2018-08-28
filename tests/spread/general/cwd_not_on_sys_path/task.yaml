@@ -1,0 +1,22 @@
+summary: Build a snap that would crash snapcraft if it loaded modules from cwd
+
+# The python plugin doesn't work on trusty
+systems: [-ubuntu-14*]
+
+environment:
+  SNAP_DIR: snaps/sys-path-test
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # If the system isn't Ubuntu 16.04, we'll need to stage libc6
+  if [[ "$SPREAD_SYSTEM" != ubuntu-16* ]] ; then
+    echo "    stage-packages: [libc6]" >> snap/snapcraft.yaml
+  fi
+
+  snapcraft

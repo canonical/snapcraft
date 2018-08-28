@@ -1,0 +1,13 @@
+name: sys-path-test
+version: 0.1
+summary: This snap should build
+description: |
+  This snap includes a python package that, if snapcraft includes the cwd in sys.path,
+  will clash and cause the build to fail. It should succeed.
+
+grade: stable
+confinement: strict
+
+parts:
+  part:
+    plugin: python
