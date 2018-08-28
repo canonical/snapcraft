@@ -141,7 +141,7 @@ class MultipassTest(BaseProviderBaseTest):
             instance_name=self.instance_name
         )
         self.multipass_cmd_mock().delete.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, purge=True
         )
 
     def test_provision_project(self):

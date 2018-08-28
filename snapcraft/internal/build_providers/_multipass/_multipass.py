@@ -93,7 +93,9 @@ class Multipass(Provider):
         # Resolve the home directory
         home_dir = (
             self._multipass_cmd.execute(
-                command=["pwd"], hide_output=True, instance_name=self.instance_name
+                command=["printenv", "HOME"],
+                hide_output=True,
+                instance_name=self.instance_name,
             )
             .decode()
             .strip()
@@ -131,7 +133,7 @@ class Multipass(Provider):
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()
         if was_cleaned:
-            self._multipass_cmd.delete(instance_name=self.instance_name)
+            self._multipass_cmd.delete(instance_name=self.instance_name, purge=True)
         return was_cleaned
 
     def build_project(self) -> None:
