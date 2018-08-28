@@ -16,16 +16,14 @@
 
 import contextlib
 import copy
-import functools
 import jsonschema
+import importlib
 import logging
-import os
-from typing import Any, Dict, List, Set  # noqa: F401
-import yaml
+from typing import Any, Dict, List, Set, Type  # noqa: F401
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common
-from . import errors
+from .. import errors
+from ._template import Template
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +60,8 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
             template_names = global_template_names
 
         for template_name in template_names:
-            template_data = _find_template(base, template_name)
-            _apply_template(yaml_data, app_name, template_name, template_data)
+            template = _load_template(base, template_name, yaml_data)
+            _apply_template(yaml_data, app_name, template_name, template)
 
         # Keep track of the templates applied so we can warn about any that
         # are declared, but not used
@@ -89,118 +87,84 @@ def apply_templates(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     return yaml_data
 
 
-def template_yaml_path(template_name: str) -> str:
-    """Return the file path to the template's template.yaml
-
-    :param str template_name: The name of the template
-    :returns: File path to the template.yaml
-    :raises: errors.TemplateNotFoundError if the template is not found
-    """
-    template_yaml_path = os.path.join(
-        common.get_templatesdir(), template_name, "template.yaml"
-    )
-
-    if not os.path.isdir(os.path.dirname(template_yaml_path)):
-        raise errors.TemplateNotFoundError(template_name)
-
-    return template_yaml_path
-
-
-def load_template(template_name: str) -> Dict[str, Any]:
-    """Load and return the template with the given name.
+def find_template(template_name: str) -> Type[Template]:
+    """Find and return the template class with the given name.
 
     :param str template_name: The name of the template to load
+
+    :returns: Template subclass responsible for template.
+    :rtype: type(Template)
     :raises: errors.TemplateNotFoundError if the template is not found
     """
-    return copy.deepcopy(__template_loader(template_name))
+    try:
+        template_module = importlib.import_module(
+            "snapcraft.internal.project_loader._templates.{}".format(template_name)
+        )
+    except ImportError:
+        raise errors.TemplateNotFoundError(template_name)
+
+    # This may throw an AttributeError, but that would be programmer error of whoever
+    # is hacking on templates.
+    template_class_name = "{}Template".format(template_name.capitalize())
+    return getattr(template_module, template_class_name)
 
 
-def _find_template(base: str, template_name: str) -> Dict[str, Any]:
+def _load_template(base: str, template_name: str, yaml_data) -> Template:
     # A base is required in order to use templates, so raise an error if not specified.
     if not base:
         raise errors.TemplateBaseRequiredError()
 
-    try:
-        return load_template(template_name)[base]
-    except KeyError:
+    template_class = find_template(template_name)
+    if base not in template_class.supported_bases:
         raise errors.TemplateUnsupportedBaseError(template_name, base)
 
-
-# Don't load the same template multiple times
-@functools.lru_cache()
-def __template_loader(template_name: str) -> Dict[str, Any]:
-    with open(template_yaml_path(template_name), "r") as f:
-        return yaml.safe_load(f)
+    # Hand the template a copy of the yaml data so the only way they can modify it is
+    # by going through the template API.
+    return template_class(copy.deepcopy(yaml_data))
 
 
 def _apply_template(
-    yaml_data: Dict[str, Any],
-    app_name: str,
-    template_name: str,
-    template_data: Dict[str, Any],
+    yaml_data: Dict[str, Any], app_name: str, template_name: str, template: Template
 ):
     # Apply the app-specific components of the template (if any)
-    template_app_components = template_data.pop("apps", None)
-    if template_app_components:
-        app_template = template_app_components.pop("*", {})
-
-        # If there are any other app components, a template developer is trying to add
-        # an app. Try to be helpful.
-        if template_app_components:
-            raise RuntimeError(
-                "The 'apps' section of templates should contain no more than '*'. "
-                "Adding standalone apps from templates is not currently supported."
-            )
-
-        app_definition = yaml_data["apps"][app_name]
-        for property_name, property_value in app_template.items():
-            app_definition[property_name] = _apply_template_property(
-                app_definition.get(property_name), property_value
-            )
+    app_template = template.app_snippet
+    app_definition = yaml_data["apps"][app_name]
+    for property_name, property_value in app_template.items():
+        app_definition[property_name] = _apply_template_property(
+            app_definition.get(property_name), property_value
+        )
 
     # Next, apply the part-specific components
-    template_part_components = template_data.pop("parts", None)
-    if template_part_components:
-        part_template = template_part_components.pop("*", {})
-
-        parts = yaml_data["parts"]
-        for part_name, part_definition in parts.items():
-            for property_name, property_value in part_template.items():
-                part_definition[property_name] = _apply_template_property(
-                    part_definition.get(property_name), property_value
-                )
-
-        # Finally, add any parts specified in the template
-        for part_name, part_definition in template_part_components.items():
-            # If a template part name clashes with a part that already exists, error.
-            if part_name in parts:
-                raise errors.TemplatePartConflictError(template_name, part_name)
-
-            parts[part_name] = part_definition
-
-    # If there is anything left in the template, a template developer is trying to do
-    # something that isn't supported. Try to be helpful.
-    if template_data:
-        raise RuntimeError(
-            "Templates are only capable of specifying 'apps' and 'parts'. {} keys are "
-            "currently unsupported.".format(
-                formatting_utils.humanize_list(template_data.keys(), "and")
+    part_template = template.part_snippet
+    parts = yaml_data["parts"]
+    for part_name, part_definition in parts.items():
+        for property_name, property_value in part_template.items():
+            part_definition[property_name] = _apply_template_property(
+                part_definition.get(property_name), property_value
             )
-        )
+
+    # Finally, add any parts specified in the template
+    for part_name, part_definition in template.parts.items():
+        # If a template part name clashes with a part that already exists, error.
+        if part_name in parts:
+            raise errors.TemplatePartConflictError(template_name, part_name)
+
+        parts[part_name] = part_definition
 
 
 def _apply_template_property(existing_property: Any, template_property: Any):
     if existing_property:
-        if type(existing_property) is type(template_property):
-            # If the property is not scalar, merge them
-            if isinstance(existing_property, list):
-                return _merge_lists(existing_property, template_property)
-            elif isinstance(existing_property, dict):
-                for key, value in template_property.items():
-                    existing_property[key] = _apply_template_property(
-                        existing_property.get(key), value
-                    )
-                return existing_property
+        # If the property is not scalar, merge them
+        if isinstance(existing_property, list) and isinstance(template_property, list):
+            return _merge_lists(existing_property, template_property)
+        elif isinstance(existing_property, dict) and isinstance(
+            template_property, dict
+        ):
+            for key, value in template_property.items():
+                existing_property[key] = _apply_template_property(
+                    existing_property.get(key), value
+                )
+            return existing_property
         return existing_property
 
     return template_property

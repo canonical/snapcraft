@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import textwrap
 
-import fixtures
+from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.internal import common
+from snapcraft.internal.project_loader._templates._template import Template
 
+from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
@@ -29,52 +29,20 @@ class TemplatesCommandTest(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        templates_dir = self.useFixture(fixtures.TempDir()).path
-        common.set_templatesdir(templates_dir)
+        # Create a few fake templates
+        self.useFixture(_test1_template_fixture())
+        self.useFixture(_test2_template_fixture())
+        self.useFixture(_test3_template_fixture())
 
-        # Create a a few fake templates
-        for template_name in ("template1", "template2"):
-            template_dir = os.path.join(templates_dir, template_name)
-            os.mkdir(template_dir)
-            with open(os.path.join(template_dir, "template.yaml"), "w") as f:
-                f.write(
-                    textwrap.dedent(
-                        """\
-                        core16:
-                            apps:
-                                '*':
-                                    environment:
-                                        TEMPLATE_NAME: {}
-
-                            parts:
-                                '*':
-                                    after: [template-part]
-
-                                template-part:
-                                    plugin: nil
-                        """
-                    ).format(template_name)
-                )
-
-        template_dir = os.path.join(templates_dir, "template3")
-        os.mkdir(template_dir)
-        with open(os.path.join(template_dir, "template.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                    core16:
-                        parts:
-                            template-part:
-                                plugin: nil
-                    core18:
-                        parts:
-                            template-part:
-                                plugin: nil
-                    """
-                ).format(template_name)
-            )
-
-    def test_list_templates(self):
+    @mock.patch(
+        "pkgutil.iter_modules",
+        return_value=(
+            (None, "test1", None),
+            (None, "test2", None),
+            (None, "test3", None),
+        ),
+    )
+    def test_list_templates(self, fake_iter_modules):
         result = self.run_command(["templates"])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -85,16 +53,16 @@ class TemplatesCommandTest(CommandBaseTestCase):
                     """\
                     Template name    Supported bases
                     ---------------  -----------------
-                    template1        core16
-                    template2        core16
-                    template3        core16, core18
+                    test1            core16
+                    test2            core16
+                    test3            core16, core18
                     """
                 )
             ),
         )
 
     def test_template(self):
-        result = self.run_command(["template", "template1"])
+        result = self.run_command(["template", "test1"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -102,18 +70,55 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    core16:
-                        apps:
-                            '*':
-                                environment:
-                                    TEMPLATE_NAME: template1
+                    The test1 template adds the following to apps that use it:
+                        environment:
+                          TEMPLATE_NAME: test1
 
-                        parts:
-                            '*':
-                                after: [template-part]
+                    It adds the following to all parts:
+                        after:
+                        - template-part
 
-                            template-part:
-                                plugin: nil
+                    It adds the following part definitions:
+                        template-part:
+                          plugin: nil
+
+                    """  # Extra line break due to click.echo
+                )
+            ),
+        )
+
+        result = self.run_command(["template", "test2"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    The test2 template adds the following to all parts:
+                        after:
+                        - template-part
+
+                    It adds the following part definitions:
+                        template-part:
+                          plugin: nil
+
+                    """  # Extra line break due to click.echo
+                )
+            ),
+        )
+
+        result = self.run_command(["template", "test3"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    The test3 template adds the following part definitions:
+                        template-part:
+                          plugin: nil
 
                     """  # Extra line break due to click.echo
                 )
@@ -135,7 +140,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [template1]
+                        templates: [test1]
 
                 parts:
                     test-part:
@@ -163,7 +168,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                       test-app:
                         command: echo "hello"
                         environment:
-                          TEMPLATE_NAME: template1
+                          TEMPLATE_NAME: test1
                     parts:
                       test-part:
                         plugin: nil
@@ -175,3 +180,39 @@ class TemplatesCommandTest(CommandBaseTestCase):
                 )
             ),
         )
+
+
+def _test1_template_fixture():
+    class Test1Template(Template):
+        supported_bases = ("core16",)
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"environment": {"TEMPLATE_NAME": "test1"}}
+            self.part_snippet = {"after": ["template-part"]}
+            self.parts = {"template-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeTemplate("test1", Test1Template)
+
+
+def _test2_template_fixture():
+    class Test2Template(Template):
+        supported_bases = ("core16",)
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.part_snippet = {"after": ["template-part"]}
+            self.parts = {"template-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeTemplate("test2", Test2Template)
+
+
+def _test3_template_fixture():
+    class Test3Template(Template):
+        supported_bases = ("core16", "core18")
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.parts = {"template-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeTemplate("test3", Test3Template)

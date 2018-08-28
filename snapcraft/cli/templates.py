@@ -16,13 +16,14 @@
 
 import click
 import collections
-import os
+import pkgutil
 import yaml
 import sys
+import textwrap
 import tabulate
 
 from ._options import get_project
-from snapcraft.internal import common, project_loader
+from snapcraft.internal import lifecycle
 
 
 @click.group()
@@ -33,18 +34,24 @@ def templatecli(**kwargs):
 @templatecli.command()
 def templates(**kwargs):
     """List available templates."""
+    from snapcraft.internal import project_loader
 
-    template_names = os.listdir(common.get_templatesdir())
+    template_names = []
+    for _, modname, _ in pkgutil.iter_modules(project_loader._templates.__path__):
+        # Only add non-private modules/packages to the template list
+        if not modname.startswith("_"):
+            template_names.append(modname)
+
     if not template_names:
         click.echo("No templates supported")
         return
 
     templates = []
     for template_name in sorted(template_names):
-        template = project_loader.load_template(template_name)
+        template = project_loader.find_template(template_name)
         template_info = collections.OrderedDict()
         template_info["Template name"] = template_name
-        template_info["Supported bases"] = ", ".join(sorted(template.keys()))
+        template_info["Supported bases"] = ", ".join(sorted(template.supported_bases))
         templates.append(template_info)
 
     click.echo(tabulate.tabulate(templates, headers="keys"))
@@ -54,15 +61,45 @@ def templates(**kwargs):
 @click.argument("name")
 def template(name, **kwargs):
     """Show contents of template."""
+    from snapcraft.internal import project_loader
 
-    # Dump the template file itself, thus preserving all comments, etc.
-    with open(project_loader.template_yaml_path(name), "r") as f:
-        click.echo(f.read())
+    dummy_data = lifecycle.get_init_data()
+    template_instance = project_loader.find_template(name)(dummy_data)
+
+    app_snippet = template_instance.app_snippet
+    part_snippet = template_instance.part_snippet
+    parts = template_instance.parts
+
+    intro = "The {} template".format(name)
+    if app_snippet:
+        click.echo("{} adds the following to apps that use it:".format(intro))
+        click.echo(
+            textwrap.indent(
+                yaml.safe_dump(app_snippet, default_flow_style=False), "    "
+            )
+        )
+        intro = "It"
+
+    if part_snippet:
+        click.echo("{} adds the following to all parts:".format(intro))
+        click.echo(
+            textwrap.indent(
+                yaml.safe_dump(part_snippet, default_flow_style=False), "    "
+            )
+        )
+        intro = "It"
+
+    if parts:
+        click.echo("{} adds the following part definitions:".format(intro))
+        click.echo(
+            textwrap.indent(yaml.safe_dump(parts, default_flow_style=False), "    ")
+        )
 
 
 @templatecli.command("expand-templates")
 def expand_templates(**kwargs):
     """Display snapcraft.yaml with all templates applied."""
+    from snapcraft.internal import project_loader
 
     project = get_project(**kwargs)
     yaml_with_templates = project_loader.apply_templates(
