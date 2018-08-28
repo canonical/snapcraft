@@ -99,7 +99,7 @@ class Provider(abc.ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.destroy()
 
-    @abc.abstractstaticmethod
+    @abc.abstractclassmethod
     def _get_provider_name(self) -> str:
         """Return the provider name."""
 
