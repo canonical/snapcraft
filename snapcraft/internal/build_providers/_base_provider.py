@@ -100,7 +100,7 @@ class Provider(abc.ABC):
         self.destroy()
 
     @abc.abstractclassmethod
-    def _get_provider_name(self) -> str:
+    def _get_provider_name(cls) -> str:
         """Return the provider name."""
 
     @abc.abstractmethod
