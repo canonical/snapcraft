@@ -34,7 +34,7 @@ from snapcraft.internal import (
 from snapcraft.project.errors import YamlValidationError
 
 if typing.TYPE_CHECKING:
-    from snapcraft.internal.project import Project
+    from snapcraft.internal.project import Project  # noqa: F401
 
 
 # TODO: when snap is a real step we can simplify the arguments here.
@@ -45,7 +45,7 @@ def _execute(
     pack_project: bool = False,
     output: str = None,
     **kwargs
-) -> Project:
+) -> "Project":
     # fmt: on
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
