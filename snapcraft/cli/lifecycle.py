@@ -16,6 +16,7 @@
 
 import os
 import sys
+import typing
 
 import click
 
@@ -32,9 +33,18 @@ from snapcraft.internal import (
 )
 from snapcraft.project.errors import YamlValidationError
 
+if typing.TYPE_CHECKING:
+    from snapcraft.internal.project import Project
+
 
 # TODO: when snap is a real step we can simplify the arguments here.
-def _execute(step: steps.Step, parts, pack_project=False, **kwargs):
+def _execute(
+    step: steps.Step,
+    parts: str,
+    pack_project: bool = False,
+    output: str = None,
+    **kwargs,
+) -> Project:
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
@@ -49,19 +59,19 @@ def _execute(step: steps.Step, parts, pack_project=False, **kwargs):
             instance.mount_project()
             if pack_project:
                 # TODO add support for output
-                instance.pack_project(output=kwargs.get("output"))
+                instance.pack_project(output=output)
             else:
                 instance.execute_step(step)
     elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
-            _pack(project.prime_dir, output=kwargs.get("output"))
+            _pack(project.prime_dir, output=output)
     else:
         # containerbuild takes a snapcraft command name, not a step
         lifecycle.containerbuild(command=step.name, project=project, args=parts)
         if pack_project:
-            _pack(project.prime_dir, output=kwargs.get("output"))
+            _pack(project.prime_dir, output=output)
     return project
 
 
@@ -214,7 +224,7 @@ def clean(parts, step_name, **kwargs):
         project = get_project(
             is_managed_host=build_environment.is_managed_host,
             skip_snapcraft_yaml=True,
-            **kwargs
+            **kwargs,
         )
 
     step = None
