@@ -141,7 +141,7 @@ class Provider(abc.ABC):
 
     @abc.abstractmethod
     def _unmount_snaps_directory(self) -> None:
-        """Mount the host directory with snaps into the provider."""
+        """Unmount the host directory with snaps from the provider."""
 
     @abc.abstractmethod
     def mount_project(self) -> None:
