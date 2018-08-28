@@ -200,6 +200,22 @@ class ProjectOptions:
     def kernel_arch(self):
         return self.__machine_info["kernel"]
 
+    @property
+    def local_plugins_dir(self) -> str:
+        return self._local_plugins_dir
+
+    @property
+    def parts_dir(self) -> str:
+        return self._parts_dir
+
+    @property
+    def stage_dir(self) -> str:
+        return self._stage_dir
+
+    @property
+    def prime_dir(self) -> str:
+        return self._prime_dir
+
     def __init__(
         self,
         use_geoip=False,
@@ -219,14 +235,14 @@ class ProjectOptions:
         self.parallel_builds = parallel_builds
         self.debug = debug
 
-        self.parts_dir = os.path.join(work_dir, "parts")
-        self.stage_dir = os.path.join(work_dir, "stage")
-        self.prime_dir = os.path.join(work_dir, "prime")
-        self.local_plugins_dir = _get_local_plugins_dir(project_dir, self.parts_dir)
+        self._parts_dir = os.path.join(work_dir, "parts")
+        self._stage_dir = os.path.join(work_dir, "stage")
+        self._prime_dir = os.path.join(work_dir, "prime")
+        self._local_plugins_dir = _get_local_plugins_dir(project_dir, self._parts_dir)
 
-        logger.debug("Parts dir {}".format(self.parts_dir))
-        logger.debug("Stage dir {}".format(self.stage_dir))
-        logger.debug("Prime dir {}".format(self.prime_dir))
+        logger.debug("Parts dir {}".format(self._parts_dir))
+        logger.debug("Stage dir {}".format(self._stage_dir))
+        logger.debug("Prime dir {}".format(self._prime_dir))
 
         self._set_machine(target_deb_arch)
 
