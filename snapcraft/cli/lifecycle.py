@@ -38,13 +38,15 @@ if typing.TYPE_CHECKING:
 
 
 # TODO: when snap is a real step we can simplify the arguments here.
+# fmt: off
 def _execute(
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
     output: str = None,
-    **kwargs,
+    **kwargs
 ) -> Project:
+    # fmt: on
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
