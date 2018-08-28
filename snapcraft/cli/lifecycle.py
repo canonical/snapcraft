@@ -24,6 +24,7 @@ from . import echo
 from . import env
 from ._options import add_build_options, get_project
 from snapcraft.internal import (
+    errors,
     build_providers,
     deprecations,
     lifecycle,
@@ -244,10 +245,14 @@ def clean(parts, step_name, **kwargs):
     elif build_environment.is_host:
         lifecycle.clean(project, parts, step)
     else:
+        # TODO support for steps.
+        if parts or step_name:
+            raise errors.SnapcraftEnvironmentError(
+                "Build providers are still not feature complete, specifying parts or a step name "
+                "is not yet supported.")
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        # TODO support for steps.
         build_provider_class(project=project, echoer=echo).clean_project()
 
 
