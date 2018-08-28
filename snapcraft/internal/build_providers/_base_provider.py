@@ -162,10 +162,11 @@ class Provider(abc.ABC):
         self._run(command=command)
 
     def clean_project(self) -> bool:
-        if not os.path.exists(self.provider_project_dir):
+        try:
+            shutil.rmtree(self.provider_project_dir)
+            return True
+        except FileNotFoundError:
             return False
-        shutil.rmtree(self.provider_project_dir)
-        return True
 
     @abc.abstractmethod
     def build_project(self) -> None:
