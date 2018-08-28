@@ -97,6 +97,14 @@ class TestElfFileSmoketest(unit.TestCase):
                 isinstance(version, str), "expected {!r} to be a string".format(version)
             )
 
+        # GCC adds a build ID to executables
+        self.assertThat(elf_file.build_id, NotEquals(""))
+
+        # If the Python interpreter is distro packaged, it probably
+        # doesn't have debug info, but we don't know for sure.
+        # Instead just check that it is a boolean.
+        self.assertTrue(isinstance(elf_file.has_debug_info, bool))
+
 
 class TestGetLibraries(TestElfBase):
     def setUp(self):
