@@ -58,7 +58,6 @@ def _execute(
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             if pack_project:
-                # TODO add support for output
                 instance.pack_project(output=output)
             else:
                 instance.execute_step(step)
@@ -246,6 +245,7 @@ def clean(parts, step_name, **kwargs):
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
+        # TODO support for steps.
         build_provider_class(project=project, echoer=echo).clean_project()
 
 
