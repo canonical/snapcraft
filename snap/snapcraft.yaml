@@ -1,13 +1,11 @@
 name: snapcraft
-version: git
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
     a single toolset, but instead is a collection of tools that enable the
     natural workflow of an upstream to be extended with a simple release step
     into Snappy.
-
-grade: stable
+adopt-info: snapcraft
 confinement: classic
 
 apps:
@@ -45,6 +43,12 @@ parts:
         - patchelf
         - squashfs-tools
         - xdelta3
+    override-pull: |
+        version="$(git describe --dirty --always | sed -e 's/-/+git/;y/-/./')"
+        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+        snapcraftctl set-version "$version"
+        snapcraftctl set-grade "$grade"
+        snapcraftctl pull
     override-build: |
         snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
