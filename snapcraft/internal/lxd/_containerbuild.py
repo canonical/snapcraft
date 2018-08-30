@@ -66,12 +66,19 @@ class Containerbuild:
         output: str = None,
         remote: str = None
     ) -> None:
+        if project.info.architectures is None:
+            architecture = project.deb_arch
+        elif len(project.info.architectures) == 1:
+            architecture = project.info.architectures[0]
+        else:
+            architecture = "multi"
+
         if output is None and project.info.version:
             output = "{}_{}_{}.snap".format(
-                project.info.name, project.info.version, project.deb_arch
+                project.info.name, project.info.version, architecture
             )
         elif output is None:
-            output = "{}_{}.snap".format(project.info.name, project.deb_arch)
+            output = "{}_{}.snap".format(project.info.name, architecture)
         self.snap_filename = output
 
         self._source = os.path.realpath(source)

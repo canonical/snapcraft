@@ -520,8 +520,8 @@ class SnapOutputTestCase(unit.TestCase):
             dict(
                 name="name",
                 version="version",
-                architectures=["amd64"],
-                expected="name_version_amd64.snap",
+                architectures=["arm64"],
+                expected="name_version_arm64.snap",
             ),
         ),
         (
@@ -529,8 +529,8 @@ class SnapOutputTestCase(unit.TestCase):
             dict(
                 name="name",
                 version=None,
-                architectures=["amd64"],
-                expected="name_amd64.snap",
+                architectures=["arm64"],
+                expected="name_arm64.snap",
             ),
         ),
     ]
