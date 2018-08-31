@@ -52,7 +52,7 @@ class AssetRecordingBaseTestCase(integration.TestCase):
             subprocess.check_call(["sudo", "snap", "install", "review-tools", "--edge"])
 
     def assert_review_passes(self, snap_file: str) -> None:
-        # review-tools do no really have access to tmp, let's assume it can look
+        # review-tools do not really have access to tmp, let's assume it can look
         # in its own snap directory and that that does not change as we cannot
         # query what the data store is for a given snap.
         review_tools_common_dir = os.path.expanduser(
