@@ -216,6 +216,18 @@ class ProjectOptions:
     def prime_dir(self) -> str:
         return self._prime_dir
 
+    @property
+    def use_geoip(self):
+        return self._use_geoip
+
+    @property
+    def parallel_builds(self):
+        return self._parallel_builds
+
+    @property
+    def debug(self):
+        return self._debug
+
     def __init__(
         self,
         use_geoip=False,
@@ -231,9 +243,9 @@ class ProjectOptions:
         if work_dir is None:
             work_dir = project_dir
 
-        self.use_geoip = use_geoip
-        self.parallel_builds = parallel_builds
-        self.debug = debug
+        self._use_geoip = use_geoip
+        self._parallel_builds = parallel_builds
+        self._debug = debug
 
         self._parts_dir = os.path.join(work_dir, "parts")
         self._stage_dir = os.path.join(work_dir, "stage")
