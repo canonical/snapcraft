@@ -146,7 +146,7 @@ class ProjectOptions:
     @property
     def parallel_build_count(self):
         build_count = 1
-        if self.parallel_builds:
+        if self._parallel_builds:
             try:
                 build_count = multiprocessing.cpu_count()
             except NotImplementedError:
