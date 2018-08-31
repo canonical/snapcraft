@@ -46,10 +46,9 @@ class AssetRecordingBaseTestCase(integration.TestCase):
 
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
 
-        # snapd has no easy way of telling me if a snap is installed from its cli.
         try:
-            subprocess.check_output(["review-tools.snap-review", "--help"])
-        except FileNotFoundError:
+            subprocess.check_output(["snap", "list", "review-tools"])
+        except subprocess.CalledProcessError:
             subprocess.check_call(["sudo", "snap", "install", "review-tools", "--edge"])
 
     def assert_review_passes(self, snap_file: str) -> None:
