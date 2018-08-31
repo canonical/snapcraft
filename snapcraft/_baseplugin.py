@@ -113,6 +113,7 @@ class BasePlugin:
         self.installdir = os.path.join(self.partdir, "install")
         self.statedir = os.path.join(self.partdir, "state")
         self.osrepodir = os.path.join(self.partdir, "ubuntu")
+        self.debugdir = os.path.join(self.partdir, "debug")
 
         self.build_basedir = os.path.join(self.partdir, "build")
         source_subdir = getattr(self.options, "source_subdir", None)

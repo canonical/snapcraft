@@ -40,6 +40,7 @@ from ._runner import Runner
 from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._outdated_report import OutdatedReport
+from ._debuginfo import DebugInfoCollector
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +215,7 @@ class PluginHandler:
             self.plugin.builddir,
             self.plugin.installdir,
             self.plugin.statedir,
+            self.plugin.debugdir,
             self.stagedir,
             self.primedir,
         ]
@@ -555,6 +557,8 @@ class PluginHandler:
         #      parts when staging.
         self._organize()
 
+        self._separate_debug_info()
+
         self.mark_build_done()
 
     def mark_build_done(self):
@@ -647,6 +651,9 @@ class PluginHandler:
         if os.path.exists(self.plugin.installdir):
             shutil.rmtree(self.plugin.installdir)
 
+        if os.path.exists(self.plugin.debugdir):
+            shutil.rmtree(self.plugin.debugdir)
+
         self.plugin.clean_build()
         self.mark_cleaned(steps.BUILD)
 
@@ -675,6 +682,10 @@ class PluginHandler:
         fileset = self._get_fileset("organize", {})
 
         _organize_filesets(fileset.copy(), self.plugin.installdir)
+
+    def _separate_debug_info(self):
+        collector = DebugInfoCollector(debug_dir=self.plugin.debugdir)
+        collector.separate_tree(base_dir=self.plugin.installdir)
 
     def stage(self, force=False):
         self.makedirs()
