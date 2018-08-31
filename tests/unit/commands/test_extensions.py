@@ -19,20 +19,20 @@ import textwrap
 from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.internal.project_loader._templates._template import Template
+from snapcraft.internal.project_loader._extensions._extension import Extension
 
 from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
-class TemplatesCommandTest(CommandBaseTestCase):
+class ExtensionsCommandTest(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        # Create a few fake templates
-        self.useFixture(_test1_template_fixture())
-        self.useFixture(_test2_template_fixture())
-        self.useFixture(_test3_template_fixture())
+        # Create a few fake extensions
+        self.useFixture(_test1_extension_fixture())
+        self.useFixture(_test2_extension_fixture())
+        self.useFixture(_test3_extension_fixture())
 
     @mock.patch(
         "pkgutil.iter_modules",
@@ -42,8 +42,8 @@ class TemplatesCommandTest(CommandBaseTestCase):
             (None, "test3", None),
         ),
     )
-    def test_list_templates(self, fake_iter_modules):
-        result = self.run_command(["templates"])
+    def test_list_extensions(self, fake_iter_modules):
+        result = self.run_command(["extensions"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -51,18 +51,18 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    Template name    Supported bases
-                    ---------------  -----------------
-                    test1            core16
-                    test2            core16
-                    test3            core16, core18
+                    Extension name    Supported bases
+                    ----------------  -----------------
+                    test1             core16
+                    test2             core16
+                    test3             core16, core18
                     """
                 )
             ),
         )
 
-    def test_template(self):
-        result = self.run_command(["template", "test1"])
+    def test_extension(self):
+        result = self.run_command(["extension", "test1"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -70,16 +70,16 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    The test1 template adds the following to apps that use it:
+                    The test1 extension adds the following to apps that use it:
                         environment:
-                          TEMPLATE_NAME: test1
+                          EXTENSION_NAME: test1
 
                     It adds the following to all parts:
                         after:
-                        - template-part
+                        - extension-part
 
                     It adds the following part definitions:
-                        template-part:
+                        extension-part:
                           plugin: nil
 
                     """  # Extra line break due to click.echo
@@ -87,7 +87,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
             ),
         )
 
-        result = self.run_command(["template", "test2"])
+        result = self.run_command(["extension", "test2"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -95,12 +95,12 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    The test2 template adds the following to all parts:
+                    The test2 extension adds the following to all parts:
                         after:
-                        - template-part
+                        - extension-part
 
                     It adds the following part definitions:
-                        template-part:
+                        extension-part:
                           plugin: nil
 
                     """  # Extra line break due to click.echo
@@ -108,7 +108,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
             ),
         )
 
-        result = self.run_command(["template", "test3"])
+        result = self.run_command(["extension", "test3"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -116,8 +116,8 @@ class TemplatesCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    The test3 template adds the following part definitions:
-                        template-part:
+                    The test3 extension adds the following part definitions:
+                        extension-part:
                           plugin: nil
 
                     """  # Extra line break due to click.echo
@@ -125,7 +125,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
             ),
         )
 
-    def test_expand_templates(self):
+    def test_expand_extensions(self):
         self.make_snapcraft_yaml(
             textwrap.dedent(
                 """\
@@ -140,7 +140,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
                 apps:
                     test-app:
                         command: echo "hello"
-                        templates: [test1]
+                        extensions: [test1]
 
                 parts:
                     test-part:
@@ -149,7 +149,7 @@ class TemplatesCommandTest(CommandBaseTestCase):
             )
         )
 
-        result = self.run_command(["expand-templates"])
+        result = self.run_command(["expand-extensions"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -168,13 +168,13 @@ class TemplatesCommandTest(CommandBaseTestCase):
                       test-app:
                         command: echo "hello"
                         environment:
-                          TEMPLATE_NAME: test1
+                          EXTENSION_NAME: test1
                     parts:
                       test-part:
                         plugin: nil
                         after:
-                        - template-part
-                      template-part:
+                        - extension-part
+                      extension-part:
                         plugin: nil
                     """
                 )
@@ -182,37 +182,37 @@ class TemplatesCommandTest(CommandBaseTestCase):
         )
 
 
-def _test1_template_fixture():
-    class Test1Template(Template):
+def _test1_extension_fixture():
+    class Test1Extension(Extension):
         supported_bases = ("core16",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
-            self.app_snippet = {"environment": {"TEMPLATE_NAME": "test1"}}
-            self.part_snippet = {"after": ["template-part"]}
-            self.parts = {"template-part": {"plugin": "nil"}}
+            self.app_snippet = {"environment": {"EXTENSION_NAME": "test1"}}
+            self.part_snippet = {"after": ["extension-part"]}
+            self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeTemplate("test1", Test1Template)
+    return fixture_setup.FakeExtension("test1", Test1Extension)
 
 
-def _test2_template_fixture():
-    class Test2Template(Template):
+def _test2_extension_fixture():
+    class Test2Extension(Extension):
         supported_bases = ("core16",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
-            self.part_snippet = {"after": ["template-part"]}
-            self.parts = {"template-part": {"plugin": "nil"}}
+            self.part_snippet = {"after": ["extension-part"]}
+            self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeTemplate("test2", Test2Template)
+    return fixture_setup.FakeExtension("test2", Test2Extension)
 
 
-def _test3_template_fixture():
-    class Test3Template(Template):
+def _test3_extension_fixture():
+    class Test3Extension(Extension):
         supported_bases = ("core16", "core18")
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
-            self.parts = {"template-part": {"plugin": "nil"}}
+            self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeTemplate("test3", Test3Template)
+    return fixture_setup.FakeExtension("test3", Test3Extension)

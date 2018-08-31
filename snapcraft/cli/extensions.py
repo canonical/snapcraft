@@ -27,50 +27,50 @@ from snapcraft.internal import lifecycle
 
 
 @click.group()
-def templatecli(**kwargs):
+def extensioncli(**kwargs):
     pass
 
 
-@templatecli.command()
-def templates(**kwargs):
-    """List available templates."""
+@extensioncli.command()
+def extensions(**kwargs):
+    """List available extensions."""
     from snapcraft.internal import project_loader
 
-    template_names = []
-    for _, modname, _ in pkgutil.iter_modules(project_loader._templates.__path__):
-        # Only add non-private modules/packages to the template list
+    extension_names = []
+    for _, modname, _ in pkgutil.iter_modules(project_loader._extensions.__path__):
+        # Only add non-private modules/packages to the extension list
         if not modname.startswith("_"):
-            template_names.append(modname)
+            extension_names.append(modname)
 
-    if not template_names:
-        click.echo("No templates supported")
+    if not extension_names:
+        click.echo("No extensions supported")
         return
 
-    templates = []
-    for template_name in sorted(template_names):
-        template = project_loader.find_template(template_name)
-        template_info = collections.OrderedDict()
-        template_info["Template name"] = template_name
-        template_info["Supported bases"] = ", ".join(sorted(template.supported_bases))
-        templates.append(template_info)
+    extensions = []
+    for extension_name in sorted(extension_names):
+        extension = project_loader.find_extension(extension_name)
+        extension_info = collections.OrderedDict()
+        extension_info["Extension name"] = extension_name
+        extension_info["Supported bases"] = ", ".join(sorted(extension.supported_bases))
+        extensions.append(extension_info)
 
-    click.echo(tabulate.tabulate(templates, headers="keys"))
+    click.echo(tabulate.tabulate(extensions, headers="keys"))
 
 
-@templatecli.command()
+@extensioncli.command()
 @click.argument("name")
-def template(name, **kwargs):
-    """Show contents of template."""
+def extension(name, **kwargs):
+    """Show contents of extension."""
     from snapcraft.internal import project_loader
 
     dummy_data = lifecycle.get_init_data()
-    template_instance = project_loader.find_template(name)(dummy_data)
+    extension_instance = project_loader.find_extension(name)(dummy_data)
 
-    app_snippet = template_instance.app_snippet
-    part_snippet = template_instance.part_snippet
-    parts = template_instance.parts
+    app_snippet = extension_instance.app_snippet
+    part_snippet = extension_instance.part_snippet
+    parts = extension_instance.parts
 
-    intro = "The {} template".format(name)
+    intro = "The {} extension".format(name)
     if app_snippet:
         click.echo("{} adds the following to apps that use it:".format(intro))
         click.echo(
@@ -96,15 +96,15 @@ def template(name, **kwargs):
         )
 
 
-@templatecli.command("expand-templates")
-def expand_templates(**kwargs):
-    """Display snapcraft.yaml with all templates applied."""
+@extensioncli.command("expand-extensions")
+def expand_extensions(**kwargs):
+    """Display snapcraft.yaml with all extensions applied."""
     from snapcraft.internal import project_loader
 
     project = get_project(**kwargs)
-    yaml_with_templates = project_loader.apply_templates(
+    yaml_with_extensions = project_loader.apply_extensions(
         project.info.get_raw_snapcraft()
     )
 
-    # Loading the config applied all the templates, so just dump it back out
-    yaml.safe_dump(yaml_with_templates, stream=sys.stdout, default_flow_style=False)
+    # Loading the config applied all the extensions, so just dump it back out
+    yaml.safe_dump(yaml_with_extensions, stream=sys.stdout, default_flow_style=False)

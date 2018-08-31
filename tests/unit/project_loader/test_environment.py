@@ -250,6 +250,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
                         project_config.project.arch_triplet
                     ),
+                    'SNAPCRAFT_EXTENSIONS_DIR="{}"'.format(common.get_extensionsdir()),
                     'SNAPCRAFT_PARALLEL_BUILD_COUNT="2"',
                     'SNAPCRAFT_PART_BUILD="{}/parts/main/build"'.format(self.path),
                     'SNAPCRAFT_PART_INSTALL="{}/parts/main/install"'.format(self.path),
@@ -259,7 +260,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_PROJECT_NAME="test"',
                     'SNAPCRAFT_PROJECT_VERSION="1"',
                     'SNAPCRAFT_STAGE="{}/stage"'.format(self.path),
-                    'SNAPCRAFT_TEMPLATES_DIR="{}"'.format(common.get_templatesdir()),
                 ]
             ),
         )
@@ -536,11 +536,11 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         env = project_config.parts.build_env_for_part(part1)
         self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="42"'))
 
-    def test_template_dir(self):
-        common.set_templatesdir("/foo")
+    def test_extension_dir(self):
+        common.set_extensionsdir("/foo")
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
         part1 = [
             part for part in project_config.parts.all_parts if part.name == "part1"
         ][0]
         env = project_config.parts.build_env_for_part(part1)
-        self.assertThat(env, Contains('SNAPCRAFT_TEMPLATES_DIR="/foo"'))
+        self.assertThat(env, Contains('SNAPCRAFT_EXTENSIONS_DIR="/foo"'))
