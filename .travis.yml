@@ -55,7 +55,7 @@ jobs:
         - codecov --token="$CODECOV_TOKEN"
 
     - stage: osx-integration-store
-      if: type != cron
+      if: repo != "snapcore/snapcraft"
       os: osx
       install:
         - brew upgrade python
