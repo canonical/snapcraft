@@ -152,7 +152,7 @@ else:
                 ["libraries/" + x for x in os.listdir("libraries")],
             ),
             (
-                "share/snapcraft/extension-data",
+                "share/snapcraft/extensions",
                 ["extensions/" + x for x in os.listdir("extensions")],
             ),
         ],
