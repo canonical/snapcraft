@@ -31,9 +31,12 @@ def extensioncli(**kwargs):
     pass
 
 
-@extensioncli.command()
-def extensions(**kwargs):
-    """List available extensions."""
+@extensioncli.command("list-extensions")
+def list_extensions(**kwargs):
+    """List available extensions.
+
+    This command has an alias of `extensions`.
+    """
     from snapcraft.internal import project_loader
 
     extension_names = []

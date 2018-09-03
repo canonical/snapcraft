@@ -32,6 +32,7 @@ _CMD_ALIASES = {
     "revisions": "list-revisions",
     "plugins": "list-plugins",
     "collaborators": "edit-collaborators",
+    "extensions": "list-extensions",
 }
 
 _CMD_DEPRECATION_NOTICES = {"history": "dn4"}
