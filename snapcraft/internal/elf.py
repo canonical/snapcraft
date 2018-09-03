@@ -60,6 +60,17 @@ else:
     _DEBUG_INFO = b".debug_info"
     _GNU_VERSION_R = b".gnu.version_r"
 
+# Mappings from ElfArchitectureTuples to GCC style architecture triples
+_ARCH_TRIPLET = {
+    ("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64"): "x86_64-linux-gnu",
+    ("ELFCLASS64", "ELFDATA2LSB", "EM_AARCH64"): "aarch64-linux-gnu",
+    ("ELFCLASS32", "ELFDATA2LSB", "EM_ARM"): "arm-linux-gnueabihf",
+    ("ELFCLASS32", "ELFDATA2LSB", "EM_386"): "i386-linux-gnu",
+    ("ELFCLASS32", "ELFDATA2MSB", "EM_PPC"): "powerpc-linux-gnu",
+    ("ELFCLASS64", "ELFDATA2LSB", "EM_PPC64"): "powerpc64le-linux-gnu",
+    ("ELFCLASS64", "ELFDATA2MSB", "EM_S390"): "s390x-linux-gnu",
+}
+
 
 class SonameCache:
     """A cache for sonames."""
@@ -290,6 +301,10 @@ class ElfFile:
             )
 
         return (arch, interp, soname, libs, execstack_set, build_id, has_debug_info)
+
+    @property
+    def arch_triplet(self) -> str:
+        return _ARCH_TRIPLET.get(self.arch)
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determines if linker will work given the required glibc version."""

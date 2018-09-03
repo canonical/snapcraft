@@ -31,9 +31,6 @@ class DebugInfoCollector:
     def __init__(self, *, debug_dir: str) -> None:
         self._debug_dir = debug_dir
 
-        self._objcopy_cmd = file_utils.get_tool_path("objcopy")
-        self._strip_cmd = file_utils.get_tool_path("strip")
-
     def _debug_info_file(self, *, elf_file: elf.ElfFile) -> str:
         build_id = elf_file.build_id
         assert build_id != ""
@@ -47,19 +44,28 @@ class DebugInfoCollector:
         os.makedirs(os.path.dirname(debug_file), exist_ok=True)
 
         self._run(
+            elf_file,
             [
-                self._objcopy_cmd,
+                "objcopy",
                 "--only-keep-debug",
                 "--compress-debug-sections",
                 elf_file.path,
                 debug_file,
-            ]
+            ],
         )
         # FIXME: consider being a bit more aggressive in stripping executable.
-        self._run([self._strip_cmd, "-g", elf_file.path])
-        self._run([self._objcopy_cmd, "--add-gnu-debuglink", debug_file, elf_file.path])
+        self._run(elf_file, ["strip", "-g", elf_file.path])
+        self._run(
+            elf_file, ["objcopy", "--add-gnu-debuglink", debug_file, elf_file.path]
+        )
 
-    def _run(self, args: List[str]) -> None:
+    def _run(self, elf_file: elf.ElfFile, args: List[str]) -> None:
+        cmd = args[0]
+        arch_triplet = elf_file.arch_triplet
+        if arch_triplet is not None:
+            cmd = "{}-{}".format(arch_triplet, cmd)
+        args = [file_utils.get_tool_path(cmd)] + args[1:]
+
         try:
             subprocess.check_call(args)
         except subprocess.CalledProcessError as call_error:
