@@ -343,23 +343,24 @@ def get_tool_path(command_name: str) -> str:
     :return: Path to command
     :rtype: str
     """
+    snapcraft_snap_path = os.path.join(os.sep, "snap", "snapcraft", "current")
+
     if common.is_snap():
         command_path = _command_path_in_root(os.getenv("SNAP"), command_name)
-    elif common.is_docker_instance():
-        command_path = _command_path_in_root(
-            os.path.join(os.sep, "snap", "snapcraft", "current"), command_name
-        )
+    elif common.is_docker_instance() and os.path.exists(snapcraft_snap_path):
+        command_path = _command_path_in_root(snapcraft_snap_path, command_name)
     else:
         command_path = shutil.which(command_name)
 
-    # shutil.which will return None if it cannot find command_name
-    if command_path is None:
+    # shutil.which will return None if it cannot find command_name but
+    # _command_path_in_root will return an empty string.
+    if not command_path:
         raise ToolMissingError(command_name=command_name)
 
     return command_path
 
 
-def _command_path_in_root(root, command_name):
+def _command_path_in_root(root, command_name: str) -> str:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),
         os.path.join("usr", "local", "bin"),
