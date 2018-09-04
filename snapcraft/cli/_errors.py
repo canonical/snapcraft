@@ -20,13 +20,15 @@ import sys
 import tempfile
 import traceback
 from textwrap import dedent
+from typing import Dict  # noqa: F401
+
+import click
 
 from . import echo
+import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
 from snapcraft.internal.lxd import errors as lxd_errors
-
-import click
 
 # raven is not available on 16.04
 try:
@@ -230,6 +232,10 @@ def _prompt_sentry():
 
 
 def _submit_trace(exc_info):
+    kwargs = dict()  # Dict[str,str]
+    if "+git" not in snapcraft.__version__:
+        kwargs["release"] = snapcraft.__version__
+
     client = RavenClient(
         "https://b0fef3e0ced2443c92143ae0d038b0a4:"
         "b7c67d7fa4ee46caae12b29a80594c54@sentry.io/277754",
@@ -247,5 +253,6 @@ def _submit_trace(exc_info):
             "raven.processors.RemoveStackLocalsProcessor",
             "raven.processors.SanitizePasswordsProcessor",
         ),
+        **kwargs
     )
     client.captureException(exc_info=exc_info)

@@ -160,6 +160,7 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
 
@@ -203,6 +204,7 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
         config_path = os.path.join(
@@ -249,6 +251,7 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
         self.prompt_mock.assert_not_called()
@@ -273,6 +276,7 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
 
