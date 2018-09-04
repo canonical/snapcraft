@@ -59,7 +59,7 @@ _MSG_ALWAYS_REPORT = dedent(
 )
 _MSG_MANUALLY_REPORT = dedent(
     """\
-    We would appreciate it if you created a bug report at 
+    We would appreciate it if you created a bug report at
     https://launchpad.net/snapcraft/+filebug with the above text included."""
 )
 
