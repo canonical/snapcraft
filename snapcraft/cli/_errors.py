@@ -175,7 +175,7 @@ def _is_send_to_sentry(trace_filepath: str) -> bool:  # noqa: C901
     # configuration for where that value is stored cannot be read, so
     # resort to prompting.
     try:
-        response = _prompt_sentry()
+        response = _prompt_sentry(trace_filepath)
     except click.exceptions.Abort:
         # This was most likely triggered by a KeyboardInterrupt so
         # adding a new line makes things look nice.
@@ -203,8 +203,8 @@ def _is_send_to_sentry(trace_filepath: str) -> bool:  # noqa: C901
         return False
 
 
-def _prompt_sentry():
-    msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT
+def _prompt_sentry(trace_filepath: str):
+    msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT.format(trace_filepath)
     all_valid = _YES_VALUES + _NO_VALUES + _ALWAYS_VALUES
 
     def validate(value):
