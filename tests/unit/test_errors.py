@@ -242,7 +242,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                 },
                 "expected_message": (
                     "The linker version '2.23' used by the base 'core18' is "
-                    "incompatible with all or some of the files in this snap:\n"
+                    "incompatible with files in this snap:\n"
                     "    a (2.26)\n"
                     "    b (2.27)"
                 ),

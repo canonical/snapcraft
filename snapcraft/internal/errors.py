@@ -136,7 +136,7 @@ class SnapcraftMissingLinkerInBaseError(SnapcraftError):
 class IncompatibleBaseError(SnapcraftError):
     fmt = (
         "The linker version {linker_version!r} used by the base {base!r} is "
-        "incompatible with all or some of the files in this snap:\n"
+        "incompatible with files in this snap:\n"
         "{file_list}"
     )
 
