@@ -232,6 +232,23 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
+            "IncompatibleBaseError",
+            {
+                "exception": errors.IncompatibleBaseError,
+                "kwargs": {
+                    "base": "core18",
+                    "linker_version": "2.23",
+                    "file_list": dict(a="2.26", b="2.27"),
+                },
+                "expected_message": (
+                    "The linker version '2.23' used by the base 'core18' is "
+                    "incompatible with files in this snap:\n"
+                    "    a (2.26)\n"
+                    "    b (2.27)"
+                ),
+            },
+        ),
+        (
             "PrimeFileConflictError",
             {
                 "exception": errors.PrimeFileConflictError,
