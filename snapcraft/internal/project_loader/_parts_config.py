@@ -256,7 +256,7 @@ class PartsConfig:
     def get_part_env(
         self, part: pluginhandler.PluginHandler, step: steps.Step
     ) -> List[str]:
-        # The plugin environment needs to come before any {}/usr/bin
+        # The plugin environment needs to come before anything else
         env = _dict_to_env(getattr(part.plugin, "get_{}_env".format(step.name))())
 
         env += self._common_env(part)
@@ -305,14 +305,8 @@ class PartsConfig:
         return chain
 
     def get_part_snap_env(self, part: pluginhandler.PluginHandler) -> List[str]:
-        env = []  # type: List[str]
-
-        # Maintain backward compatibility with the deprecated .env() function.
-        # The plugin environment needs to come before any {}/usr/bin
-        try:
-            env += part.plugin.env(self._project.prime_dir)  # type: ignore
-        except AttributeError:
-            env += _dict_to_env(part.plugin.get_snap_env())
+        # The plugin environment needs to come before anything else
+        env = _dict_to_env(part.plugin.get_snap_env())
 
         env += self._common_env(part)
 

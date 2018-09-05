@@ -326,29 +326,6 @@ class _SnapPackaging:
         self._config_data = config_data.copy()
         self._original_snapcraft_yaml = project.info.get_raw_snapcraft()
 
-        # If we are dealing with classic confinement it means all our
-        # binaries are linked with `nodefaultlib` but we still do
-        # not want to leak PATH or other environment variables
-        # that would affect the applications view of the classic
-        # environment it is dropped into.
-        replace_path = re.compile(
-            r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
-        )
-
-        self._assembled_command_chain = " ".join(
-            [os.path.join("$SNAP", shlex.quote(c)) for c in common.command_chain]
-        )
-        self._assembled_command_chain = self._assembled_command_chain.replace(
-            self._prime_dir, "$SNAP"
-        )
-        self._assembled_command_chain = replace_path.sub(
-            "$SNAP", self._assembled_command_chain
-        )
-
-        self._assembled_env = common.assemble_env()
-        self._assembled_env = self._assembled_env.replace(self._prime_dir, "$SNAP")
-        self._assembled_env = replace_path.sub("$SNAP", self._assembled_env)
-
         os.makedirs(self._meta_dir, exist_ok=True)
 
     def write_snap_yaml(self) -> str:
