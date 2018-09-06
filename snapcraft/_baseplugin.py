@@ -329,5 +329,5 @@ def _env_list_to_ordered_dict(
     env = collections.OrderedDict()  # type: collections.OrderedDict[str, str]
     for item in env_list:
         variable_name, value = item.split("=", maxsplit=1)
-        env[variable_name] = value
+        env[variable_name] = value.strip("'\"")
     return env
