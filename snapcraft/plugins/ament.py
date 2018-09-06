@@ -263,4 +263,4 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             f.write(script)
-        os.chmod(path, 0o555)
+        os.chmod(path, 0o755)

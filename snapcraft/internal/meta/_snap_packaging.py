@@ -430,7 +430,7 @@ class _SnapPackaging:
                     command += "{} ".format(assembled_command_chain)
                 command += '"$@"'
                 print(command, file=f)
-            os.chmod(self._meta_runner, 0o555)
+            os.chmod(self._meta_runner, 0o755)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
