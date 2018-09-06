@@ -362,9 +362,9 @@ of the choice of plugin.
         build in Debug mode.
 """
 
-from collections import OrderedDict  # noqa
+import collections
 import pkg_resources  # noqa
-import yaml  # noqa
+import yaml
 
 
 def _get_version():
@@ -426,7 +426,17 @@ def dict_representer(dumper, data):
 def dict_constructor(loader, node):
     # Necessary in order to make yaml merge tags work
     loader.flatten_mapping(node)
-    return OrderedDict(loader.construct_pairs(node))
+    value = loader.construct_pairs(node)
+
+    try:
+        return collections.OrderedDict(value)
+    except TypeError:
+        raise yaml.constructor.ConstructorError(
+            "while constructing a mapping",
+            node.start_mark,
+            "found unhashable key",
+            node.start_mark,
+        )
 
 
 def str_presenter(dumper, data):
@@ -437,7 +447,7 @@ def str_presenter(dumper, data):
 
 yaml.add_representer(str, str_presenter)
 yaml.SafeDumper.add_representer(str, str_presenter)
-yaml.add_representer(OrderedDict, dict_representer)
-yaml.SafeDumper.add_representer(OrderedDict, dict_representer)
+yaml.add_representer(collections.OrderedDict, dict_representer)
+yaml.SafeDumper.add_representer(collections.OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
 yaml.SafeLoader.add_constructor(_mapping_tag, dict_constructor)
