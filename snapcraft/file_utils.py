@@ -334,8 +334,9 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
 def get_tool_path(command_name: str) -> str:
     """Return the path to the given command
 
-    Return a path to command_name, if Snapcraft is running out of the snap or out
-    of Docker, it ensures it is using the one in the snap, not the host.
+    Return a path to command_name, if Snapcraft is running out of the snap
+    or in legacy mode (snap or sources), it ensures it is using the one in
+    the snap, not the host.
     If a path cannot be resolved, ToolMissingError is raised.
 
     : param str command_name: the name of the command to resolve a path for.
@@ -345,21 +346,18 @@ def get_tool_path(command_name: str) -> str:
     """
     if common.is_snap():
         command_path = _command_path_in_root(os.getenv("SNAP"), command_name)
-    elif common.is_docker_instance():
-        command_path = _command_path_in_root(
-            os.path.join(os.sep, "snap", "snapcraft", "current"), command_name
-        )
     else:
         command_path = shutil.which(command_name)
 
-    # shutil.which will return None if it cannot find command_name
-    if command_path is None:
+    # shutil.which will return None if it cannot find command_name but
+    # _command_path_in_root will return an empty string.
+    if not command_path:
         raise ToolMissingError(command_name=command_name)
 
     return command_path
 
 
-def _command_path_in_root(root, command_name):
+def _command_path_in_root(root, command_name: str) -> str:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),
         os.path.join("usr", "local", "bin"),

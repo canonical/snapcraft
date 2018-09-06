@@ -16,8 +16,10 @@
 
 import filecmp
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import yaml
 
 import apt
@@ -38,7 +40,37 @@ class AssetRecordingBaseTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
+        # The combination of snapd, lxd and armhf does not currently work.
+        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
+
+        try:
+            subprocess.check_output(["snap", "list", "review-tools"])
+        except subprocess.CalledProcessError:
+            subprocess.check_call(["sudo", "snap", "install", "review-tools", "--edge"])
+
+    def assert_review_passes(self, snap_file: str) -> None:
+        # review-tools do not really have access to tmp, let's assume it can look
+        # in its own snap directory and that that does not change as we cannot
+        # query what the data store is for a given snap.
+        review_tools_common_dir = os.path.expanduser(
+            os.path.join("~", "snap", "review-tools", "common")
+        )
+        os.makedirs(review_tools_common_dir, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=review_tools_common_dir) as temp_snap_file:
+            shutil.copyfile(snap_file, temp_snap_file.name)
+            try:
+                subprocess.check_output(
+                    ["review-tools.snap-review", temp_snap_file.name]
+                )
+            except subprocess.CalledProcessError as call_error:
+                self.fail(
+                    "{!r} does not pass the review:\n{}".format(
+                        snap_file, call_error.stdout.decode()
+                    )
+                )
 
 
 class SnapcraftYamlRecordingTestCase(AssetRecordingBaseTestCase):
@@ -57,7 +89,7 @@ class SnapcraftYamlRecordingTestCase(AssetRecordingBaseTestCase):
 
 class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
     def test_prime_records_uname(self):
-        self.run_snapcraft("prime", project_dir="basic")
+        self.run_snapcraft(["snap", "--output", "basic.snap"], project_dir="basic")
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -71,9 +103,10 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         self.assertThat(
             recorded_yaml["parts"]["dummy-part"]["uname"], Equals(expected_uname)
         )
+        self.assert_review_passes("basic.snap")
 
     def test_prime_records_installed_packages(self):
-        self.run_snapcraft("prime", project_dir="basic")
+        self.run_snapcraft(["snap", "--output", "basic.snap"], project_dir="basic")
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -87,13 +120,11 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
             recorded_yaml["parts"]["dummy-part"]["installed-packages"],
             Contains(expected_package),
         )
+        self.assert_review_passes("basic.snap")
 
     def test_prime_records_installed_snaps(self):
-        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("The autopkgtest armhf runners can't install snaps")
-
         subprocess.check_call(["sudo", "snap", "install", "core"])
-        self.run_snapcraft("prime", project_dir="basic")
+        self.run_snapcraft(["snap", "--output", "basic.snap"], project_dir="basic")
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -106,6 +137,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
             recorded_yaml["parts"]["dummy-part"]["installed-snaps"],
             Contains(expected_package),
         )
+        self.assert_review_passes("basic.snap")
 
     def test_prime_with_architectures(self):
         """Test the recorded manifest for a basic snap
@@ -113,13 +145,14 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         This snap doesn't have stage or build packages and is declared that it
         works on all architectures.
         """
-        self.run_snapcraft("prime", project_dir="basic")
+        self.run_snapcraft(["snap", "--output", "basic.snap"], project_dir="basic")
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["architectures"], Equals(["all"]))
+        self.assert_review_passes("basic.snap")
 
     def test_prime_without_architectures_records_current_arch(self):
         """Test the recorded manifest for a basic snap
@@ -128,18 +161,19 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         that it works on all architectures, which makes it specific to the
         current architecture.
         """
-        self.run_snapcraft("prime", project_dir="basic-without-arch")
+        self.run_snapcraft(
+            ["snap", "--output", "basic-without-arch.snap"],
+            project_dir="basic-without-arch",
+        )
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["architectures"], Equals([self.deb_arch]))
+        self.assert_review_passes("basic-without-arch.snap")
 
     def test_prime_records_build_snaps(self):
-        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("The autopkgtest armhf runners can't install snaps")
-
         self.useFixture(fixture_setup.WithoutSnapInstalled("hello"))
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part(
@@ -306,7 +340,7 @@ class ManifestRecordingBzrSourceTestCase(
         self.init_source_control()
         self.commit('"test-commit"', unchanged=True)
 
-        self.run_snapcraft("prime")
+        self.run_snapcraft(["snap", "--output", "bzr.snap"])
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -314,6 +348,7 @@ class ManifestRecordingBzrSourceTestCase(
 
         commit = self.get_revno()
         self.assertThat(recorded_yaml["parts"]["bzr"]["source-commit"], Equals(commit))
+        self.assert_review_passes("bzr.snap")
 
 
 class ManifestRecordingGitSourceTestCase(
@@ -325,7 +360,7 @@ class ManifestRecordingGitSourceTestCase(
         self.init_source_control()
         self.commit('"test-commit"', allow_empty=True)
 
-        self.run_snapcraft("prime")
+        self.run_snapcraft(["snap", "--output", "git.snap"])
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -333,6 +368,7 @@ class ManifestRecordingGitSourceTestCase(
 
         commit = self.get_revno()
         self.assertThat(recorded_yaml["parts"]["git"]["source-commit"], Equals(commit))
+        self.assert_review_passes("git.snap")
 
 
 class ManifestRecordingHgSourceTestCase(
@@ -345,7 +381,7 @@ class ManifestRecordingHgSourceTestCase(
         open("1", "w").close()
         self.commit("1", "1")
 
-        self.run_snapcraft("prime")
+        self.run_snapcraft(["snap", "--output", "hg.snap"])
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
@@ -355,6 +391,7 @@ class ManifestRecordingHgSourceTestCase(
         self.assertThat(
             recorded_yaml["parts"]["mercurial"]["source-commit"], Equals(commit)
         )
+        self.assert_review_passes("hg.snap")
 
 
 class ManifestRecordingSubversionSourceTestCase(
@@ -372,10 +409,11 @@ class ManifestRecordingSubversionSourceTestCase(
         self.update(cwd="local/")
         subprocess.check_call(["rm", "-rf", "local/"], stdout=subprocess.DEVNULL)
 
-        self.run_snapcraft("prime")
+        self.run_snapcraft(["snap", "--output", "svn.snap"])
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertThat(recorded_yaml["parts"]["svn"]["source-commit"], Equals("1"))
+        self.assert_review_passes("svn.snap")

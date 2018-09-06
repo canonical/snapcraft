@@ -417,9 +417,40 @@ class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
                 Equals(os.path.join(snap_root, self.tool_path)),
             )
 
+    def test_get_tool_from_docker_deb_path(self):
+        self._patch(os.path.sep)
+
+        patcher = mock.patch(
+            "shutil.which",
+            return_value=os.path.join(
+                os.path.sep, "bin", os.path.basename(self.tool_path)
+            ),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        with mock.patch(
+            "snapcraft.internal.common.is_docker_instance", return_value=True
+        ):
+            self.assertThat(
+                file_utils.get_tool_path("tool-command"),
+                Equals(
+                    os.path.join(os.path.sep, "bin", os.path.basename(self.tool_path))
+                ),
+            )
+
 
 class GetToolPathErrorsTest(testtools.TestCase):
     def test_get_tool_path_fails(self):
+        self.assertRaises(
+            file_utils.ToolMissingError,
+            file_utils.get_tool_path,
+            "non-existent-tool-command",
+        )
+
+    def test_get_tool_path_in_container_fails_root(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
         self.assertRaises(
             file_utils.ToolMissingError,
             file_utils.get_tool_path,

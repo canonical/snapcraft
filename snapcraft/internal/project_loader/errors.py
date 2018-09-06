@@ -92,42 +92,42 @@ class SnapcraftLogicError(ProjectLoaderError):
         super().__init__(message=message)
 
 
-class TemplateBaseRequiredError(ProjectLoaderError):
-    fmt = "Templates can only be used if the snapcraft.yaml specifies a 'base'"
+class ExtensionBaseRequiredError(ProjectLoaderError):
+    fmt = "Extensions can only be used if the snapcraft.yaml specifies a 'base'"
 
 
-class TemplateNotFoundError(ProjectLoaderError):
+class ExtensionNotFoundError(ProjectLoaderError):
     fmt = (
-        "Failed to find template {template_name!r}: "
-        "a template by that name does not exist.\n"
-        "Check the template name and try again."
+        "Failed to find extension {extension_name!r}: "
+        "a extension by that name does not exist.\n"
+        "Check the extension name and try again."
     )
 
-    def __init__(self, template_name: str) -> None:
-        super().__init__(template_name=template_name)
+    def __init__(self, extension_name: str) -> None:
+        super().__init__(extension_name=extension_name)
 
 
-class TemplatePartConflictError(ProjectLoaderError):
+class ExtensionPartConflictError(ProjectLoaderError):
     fmt = (
-        "Failed to apply template {template_name!r}: "
-        "this template adds a part named {part_name!r}, but a part by that name "
+        "Failed to apply extension {extension_name!r}: "
+        "this extension adds a part named {part_name!r}, but a part by that name "
         "already exists.\n"
         "Rename the {part_name!r} part to something else and try again."
     )
 
-    def __init__(self, template_name: str, part_name: str) -> None:
-        super().__init__(template_name=template_name, part_name=part_name)
+    def __init__(self, extension_name: str, part_name: str) -> None:
+        super().__init__(extension_name=extension_name, part_name=part_name)
 
 
-class TemplateUnsupportedBaseError(ProjectLoaderError):
+class ExtensionUnsupportedBaseError(ProjectLoaderError):
     fmt = (
-        "Failed to load template {template_name!r}: "
-        "this template does not support the {base!r} base.\n"
-        "Either use a different template, or use a base supported by this template."
+        "Failed to load extension {extension_name!r}: "
+        "this extension does not support the {base!r} base.\n"
+        "Either use a different extension, or use a base supported by this extension."
     )
 
-    def __init__(self, template_name: str, base: str) -> None:
-        super().__init__(template_name=template_name, base=base)
+    def __init__(self, extension_name: str, base: str) -> None:
+        super().__init__(extension_name=extension_name, base=base)
 
 
 def _determine_preamble(error):

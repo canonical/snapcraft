@@ -1299,3 +1299,23 @@ class FakeSnapcraftIsASnap(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable("SNAP", "/snap/snapcraft/current"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_NAME", "snapcraft"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "devel"))
+
+
+class FakeExtension(fixtures.Fixture):
+    """Dynamically generate a new module containing the provided extension"""
+
+    def __init__(self, extension_name, extension_class):
+        super().__init__()
+        self._import_name = "snapcraft.internal.project_loader._extensions.{}".format(
+            extension_name
+        )
+        self._extension_class = extension_class
+
+    def _setUp(self):
+        extension_module = ModuleType(self._import_name)
+        setattr(extension_module, self._extension_class.__name__, self._extension_class)
+        sys.modules[self._import_name] = extension_module
+        self.addCleanup(self._remove_module)
+
+    def _remove_module(self):
+        del sys.modules[self._import_name]

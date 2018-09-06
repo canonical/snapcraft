@@ -1,3 +1,31 @@
+snapcraft (2.43.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * lxd: support new style snap injection (#2222)
+  * snap: prepare override scripts to allow rebuilding (#2223)
+  * lxd: wait for cloud-init (#2227)
+  * storeapi: handle releasing to a curly braced branch (#2228)
+  * snap: use set-version and set-grade (#2230)
+  * lxd: proper filename set when using architectures (#2232)
+  * tests: cover manifest generation with review-tools (#2235)
+  * reporting: record the released version for errors (#2238)
+  * file_utils: find tool when using docker and deb (#2240)
+  * elf: better messaging on glibc ABI incompatibilities (#2241)
+  * New upstream release (LP: #1789766)
+
+  [ Kyle Fazzari ]
+  * spread: stop running catkin tests on 18.10 (#2221)
+  * snapcraftctl: run in isolation mode (#2224)
+  * templates: reimplement templates as python classes (#2226)
+  * templates: rename to extensions (#2233)
+  * cli: add list-extensions command (#2237)
+  * extensions: fix install path (#2236)
+
+  [ Evan Dandrea]
+  * reporting: improve messaging on errors (#2242)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 30 Aug 2018 00:08:05 +0000
+
 snapcraft (2.43) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -177,7 +205,7 @@ snapcraft (2.42) xenial; urgency=medium
   * lifecycle: skip -all-root for base snaps (#2090)
 
   [ Matias Bordese ]
-  * tests: update metadata store integration test, no previous push 
+  * tests: update metadata store integration test, no previous push
     required (#2086)
 
  -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 26 Apr 2018 01:58:29 +0000
@@ -1035,7 +1063,7 @@ snapcraft (2.30) xenial; urgency=medium
 
   [ roxd ]
   * rust plugin: use of source-subdir without failing on pull (#1296)
-  
+
   [ edvega ]
   * sources: validate unknown source-type in yaml (#1297)
 
@@ -1535,7 +1563,7 @@ snapcraft (2.22) xenial; urgency=medium
   * Support for gadget snaps (#886)
   * Remove license concepts (#880)
   * store: send snapcraft version in a header (#894)
-  
+
 
   [ Bayard Randel ]
   * repo: cache apt related files (config, packages) in 'apt' parent
@@ -1549,7 +1577,7 @@ snapcraft (2.22) xenial; urgency=medium
 
   [ Stéphane Graber ]
   * Always respect go-buildtags (#888)
-  * Allow for architecture-specific packages (#876)  
+  * Allow for architecture-specific packages (#876)
 
  -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 09 Nov 2016 19:50:29 +0000
 

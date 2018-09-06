@@ -1082,7 +1082,26 @@ class ReleaseTestCase(StoreTestCase):
 
         self.assertThat(
             str(raised),
-            Equals("invalid-field: The 'revision' field must be an integer\n"),
+            Equals("invalid-field: The 'revision' field must be an integer"),
+        )
+
+    def test_release_to_curly_braced_channel(self):
+        self.client.login("dummy", "test correct password")
+        raised = self.assertRaises(
+            errors.StoreReleaseError,
+            self.client.release,
+            "test-snap",
+            "19",
+            ["edge/{curly}"],
+        )
+
+        self.assertThat(
+            str(raised),
+            Equals(
+                "invalid-field: Invalid branch name: {curly}. Enter a value consisting of "
+                "letters, numbers or hyphens. Hyphens cannot occur at the start or end of the "
+                "chosen value."
+            ),
         )
 
 
