@@ -2,7 +2,6 @@ FROM ubuntu:xenial
 
 # Enable proposed and pin snapcraft
 RUN echo "deb http://archive.ubuntu.com/ubuntu/ xenial-proposed restricted main multiverse universe" >> /etc/apt/sources.list
-RUN cat /etc/apt/sources.list
 RUN echo 'Package: *' > /etc/apt/preferences.d/snapcraft-proposed
 RUN echo 'Pin: release a=xenial-proposed' >> /etc/apt/preferences.d/snapcraft-proposed
 RUN echo 'Pin-Priority: 400' >> /etc/apt/preferences.d/snapcraft-proposed
