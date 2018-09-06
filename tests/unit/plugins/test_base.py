@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import os
 import unittest.mock
 
@@ -73,3 +74,62 @@ class TestBasePlugin(unit.TestCase):
         plugin.run_output(["ls"], cwd=plugin.sourcedir)
 
         mock_run.assert_called_once_with(["ls"], cwd=plugin.sourcedir)
+
+
+class BaseEnvironmentTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        class TestPlugin(snapcraft.BasePlugin):
+            def env(self, root):
+                return ['TEST_VAR="{}/path"'.format(root)]
+
+        self.plugin = TestPlugin(
+            "test-part", options=None, project=snapcraft.project.Project()
+        )
+
+    def test_pull_env_falls_back_to_env(self):
+        self.assertThat(
+            self.plugin.get_pull_env(),
+            Equals(
+                collections.OrderedDict(
+                    [("TEST_VAR", "{}/path".format(self.plugin.installdir))]
+                )
+            ),
+        )
+
+    def test_build_env_falls_back_to_env(self):
+        self.assertThat(
+            self.plugin.get_build_env(),
+            Equals(
+                collections.OrderedDict(
+                    [("TEST_VAR", "{}/path".format(self.plugin.installdir))]
+                )
+            ),
+        )
+
+    def test_stage_env_falls_back_to_env(self):
+        self.assertThat(
+            self.plugin.get_stage_env(),
+            Equals(
+                collections.OrderedDict(
+                    [("TEST_VAR", "{}/path".format(self.plugin.project.stage_dir))]
+                )
+            ),
+        )
+
+    def test_prime_env_falls_back_to_env(self):
+        self.assertThat(
+            self.plugin.get_prime_env(),
+            Equals(
+                collections.OrderedDict(
+                    [("TEST_VAR", "{}/path".format(self.plugin.project.prime_dir))]
+                )
+            ),
+        )
+
+    def test_snap_env_falls_back_to_env(self):
+        self.assertThat(
+            self.plugin.get_snap_env(),
+            Equals(collections.OrderedDict([("TEST_VAR", "$SNAP/path")])),
+        )
