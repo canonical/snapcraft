@@ -122,14 +122,7 @@ class AmentPluginTestCase(unit.TestCase):
             os.path.join(plugin.installdir, "test-file"), FileContains("hello")
         )
 
-        class check_env:
-            def __eq__(self, env):
-                return env["PYTHONPATH"] == os.path.join(
-                    os.path.sep, "usr", "lib", "python3", "dist-packages"
-                )
-
-        # Verify that the source space was built as expected, and that the
-        # system's PYTHONPATH was included while building
+        # Verify that the source space was built as expected
         mock_run.assert_called_once_with(
             [
                 "ament",
@@ -143,7 +136,6 @@ class AmentPluginTestCase(unit.TestCase):
                 "-DCMAKE_BUILD_TYPE=Release",
             ],
             cwd=mock.ANY,
-            env=check_env(),
         )
 
     def test_prepare_build_rewrites_ament_current_prefix(self):
@@ -190,7 +182,7 @@ class AmentPluginTestCase(unit.TestCase):
             FileContains("${AMENT_CURRENT_PREFIX:=$SNAP}"),
         )
 
-    def test_environment(self):
+    def test_build_environment(self):
         plugin = ament.AmentPlugin("test-part", self.properties, self.project)
 
         python_path = os.path.join(
@@ -198,16 +190,13 @@ class AmentPluginTestCase(unit.TestCase):
         )
         os.makedirs(python_path)
 
-        # Joining and re-splitting to get hacked script in there as well
-        environment = "\n".join(plugin.env(plugin.installdir)).split("\n")
+        environment = plugin.get_build_env()
 
+        self.assertThat(environment["PYTHONUSERBASE"], Equals(plugin.installdir))
         self.assertThat(
-            environment, Contains('PYTHONUSERBASE="{}"'.format(plugin.installdir))
-        )
-        self.assertThat(
-            environment,
-            Contains(
-                'PYTHONPATH="{}:{}${{PYTHONPATH:+:$PYTHONPATH}}"'.format(
+            environment["PYTHONPATH"],
+            Equals(
+                "{}:{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
                     os.path.join(
                         plugin.installdir, "usr", "lib", "python3", "dist-packages"
                     ),
@@ -215,6 +204,28 @@ class AmentPluginTestCase(unit.TestCase):
                 )
             ),
         )
+
+    def test_prime_environment(self):
+        plugin = ament.AmentPlugin("test-part", self.properties, self.project)
+        self.assertThat(plugin.get_prime_env(), Equals(plugin.get_build_env()))
+
+    def test_snap_environment(self):
+        plugin = ament.AmentPlugin("test-part", self.properties, self.project)
+
+        python_path = os.path.join(
+            plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
+        )
+        os.makedirs(python_path)
+
+        environment = plugin.get_snap_env()
+
+        self.assertThat(environment["PYTHONUSERBASE"], Equals("$SNAP"))
         self.assertThat(
-            environment, Contains("    . {}/setup.sh".format(plugin.installdir))
+            environment["PYTHONPATH"],
+            Equals(
+                "{}:{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
+                    os.path.join("$SNAP", "usr", "lib", "python3", "dist-packages"),
+                    os.path.join("$SNAP", "lib", "python3", "dist-packages"),
+                )
+            ),
         )

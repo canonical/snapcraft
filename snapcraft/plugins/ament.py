@@ -28,10 +28,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Defaults to 'release-beta3'.
 """
 
+import collections
 import logging
 import os
 import re
 import textwrap
+from typing import List
 
 import snapcraft
 from . import _ros
@@ -92,6 +94,10 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         """
         super().__init__(name, options, project)
 
+        runner_name = "snapcraft-{}-runner.sh".format(name)
+        self._snapcraft_runner_path = os.path.join(self.partdir, runner_name)
+        self._snap_runner_path = os.path.join("snap", "command-chain", runner_name)
+
         # FIXME: Remove this warning once the plugin (and indeed ROS2) is
         # considered stable
         logger.warn(
@@ -118,6 +124,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # Pull ros2 underlay
         self._bootstrapper.pull()
+
+        self._generate_snapcraft_runner(self._snapcraft_runner_path, self.installdir)
 
     def clean_pull(self):
         """Clean the fetched source and ROS2 underlay."""
@@ -147,8 +155,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                 self.installdir,
                 "--cmake-args",
                 "-DCMAKE_BUILD_TYPE=Release",
-            ],
-            env=self._build_env(),
+            ]
         )
 
         self._finish_build()
@@ -178,39 +185,82 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             "${AMENT_CURRENT_PREFIX:=$SNAP}",
         )
 
-    def env(self, root):
-        """Runtime environment for ROS2 apps."""
-
-        env = []
-
-        env.append('PYTHONUSERBASE="{}"'.format(root))
-        env.append(
-            'PYTHONPATH="{}:{}${{PYTHONPATH:+:$PYTHONPATH}}"'.format(
-                os.path.join(root, "usr", "lib", "python3", "dist-packages"),
-                os.path.join(root, "lib", "python3", "dist-packages"),
-            )
+        self._generate_snapcraft_runner(
+            os.path.join(self.installdir, self._snap_runner_path), "$SNAP"
         )
 
-        # Each of these lines is prepended with an `export` when the
-        # environment is actually generated. In order to inject real shell code
-        # we have to hack it in by appending it on the end of an item already
-        # in the environment. FIXME: There should be a better way to do this.
-        env[-1] = env[-1] + "\n\n" + self._source_setup_sh(root)
-
-        return env
-
-    def _build_env(self):
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.path.join(
-            os.path.sep, "usr", "lib", "python3", "dist-packages"
+    def get_build_env(self) -> "collections.OrderedDict[str, str]":
+        usr_lib_packages = os.path.join(
+            self.installdir, "usr", "lib", "python3", "dist-packages"
         )
-        return env
+        lib_packages = os.path.join(self.installdir, "lib", "python3", "dist-packages")
+
+        return collections.OrderedDict(
+            [
+                ("PYTHONUSERBASE", self.installdir),
+                (
+                    "PYTHONPATH",
+                    "{}:{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
+                        usr_lib_packages, lib_packages
+                    ),
+                ),
+            ]
+        )
+
+    def get_build_command_chain(self) -> List[str]:
+        return [self._snapcraft_runner_path]
+
+    def get_prime_env(self) -> "collections.OrderedDict[str, str]":
+        # The priming environment and command chain are used to ensure binaries used in
+        # commands exist. However, we can't make an Ament command chain that will work
+        # in both the priming area and the final snap. Instead, just re-use the build
+        # environment and chain to verify apps are valid.
+        return self.get_build_env()
+
+    def get_prime_command_chain(self) -> List[str]:
+        # The priming environment and command chain are used to ensure binaries used in
+        # commands exist. However, we can't make an Ament command chain that will work
+        # in both the priming area and the final snap. Instead, just re-use the build
+        # environment and chain to verify apps are valid.
+        return self.get_build_command_chain()
+
+    def get_snap_env(self) -> "collections.OrderedDict[str, str]":
+        usr_lib_packages = os.path.join(
+            "$SNAP", "usr", "lib", "python3", "dist-packages"
+        )
+        lib_packages = os.path.join("$SNAP", "lib", "python3", "dist-packages")
+
+        return collections.OrderedDict(
+            [
+                ("PYTHONUSERBASE", "$SNAP"),
+                (
+                    "PYTHONPATH",
+                    "{}:{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
+                        usr_lib_packages, lib_packages
+                    ),
+                ),
+            ]
+        )
+
+    def get_snap_command_chain(self) -> List[str]:
+        return [self._snap_runner_path]
 
     def _source_setup_sh(self, root):
         return textwrap.dedent(
-            """
+            """\
+            #!/bin/sh
+
             if [ -f {ros_setup} ]; then
                 . {ros_setup}
             fi
-        """
+
+            exec "$@"
+            """
         ).format(ros_setup=os.path.join(root, "setup.sh"))
+
+    def _generate_snapcraft_runner(self, path, root):
+        script = self._source_setup_sh(root)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(script)
+        os.chmod(path, 0o555)
