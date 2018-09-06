@@ -69,6 +69,13 @@ class ErrorsBaseTestCase(unit.TestCase):
             RuntimeError, mock.ANY, mock.ANY, file=mock.ANY
         )
 
+    def assert_exception_traceback_exit_1_without_raven(self):
+        self.error_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+        self.print_exception_mock.assert_called_once_with(
+            RuntimeError, mock.ANY, mock.ANY
+        )
+
     def assert_no_exception_traceback_exit_1_without_debug(self):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
@@ -89,7 +96,7 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.assert_exception_traceback_exit_1_with_debug()
+        self.assert_exception_traceback_exit_1_without_raven()
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
@@ -160,6 +167,7 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
 
@@ -203,6 +211,7 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
         config_path = os.path.join(
@@ -249,6 +258,7 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
         self.prompt_mock.assert_not_called()
@@ -273,6 +283,7 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
             transport=self.raven_request_mock,
             name="snapcraft",
             processors=mock.ANY,
+            release=mock.ANY,
             auto_log_stacks=False,
         )
 

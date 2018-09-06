@@ -491,7 +491,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload, response_code, [("Content-Type", content_type)]
         )
 
-    def snap_release(self, request):
+    def snap_release(self, request):  # noqa: C901
         if self.fake_store.needs_refresh:
             return self._refresh_error()
         logger.debug(
@@ -509,6 +509,21 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         elif "alpha" in channels:
             response_code = 400
             payload = json.dumps({"errors": "Not a valid channel: alpha"}).encode()
+        elif "edge/{curly}" in channels:
+            response_code = 400
+            payload = json.dumps(
+                {
+                    "error_list": [
+                        {
+                            "message": (
+                                "Invalid branch name: {curly}. Enter a value consisting of letters, numbers or hyphens. "
+                                "Hyphens cannot occur at the start or end of the chosen value."
+                            ),
+                            "code": "invalid-field",
+                        }
+                    ]
+                }
+            ).encode()
         elif "no-permission" in channels:
             response_code = 403
             payload = json.dumps(

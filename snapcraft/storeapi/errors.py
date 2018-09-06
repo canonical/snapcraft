@@ -440,15 +440,18 @@ class StoreReleaseError(StoreError):
 
     def __fmt_error_400(self, response):
         response_json = self.__to_json(response)
-
         try:
             fmt = ""
             for error in response_json["error_list"]:
-                fmt += self.__FMT_BAD_REQUEST.format(**error)
+                # Escape curly braces to avoid formatting errors.
+                message = error["message"].replace("{", "{{").replace("}", "}}")
+                code = error["code"].replace("{", "{{").replace("}", "}}")
+                fmt += self.__FMT_BAD_REQUEST.format(code=code, message=message)
+            # Strip the last new line from the error message
+            fmt = fmt.rstrip("\n")
 
         except (AttributeError, KeyError):
             fmt = self.__fmt_error_unknown(response)
-
         return fmt
 
     def __fmt_error_401_or_403(self, response):

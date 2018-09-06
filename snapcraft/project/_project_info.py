@@ -41,6 +41,7 @@ class ProjectInfo:
         self.summary = self.__raw_snapcraft.get("summary")
         self.description = self.__raw_snapcraft.get("description")
         self.confinement = self.__raw_snapcraft.get("confinement")
+        self.architectures = self.__raw_snapcraft.get("architectures")
         self.grade = self.__raw_snapcraft.get("grade")
         self.base = self.__raw_snapcraft.get("base")
 

@@ -185,6 +185,11 @@ prepare: |
 restore: $SETUP_DIR/restore.sh
 
 suites:
+ # General, core suite
+ tests/spread/general/:
+   summary: tests of snapcraft core functionality
+
+ # Plugin-specific suites
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin
    kill-timeout: 360m

@@ -20,13 +20,15 @@ import sys
 import tempfile
 import traceback
 from textwrap import dedent
+from typing import Dict  # noqa: F401
+
+import click
 
 from . import echo
+import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
 from snapcraft.internal.lxd import errors as lxd_errors
-
-import click
 
 # raven is not available on 16.04
 try:
@@ -38,23 +40,13 @@ except ImportError:
 # TODO:
 # - annotate the part and lifecycle step in the message
 # - add link to privacy policy
-_MSG_TRACEBACK_PRINT = dedent(
-    """\
-    Sorry, Snapcraft ran into an error when trying to running through its
-    lifecycle that generated the following traceback:"""
-)
-_MSG_TRACEBACK_FILE = dedent(
-    """\
-    Sorry, Snapcraft ran into an error when trying to running through its
-    lifecycle that generated a trace that has been put in {!r}."""
-)
-_MSG_REPORTABLE_ERROR = "This is a problem in snapcraft; a trace has been put in {!r}."
+_MSG_TRACEBACK_PRINT = "Sorry, an error occurred in Snapcraft:"
+_MSG_TRACEBACK_FILE = "Sorry, an error occurred in Snapcraft."
 _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     """\
-    You can anonymously report this issue to the snapcraft developers.
-    No other data than this traceback and the version of snapcraft in
-    use will be sent.
-    Would you like send this error data? (Yes/No/Always)"""
+    We would appreciate it if you anonymously reported this issue.
+    No other data than the traceback ({!r}) and the version of snapcraft in use will be sent.
+    Would you like to send this error data? (Yes/No/Always)"""
 )
 _MSG_SEND_TO_SENTRY_THANKS = "Thank you, sent."
 _MSG_SILENT_REPORT = (
@@ -65,12 +57,10 @@ _MSG_ALWAYS_REPORT = dedent(
     Sending an error report because ALWAYS was selected in a past prompt.
     This behavior can be changed by changing the always_send entry in {}."""
 )
-_MSG_RAVEN_MISSING = dedent(
+_MSG_MANUALLY_REPORT = dedent(
     """\
-    "Submitting this error to the Snapcraft developers is not possible through the CLI
-    without Raven installed.
-    If you wish to report this issue, please copy the contents of the previous traceback
-    and submit manually at https://launchpad.net/snapcraft/+filebug."""
+    We would appreciate it if you created a bug report at
+    https://launchpad.net/snapcraft/+filebug with the above text included."""
 )
 
 _YES_VALUES = ["yes", "y"]
@@ -108,14 +98,10 @@ def exception_handler(
     is_snapcraft_managed_host = (
         distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
     )
+    ask_to_report = False
 
     if not is_snapcraft_error:
-        _handle_trace_output(exc_info, is_snapcraft_managed_host, _MSG_TRACEBACK_FILE)
-        if not is_raven_setup:
-            echo.warning(_MSG_RAVEN_MISSING)
-        elif _is_send_to_sentry():
-            _submit_trace(exc_info)
-            click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+        ask_to_report = True
     elif is_snapcraft_error and debug:
         exit_code = exception.get_exit_code()
         traceback.print_exception(*exc_info)
@@ -126,38 +112,38 @@ def exception_handler(
         # of a double error print
         if exception_type != lxd_errors.ContainerSnapcraftCmdError:
             echo.error(str(exception))
-        if is_snapcraft_reportable_error and is_raven_setup:
-            _handle_trace_output(
-                exc_info, is_snapcraft_managed_host, _MSG_REPORTABLE_ERROR
-            )
-            if _is_send_to_sentry():
-                _submit_trace(exc_info)
-                click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+        if is_snapcraft_reportable_error:
+            ask_to_report = True
     else:
         click.echo("Unhandled error case")
         exit_code = -1
 
+    if ask_to_report:
+        if not is_raven_setup or is_snapcraft_managed_host:
+            click.echo(_MSG_TRACEBACK_PRINT)
+            traceback.print_exception(*exc_info)
+            click.echo(_MSG_MANUALLY_REPORT)
+        else:
+            trace_filepath = _handle_trace_output(exc_info)
+            if _is_send_to_sentry(trace_filepath):
+                _submit_trace(exc_info)
+                click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+
     sys.exit(exit_code)
 
 
-def _handle_trace_output(
-    exc_info, is_snapcraft_managed_host: bool, trace_file_msg_tmpl: str
-) -> None:
-    if is_snapcraft_managed_host:
-        click.echo(_MSG_TRACEBACK_PRINT)
-        traceback.print_exception(*exc_info)
-    else:
-        trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
-        with open(trace_filepath, "w") as trace_file:
-            # mypy does not like *exc_info with a kwarg that follows
-            # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
-            traceback.print_exception(
-                exc_info[0], exc_info[1], exc_info[2], file=trace_file
-            )
-        click.echo(trace_file_msg_tmpl.format(trace_filepath))
+def _handle_trace_output(exc_info) -> str:
+    trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
+    with open(trace_filepath, "w") as trace_file:
+        # mypy does not like *exc_info with a kwarg that follows
+        # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
+        traceback.print_exception(
+            exc_info[0], exc_info[1], exc_info[2], file=trace_file
+        )
+    return trace_filepath
 
 
-def _is_send_to_sentry() -> bool:  # noqa: C901
+def _is_send_to_sentry(trace_filepath: str) -> bool:  # noqa: C901
     # Check to see if error reporting has been disabled
     if (
         distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
@@ -189,7 +175,7 @@ def _is_send_to_sentry() -> bool:  # noqa: C901
     # configuration for where that value is stored cannot be read, so
     # resort to prompting.
     try:
-        response = _prompt_sentry()
+        response = _prompt_sentry(trace_filepath)
     except click.exceptions.Abort:
         # This was most likely triggered by a KeyboardInterrupt so
         # adding a new line makes things look nice.
@@ -217,8 +203,8 @@ def _is_send_to_sentry() -> bool:  # noqa: C901
         return False
 
 
-def _prompt_sentry():
-    msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT
+def _prompt_sentry(trace_filepath: str):
+    msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT.format(trace_filepath)
     all_valid = _YES_VALUES + _NO_VALUES + _ALWAYS_VALUES
 
     def validate(value):
@@ -230,6 +216,10 @@ def _prompt_sentry():
 
 
 def _submit_trace(exc_info):
+    kwargs = dict()  # Dict[str,str]
+    if "+git" not in snapcraft.__version__:
+        kwargs["release"] = snapcraft.__version__
+
     client = RavenClient(
         "https://b0fef3e0ced2443c92143ae0d038b0a4:"
         "b7c67d7fa4ee46caae12b29a80594c54@sentry.io/277754",
@@ -247,5 +237,6 @@ def _submit_trace(exc_info):
             "raven.processors.RemoveStackLocalsProcessor",
             "raven.processors.SanitizePasswordsProcessor",
         ),
+        **kwargs
     )
     client.captureException(exc_info=exc_info)

@@ -16,6 +16,7 @@
 import contextlib
 import os
 from textwrap import dedent
+import yaml
 
 from snapcraft.internal import errors
 
@@ -54,10 +55,14 @@ def init():
         raise errors.SnapcraftEnvironmentError("snapcraft.yaml already exists!")
     elif os.path.exists(".snapcraft.yaml"):
         raise errors.SnapcraftEnvironmentError(".snapcraft.yaml already exists!")
-    yaml = _TEMPLATE_YAML
+    text = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode="w") as f:
-        f.write(yaml)
+        f.write(text)
 
     return snapcraft_yaml_path
+
+
+def get_init_data():
+    return yaml.load(_TEMPLATE_YAML)

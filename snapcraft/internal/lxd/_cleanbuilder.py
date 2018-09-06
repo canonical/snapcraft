@@ -49,6 +49,7 @@ class Cleanbuilder(Containerbuild):
             raise errors.ContainerCreationFailedError() from e
         self._configure_container()
         self._wait_for_network()
+        self._wait_for_cloud_init()
         self._container_run(["apt-get", "update"])
         self._inject_snapcraft()
 

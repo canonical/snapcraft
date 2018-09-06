@@ -45,8 +45,8 @@ _DEFAULT_SCHEMADIR = os.path.join(sys.prefix, "share", "snapcraft", "schema")
 _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, "share", "snapcraft", "libraries")
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TEMPLATESDIR = os.path.join(sys.prefix, "share", "snapcraft", "templates")
-_templatesdir = _DEFAULT_TEMPLATESDIR
+_DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensions")
+_extensionsdir = _DEFAULT_EXTENSIONSDIR
 _DOCKERENV_FILE = "/.dockerenv"
 
 MAX_CHARACTERS_WRAP = 120
@@ -103,9 +103,9 @@ def format_snap_name(snap, *, allow_empty_version: bool = False) -> str:
                                      allowed.
     """
     if allow_empty_version and snap.get("version") is None:
-        template = "{name}_{arch}.snap"
+        extension = "{name}_{arch}.snap"
     else:
-        template = "{name}_{version}_{arch}.snap"
+        extension = "{name}_{version}_{arch}.snap"
 
     if "arch" not in snap:
         snap["arch"] = snap.get("architectures", None)
@@ -116,7 +116,7 @@ def format_snap_name(snap, *, allow_empty_version: bool = False) -> str:
     else:
         snap["arch"] = "multi"
 
-    return template.format(**snap)
+    return extension.format(**snap)
 
 
 def is_snap() -> bool:
@@ -151,13 +151,13 @@ def get_schemadir():
     return _schemadir
 
 
-def set_templatesdir(templatesdir):
-    global _templatesdir
-    _templatesdir = templatesdir
+def set_extensionsdir(extensionsdir):
+    global _extensionsdir
+    _extensionsdir = extensionsdir
 
 
-def get_templatesdir():
-    return _templatesdir
+def get_extensionsdir():
+    return _extensionsdir
 
 
 def get_arch_triplet():

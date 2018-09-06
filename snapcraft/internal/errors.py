@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from subprocess import CalledProcessError
-from typing import List, Union
+from typing import Dict, List, Union
 
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
@@ -131,6 +131,24 @@ class SnapcraftMissingLinkerInBaseError(SnapcraftError):
 
     def __init__(self, *, base, linker_path):
         super().__init__(base=base, linker_path=linker_path)
+
+
+class IncompatibleBaseError(SnapcraftError):
+    fmt = (
+        "The linker version {linker_version!r} used by the base {base!r} is "
+        "incompatible with files in this snap:\n"
+        "{file_list}"
+    )
+
+    def __init__(
+        self, *, base: str, linker_version: str, file_list: Dict[str, str]
+    ) -> None:
+        spaced_file_list = ("    {} ({})".format(k, v) for k, v in file_list.items())
+        super().__init__(
+            base=base,
+            linker_version=linker_version,
+            file_list="\n".join(sorted(spaced_file_list)),
+        )
 
 
 class PrimeFileConflictError(SnapcraftError):

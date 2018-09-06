@@ -97,16 +97,6 @@ class PartPatcher:
         for elf_file in self._elf_files:
             if not elf_file.is_linker_compatible(linker_version=linker_version):
                 linker_incompat[elf_file.path] = elf_file.get_required_glibc()
-        if linker_incompat:
-            formatted_items = [
-                "- {} (requires GLIBC {})".format(k, v)
-                for k, v in linker_incompat.items()
-            ]
-            logger.warning(
-                "The GLIBC version of the targeted core is {}. A newer "
-                "libc will be required for the following files:"
-                "\n{}".format(linker_version, "\n".join(formatted_items))
-            )
         return linker_incompat
 
     def _get_preferred_patchelf_path(self):
@@ -154,7 +144,11 @@ class PartPatcher:
         )
         # Even though we do this in patch, it does not hurt to check again
         if linker_incompat and not self._is_libc6_staged:
-            raise errors.StagePackageMissingError(package="libc6")
+            raise errors.IncompatibleBaseError(
+                base=self._core_base,
+                linker_version=linker_version,
+                file_list=linker_incompat,
+            )
 
     def patch(self) -> None:
         """Executes the patching process for elf_files.
@@ -192,6 +186,10 @@ class PartPatcher:
         if self._is_libc6_staged:
             dynamic_linker = elf.find_linker(
                 root_path=self._primedir, snap_base_path=self._snap_base_path
+            )
+            logger.warning(
+                "libc6 has been staged into the snap: only do this if you know what "
+                "what you are doing."
             )
         elif self._is_classic:
             dynamic_linker = self._project.get_core_dynamic_linker(

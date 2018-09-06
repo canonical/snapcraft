@@ -177,6 +177,7 @@ class CleanbuilderTestCase(LXDTestCase):
         mock_container_run.assert_has_calls(
             [
                 call(["python3", "-c", ANY]),
+                call(["cloud-init", "status", "--wait"], hide_output=True),
                 call(["apt-get", "update"]),
                 call(["mkdir", project_folder]),
                 call(["tar", "xvf", "project.tar"], cwd=project_folder),
@@ -188,7 +189,7 @@ class CleanbuilderTestCase(LXDTestCase):
             ]
         )
         # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(5))
+        self.assertThat(mock_container_run.call_count, Equals(6))
         self.fake_lxd.check_call_mock.assert_has_calls(
             [
                 call(
@@ -519,8 +520,8 @@ class SnapOutputTestCase(unit.TestCase):
             dict(
                 name="name",
                 version="version",
-                architectures=["amd64"],
-                expected="name_version_amd64.snap",
+                architectures=["arm64"],
+                expected="name_version_arm64.snap",
             ),
         ),
         (
@@ -528,8 +529,8 @@ class SnapOutputTestCase(unit.TestCase):
             dict(
                 name="name",
                 version=None,
-                architectures=["amd64"],
-                expected="name_amd64.snap",
+                architectures=["arm64"],
+                expected="name_arm64.snap",
             ),
         ),
     ]
