@@ -93,7 +93,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml.load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         expected_uname = (
             subprocess.check_output(["uname", "-srvmpio"])
@@ -110,7 +110,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         recorded_yaml_path = os.path.join(self.prime_dir, "snap", "manifest.yaml")
         with open(recorded_yaml_path) as recorded_yaml_file:
-            recorded_yaml = yaml.load(recorded_yaml_file)
+            recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
         with apt.Cache() as apt_cache:
             expected_package = "python3={}".format(
