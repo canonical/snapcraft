@@ -17,6 +17,7 @@
 import copy
 import collections
 import contextlib
+import enum
 import itertools
 import logging
 import os
@@ -61,6 +62,12 @@ _OPTIONAL_PACKAGE_KEYS = [
     "hooks",
     "environment",
 ]
+
+
+@enum.unique
+class Adapter(enum.Enum):
+    NONE = 1
+    LEGACY = 2
 
 
 class OctInt(int):
@@ -623,8 +630,8 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == ".desktop":
                 os.remove(os.path.join(gui_dir, f))
         for app_name, app in apps.items():
-            adapter = project_loader.Adapter[app.pop("adapter").upper()]
-            if adapter == project_loader.Adapter.LEGACY:
+            adapter = Adapter[app.pop("adapter").upper()]
+            if adapter == Adapter.LEGACY:
                 self._wrap_app(app_name, app)
             self._generate_desktop_file(app_name, app)
         return apps

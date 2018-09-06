@@ -318,8 +318,10 @@ properties:
           adapter:
             type: string
             description: What kind of wrapper to generate for the given command
-            format: adapter
-            default: "legacy"
+            enum:
+              - none
+              - legacy
+            default: legacy
           sockets:
             type: object
             additionalProperties: false

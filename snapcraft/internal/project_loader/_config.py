@@ -31,22 +31,10 @@ from ._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
 from ._env import runtime_env, snapcraft_global_environment, environment_to_replacements
-from . import Adapter, errors, grammar_processing, replace_attr
+from . import errors, grammar_processing, replace_attr
 
 
 logger = logging.getLogger(__name__)
-
-
-@jsonschema.FormatChecker.cls_checks("adapter")
-def _validate_adapter(instance):
-    try:
-        Adapter[instance.upper()]
-    except KeyError:
-        raise jsonschema.exceptions.ValidationError(
-            "invalid adapter", instance=instance
-        )
-
-    return True
 
 
 @jsonschema.FormatChecker.cls_checks("icon-path")
