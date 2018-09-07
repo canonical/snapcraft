@@ -110,13 +110,13 @@ class RunnerTestCase(unit.TestCase):
 
         self.assertThat(os.path.join("builddir", "fake-build"), FileExists())
 
-    def test_snapcraftctl_alias_if_snap(self):
+    def test_snapcraft_utils_in_path_if_snap(self):
         self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         os.mkdir("builddir")
 
         runner = _runner.Runner(
-            part_properties={"prepare": "alias snapcraftctl > definition"},
+            part_properties={"prepare": "echo $PATH > path"},
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -124,15 +124,14 @@ class RunnerTestCase(unit.TestCase):
             builtin_functions={},
         )
 
-        with mock.patch("os.path.exists", return_value=True):
-            runner.prepare()
+        runner.prepare()
 
-        expected_snapcrafctl = "/snap/snapcraft/current/bin/snapcraftctl"
+        expected_path_segment = "/snap/snapcraft/current/bin/snapcraft-utils"
 
-        self.assertThat(os.path.join("builddir", "definition"), FileExists())
+        self.assertThat(os.path.join("builddir", "path"), FileExists())
         self.assertThat(
-            os.path.join("builddir", "definition"),
-            FileContains("snapcraftctl={!r}\n".format(expected_snapcrafctl)),
+            os.path.join("builddir", "path"),
+            FileContains(matcher=Contains(expected_path_segment)),
         )
 
     def test_old_build(self):

@@ -166,6 +166,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "false")
         )
 
+        # Don't let the managed host variable leak into tests
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_MANAGED_HOST"))
+
         machine = os.environ.get("SNAPCRAFT_TEST_MOCK_MACHINE", None)
         self.base_environment = fixture_setup.FakeBaseEnvironment(machine=machine)
         self.useFixture(self.base_environment)

@@ -32,7 +32,6 @@ from testtools.matchers import (
     Equals,
     FileExists,
     HasLength,
-    LessThan,
     MatchesRegex,
     Not,
 )
@@ -702,180 +701,15 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                 "The absolute path to python was not replaced as expected",
             )
 
-    def _verify_run_environment(self, plugin):
-        python_path = os.path.join(
-            plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
-        )
-        os.makedirs(python_path)
-
-        # Joining and re-splitting to get hacked script in there as well
-        environment = "\n".join(plugin.env(plugin.installdir)).split("\n")
-
-        self.assertThat(
-            environment,
-            Contains("PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}".format(python_path)),
-        )
-
-        self.assertThat(
-            environment,
-            Contains("ROS_MASTER_URI={}".format(self.properties.catkin_ros_master_uri)),
-        )
-
-        self.assertThat(environment, Contains("ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros"))
-
-        self.assertThat(environment, Contains("LC_ALL=C.UTF-8"))
-
-        # Verify that LD_LIBRARY_PATH was set before setup.sh is sourced
-        ld_library_path_index = [
-            i for i, line in enumerate(environment) if "LD_LIBRARY_PATH" in line
-        ][0]
-        source_setup_index = [
-            i for i, line in enumerate(environment) if "setup.sh" in line
-        ][0]
-        self.assertThat(ld_library_path_index, LessThan(source_setup_index))
-
-        return environment
-
-    @mock.patch.object(
-        catkin.CatkinPlugin, "_source_setup_sh", return_value="test-source-setup.sh"
-    )
-    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="bar")
-    def test_run_environment(self, run_mock, source_setup_sh_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-
-        environment = self._verify_run_environment(plugin)
-
-        source_setup_sh_mock.assert_called_with(plugin.installdir, None)
-        self.assertThat(environment, Contains("test-source-setup.sh"))
-
-    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="bar")
-    def test_run_environment_with_underlay(self, run_mock):
-        self.properties.underlay = {
-            "build-path": "test-build-path",
-            "run-path": "test-run-path",
-        }
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-
-        environment = self._verify_run_environment(plugin)
-
-        setup_path = os.path.join(plugin.rosdir, "snapcraft-setup.sh")
-        lines_of_interest = [
-            "if [ -f {} ]; then".format(setup_path),
-            ". {}".format(setup_path),
-            "fi",
-        ]
-        actual_lines = []
-
-        for line in environment:
-            line = line.strip()
-            if line in lines_of_interest:
-                actual_lines.append(line)
-
-        self.assertThat(
-            actual_lines,
-            Equals(lines_of_interest),
-            "Expected snapcraft-setup.sh to be sourced after checking for its "
-            "existence",
-        )
-
-    @mock.patch.object(
-        catkin.CatkinPlugin, "_source_setup_sh", return_value="test-source-setup.sh"
-    )
-    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="bar")
-    def test_run_environment_with_catkin_ros_master_uri(
-        self, run_mock, source_setup_sh_mock
-    ):
-
-        self.properties.catkin_ros_master_uri = "http://rosmaster:11311"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-
-        self._verify_run_environment(plugin)
-
-    def _evaluate_environment(self, predefinition=""):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-
-        python_path = os.path.join(
-            plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
-        )
-        os.makedirs(python_path)
-
-        # Save plugin environment off into a file and read the evaluated
-        # version back in, thus obtaining the real environment
-        with tempfile.NamedTemporaryFile(mode="w+") as f:
-            f.write(predefinition)
-            f.write("\n".join(["export " + e for e in plugin.env(plugin.installdir)]))
-            f.write('python3 -c "import os; print(dict(os.environ))"')
-            f.flush()
-            return ast.literal_eval(
-                subprocess.check_output(["/bin/sh", f.name])
-                .decode(sys.getfilesystemencoding())
-                .strip()
-            )
-
-    def _pythonpath_segments(self, environment):
-        # Verify that the environment contains PYTHONPATH, and return its
-        # segments as a list.
-        self.assertThat(environment, Contains("PYTHONPATH"))
-        return environment["PYTHONPATH"].split(":")
-
-    def _list_contains_empty_items(self, item_list):
-        empty_items = [i for i in item_list if not i.strip()]
-        return len(empty_items) > 0
-
-    def test_pythonpath_if_not_defined(self):
-        environment = self._evaluate_environment()
-        segments = self._pythonpath_segments(environment)
-        self.assertFalse(
-            self._list_contains_empty_items(segments),
-            "PYTHONPATH unexpectedly contains empty segments: {}".format(
-                environment["PYTHONPATH"]
-            ),
-        )
-
-    def test_pythonpath_if_null(self):
-        environment = self._evaluate_environment(
-            textwrap.dedent(
-                """
-            export PYTHONPATH=
-        """
-            )
-        )
-
-        segments = self._pythonpath_segments(environment)
-        self.assertFalse(
-            self._list_contains_empty_items(segments),
-            "PYTHONPATH unexpectedly contains empty segments: {}".format(
-                environment["PYTHONPATH"]
-            ),
-        )
-
-    def test_pythonpath_if_not_empty(self):
-        environment = self._evaluate_environment(
-            textwrap.dedent(
-                """
-            export PYTHONPATH=foo
-        """
-            )
-        )
-
-        segments = self._pythonpath_segments(environment)
-        self.assertFalse(
-            self._list_contains_empty_items(segments),
-            "PYTHONPATH unexpectedly contains empty segments: {}".format(
-                environment["PYTHONPATH"]
-            ),
-        )
-        self.assertThat(segments, Contains("foo"))
-
     @mock.patch.object(
         catkin.CatkinPlugin, "_source_setup_sh", return_value="test-source-setup"
     )
     def test_generate_snapcraft_sh(self, source_setup_sh_mock):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
 
-        plugin._generate_snapcraft_setup_sh("test-root", None)
+        plugin._generate_snapcraft_setup_sh("./test.sh", "test-root", None)
         source_setup_sh_mock.assert_called_with("test-root", None)
-        with open(os.path.join(plugin.rosdir, "snapcraft-setup.sh"), "r") as f:
+        with open("test.sh", "r") as f:
             self.assertThat(f.read(), Equals("test-source-setup"))
 
     def test_source_setup_sh(self):
@@ -929,8 +763,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         ]
         actual_lines = []
 
-        plugin._generate_snapcraft_setup_sh("test-root", "test-underlay")
-        with open(os.path.join(plugin.rosdir, "snapcraft-setup.sh"), "r") as f:
+        plugin._generate_snapcraft_setup_sh("./test.sh", "test-root", "test-underlay")
+        with open("test.sh", "r") as f:
             for line in f:
                 line = line.strip()
                 if line in lines_of_interest:
@@ -1003,6 +837,162 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                 self.assertThat(f.read(), Equals(file_info["expected"]))
 
 
+class PullEnvTest(CatkinPluginBaseTestCase):
+    def test_environment(self):
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        environment = plugin.get_pull_env()
+        self.assertThat(
+            environment["ROS_HOME"], Equals(os.path.join(tempfile.gettempdir(), "ros"))
+        )
+        self.assertThat(environment["LC_ALL"], Equals("C.UTF-8"))
+
+
+class BuildEnvTest(CatkinPluginBaseTestCase):
+    def test_environment(self):
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        python_path = os.path.join(
+            plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
+        )
+        os.makedirs(python_path)
+
+        environment = plugin.get_build_env()
+
+        self.assertThat(
+            environment["PYTHONPATH"],
+            Equals("{}${{PYTHONPATH:+:$PYTHONPATH}}".format(python_path)),
+        )
+
+        self.assertThat(
+            environment["ROS_HOME"], Equals(os.path.join(tempfile.gettempdir(), "ros"))
+        )
+        self.assertThat(environment["LC_ALL"], Equals("C.UTF-8"))
+        self.assertThat(environment, Contains("LD_LIBRARY_PATH"))
+
+
+class SnapEnvTest(CatkinPluginBaseTestCase):
+    def test_environment(self):
+        python_path = os.path.join(
+            self.project_options.prime_dir, "usr", "lib", "python2.7", "dist-packages"
+        )
+        os.makedirs(python_path)
+
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+
+        environment = plugin.get_snap_env()
+
+        self.assertThat(
+            environment["PYTHONPATH"],
+            Equals(
+                "{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
+                    os.path.join("$SNAP", "usr", "lib", "python2.7", "dist-packages")
+                )
+            ),
+        )
+
+        self.assertThat(
+            environment["ROS_HOME"], Equals(os.path.join("$SNAP_USER_DATA", "ros"))
+        )
+        self.assertThat(environment["LC_ALL"], Equals("C.UTF-8"))
+        self.assertThat(environment, Contains("LD_LIBRARY_PATH"))
+
+    def test_environment_with_ros_master_uri(self):
+        python_path = os.path.join(
+            self.project_options.prime_dir, "usr", "lib", "python2.7", "dist-packages"
+        )
+        os.makedirs(python_path)
+
+        self.properties.catkin_ros_master_uri = "http://rosmaster:11311"
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        environment = plugin.get_snap_env()
+
+        self.assertThat(environment["ROS_MASTER_URI"], Equals("http://rosmaster:11311"))
+
+
+class PythonPathTestCase(CatkinPluginBaseTestCase):
+
+    scenarios = [
+        ("build env", {"env_function": "get_build_env"}),
+        ("snap env", {"env_function": "get_snap_env"}),
+    ]
+
+    def _evaluate_environment(self, predefinition=""):
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+
+        python_path = os.path.join("usr", "lib", "python2.7", "dist-packages")
+        os.makedirs(os.path.join(plugin.installdir, python_path))
+        os.makedirs(os.path.join(self.project_options.prime_dir, python_path))
+
+        # Save plugin environment off into a file and read the evaluated
+        # version back in, thus obtaining the real environment
+        env = getattr(plugin, self.env_function)()
+        with tempfile.NamedTemporaryFile(mode="w+") as f:
+            f.write(predefinition)
+            f.write("\n".join(['export {}="{}"'.format(k, v) for k, v in env.items()]))
+            f.write('\npython3 -c "import os; print(dict(os.environ))"')
+            f.flush()
+            f.seek(0)
+            return ast.literal_eval(
+                subprocess.check_output(["/bin/sh", f.name])
+                .decode(sys.getfilesystemencoding())
+                .strip()
+            )
+
+    def _pythonpath_segments(self, environment):
+        # Verify that the environment contains PYTHONPATH, and return its
+        # segments as a list.
+        self.assertThat(environment, Contains("PYTHONPATH"))
+        return environment["PYTHONPATH"].split(":")
+
+    def _list_contains_empty_items(self, item_list):
+        empty_items = [i for i in item_list if not i.strip()]
+        return len(empty_items) > 0
+
+    def test_pythonpath_if_not_defined(self):
+        environment = self._evaluate_environment()
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            "PYTHONPATH unexpectedly contains empty segments: {}".format(
+                environment["PYTHONPATH"]
+            ),
+        )
+
+    def test_pythonpath_if_null(self):
+        environment = self._evaluate_environment(
+            textwrap.dedent(
+                """
+            export PYTHONPATH=
+        """
+            )
+        )
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            "PYTHONPATH unexpectedly contains empty segments: {}".format(
+                environment["PYTHONPATH"]
+            ),
+        )
+
+    def test_pythonpath_if_not_empty(self):
+        environment = self._evaluate_environment(
+            textwrap.dedent(
+                """
+            export PYTHONPATH=foo
+        """
+            )
+        )
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            "PYTHONPATH unexpectedly contains empty segments: {}".format(
+                environment["PYTHONPATH"]
+            ),
+        )
+        self.assertThat(segments, Contains("foo"))
+
+
 class PullTestCase(CatkinPluginBaseTestCase):
 
     scenarios = [
@@ -1047,13 +1037,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         self.wstool_mock.assert_not_called()
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                plugin.installdir, self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(plugin.partdir, "snapcraft-test-part-runner.sh"),
+            plugin.installdir,
+            self.expected_underlay_path,
+        )
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -1089,13 +1077,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         self.wstool_mock.assert_not_called()
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                plugin.installdir, self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(plugin.partdir, "snapcraft-test-part-runner.sh"),
+            plugin.installdir,
+            self.expected_underlay_path,
+        )
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -1137,13 +1123,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         self.wstool_mock.assert_not_called()
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                plugin.installdir, self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(plugin.partdir, "snapcraft-test-part-runner.sh"),
+            plugin.installdir,
+            self.expected_underlay_path,
+        )
 
         # Verify that roscore was installed
         self.ubuntu_mock.return_value.get.assert_called_with({"ros-core-dependency"})
@@ -1181,13 +1165,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
             ]
         )
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                plugin.installdir, self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(plugin.partdir, "snapcraft-test-part-runner.sh"),
+            plugin.installdir,
+            self.expected_underlay_path,
+        )
 
         # Verify that no .deb packages were installed
         self.assertTrue(
@@ -1217,13 +1199,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
             "2", plugin.partdir, plugin.installdir, plugin.project.stage_dir
         )
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                plugin.installdir, self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(plugin.partdir, "snapcraft-test-part-runner.sh"),
+            plugin.installdir,
+            self.expected_underlay_path,
+        )
 
         # Verify that dependencies were found as expected. TODO: Would really
         # like to use ANY here instead of verifying explicit arguments, but
@@ -1468,13 +1448,16 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
 
         self.assertTrue(use_python_mock.called)
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                "$SNAP", self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(
+                self.plugin.installdir,
+                "snap",
+                "command-chain",
+                "snapcraft-test-part-runner.sh",
+            ),
+            "$SNAP",
+            self.expected_underlay_path,
+        )
 
         for file_info in files:
             path = os.path.join(self.plugin.rosdir, file_info["path"])
@@ -1510,13 +1493,16 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
 
         self.assertTrue(use_python_mock.called)
 
-        # This shouldn't be called unless there's an underlay
-        if self.properties.underlay:
-            generate_setup_mock.assert_called_once_with(
-                "$SNAP", self.expected_underlay_path
-            )
-        else:
-            generate_setup_mock.assert_not_called()
+        generate_setup_mock.assert_called_once_with(
+            os.path.join(
+                self.plugin.installdir,
+                "snap",
+                "command-chain",
+                "snapcraft-test-part-runner.sh",
+            ),
+            "$SNAP",
+            self.expected_underlay_path,
+        )
 
         expected = "CMAKE_PREFIX_PATH = []\n"
 

@@ -65,6 +65,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       to http://localhost:11311.
 """
 
+import collections
 import contextlib
 import glob
 import os
@@ -74,6 +75,7 @@ import re
 import shutil
 import subprocess
 import textwrap
+from typing import List
 
 import snapcraft
 from snapcraft.plugins import _ros
@@ -242,6 +244,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         self._catkin_path = os.path.join(self.partdir, "catkin")
         self._wstool_path = os.path.join(self.partdir, "wstool")
 
+        runner_name = "snapcraft-{}-runner.sh".format(name)
+        self._snapcraft_runner_path = os.path.join(self.partdir, runner_name)
+        self._snap_runner_path = os.path.join("snap", "command-chain", runner_name)
+
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
         # containing another subdirectory called the "source space." By
@@ -273,75 +279,125 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 )
             )
 
-    def env(self, root):
-        """Runtime environment for ROS binaries and services."""
+    def get_pull_env(self) -> "collections.OrderedDict[str, str]":
+        return collections.OrderedDict(
+            [
+                # Various ROS tools (e.g. rospack, roscore) keep a cache or a log, and use
+                # $ROS_HOME to determine where to put them.
+                ("ROS_HOME", os.path.join(tempfile.gettempdir(), "ros")),
+                # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll temporarily
+                # work around that bug by forcing the locale to C.UTF-8.
+                ("LC_ALL", "C.UTF-8"),
+            ]
+        )
 
-        paths = common.get_library_paths(root, self.project.arch_triplet)
+    def get_build_env(self) -> "collections.OrderedDict[str, str]":
+        paths = common.get_library_paths(self.installdir, self.project.arch_triplet)
         ld_library_path = formatting_utils.combine_paths(
             paths, prepend="", separator=":"
         )
 
-        env = [
-            # This environment variable tells ROS nodes where to find ROS
-            # master. It does not affect ROS master, however-- this is just the
-            # URI.
-            "ROS_MASTER_URI={}".format(self.options.catkin_ros_master_uri),
-            # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
-            # and use $ROS_HOME to determine where to put them.
-            "ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros",
-            # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll
-            # temporarily work around that bug by forcing the locale to
-            # C.UTF-8.
-            "LC_ALL=C.UTF-8",
-            # The Snapcraft Core will ensure that we get a good LD_LIBRARY_PATH
-            # overall, but it defines it after this function runs. Some ROS
-            # tools will cause binaries to be run when we source the setup.sh,
-            # below, so we need to have a sensible LD_LIBRARY_PATH before then.
-            "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}".format(ld_library_path),
+        return collections.OrderedDict(
+            [
+                # Various ROS tools (e.g. rospack, roscore) keep a cache or a log, and use
+                # $ROS_HOME to determine where to put them.
+                ("ROS_HOME", os.path.join(tempfile.gettempdir(), "ros")),
+                # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll temporarily
+                # work around that bug by forcing the locale to C.UTF-8.
+                ("LC_ALL", "C.UTF-8"),
+                # The Snapcraft Core will ensure that we get a good LD_LIBRARY_PATH overall,
+                # but it defines it after this function runs. Some ROS tools will cause
+                # binaries to be run when we source the setup.sh in the command chain, so we
+                # need to have a sensible LD_LIBRARY_PATH before then.
+                ("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:{}".format(ld_library_path)),
+                # The setup.sh we source in the command chain requires the in-snap python.
+                # Make sure it's in the PATH before it's run.
+                ("PATH", "$PATH:{}/usr/bin".format(self.installdir)),
+                # The ROS packaging system tools (e.g. rospkg, etc.) don't go into the ROS
+                # install path (/opt/ros/$distro), so we need the PYTHONPATH to include the
+                # dist-packages in /usr/lib as well.
+                #
+                # Note: Empty segments in PYTHONPATH are interpreted as `.`, thus
+                # adding the current working directory to the PYTHONPATH. That is
+                # not desired in this situation, so take proper precautions when
+                # expanding PYTHONPATH: only add it if it's not empty.
+                (
+                    "PYTHONPATH",
+                    "{}${{PYTHONPATH:+:$PYTHONPATH}}".format(
+                        common.get_python2_path(self.installdir)
+                    ),
+                ),
+            ]
+        )
+
+    def get_build_command_chain(self) -> List[str]:
+        return [self._snapcraft_runner_path]
+
+    def get_prime_env(self) -> "collections.OrderedDict[str, str]":
+        # The priming environment and command chain are used to ensure binaries used in
+        # commands exist. However, we can't make a Catkin command chain that will work
+        # in both the priming area and the final snap. Instead, just re-use the build
+        # environment and chain to verify apps are valid.
+        return self.get_build_env()
+
+    def get_prime_command_chain(self) -> List[str]:
+        # The priming environment and command chain are used to ensure binaries used in
+        # commands exist. However, we can't make a Catkin command chain that will work
+        # in both the priming area and the final snap. Instead, just re-use the build
+        # environment and chain to verify apps are valid.
+        return self.get_build_command_chain()
+
+    def get_snap_env(self) -> "collections.OrderedDict[str, str]":
+        paths = common.get_library_paths(
+            self.project.prime_dir, self.project.arch_triplet
+        )
+        paths = [
+            os.path.join("$SNAP", os.path.relpath(p, self.project.prime_dir))
+            for p in paths
         ]
+        ld_library_path = formatting_utils.combine_paths(
+            paths, prepend="", separator=":"
+        )
+        python_path = os.path.join(
+            "$SNAP",
+            os.path.relpath(
+                common.get_python2_path(self.project.prime_dir), self.project.prime_dir
+            ),
+        )
 
-        # There's a chicken and egg problem here, everything run gets an
-        # env built, even package installation, so the first runs for these
-        # will likely fail.
-        try:
-            # The ROS packaging system tools (e.g. rospkg, etc.) don't go
-            # into the ROS install path (/opt/ros/$distro), so we need the
-            # PYTHONPATH to include the dist-packages in /usr/lib as well.
-            #
-            # Note: Empty segments in PYTHONPATH are interpreted as `.`, thus
-            # adding the current working directory to the PYTHONPATH. That is
-            # not desired in this situation, so take proper precautions when
-            # expanding PYTHONPATH: only add it if it's not empty.
-            env.append(
-                "PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}".format(
-                    common.get_python2_path(root)
-                )
-            )
-        except errors.SnapcraftEnvironmentError as e:
-            logger.debug(e)
+        return collections.OrderedDict(
+            [
+                # This environment variable tells ROS nodes where to find ROS master. It
+                # does not affect ROS master, however-- this is just the URI.
+                ("ROS_MASTER_URI", self.options.catkin_ros_master_uri),
+                # Various ROS tools (e.g. rospack, roscore) keep a cache or a log, and use
+                # $ROS_HOME to determine where to put them.
+                ("ROS_HOME", "$SNAP_USER_DATA/ros"),
+                # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll temporarily
+                # work around that bug by forcing the locale to C.UTF-8.
+                ("LC_ALL", "C.UTF-8"),
+                # The Snapcraft Core will ensure that we get a good LD_LIBRARY_PATH overall,
+                # but it defines it after this function runs. Some ROS tools will cause
+                # binaries to be run when we source the setup.sh in the command chain, so we
+                # need to have a sensible LD_LIBRARY_PATH before then.
+                ("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:{}".format(ld_library_path)),
+                # The setup.sh we source in the command chain requires the in-snap python.
+                # Make sure it's in the PATH before it's run.
+                ("PATH", "$PATH:{}/usr/bin".format(self.installdir)),
+                # The ROS packaging system tools (e.g. rospkg, etc.) don't go into the ROS
+                # install path (/opt/ros/$distro), so we need the PYTHONPATH to include the
+                # dist-packages in /usr/lib as well.
+                #
+                # Note: Empty segments in PYTHONPATH are interpreted as `.`, thus
+                # adding the current working directory to the PYTHONPATH. That is
+                # not desired in this situation, so take proper precautions when
+                # expanding PYTHONPATH: only add it if it's not empty.
+                ("PYTHONPATH", "{}${{PYTHONPATH:+:$PYTHONPATH}}".format(python_path)),
+            ]
+        )
 
-        # The setup.sh we source below requires the in-snap python. Here we
-        # make sure it's in the PATH before it's run.
-        env.append("PATH=$PATH:{}/usr/bin".format(root))
-
-        if self.options.underlay:
-            script = textwrap.dedent(
-                """
-                if [ -f {snapcraft_setup} ]; then
-                    . {snapcraft_setup}
-                fi
-            """
-            ).format(snapcraft_setup=os.path.join(self.rosdir, "snapcraft-setup.sh"))
-        else:
-            script = self._source_setup_sh(root, None)
-
-        # Each of these lines is prepended with an `export` when the
-        # environment is actually generated. In order to inject real shell code
-        # we have to hack it in by appending it on the end of an item already
-        # in the environment. FIXME: There should be a better way to do this.
-        env[-1] = env[-1] + "\n\n" + script
-
-        return env
+    def get_snap_command_chain(self) -> List[str]:
+        return [self._snap_runner_path]
 
     def pull(self):
         """Copy source into build directory and fetch dependencies.
@@ -428,7 +484,9 @@ class CatkinPlugin(snapcraft.BasePlugin):
             )
             catkin.setup()
 
-            self._generate_snapcraft_setup_sh(self.installdir, underlay_build_path)
+        self._generate_snapcraft_setup_sh(
+            self._snapcraft_runner_path, self.installdir, underlay_build_path
+        )
 
         # Pull our own compilers so we use ones that match up with the version
         # of ROS we're using.
@@ -522,6 +580,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._catkin_path)
 
+        # Remove the runner
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(self._snapcraft_runner_path)
+
         # Clean pip packages, if any
         self._pip.clean_packages()
 
@@ -559,7 +621,9 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # (LP: #1660852). So we'll backup all args, source the setup.sh, then
         # restore all args for the wrapper's `exec` line.
         return textwrap.dedent(
-            """
+            """\
+            #!/bin/sh
+
             # Shell quote arbitrary string by replacing every occurrence of '
             # with '\\'', then put ' at the beginning and end of the string.
             # Prepare yourself, fun regex ahead.
@@ -575,16 +639,18 @@ class CatkinPlugin(snapcraft.BasePlugin):
             set --
             {}
             eval "set -- $BACKUP_ARGS"
-        """
+            exec "$@"
+            """
         ).format(
             source_script
         )  # noqa
 
-    def _generate_snapcraft_setup_sh(self, root, underlay_path):
+    def _generate_snapcraft_setup_sh(self, path, root, underlay_path):
         script = self._source_setup_sh(root, underlay_path)
-        os.makedirs(self.rosdir, exist_ok=True)
-        with open(os.path.join(self.rosdir, "snapcraft-setup.sh"), "w") as f:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
             f.write(script)
+        os.chmod(path, 0o755)
 
     @property
     def rosdir(self):
@@ -693,9 +759,14 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 f.truncate()
                 f.write(replaced)
 
+        underlay_run_path = None
         if self.options.underlay:
             underlay_run_path = self.options.underlay["run-path"]
-            self._generate_snapcraft_setup_sh("$SNAP", underlay_run_path)
+        self._generate_snapcraft_setup_sh(
+            os.path.join(self.installdir, self._snap_runner_path),
+            "$SNAP",
+            underlay_run_path,
+        )
 
         # If pip dependencies were installed, generate a sitecustomize that
         # allows access to them.
