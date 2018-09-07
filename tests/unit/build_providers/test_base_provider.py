@@ -17,7 +17,7 @@
 import os
 from unittest.mock import call
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, EndsWith
 
 from . import BaseProviderBaseTest, ProviderImpl
 
@@ -28,7 +28,12 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         self.assertThat(provider.project, Equals(self.project))
         self.assertThat(provider.instance_name, Equals(self.instance_name))
-        self.assertThat(provider.project_dir, Equals("project-name"))
+        self.assertThat(
+            provider.provider_project_dir,
+            EndsWith(
+                os.path.join("snapcraft", "projects", "stub-provider", "project-name")
+            ),
+        )
         self.assertThat(
             provider.snap_filename,
             Equals("project-name_{}.snap".format(self.project.deb_arch)),
@@ -81,7 +86,9 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         self.snap_injector_mock.assert_called_once_with(
             snap_dir=provider._SNAPS_MOUNTPOINT,
-            registry_filepath=None,
+            registry_filepath=os.path.join(
+                provider.provider_project_dir, "snap-registry.yaml"
+            ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
             snap_dir_mounter=provider._mount_snaps_directory,

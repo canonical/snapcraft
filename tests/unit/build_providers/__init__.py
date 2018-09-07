@@ -53,6 +53,30 @@ class ProviderImpl(Provider):
     def _push_file(self, *, source: str, destination: str) -> None:
         self.push_file_mock(source=source, destination=destination)
 
+    def _get_provider_name(self) -> str:
+        return "stub-provider"
+
+    def _umount(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def build_project(self) -> None:
+        raise NotImplementedError("test stub not implemented")
+
+    def create(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def destroy(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def mount_project(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def provision_project(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def retrieve_snap(self):
+        raise NotImplementedError("test stub not implemented")
+
 
 def get_project() -> Project:
     with open("snapcraft.yaml", "w") as snapcraft_file:
@@ -65,10 +89,7 @@ class BaseProviderBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.instance_name = "ridicoulus-hours"
-        patcher = mock.patch("petname.Generate", return_value=self.instance_name)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
             "snapcraft.internal.build_providers._base_provider.SnapInjector"

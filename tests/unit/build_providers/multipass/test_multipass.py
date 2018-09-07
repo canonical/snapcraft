@@ -28,7 +28,7 @@ _DEFAULT_INSTANCE_INFO = dedent(
         "errors": [
         ],
         "info": {
-            "ridicoulus-hours": {
+            "snapcraft-project-name": {
                 "disks": {
                     "sda1": {
                         "total": "5136297984",
@@ -72,38 +72,49 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._base_provider.Provider.clean_project",
+            return_value=True,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         # default data returned for info
         self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
 
-    def test_instance_with_contextmanager(self):
-        with Multipass(project=self.project, echoer=self.echoer_mock) as instance:
+    def test_ephemeral_instance_with_contextmanager(self):
+        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
+            provider_name="multipass", exit_code=1
+        )
+
+        with Multipass(
+            project=self.project, echoer=self.echoer_mock, is_ephemeral=True
+        ) as instance:
             instance.provision_project("source.tar")
             instance.build_project()
             instance.retrieve_snap()
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
-            image="16.04", instance_name=self.instance_name
+            image="16.04", instance_name=self.instance_name, cloud_init=mock.ANY
         )
         # Given SnapInjector is mocked, we only need to verify the commands
         # called from the Multipass class.
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    instance_name=self.instance_name, command=["mkdir", "project-name"]
+                    instance_name=self.instance_name, command=["mkdir", "~/project"]
                 ),
                 mock.call(
                     instance_name=self.instance_name,
-                    command=["tar", "-xvf", "source.tar", "-C", "project-name"],
+                    command=["tar", "-xvf", "source.tar", "-C", "~/project"],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
                     command=[
-                        "sh",
-                        "-c",
-                        "cd project-name; /snap/bin/snapcraft "
-                        "snap --output project-name_{}.snap".format(
-                            self.project.deb_arch
-                        ),
+                        "snapcraft",
+                        "snap",
+                        "--output",
+                        "project-name_{}.snap".format(self.project.deb_arch),
                     ],
                 ),
             ]
@@ -120,7 +131,7 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
                 mock.call(
                     destination="project-name_{}.snap".format(self.project.deb_arch),
-                    source="{}:project-name/project-name_{}.snap".format(
+                    source="{}:~/project/project-name_{}.snap".format(
                         self.instance_name, self.project.deb_arch
                     ),
                 ),
@@ -130,7 +141,7 @@ class MultipassTest(BaseProviderBaseTest):
             instance_name=self.instance_name
         )
         self.multipass_cmd_mock().delete.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, purge=True
         )
 
     def test_provision_project(self):
@@ -143,11 +154,11 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    instance_name=self.instance_name, command=["mkdir", "project-name"]
+                    instance_name=self.instance_name, command=["mkdir", "~/project"]
                 ),
                 mock.call(
                     instance_name=self.instance_name,
-                    command=["tar", "-xvf", "source.tar", "-C", "project-name"],
+                    command=["tar", "-xvf", "source.tar", "-C", "~/project"],
                 ),
             ]
         )
@@ -170,10 +181,10 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_called_once_with(
             instance_name=self.instance_name,
             command=[
-                "sh",
-                "-c",
-                "cd project-name; /snap/bin/snapcraft "
-                "snap --output project-name_{}.snap".format(self.project.deb_arch),
+                "snapcraft",
+                "snap",
+                "--output",
+                "project-name_{}.snap".format(self.project.deb_arch),
             ],
         )
 
@@ -192,7 +203,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().copy_files.assert_called_once_with(
             destination="project-name_{}.snap".format(self.project.deb_arch),
-            source="{}:project-name/project-name_{}.snap".format(
+            source="{}:~/project/project-name_{}.snap".format(
                 self.instance_name, self.project.deb_arch
             ),
         )

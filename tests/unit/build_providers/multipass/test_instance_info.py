@@ -28,7 +28,10 @@ from tests import unit
 class InstanceInfoGeneralTest(unit.TestCase):
     def test_initialize(self):
         instance_info = InstanceInfo(
-            name="instance-name", state="RUNNING", image_release="16.04 LTS"
+            name="instance-name",
+            state="RUNNING",
+            image_release="16.04 LTS",
+            mounts=dict(),
         )
 
         self.assertThat(instance_info.name, Equals("instance-name"))
@@ -38,10 +41,24 @@ class InstanceInfoGeneralTest(unit.TestCase):
 
     def test_instance_is_stopped(self):
         instance_info = InstanceInfo(
-            name="instance-name", state="STOPPED", image_release="16.04 LTS"
+            name="instance-name",
+            state="STOPPED",
+            image_release="16.04 LTS",
+            mounts=dict(),
         )
 
         self.assertThat(instance_info.is_stopped(), Equals(True))
+
+    def test_instance_is_mounted(self):
+        instance_info = InstanceInfo(
+            name="instance-name",
+            state="STOPPED",
+            image_release="16.04 LTS",
+            mounts=dict(project=dict()),
+        )
+
+        self.assertThat(instance_info.is_mounted("project"), Equals(True))
+        self.assertThat(instance_info.is_mounted("not-project"), Equals(False))
 
 
 class InstanceInfoFromJSONTest(unit.TestCase):
