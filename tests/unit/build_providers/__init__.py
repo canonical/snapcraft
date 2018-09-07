@@ -31,6 +31,10 @@ class ProviderImpl(Provider):
         self.mount_mock = mock.Mock()
         self.unmount_mock = mock.Mock()
         self.push_file_mock = mock.Mock()
+        self.create_mock = mock.Mock()
+        self.destroy_mock = mock.Mock()
+        self.mount_project_mock = mock.Mock()
+        self.shell_mock = mock.Mock()
 
     def _run(self, command, hide_output=False):
         self.run_mock(command)
@@ -63,13 +67,14 @@ class ProviderImpl(Provider):
         raise NotImplementedError("test stub not implemented")
 
     def create(self):
-        raise NotImplementedError("test stub not implemented")
+        self.create_mock("create")
+        # raise EnvironmentError(self.create_mock.call_args)
 
     def destroy(self):
-        raise NotImplementedError("test stub not implemented")
+        self.destroy_mock("destroy")
 
     def mount_project(self):
-        raise NotImplementedError("test stub not implemented")
+        self.mount_project_mock("mount-project")
 
     def provision_project(self):
         raise NotImplementedError("test stub not implemented")
@@ -78,7 +83,7 @@ class ProviderImpl(Provider):
         raise NotImplementedError("test stub not implemented")
 
     def shell(self):
-        raise NotImplementedError("test stub not implemented")
+        self.shell_mock("shell")
 
 
 def get_project() -> Project:
