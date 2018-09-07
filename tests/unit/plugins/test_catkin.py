@@ -355,8 +355,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             str(raised),
             Equals(
                 "Unsupported rosdistro: 'invalid'. The supported ROS "
-                "distributions are 'indigo', 'jade', 'kinetic', and "
-                "'lunar'"
+                "distributions are 'indigo', 'jade', 'kinetic', 'lunar', "
+                "and 'melodic'"
             ),
         )
 
@@ -379,6 +379,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.properties.rosdistro = "lunar"
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
         self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
+    
+    def test_get_stage_sources_melodic(self):
+        self.properties.rosdistro = "melodic"
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        self.assertTrue("bionic" in plugin.PLUGIN_STAGE_SOURCES)
+
 
     @mock.patch("snapcraft.plugins.catkin.Compilers")
     def test_pull_invalid_dependency(self, compilers_mock):
