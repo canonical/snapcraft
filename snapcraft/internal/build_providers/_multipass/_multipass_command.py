@@ -153,6 +153,18 @@ class MultipassCommand:
                 exit_code=process_error.returncode,
             ) from process_error
 
+    def shell(self, *, instance_name: str) -> None:
+        """Passthrough for running multipass shell.
+
+        :param str instance_name: the name of the instance to execute command.
+        """
+        try:
+            _run([self.provider_cmd, "shell", instance_name])
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderShellError(
+                provider_name=self.provider_name, exit_code=process_error.returncode
+            ) from process_error
+
     def mount(self, *, source: str, target: str) -> None:
         """Passthrough for running multipass mount.
 
