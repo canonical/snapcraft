@@ -24,7 +24,7 @@ from testtools.matchers import Contains, Equals, MatchesRegex
 
 from . import ProjectLoaderBaseTest
 from tests import fixture_setup, unit
-from snapcraft.project import Project
+from snapcraft.project import Project, errors as project_errors
 from snapcraft.internal.errors import PluginError
 from snapcraft.internal.project_loader import load_config, errors
 from snapcraft.internal.project_loader import Validator
@@ -939,6 +939,30 @@ class VersionTest(ProjectLoaderBaseTest):
                 "schema: 'abcdefghijklmnopqrstuvwxyz1234567' is too long "
                 "(maximum length is 32)"
             ),
+        )
+
+    def test_invalid_yaml_version_unhashable(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: {{invalid}}
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+            """
+        )
+        raised = self.assertRaises(
+            project_errors.YamlValidationError,
+            self.make_snapcraft_project,
+            snapcraft_yaml,
+        )
+
+        self.assertThat(
+            raised.message, Equals("found unhashable key, line 2, column 10")
         )
 
 
