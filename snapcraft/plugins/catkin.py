@@ -89,6 +89,7 @@ _ROS_RELEASE_MAP = {
     "jade": "trusty",
     "kinetic": "xenial",
     "lunar": "xenial",
+    "melodic": "bionic",
 }
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
