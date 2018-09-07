@@ -348,7 +348,10 @@ class _SnapPackaging:
         os.makedirs(self._meta_dir, exist_ok=True)
 
     def write_snap_yaml(self) -> str:
-        self._generate_command_chain()
+        # Only generate the meta command chain if there are apps that need it
+        if self._config_data.get("apps", dict()):
+            self._generate_command_chain()
+
         package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
         snap_yaml = self._compose_snap_yaml()
 

@@ -1235,7 +1235,7 @@ class WrapExeTestCase(unit.TestCase):
         super().setUp()
 
         snapcraft_yaml_file_path = "snapcraft.yaml"
-        snapcraft_yaml = {
+        self.snapcraft_yaml = {
             "name": "test-snap",
             "version": "test-version",
             "summary": "test-summary",
@@ -1244,10 +1244,12 @@ class WrapExeTestCase(unit.TestCase):
             "apps": {"app1": {"command": "test-command", "adapter": "legacy"}},
         }
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml.dump(snapcraft_yaml, stream=snapcraft_file)
+            yaml.dump(self.snapcraft_yaml, stream=snapcraft_file)
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         # TODO move to use outer interface
-        self.packager = _snap_packaging._SnapPackaging(snapcraft_yaml, self.project)
+        self.packager = _snap_packaging._SnapPackaging(
+            self.snapcraft_yaml, self.project
+        )
         self.packager._is_host_compatible_with_base = True
 
     @patch("snapcraft.internal.common.assemble_env")
@@ -1292,10 +1294,7 @@ class WrapExeTestCase(unit.TestCase):
             ),
         )
 
-    @patch("snapcraft.internal.common.assemble_env")
-    def test_no_runner_if_not_on_compatible_host_for_target_base(
-        self, mock_assemble_env
-    ):
+    def test_no_runner_if_not_on_compatible_host_for_target_base(self):
         self.packager._is_host_compatible_with_base = False
         snap_yaml = self.packager.write_snap_yaml()
 
@@ -1312,6 +1311,26 @@ class WrapExeTestCase(unit.TestCase):
             """
                 )
             ),
+        )
+
+    def test_no_runner_generated_if_no_apps(self):
+        snapcraft_yaml_file_path = "snapcraft.yaml"
+        snapcraft_yaml = {
+            "name": "test-snap",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "confinement": "devmode",
+        }
+        with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
+            yaml.dump(snapcraft_yaml, stream=snapcraft_file)
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        packager = _snap_packaging._SnapPackaging(snapcraft_yaml, project)
+        packager._is_host_compatible_with_base = True
+
+        packager.write_snap_yaml()
+        self.assertThat(
+            os.path.join(project.prime_dir, "snap", "command-chain"), Not(DirExists())
         )
 
     @patch("snapcraft.internal.common.assemble_env")
@@ -1423,57 +1442,47 @@ class WrapExeTestCase(unit.TestCase):
     def test_command_does_not_exist(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-does-not-exist", "adapter": "legacy"}}
-        packager = _snap_packaging._SnapPackaging(
-            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
-        )
-        packager._is_host_compatible_with_base = True
-
         # Verify that apps can be wrapped even if they don't exist
-        packager._wrap_apps(apps)
+        self.packager._wrap_apps(self.snapcraft_yaml["apps"])
 
-        raised = self.assertRaises(errors.InvalidAppCommandError, packager.verify_apps)
-        self.assertThat(raised.command, Equals("command-does-not-exist"))
+        raised = self.assertRaises(
+            errors.InvalidAppCommandError, self.packager.verify_apps
+        )
+        self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app, Equals("app1"))
 
     def test_command_is_not_executable(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-not-executable", "adapter": "legacy"}}
-        packager = _snap_packaging._SnapPackaging(
-            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
+        cmd_path = os.path.join(
+            self.prime_dir, "bin", self.snapcraft_yaml["apps"]["app1"]["command"]
         )
-        packager._is_host_compatible_with_base = True
-
-        cmd_path = os.path.join(self.prime_dir, "bin", apps["app1"]["command"])
         _create_file(cmd_path)
 
         # Verify that apps can be wrapped even if they don't exist
-        packager._wrap_apps(apps)
+        self.packager._wrap_apps(self.snapcraft_yaml["apps"])
 
-        raised = self.assertRaises(errors.InvalidAppCommandError, packager.verify_apps)
-        self.assertThat(raised.command, Equals("command-not-executable"))
+        raised = self.assertRaises(
+            errors.InvalidAppCommandError, self.packager.verify_apps
+        )
+        self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app, Equals("app1"))
 
     def test_command_found(self):
         common.env = ["PATH={}/bin:$PATH".format(self.prime_dir)]
 
-        apps = {"app1": {"command": "command-executable", "adapter": "legacy"}}
-        packager = _snap_packaging._SnapPackaging(
-            {"name": "test-snap", "confinement": "devmode", "apps": apps}, self.project
+        cmd_path = os.path.join(
+            self.prime_dir, "bin", self.snapcraft_yaml["apps"]["app1"]["command"]
         )
-        packager._is_host_compatible_with_base = True
-
-        cmd_path = os.path.join(self.prime_dir, "bin", apps["app1"]["command"])
         _create_file(cmd_path, executable=True)
 
-        wrapped_apps = packager._wrap_apps(apps)
+        wrapped_apps = self.packager._wrap_apps(self.snapcraft_yaml["apps"])
 
         self.assertThat(
             wrapped_apps, Equals({"app1": {"command": "command-app1.wrapper"}})
         )
 
-        packager.verify_apps()
+        self.packager.verify_apps()
 
 
 def _create_file(path, *, content="", executable=False):
