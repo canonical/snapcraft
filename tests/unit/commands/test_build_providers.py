@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from unittest import mock
+from typing import Optional
 
 import fixtures
 from testtools.matchers import Equals
@@ -68,4 +69,62 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
     def test_step_without_debug_using_build_provider_fails_and_does_not_shell(self):
         self.assertRaises(ProviderExecError, self.run_command, ["pull"])
 
+        self.shell_mock.assert_not_called()
+
+
+class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
+        )
+
+        shell_mock = mock.Mock()
+        pack_project_mock = mock.Mock()
+        execute_step_mock = mock.Mock()
+
+        class Provider(ProviderImpl):
+            def pack_project(self, *, output: Optional[str] = None) -> None:
+                pack_project_mock(output)
+
+            def execute_step(self, step: steps.Step) -> None:
+                execute_step_mock(step)
+
+            def shell(self):
+                shell_mock()
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+        )
+        self.provider = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.shell_mock = shell_mock
+        self.pack_project_mock = pack_project_mock
+        self.execute_step_mock = execute_step_mock
+
+        self.make_snapcraft_yaml("pull", base="core18")
+
+    def test_step_with_shell_after(self):
+        result = self.run_command(["pull", "--shell-after"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(steps.PULL)
+        self.shell_mock.assert_called_once_with()
+
+    def test_snap_with_shell_after(self):
+        result = self.run_command(["snap", "--output", "fake.snap", "--shell-after"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_called_once_with("fake.snap")
+        self.execute_step_mock.assert_not_called()
+        self.shell_mock.assert_called_once_with()
+
+    def test_step_without_shell_after_does_not_enter_shell(self):
+        result = self.run_command(["pull"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(steps.PULL)
         self.shell_mock.assert_not_called()

@@ -45,6 +45,7 @@ def _execute(
     parts: str,
     pack_project: bool = False,
     output: str = None,
+    shell_after: bool = False,
     **kwargs
 ) -> "Project":
     # fmt: on
@@ -65,6 +66,8 @@ def _execute(
                     instance.pack_project(output=output)
                 else:
                     instance.execute_step(step)
+                if shell_after:
+                    instance.shell()
             except Exception as exc:
                 if project.debug:
                     instance.shell()
