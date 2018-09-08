@@ -40,11 +40,12 @@ if typing.TYPE_CHECKING:
 
 # TODO: when snap is a real step we can simplify the arguments here.
 # fmt: off
-def _execute(
+def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
     output: str = None,
+    shell: bool = False,
     shell_after: bool = False,
     **kwargs
 ) -> "Project":
@@ -62,11 +63,15 @@ def _execute(
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
-                if pack_project:
+                if pack_project and shell:
+                    instance.execute_step(steps.PRIME)
+                elif pack_project and not shell:
                     instance.pack_project(output=output)
+                elif step and shell:
+                    instance.execute_step(step.previous_step())
                 else:
                     instance.execute_step(step)
-                if shell_after:
+                if shell or shell_after:
                     instance.shell()
             except Exception as exc:
                 if project.debug:
