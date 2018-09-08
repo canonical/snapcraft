@@ -105,7 +105,7 @@ class Multipass(Provider):
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
             self._mount(
-                mountpoint=project_mountpoint, dev_or_path=self.project.project_dir
+                mountpoint=project_mountpoint, dev_or_path=self.project._project_dir
             )
 
     def provision_project(self, tarball: str) -> None:
@@ -150,6 +150,9 @@ class Multipass(Provider):
         )
         self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
         return self.snap_filename
+
+    def shell(self) -> None:
+        self._multipass_cmd.shell(instance_name=self.instance_name)
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(

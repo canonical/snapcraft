@@ -77,6 +77,9 @@ class ProviderImpl(Provider):
     def retrieve_snap(self):
         raise NotImplementedError("test stub not implemented")
 
+    def shell(self):
+        raise NotImplementedError("test stub not implemented")
+
 
 def get_project() -> Project:
     with open("snapcraft.yaml", "w") as snapcraft_file:

@@ -112,6 +112,17 @@ class ProviderExecError(_SnapcraftError):
         )
 
 
+class ProviderShellError(_SnapcraftError):
+
+    fmt = (
+        "An error occurred when trying to provide a shell with "
+        "{provider_name!r}: returned exit code {exit_code!r}."
+    )
+
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(provider_name=provider_name, exit_code=exit_code)
+
+
 class ProviderMountError(_SnapcraftError):
 
     fmt = (

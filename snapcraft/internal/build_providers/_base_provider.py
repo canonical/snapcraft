@@ -181,6 +181,10 @@ class Provider(abc.ABC):
         :rtype: str
         """
 
+    @abc.abstractmethod
+    def shell(self) -> None:
+        """Provider steps to provide a shell into the instance."""
+
     def launch_instance(self) -> None:
         os.makedirs(self.provider_project_dir, exist_ok=True)
         self._launch()
