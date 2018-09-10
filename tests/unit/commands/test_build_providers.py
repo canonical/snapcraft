@@ -128,3 +128,14 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock.assert_not_called()
         self.execute_step_mock.assert_called_once_with(steps.PULL)
         self.shell_mock.assert_not_called()
+
+    def test_error_with_shell_after_error_and_debug(self):
+        self.shell_mock.side_effect = EnvironmentError("error")
+
+        self.assertRaises(
+            EnvironmentError, self.run_command, ["pull", "--shell-after", "--debug"]
+        )
+
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(steps.PULL)
+        self.shell_mock.assert_called_once_with()

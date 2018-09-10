@@ -66,8 +66,6 @@ def _execute(
                     instance.pack_project(output=output)
                 else:
                     instance.execute_step(step)
-                if shell_after:
-                    instance.shell()
             except Exception:
                 if project.debug:
                     instance.shell()
@@ -75,6 +73,9 @@ def _execute(
                     echo.warning("Run the same command again with --debug to shell into the environment "
                                  "if you wish to introspect this failure.")
                     raise
+            else:
+                if shell_after:
+                    instance.shell()
     elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
