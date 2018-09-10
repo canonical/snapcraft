@@ -60,10 +60,18 @@ def _execute(
         echo.info("Launching a VM.")
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
-            if pack_project:
-                instance.pack_project(output=output)
-            else:
-                instance.execute_step(step)
+            try:
+                if pack_project:
+                    instance.pack_project(output=output)
+                else:
+                    instance.execute_step(step)
+            except Exception:
+                if project.debug:
+                    instance.shell()
+                else:
+                    echo.warning("Run the same command again with --debug to shell into the environment "
+                                 "if you wish to introspect this failure.")
+                    raise
     elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
@@ -199,7 +207,6 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command()
-@add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--step",
@@ -208,7 +215,7 @@ def pack(directory, output, **kwargs):
     type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
     help="only clean the specified step and those that depend on it.",
 )
-def clean(parts, step_name, **kwargs):
+def clean(parts, step_name):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -219,14 +226,13 @@ def clean(parts, step_name, **kwargs):
     build_environment = env.BuilderEnvironmentConfig()
     try:
         project = get_project(
-            is_managed_host=build_environment.is_managed_host, **kwargs
+            is_managed_host=build_environment.is_managed_host
         )
     except YamlValidationError:
         # We need to be able to clean invalid projects too.
         project = get_project(
             is_managed_host=build_environment.is_managed_host,
-            skip_snapcraft_yaml=True,
-            **kwargs,
+            skip_snapcraft_yaml=True
         )
 
     step = None
@@ -263,10 +269,7 @@ def clean(parts, step_name, **kwargs):
     metavar="<remote>",
     help="Use a specific lxd remote instead of a local container.",
 )
-@click.option(
-    "--debug", is_flag=True, help="Shells into the environment if the build fails."
-)
-def cleanbuild(remote, debug, **kwargs):
+def cleanbuild(remote, **kwargs):
     """Create a snap using a clean environment managed by a build provider.
 
     \b
@@ -294,7 +297,7 @@ def cleanbuild(remote, debug, **kwargs):
         default=default_provider, additional_providers=["multipass"]
     )
     project = get_project(
-        is_managed=build_environment.is_managed_host, **kwargs, debug=debug
+        is_managed=build_environment.is_managed_host, **kwargs
     )
 
     snap_filename = lifecycle.cleanbuild(
