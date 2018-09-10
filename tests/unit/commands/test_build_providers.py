@@ -139,3 +139,35 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock.assert_not_called()
         self.execute_step_mock.assert_called_once_with(steps.PULL)
         self.shell_mock.assert_called_once_with()
+
+    def test_pull_step_with_shell(self):
+        result = self.run_command(["pull", "--shell"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_not_called()
+        self.shell_mock.assert_called_once_with()
+
+    def test_step_with_shell(self):
+        result = self.run_command(["stage", "--shell"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(steps.BUILD)
+        self.shell_mock.assert_called_once_with()
+
+    def test_snap_with_shell(self):
+        result = self.run_command(["snap", "--shell"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_called_once_with(steps.PRIME)
+        self.shell_mock.assert_called_once_with()
+
+    def test_snap_without_shell(self):
+        result = self.run_command(["snap"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_called_once_with(None)
+        self.execute_step_mock.assert_not_called()
+        self.shell_mock.assert_not_called()
