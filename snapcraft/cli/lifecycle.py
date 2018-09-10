@@ -63,12 +63,18 @@ def _execute(  # noqa: C901
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
-                if pack_project and shell:
-                    instance.execute_step(steps.PRIME)
-                elif pack_project and not shell:
+                if shell:
+                    # shell means we want to do everything right up to the previous
+                    # step and then go into a shell instead of the requested step.
+                    # the "snap" target is a special snowflake that has not made its
+                    # way to be a proper step.
+                    if pack_project:
+                        previous_step = steps.PRIME
+                    else:
+                        previous_step = step.previous_step()
+                    instance.execute_step(previous_step)
+                elif pack_project:
                     instance.pack_project(output=output)
-                elif step and shell:
-                    instance.execute_step(step.previous_step())
                 else:
                     instance.execute_step(step)
             except Exception:
