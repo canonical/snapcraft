@@ -40,7 +40,7 @@ if typing.TYPE_CHECKING:
 
 # TODO: when snap is a real step we can simplify the arguments here.
 # fmt: off
-def _execute(
+def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
@@ -68,11 +68,14 @@ def _execute(
                     # step and then go into a shell instead of the requested step.
                     # the "snap" target is a special snowflake that has not made its
                     # way to be a proper step.
+                    previous_step = None
                     if pack_project:
                         previous_step = steps.PRIME
-                    else:
+                    elif step > steps.PULL:
                         previous_step = step.previous_step()
-                    instance.execute_step(previous_step)
+                    # steps.PULL is the first step, so we would directly shell into it.
+                    if previous_step:
+                        instance.execute_step(previous_step)
                 elif pack_project:
                     instance.pack_project(output=output)
                 else:

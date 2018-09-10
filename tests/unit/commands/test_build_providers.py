@@ -140,6 +140,14 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.execute_step_mock.assert_called_once_with(steps.PULL)
         self.shell_mock.assert_called_once_with()
 
+    def test_pull_step_with_shell(self):
+        result = self.run_command(["pull", "--shell"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.pack_project_mock.assert_not_called()
+        self.execute_step_mock.assert_not_called()
+        self.shell_mock.assert_called_once_with()
+
     def test_step_with_shell(self):
         result = self.run_command(["stage", "--shell"])
 
