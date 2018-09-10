@@ -32,6 +32,7 @@ from snapcraft.internal import (
     project_loader,
     steps,
 )
+from ._preflight_check import conduct_preflight_check
 from snapcraft.project.errors import YamlValidationError
 
 if typing.TYPE_CHECKING:
@@ -51,6 +52,8 @@ def _execute(
     # fmt: on
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
+
+    conduct_preflight_check(project)
 
     if project.info.base is not None and not (
         build_environment.is_host or build_environment.is_managed_host
@@ -308,6 +311,8 @@ def cleanbuild(remote, debug, **kwargs):
     project = get_project(
         is_managed=build_environment.is_managed_host, **kwargs, debug=debug
     )
+
+    conduct_preflight_check(project)
 
     snap_filename = lifecycle.cleanbuild(
         project=project, echoer=echo, remote=remote, build_environment=build_environment

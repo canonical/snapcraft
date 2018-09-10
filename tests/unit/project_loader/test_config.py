@@ -16,7 +16,6 @@
 
 from textwrap import dedent
 
-from unittest import mock
 from testtools.matchers import Contains, Equals
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest
@@ -27,26 +26,6 @@ from tests import unit
 
 
 class VariableExpansionTest(LoadPartBaseTest):
-    @mock.patch("snapcraft.internal.project_loader._config.conduct_preflight_check")
-    def test_preflight_check_is_called(self, mock_check):
-        project_config = self.make_snapcraft_project(
-            dedent(
-                """\
-                name: test
-                version: "1.0"
-                summary: test-summary
-                description: test-description
-                confinement: strict
-                grade: devel
-
-                parts:
-                  test-part:
-                    plugin: nil
-                """
-            )
-        )
-        mock_check.assert_called_once_with(project_config.project)
-
     def test_version_script(self):
         project_config = self.make_snapcraft_project(
             dedent(

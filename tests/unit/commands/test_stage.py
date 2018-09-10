@@ -19,6 +19,7 @@ import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import Equals, DirExists, Not
+from unittest import mock
 
 from . import LifecycleCommandsBaseTestCase
 
@@ -99,3 +100,9 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
                 "specifying parts, or clean the steps you want to run again.\n"
             ),
         )
+
+    @mock.patch("snapcraft.cli.lifecycle.conduct_preflight_check")
+    def test_preflight_check_is_called(self, mock_check):
+        self.make_snapcraft_yaml("stage")
+        self.run_command(["stage"])
+        mock_check.assert_called_once_with(mock.ANY)

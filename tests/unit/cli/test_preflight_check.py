@@ -21,7 +21,7 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.internal.project_loader._preflight_check import conduct_preflight_check
+from snapcraft.cli._preflight_check import conduct_preflight_check
 
 from tests import unit
 
@@ -63,18 +63,27 @@ class PreflightChecksTest(unit.TestCase):
         open(os.path.join(plugins_dir, "data-file"), "w").close()
         self.assert_check_passes()
 
+    def test_hooks(self):
+        plugins_dir = os.path.join("snap", "hooks")
+        os.makedirs(plugins_dir)
+        open(os.path.join(plugins_dir, "configure"), "w").close()
+        open(os.path.join(plugins_dir, "random-hook-2"), "w").close()
+        self.assert_check_passes()
+
     def test_unexpected_things(self):
         dir1 = os.path.join("snap", "dir1")
         dir2 = os.path.join("snap", "dir2")
         gui_dir = os.path.join("snap", "gui")
         state_dir = os.path.join("snap", ".snapcraft")
         fake_plugins_dir = os.path.join(dir1, "plugins")
+        fake_hooks_dir = os.path.join(dir1, "hooks")
         fake_gui_dir = os.path.join(dir2, "gui")
         os.makedirs(dir1)
         os.makedirs(dir2)
         os.makedirs(gui_dir)
         os.makedirs(state_dir)
         os.makedirs(fake_plugins_dir)
+        os.makedirs(fake_hooks_dir)
         os.makedirs(fake_gui_dir)
         open(os.path.join(dir1, "foo"), "w").close()
         open(os.path.join(dir2, "bar"), "w").close()
@@ -91,6 +100,7 @@ class PreflightChecksTest(unit.TestCase):
                 "- .snapcraft/baz\n"
                 "- dir1\n"
                 "- dir1/foo\n"
+                "- dir1/hooks\n"
                 "- dir1/plugins\n"
                 "- dir2\n"
                 "- dir2/bar\n"

@@ -35,7 +35,6 @@ from ._env import (
     snapcraft_global_environment,
     environment_to_replacements,
 )
-from ._preflight_check import conduct_preflight_check
 from . import errors, grammar_processing, replace_attr
 
 
@@ -237,8 +236,6 @@ class Config:
         self.data["architectures"] = _process_architectures(
             self.data.get("architectures"), project.deb_arch
         )
-
-        conduct_preflight_check(self.project)
 
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names
