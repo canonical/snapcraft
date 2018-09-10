@@ -344,7 +344,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_invalid_rosdistro(self):
         self.properties.rosdistro = "invalid"
         raised = self.assertRaises(
-            RuntimeError,
+            catkin.CatkinUnsupportedRosdistroError,
             catkin.CatkinPlugin,
             "test-part",
             self.properties,
@@ -354,9 +354,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(
             str(raised),
             Equals(
-                "Unsupported rosdistro: 'invalid'. The supported ROS "
-                "distributions are 'indigo', 'jade', 'kinetic', and "
-                "'lunar'"
+                "Unsupported ROS distribution: 'invalid'. The supported ROS "
+                "distributions are 'indigo', 'jade', 'kinetic', and 'lunar'."
             ),
         )
 
@@ -390,7 +389,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         mock_instance = self.ubuntu_mock.return_value
         mock_instance.get.side_effect = repo.errors.PackageNotFoundError("foo")
 
-        raised = self.assertRaises(RuntimeError, plugin.pull)
+        raised = self.assertRaises(catkin.CatkinAptDependencyFetchError, plugin.pull)
 
         self.assertThat(
             str(raised),
@@ -409,11 +408,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         self.rosdep_mock.return_value.resolve_dependency.return_value = None
 
-        raised = self.assertRaises(RuntimeError, plugin.pull)
-
-        self.assertThat(
-            str(raised), Equals("Unable to determine system dependency for roscore")
-        )
+        self.assertRaises(catkin.CatkinCannotResolveRoscoreError, plugin.pull)
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_invalid_underlay(self, generate_setup_mock):
@@ -535,17 +530,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # source_space was specified to be the same as the root, this should
         # fail.
-        raised = self.assertRaises(
-            RuntimeError,
+        self.assertRaises(
+            catkin.CatkinWorkspaceIsRootError,
             catkin.CatkinPlugin,
             "test-part",
             self.properties,
             self.project_options,
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("source-space cannot be the root of the Catkin workspace"),
         )
 
     @mock.patch("snapcraft.plugins.catkin.Compilers")
@@ -1701,7 +1691,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             str(raised),
             Equals(
                 "Package 'bar' resolved to an unsupported type of dependency: "
-                "'unsupported-type'"
+                "'unsupported-type'."
             ),
         )
 
@@ -1906,7 +1896,9 @@ class CompilersTestCase(unit.TestCase):
     def test_cxxflags_without_include_path_raises(self):
         shutil.rmtree(self.compilers._compilers_install_path)
         with testtools.ExpectedException(
-            RuntimeError, "Unable to determine gcc version: nothing.*"
+            catkin.CatkinGccVersionError,
+            "Failed to determine gcc version: Failed to determine highest path in "
+            "'.*': nothing found",
         ):
             self.compilers.cxxflags
 
