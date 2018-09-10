@@ -103,6 +103,17 @@ class ErrorFormattingTest(unit.TestCase):
             ),
         ),
         (
+            "ProviderShellError",
+            dict(
+                exception=errors.ProviderShellError,
+                kwargs=dict(provider_name="multipass", exit_code=1),
+                expected_message=(
+                    "An error occurred when trying to provide a shell with "
+                    "'multipass': returned exit code 1."
+                ),
+            ),
+        ),
+        (
             "ProviderMountError",
             dict(
                 exception=errors.ProviderMountError,

@@ -52,6 +52,7 @@ class Project(ProjectOptions):
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self._global_state_file = os.path.join(internal_dir, "state")
+        self._project_dir = project_dir
         self._work_dir = work_dir
         self._internal_dir = internal_dir
 
