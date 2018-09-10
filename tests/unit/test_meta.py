@@ -1229,7 +1229,7 @@ class WrapExeTestCase(unit.TestCase):
             "summary": "test summary",
             "description": "test description",
             "confinement": "devmode",
-            "apps": {"app": {"command": "test-command"}},
+            "apps": {"app": {"command": "test-command", "adapter": "legacy"}},
             "parts": {"part1": {"plugin": "nil"}},
         }
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:

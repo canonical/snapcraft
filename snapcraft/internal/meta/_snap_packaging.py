@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import enum
 import collections
 import contextlib
 import itertools
@@ -61,6 +62,12 @@ _OPTIONAL_PACKAGE_KEYS = [
     "hooks",
     "environment",
 ]
+
+
+@enum.unique
+class Adapter(enum.Enum):
+    NONE = 1
+    LEGACY = 2
 
 
 class OctInt(int):
@@ -271,6 +278,16 @@ def _update_yaml_with_defaults(config_data, schema):
                         key, default
                     )
                 )
+
+    app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][
+        "properties"
+    ]
+    # Set default adapter
+    for app in config_data.get("apps", {}).values():
+        if "adapter" not in app:
+            with contextlib.suppress(KeyError):
+                default = app_schema["adapter"]["default"]
+                app["adapter"] = default
 
 
 def _ensure_required_keywords(config_data):
@@ -557,17 +574,18 @@ class _SnapPackaging:
         return os.path.relpath(wrappath, self._prime_dir)
 
     def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
+        apps = copy.deepcopy(apps)
         gui_dir = os.path.join(self.meta_dir, "gui")
         if not os.path.exists(gui_dir):
             os.mkdir(gui_dir)
         for f in os.listdir(gui_dir):
             if os.path.splitext(f)[1] == ".desktop":
                 os.remove(os.path.join(gui_dir, f))
-        for app in apps:
-            adapter = apps[app].pop("adapter", "")
-            if adapter != "none":
-                self._wrap_app(app, apps[app])
-            self._generate_desktop_file(app, apps[app])
+        for app_name, app in apps.items():
+            adapter = Adapter[app.pop("adapter").upper()]
+            if adapter == Adapter.LEGACY:
+                self._wrap_app(app_name, app)
+            self._generate_desktop_file(app_name, app)
         return apps
 
     def _wrap_app(self, name, app):

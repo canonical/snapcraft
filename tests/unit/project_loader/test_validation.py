@@ -1475,6 +1475,64 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
         )
 
 
+class ValidAdaptersTest(ProjectLoaderBaseTest):
+    scenarios = [("none", {"yaml": "none"}), ("legacy", {"yaml": "legacy"})]
+
+    def test_yaml_valid_adapters(self):
+        self.make_snapcraft_project(
+            dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: nothing
+                apps:
+                  app:
+                    command: foo
+                    adapter: {}
+                parts:
+                  part1:
+                    plugin: nil
+                """
+            ).format(self.yaml)
+        )
+
+
+class InvalidAdapterTest(ProjectLoaderBaseTest):
+    scenarios = [
+        ("NONE", {"yaml": "NONE"}),
+        ("none-", {"yaml": "none-"}),
+        ("invalid", {"yaml": "invalid"}),
+        ("LeGaCY", {"yaml": "LeGaCY"}),
+        ("leg-acy", {"yaml": "leg-acy"}),
+    ]
+
+    def test_invalid_yaml_invalid_adapters(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: nothing
+            apps:
+              app:
+                command: foo
+                adapter: {}
+            parts:
+              part1:
+                plugin: nil
+            """
+        ).format(self.yaml)
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+        self.assertRegex(
+            raised.message,
+            "The 'apps/app/adapter' property does not match the required schema:.*is "
+            "not one of \['none', 'legacy'\]",
+        )
+
+
 class ValidArchitecturesTest(ProjectLoaderBaseTest):
 
     yaml_scenarios = [
