@@ -31,9 +31,14 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
 }
 
+# TODO: Add conduct_environment_sanity_check() to be run in the build environment
 
-def conduct_preflight_check(project: snapcraft.project.Project):
-    """Sanity check the project and machine before continuing."""
+
+def conduct_project_sanity_check(project: snapcraft.project.Project):
+    """Sanity check the project itself before continuing.
+
+    The checks done here are meant to be light, and not rely on the build environment.
+    """
 
     snap_dir_path = os.path.join(project._work_dir, "snap")
     if os.path.isdir(snap_dir_path):

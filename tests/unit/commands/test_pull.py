@@ -104,7 +104,7 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         mock_get.assert_called_once_with({"mir:arch"})
 
-    @mock.patch("snapcraft.cli.lifecycle.conduct_preflight_check")
+    @mock.patch("snapcraft.cli.lifecycle.conduct_project_sanity_check")
     def test_preflight_check_is_called(self, mock_check):
         self.make_snapcraft_yaml("pull")
         self.run_command(["pull"])

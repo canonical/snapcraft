@@ -21,7 +21,7 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.cli._preflight_check import conduct_preflight_check
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 from tests import unit
 
@@ -112,4 +112,4 @@ class PreflightChecksTest(unit.TestCase):
 
 def _run_check():
     project = snapcraft.project.Project()
-    conduct_preflight_check(project)
+    conduct_project_sanity_check(project)
