@@ -45,6 +45,7 @@ def _execute(
     parts: str,
     pack_project: bool = False,
     output: str = None,
+    shell_after: bool = False,
     **kwargs
 ) -> "Project":
     # fmt: on
@@ -60,10 +61,21 @@ def _execute(
         echo.info("Launching a VM.")
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
-            if pack_project:
-                instance.pack_project(output=output)
+            try:
+                if pack_project:
+                    instance.pack_project(output=output)
+                else:
+                    instance.execute_step(step)
+            except Exception:
+                if project.debug:
+                    instance.shell()
+                else:
+                    echo.warning("Run the same command again with --debug to shell into the environment "
+                                 "if you wish to introspect this failure.")
+                    raise
             else:
-                instance.execute_step(step)
+                if shell_after:
+                    instance.shell()
     elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
