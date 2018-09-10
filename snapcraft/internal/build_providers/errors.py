@@ -247,3 +247,13 @@ class BuildImageChecksumError(_SnapcraftError):
 
     def __init__(self, *, expected: str, calculated: str, algorithm: str) -> None:
         super().__init__(expected=expected, calculated=calculated, algorithm=algorithm)
+
+
+class UnsupportedHostError(_SnapcraftError):
+    fmt = (
+        "Building for {base!r} is not supported on platform {platform!r} using "
+        "provider: {provider!r}."
+    )
+
+    def __init__(self, *, base: str, platform: str, provider: str) -> None:
+        super().__init__(base=base, platform=platform, provider=provider)

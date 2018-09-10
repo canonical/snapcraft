@@ -324,3 +324,37 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             instance_name=self.instance_name
         )
         self.multipass_cmd_mock().delete.assert_not_called()
+
+
+class MultipassUnsupportedPlatform(BaseProviderWithBasesBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._multipass."
+            "_multipass.MultipassCommand",
+            spec=MultipassCommand,
+        )
+        self.multipass_cmd_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._multipass._multipass._get_platform",
+            return_value="darwin",
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
+            provider_name="multipass", exit_code=1
+        )
+
+        # default data returned for info
+        self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
+
+    def test_plaftorm_and_base_unsupported(self):
+        project = get_project(base="core17")
+
+        multipass = Multipass(project=project, echoer=self.echoer_mock)
+
+        self.assertRaises(errors.UnsupportedHostError, multipass.create)

@@ -53,10 +53,10 @@ class Multipass(Provider):
         elif self.project.info.base in ("core16", None):
             image = "16.04"
         else:
-            raise EnvironmentError(
-                "Building for this base is not supported on {} hosts".format(
-                    sys.platform
-                )
+            raise errors.UnsupportedHostError(
+                base=self.project.info.base,
+                platform=_get_platform(),
+                provider=self._get_provider_name(),
             )
 
         return image
