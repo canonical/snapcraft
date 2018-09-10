@@ -40,7 +40,7 @@ if typing.TYPE_CHECKING:
 
 # TODO: when snap is a real step we can simplify the arguments here.
 # fmt: off
-def _execute(  # noqa: C901
+def _execute(
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
