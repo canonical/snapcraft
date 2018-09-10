@@ -31,16 +31,18 @@ _BUILD_OPTION_NAMES = [
     "--no-parallel-builds",
     "--target-arch",
     "--debug",
+    "--shell-after",
 ]
 
 _BUILD_OPTIONS = [
     dict(
         is_flag=True,
-        help=("Detect best candidate location for stage-packages using geoip"),
+        help="Detect best candidate location for stage-packages using geoip",
     ),
     dict(is_flag=True, help="Force a sequential build."),
     dict(metavar="<arch>", help="Target architecture to cross compile to"),
     dict(is_flag=True, help="Shells into the environment if the build fails."),
+    dict(is_flag=True, help="Shells into the environment after the step has run."),
 ]
 
 
