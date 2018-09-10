@@ -255,7 +255,7 @@ def _get_env():
         # means snapcraftctl won't be found. We can't use aliases since they don't
         # persist into subshells. However, we know that snapcraftctl lives in its own
         # directory, so adding that to the PATH should have no ill side effects.
-        env += 'export PATH="$PATH:$SNAP/bin/snapcraft-utils"\n'
+        env += 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"\n'
     env += common.assemble_env()
 
     return env

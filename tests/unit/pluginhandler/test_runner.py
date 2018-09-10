@@ -126,7 +126,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner.prepare()
 
-        expected_path_segment = "/snap/snapcraft/current/bin/snapcraft-utils"
+        expected_path_segment = "/snap/snapcraft/current/bin/scriptlet-bin"
 
         self.assertThat(os.path.join("builddir", "path"), FileExists())
         self.assertThat(
