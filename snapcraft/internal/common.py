@@ -34,6 +34,7 @@ from snapcraft.internal import errors
 SNAPCRAFT_FILES = [
     "snapcraft.yaml",
     ".snapcraft.yaml",
+    ".snapcraft",
     "parts",
     "stage",
     "prime",
