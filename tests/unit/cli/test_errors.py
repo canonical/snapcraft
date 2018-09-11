@@ -16,13 +16,14 @@
 
 import os
 import sys
+import tempfile
 import xdg
 
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains
+from testtools.matchers import FileContains, MatchesRegex
 from testscenarios import multiply_scenarios
 
 import snapcraft.internal.errors
@@ -71,14 +72,14 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY, file=mock.ANY
+            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
         )
 
     def assert_exception_traceback_exit_1_without_raven(self):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY
+            RuntimeError, mock.ANY, mock.ANY, file=sys.stdout
         )
 
     def assert_no_exception_traceback_exit_1_without_debug(self):
@@ -186,9 +187,13 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [mock.call(RuntimeError, mock.ANY, mock.ANY, file=mock.ANY)]
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
         if not self.tty:
-            expected_calls.append(mock.call(RuntimeError, mock.ANY, mock.ANY))
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
 
         self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
@@ -220,9 +225,13 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [mock.call(RuntimeError, mock.ANY, mock.ANY, file=mock.ANY)]
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
         if not self.tty:
-            expected_calls.append(mock.call(RuntimeError, mock.ANY, mock.ANY))
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
 
         self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
@@ -277,9 +286,13 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [mock.call(RuntimeError, mock.ANY, mock.ANY, file=mock.ANY)]
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
         if not self.tty:
-            expected_calls.append(mock.call(RuntimeError, mock.ANY, mock.ANY))
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
 
         self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
@@ -358,3 +371,17 @@ class SendToSentryDisabledTest(SendToSentryBaseTest):
 
         self.assert_exception_traceback_exit_1_with_debug()
         self.raven_client_mock.assert_not_called()
+
+
+class _Tracefile:
+    def __init__(self, test):
+        self._test = test
+
+    def __eq__(self, other):
+        try:
+            self._test.assertThat(
+                other.name, MatchesRegex("{}.*/trace.txt".format(tempfile.gettempdir()))
+            )
+        except AttributeError:
+            return False
+        return True
