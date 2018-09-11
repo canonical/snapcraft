@@ -76,7 +76,7 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             project=ANY, remote=None, source="snap-test_source.tar.bz2"
         )
 
-    @mock.patch("snapcraft.cli.lifecycle.conduct_preflight_check")
+    @mock.patch("snapcraft.cli.lifecycle.conduct_project_sanity_check")
     def test_preflight_check_is_called(self, mock_check):
         self.run_command(["cleanbuild"])
         mock_check.assert_called_once_with(mock.ANY)
