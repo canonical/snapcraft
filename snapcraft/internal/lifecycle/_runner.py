@@ -349,15 +349,9 @@ class _Executor:
 
         self._run_step(step=step, part=part, progress=progress, hint=hint)
 
-    def _create_meta(self, step, part_names):
+    def _create_meta(self, step: steps.Step, part_names: Sequence[str]) -> None:
         if step == steps.PRIME and part_names == self.config.part_names:
-            common.env = self.config.snap_env()
-            meta.create_snap_packaging(
-                self.config.data,
-                self.config.parts,
-                self.project,
-                self.config.validator.schema,
-            )
+            meta.create_snap_packaging(self.config)
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()

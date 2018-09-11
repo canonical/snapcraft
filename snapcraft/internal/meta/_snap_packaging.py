@@ -31,8 +31,8 @@ import yaml
 
 from snapcraft import file_utils, formatting_utils
 from snapcraft import shell_utils
-from snapcraft.project import Project
 from snapcraft.internal import common, errors, project_loader
+from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import (
@@ -74,12 +74,7 @@ def oct_int_representer(dumper, data):
 yaml.add_representer(OctInt, oct_int_representer)
 
 
-def create_snap_packaging(
-    config_data: Dict[str, Any],
-    parts_config: project_loader.PartsConfig,
-    project: Project,
-    snapcraft_schema: Dict[str, Any],
-) -> str:
+def create_snap_packaging(project_config: _config.Config) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -91,21 +86,21 @@ def create_snap_packaging(
     """
 
     # Update config_data using metadata extracted from the project
-    _update_yaml_with_extracted_metadata(config_data, parts_config)
+    _update_yaml_with_extracted_metadata(project_config.data, project_config.parts)
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
-    validator = project_loader.Validator(config_data)
+    validator = project_loader.Validator(project_config.data)
     validator.validate(source="properties")
 
     # Update default values
-    _update_yaml_with_defaults(config_data, snapcraft_schema)
+    _update_yaml_with_defaults(project_config.data, project_config.validator.schema)
 
     # Ensure the YAML contains all required keywords before continuing to
     # use it to generate the snap.yaml.
-    _ensure_required_keywords(config_data)
+    _ensure_required_keywords(project_config.data)
 
-    packaging = _SnapPackaging(config_data, project)
+    packaging = _SnapPackaging(project_config)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -294,27 +289,34 @@ class _SnapPackaging:
     def meta_dir(self) -> str:
         return self._meta_dir
 
-    def __init__(self, config_data: Dict[str, Any], project: Project) -> None:
-        self._snapcraft_yaml_path = project.info.snapcraft_yaml_file_path
-        self._prime_dir = project.prime_dir
-        self._parts_dir = project.parts_dir
-        self._arch_triplet = project.arch_triplet
-        self._global_state_file = project._global_state_file
-        self._is_host_compatible_with_base = project.is_host_compatible_with_base
+    def __init__(self, project_config: _config.Config) -> None:
+        self._project_config = project_config
+        self._snapcraft_yaml_path = project_config.project.info.snapcraft_yaml_file_path
+        self._prime_dir = project_config.project.prime_dir
+        self._parts_dir = project_config.project.parts_dir
+        self._arch_triplet = project_config.project.arch_triplet
+        self._global_state_file = project_config.project._global_state_file
+        self._is_host_compatible_with_base = (
+            project_config.project.is_host_compatible_with_base
+        )
         self._meta_dir = os.path.join(self._prime_dir, "meta")
-        self._config_data = config_data.copy()
-        self._original_snapcraft_yaml = project.info.get_raw_snapcraft()
+        self._config_data = project_config.data.copy()
+        self._original_snapcraft_yaml = project_config.project.info.get_raw_snapcraft()
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
     def write_snap_yaml(self) -> str:
-        package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
-        snap_yaml = self._compose_snap_yaml()
+        common.env = self._project_config.snap_env()
+        try:
+            package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
+            snap_yaml = self._compose_snap_yaml()
 
-        with open(package_snap_path, "w") as f:
-            yaml.dump(snap_yaml, stream=f, default_flow_style=False)
+            with open(package_snap_path, "w") as f:
+                yaml.dump(snap_yaml, stream=f, default_flow_style=False)
 
-        return snap_yaml
+            return snap_yaml
+        finally:
+            common.reset_env()
 
     def setup_assets(self) -> None:
         # We do _setup_from_setup first since it is legacy and let the
