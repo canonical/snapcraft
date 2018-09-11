@@ -216,7 +216,7 @@ class SnapTestCase(integration.TestCase):
         )
         self.assertIn(
             "Issues while validating snapcraft.yaml: found character '\\t' "
-            "that cannot start any token on line 13 of snapcraft.yaml",
+            "that cannot start any token on line 13, column 1",
             str(error.output),
         )
 
