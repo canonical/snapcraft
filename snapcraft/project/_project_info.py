@@ -75,5 +75,11 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
                 chr(e.character), e.position + 1, yaml_file_path, e.reason
             )
         ) from e
+    except yaml.constructor.ConstructorError as e:
+        raise errors.YamlValidationError(
+            "{}, line {}, column {}".format(
+                e.problem, e.problem_mark.line + 1, e.problem_mark.column + 1
+            )
+        ) from e
 
     return yaml_contents

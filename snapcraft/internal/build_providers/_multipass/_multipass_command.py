@@ -18,7 +18,7 @@ import logging
 import signal
 import shutil
 import subprocess
-from typing import Any, Callable, List, Union  # noqa: F401
+from typing import Any, Callable, List, Optional, Sequence, Union  # noqa: F401
 
 from snapcraft.internal.build_providers import errors
 
@@ -26,12 +26,12 @@ from snapcraft.internal.build_providers import errors
 logger = logging.getLogger(__name__)
 
 
-def _run(command: List) -> None:
+def _run(command: Sequence[str]) -> None:
     logger.debug("Running {}".format(" ".join(command)))
     subprocess.check_call(command)
 
 
-def _run_output(command: List) -> bytes:
+def _run_output(command: Sequence[str]) -> bytes:
     logger.debug("Running {}".format(" ".join(command)))
     return subprocess.check_output(command)
 
@@ -62,20 +62,51 @@ class MultipassCommand:
         # Workaround for https://github.com/CanonicalLtd/multipass/issues/221
         signal.signal(signal.SIGUSR1, _ignore_signal)
 
-    def launch(self, *, instance_name: str, image: str, remote: str = None) -> None:
+    def launch(
+        self,
+        *,
+        instance_name: str,
+        image: str,
+        mem: str = None,
+        disk: str = None,
+        remote: str = None,
+        cloud_init: str = None
+    ) -> None:
         """Passthrough for running multipass launch.
 
         :param str instance_name: the name the launched instance will have.
         :param str image: the image to create the instance with.
+        :param str mem: amount of RAM to assign to the launched instance.
+        :param str disk: amount of disk space the instance will see.
         :param str remote: the remote server to retrieve the image from.
+        :param str cloud_init_file: path to a user-data cloud-init configuration.
         """
         if remote is not None:
             image = "{}:{}".format(remote, image)
         cmd = [self.provider_cmd, "launch", image, "--name", instance_name]
+        if cloud_init is not None:
+            cmd.extend(["--cloud-init", cloud_init])
+        if mem is not None:
+            cmd.extend(["--mem", mem])
+        if disk is not None:
+            cmd.extend(["--disk", disk])
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderLaunchError(
+                provider_name=self.provider_name, exit_code=process_error.returncode
+            ) from process_error
+
+    def start(self, *, instance_name: str) -> None:
+        """Passthrough for running multipass start.
+
+        :param str instance_name: the name of the instance to start.
+        """
+        cmd = [self.provider_cmd, "start", instance_name]
+        try:
+            _run(cmd)
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderStartError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
@@ -110,7 +141,7 @@ class MultipassCommand:
 
     def execute(
         self, *, command: List[str], instance_name: str, hide_output: bool = False
-    ) -> None:
+    ) -> Optional[bytes]:
         """Passthrough for running multipass exec.
 
         :param list command: the command to exectute on the instance.
@@ -118,16 +149,28 @@ class MultipassCommand:
         """
         cmd = [self.provider_cmd, "exec", instance_name, "--"] + command
         if hide_output:
-            runnable = _run_output  # type: Callable[[List[Any]], Union[bytes, None]]
+            runnable = _run_output  # type: Callable[[List[Any]], Optional[bytes]]
         else:
             runnable = _run
         try:
-            runnable(cmd)
+            return runnable(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderExecError(
                 provider_name=self.provider_name,
                 command=command,
                 exit_code=process_error.returncode,
+            ) from process_error
+
+    def shell(self, *, instance_name: str) -> None:
+        """Passthrough for running multipass shell.
+
+        :param str instance_name: the name of the instance to execute command.
+        """
+        try:
+            _run([self.provider_cmd, "shell", instance_name])
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderShellError(
+                provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
     def mount(self, *, source: str, target: str) -> None:
@@ -143,6 +186,21 @@ class MultipassCommand:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderMountError(
+                provider_name=self.provider_name, exit_code=process_error.returncode
+            ) from process_error
+
+    def umount(self, *, mount: str) -> None:
+        """Passthrough for running multipass mount.
+
+        :param str mount: mountpoint inside the instance in the form of
+                           <instance-name>:path to unmount.
+        :raises errors.ProviderUMountError: when the unmount operation fails.
+        """
+        cmd = [self.provider_cmd, "umount", mount]
+        try:
+            _run(cmd)
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderUnMountError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 

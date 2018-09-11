@@ -22,7 +22,7 @@ from typing import Dict
 import requests
 
 from . import errors
-from snapcraft.file_utils import calculate_hash, get_tool_path
+from snapcraft.file_utils import calculate_hash
 from snapcraft.internal.cache import FileCache
 from snapcraft.internal.indicators import download_requests_stream
 
@@ -99,6 +99,34 @@ def _get_build_images(base: str) -> Dict[str, _Image]:
         raise KeyError(base)
 
 
+def get_cached_image_filepath(*, base: str, snap_arch: str) -> str:
+    """Return the path to the cached disk image for base and snap_arch.
+
+    Users of this API shall not modify the image in place.
+
+    :param str base: the base of the build image to setup.
+    :param str snap_arch: the architecture of the base for the build image.
+    :raises errors.BuildImageForBaseMissing:
+        if there is no build image defined for the requested base or snap
+        architecture.
+    :raises errors.BuildImageRequestError:
+        upon a network related issue that prevents download of the build image.
+    :raises errors.BuildImageChecksumError:
+        if the resulting downloaded build image does not match the expected
+        checksum.
+    :rtype: str
+    :returns: path to the cached image for base and snap_arch.
+    """
+    try:
+        image = _get_build_images(base)[snap_arch]
+    except KeyError as key_error:
+        raise errors.BuildImageForBaseMissing(
+            base=base, snap_arch=snap_arch
+        ) from key_error
+
+    return image.get()
+
+
 def setup(*, base: str, snap_arch: str, size: str, image_path: str) -> None:
     """Setup a build image for base and snap_arch of size at image_path.
 
@@ -110,7 +138,6 @@ def setup(*, base: str, snap_arch: str, size: str, image_path: str) -> None:
     :param str base: the base of the build image to setup.
     :param str snap_arch: the architecture of the base for the build image.
     :param str size: the size of the disk for the build image.
-    :param str image_path: the path to create the build image.
     :raises errors.BuildImageForBaseMissing:
         if there is no build image defined for the requested base or snap
         architecture.
@@ -123,18 +150,10 @@ def setup(*, base: str, snap_arch: str, size: str, image_path: str) -> None:
         if a build image cannot be created due to tooling or other system
         issues (e.g.; space issues).
     """
-    try:
-        image = _get_build_images(base)[snap_arch]
-    except KeyError as key_error:
-        raise errors.BuildImageForBaseMissing(
-            base=base, snap_arch=snap_arch
-        ) from key_error
-
-    cached_file = image.get()
+    cached_file = get_cached_image_filepath(base=base, snap_arch=snap_arch)
 
     if os.path.dirname(image_path):
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
-    qemu_img_cmd = get_tool_path("qemu-img")
     # qemu-img parameters:
     # -q: quiet.
     # -f: first image format.
@@ -142,7 +161,7 @@ def setup(*, base: str, snap_arch: str, size: str, image_path: str) -> None:
     try:
         subprocess.check_call(
             [
-                qemu_img_cmd,
+                "qemu-img",
                 "create",
                 "-q",
                 "-f",

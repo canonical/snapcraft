@@ -52,7 +52,7 @@ class BuilderEnvironmentConfig:
         :param str additional_providers: Additional providers allowed in the
                                          environment.
         """
-        valid_providers = ["host", "lxd"]
+        valid_providers = ["host", "multipass", "lxd", "managed-host"]
         if additional_providers is not None:
             valid_providers.extend(additional_providers)
 
@@ -94,3 +94,5 @@ class BuilderEnvironmentConfig:
         self.provider = build_provider
         self.is_host = build_provider == "host"
         self.is_lxd = build_provider == "lxd"
+        self.is_multipass = build_provider == "multipass"
+        self.is_managed_host = build_provider == "managed-host"

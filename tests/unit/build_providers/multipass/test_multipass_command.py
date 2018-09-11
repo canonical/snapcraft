@@ -72,6 +72,42 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
         )
         self.check_output_mock.assert_not_called()
 
+    def test_launch_with_mem(self):
+        self.multipass_command.launch(
+            instance_name=self.instance_name, mem="2G", image="16.04"
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "launch",
+                "16.04",
+                "--name",
+                self.instance_name,
+                "--mem",
+                "2G",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_launch_with_disk(self):
+        self.multipass_command.launch(
+            instance_name=self.instance_name, disk="8G", image="16.04"
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "launch",
+                "16.04",
+                "--name",
+                self.instance_name,
+                "--disk",
+                "8G",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
     def test_launch_with_remote(self):
         self.multipass_command.launch(
             instance_name=self.instance_name, image="18.04", remote="daily"
@@ -97,6 +133,30 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
             self.multipass_command.launch,
             instance_name=self.instance_name,
             image="18.04",
+        )
+        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_output_mock.assert_not_called()
+
+
+class MultipassCommandShellTest(MultipassCommandPassthroughBaseTest):
+    def test_shell(self):
+        self.multipass_command.shell(instance_name=self.instance_name)
+
+        self.check_call_mock.assert_called_once_with(
+            ["multipass", "shell", self.instance_name]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_shell_fails(self):
+        # multipass can fail due to several reasons and will display the error
+        # right above this exception message.
+        cmd = ["multipass", "shell", self.instance_name]
+        self.check_call_mock.side_effect = subprocess.CalledProcessError(1, cmd)
+
+        self.assertRaises(
+            errors.ProviderShellError,
+            self.multipass_command.shell,
+            instance_name=self.instance_name,
         )
         self.check_call_mock.assert_called_once_with(cmd)
         self.check_output_mock.assert_not_called()

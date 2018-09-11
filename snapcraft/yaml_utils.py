@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
+import collections
 import yaml
 from typing import Any, Dict, TextIO, Union
 
@@ -49,7 +49,7 @@ class _SafeOrderedDumper(CSafeDumper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_representer(str, _str_presenter)
-        self.add_representer(OrderedDict, _dict_representer)
+        self.add_representer(collections.OrderedDict, _dict_representer)
 
 
 class SnapcraftYAMLObject(yaml.YAMLObject):
@@ -68,7 +68,17 @@ def _dict_representer(dumper, data):
 def _dict_constructor(loader, node):
     # Necessary in order to make yaml merge tags work
     loader.flatten_mapping(node)
-    return OrderedDict(loader.construct_pairs(node))
+    value = loader.construct_pairs(node)
+
+    try:
+        return collections.OrderedDict(value)
+    except TypeError:
+        raise yaml.constructor.ConstructorError(
+            "while constructing a mapping",
+            node.start_mark,
+            "found unhashable key",
+            node.start_mark,
+        )
 
 
 def _str_presenter(dumper, data):

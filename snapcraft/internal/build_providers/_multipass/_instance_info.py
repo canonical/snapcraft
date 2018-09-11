@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-from typing import Type
+from typing import Any, Dict, Type
 
 from snapcraft.internal.build_providers import errors
 
@@ -54,6 +54,7 @@ class InstanceInfo:
                 name=instance_name,
                 state=instance_info["state"],
                 image_release=instance_info["image_release"],
+                mounts=instance_info["mounts"],
             )
         except KeyError as missing_key:
             raise errors.ProviderInfoDataKeyError(
@@ -62,7 +63,9 @@ class InstanceInfo:
                 data=instance_info,
             ) from missing_key
 
-    def __init__(self, *, name: str, state: str, image_release: str) -> None:
+    def __init__(
+        self, *, name: str, state: str, image_release: str, mounts: Dict[str, Any]
+    ) -> None:
         """Initialize an InstanceInfo.
 
         :param str name: the instance name.
@@ -76,6 +79,10 @@ class InstanceInfo:
         self.name = name
         self.state = state
         self.image_release = image_release
+        self.mounts = mounts
 
-    def is_stopped(self):
+    def is_mounted(self, mountpoint: str) -> bool:
+        return mountpoint in self.mounts
+
+    def is_stopped(self) -> bool:
         return self.state == "STOPPED"

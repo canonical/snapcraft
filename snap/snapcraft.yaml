@@ -35,6 +35,7 @@ parts:
         - sed
     stage-packages:
         - apt
+        - apt-transport-https
         - apt-utils
         - binutils
         - execstack
@@ -44,6 +45,10 @@ parts:
         - patchelf
         - squashfs-tools
         - xdelta3
+    organize:
+        # Put snapcraftctl into its own directory that can be included in the PATH
+        # without including other binaries.
+        bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
     override-pull: |
         version="$(git describe --dirty --always | sed -e 's/-/+git/;y/-/./')"
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable

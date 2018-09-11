@@ -14,34 +14,92 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import shlex
+import sys
 
+from .. import errors
 from .._base_provider import Provider
+from .._images import get_cached_image_filepath
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 
 
+def _get_platform() -> str:
+    return sys.platform
+
+
 class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
+
+    @classmethod
+    def _get_provider_name(cls):
+        return "multipass"
 
     def _run(self, command, hide_output: bool = False) -> None:
         self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
 
+    def _get_disk_image(self) -> str:
+        if self.project.info.base is not None and _get_platform() == "linux":
+            image = "file://{}".format(
+                get_cached_image_filepath(
+                    base=self.project.info.base, snap_arch=self.project.deb_arch
+                )
+            )
+        elif self.project.info.base == "core18":
+            image = "18.04"
+        elif self.project.info.base in ("core16", None):
+            image = "16.04"
+        else:
+            raise errors.UnsupportedHostError(
+                base=self.project.info.base,
+                platform=_get_platform(),
+                provider=self._get_provider_name(),
+            )
+
+        return image
+
     def _launch(self) -> None:
-        self._multipass_cmd.launch(instance_name=self.instance_name, image="16.04")
+        with contextlib.suppress(errors.ProviderStartError):
+            # An exception here means we need to create
+            self._multipass_cmd.start(instance_name=self.instance_name)
+            # start worked, which means the image existed, which means we can
+            # now return.
+            return
+
+        cloud_user_data_filepath = self._get_cloud_user_data()
+        image = self._get_disk_image()
+
+        mem = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "2G")
+        disk = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "256G")
+
+        self._multipass_cmd.launch(
+            instance_name=self.instance_name,
+            mem=mem,
+            disk=disk,
+            image=image,
+            cloud_init=cloud_user_data_filepath,
+        )
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.mount(source=dev_or_path, target=target)
+
+    def _umount(self, *, mountpoint: str) -> None:
+        mount = "{}:{}".format(self.instance_name, mountpoint)
+        self._multipass_cmd.umount(mount=mount)
 
     def _mount_snaps_directory(self) -> None:
         # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
         # CoreLibExecDir
         path = os.path.join(os.path.sep, "var", "lib", "snapd", "snaps")
         self._mount(mountpoint=self._SNAPS_MOUNTPOINT, dev_or_path=path)
+
+    def _unmount_snaps_directory(self):
+        self._umount(mountpoint=self._SNAPS_MOUNTPOINT)
 
     def _push_file(self, *, source: str, destination: str) -> None:
         destination = "{}:{}".format(self.instance_name, destination)
@@ -64,7 +122,27 @@ class Multipass(Provider):
 
         if not self._instance_info.is_stopped():
             self._multipass_cmd.stop(instance_name=self.instance_name)
-        self._multipass_cmd.delete(instance_name=self.instance_name)
+        if self._is_ephemeral:
+            self.clean_project()
+
+    def mount_project(self) -> None:
+        # Resolve the home directory
+        home_dir = (
+            self._multipass_cmd.execute(
+                command=["printenv", "HOME"],
+                hide_output=True,
+                instance_name=self.instance_name,
+            )
+            .decode()
+            .strip()
+        )
+        project_mountpoint = os.path.join(home_dir, "project")
+
+        # multipass keeps the mount active, so check if it is there first.
+        if not self._instance_info.is_mounted(project_mountpoint):
+            self._mount(
+                mountpoint=project_mountpoint, dev_or_path=self.project._project_dir
+            )
 
     def provision_project(self, tarball: str) -> None:
         """Provision the multipass instance with the project to work with."""
@@ -74,7 +152,8 @@ class Multipass(Provider):
 
         # First create a working directory
         self._multipass_cmd.execute(
-            command=["mkdir", self.project_dir], instance_name=self.instance_name
+            command=["mkdir", self._INSTANCE_PROJECT_DIR],
+            instance_name=self.instance_name,
         )
 
         # Then copy the tarball over
@@ -82,28 +161,34 @@ class Multipass(Provider):
         self._multipass_cmd.copy_files(source=tarball, destination=destination)
 
         # Finally extract it into project_dir.
-        extract_cmd = ["tar", "-xvf", tarball, "-C", self.project_dir]
+        extract_cmd = ["tar", "-xvf", tarball, "-C", self._INSTANCE_PROJECT_DIR]
         self._multipass_cmd.execute(
             command=extract_cmd, instance_name=self.instance_name
         )
 
+    def clean_project(self) -> bool:
+        was_cleaned = super().clean_project()
+        if was_cleaned:
+            self._multipass_cmd.delete(instance_name=self.instance_name, purge=True)
+        return was_cleaned
+
     def build_project(self) -> None:
         # TODO add instance check.
-        # Use the full path as /snap/bin is not in PATH.
-        snapcraft_cmd = "cd {}; /snap/bin/snapcraft snap --output {}".format(
-            self.project_dir, self.snap_filename
-        )
         self._multipass_cmd.execute(
-            command=["sh", "-c", snapcraft_cmd], instance_name=self.instance_name
+            command=["snapcraft", "snap", "--output", self.snap_filename],
+            instance_name=self.instance_name,
         )
 
     def retrieve_snap(self) -> str:
         # TODO add instance check.
         source = "{}:{}/{}".format(
-            self.instance_name, self.project_dir, self.snap_filename
+            self.instance_name, self._INSTANCE_PROJECT_DIR, self.snap_filename
         )
         self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
         return self.snap_filename
+
+    def shell(self) -> None:
+        self._multipass_cmd.shell(instance_name=self.instance_name)
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(
