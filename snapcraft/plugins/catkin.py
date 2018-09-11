@@ -134,7 +134,7 @@ class CatkinWorkspaceIsRootError(errors.SnapcraftError):
 
 
 class CatkinCannotResolveRoscoreError(errors.SnapcraftError):
-    fmt = "Failed to determine system dependency for roscore"
+    fmt = "Failed to determine system dependency for roscore."
 
 
 class CatkinAptDependencyFetchError(errors.SnapcraftError):
