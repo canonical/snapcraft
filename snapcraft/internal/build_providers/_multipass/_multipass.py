@@ -16,11 +16,17 @@
 
 import os
 import shlex
+import sys
 
 from .. import errors
 from .._base_provider import Provider
+from .._images import get_cached_image_filepath
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
+
+
+def _get_platform() -> str:
+    return sys.platform
 
 
 class Multipass(Provider):
@@ -35,16 +41,37 @@ class Multipass(Provider):
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
 
+    def _get_disk_image(self) -> str:
+        if self.project.info.base is not None and _get_platform() == "linux":
+            image = "file://{}".format(
+                get_cached_image_filepath(
+                    base=self.project.info.base, snap_arch=self.project.deb_arch
+                )
+            )
+        elif self.project.info.base == "core18":
+            image = "18.04"
+        elif self.project.info.base in ("core16", None):
+            image = "16.04"
+        else:
+            raise errors.UnsupportedHostError(
+                base=self.project.info.base,
+                platform=_get_platform(),
+                provider=self._get_provider_name(),
+            )
+
+        return image
+
     def _launch(self) -> None:
         try:
             # An exception here means we need to create
             self._multipass_cmd.start(instance_name=self.instance_name)
         except errors.ProviderStartError:
             cloud_user_data_filepath = self._get_cloud_user_data()
+            image = self._get_disk_image()
 
             self._multipass_cmd.launch(
                 instance_name=self.instance_name,
-                image="16.04",
+                image=image,
                 cloud_init=cloud_user_data_filepath,
             )
 

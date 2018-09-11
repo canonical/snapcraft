@@ -86,9 +86,11 @@ class ProviderImpl(Provider):
         self.shell_mock("shell")
 
 
-def get_project() -> Project:
+def get_project(base: str = "") -> Project:
     with open("snapcraft.yaml", "w") as snapcraft_file:
         print("name: project-name", file=snapcraft_file)
+        if base:
+            print("base: {}".format(base), file=snapcraft_file)
 
     return Project(snapcraft_yaml_file_path="snapcraft.yaml")
 
@@ -106,5 +108,27 @@ class BaseProviderBaseTest(unit.TestCase):
         self.addCleanup(patcher.stop)
 
         self.project = get_project()
+
+        self.echoer_mock = mock.Mock()
+
+
+class BaseProviderWithBasesBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.instance_name = "snapcraft-project-name"
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._base_provider.SnapInjector"
+        )
+        self.snap_injector_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._images._Image.get",
+            return_value="fake-base.qcow2",
+        )
+        self.images_get_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
         self.echoer_mock = mock.Mock()
