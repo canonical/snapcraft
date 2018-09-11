@@ -102,6 +102,9 @@ class TestCase(testtools.TestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "false")
         )
 
+        # Don't let the managed host variable leak into tests
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_MANAGED_HOST"))
+
         # Note that these directories won't exist when the test starts,
         # they might be created after calling the snapcraft command on the
         # project dir.
