@@ -66,6 +66,8 @@ class Multipass(Provider):
         with contextlib.suppress(errors.ProviderStartError):
             # An exception here means we need to create
             self._multipass_cmd.start(instance_name=self.instance_name)
+            # start worked, which means the image existed, which means we can
+            # now return.
             return
 
         cloud_user_data_filepath = self._get_cloud_user_data()
