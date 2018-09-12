@@ -4,7 +4,7 @@ docopt==0.6.2
 jsonschema==2.5.1
 paramiko==2.4.1
 progressbar33==2.4
-PyYAML==3.11; sys_platform != 'darwin' and sys_platform != 'win32'
+PyYAML==3.11; sys_platform == 'linux'
 http://pyyaml.org/download/pyyaml/PyYAML-3.13-cp35-cp35m-win_amd64.whl; sys_platform == 'win32'
 PyYAML==3.13; sys_platform == 'darwin'
 pyxdg==0.25
