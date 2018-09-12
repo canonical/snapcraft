@@ -109,11 +109,53 @@ class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
 class CatkinUnsupportedDependencyTypeError(errors.SnapcraftError):
     fmt = (
         "Package {dependency!r} resolved to an unsupported type of "
-        "dependency: {dependency_type!r}"
+        "dependency: {dependency_type!r}."
     )
 
     def __init__(self, dependency_type, dependency):
         super().__init__(dependency_type=dependency_type, dependency=dependency)
+
+
+class CatkinUnsupportedRosdistroError(errors.SnapcraftError):
+    fmt = (
+        "Unsupported ROS distribution: {rosdistro!r}. The supported ROS distributions "
+        "are {supported}."
+    )
+
+    def __init__(self, rosdistro):
+        super().__init__(
+            rosdistro=rosdistro,
+            supported=formatting_utils.humanize_list(_ROS_RELEASE_MAP.keys(), "and"),
+        )
+
+
+class CatkinWorkspaceIsRootError(errors.SnapcraftError):
+    fmt = "source-space cannot be the root of the Catkin workspace; use a subdirectory."
+
+
+class CatkinCannotResolveRoscoreError(errors.SnapcraftError):
+    fmt = "Failed to determine system dependency for roscore."
+
+
+class CatkinAptDependencyFetchError(errors.SnapcraftError):
+    fmt = "Failed to fetch apt dependencies: {message}"
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class CatkinNoHighestVersionPathError(errors.SnapcraftError):
+    fmt = "Failed to determine highest path in {path!r}: nothing found."
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
+class CatkinGccVersionError(errors.SnapcraftError):
+    fmt = "Failed to determine gcc version: {message}"
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class CatkinPlugin(snapcraft.BasePlugin):
@@ -259,19 +301,11 @@ class CatkinPlugin(snapcraft.BasePlugin):
             )
 
         if os.path.abspath(self.sourcedir) == os.path.abspath(self._ros_package_path):
-            raise RuntimeError(
-                "source-space cannot be the root of the Catkin workspace"
-            )
+            raise CatkinWorkspaceIsRootError()
 
         # Validate selected ROS distro
         if self.options.rosdistro not in _ROS_RELEASE_MAP:
-            raise RuntimeError(
-                "Unsupported rosdistro: {!r}. The supported ROS distributions "
-                "are {}".format(
-                    self.options.rosdistro,
-                    formatting_utils.humanize_list(_ROS_RELEASE_MAP.keys(), "and"),
-                )
-            )
+            raise CatkinUnsupportedRosdistroError(self.options.rosdistro)
 
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
@@ -466,7 +500,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
                         system_dependencies[dependency_type] = set()
                     system_dependencies[dependency_type] |= dependencies
             else:
-                raise RuntimeError("Unable to determine system dependency for roscore")
+                raise CatkinCannotResolveRoscoreError()
 
         # Pull down and install any apt dependencies that were discovered
         self._setup_apt_dependencies(system_dependencies.get("apt"))
@@ -490,9 +524,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             try:
                 ubuntu.get(apt_dependencies)
             except repo.errors.PackageNotFoundError as e:
-                raise RuntimeError(
-                    "Failed to fetch apt dependencies: {}".format(e.message)
-                )
+                raise CatkinAptDependencyFetchError(e.message)
 
             logger.info("Installing apt dependencies...")
             ubuntu.unpack(self.installdir)
@@ -1001,8 +1033,8 @@ class Compilers:
                     )
                 )
             )
-        except RuntimeError as e:
-            raise RuntimeError("Unable to determine gcc version: {}".format(str(e)))
+        except CatkinNoHighestVersionPathError as e:
+            raise CatkinGccVersionError(str(e))
 
         return formatting_utils.combine_paths(paths, prepend="-I", separator=" ")
 
@@ -1104,6 +1136,6 @@ class _Catkin:
 def _get_highest_version_path(path):
     paths = sorted(glob.glob(os.path.join(path, "*")))
     if not paths:
-        raise RuntimeError("nothing found in {!r}".format(path))
+        raise CatkinNoHighestVersionPathError(path)
 
     return paths[-1]

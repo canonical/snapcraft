@@ -43,6 +43,13 @@ class RosdepUnexpectedResultError(errors.SnapcraftError):
         super().__init__(dependency=dependency, output=output)
 
 
+class RosdepInitializationError(errors.SnapcraftError):
+    fmt = "Failed to initialize rosdep: {message}"
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
 class Rosdep:
     def __init__(
         self,
@@ -95,14 +102,18 @@ class Rosdep:
             self._run(["init"])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
-            raise RuntimeError("Error initializing rosdep database:\n{}".format(output))
+            raise RosdepInitializationError(
+                "Error initializing rosdep database:\n{}".format(output)
+            )
 
         logger.info("Updating rosdep database...")
         try:
             self._run(["update"])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
-            raise RuntimeError("Error updating rosdep database:\n{}".format(output))
+            raise RosdepInitializationError(
+                "Error updating rosdep database:\n{}".format(output)
+            )
 
     def get_dependencies(self, package_name=None):
         """Obtain dependencies for a given package, or entire workspace.

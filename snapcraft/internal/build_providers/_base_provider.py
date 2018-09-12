@@ -203,8 +203,17 @@ class Provider(abc.ABC):
             snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
         )
+        # Inject snapcraft
         snap_injector.add(snap_name="core")
         snap_injector.add(snap_name="snapcraft")
+
+        # Also inject the base when confinement is set to classic to have real
+        # paths to the linker.
+        if (
+            self.project.info.base is not None
+            and self.project.info.confinement == "classic"
+        ):
+            snap_injector.add(snap_name=self.project.info.base)
 
         snap_injector.apply()
 
