@@ -131,7 +131,6 @@ class ProjectInfoTest(unit.TestCase):
 
 class InvalidYamlTest(unit.TestCase):
     def test_tab_in_yaml(self):
-
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(
                 """\
@@ -156,10 +155,11 @@ class InvalidYamlTest(unit.TestCase):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
 
+        self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
         self.assertThat(
             raised.message,
             Equals(
-                "found a tab character that violate intendation on line 5 of snap/snapcraft.yaml"
+                "found a tab character that violate intendation on line 5, column 1"
             ),
         )
 
@@ -181,12 +181,61 @@ class InvalidYamlTest(unit.TestCase):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         )
 
+        self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
         self.assertThat(
             raised.message,
             Equals(
-                "Invalid character '\\uffff' at position 40 "
-                "of snap/snapcraft.yaml: control characters are not allowed"
+                "invalid character '\\uffff' at position 40: control characters are not allowed"
             ),
+        )
+
+    def test_invalid_yaml_unhashable(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+                name: test
+                version: {{invalid}}
+                summary: test
+                description: test
+                confinement: strict
+                grade: stable
+                parts:
+                part1:
+                    plugin: nil
+                """
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            ProjectInfo,
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+        )
+
+        self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
+        self.assertThat(
+            raised.message, Equals("found unhashable key on line 2, column 10")
+        )
+
+    def test_invalid_yaml_list_in_mapping(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+                name: foobar
+                - list item
+                """
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            ProjectInfo,
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+        )
+
+        self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
+        self.assertThat(
+            raised.message, Equals("did not find expected key on line 2, column 1")
         )
 
 
