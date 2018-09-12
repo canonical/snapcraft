@@ -94,9 +94,14 @@ class RosdepTestCase(unit.TestCase):
 
         self.check_output_mock.side_effect = run
 
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
+        raised = self.assertRaises(rosdep.RosdepInitializationError, self.rosdep.setup)
 
-        self.assertThat(str(raised), Equals("Error initializing rosdep database:\nbar"))
+        self.assertThat(
+            str(raised),
+            Equals(
+                "Failed to initialize rosdep: Error initializing rosdep database:\nbar"
+            ),
+        )
 
     def test_setup_update_failure(self):
         def run(args, **kwargs):
@@ -107,9 +112,12 @@ class RosdepTestCase(unit.TestCase):
 
         self.check_output_mock.side_effect = run
 
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
+        raised = self.assertRaises(rosdep.RosdepInitializationError, self.rosdep.setup)
 
-        self.assertThat(str(raised), Equals("Error updating rosdep database:\nbar"))
+        self.assertThat(
+            str(raised),
+            Equals("Failed to initialize rosdep: Error updating rosdep database:\nbar"),
+        )
 
     def test_get_dependencies(self):
         self.check_output_mock.return_value = b"foo\nbar\nbaz"
