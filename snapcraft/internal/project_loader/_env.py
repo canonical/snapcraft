@@ -19,21 +19,6 @@ from snapcraft.internal import common, elf, pluginhandler
 from typing import Dict, List
 
 
-def env_for_classic(base: str, arch_triplet: str) -> List[str]:
-    """Set the required environment variables for a classic confined build."""
-    env = []
-
-    core_path = common.get_core_path(base)
-    paths = common.get_library_paths(core_path, arch_triplet, existing_only=False)
-    env.append(
-        formatting_utils.format_path_variable(
-            "LD_LIBRARY_PATH", paths, prepend="", separator=":"
-        )
-    )
-
-    return env
-
-
 def runtime_env(root: str, arch_triplet: str) -> List[str]:
     """Set the environment variables required for running binaries."""
     env = []

@@ -285,15 +285,8 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(snapcraft_yaml)
         part = project_config.parts.get_part("part1")
         environment = project_config.parts.build_env_for_part(part, root_part=True)
-        self.assertIn(
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{base_core_path}/lib:'
-            "{base_core_path}/usr/lib:{base_core_path}/lib/{arch_triplet}:"
-            '{base_core_path}/usr/lib/{arch_triplet}"'.format(
-                base_core_path=self.base_environment.core_path,
-                arch_triplet=project_config.project.arch_triplet,
-            ),
-            environment,
-        )
+        for env_item in environment:
+            self.assertThat(env_item, Not(StartsWith("LD_LIBRARY_PATH")))
 
     def test_stage_environment_confinement_classic_with_incompat_host(self):
         self.useFixture(FakeOsRelease(version_codename="incompatible-fake"))
