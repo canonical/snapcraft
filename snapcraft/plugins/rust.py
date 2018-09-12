@@ -104,8 +104,6 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        self._write_cross_compile_config()
-
         self._test()
 
         cmd = [
@@ -115,34 +113,15 @@ class RustPlugin(snapcraft.BasePlugin):
             "--root",
             self.installdir,
             "--path",
-            self.builddir,
+            self.builddir
         ]
+        if self.project.is_cross_compiling:
+            cmd.extend(["--target", self._target])
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(" ".join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
         self._record_manifest()
-
-    def _write_cross_compile_config(self):
-        if not self.project.is_cross_compiling:
-            return
-
-        # Cf. http://doc.crates.io/config.html
-        os.makedirs(self._cargo_dir, exist_ok=True)
-        with open(os.path.join(self._cargo_dir, "config"), "w") as f:
-            f.write(
-                """
-                [build]
-                target = "{}"
-
-                [target.{}]
-                linker = "{}"
-                """.format(
-                    self._target,
-                    self._target,
-                    "{}-gcc".format(self.project.arch_triplet),
-                )
-            )
 
     def _record_manifest(self):
         self._manifest["rustup-version"] = self.run_output([self._rustup, "--version"])
