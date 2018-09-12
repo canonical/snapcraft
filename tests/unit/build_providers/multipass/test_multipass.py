@@ -280,12 +280,8 @@ class MultipassTest(BaseProviderBaseTest):
 class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
     scenarios = (
-        (
-            "linux",
-            dict(
-                platform="linux", base="core16", expected_image="file://fake-base.qcow2"
-            ),
-        ),
+        ("linux", dict(platform="linux", base="core16", expected_image="16.04")),
+        ("linux", dict(platform="linux", base="core18", expected_image="18.04")),
         ("linux no base", dict(platform="linux", base=None, expected_image="16.04")),
         ("darwin", dict(platform="darwin", base="core18", expected_image="18.04")),
         ("darwin", dict(platform="darwin", base="core16", expected_image="16.04")),
