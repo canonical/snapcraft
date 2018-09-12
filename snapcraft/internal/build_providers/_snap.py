@@ -44,6 +44,22 @@ class _SnapOp(enum.Enum):
     REFRESH = 3
 
 
+def _get_snap_channel(snap_name: str) -> str:
+    """Returns the channel to use for snap_name."""
+    if snap_name == "snapcraft":
+        channel = os.getenv(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/stable"
+        )
+        logger.warning(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+            "snapcraft from {}".format(channel)
+        )
+    else:
+        channel = "latest/stable"
+
+    return channel
+
+
 class _SnapManager:
     def __init__(
         self,
@@ -164,13 +180,15 @@ class _SnapManager:
             install_cmd.append(os.path.join(self._snap_dir, snap_file_name))
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd.append(op.name.lower())
+            snap_channel = _get_snap_channel(self.snap_name)
             store_snap_info = storeapi.StoreClient().cpi.get_package(
-                self.snap_name, "latest/stable", self._snap_arch
+                self.snap_name, snap_channel, self._snap_arch
             )
             snap_revision = store_snap_info["revision"]
             confinement = store_snap_info["confinement"]
             if confinement == "classic":
                 install_cmd.append("--classic")
+            install_cmd.extend(["--channel", snap_channel])
             install_cmd.append(host_snap_repo.name)
         elif op == _SnapOp.NOP:
             install_cmd = []
