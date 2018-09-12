@@ -1,0 +1,23 @@
+summary: Build a snap that uses snap/local and verify that it works without warning
+
+environment:
+  SNAP_DIR: snaps/snap-local-dir
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Verify that no warning was printed
+  snapcraft pull | MATCH -v "unsupported"
+
+  # Verify that the parts were pulled as expected
+  [ "$(find parts/local-part/src -printf "%P ")" = "root-file dir dir/dir-file " ]
+  [ "$(find parts/local-subdir-part/src -printf "%P ")" = "dir-file " ]
+
+  # Verify that the parts can now be staged, and end up as expected
+  snapcraft stage | MATCH -v "unsupported"
+  [ "$(find stage -printf "%P ")" = "root-file dir-file dir dir/dir-file " ]
