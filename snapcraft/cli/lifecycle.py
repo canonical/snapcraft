@@ -41,11 +41,12 @@ if typing.TYPE_CHECKING:
 
 # TODO: when snap is a real step we can simplify the arguments here.
 # fmt: off
-def _execute(
+def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
     output: str = None,
+    shell: bool = False,
     shell_after: bool = False,
     **kwargs
 ) -> "Project":
@@ -65,7 +66,20 @@ def _execute(
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
-                if pack_project:
+                if shell:
+                    # shell means we want to do everything right up to the previous
+                    # step and then go into a shell instead of the requested step.
+                    # the "snap" target is a special snowflake that has not made its
+                    # way to be a proper step.
+                    previous_step = None
+                    if pack_project:
+                        previous_step = steps.PRIME
+                    elif step > steps.PULL:
+                        previous_step = step.previous_step()
+                    # steps.PULL is the first step, so we would directly shell into it.
+                    if previous_step:
+                        instance.execute_step(previous_step)
+                elif pack_project:
                     instance.pack_project(output=output)
                 else:
                     instance.execute_step(step)
@@ -77,7 +91,7 @@ def _execute(
                                  "if you wish to introspect this failure.")
                     raise
             else:
-                if shell_after:
+                if shell or shell_after:
                     instance.shell()
     elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
@@ -214,7 +228,6 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command()
-@add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--step",
@@ -223,7 +236,7 @@ def pack(directory, output, **kwargs):
     type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
     help="only clean the specified step and those that depend on it.",
 )
-def clean(parts, step_name, **kwargs):
+def clean(parts, step_name):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -234,14 +247,13 @@ def clean(parts, step_name, **kwargs):
     build_environment = env.BuilderEnvironmentConfig()
     try:
         project = get_project(
-            is_managed_host=build_environment.is_managed_host, **kwargs
+            is_managed_host=build_environment.is_managed_host
         )
     except YamlValidationError:
         # We need to be able to clean invalid projects too.
         project = get_project(
             is_managed_host=build_environment.is_managed_host,
-            skip_snapcraft_yaml=True,
-            **kwargs,
+            skip_snapcraft_yaml=True
         )
 
     step = None
@@ -278,10 +290,7 @@ def clean(parts, step_name, **kwargs):
     metavar="<remote>",
     help="Use a specific lxd remote instead of a local container.",
 )
-@click.option(
-    "--debug", is_flag=True, help="Shells into the environment if the build fails."
-)
-def cleanbuild(remote, debug, **kwargs):
+def cleanbuild(remote, **kwargs):
     """Create a snap using a clean environment managed by a build provider.
 
     \b
@@ -309,7 +318,7 @@ def cleanbuild(remote, debug, **kwargs):
         default=default_provider, additional_providers=["multipass"]
     )
     project = get_project(
-        is_managed=build_environment.is_managed_host, **kwargs, debug=debug
+        is_managed=build_environment.is_managed_host, **kwargs
     )
 
     conduct_project_sanity_check(project)

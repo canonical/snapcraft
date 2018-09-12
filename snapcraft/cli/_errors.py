@@ -98,6 +98,7 @@ def exception_handler(
     is_snapcraft_managed_host = (
         distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
     )
+    is_connected_to_tty = sys.stdout.isatty()
     ask_to_report = False
 
     if not is_snapcraft_error:
@@ -121,9 +122,14 @@ def exception_handler(
     if ask_to_report:
         if not is_raven_setup or is_snapcraft_managed_host:
             click.echo(_MSG_TRACEBACK_PRINT)
-            traceback.print_exception(*exc_info)
+            traceback.print_exception(*exc_info, file=sys.stdout)
             click.echo(_MSG_MANUALLY_REPORT)
         else:
+            if is_connected_to_tty:
+                click.echo(_MSG_TRACEBACK_FILE)
+            else:
+                click.echo(_MSG_TRACEBACK_PRINT)
+                traceback.print_exception(*exc_info, file=sys.stdout)
             trace_filepath = _handle_trace_output(exc_info)
             if _is_send_to_sentry(trace_filepath):
                 _submit_trace(exc_info)

@@ -85,11 +85,6 @@ class SetupTest(unit.TestCase):
         call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.object(_images, "get_tool_path")
-        tool_mock = patcher.start()
-        tool_mock.return_value = "qemu-img-fake-tool"
-        self.addCleanup(patcher.stop)
-
         _images.setup(
             base="core16", snap_arch="amd64", size="1G", image_path="image.qcow2"
         )
@@ -97,7 +92,7 @@ class SetupTest(unit.TestCase):
         image_get_mock.assert_called_once_with()
         call_mock.assert_called_once_with(
             [
-                "qemu-img-fake-tool",
+                "qemu-img",
                 "create",
                 "-q",
                 "-f",
@@ -119,11 +114,6 @@ class SetupTest(unit.TestCase):
         call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.object(_images, "get_tool_path")
-        tool_mock = patcher.start()
-        tool_mock.return_value = "qemu-img-fake-tool"
-        self.addCleanup(patcher.stop)
-
         _images.setup(
             base="core16",
             snap_arch="amd64",
@@ -134,7 +124,7 @@ class SetupTest(unit.TestCase):
         self.assertThat("dir", DirExists())
         call_mock.assert_called_once_with(
             [
-                "qemu-img-fake-tool",
+                "qemu-img",
                 "create",
                 "-q",
                 "-f",
@@ -155,11 +145,6 @@ class SetupTest(unit.TestCase):
         patcher = mock.patch("subprocess.check_call")
         call_mock = patcher.start()
         call_mock.side_effect = subprocess.CalledProcessError(1, ["qemu-img"])
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.object(_images, "get_tool_path")
-        tool_mock = patcher.start()
-        tool_mock.return_value = "qemu-img-fake-tool"
         self.addCleanup(patcher.stop)
 
         self.assertRaises(

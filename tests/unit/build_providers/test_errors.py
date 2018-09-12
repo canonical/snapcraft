@@ -244,6 +244,16 @@ class ErrorFormattingTest(unit.TestCase):
                 ),
             ),
         ),
+        (
+            "UnsupportedHostError",
+            dict(
+                exception=errors.UnsupportedHostError,
+                kwargs=dict(base="core66", platform="beos", provider="multipass"),
+                expected_message=(
+                    "Building for 'core66' is not supported on platform 'beos' using provider: 'multipass'."
+                ),
+            ),
+        ),
     ]
 
     def test_error_formatting(self):

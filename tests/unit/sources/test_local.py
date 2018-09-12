@@ -119,11 +119,15 @@ class TestLocal(unit.TestCase):
         os.makedirs(os.path.join("src", "parts"))
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
+        os.makedirs(os.path.join("src", ".snapcraft"))
 
         # Make the snapcraft.yaml (and hidden one) and a built snap
         open(os.path.join("src", "snapcraft.yaml"), "w").close()
         open(os.path.join("src", ".snapcraft.yaml"), "w").close()
         open(os.path.join("src", "foo.snap"), "w").close()
+
+        # Make the global state cache
+        open(os.path.join("src", ".snapcraft", "state"), "w").close()
 
         # Now make some real files
         os.makedirs(os.path.join("src", "dir"))
@@ -140,6 +144,7 @@ class TestLocal(unit.TestCase):
         self.assertFalse(os.path.exists(os.path.join("destination", "prime")))
         self.assertFalse(os.path.exists(os.path.join("destination", "snapcraft.yaml")))
         self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft.yaml")))
+        self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft")))
         self.assertFalse(os.path.exists(os.path.join("destination", "foo.snap")))
 
         # Verify that the real stuff made it in.
