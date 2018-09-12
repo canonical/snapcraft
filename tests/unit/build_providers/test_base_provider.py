@@ -17,9 +17,10 @@
 import os
 from unittest.mock import call
 
-from testtools.matchers import Equals, EndsWith
+from testtools.matchers import Equals, EndsWith, DirExists, Not
 
 from . import BaseProviderBaseTest, ProviderImpl
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -51,10 +52,29 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_launch_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.start_mock.side_effect = errors.ProviderStartError(
+            exit_code=1, provider_name="provider"
+        )
         provider.launch_instance()
 
         provider.launch_mock.assert_any_call()
+        provider.start_mock.assert_any_call()
+        provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
+
+        self.assertThat(provider.provider_project_dir, DirExists())
+
+    def test_start_instance(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.launch_instance()
+
+        provider.launch_mock.assert_not_called()
+        provider.start_mock.assert_any_call()
         provider.run_mock.assert_not_called()
+
+        # Given the way we constructe this test, this directory should not exist
+        # TODO add robustness to start. (LP: #1792242)
+        self.assertThat(provider.provider_project_dir, Not(DirExists()))
 
 
 class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
