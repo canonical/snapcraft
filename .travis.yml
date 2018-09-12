@@ -93,10 +93,8 @@ jobs:
     - stage: integration
       if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
-    # Disable this test until snaps can run in bionic containers again. See
-    # https://forum.snapcraft.io/t/7339 for more info.
-    #- if: type != cron
-      #script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
+    - if: type != cron
+      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/lifecycle
     - if: type != cron
@@ -115,10 +113,8 @@ jobs:
       - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_java
     - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
-    # Disable this test until snaps can run in bionic containers again. See
-    # https://forum.snapcraft.io/t/7339 for more info.
-    #- if: type != cron
-      #script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
+    - if: type != cron
+      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
     - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
     - if: type != cron

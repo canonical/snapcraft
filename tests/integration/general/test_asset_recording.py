@@ -28,7 +28,7 @@ import testscenarios
 from testtools.matchers import Contains, Equals
 
 from tests.integration import repo
-from tests import integration, fixture_setup
+from tests import integration, fixture_setup, skip
 
 
 class AssetRecordingBaseTestCase(integration.TestCase):
@@ -38,6 +38,8 @@ class AssetRecordingBaseTestCase(integration.TestCase):
 
     """
 
+    # See https://forum.snapcraft.io/t/7339 for more info.
+    @skip.skip_unless_codename("xenial", "snaps are broken in bionic containers")
     def setUp(self):
         super().setUp()
         # The combination of snapd, lxd and armhf does not currently work.
