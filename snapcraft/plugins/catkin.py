@@ -158,6 +158,13 @@ class CatkinGccVersionError(errors.SnapcraftError):
         super().__init__(message=message)
 
 
+class CatkinPackagePathNotFoundError(errors.SnapcraftError):
+    fmt = "Failed to find package path: {path!r}"
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
 class CatkinPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
@@ -428,9 +435,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             self.catkin_packages is None or len(self.catkin_packages) > 0
         )
         if packages_to_build and not os.path.exists(self._ros_package_path):
-            raise FileNotFoundError(
-                'Unable to find package path: "{}"'.format(self._ros_package_path)
-            )
+            raise CatkinPackagePathNotFoundError(self._ros_package_path)
 
         # Validate the underlay. Note that this validation can't happen in
         # __init__ as the underlay will probably only be valid once a
@@ -880,7 +885,7 @@ def _resolve_package_dependencies(
     # it.
     try:
         these_dependencies = rosdep.resolve_dependency(dependency)
-    except _ros.rosdep.RosdepDependencyNotFoundError:
+    except _ros.rosdep.RosdepDependencyNotResolvedError:
         raise CatkinInvalidSystemDependencyError(dependency)
 
     for key, value in these_dependencies.items():
