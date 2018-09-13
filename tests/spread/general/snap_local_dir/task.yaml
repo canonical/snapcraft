@@ -9,15 +9,20 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  list_dir_contents()
+  {
+      find "$1" ! -path "$1" -printf "%P\n" | sort | xargs
+  }
+
   cd "$SNAP_DIR"
 
   # Verify that no warning was printed
   snapcraft pull | MATCH -v "unsupported"
 
   # Verify that the parts were pulled as expected
-  [ "$(find parts/local-part/src -printf "%P ")" = "root-file dir dir/dir-file " ]
-  [ "$(find parts/local-subdir-part/src -printf "%P ")" = "dir-file " ]
+  [ "$(list_dir_contents parts/local-part/src)" = "dir dir/dir-file root-file" ]
+  [ "$(list_dir_contents parts/local-subdir-part/src)" = "dir-file" ]
 
   # Verify that the parts can now be staged, and end up as expected
   snapcraft stage | MATCH -v "unsupported"
-  [ "$(find stage -printf "%P ")" = "root-file dir-file dir dir/dir-file " ]
+  [ "$(list_dir_contents stage)" = "dir dir/dir-file dir-file root-file" ]
