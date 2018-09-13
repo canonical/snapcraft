@@ -20,7 +20,6 @@ import sys
 
 from .. import errors
 from .._base_provider import Provider
-from .._images import get_cached_image_filepath
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 
@@ -42,13 +41,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        if self.project.info.base is not None and _get_platform() == "linux":
-            image = "file://{}".format(
-                get_cached_image_filepath(
-                    base=self.project.info.base, snap_arch=self.project.deb_arch
-                )
-            )
-        elif self.project.info.base == "core18":
+        if self.project.info.base == "core18":
             image = "18.04"
         elif self.project.info.base in ("core16", None):
             image = "16.04"
