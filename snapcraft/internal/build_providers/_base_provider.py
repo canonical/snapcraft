@@ -23,6 +23,7 @@ from typing import List, Optional
 
 from xdg import BaseDirectory
 
+from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import steps
 
@@ -124,6 +125,10 @@ class Provider(abc.ABC):
         """Launch the instance."""
 
     @abc.abstractmethod
+    def _start(self):
+        """Start an existing the instance."""
+
+    @abc.abstractmethod
     def _push_file(self, *, source: str, destination: str) -> None:
         """Push a file into the instance."""
 
@@ -186,9 +191,25 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
-        os.makedirs(self.provider_project_dir, exist_ok=True)
-        self._launch()
-        self._setup_snapcraft()
+        try:
+            # An ProviderStartError exception here means we need to create
+            self._start()
+        except errors.ProviderStartError:
+            # If starting failed, we need to make sure our data directory is
+            # clean
+            if os.path.exists(self.provider_project_dir):
+                shutil.rmtree(self.provider_project_dir)
+            os.makedirs(self.provider_project_dir)
+            # then launch
+            self._launch()
+            # We need to setup snapcraft now to be able to refresh
+            self._setup_snapcraft()
+            # and do first boot related things
+            self._run(["snapcraft", "refresh"])
+        else:
+            # We always setup snapcraft after a start to bring it up to speed with
+            # what is on the host
+            self._setup_snapcraft()
 
     def _setup_snapcraft(self) -> None:
         registry_filepath = os.path.join(

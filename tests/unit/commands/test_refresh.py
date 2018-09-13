@@ -21,7 +21,6 @@ import fixtures
 from testtools.matchers import Equals
 from xdg import BaseDirectory
 
-from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests.unit import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
 
@@ -60,7 +59,7 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
 class RefreshCommandTestCase(RefreshCommandBaseTestCase):
     @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    def test_refresh(self, mock_container_run):
+    def test_refresh_lxd(self, mock_container_run):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
         )
@@ -79,9 +78,11 @@ class RefreshCommandTestCase(RefreshCommandBaseTestCase):
         )
         lxd_project_mock().refresh.assert_called_once_with()
 
-
-class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
-    def test_refresh_fails_without_env_var(self):
+    @mock.patch("snapcraft.cli.containers.repo.Repo.refresh_build_packages")
+    def test_refresh(self, mock_repo_refresh):
         self.make_snapcraft_yaml()
 
-        self.assertRaises(SnapcraftEnvironmentError, self.run_command, ["refresh"])
+        result = self.run_command(["refresh"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        mock_repo_refresh.assert_called_once_with()
