@@ -534,7 +534,6 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
         self.config_data["apps"] = {
             "foo": {"command": "echo", "passthrough": {"foo": "bar", "spam": "eggs"}}
         }
-        _create_file(os.path.join(self.prime_dir, self.config_data["apps"]["foo"]["command"]))
         self.config_data["hooks"] = {
             "foo": {"plugs": ["network"], "passthrough": {"foo": "bar", "spam": "eggs"}}
         }

@@ -531,11 +531,6 @@ class _SnapPackaging:
     def _wrap_exe(self, command, basename=None):
         execparts = shlex.split(command)
         exepath = os.path.join(self._prime_dir, execparts[0])
-        if not os.path.exists(exepath) and "/" not in execparts[0]:
-            logger.warning(
-                "For better results ensure that the specified command {command!r} is "
-                "relative to the prime directory.".format(command=execparts[0])
-            )
         if basename:
             wrappath = os.path.join(self._prime_dir, basename) + ".wrapper"
         else:
