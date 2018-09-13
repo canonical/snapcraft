@@ -464,3 +464,20 @@ class BuildPackagesTestCase(unit.TestCase):
             ["package-not-installable"],
         )
         self.assertThat(raised.packages, Equals("package-not-installable"))
+
+    @patch("subprocess.check_call")
+    def test_refresh_buid_packages(self, mock_check_call):
+        repo.Ubuntu.refresh_build_packages()
+
+        mock_check_call.assert_called_once_with(["sudo", "apt", "update"])
+
+    @patch(
+        "subprocess.check_call",
+        side_effect=CalledProcessError(returncode=1, cmd=["sudo", "apt", "update"]),
+    )
+    def test_refresh_buid_packages_fails(self, mock_check_call):
+        self.assertRaises(
+            errors.CacheUpdateFailedError, repo.Ubuntu.refresh_build_packages
+        )
+
+        mock_check_call.assert_called_once_with(["sudo", "apt", "update"])

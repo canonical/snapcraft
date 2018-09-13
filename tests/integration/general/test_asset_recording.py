@@ -28,7 +28,7 @@ from testtools.matchers import Contains, Equals
 
 from snapcraft import yaml_utils
 from tests.integration import repo
-from tests import integration, fixture_setup
+from tests import integration, fixture_setup, os_release
 
 
 class AssetRecordingBaseTestCase(integration.TestCase):
@@ -52,6 +52,11 @@ class AssetRecordingBaseTestCase(integration.TestCase):
             subprocess.check_call(["sudo", "snap", "install", "review-tools", "--edge"])
 
     def assert_review_passes(self, snap_file: str) -> None:
+        # See https://forum.snapcraft.io/t/7339 for more info on why review verification
+        # is skipped on non xenial environments.
+        if os_release.get_version_codename() != "xenial":
+            return
+
         # review-tools do not really have access to tmp, let's assume it can look
         # in its own snap directory and that that does not change as we cannot
         # query what the data store is for a given snap.

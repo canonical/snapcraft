@@ -14,14 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import os
 import shlex
 import sys
 
 from .. import errors
 from .._base_provider import Provider
-from .._images import get_cached_image_filepath
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 
@@ -43,13 +41,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        if self.project.info.base is not None and _get_platform() == "linux":
-            image = "file://{}".format(
-                get_cached_image_filepath(
-                    base=self.project.info.base, snap_arch=self.project.deb_arch
-                )
-            )
-        elif self.project.info.base == "core18":
+        if self.project.info.base == "core18":
             image = "18.04"
         elif self.project.info.base in ("core16", None):
             image = "16.04"
@@ -63,13 +55,6 @@ class Multipass(Provider):
         return image
 
     def _launch(self) -> None:
-        with contextlib.suppress(errors.ProviderStartError):
-            # An exception here means we need to create
-            self._multipass_cmd.start(instance_name=self.instance_name)
-            # start worked, which means the image existed, which means we can
-            # now return.
-            return
-
         cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
@@ -83,6 +68,9 @@ class Multipass(Provider):
             image=image,
             cloud_init=cloud_user_data_filepath,
         )
+
+    def _start(self):
+        self._multipass_cmd.start(instance_name=self.instance_name)
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)

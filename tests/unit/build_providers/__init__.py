@@ -28,6 +28,7 @@ class ProviderImpl(Provider):
 
         self.run_mock = mock.Mock()
         self.launch_mock = mock.Mock()
+        self.start_mock = mock.Mock()
         self.mount_mock = mock.Mock()
         self.unmount_mock = mock.Mock()
         self.push_file_mock = mock.Mock()
@@ -41,6 +42,9 @@ class ProviderImpl(Provider):
 
     def _launch(self) -> None:
         self.launch_mock()
+
+    def _start(self) -> None:
+        self.start_mock()
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         self.mount_mock(mountpoint=mountpoint, dev_or_path=dev_or_path)
