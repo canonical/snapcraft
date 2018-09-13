@@ -18,6 +18,7 @@ import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import Equals, DirExists, Not
+from unittest import mock
 
 from . import LifecycleCommandsBaseTestCase
 
@@ -106,3 +107,9 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
                 "again.\n"
             ),
         )
+
+    @mock.patch("snapcraft.cli.lifecycle.conduct_project_sanity_check")
+    def test_preflight_check_is_called(self, mock_check):
+        self.make_snapcraft_yaml("prime")
+        self.run_command(["prime"])
+        mock_check.assert_called_once_with(mock.ANY)
