@@ -153,6 +153,20 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         )
 
 
+class SendToSentryFails(SendToSentryBaseTest):
+    def test_send_fails(self):
+        self.prompt_mock.return_value = "yes"
+        self.mock_isatty.return_value = True
+
+        self.raven_client_mock().captureException.side_effect = RuntimeError(
+            "raven is broken"
+        )
+        try:
+            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+        except Exception:
+            self.fail("Exception unexpectedly raised")
+
+
 class SendToSentryIsYesTest(SendToSentryBaseTest):
 
     yes_scenarios = [
