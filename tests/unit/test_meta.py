@@ -1242,7 +1242,11 @@ class BaseWrapTest(unit.TestCase):
 
 class WrapAppTest(BaseWrapTest):
     def test_app_not_fount(self):
-        self.assertRaises(errors.InvalidAppCommandError, self.packager._wrap_apps, apps=dict(app=dict(command="test-command")))
+        self.assertRaises(
+            errors.InvalidAppCommandError,
+            self.packager._wrap_apps,
+            apps=dict(app=dict(command="test-command")),
+        )
 
 
 # TODO this needs more tests.
