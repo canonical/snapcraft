@@ -23,10 +23,8 @@ import tempfile
 from typing import Callable, Generator, List, Optional
 from typing import Any, Dict  # noqa: F401
 
-import yaml
-
 from . import errors
-from snapcraft import storeapi
+from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import repo
 
 logger = logging.getLogger(__name__)
@@ -213,7 +211,7 @@ def _load_registry(registry_filepath: Optional[str]) -> Dict[str, List[Any]]:
         return dict()
 
     with open(registry_filepath) as registry_file:
-        return yaml.load(registry_file)
+        return yaml_utils.load(registry_file)
 
 
 def _save_registry(
@@ -227,7 +225,7 @@ def _save_registry(
         os.makedirs(dirpath, exist_ok=True)
 
     with open(registry_filepath, "w") as registry_file:
-        yaml.dump(registry_data, stream=registry_file)
+        yaml_utils.dump(registry_data, stream=registry_file)
 
 
 class SnapInjector:

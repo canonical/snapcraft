@@ -42,7 +42,6 @@ import logging
 import os
 import re
 import urllib
-import yaml
 from yaml.scanner import ScannerError
 from xdg import BaseDirectory
 from yaml.parser import ParserError
@@ -51,7 +50,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 import snapcraft
-from snapcraft import project
+from snapcraft import project, yaml_utils
 from snapcraft.internal import errors, log, project_loader, repo, sources
 
 logger = logging.getLogger(__name__)
@@ -88,7 +87,7 @@ def _get_origin_data(origin_dir):
     yaml_file = project.get_snapcraft_yaml(base_dir=origin_dir)
     try:
         with open(yaml_file) as fp:
-            origin_data = yaml.safe_load(fp)
+            origin_data = yaml_utils.load(fp)
     except ScannerError as e:
         raise errors.InvalidWikiEntryError(e) from e
 
@@ -222,7 +221,7 @@ def _process_wiki_entry(
     """Add valid wiki entries to the master parts list"""
     # return the number of errors encountered
     try:
-        data = yaml.safe_load(entry)
+        data = yaml_utils.load(entry)
     except (ScannerError, ParserError) as e:
         raise errors.InvalidWikiEntryError(
             "Bad wiki entry, possibly malformed YAML for entry: {}".format(e)
@@ -342,7 +341,7 @@ def run(args):
     _write_parts_list(path, master_parts_list)
 
     if args["--debug"]:
-        print(yaml.dump(master_parts_list, default_flow_style=False))
+        print(yaml_utils.dump(master_parts_list))
 
     return wiki_errors
 
@@ -359,4 +358,4 @@ def missing_parts_set(parts, known_parts):
 def _write_parts_list(path, master_parts_list):
     logger.info("Writing parts list to {!r}".format(path))
     with open(path, "w") as fp:
-        fp.write(yaml.dump(master_parts_list, default_flow_style=False))
+        fp.write(yaml_utils.dump(master_parts_list))

@@ -18,19 +18,19 @@ import subprocess
 from textwrap import dedent
 
 import testscenarios
-import yaml
 from testtools.matchers import Contains, FileExists
 
+from snapcraft import yaml_utils
 from tests import integration
 
 
 class VersionScriptBaseTestCase(integration.TestCase):
     def _set_version_script(self, snapcraft_yaml_file):
         with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml.load(f)
+            snapcraft_yaml = yaml_utils.load(f)
         snapcraft_yaml["version-script"] = self.scripts[self.script]
         with open(snapcraft_yaml_file, "w") as f:
-            yaml.dump(snapcraft_yaml, f)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
 
 class VersionScriptTestCase(testscenarios.WithScenarios, VersionScriptBaseTestCase):

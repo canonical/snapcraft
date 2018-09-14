@@ -37,9 +37,9 @@ from typing import Callable
 
 import fixtures
 import xdg
-import yaml
 
 import snapcraft
+from snapcraft import yaml_utils
 from snapcraft.internal import elf
 from tests import fake_servers
 from tests.fake_servers import api, search, upload
@@ -1015,7 +1015,7 @@ class SnapcraftYaml(fixtures.Fixture):
         )
         os.makedirs(os.path.join(self.path, "snap"), exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as snapcraft_yaml_file:
-            yaml.dump(self.data, snapcraft_yaml_file)
+            yaml_utils.dump(self.data, stream=snapcraft_yaml_file)
 
 
 class SharedCache(fixtures.Fixture):

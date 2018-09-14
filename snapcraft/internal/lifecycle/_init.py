@@ -16,9 +16,9 @@
 import contextlib
 import os
 from textwrap import dedent
-import yaml
 
 from snapcraft.internal import errors
+from snapcraft import yaml_utils
 
 
 _TEMPLATE_YAML = dedent(
@@ -65,4 +65,4 @@ def init():
 
 
 def get_init_data():
-    return yaml.load(_TEMPLATE_YAML)
+    return yaml_utils.load(_TEMPLATE_YAML)
