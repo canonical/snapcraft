@@ -26,7 +26,14 @@ from snapcraft.internal import errors, repo
 logger = logging.getLogger(__name__)
 
 
-class RosdepDependencyNotFoundError(errors.SnapcraftError):
+class RosdepPackageNotFoundError(errors.SnapcraftError):
+    fmt = "rosdep cannot find Catkin package {package!r}"
+
+    def __init__(self, package):
+        super().__init__(package=package)
+
+
+class RosdepDependencyNotResolvedError(errors.SnapcraftError):
     fmt = "rosdep cannot resolve {dependency!r} into a valid dependency"
 
     def __init__(self, dependency):
@@ -141,9 +148,7 @@ class Rosdep:
             else:
                 return set()
         except subprocess.CalledProcessError:
-            raise FileNotFoundError(
-                'Unable to find Catkin package "{}"'.format(package_name)
-            )
+            raise RosdepPackageNotFoundError(package_name)
 
     def resolve_dependency(self, dependency_name):
         try:
@@ -164,7 +169,7 @@ class Rosdep:
                 ]
             )
         except subprocess.CalledProcessError:
-            raise RosdepDependencyNotFoundError(dependency_name)
+            raise RosdepDependencyNotResolvedError(dependency_name)
 
         # The output of rosdep follows the pattern:
         #

@@ -139,10 +139,10 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(1, "foo")
 
         raised = self.assertRaises(
-            FileNotFoundError, self.rosdep.get_dependencies, "bar"
+            rosdep.RosdepPackageNotFoundError, self.rosdep.get_dependencies, "bar"
         )
 
-        self.assertThat(str(raised), Equals('Unable to find Catkin package "bar"'))
+        self.assertThat(str(raised), Equals("rosdep cannot find Catkin package 'bar'"))
 
     def test_get_dependencies_entire_workspace(self):
         self.check_output_mock.return_value = b"foo\nbar\nbaz"
@@ -177,7 +177,9 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(1, "foo")
 
         raised = self.assertRaises(
-            rosdep.RosdepDependencyNotFoundError, self.rosdep.resolve_dependency, "bar"
+            rosdep.RosdepDependencyNotResolvedError,
+            self.rosdep.resolve_dependency,
+            "bar",
         )
 
         self.assertThat(

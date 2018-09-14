@@ -30,6 +30,7 @@ parts:
         - libssl-dev
         - libsodium-dev
         - liblzma-dev
+        - libyaml-dev
         - patch
         - sed
     stage-packages:

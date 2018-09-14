@@ -159,8 +159,7 @@ class InvalidYamlTest(unit.TestCase):
         self.assertThat(
             raised.message,
             Equals(
-                "found character '\\t' that cannot start any token "
-                "on line 5, column 1"
+                "found a tab character that violate intendation on line 5, column 1"
             ),
         )
 
@@ -186,8 +185,7 @@ class InvalidYamlTest(unit.TestCase):
         self.assertThat(
             raised.message,
             Equals(
-                "invalid character '\\uffff' at position 40 "
-                "of snap/snapcraft.yaml: special characters are not allowed"
+                "invalid character '\\uffff' at position 40: control characters are not allowed"
             ),
         )
 
@@ -237,8 +235,7 @@ class InvalidYamlTest(unit.TestCase):
 
         self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
         self.assertThat(
-            raised.message,
-            Equals("expected <block end>, but found '-' on line 2, column 1"),
+            raised.message, Equals("did not find expected key on line 2, column 1")
         )
 
 

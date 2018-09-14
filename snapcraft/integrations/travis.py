@@ -65,9 +65,8 @@ import logging
 import os
 import subprocess
 import tempfile
-import yaml
 
-from snapcraft import storeapi
+from snapcraft import storeapi, yaml_utils
 from snapcraft.file_utils import requires_command_success, requires_path_exists
 from snapcraft.internal import project_loader
 from snapcraft._store import login
@@ -218,7 +217,7 @@ def enable(project):
         'Configuring "deploy" phase to build and release the snap in the ' "Store."
     )
     with open(TRAVIS_CONFIG_FILENAME, "r+") as fd:
-        travis_conf = yaml.safe_load(fd)
+        travis_conf = yaml_utils.load(fd)
         # Enable 'sudo' capability and 'docker' service.
         travis_conf["sudo"] = "required"
         services = travis_conf.setdefault("services", [])
@@ -237,7 +236,7 @@ def enable(project):
             "on": {"branch": "master"},
         }
         fd.seek(0)
-        yaml.dump(travis_conf, fd, default_flow_style=False)
+        yaml_utils.dump(travis_conf, stream=fd)
 
     logger.info(
         "Done. Now you just have to review and commit changes in your "

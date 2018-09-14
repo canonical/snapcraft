@@ -454,12 +454,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # it does not contain a `src` folder and `source-space` is 'src', this
         # should fail.
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        raised = self.assertRaises(FileNotFoundError, plugin.pull)
+        raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
             str(raised),
             Equals(
-                'Unable to find package path: "{}"'.format(
+                "Failed to find package path: {!r}".format(
                     os.path.join(plugin.sourcedir, "src")
                 )
             ),
@@ -483,12 +483,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        raised = self.assertRaises(FileNotFoundError, plugin.pull)
+        raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
             str(raised),
             Equals(
-                'Unable to find package path: "{}"'.format(
+                "Failed to find package path: {!r}".format(
                     os.path.join(plugin.sourcedir, self.properties.source_space)
                 )
             ),
@@ -502,12 +502,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        raised = self.assertRaises(FileNotFoundError, plugin.pull)
+        raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
             str(raised),
             Equals(
-                'Unable to find package path: "{}"'.format(
+                "Failed to find package path: {!r}".format(
                     os.path.join(plugin.sourcedir, self.properties.source_space)
                 )
             ),
@@ -1654,7 +1654,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
     def test_find_system_dependencies_missing_local_dependency(self):
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
-        exception = _ros.rosdep.RosdepDependencyNotFoundError("foo")
+        exception = _ros.rosdep.RosdepDependencyNotResolvedError("foo")
         self.rosdep_mock.resolve_dependency.side_effect = exception
 
         raised = self.assertRaises(
