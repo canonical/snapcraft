@@ -1241,7 +1241,7 @@ class BaseWrapTest(unit.TestCase):
 
 
 class WrapAppTest(BaseWrapTest):
-    def test_app_not_fount(self):
+    def test_app_not_found(self):
         self.assertRaises(
             errors.InvalidAppCommandError,
             self.packager._wrap_apps,
