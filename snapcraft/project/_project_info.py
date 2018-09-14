@@ -19,8 +19,8 @@ from collections import OrderedDict
 from copy import deepcopy
 
 import yaml
-import yaml.reader
 
+from snapcraft import yaml_utils
 from . import errors
 
 
@@ -62,7 +62,7 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
 
     try:
         with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = yaml.safe_load(fp)  # type: ignore
+            yaml_contents = yaml_utils.load(fp)  # type: ignore
     except yaml.MarkedYAMLError as e:
         raise errors.YamlValidationError(
             "{} on line {}, column {}".format(
@@ -72,8 +72,8 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
         ) from e
     except yaml.reader.ReaderError as e:
         raise errors.YamlValidationError(
-            "invalid character {!r} at position {} of {}: {}".format(
-                chr(e.character), e.position + 1, yaml_file_path, e.reason
+            "invalid character {!r} at position {}: {}".format(
+                chr(e.character), e.position + 1, e.reason
             ),
             yaml_file_path,
         ) from e

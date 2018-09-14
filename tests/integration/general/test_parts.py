@@ -19,9 +19,9 @@ import os
 import sys
 import xdg
 
-import yaml
 from testtools.matchers import Contains, Equals
 
+from snapcraft import yaml_utils
 from tests import integration
 
 
@@ -59,7 +59,7 @@ class PartsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml.safe_load(output[idx:])
+        part = yaml_utils.load(output[idx:])
         expected_part = {
             "curl": {
                 "plugin": "autotools",
@@ -96,7 +96,7 @@ class PartsWithFilesetsTestCase(integration.TestCase):
         )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
-        part = yaml.safe_load(output[idx:])
+        part = yaml_utils.load(output[idx:])
         expected_part = {
             "simple-make-filesets": {
                 "plugin": "make",

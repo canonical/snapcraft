@@ -362,9 +362,8 @@ of the choice of plugin.
         build in Debug mode.
 """
 
-import collections
+from collections import OrderedDict  # noqa
 import pkg_resources  # noqa
-import yaml
 
 
 def _get_version():
@@ -411,43 +410,3 @@ from snapcraft import file_utils  # noqa
 from snapcraft import shell_utils  # noqa
 from snapcraft.internal import repo  # noqa
 from snapcraft.project._project_options import ProjectOptions  # noqa
-
-
-# Setup yaml module globally
-# yaml OrderedDict loading and dumping
-# from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
-
-def dict_representer(dumper, data):
-    return dumper.represent_dict(data.items())
-
-
-def dict_constructor(loader, node):
-    # Necessary in order to make yaml merge tags work
-    loader.flatten_mapping(node)
-    value = loader.construct_pairs(node)
-
-    try:
-        return collections.OrderedDict(value)
-    except TypeError:
-        raise yaml.constructor.ConstructorError(
-            "while constructing a mapping",
-            node.start_mark,
-            "found unhashable key",
-            node.start_mark,
-        )
-
-
-def str_presenter(dumper, data):
-    if len(data.splitlines()) > 1:  # check for multiline string
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-
-
-yaml.add_representer(str, str_presenter)
-yaml.SafeDumper.add_representer(str, str_presenter)
-yaml.add_representer(collections.OrderedDict, dict_representer)
-yaml.SafeDumper.add_representer(collections.OrderedDict, dict_representer)
-yaml.add_constructor(_mapping_tag, dict_constructor)
-yaml.SafeLoader.add_constructor(_mapping_tag, dict_constructor)

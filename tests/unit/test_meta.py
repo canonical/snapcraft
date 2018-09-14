@@ -23,7 +23,6 @@ from unittest.mock import patch
 import fixtures
 import testscenarios
 import testtools
-import yaml
 from testtools.matchers import (
     Contains,
     DirExists,
@@ -35,7 +34,7 @@ from testtools.matchers import (
 )
 
 from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
-from snapcraft import extractors
+from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
@@ -64,7 +63,7 @@ class CreateBaseTestCase(unit.TestCase):
     def generate_meta_yaml(self, *, build=False):
         os.makedirs("snap", exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as f:
-            f.write(yaml.dump(self.config_data))
+            f.write(yaml_utils.dump(self.config_data))
 
         self.project = Project(snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
 
@@ -85,7 +84,7 @@ class CreateBaseTestCase(unit.TestCase):
         self.assertTrue(os.path.exists(self.snap_yaml), "snap.yaml was not created")
 
         with open(self.snap_yaml) as f:
-            return yaml.load(f)
+            return yaml_utils.load(f)
 
 
 class CreateTestCase(CreateBaseTestCase):
@@ -1232,7 +1231,7 @@ class BaseWrapTest(unit.TestCase):
             "parts": {"part1": {"plugin": "nil"}},
         }
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml.dump(self.snapcraft_yaml, stream=snapcraft_file)
+            yaml_utils.dump(self.snapcraft_yaml, stream=snapcraft_file)
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
         # TODO move to use outer interface
