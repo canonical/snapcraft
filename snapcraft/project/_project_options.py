@@ -144,7 +144,7 @@ def _get_local_plugins_dir(project_dir: str, parts_dir: str) -> str:
 
 class ProjectOptions:
     @property
-    def parallel_build_count(self) -> int:
+    def parallel_build_count(self) -> str:
         build_count = 1
         if self._parallel_builds:
             try:
@@ -154,7 +154,7 @@ class ProjectOptions:
                     "Unable to determine CPU count; disabling parallel builds"
                 )
 
-        return build_count
+        return str(build_count)
 
     @property
     def is_cross_compiling(self):
