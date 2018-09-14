@@ -68,7 +68,7 @@ _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
 
 
-def exception_handler(
+def exception_handler(  # noqa: C901
     exception_type, exception, exception_traceback, *, debug=False
 ) -> None:
     """Catch all Snapcraft exceptions unless debugging.
@@ -132,8 +132,17 @@ def exception_handler(
                 traceback.print_exception(*exc_info, file=sys.stdout)
             trace_filepath = _handle_trace_output(exc_info)
             if _is_send_to_sentry(trace_filepath):
-                _submit_trace(exc_info)
-                click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+                try:
+                    _submit_trace(exc_info)
+                except Exception as exc:
+                    # we really cannot do much more from this exit handler.
+                    echo.error(
+                        "Encountered an issue while trying to submit the report: {}".format(
+                            str(exc)
+                        )
+                    )
+                else:
+                    click.echo(_MSG_SEND_TO_SENTRY_THANKS)
 
     sys.exit(exit_code)
 
