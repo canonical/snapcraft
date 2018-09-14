@@ -1216,8 +1216,7 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
             )
 
 
-# TODO this needs more tests.
-class WrapExeTestCase(unit.TestCase):
+class BaseWrapTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1239,6 +1238,18 @@ class WrapExeTestCase(unit.TestCase):
         self.packager = _snap_packaging._SnapPackaging(config)
         self.packager._is_host_compatible_with_base = True
 
+
+class WrapAppTest(BaseWrapTest):
+    def test_app_not_found(self):
+        self.assertRaises(
+            errors.InvalidAppCommandError,
+            self.packager._wrap_apps,
+            apps=dict(app=dict(command="test-command")),
+        )
+
+
+# TODO this needs more tests.
+class WrapExeTest(BaseWrapTest):
     @patch("snapcraft.internal.common.assemble_env")
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
         mock_assemble_env.return_value = "PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
