@@ -279,15 +279,14 @@ def _update_yaml_with_defaults(config_data, schema):
                     )
                 )
 
+    # Set default adapter
     app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][
         "properties"
     ]
-    # Set default adapter
+    default_adapter = app_schema["adapter"]["default"]
     for app in config_data.get("apps", {}).values():
         if "adapter" not in app:
-            with contextlib.suppress(KeyError):
-                default = app_schema["adapter"]["default"]
-                app["adapter"] = default
+            app["adapter"] = default_adapter
 
 
 def _ensure_required_keywords(config_data):
