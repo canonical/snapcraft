@@ -103,6 +103,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="256G",
             image="16.04",
@@ -155,6 +156,26 @@ class MultipassTest(BaseProviderBaseTest):
             instance_name=self.instance_name, purge=True
         )
 
+    def test_launch_with_cpus_from_environment(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_CPU", "64")
+        )
+        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
+            provider_name="multipass", exit_code=1
+        )
+
+        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance.create()
+
+        self.multipass_cmd_mock().launch.assert_called_once_with(
+            instance_name=self.instance_name,
+            cpus="64",
+            mem="2G",
+            disk="256G",
+            image="16.04",
+            cloud_init=mock.ANY,
+        )
+
     def test_launch_with_ram_from_environment(self):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "4G")
@@ -168,6 +189,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="4G",
             disk="256G",
             image="16.04",
@@ -187,6 +209,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="400G",
             image="16.04",
@@ -333,6 +356,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="256G",
             image=self.expected_image,

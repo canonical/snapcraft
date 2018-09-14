@@ -58,11 +58,15 @@ class Multipass(Provider):
         cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
+        cpus = os.getenv(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CPU", str(self.project.parallel_build_count)
+        )
         mem = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "2G")
         disk = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "256G")
 
         self._multipass_cmd.launch(
             instance_name=self.instance_name,
+            cpus=cpus,
             mem=mem,
             disk=disk,
             image=image,

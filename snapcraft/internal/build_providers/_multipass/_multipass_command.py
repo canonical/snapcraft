@@ -67,6 +67,7 @@ class MultipassCommand:
         *,
         instance_name: str,
         image: str,
+        cpus: str = None,
         mem: str = None,
         disk: str = None,
         remote: str = None,
@@ -76,6 +77,7 @@ class MultipassCommand:
 
         :param str instance_name: the name the launched instance will have.
         :param str image: the image to create the instance with.
+        :param str cpus: amount of CPUs to assign to the launched instance.
         :param str mem: amount of RAM to assign to the launched instance.
         :param str disk: amount of disk space the instance will see.
         :param str remote: the remote server to retrieve the image from.
@@ -86,6 +88,8 @@ class MultipassCommand:
         cmd = [self.provider_cmd, "launch", image, "--name", instance_name]
         if cloud_init is not None:
             cmd.extend(["--cloud-init", cloud_init])
+        if cpus is not None:
+            cmd.extend(["--cpus", cpus])
         if mem is not None:
             cmd.extend(["--mem", mem])
         if disk is not None:
