@@ -77,7 +77,7 @@ class MultipassCommand:
 
         :param str instance_name: the name the launched instance will have.
         :param str image: the image to create the instance with.
-        :param str cpus: amount of CPUs to assign to the launched instance.
+        :param str cpus: amount of virtual CPUs to assign to the launched instance.
         :param str mem: amount of RAM to assign to the launched instance.
         :param str disk: amount of disk space the instance will see.
         :param str remote: the remote server to retrieve the image from.
