@@ -1,0 +1,15 @@
+summary: Ensure the define command outputs correctly
+
+systems: [ubuntu-14*, ubuntu-16*]
+
+restore: |
+  rm -rf ./parts
+  rm -f ./define.txt
+
+execute: |
+  export XDG_DATA_HOME="$(pwd)/parts"
+
+  snapcraft update
+  snapcraft define curl > define.txt
+
+  comm -3 expected_define.txt define.txt

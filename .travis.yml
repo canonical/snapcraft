@@ -92,6 +92,10 @@ jobs:
 
     - stage: integration
       if: type != cron
+      script:
+      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+      - ./runtests.sh spread
+    - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
       script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
@@ -126,7 +130,3 @@ jobs:
       script:
         - sudo apt install -y git python-launchpadlib
         - ./tools/cla_check.py
-      if: type != cron
-      script:
-      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-      - ./runtests.sh spread
