@@ -27,10 +27,7 @@ from snapcraft.internal.build_providers.errors import ProviderExecError
 
 
 class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
-    scenarios = (
-        ("core18", dict(base="core18")),
-        ("no base", dict(base=None)),
-    )
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
 
     def setUp(self):
         super().setUp()
@@ -78,10 +75,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
 
 class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
-    scenarios = (
-        ("core18", dict(base="core18")),
-        ("no base", dict(base=None)),
-    )
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
 
     def setUp(self):
         super().setUp()
