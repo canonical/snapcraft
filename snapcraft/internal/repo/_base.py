@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -43,6 +43,7 @@ class BaseRepo:
     - unpack
     - get_package_libraries
     - get_packages_for_source_type
+    - refresh_build_packages
     - install_build_packages
     - is_package_installed
 
@@ -83,6 +84,18 @@ class BaseRepo:
         :param str source_type: a VCS source type to handle.
         :returns: a set of packages that need to be installed on the host.
         :rtype: set of strings.
+        """
+        raise errors.NoNativeBackendError()
+
+    @classmethod
+    def refresh_build_packages(cls) -> None:
+        """Refresh the build packages cache.
+
+        If refreshing is not possible
+        snapcraft.repo.errors.CacheUpdateFailedError should be raised
+
+        :raises snapcraft.repo.errors.NoNativeBackendError:
+            if the method is not implemented in the subclass.
         """
         raise errors.NoNativeBackendError()
 

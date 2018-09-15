@@ -26,7 +26,14 @@ from snapcraft.internal import errors, repo
 logger = logging.getLogger(__name__)
 
 
-class RosdepDependencyNotFoundError(errors.SnapcraftError):
+class RosdepPackageNotFoundError(errors.SnapcraftError):
+    fmt = "rosdep cannot find Catkin package {package!r}"
+
+    def __init__(self, package):
+        super().__init__(package=package)
+
+
+class RosdepDependencyNotResolvedError(errors.SnapcraftError):
     fmt = "rosdep cannot resolve {dependency!r} into a valid dependency"
 
     def __init__(self, dependency):
@@ -41,6 +48,13 @@ class RosdepUnexpectedResultError(errors.SnapcraftError):
 
     def __init__(self, dependency, output):
         super().__init__(dependency=dependency, output=output)
+
+
+class RosdepInitializationError(errors.SnapcraftError):
+    fmt = "Failed to initialize rosdep: {message}"
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class Rosdep:
@@ -95,14 +109,18 @@ class Rosdep:
             self._run(["init"])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
-            raise RuntimeError("Error initializing rosdep database:\n{}".format(output))
+            raise RosdepInitializationError(
+                "Error initializing rosdep database:\n{}".format(output)
+            )
 
         logger.info("Updating rosdep database...")
         try:
             self._run(["update"])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
-            raise RuntimeError("Error updating rosdep database:\n{}".format(output))
+            raise RosdepInitializationError(
+                "Error updating rosdep database:\n{}".format(output)
+            )
 
     def get_dependencies(self, package_name=None):
         """Obtain dependencies for a given package, or entire workspace.
@@ -130,9 +148,7 @@ class Rosdep:
             else:
                 return set()
         except subprocess.CalledProcessError:
-            raise FileNotFoundError(
-                'Unable to find Catkin package "{}"'.format(package_name)
-            )
+            raise RosdepPackageNotFoundError(package_name)
 
     def resolve_dependency(self, dependency_name):
         try:
@@ -153,7 +169,7 @@ class Rosdep:
                 ]
             )
         except subprocess.CalledProcessError:
-            raise RosdepDependencyNotFoundError(dependency_name)
+            raise RosdepDependencyNotResolvedError(dependency_name)
 
         # The output of rosdep follows the pattern:
         #

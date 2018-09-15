@@ -17,9 +17,10 @@
 import os
 from unittest.mock import call
 
-from testtools.matchers import Equals, EndsWith
+from testtools.matchers import Equals, EndsWith, DirExists, Not
 
 from . import BaseProviderBaseTest, ProviderImpl
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -51,10 +52,29 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_launch_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.start_mock.side_effect = errors.ProviderStartError(
+            exit_code=1, provider_name="provider"
+        )
         provider.launch_instance()
 
         provider.launch_mock.assert_any_call()
+        provider.start_mock.assert_any_call()
+        provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
+
+        self.assertThat(provider.provider_project_dir, DirExists())
+
+    def test_start_instance(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.launch_instance()
+
+        provider.launch_mock.assert_not_called()
+        provider.start_mock.assert_any_call()
         provider.run_mock.assert_not_called()
+
+        # Given the way we constructe this test, this directory should not exist
+        # TODO add robustness to start. (LP: #1792242)
+        self.assertThat(provider.provider_project_dir, Not(DirExists()))
 
 
 class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
@@ -76,6 +96,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().add.assert_has_calls(
             [call(snap_name="core"), call(snap_name="snapcraft")]
         )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_ephemeral_setup_snapcraft(self):
@@ -98,4 +119,35 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().add.assert_has_calls(
             [call(snap_name="core"), call(snap_name="snapcraft")]
         )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+    def test_setup_snapcraft_for_classic_build(self):
+        self.project.info.base = "core18"
+        self.project.info.confinement = "classic"
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock().add.assert_has_calls(
+            [
+                call(snap_name="core"),
+                call(snap_name="snapcraft"),
+                call(snap_name="core18"),
+            ]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+    def test_setup_snapcraft_for_with_base_but_not_a_classic_build(self):
+        self.project.info.base = "core18"
+        self.project.info.confinement = "strict"
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock().add.assert_has_calls(
+            [call(snap_name="core"), call(snap_name="snapcraft")]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()

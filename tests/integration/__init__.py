@@ -33,10 +33,10 @@ import pexpect
 from pexpect import popen_spawn
 import requests
 import testtools
-import yaml
 from testtools import content
 from testtools.matchers import MatchesRegex
 
+from snapcraft import yaml_utils
 from tests import fixture_setup, os_release, subprocess_utils
 from tests.integration import platform
 
@@ -238,8 +238,8 @@ class TestCase(testtools.TestCase):
             "name": name,
             "summary": summary,
             "description": description,
-            "parts": yaml.load(parts),
-            "build-packages": yaml.load(build_packages),
+            "parts": yaml_utils.load(parts),
+            "build-packages": yaml_utils.load(build_packages),
         }
 
         if version:
@@ -252,7 +252,7 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml["architectures"] = architectures
 
         with open("snapcraft.yaml", "w") as f:
-            yaml.dump(snapcraft_yaml, f, default_flow_style=False)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.
@@ -282,7 +282,7 @@ class TestCase(testtools.TestCase):
     ):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:
-            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+            snapcraft_yaml = yaml_utils.load(snapcraft_yaml_file)
         if part:
             packages = snapcraft_yaml["parts"][part].get(type_, [])
         else:
@@ -300,7 +300,7 @@ class TestCase(testtools.TestCase):
             self.fail("The part {} doesn't have a package {}".format(part, package))
 
         with open(snapcraft_yaml_path, "w") as snapcraft_yaml_file:
-            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_yaml_file)
         return version
 
     def set_build_package_architecture(
@@ -308,7 +308,7 @@ class TestCase(testtools.TestCase):
     ):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:
-            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+            snapcraft_yaml = yaml_utils.load(snapcraft_yaml_file)
         packages = snapcraft_yaml["parts"][part]["build-packages"]
         for index, package_in_yaml in enumerate(packages):
             if package_in_yaml == package:
@@ -318,7 +318,7 @@ class TestCase(testtools.TestCase):
             self.fail("The part {} doesn't have a package {}".format(part, package))
 
         with open(snapcraft_yaml_path, "w") as snapcraft_yaml_file:
-            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_yaml_file)
 
 
 class BzrSourceBaseTestCase(TestCase):
@@ -750,10 +750,10 @@ def add_stage_packages(
         snapcraft_yaml_file = os.path.join("snap", "snapcraft.yaml")
 
     with open(snapcraft_yaml_file) as file_read:
-        y = yaml.load(file_read)
+        y = yaml_utils.load(file_read)
         if "stage-packages" in y["parts"][part_name]:
             y["parts"][part_name]["stage-packages"].extend(stage_packages)
         else:
             y["parts"][part_name]["stage-packages"] = stage_packages
     with open(snapcraft_yaml_file, "w") as file_write:
-        yaml.dump(y, file_write)
+        yaml_utils.dump(y, stream=file_write)

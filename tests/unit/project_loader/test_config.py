@@ -45,7 +45,7 @@ class VariableExpansionTest(LoadPartBaseTest):
                 stage-packages: [fswebcam]
         """
             )
-        )  # noqa: E501
+        )
 
         self.assertThat(project_config.data["version-script"], Equals("echo 1.0-devel"))
 
