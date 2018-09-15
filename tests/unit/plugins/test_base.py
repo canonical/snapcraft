@@ -37,7 +37,7 @@ class TestBasePlugin(unit.TestCase):
         options = unit.MockOptions(disable_parallel=False)
         plugin = snapcraft.BasePlugin("test_plugin", options, self.project_options)
         unittest.mock.patch.object(self.project_options, "parallel_build_count", 2)
-        self.assertThat(plugin.parallel_build_count, Equals("2"))
+        self.assertThat(plugin.parallel_build_count, Equals(2))
 
     def test_part_name_with_forward_slash_is_one_directory(self):
         plugin = snapcraft.BasePlugin("test/part", options=None)
