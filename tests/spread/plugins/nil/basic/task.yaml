@@ -9,8 +9,13 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  list_dir_contents()
+  {
+      find "$1" ! -path "$1" -printf "%P\n" | sort | xargs
+  }
+
   cd "$SNAP_DIR"
   snapcraft prime
 
   # Verify that the only thing here is the snap metadata
-  [ "$(find prime -printf "%p ")" = "prime prime/meta prime/meta/snap.yaml " ]
+  [ "$(list_dir_contents prime)" = "meta meta/snap.yaml" ]

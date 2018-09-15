@@ -581,6 +581,8 @@ class _SnapPackaging:
         for k in cmds:
             try:
                 app[k] = self._wrap_exe(app[k], "{}-{}".format(k, name))
+            except FileNotFoundError:
+                raise errors.InvalidAppCommandError(command=app[k], app=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
 
