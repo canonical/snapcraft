@@ -56,9 +56,9 @@ def _execute(  # noqa: C901
 
     conduct_project_sanity_check(project)
 
-    if project.info.base is not None and not (
-        build_environment.is_host or build_environment.is_managed_host
-    ):
+    #  When we are ready to pull the trigger we will trigger this when
+    # project.info.base is set
+    if build_environment.is_multipass:
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )

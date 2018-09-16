@@ -102,6 +102,8 @@ parts:
 
         if base:
             base = "base: {}".format(base)
+        else:
+            base = ""
 
         parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
         super().make_snapcraft_yaml(
