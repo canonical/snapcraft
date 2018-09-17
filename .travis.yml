@@ -92,6 +92,10 @@ jobs:
 
     - stage: integration
       if: type != cron
+      script:
+      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+      - ./runtests.sh spread
+    - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
       script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
@@ -123,10 +127,7 @@ jobs:
       - sudo ./tools/travis/run_integration_test.sh tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
+      install:
+        - sudo apt update && sudo apt install -y git python-launchpadlib
       script:
-        - sudo apt install -y git python-launchpadlib
         - ./tools/cla_check.py
-      if: type != cron
-      script:
-      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-      - ./runtests.sh spread
