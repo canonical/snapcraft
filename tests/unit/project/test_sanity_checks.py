@@ -27,12 +27,20 @@ from tests import unit
 
 
 class PreflightChecksTest(unit.TestCase):
+    scenarios = [
+        ("managed", dict(is_managed_host=True)),
+        ("unmanaged", dict(is_managed_host=False)),
+    ]
+
     def setUp(self):
         super().setUp()
         self.fake_logger = self.useFixture(fixtures.FakeLogger(level=logging.WARN))
+        self.useFixture(
+            fixtures.EnvironmentVariable("HOME", os.path.join(self.path, "fake-home"))
+        )
 
     def assert_check_passes(self):
-        _run_check()
+        self.run_check()
         self.assertThat(self.fake_logger.output, Equals(""))
 
     def test_no_snap_dir(self):
@@ -100,7 +108,7 @@ class PreflightChecksTest(unit.TestCase):
         open(os.path.join(gui_dir, "icon.jpg"), "w").close()
         open(os.path.join(state_dir, "baz"), "w").close()
 
-        _run_check()
+        self.run_check()
         self.assertThat(
             self.fake_logger.output,
             Equals(
@@ -122,7 +130,6 @@ class PreflightChecksTest(unit.TestCase):
             ),
         )
 
-
-def _run_check():
-    project = snapcraft.project.Project()
-    conduct_project_sanity_check(project)
+    def run_check(self):
+        project = snapcraft.project.Project(is_managed_host=self.is_managed_host)
+        conduct_project_sanity_check(project)

@@ -41,7 +41,7 @@ def conduct_project_sanity_check(project: snapcraft.project.Project):
     The checks done here are meant to be light, and not rely on the build environment.
     """
 
-    snap_dir_path = os.path.join(project._work_dir, "snap")
+    snap_dir_path = os.path.join(project._project_dir, "snap")
     if os.path.isdir(snap_dir_path):
         _check_snap_dir(snap_dir_path)
 
