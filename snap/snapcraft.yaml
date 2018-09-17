@@ -50,11 +50,11 @@ parts:
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
     override-pull: |
+        snapcraftctl pull
         version="$(git describe --dirty --always | sed -e 's/-/+git/;y/-/./')"
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
         snapcraftctl set-version "$version"
         snapcraftctl set-grade "$grade"
-        snapcraftctl pull
     override-build: |
         snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
