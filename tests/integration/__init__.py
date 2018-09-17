@@ -456,7 +456,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
@@ -539,7 +539,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
