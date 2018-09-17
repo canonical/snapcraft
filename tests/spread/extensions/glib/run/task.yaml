@@ -1,0 +1,38 @@
+summary: Build and run a basic glib snap
+
+environment:
+  SNAP_DIR: ../snaps/glib-hello
+
+# This is a manual test until v2.36 of core is in stable
+manual: true
+
+prepare: |
+  sudo snap refresh --edge core
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  sudo snap refresh --stable core
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install glib-hello_*.snap --dangerous
+  [ "$(glib-hello)" = "hello world" ]
+
+  # Verify that the extension command chain went through the proper setup procedure
+  snap_user_data="$HOME/snap/glib-hello/current"
+  [ -d "$snap_user_data/.config" ]
+  [ -d "$snap_user_data/.local" ]
+  [ -h "$snap_user_data/.themes" ]
+
+  [ -f "$snap_user_data/.last_revision" ]
+  [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]

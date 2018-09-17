@@ -1,0 +1,19 @@
+name: glib-hello
+version: "1.0"
+summary: test the glib extension
+description: This is a basic glib snap. It simply prints a hello world.
+
+grade: devel
+confinement: strict
+base: core18
+
+apps:
+  glib-hello:
+    command: bin/hello
+    adapter: full
+    extensions: [glib]
+
+parts:
+  project:
+    plugin: cmake
+    source: .
