@@ -75,7 +75,7 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
         if os.getenv("SNAP_NAME") == "snapcraft":
             cmd.append(os.path.join(snap_path, "usr", "bin", "python3"))
         cmd.extend(sys.argv)
-        os.execve("/usr/bin/sudo",  cmd, os.environ)
+        os.execve("/usr/bin/sudo", cmd, os.environ)
 
     # Debugging snapcraft itself is not tied to debugging a snapcraft project.
     try:
