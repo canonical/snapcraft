@@ -59,6 +59,12 @@ class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
         self.check_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("subprocess.Popen")
+        self.popen_mock = patcher.start()
+        self.popen_mock().communicate.return_value = (b"", b"error")
+        self.popen_mock().returncode = 0
+        self.addCleanup(patcher.stop)
+
         self.multipass_command = MultipassCommand()
         self.instance_name = "stub-instance"
 
@@ -293,20 +299,18 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
 
 
 class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch("subprocess.Popen")
-        self.popen_mock = patcher.start()
-        self.popen_mock().communicate.return_value = (b"", b"error")
-        self.popen_mock().returncode = 0
-        self.addCleanup(patcher.stop)
-
     def test_info(self):
         self.multipass_command.info(instance_name=self.instance_name)
 
-        self.popen_mock.assert_has_calls([
-            mock.call(["multipass", "info", self.instance_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)])
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
+        )
         self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()
 
@@ -315,22 +319,34 @@ class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
             instance_name=self.instance_name, output_format="json"
         )
 
-        self.popen_mock.assert_has_calls([
-            mock.call(["multipass", "info", self.instance_name, "--format", "json"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)])
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name, "--format", "json"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
+        )
         self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()
 
     def test_info_fails(self):
         self.popen_mock().returncode = 1
 
-        cmd = ["multipass", "info", self.instance_name]
-
         self.assertRaises(
             errors.ProviderInfoError,
             self.multipass_command.info,
             instance_name=self.instance_name,
         )
-        self.popen_mock.assert_has_calls([
-            mock.call(["multipass", "info", self.instance_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)])
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
+        )
         self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()

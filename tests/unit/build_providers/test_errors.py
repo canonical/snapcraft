@@ -147,6 +147,14 @@ class ErrorFormattingTest(unit.TestCase):
             ),
         ),
         (
+            "ProviderInstanceNotFoundError",
+            dict(
+                exception=errors.ProviderInstanceNotFoundError,
+                kwargs=dict(instance_name="test-build"),
+                expected_message=("Cannot find an instance named 'test-build'."),
+            ),
+        ),
+        (
             "ProviderInfoDataKeyError",
             dict(
                 exception=errors.ProviderInfoDataKeyError,

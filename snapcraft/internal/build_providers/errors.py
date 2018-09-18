@@ -169,6 +169,14 @@ class ProviderInfoError(_SnapcraftError):
         )
 
 
+class ProviderInstanceNotFoundError(_SnapcraftError):
+
+    fmt = "Cannot find an instance named {instance_name!r}."
+
+    def __init__(self, *, instance_name: str) -> None:
+        super().__init__(instance_name=instance_name)
+
+
 class ProviderInfoDataKeyError(_SnapcraftError):
 
     fmt = (
