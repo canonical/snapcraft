@@ -74,6 +74,13 @@ class Multipass(Provider):
         )
 
     def _start(self):
+        try:
+            self._get_instance_info()
+        except errors.ProviderInfoError as instance_error:
+            raise errors.ProviderStartError(
+                provider_name=self._get_provider_name(), exit_code=0
+            ) from instance_error
+
         self._multipass_cmd.start(instance_name=self.instance_name)
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:

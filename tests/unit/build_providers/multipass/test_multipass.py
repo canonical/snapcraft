@@ -18,6 +18,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
 from tests.unit.build_providers import (
     BaseProviderBaseTest,
@@ -90,9 +91,11 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
 
     def test_ephemeral_instance_with_contextmanager(self):
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode()]
 
         with Multipass(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=True
@@ -131,9 +134,11 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.multipass_cmd_mock().info.assert_called_once_with(
-            instance_name=self.instance_name, output_format="json"
-        )
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.multipass_cmd_mock().info.assert_has_calls([
+            mock.call(instance_name=self.instance_name, output_format="json"),
+            mock.call(instance_name=self.instance_name, output_format="json"),
+        ])
 
         self.multipass_cmd_mock().copy_files.assert_has_calls(
             [
@@ -160,9 +165,11 @@ class MultipassTest(BaseProviderBaseTest):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_CPU", "64")
         )
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode()]
 
         instance = Multipass(project=self.project, echoer=self.echoer_mock)
         instance.create()
@@ -289,7 +296,7 @@ class MultipassTest(BaseProviderBaseTest):
     def test_instance_does_not_exist_on_destroy(self):
         # An error is raised if the queried image does not exist
         self.multipass_cmd_mock().info.side_effect = errors.ProviderInfoError(
-            provider_name=self.instance_name, exit_code=2
+            provider_name=self.instance_name, exit_code=2, stderr=b"error"
         )
 
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
@@ -381,10 +388,11 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             target="{}:{}".format(self.instance_name, "/home/multipass/project"),
         )
         self.multipass_cmd_mock().umount.assert_not_called()
-        self.multipass_cmd_mock().info.assert_called_once_with(
-            instance_name=self.instance_name, output_format="json"
-        )
-
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.multipass_cmd_mock().info.assert_has_calls([
+            mock.call(instance_name=self.instance_name, output_format="json"),
+            mock.call(instance_name=self.instance_name, output_format="json"),
+        ])
         self.multipass_cmd_mock().copy_files.assert_not_called()
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name
