@@ -22,6 +22,7 @@ from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 def _get_platform() -> str:
@@ -32,7 +33,13 @@ def _get_stop_time() -> int:
     try:
         timeout = int(os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "10"))
     except ValueError:
-        timeout = 10
+        raise SnapcraftEnvironmentError(
+            "'SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME' is incorrectly set, found {!r} "
+            "but expected a number representing the minutes to delay the actual stop "
+            "operation (or 0 to stop immediately).".format(
+                os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME")
+            )
+        )
 
     return timeout
 
