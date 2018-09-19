@@ -31,9 +31,9 @@ def _run(command: Sequence[str]) -> None:
     subprocess.check_call(command)
 
 
-def _run_output(command: Sequence[str]) -> bytes:
+def _run_output(command: Sequence[str], **kwargs) -> bytes:
     logger.debug("Running {}".format(" ".join(command)))
-    return subprocess.check_output(command)
+    return subprocess.check_output(command, **kwargs)
 
 
 def _ignore_signal(sig, stack):
@@ -229,9 +229,12 @@ class MultipassCommand:
         cmd = [self.provider_cmd, "info", instance_name]
         if output_format is not None:
             cmd.extend(["--format", output_format])
-        try:
-            return _run_output(cmd)
-        except subprocess.CalledProcessError as process_error:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if process.returncode != 0:
             raise errors.ProviderInfoError(
-                provider_name=self.provider_name, exit_code=process_error.returncode
-            ) from process_error
+                provider_name=self.provider_name,
+                exit_code=process.returncode,
+                stderr=stderr,
+            )
+        return stdout

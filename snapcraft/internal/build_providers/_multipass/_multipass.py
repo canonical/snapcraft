@@ -74,6 +74,16 @@ class Multipass(Provider):
         )
 
     def _start(self):
+        try:
+            self._get_instance_info()
+        except errors.ProviderInfoError as instance_error:
+            # Until we have proper multipass error codes to know if this
+            # was a communication error we should keep this error tracking
+            # and generation here.
+            raise errors.ProviderInstanceNotFoundError(
+                instance_name=self.instance_name
+            ) from instance_error
+
         self._multipass_cmd.start(instance_name=self.instance_name)
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:

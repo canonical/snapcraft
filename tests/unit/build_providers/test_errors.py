@@ -139,11 +139,19 @@ class ErrorFormattingTest(unit.TestCase):
             "ProviderInfoError",
             dict(
                 exception=errors.ProviderInfoError,
-                kwargs=dict(provider_name="multipass", exit_code=1),
+                kwargs=dict(provider_name="multipass", exit_code=1, stderr=b"error"),
                 expected_message=(
                     "An error occurred when using 'multipass' to query the status "
-                    "of the instance: returned exit code 1."
+                    "of the instance: returned exit code 1: error."
                 ),
+            ),
+        ),
+        (
+            "ProviderInstanceNotFoundError",
+            dict(
+                exception=errors.ProviderInstanceNotFoundError,
+                kwargs=dict(instance_name="test-build"),
+                expected_message=("Cannot find an instance named 'test-build'."),
             ),
         ),
         (
