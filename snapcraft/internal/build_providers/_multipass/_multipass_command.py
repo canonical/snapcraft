@@ -114,12 +114,17 @@ class MultipassCommand:
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
-    def stop(self, *, instance_name: str) -> None:
+    def stop(self, *, instance_name: str, time: int = None) -> None:
         """Passthrough for running multipass stop.
 
         :param str instance_name: the name of the instance to stop.
+        :param str time: time from now, in minutes, to delay shutdown of the
+                         instance.
         """
-        cmd = [self.provider_cmd, "stop", instance_name]
+        cmd = [self.provider_cmd, "stop"]
+        if time:
+            cmd.extend(["--time", str(time)])
+        cmd.append(instance_name)
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:

@@ -28,6 +28,15 @@ def _get_platform() -> str:
     return sys.platform
 
 
+def _get_stop_time() -> int:
+    try:
+        timeout = int(os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "10"))
+    except ValueError:
+        timeout = 10
+
+    return timeout
+
+
 class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
@@ -123,7 +132,16 @@ class Multipass(Provider):
             return
 
         if not self._instance_info.is_stopped():
-            self._multipass_cmd.stop(instance_name=self.instance_name)
+            stop_time = _get_stop_time()
+            if stop_time > 0:
+                try:
+                    self._multipass_cmd.stop(
+                        instance_name=self.instance_name, time=stop_time
+                    )
+                except errors.ProviderStopError:
+                    self._multipass_cmd.stop(instance_name=self.instance_name)
+            else:
+                self._multipass_cmd.stop(instance_name=self.instance_name)
         if self._is_ephemeral:
             self.clean_project()
 

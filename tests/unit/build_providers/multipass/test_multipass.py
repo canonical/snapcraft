@@ -156,7 +156,7 @@ class MultipassTest(BaseProviderBaseTest):
             ]
         )
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_called_once_with(
             instance_name=self.instance_name, purge=True
@@ -388,7 +388,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         )
         self.multipass_cmd_mock().copy_files.assert_not_called()
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
 

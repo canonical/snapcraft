@@ -195,6 +195,14 @@ class MultipassCommandStopTest(MultipassCommandPassthroughBaseTest):
         )
         self.check_output_mock.assert_not_called()
 
+    def test_stop_time(self):
+        self.multipass_command.stop(instance_name=self.instance_name, time=10)
+
+        self.check_call_mock.assert_called_once_with(
+            ["multipass", "stop", "--time", "10", self.instance_name]
+        )
+        self.check_output_mock.assert_not_called()
+
     def test_stop_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.
