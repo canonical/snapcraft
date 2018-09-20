@@ -26,6 +26,7 @@ from tests.unit.build_providers import (
     get_project,
 )
 from snapcraft.internal import steps
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
 
@@ -156,7 +157,7 @@ class MultipassTest(BaseProviderBaseTest):
             ]
         )
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_called_once_with(
             instance_name=self.instance_name, purge=True
@@ -296,6 +297,50 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
 
+    def test_destroy_instance_with_stop_delay(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "60")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+        multipass.destroy()
+
+        self.multipass_cmd_mock().stop.assert_called_once_with(
+            instance_name=self.instance_name, time=60
+        )
+        self.multipass_cmd_mock().delete.assert_not_called()
+
+    def test_destroy_instance_with_stop_delay_0(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "0")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+        multipass.destroy()
+
+        self.multipass_cmd_mock().stop.assert_called_once_with(
+            instance_name=self.instance_name
+        )
+        self.multipass_cmd_mock().delete.assert_not_called()
+
+    def test_destroy_instance_with_stop_delay_invalid(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "A")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+
+        self.assertRaises(SnapcraftEnvironmentError, multipass.destroy)
+
+        self.multipass_cmd_mock().stop.assert_not_called()
+        self.multipass_cmd_mock().delete.assert_not_called()
+
 
 class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
@@ -388,7 +433,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         )
         self.multipass_cmd_mock().copy_files.assert_not_called()
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
 

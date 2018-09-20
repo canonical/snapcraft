@@ -22,10 +22,26 @@ from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 def _get_platform() -> str:
     return sys.platform
+
+
+def _get_stop_time() -> int:
+    try:
+        timeout = int(os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "10"))
+    except ValueError:
+        raise SnapcraftEnvironmentError(
+            "'SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME' is incorrectly set, found {!r} "
+            "but expected a number representing the minutes to delay the actual stop "
+            "operation (or 0 to stop immediately).".format(
+                os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME")
+            )
+        )
+
+    return timeout
 
 
 class Multipass(Provider):
@@ -123,7 +139,16 @@ class Multipass(Provider):
             return
 
         if not self._instance_info.is_stopped():
-            self._multipass_cmd.stop(instance_name=self.instance_name)
+            stop_time = _get_stop_time()
+            if stop_time > 0:
+                try:
+                    self._multipass_cmd.stop(
+                        instance_name=self.instance_name, time=stop_time
+                    )
+                except errors.ProviderStopError:
+                    self._multipass_cmd.stop(instance_name=self.instance_name)
+            else:
+                self._multipass_cmd.stop(instance_name=self.instance_name)
         if self._is_ephemeral:
             self.clean_project()
 
