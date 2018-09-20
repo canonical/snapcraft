@@ -153,8 +153,8 @@ class CLIConfig:
         if action:
             return OutdatedStepAction[action.upper()]
         else:
-            # Error by default
-            return OutdatedStepAction.ERROR
+            # Clean by default
+            return OutdatedStepAction.CLEAN
 
 
 class Config(object):
