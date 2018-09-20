@@ -51,7 +51,12 @@ def _execute(  # noqa: C901
     **kwargs
 ) -> "Project":
     # fmt: on
-    build_environment = env.BuilderEnvironmentConfig()
+    if sys.platform == "darwin":
+        default_provider = "multipass"
+    else:
+        default_provider = "host"
+
+    build_environment = env.BuilderEnvironmentConfig(default=default_provider)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     conduct_project_sanity_check(project)
@@ -314,9 +319,7 @@ def cleanbuild(remote, **kwargs):
     else:
         default_provider = "lxd"
 
-    build_environment = env.BuilderEnvironmentConfig(
-        default=default_provider, additional_providers=["multipass"]
-    )
+    build_environment = env.BuilderEnvironmentConfig(default=default_provider)
     project = get_project(
         is_managed=build_environment.is_managed_host, **kwargs
     )
