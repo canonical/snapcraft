@@ -138,13 +138,11 @@ else:
         classifiers=classifiers,
         # non-cx_Freeze arguments
         entry_points={
-            "console_scripts": [
-                "snapcraft = snapcraft.cli.__main__:run",
-                "snapcraft-parser = snapcraft.internal.parser:main",
-            ]
+            "console_scripts": ["snapcraft-parser = snapcraft.internal.parser:main"]
         },
-        # This is not in console_scripts because we need a clean environment
-        scripts=["bin/snapcraftctl"],
+        # snapcraftctl is not in console_scripts because we need a clean environment.
+        # snapcraft isn't in console_scripts so we can dispatch to legacy depending on bases
+        scripts=["bin/snapcraft", "bin/snapcraftctl"],
         data_files=[
             ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")]),
             (

@@ -15,8 +15,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This script is only needed as cx_Freeze does not support console scripts
-# thus there are no entry points.
-# We use __import__ to replicate somewhat what would happen if using
-# pkg_resources.
-__import__('snapcraft.cli.__main__', fromlist=['__name__'], level=0)
+import os
+import site
+import subprocess
+import sys
+
+from snapcraft import project, yaml_utils
+from snapcraft.internal import common
+
+# We need to determine the appropriate version of the snapcraft CLI: current, or legacy.
+# By default we use current, but we use legacy if all the following conditions are met:
+#
+#     1. A legacy snapcraft is available
+#     2. There is a snapcraft.yaml
+#     3. Reading the snapcraft.yaml doesn't toss exceptions
+#     3. The snapcraft.yaml is not using the 'base' keyword
+
+if os.path.isdir(common.get_legacy_snapcraft_dir()):
+    try:
+        snapcraft_yaml_path = project.get_snapcraft_yaml()
+        with open(snapcraft_yaml_path, "r") as f:
+            data = yaml_utils.load(f)
+        if data.get("base") is None:
+            legacy_python = os.path.join(
+                common.get_legacy_snapcraft_dir(), "usr", "bin", "python3"
+            )
+            legacy_snapcraft = os.path.join(
+                common.get_legacy_snapcraft_dir(), "bin", "snapcraft"
+            )
+            os.execv(legacy_python, [legacy_python, legacy_snapcraft] + sys.argv[1:])
+    except Exception:
+        # If there are issues loading/parsing the YAML, just pass off to the current version
+        # where the error should be properly handled
+        pass
+
+import snapcraft.cli.__main__
+
+snapcraft.cli.__main__.run()
