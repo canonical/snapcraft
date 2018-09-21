@@ -472,7 +472,7 @@ class _SnapPackaging:
                 snap_yaml[key_name] = self._config_data[key_name]
 
         if "apps" in self._config_data:
-            _verify_app_paths(basedir="prime", apps=self._config_data["apps"])
+            _verify_app_paths(basedir=self._prime_dir, apps=self._config_data["apps"])
             snap_yaml["apps"] = self._wrap_apps(self._config_data["apps"])
             self._render_socket_modes(snap_yaml["apps"])
 
