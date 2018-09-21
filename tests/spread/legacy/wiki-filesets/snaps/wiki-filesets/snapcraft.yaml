@@ -1,10 +1,9 @@
 name: wiki-filesets
-version: 0
+version: "1.0"
 summary: Get part from wiki with filesets
 description: Get part from wiki with filesets
 confinement: strict
+grade: devel
 
 parts:
-    my-part:
-        plugin: nil
-        after: [simple-make-filesets]
+    simple-make-filesets:

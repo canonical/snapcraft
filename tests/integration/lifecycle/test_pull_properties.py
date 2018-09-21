@@ -17,11 +17,11 @@
 from collections import namedtuple
 import os
 import subprocess
-import yaml
 
 import testscenarios
 from testtools.matchers import Equals, FileExists
 
+from snapcraft import yaml_utils
 from tests import fixture_setup, integration
 
 
@@ -38,7 +38,7 @@ class PullPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "x-local-plugin", "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         # Verify that the correct schema dependencies made it into the state.
         self.assertTrue("foo" in state.schema_properties)
@@ -59,7 +59,7 @@ class PullPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "go-hello", "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertThat(state.project_options["deb_arch"], Equals("i386"))
 
     def test_arch_with_pull(self):
@@ -69,7 +69,7 @@ class PullPropertiesTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "go-hello", "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertThat(state.project_options["deb_arch"], Equals("i386"))
 
 
@@ -88,7 +88,7 @@ class AssetTrackingTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "asset-tracking", "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         # Verify that the correct version of 'hello' is installed
         self.assertTrue(len(state.assets["stage-packages"]) > 0)
@@ -111,7 +111,7 @@ class AssetTrackingTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, "empty-part", "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         self.assertTrue(len(state.assets["build-packages"]) == 0)
 
@@ -127,7 +127,7 @@ class AssetTrackingTestCase(integration.TestCase):
 
         state_file = os.path.join(self.parts_dir, "hello", "state", "pull")
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertIn("hello", state.assets["build-packages"][0])
 
     def test_pull_with_virtual_build_package(self):
@@ -137,7 +137,7 @@ class AssetTrackingTestCase(integration.TestCase):
 
         state_file = os.path.join("snap", ".snapcraft", "state")
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
         self.assertIn(
             "{}={}".format(
                 virtual_package,
@@ -182,7 +182,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestCase
         state_file = os.path.join(self.parts_dir, self.part_name, "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         self.assertIn("source-details", state.assets)
 
@@ -222,7 +222,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestC
         state_file = os.path.join(self.parts_dir, part, "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         self.assertIn("source-details", state.assets)
 
@@ -260,7 +260,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios, integration.Te
         state_file = os.path.join(self.parts_dir, part, "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         self.assertIn("source-details", state.assets)
 
@@ -288,7 +288,7 @@ class SubversionAssetTrackingTestCase(integration.TestCase):
         state_file = os.path.join(self.parts_dir, part, "state", "pull")
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
-            state = yaml.load(f)
+            state = yaml_utils.load(f)
 
         self.assertIn("source-details", state.assets)
         self.assertThat(

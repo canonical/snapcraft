@@ -68,7 +68,7 @@ _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
 
 
-def exception_handler(
+def exception_handler(  # noqa: C901
     exception_type, exception, exception_traceback, *, debug=False
 ) -> None:
     """Catch all Snapcraft exceptions unless debugging.
@@ -98,6 +98,7 @@ def exception_handler(
     is_snapcraft_managed_host = (
         distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
     )
+    is_connected_to_tty = sys.stdout.isatty()
     ask_to_report = False
 
     if not is_snapcraft_error:
@@ -121,13 +122,27 @@ def exception_handler(
     if ask_to_report:
         if not is_raven_setup or is_snapcraft_managed_host:
             click.echo(_MSG_TRACEBACK_PRINT)
-            traceback.print_exception(*exc_info)
+            traceback.print_exception(*exc_info, file=sys.stdout)
             click.echo(_MSG_MANUALLY_REPORT)
         else:
+            if is_connected_to_tty:
+                click.echo(_MSG_TRACEBACK_FILE)
+            else:
+                click.echo(_MSG_TRACEBACK_PRINT)
+                traceback.print_exception(*exc_info, file=sys.stdout)
             trace_filepath = _handle_trace_output(exc_info)
             if _is_send_to_sentry(trace_filepath):
-                _submit_trace(exc_info)
-                click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+                try:
+                    _submit_trace(exc_info)
+                except Exception as exc:
+                    # we really cannot do much more from this exit handler.
+                    echo.error(
+                        "Encountered an issue while trying to submit the report: {}".format(
+                            str(exc)
+                        )
+                    )
+                else:
+                    click.echo(_MSG_SEND_TO_SENTRY_THANKS)
 
     sys.exit(exit_code)
 

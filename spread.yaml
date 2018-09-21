@@ -222,4 +222,8 @@ suites:
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
 
+# Legacy tests
+ tests/spread/legacy/:
+   summary: legacy snapcraft tests
+
 path: /snapcraft/

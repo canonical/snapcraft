@@ -16,13 +16,15 @@
 
 import os
 import sys
+import tempfile
 import xdg
 
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains
+from testtools.matchers import FileContains, MatchesRegex
+from testscenarios import multiply_scenarios
 
 import snapcraft.internal.errors
 from snapcraft.cli._errors import exception_handler
@@ -56,6 +58,10 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.print_exception_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("sys.stdout.isatty", return_value=True)
+        self.mock_isatty = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def call_handler(self, exception, debug):
         try:
             raise exception
@@ -66,14 +72,14 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY, file=mock.ANY
+            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
         )
 
     def assert_exception_traceback_exit_1_without_raven(self):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY
+            RuntimeError, mock.ANY, mock.ANY, file=sys.stdout
         )
 
     def assert_no_exception_traceback_exit_1_without_debug(self):
@@ -147,21 +153,39 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         )
 
 
+class SendToSentryFails(SendToSentryBaseTest):
+    def test_send_fails(self):
+        self.prompt_mock.return_value = "yes"
+        self.mock_isatty.return_value = True
+
+        self.raven_client_mock().captureException.side_effect = RuntimeError(
+            "raven is broken"
+        )
+        try:
+            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+        except Exception:
+            self.fail("Exception unexpectedly raised")
+
+
 class SendToSentryIsYesTest(SendToSentryBaseTest):
 
-    scenarios = [
+    yes_scenarios = [
         (answer, dict(answer=answer)) for answer in ["y", "Y", "YES", "yes", "Yes"]
     ]
 
+    tty_scenarios = [("tty yes", dict(tty=True)), ("tty no", dict(tty=False))]
+
+    scenarios = multiply_scenarios(yes_scenarios, tty_scenarios)
+
     def test_send(self):
         self.prompt_mock.return_value = self.answer
+        self.mock_isatty.return_value = self.tty
 
         try:
             self.call_handler(RuntimeError("not a SnapcraftError"), True)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.assert_exception_traceback_exit_1_with_debug()
         self.raven_client_mock.assert_called_once_with(
             mock.ANY,
             transport=self.raven_request_mock,
@@ -171,41 +195,81 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
             auto_log_stacks=False,
         )
 
+        # It we have a tty, then the trace should be saved to a file and sent to sentry.
+        # If we don't have a tty, then the same should happen, but the trace should
+        # also be printed.
+        self.error_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
+        if not self.tty:
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
+
+        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+
 
 class SendToSentryIsNoTest(SendToSentryBaseTest):
 
-    scenarios = [
+    no_scenarios = [
         (answer, dict(answer=answer)) for answer in ["n", "N", "NO", "no", "No"]
     ]
 
+    tty_scenarios = [("tty yes", dict(tty=True)), ("tty no", dict(tty=False))]
+
+    scenarios = multiply_scenarios(no_scenarios, tty_scenarios)
+
     def test_no_send(self):
         self.prompt_mock.return_value = self.answer
+        self.mock_isatty.return_value = self.tty
 
         try:
             self.call_handler(RuntimeError("not a SnapcraftError"), True)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.assert_exception_traceback_exit_1_with_debug()
         self.raven_client_mock.assert_not_called()
+
+        # It we have a tty, then the trace should be saved to a file and sent to sentry.
+        # If we don't have a tty, then the same should happen, but the trace should
+        # also be printed.
+        self.error_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
+        if not self.tty:
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
+
+        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
 
 class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
 
-    scenarios = [
+    always_scenarios = [
         (answer, dict(answer=answer))
         for answer in ["a", "A", "ALWAYS", "always", "Always"]
     ]
 
+    tty_scenarios = [("tty yes", dict(tty=True)), ("tty no", dict(tty=False))]
+
+    scenarios = multiply_scenarios(always_scenarios, tty_scenarios)
+
     def test_send_and_set_to_always(self):
         self.prompt_mock.return_value = self.answer
+        self.mock_isatty.return_value = self.tty
 
         try:
             self.call_handler(RuntimeError("not a SnapcraftError"), True)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.assert_exception_traceback_exit_1_with_debug()
         self.raven_client_mock.assert_called_once_with(
             mock.ANY,
             transport=self.raven_request_mock,
@@ -229,6 +293,22 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
                 )
             ),
         )
+
+        # It we have a tty, then the trace should be saved to a file and sent to sentry.
+        # If we don't have a tty, then the same should happen, but the trace should
+        # also be printed.
+        self.error_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+
+        expected_calls = [
+            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
+        ]
+        if not self.tty:
+            expected_calls.append(
+                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+            )
+
+        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
 
 class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
@@ -305,3 +385,17 @@ class SendToSentryDisabledTest(SendToSentryBaseTest):
 
         self.assert_exception_traceback_exit_1_with_debug()
         self.raven_client_mock.assert_not_called()
+
+
+class _Tracefile:
+    def __init__(self, test):
+        self._test = test
+
+    def __eq__(self, other):
+        try:
+            self._test.assertThat(
+                other.name, MatchesRegex("{}.*/trace.txt".format(tempfile.gettempdir()))
+            )
+        except AttributeError:
+            return False
+        return True

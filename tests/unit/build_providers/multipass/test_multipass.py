@@ -18,6 +18,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
 from tests.unit.build_providers import (
     BaseProviderBaseTest,
@@ -25,6 +26,7 @@ from tests.unit.build_providers import (
     get_project,
 )
 from snapcraft.internal import steps
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
 
@@ -86,14 +88,15 @@ class MultipassTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        # default data returned for info
-        self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
+        # default data returned for info so launch is triggered
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode(),
+        ]
 
     def test_ephemeral_instance_with_contextmanager(self):
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
-
         with Multipass(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=True
         ) as instance:
@@ -103,6 +106,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="256G",
             image="16.04",
@@ -130,8 +134,12 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.multipass_cmd_mock().info.assert_called_once_with(
-            instance_name=self.instance_name, output_format="json"
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.multipass_cmd_mock().info.assert_has_calls(
+            [
+                mock.call(instance_name=self.instance_name, output_format="json"),
+                mock.call(instance_name=self.instance_name, output_format="json"),
+            ]
         )
 
         self.multipass_cmd_mock().copy_files.assert_has_calls(
@@ -149,18 +157,15 @@ class MultipassTest(BaseProviderBaseTest):
             ]
         )
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_called_once_with(
             instance_name=self.instance_name, purge=True
         )
 
-    def test_launch_with_ram_from_environment(self):
+    def test_launch_with_cpus_from_environment(self):
         self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "4G")
-        )
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_CPU", "64")
         )
 
         instance = Multipass(project=self.project, echoer=self.echoer_mock)
@@ -168,6 +173,24 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus="64",
+            mem="2G",
+            disk="256G",
+            image="16.04",
+            cloud_init=mock.ANY,
+        )
+
+    def test_launch_with_ram_from_environment(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "4G")
+        )
+
+        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance.create()
+
+        self.multipass_cmd_mock().launch.assert_called_once_with(
+            instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="4G",
             disk="256G",
             image="16.04",
@@ -178,15 +201,13 @@ class MultipassTest(BaseProviderBaseTest):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "400G")
         )
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
 
         instance = Multipass(project=self.project, echoer=self.echoer_mock)
         instance.create()
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="400G",
             image="16.04",
@@ -266,7 +287,7 @@ class MultipassTest(BaseProviderBaseTest):
     def test_instance_does_not_exist_on_destroy(self):
         # An error is raised if the queried image does not exist
         self.multipass_cmd_mock().info.side_effect = errors.ProviderInfoError(
-            provider_name=self.instance_name, exit_code=2
+            provider_name=self.instance_name, exit_code=2, stderr=b"error"
         )
 
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
@@ -276,16 +297,56 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
 
+    def test_destroy_instance_with_stop_delay(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "60")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+        multipass.destroy()
+
+        self.multipass_cmd_mock().stop.assert_called_once_with(
+            instance_name=self.instance_name, time=60
+        )
+        self.multipass_cmd_mock().delete.assert_not_called()
+
+    def test_destroy_instance_with_stop_delay_0(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "0")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+        multipass.destroy()
+
+        self.multipass_cmd_mock().stop.assert_called_once_with(
+            instance_name=self.instance_name
+        )
+        self.multipass_cmd_mock().delete.assert_not_called()
+
+    def test_destroy_instance_with_stop_delay_invalid(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "A")
+        )
+
+        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+
+        multipass.create()
+
+        self.assertRaises(SnapcraftEnvironmentError, multipass.destroy)
+
+        self.multipass_cmd_mock().stop.assert_not_called()
+        self.multipass_cmd_mock().delete.assert_not_called()
+
 
 class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
     scenarios = (
-        (
-            "linux",
-            dict(
-                platform="linux", base="core16", expected_image="file://fake-base.qcow2"
-            ),
-        ),
+        ("linux", dict(platform="linux", base="core16", expected_image="16.04")),
+        ("linux", dict(platform="linux", base="core18", expected_image="18.04")),
         ("linux no base", dict(platform="linux", base=None, expected_image="16.04")),
         ("darwin", dict(platform="darwin", base="core18", expected_image="18.04")),
         ("darwin", dict(platform="darwin", base="core16", expected_image="16.04")),
@@ -321,12 +382,13 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
         self.multipass_cmd_mock().execute.side_effect = execute_effect
 
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
-
-        # default data returned for info
-        self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
+        # default data returned for info so launch is triggered
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode(),
+        ]
 
     def test_lifecycle(self):
         with Multipass(
@@ -337,6 +399,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
+            cpus=mock.ANY,
             mem="2G",
             disk="256G",
             image=self.expected_image,
@@ -361,13 +424,16 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             target="{}:{}".format(self.instance_name, "/home/multipass/project"),
         )
         self.multipass_cmd_mock().umount.assert_not_called()
-        self.multipass_cmd_mock().info.assert_called_once_with(
-            instance_name=self.instance_name, output_format="json"
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.multipass_cmd_mock().info.assert_has_calls(
+            [
+                mock.call(instance_name=self.instance_name, output_format="json"),
+                mock.call(instance_name=self.instance_name, output_format="json"),
+            ]
         )
-
         self.multipass_cmd_mock().copy_files.assert_not_called()
         self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name
+            instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
 
@@ -391,12 +457,13 @@ class MultipassUnsupportedPlatform(BaseProviderWithBasesBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.multipass_cmd_mock().start.side_effect = errors.ProviderStartError(
-            provider_name="multipass", exit_code=1
-        )
-
-        # default data returned for info
-        self.multipass_cmd_mock().info.return_value = _DEFAULT_INSTANCE_INFO.encode()
+        # default data returned for info so launch is triggered
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode(),
+        ]
 
     def test_plaftorm_and_base_unsupported(self):
         project = get_project(base="core17")

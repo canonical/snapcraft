@@ -160,11 +160,21 @@ class ProviderInfoError(_SnapcraftError):
 
     fmt = (
         "An error occurred when using {provider_name!r} to "
-        "query the status of the instance: returned exit code {exit_code!r}."
+        "query the status of the instance: returned exit code {exit_code!r}: {stderr!s}."
     )
 
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
+    def __init__(self, *, provider_name: str, exit_code: int, stderr: bytes) -> None:
+        super().__init__(
+            provider_name=provider_name, exit_code=exit_code, stderr=stderr.decode()
+        )
+
+
+class ProviderInstanceNotFoundError(_SnapcraftError):
+
+    fmt = "Cannot find an instance named {instance_name!r}."
+
+    def __init__(self, *, instance_name: str) -> None:
+        super().__init__(instance_name=instance_name)
 
 
 class ProviderInfoDataKeyError(_SnapcraftError):

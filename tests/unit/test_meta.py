@@ -23,7 +23,6 @@ from unittest.mock import patch
 import fixtures
 import testscenarios
 import testtools
-import yaml
 from testtools.matchers import (
     Contains,
     DirExists,
@@ -35,7 +34,7 @@ from testtools.matchers import (
 )
 
 from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
-from snapcraft import extractors
+from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
@@ -61,12 +60,14 @@ class CreateBaseTestCase(unit.TestCase):
         # Ensure the ensure snapcraft.yaml method has something to copy.
         _create_file(self.snapcraft_yaml_file_path)
 
-    def generate_meta_yaml(self, *, build=False):
+    def generate_meta_yaml(self, *, build=False, actual_prime_dir=None):
         os.makedirs("snap", exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as f:
-            f.write(yaml.dump(self.config_data))
+            f.write(yaml_utils.dump(self.config_data))
 
         self.project = Project(snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
+        if actual_prime_dir is not None:
+            self.project._prime_dir = actual_prime_dir
 
         self.meta_dir = os.path.join(self.project.prime_dir, "meta")
         self.hooks_dir = os.path.join(self.meta_dir, "hooks")
@@ -85,7 +86,7 @@ class CreateBaseTestCase(unit.TestCase):
         self.assertTrue(os.path.exists(self.snap_yaml), "snap.yaml was not created")
 
         with open(self.snap_yaml) as f:
-            return yaml.load(f)
+            return yaml_utils.load(f)
 
 
 class CreateTestCase(CreateBaseTestCase):
@@ -1151,6 +1152,16 @@ class EnsureFilePathsTestCase(CreateBaseTestCase):
                 filepath="usr/share/desktop/desktop.desktop",
                 content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
                 key="desktop",
+                actual_prime_dir="prime",
+            ),
+        ),
+        (
+            "desktop with other prime",
+            dict(
+                filepath="usr/share/desktop/desktop.desktop",
+                content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
+                key="desktop",
+                actual_prime_dir="other-prime",
             ),
         ),
         (
@@ -1159,6 +1170,16 @@ class EnsureFilePathsTestCase(CreateBaseTestCase):
                 filepath="usr/share/completions/complete.sh",
                 content="#/bin/bash\n",
                 key="completer",
+                actual_prime_dir="prime",
+            ),
+        ),
+        (
+            "completer with other prime",
+            dict(
+                filepath="usr/share/completions/complete.sh",
+                content="#/bin/bash\n",
+                key="completer",
+                actual_prime_dir="other-prime",
             ),
         ),
     ]
@@ -1167,10 +1188,12 @@ class EnsureFilePathsTestCase(CreateBaseTestCase):
         self.config_data["apps"] = {
             "app": {"command": 'echo "hello"', self.key: self.filepath}
         }
-        _create_file(os.path.join("prime", self.filepath), content=self.content)
+        _create_file(
+            os.path.join(self.actual_prime_dir, self.filepath), content=self.content
+        )
 
         # If the path exists this should not fail
-        self.generate_meta_yaml()
+        self.generate_meta_yaml(actual_prime_dir=self.actual_prime_dir)
 
 
 class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
@@ -1217,8 +1240,7 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
             )
 
 
-# TODO this needs more tests.
-class WrapExeTestCase(unit.TestCase):
+class BaseWrapTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1233,13 +1255,25 @@ class WrapExeTestCase(unit.TestCase):
             "parts": {"part1": {"plugin": "nil"}},
         }
         with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml.dump(self.snapcraft_yaml, stream=snapcraft_file)
+            yaml_utils.dump(self.snapcraft_yaml, stream=snapcraft_file)
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
         # TODO move to use outer interface
         self.packager = _snap_packaging._SnapPackaging(config)
         self.packager._is_host_compatible_with_base = True
 
+
+class WrapAppTest(BaseWrapTest):
+    def test_app_not_found(self):
+        self.assertRaises(
+            errors.InvalidAppCommandError,
+            self.packager._wrap_apps,
+            apps=dict(app=dict(command="test-command", adapter="legacy")),
+        )
+
+
+# TODO this needs more tests.
+class WrapExeTest(BaseWrapTest):
     @patch("snapcraft.internal.common.assemble_env")
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
         mock_assemble_env.return_value = "PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(

@@ -27,7 +27,7 @@ jobs:
       if: type != cron
       install:
         - sudo apt update
-        - sudo apt install -y python3.5-dev snapd shellcheck
+        - sudo apt install -y python3.5-dev snapd shellcheck libyaml-dev
         # workaround for "cannot locate the core snap: No such file or directory"
         - sudo snap install core
         - sudo snap install black --devmode --edge
@@ -44,7 +44,7 @@ jobs:
         # Here until we have our snapcraft testing toolkit snap
         - sudo add-apt-repository -y ppa:chris-lea/libsodium
         - sudo apt update
-        - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3
+        - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3 libyaml-dev
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
@@ -92,6 +92,10 @@ jobs:
 
     - stage: integration
       if: type != cron
+      script:
+      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+      - ./runtests.sh spread
+    - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
     - if: type != cron
       script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
@@ -123,10 +127,7 @@ jobs:
       - sudo ./tools/travis/run_integration_test.sh tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
+      install:
+        - sudo apt update && sudo apt install -y git python-launchpadlib
       script:
-        - sudo apt install -y git python-launchpadlib
         - ./tools/cla_check.py
-      if: type != cron
-      script:
-      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-      - ./runtests.sh spread

@@ -17,13 +17,13 @@
 import click
 import collections
 import pkgutil
-import yaml
 import sys
 import textwrap
 import tabulate
 
 from ._options import get_project
 from snapcraft.internal import lifecycle
+from snapcraft import yaml_utils
 
 
 @click.group()
@@ -76,27 +76,17 @@ def extension(name, **kwargs):
     intro = "The {} extension".format(name)
     if app_snippet:
         click.echo("{} adds the following to apps that use it:".format(intro))
-        click.echo(
-            textwrap.indent(
-                yaml.safe_dump(app_snippet, default_flow_style=False), "    "
-            )
-        )
+        click.echo(textwrap.indent(yaml_utils.dump(app_snippet), "    "))
         intro = "It"
 
     if part_snippet:
         click.echo("{} adds the following to all parts:".format(intro))
-        click.echo(
-            textwrap.indent(
-                yaml.safe_dump(part_snippet, default_flow_style=False), "    "
-            )
-        )
+        click.echo(textwrap.indent(yaml_utils.dump(part_snippet), "    "))
         intro = "It"
 
     if parts:
         click.echo("{} adds the following part definitions:".format(intro))
-        click.echo(
-            textwrap.indent(yaml.safe_dump(parts, default_flow_style=False), "    ")
-        )
+        click.echo(textwrap.indent(yaml_utils.dump(parts), "    "))
 
 
 @extensioncli.command("expand-extensions")
@@ -110,4 +100,4 @@ def expand_extensions(**kwargs):
     )
 
     # Loading the config applied all the extensions, so just dump it back out
-    yaml.safe_dump(yaml_with_extensions, stream=sys.stdout, default_flow_style=False)
+    yaml_utils.dump(yaml_with_extensions, stream=sys.stdout)

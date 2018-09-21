@@ -28,9 +28,7 @@ import stat
 import subprocess
 from typing import Any, Dict, List, Set  # noqa
 
-import yaml
-
-from snapcraft import file_utils, formatting_utils
+from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
@@ -70,15 +68,23 @@ class Adapter(enum.Enum):
     LEGACY = 2
 
 
-class OctInt(int):
+class OctInt(yaml_utils.SnapcraftYAMLObject):
     """An int represented in octal form."""
 
+    yaml_tag = u"!OctInt"
 
-def oct_int_representer(dumper, data):
-    return yaml.ScalarNode("tag:yaml.org,2002:int", "{:04o}".format(data))
+    def __init__(self, value):
+        super().__init__()
+        self._value = value
 
-
-yaml.add_representer(OctInt, oct_int_representer)
+    @classmethod
+    def to_yaml(cls, dumper, data):
+        """
+        Convert a Python object to a representation node.
+        """
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:int", "{:04o}".format(data._value)
+        )
 
 
 def create_snap_packaging(project_config: _config.Config) -> str:
@@ -328,7 +334,7 @@ class _SnapPackaging:
             snap_yaml = self._compose_snap_yaml()
 
             with open(package_snap_path, "w") as f:
-                yaml.dump(snap_yaml, stream=f, default_flow_style=False)
+                yaml_utils.dump(snap_yaml, stream=f)
 
             return snap_yaml
         finally:
@@ -376,7 +382,7 @@ class _SnapPackaging:
                 self._global_state_file,
             )
             with open(manifest_file_path, "w") as manifest_file:
-                yaml.dump(annotated_snapcraft, manifest_file, default_flow_style=False)
+                yaml_utils.dump(annotated_snapcraft, stream=manifest_file)
 
     def write_snap_directory(self) -> None:
         # First migrate the snap directory. It will overwrite any conflicting
@@ -482,7 +488,7 @@ class _SnapPackaging:
                 snap_yaml[key_name] = self._config_data[key_name]
 
         if "apps" in self._config_data:
-            _verify_app_paths(basedir="prime", apps=self._config_data["apps"])
+            _verify_app_paths(basedir=self._prime_dir, apps=self._config_data["apps"])
             snap_yaml["apps"] = self._wrap_apps(self._config_data["apps"])
             self._render_socket_modes(snap_yaml["apps"])
 
@@ -592,6 +598,8 @@ class _SnapPackaging:
         for k in cmds:
             try:
                 app[k] = self._wrap_exe(app[k], "{}-{}".format(k, name))
+            except FileNotFoundError:
+                raise errors.InvalidAppCommandError(command=app[k], app=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
 

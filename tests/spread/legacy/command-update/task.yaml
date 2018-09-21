@@ -1,0 +1,14 @@
+summary: Ensure the update command creates parts.yaml and headers.yaml
+
+systems: [ubuntu-14*, ubuntu-16*]
+
+restore: |
+  rm -rf ./parts
+
+execute: |
+  export XDG_DATA_HOME="$(pwd)/parts"
+
+  snapcraft update
+
+  [ -f parts/snapcraft/*/headers.yaml ]
+  [ -f parts/snapcraft/*/parts.yaml ]

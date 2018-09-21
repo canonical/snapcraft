@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import yaml
 
+from snapcraft import yaml_utils
 from snapcraft.internal import steps
 
 
-class State(yaml.YAMLObject):
+class State(yaml_utils.SnapcraftYAMLObject):
     def __repr__(self):
         items = sorted(self.__dict__.items())
         strings = (": ".join((key, repr(value))) for key, value in items)
@@ -93,7 +93,7 @@ def get_state(state_dir: str, step: steps.Step):
     state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
         with open(state_file, "r") as f:
-            state = yaml.load(f.read())
+            state = yaml_utils.load(f)
 
     return state
 

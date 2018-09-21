@@ -1,0 +1,36 @@
+summary: Build a snap that uses snap/local and verify that it works without warning
+
+environment:
+  SNAP_DIR: snaps/snap-local-dir
+
+prepare: |
+  cd "$SNAP_DIR"
+  echo -e "dir\ndir/dir-file\nroot-file" | sort > expected_local_part_src.txt
+  echo -e "dir-file" > expected_local_part_subdir_src.txt
+  echo -e "dir\ndir/dir-file\nroot-file\ndir-file" | sort > expected_stage.txt
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  rm -f ./*.txt
+
+execute: |
+  compare_dir_contents()
+  {
+      find "$1" ! -path "$1" -printf "%P\n" | sort > found.txt
+      comm -3 found.txt "$2"
+  }
+
+  cd "$SNAP_DIR"
+
+  # Verify that no warning was printed
+  snapcraft pull | MATCH -v "unsupported"
+
+  # Verify that the parts were pulled as expected
+  [ -z "$(compare_dir_contents parts/local-part/src expected_local_part_src.txt)" ]
+  [ -z "$(compare_dir_contents parts/local-subdir-part/src expected_local_part_subdir_src.txt)" ]
+
+  # Verify that the parts can now be staged, and end up as expected
+  snapcraft stage | MATCH -v "unsupported"
+  [ -z "$(compare_dir_contents stage expected_stage.txt)" ]

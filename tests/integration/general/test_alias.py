@@ -17,9 +17,9 @@
 import os
 import stat
 
-import yaml
 from testtools.matchers import Equals, FileExists
 
+from snapcraft import yaml_utils
 from tests import integration
 
 
@@ -41,7 +41,7 @@ class AliasTestCase(integration.TestCase):
 
         data = {}
         with open(snap_yaml) as fp:
-            data = yaml.load(fp)
+            data = yaml_utils.load(fp)
 
         expected_aliases = ["hi.sh", "howdy.sh"]
         self.assertThat(
