@@ -536,22 +536,30 @@ class PluginHandler:
                 return
             source.update()
 
-        self._do_build()
+        self._do_build(update=True)
 
-    def _do_build(self):
+    def _do_build(self, *, update=False):
         self._runner.prepare()
         self._runner.build()
         self._runner.install()
 
-        # Organize the installed files as requested. We do this in the build
-        # step for two reasons:
+        # Organize the installed files as requested. We do this in the build step for
+        # two reasons:
         #
-        #   1. So cleaning and re-running the stage step works even if
-        #      `organize` is used
-        #   2. So collision detection takes organization into account, i.e. we
-        #      can use organization to get around file collisions between
-        #      parts when staging.
-        self._organize()
+        #   1. So cleaning and re-running the stage step works even if `organize` is
+        #      used
+        #   2. So collision detection takes organization into account, i.e. we can use
+        #      organization to get around file collisions between parts when staging.
+        #
+        # If `update` is true, we give the snapcraft CLI permission to overwrite files
+        # that already exist. Typically we do NOT want this, so that parts don't
+        # accidentally clobber e.g. files brought in from stage-packages, but in the
+        # case of updating build, we want the part to have the ability to organize over
+        # the files it organized last time around. We can be confident that this won't
+        # overwrite anything else, because to do so would require changing the
+        # `organize` keyword, which will make the build step dirty and require a clean
+        # instead of an update.
+        self._organize(overwrite=update)
 
         self.mark_build_done()
 
@@ -669,10 +677,10 @@ class PluginHandler:
         fileset = getattr(self.plugin.options, option, default)
         return fileset if fileset else default
 
-    def _organize(self):
+    def _organize(self, *, overwrite=False):
         fileset = self._get_fileset("organize", {})
 
-        _organize_filesets(fileset.copy(), self.plugin.installdir)
+        _organize_filesets(fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
         self.makedirs()
@@ -1079,7 +1087,7 @@ def _migrate_files(
         fixup_func(dst)
 
 
-def _organize_filesets(fileset, base_dir):
+def _organize_filesets(fileset, base_dir, overwrite):
     for key in sorted(fileset, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, key)
         # Remove the leading slash if there so os.path.join
@@ -1088,22 +1096,36 @@ def _organize_filesets(fileset, base_dir):
 
         sources = iglob(src, recursive=True)
 
+        src_count = 0
         for src in sources:
+            src_count += 1
+
             if os.path.isdir(src) and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 # TODO create alternate organization location to avoid
                 # deletions.
                 shutil.rmtree(src)
+                continue
             elif os.path.isfile(dst):
-                raise errors.SnapcraftEnvironmentError(
-                    "Trying to organize file {key!r} to {dst!r}, "
-                    "but {dst!r} already exists".format(
-                        key=key, dst=os.path.relpath(dst, base_dir)
+                if overwrite and src_count <= 1:
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(dst)
+                else:
+                    raise errors.SnapcraftEnvironmentError(
+                        "Trying to organize file {key!r} to {dst!r}, "
+                        "but {dst!r} already exists".format(
+                            key=key, dst=os.path.relpath(dst, base_dir)
+                        )
                     )
-                )
-            else:
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                shutil.move(src, dst)
+            if os.path.isdir(dst) and overwrite:
+                real_dst = os.path.join(dst, os.path.basename(src))
+                if os.path.isdir(real_dst):
+                    shutil.rmtree(real_dst)
+                else:
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(real_dst)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.move(src, dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):

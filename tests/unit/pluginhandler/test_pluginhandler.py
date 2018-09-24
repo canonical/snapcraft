@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import copy
 import os
 import shutil
@@ -368,6 +369,26 @@ class PluginTestCase(unit.TestCase):
 
         self.assertThat(raised.message, Equals('path "/abs/exclude" must be relative'))
 
+    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    def test_build_organizes(self, mock_organize):
+        handler = self.load_part("test-part")
+        handler.build()
+        mock_organize.assert_called_once_with({}, handler.plugin.installdir, False)
+
+    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    def test_update_build_organizes_with_overwrite(self, mock_organize):
+        class TestPlugin(snapcraft.BasePlugin):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.out_of_source_build = True
+
+        self.useFixture(fixture_setup.FakePlugin("test-plugin", TestPlugin))
+
+        handler = self.load_part("test-part", plugin_name="test-plugin")
+        handler.makedirs()
+        handler.update_build()
+        mock_organize.assert_called_once_with({}, handler.plugin.installdir, True)
+
 
 class MigratePluginTestCase(unit.TestCase):
 
@@ -567,6 +588,7 @@ class OrganizeTestCase(unit.TestCase):
                 setup_files=["foo", "bar"],
                 organize_set={"foo": "bar"},
                 expected=errors.SnapcraftEnvironmentError,
+                expected_overwrite=[(["bar"], "")],
             ),
         ),
         (
@@ -619,33 +641,58 @@ class OrganizeTestCase(unit.TestCase):
                 ],
             ),
         ),
+        (
+            "*_into_dir",
+            dict(
+                setup_dirs=["dir"],
+                setup_files=[os.path.join("dir", "foo"), os.path.join("dir", "bar")],
+                organize_set={"dir/f*": "nested/dir/"},
+                expected=[
+                    (["dir", "nested"], ""),
+                    (["bar"], "dir"),
+                    (["dir"], "nested"),
+                    (["foo"], os.path.join("nested", "dir")),
+                ],
+            ),
+        ),
     ]
 
-    def test_organize_file(self):
+    def _organize_and_assert(self, overwrite):
         base_dir = "install"
-        os.makedirs(base_dir)
+        os.makedirs(base_dir, exist_ok=True)
 
         for directory in self.setup_dirs:
-            os.makedirs(os.path.join(base_dir, directory))
+            os.makedirs(os.path.join(base_dir, directory), exist_ok=True)
 
         for file_entry in self.setup_files:
             with open(os.path.join(base_dir, file_entry), "w") as f:
                 f.write(file_entry)
 
-        if isinstance(self.expected, type) and issubclass(self.expected, Exception):
+        expected = self.expected
+        if overwrite:
+            with contextlib.suppress(AttributeError):
+                expected = self.expected_overwrite
+        if isinstance(expected, type) and issubclass(expected, Exception):
             self.assertRaises(
-                self.expected,
+                expected,
                 pluginhandler._organize_filesets,
                 self.organize_set,
                 base_dir,
+                overwrite,
             )
         else:
-            pluginhandler._organize_filesets(self.organize_set, base_dir)
-            for expect in self.expected:
+            pluginhandler._organize_filesets(self.organize_set, base_dir, overwrite)
+            for expect in expected:
                 dir_path = os.path.join(base_dir, expect[1])
                 dir_contents = os.listdir(dir_path)
                 dir_contents.sort()
                 self.assertThat(dir_contents, Equals(expect[0]))
+
+    def test_organize(self):
+        self._organize_and_assert(False)
+
+        # Verify that it can be organized again by overwriting
+        self._organize_and_assert(True)
 
 
 class RealStageTestCase(unit.TestCase):
