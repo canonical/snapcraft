@@ -19,7 +19,7 @@ import os
 import shutil
 
 from unittest import mock
-from testtools.matchers import DirExists, Equals, FileContains, FileExists
+from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
 from snapcraft.internal import common
 from snapcraft.internal import sources
@@ -114,45 +114,96 @@ class TestLocal(unit.TestCase):
             os.stat(os.path.join("destination", "dir", "file")).st_nlink, 1
         )
 
-    def test_pull_ignores_snapcraft_specific_data(self):
-        # Make the snapcraft-specific directories
-        os.makedirs(os.path.join("src", "parts"))
-        os.makedirs(os.path.join("src", "stage"))
-        os.makedirs(os.path.join("src", "prime"))
-        os.makedirs(os.path.join("src", ".snapcraft"))
+    def test_pull_ignores_snapcraft_artifacts(self):
+        # Mimic what a dirty tree might look like within the "tree" directory, which
+        # will be the source for this test.
+        os.makedirs(os.path.join("tree", "snap", ".snapcraft"))
 
-        # Make the snapcraft.yaml (and hidden one) and a built snap
-        open(os.path.join("src", "snapcraft.yaml"), "w").close()
-        open(os.path.join("src", ".snapcraft.yaml"), "w").close()
-        open(os.path.join("src", "foo.snap"), "w").close()
+        # Create a snapcraft.yaml in all the supported locations as well as the global
+        # state cache
+        open(os.path.join("tree", "snap", "snapcraft.yaml"), "w").close()
+        open(os.path.join("tree", "snapcraft.yaml"), "w").close()
+        open(os.path.join("tree", ".snapcraft.yaml"), "w").close()
+        open(os.path.join("tree", "snap", ".snapcraft", "state"), "w").close()
 
-        # Make the global state cache
-        open(os.path.join("src", ".snapcraft", "state"), "w").close()
+        # Make the snapcraft-generated directories
+        for directory in ("parts", "stage", "prime"):
+            os.mkdir(os.path.join("tree", directory))
 
-        # Now make some real files
-        os.makedirs(os.path.join("src", "dir"))
-        open(os.path.join("src", "dir", "file"), "w").close()
+        # Create a few fake built snaps
+        os.makedirs(os.path.join("tree", "nested-dir"))
+        open(os.path.join("tree", "foo.snap"), "w").close()
+        open(os.path.join("tree", "nested-dir", "bar.snap"), "w").close()
+
+        # Finally, make some real files
+        os.makedirs(os.path.join("tree", "dir"))
+        open(os.path.join("tree", "file1"), "w").close()
+        open(os.path.join("tree", "dir", "file2"), "w").close()
 
         os.mkdir("destination")
 
-        local = sources.Local("src", "destination")
+        os.chdir("tree")
+        local = sources.Local(".", "destination")
         local.pull()
 
-        # Verify that the snapcraft-specific stuff got filtered out
-        self.assertFalse(os.path.exists(os.path.join("destination", "parts")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "stage")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "prime")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "snapcraft.yaml")))
-        self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft.yaml")))
-        self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "foo.snap")))
+        # Verify that the snapcraft artifacts were filtered out
+        for directory in (
+            "parts",
+            "stage",
+            "prime",
+            os.path.join("snap", ".snapcraft"),
+        ):
+            self.assertThat(os.path.join("destination", directory), Not(DirExists()))
 
-        # Verify that the real stuff made it in.
-        self.assertFalse(os.path.islink("destination"))
-        self.assertFalse(os.path.islink(os.path.join("destination", "dir")))
-        self.assertGreater(
-            os.stat(os.path.join("destination", "dir", "file")).st_nlink, 1
+        self.assertThat(os.path.join("destination", "foo.snap"), Not(FileExists()))
+        self.assertThat(
+            os.path.join("destination", "nested-dir", "bar.snap"), FileExists()
         )
+
+        # Verify that the other stuff made it in
+        for directory in ("snap", "dir"):
+            self.assertThat(os.path.join("destination", directory), DirExists())
+
+        for path in (
+            "file1",
+            "snapcraft.yaml",
+            ".snapcraft.yaml",
+            os.path.join("snap", "snapcraft.yaml"),
+            os.path.join("dir", "file2"),
+        ):
+            path = os.path.join("destination", path)
+            self.assertThat(path, FileExists())
+            self.assertFalse(os.path.islink(os.path.dirname(path)))
+            self.assertGreater(os.stat(path).st_nlink, 1)
+
+    def test_pull_ignores_snapcraft_artifacts_snap_dir_as_source(self):
+        # Mimic what a dirty tree might look like within the "snap" directory, which
+        # will be the source for this test.
+        os.makedirs(os.path.join("snap", ".snapcraft"))
+
+        # Create a snapcraft.yaml as well as the global state cache
+        open(os.path.join("snap", "snapcraft.yaml"), "w").close()
+        open(os.path.join("snap", ".snapcraft", "state"), "w").close()
+
+        # Finally, make some real files, within the "snap/local" dir
+        os.makedirs(os.path.join("snap", "local"))
+        open(os.path.join("snap", "local", "file"), "w").close()
+
+        os.mkdir("destination")
+
+        local = sources.Local("snap", "destination")
+        local.pull()
+
+        # Verify that the global state cache was filtered out, but everything else made
+        # it through
+        self.assertThat(os.path.join("destination", ".snapcraft"), Not(DirExists()))
+        self.assertThat(os.path.join("destination", "local"), DirExists())
+
+        for path in ("snapcraft.yaml", os.path.join("local", "file")):
+            path = os.path.join("destination", path)
+            self.assertThat(path, FileExists())
+            self.assertFalse(os.path.islink(os.path.dirname(path)))
+            self.assertGreater(os.stat(path).st_nlink, 1)
 
     def test_pull_keeps_symlinks(self):
         # Create a source containing a directory, a file and symlinks to both.

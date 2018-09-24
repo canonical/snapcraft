@@ -408,16 +408,21 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
     def test_build_is_dirty_if_scriptlet_changes(
         self, mock_install_build_packages, mock_enable_cross_compilation
     ):
+        yaml_template = textwrap.dedent(
+            """\
+            parts:
+              part1:
+                plugin: nil
+                source: src/
+                {scriptlet_name}: {scriptlet_value}
+            """
+        )
         mock_install_build_packages.return_value = []
+        os.mkdir("src")
         project_config = self.make_snapcraft_project(
-            textwrap.dedent(
-                """\
-                parts:
-                  part1:
-                    plugin: nil
-                    {}: touch scriptlet
-                """
-            ).format(self.scriptlet)
+            yaml_template.format(
+                scriptlet_name=self.scriptlet, scriptlet_value="touch scriptlet"
+            )
         )
 
         # Build it
@@ -427,16 +432,11 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
-        # Change prepare scriptlet
+        # Change scriptlet
         project_config = self.make_snapcraft_project(
-            textwrap.dedent(
-                """\
-                parts:
-                  part1:
-                    plugin: nil
-                    {}: touch changed
-                """
-            ).format(self.scriptlet)
+            yaml_template.format(
+                scriptlet_name=self.scriptlet, scriptlet_value="touch changed"
+            )
         )
 
         # Build it again. Should catch that the scriptlet changed and it needs

@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 import sys
-from glob import glob, iglob
+from glob import iglob
 from typing import cast, Dict, Set, Sequence  # noqa: F401
 
 import snapcraft.extractors
@@ -494,28 +494,10 @@ class PluginHandler:
             if os.path.exists(self.plugin.build_basedir):
                 shutil.rmtree(self.plugin.build_basedir)
 
-            # FIXME: It's not necessary to ignore here anymore since it's now
-            # done in the Local source. However, it's left here so that it
-            # continues to work on old snapcraft trees that still have src
-            # symlinks.
-            def ignore(directory, files):
-                if directory == self.plugin.sourcedir:
-                    snaps = glob(os.path.join(directory, "*.snap"))
-                    if snaps:
-                        snaps = [os.path.basename(s) for s in snaps]
-                        return common.SNAPCRAFT_FILES + snaps
-                    else:
-                        return common.SNAPCRAFT_FILES
-                else:
-                    return []
-
             # No hard-links being used here in case the build process modifies
             # these files.
             shutil.copytree(
-                self.plugin.sourcedir,
-                self.plugin.build_basedir,
-                symlinks=True,
-                ignore=ignore,
+                self.plugin.sourcedir, self.plugin.build_basedir, symlinks=True
             )
 
         self._do_build()

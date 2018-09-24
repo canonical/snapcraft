@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import functools
 import glob
 import os
+from typing import List  # noqa: F401
 
 from snapcraft import file_utils
 from snapcraft.internal import common
@@ -97,12 +97,21 @@ class Local(Base):
 
 
 def _ignore(source, current_directory, directory, files):
-    if directory == source or directory == current_directory:
-        ignored = copy.copy(common.SNAPCRAFT_FILES)
+    ignored = []  # type: List[str]
+
+    if directory.startswith(current_directory):
+        # Determine what in this directory, if anything, should be ignored
+        ignored += [
+            os.path.basename(p)
+            for p in common.SNAPCRAFT_FILES
+            if os.path.abspath(os.path.dirname(p)) == os.path.abspath(directory)
+        ]
+
+    # Also ignore snaps in the current working directory
+    if directory == current_directory:
         snaps = glob.glob(os.path.join(directory, "*.snap"))
         if snaps:
             snaps = [os.path.basename(s) for s in snaps]
             ignored += snaps
-        return ignored
-    else:
-        return []
+
+    return ignored
