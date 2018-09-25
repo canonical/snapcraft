@@ -17,8 +17,10 @@
 
 import os
 import shutil
+import subprocess
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, MatchesRegex
+from unittest import mock
 
 from snapcraft.internal import sources
 from tests import unit
@@ -62,3 +64,13 @@ class Test7z(unit.TestCase):
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler["7z"] is sources.SevenZip)
+
+    @mock.patch("subprocess.check_output")
+    def test_pull_failure(self, mock_run):
+        mock_run.side_effect = subprocess.CalledProcessError(1, [])
+
+        os.makedirs("dst")
+        seven_zip = sources.SevenZip(self.test_7z_file_path, "dst")
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, seven_zip.pull)
+        self.assertThat(raised.command, MatchesRegex("7z x .*/dst/test.7z"))
+        self.assertThat(raised.exit_code, Equals(1))
