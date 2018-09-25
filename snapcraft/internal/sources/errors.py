@@ -93,3 +93,15 @@ class SourceUpdateUnsupportedError(SnapcraftSourceError):
 
     def __init__(self, source):
         super().__init__(source=source)
+
+
+class SnapcraftPullError(SnapcraftSourceError):
+
+    fmt = "Failed to pull source, command {command!r} exited with code {exit_code}."
+
+    def __init__(self, command, exit_code):
+        if isinstance(command, list):
+            string_command = " ".join(command)
+        else:
+            string_command = command
+        super().__init__(command=string_command, exit_code=exit_code)

@@ -17,7 +17,6 @@
 
 import os
 import shutil
-import subprocess
 import tempfile
 
 from . import errors
@@ -68,8 +67,7 @@ class SevenZip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_7z, seven_zip_file)
 
-        extract_command = ["7z", "x", seven_zip_file]
-        subprocess.check_output(extract_command, cwd=dst)
+        self._run_output(["7z", "x", seven_zip_file], cwd=dst)
 
         if not keep_7z:
             os.remove(seven_zip_file)
