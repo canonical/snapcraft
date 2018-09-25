@@ -30,7 +30,7 @@ class ParserTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+        if os.getenv("SNAPCRAFT_PACKAGE_TYPE") == "snap":
             self.skipTest("The snapcraft-parser is not provided by the snap")
         self.useFixture(fixtures.EnvironmentVariable("TMPDIR", self.path))
 
