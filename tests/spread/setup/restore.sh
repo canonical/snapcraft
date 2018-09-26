@@ -4,7 +4,7 @@
 snaps="$(snap list | awk '{if (NR!=1) {print $1}}')"
 for snap in $snaps; do
 	case "$snap" in
-		"core" | "snapcraft")
+		"core" | "core18" | "snapcraft")
 			# Don't want to remove these
 			;;
 		*)
