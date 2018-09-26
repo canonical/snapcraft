@@ -16,9 +16,9 @@
 
 from typing import Any, Dict, Set
 
-from snapcraft import project
+from snapcraft import project, BasePlugin
 from snapcraft.internal.project_loader import grammar
-from snapcraft.internal import pluginhandler, repo
+from snapcraft.internal import repo
 
 from ._package_transformer import package_transformer
 
@@ -75,21 +75,17 @@ class PartGrammarProcessor:
     def __init__(
         self,
         *,
-        plugin: pluginhandler.PluginHandler,
+        plugin: BasePlugin,
         properties: Dict[str, Any],
         project: project.Project,
         repo: "repo.Ubuntu"
     ) -> None:
+        self._plugin = plugin
         self._project = project
         self._repo = repo
 
-        self._build_snap_grammar = getattr(plugin, "build_snaps", [])
         self.__build_snaps = set()  # type: Set[str]
-
-        self._build_package_grammar = getattr(plugin, "build_packages", [])
         self.__build_packages = set()  # type: Set[str]
-
-        self._stage_package_grammar = getattr(plugin, "stage_packages", [])
         self.__stage_packages = set()  # type: Set[str]
 
         source_grammar = properties.get("source", [""])
@@ -115,7 +111,7 @@ class PartGrammarProcessor:
     def get_build_snaps(self) -> Set[str]:
         if not self.__build_snaps:
             processor = grammar.GrammarProcessor(
-                self._build_snap_grammar,
+                getattr(self._plugin, "build_snaps", []),
                 self._project,
                 repo.snaps.SnapPackage.is_valid_snap,
             )
@@ -126,7 +122,7 @@ class PartGrammarProcessor:
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
             processor = grammar.GrammarProcessor(
-                self._build_package_grammar,
+                getattr(self._plugin, "build_packages", []),
                 self._project,
                 self._repo.build_package_is_valid,
                 transformer=package_transformer,
@@ -138,7 +134,7 @@ class PartGrammarProcessor:
     def get_stage_packages(self) -> Set[str]:
         if not self.__stage_packages:
             processor = grammar.GrammarProcessor(
-                self._stage_package_grammar,
+                getattr(self._plugin, "stage_packages", []),
                 self._project,
                 self._repo.is_valid,
                 transformer=package_transformer,
