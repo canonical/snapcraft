@@ -211,7 +211,7 @@ def login(
         print(
             "Enter your Ubuntu One e-mail address and password.\n"
             "If you do not have an Ubuntu One account, you can create one "
-            "at https://dashboard.snapcraft.io/openid/login"
+            "at https://snapcraft.io/account"
         )
         email = input("Email: ")
         if os.environ.get("SNAPCRAFT_TEST_INPUT"):

@@ -429,7 +429,7 @@ def login(login_file):
     """Login with your Ubuntu One e-mail address and password.
 
     If you do not have an Ubuntu One account, you can create one at
-    https://dashboard.snapcraft.io/openid/login
+    https://snapcraft.io/account
     """
     store = storeapi.StoreClient()
     if not snapcraft.login(store=store, config_fd=login_file):
