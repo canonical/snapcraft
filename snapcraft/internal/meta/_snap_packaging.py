@@ -324,12 +324,24 @@ class _SnapPackaging:
         self._meta_dir = os.path.join(self._prime_dir, "meta")
         self._config_data = project_config.data.copy()
         self._original_snapcraft_yaml = project_config.project.info.get_raw_snapcraft()
+        self._meta_runner = os.path.join(
+            self._prime_dir, "snap", "command-chain", "snapcraft-runner"
+        )
+
+        self._install_path_pattern = re.compile(
+            r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
+        )
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
     def write_snap_yaml(self) -> str:
         common.env = self._project_config.snap_env()
+
         try:
+            # Only generate the meta command chain if there are apps that need it
+            if self._config_data.get("apps", None):
+                self._generate_command_chain()
+
             package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
             snap_yaml = self._compose_snap_yaml()
 
@@ -362,6 +374,31 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
+
+    def _generate_command_chain(self):
+        # Classic confinement or building on a host that does not match the target base
+        # means we cannot setup an environment that will work.
+        if (
+            self._config_data["confinement"] == "classic"
+            or not self._is_host_compatible_with_base
+        ):
+            assembled_env = None
+        else:
+            assembled_env = common.assemble_env()
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+
+            if assembled_env:
+                os.makedirs(os.path.dirname(self._meta_runner), exist_ok=True)
+                with open(self._meta_runner, "w") as f:
+                    print("#!/bin/sh", file=f)
+                    print(assembled_env, file=f)
+                    print(
+                        "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
+                        file=f,
+                    )
+                    print('exec "$@"', file=f)
+                os.chmod(self._meta_runner, 0o755)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
@@ -504,32 +541,12 @@ class _SnapPackaging:
         args = " ".join(quoted_args) + ' "$@"' if args else '"$@"'
         cwd = "cd {}".format(cwd) if cwd else ""
 
-        # If we are dealing with classic confinement it means all our
-        # binaries are linked with `nodefaultlib` but we still do
-        # not want to leak PATH or other environment variables
-        # that would affect the applications view of the classic
-        # environment it is dropped into.
-        replace_path = re.compile(
-            r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
-        )
-        # Confinement classic or when building on a host that does not match
-        # the target base means we cannot setup an environment that will work.
-        if (
-            self._config_data["confinement"] == "classic"
-            or not self._is_host_compatible_with_base
-        ):
-            assembled_env = None
-        else:
-            assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-            assembled_env = replace_path.sub("$SNAP", assembled_env)
-
         executable = '"{}"'.format(wrapexec)
 
         if shebang:
             if shebang.startswith("/usr/bin/env "):
                 shebang = shell_utils.which(shebang.split()[1])
-            new_shebang = replace_path.sub("$SNAP", shebang)
+            new_shebang = self._install_path_pattern.sub("$SNAP", shebang)
             new_shebang = re.sub(self._prime_dir, "$SNAP", new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
@@ -539,11 +556,6 @@ class _SnapPackaging:
 
         with open(wrappath, "w+") as f:
             print("#!/bin/sh", file=f)
-            if assembled_env:
-                print("{}".format(assembled_env), file=f)
-                print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
-                )
             if cwd:
                 print("{}".format(cwd), file=f)
             print("exec {} {}".format(executable, args), file=f)
@@ -597,11 +609,16 @@ class _SnapPackaging:
         cmds = (k for k in ("command", "stop-command") if k in app)
         for k in cmds:
             try:
-                app[k] = self._wrap_exe(app[k], "{}-{}".format(k, name))
+                new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
             except FileNotFoundError:
                 raise errors.InvalidAppCommandError(command=app[k], app=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
+
+            if os.path.isfile(self._meta_runner):
+                snap_runner = os.path.relpath(self._meta_runner, self._prime_dir)
+                new_command = "{} $SNAP/{}".format(snap_runner, new_command)
+            app[k] = new_command
 
     def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop("desktop", "")

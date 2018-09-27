@@ -18,6 +18,7 @@ import configparser
 import contextlib
 import logging
 import os
+import textwrap
 from unittest.mock import patch
 
 import fixtures
@@ -312,19 +313,24 @@ class CreateTestCase(CreateBaseTestCase):
         expected = {
             "architectures": ["amd64"],
             "apps": {
-                "app1": {"command": "command-app1.wrapper"},
-                "app2": {"command": "command-app2.wrapper", "plugs": ["network"]},
+                "app1": {
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app1.wrapper"
+                },
+                "app2": {
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app2.wrapper",
+                    "plugs": ["network"],
+                },
                 "app3": {
-                    "command": "command-app3.wrapper",
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app3.wrapper",
                     "plugs": ["network-server"],
                 },
                 "app4": {
-                    "command": "command-app4.wrapper",
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app4.wrapper",
                     "plugs": ["network-server"],
                     "environment": {"XDG_SOMETHING": "$SNAP_USER_DATA", "LANG": "C"},
                 },
                 "app5": {
-                    "command": "command-app5.wrapper",
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app5.wrapper",
                     "common-id": "test-common-id",
                 },
             },
@@ -1275,57 +1281,96 @@ class WrapAppTest(BaseWrapTest):
 # TODO this needs more tests.
 class WrapExeTest(BaseWrapTest):
     @patch("snapcraft.internal.common.assemble_env")
-    def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
-        mock_assemble_env.return_value = "PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
+    def test_wrapper(self, mock_assemble_env):
+        mock_assemble_env.return_value = "export PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
             self.parts_dir
         )
 
-        relative_exe_path = "test_relexepath"
-        _create_file(os.path.join(self.prime_dir, relative_exe_path))
-
-        # Check that the wrapper is created even if there is already a file
-        # with the same name.
-        _create_file(os.path.join(self.prime_dir, "test_relexepath.wrapper"))
-
-        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        expected = (
-            "#!/bin/sh\n"
-            "PATH=$SNAP/usr/bin:$SNAP/bin\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:"
-            "$LD_LIBRARY_PATH\n"
-            'exec "$SNAP/test_relexepath" "$@"\n'
+        _create_file(
+            os.path.join(self.prime_dir, self.snapcraft_yaml["apps"]["app"]["command"])
         )
 
-        self.assertThat(wrapper_path, FileContains(expected))
+        snap_yaml = self.packager.write_snap_yaml()
+        app_command = snap_yaml["apps"]["app"]["command"]
+        runner, wrapper = app_command.split(maxsplit=1)
 
-    @patch("snapcraft.internal.common.assemble_env")
-    def test_empty_wrapper_if_not_on_compatible_host_for_target_base(
-        self, mock_assemble_env
-    ):
+        runner_path = os.path.join(self.prime_dir, runner)
+        self.assertThat(
+            runner_path,
+            FileContains(
+                textwrap.dedent(
+                    """\
+                    #!/bin/sh
+                    export PATH=$SNAP/usr/bin:$SNAP/bin
+                    export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+                    exec "$@"
+                    """
+                )
+            ),
+        )
+
+        wrapper_path = os.path.join(self.prime_dir, os.path.relpath(wrapper, "$SNAP"))
+        self.assertThat(
+            wrapper_path,
+            FileContains(
+                textwrap.dedent(
+                    """\
+                    #!/bin/sh
+                    exec "$SNAP/test-command" "$@"
+                    """
+                )
+            ),
+        )
+
+    def test_no_runner_if_not_on_compatible_host_for_target_base(self):
         self.packager._is_host_compatible_with_base = False
-        mock_assemble_env.return_value = "PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
-            self.parts_dir
+
+        _create_file(
+            os.path.join(self.prime_dir, self.snapcraft_yaml["apps"]["app"]["command"])
         )
 
-        relative_exe_path = "test_relexepath"
-        _create_file(os.path.join(self.prime_dir, relative_exe_path))
+        snap_yaml = self.packager.write_snap_yaml()
+        wrapper = snap_yaml["apps"]["app"]["command"]
 
-        # Check that the wrapper is created even if there is already a file
-        # with the same name.
-        _create_file(os.path.join(self.prime_dir, "test_relexepath.wrapper"))
+        wrapper_path = os.path.join(self.prime_dir, wrapper)
+        self.assertThat(
+            wrapper_path,
+            FileContains(
+                textwrap.dedent(
+                    """\
+                    #!/bin/sh
+                    exec "$SNAP/test-command" "$@"
+                    """
+                )
+            ),
+        )
 
-        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
+    def test_no_runner_generated_if_no_apps(self):
+        snapcraft_yaml_file_path = "snapcraft.yaml"
+        snapcraft_yaml = {
+            "name": "test-snap",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "confinement": "devmode",
+            "parts": {"part1": {"plugin": "nil"}},
+        }
+        with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_file)
 
-        expected = "#!/bin/sh\n" 'exec "$SNAP/test_relexepath" "$@"\n'
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        config = project_loader.load_config(project)
+        packager = _snap_packaging._SnapPackaging(config)
+        packager._is_host_compatible_with_base = True
 
-        self.assertThat(wrapper_path, FileContains(expected))
+        packager.write_snap_yaml()
+        self.assertThat(
+            os.path.join(project.prime_dir, "snap", "command-chain"), Not(DirExists())
+        )
 
     @patch("snapcraft.internal.common.assemble_env")
     def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
-        mock_assemble_env.return_value = "PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
+        mock_assemble_env.return_value = "export PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
             self.parts_dir
         )
 
@@ -1339,13 +1384,7 @@ class WrapExeTest(BaseWrapTest):
 
         self.assertThat(relative_wrapper_path, Equals("new-name.wrapper"))
 
-        expected = (
-            "#!/bin/sh\n"
-            "PATH=$SNAP/usr/bin:$SNAP/bin\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:"
-            "$LD_LIBRARY_PATH\n"
-            'exec "$SNAP/test_relexepath" "$@"\n'
-        )
+        expected = "#!/bin/sh\n" 'exec "$SNAP/test_relexepath" "$@"\n'
         self.assertThat(wrapper_path, FileContains(expected))
 
     def test_snap_shebangs_extracted(self):
@@ -1481,7 +1520,14 @@ class WrapExeTest(BaseWrapTest):
         snap_yaml = self.packager.write_snap_yaml()
 
         self.assertThat(
-            snap_yaml["apps"], Equals({"app": {"command": "command-app.wrapper"}})
+            snap_yaml["apps"],
+            Equals(
+                {
+                    "app": {
+                        "command": "snap/command-chain/snapcraft-runner $SNAP/command-app.wrapper"
+                    }
+                }
+            ),
         )
 
 
