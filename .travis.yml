@@ -65,7 +65,7 @@ jobs:
         - python3 -m pip install -r requirements.txt
         - python3 -m pip install -r requirements-devel.txt
       script:
-        - SNAPCRAFT_FROM_BREW=1 ./runtests.sh tests.integration.store.test_store_login_logout use-run
+        - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
 
     - stage: snap
       if: type != cron

@@ -1,9 +1,6 @@
 project: snapcraft
 
 environment:
-  # FIXME: This variable is only used by the spread_tests/ suite.
-  SNAPCRAFT_FROM_SNAP: "1"
-
   # This variable can be set to either "deb" or "snap". It defaults to "snap".
   SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
 

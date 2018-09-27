@@ -61,7 +61,7 @@ setup_lxd() {
     $lxc config set "$name" environment.GITHUB_TEST_PASSWORD "$GITHUB_TEST_PASSWORD"
     $lxc config set "$name" environment.GH_TOKEN "$GH_TOKEN"
     $lxc config set "$name" environment.LC_ALL "C.UTF-8"
-    $lxc config set "$name" environment.SNAPCRAFT_FROM_SNAP "1"
+    $lxc config set "$name" environment.SNAPCRAFT_PACKAGE_TYPE "snap"
 
     $lxc exec "$name" -- apt update
 }

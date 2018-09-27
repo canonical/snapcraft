@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 
 import testscenarios
 
@@ -28,15 +27,6 @@ class UnicodePropertyTestCase(testscenarios.WithScenarios, integration.TestCase)
     ]
 
     def test_invalid_unicode_workaround(self):
-        if not (
-            os.getenv("SNAPCRAFT_FROM_SNAP", False)
-            or os.getenv("SNAPCRAFT_FROM_DEB", False)
-        ):
-            self.skipTest(
-                "The yaml unicode patch is applied to the snap "
-                "and python3-yaml package, but not PyYAML in PyPI"
-            )
-
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
             self.path,
             name=self.name,
