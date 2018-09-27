@@ -680,7 +680,7 @@ class PluginHandler:
     def _organize(self, *, overwrite=False):
         fileset = self._get_fileset("organize", {})
 
-        _organize_filesets(fileset.copy(), self.plugin.installdir, overwrite)
+        _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
         self.makedirs()
@@ -1087,7 +1087,7 @@ def _migrate_files(
         fixup_func(dst)
 
 
-def _organize_filesets(fileset, base_dir, overwrite):
+def _organize_filesets(part_name, fileset, base_dir, overwrite):
     for key in sorted(fileset, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, key)
         # Remove the leading slash if there so os.path.join
@@ -1096,6 +1096,8 @@ def _organize_filesets(fileset, base_dir, overwrite):
 
         sources = iglob(src, recursive=True)
 
+        # Keep track of the number of glob expansions so we can properly error if more
+        # than one tries to organize to the same file
         src_count = 0
         for src in sources:
             src_count += 1
@@ -1110,12 +1112,21 @@ def _organize_filesets(fileset, base_dir, overwrite):
                 if overwrite and src_count <= 1:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(dst)
+                elif src_count > 1:
+                    raise errors.SnapcraftOrganizeError(
+                        part_name,
+                        "multiple files to be organized into {!r}. If this is supposed "
+                        "to be a directory, end it with a forward slash.".format(
+                            os.path.relpath(dst, base_dir)
+                        ),
+                    )
                 else:
-                    raise errors.SnapcraftEnvironmentError(
-                        "Trying to organize file {key!r} to {dst!r}, "
-                        "but {dst!r} already exists".format(
+                    raise errors.SnapcraftOrganizeError(
+                        part_name,
+                        "trying to organize file {key!r} to {dst!r}, but {dst!r} "
+                        "already exists".format(
                             key=key, dst=os.path.relpath(dst, base_dir)
-                        )
+                        ),
                     )
             if os.path.isdir(dst) and overwrite:
                 real_dst = os.path.join(dst, os.path.basename(src))

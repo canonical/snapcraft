@@ -24,7 +24,7 @@ from collections import OrderedDict
 from textwrap import dedent
 from unittest.mock import call, Mock, MagicMock, patch
 
-from testtools.matchers import Contains, Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
 from . import mocks
@@ -373,7 +373,9 @@ class PluginTestCase(unit.TestCase):
     def test_build_organizes(self, mock_organize):
         handler = self.load_part("test-part")
         handler.build()
-        mock_organize.assert_called_once_with({}, handler.plugin.installdir, False)
+        mock_organize.assert_called_once_with(
+            "test-part", {}, handler.plugin.installdir, False
+        )
 
     @patch("snapcraft.internal.pluginhandler._organize_filesets")
     def test_update_build_organizes_with_overwrite(self, mock_organize):
@@ -387,7 +389,9 @@ class PluginTestCase(unit.TestCase):
         handler = self.load_part("test-part", plugin_name="test-plugin")
         handler.makedirs()
         handler.update_build()
-        mock_organize.assert_called_once_with({}, handler.plugin.installdir, True)
+        mock_organize.assert_called_once_with(
+            "test-part", {}, handler.plugin.installdir, True
+        )
 
 
 class MigratePluginTestCase(unit.TestCase):
@@ -587,7 +591,8 @@ class OrganizeTestCase(unit.TestCase):
                 setup_dirs=[],
                 setup_files=["foo", "bar"],
                 organize_set={"foo": "bar"},
-                expected=errors.SnapcraftEnvironmentError,
+                expected=errors.SnapcraftOrganizeError,
+                expected_message=".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*",
                 expected_overwrite=[(["bar"], "")],
             ),
         ),
@@ -606,7 +611,8 @@ class OrganizeTestCase(unit.TestCase):
                 setup_dirs=[],
                 setup_files=["foo.conf", "bar.conf"],
                 organize_set={"*.conf": "dir"},
-                expected=errors.SnapcraftEnvironmentError,
+                expected=errors.SnapcraftOrganizeError,
+                expected_message=".*multiple files to be organized into 'dir'.*",
             ),
         ),
         (
@@ -673,15 +679,19 @@ class OrganizeTestCase(unit.TestCase):
             with contextlib.suppress(AttributeError):
                 expected = self.expected_overwrite
         if isinstance(expected, type) and issubclass(expected, Exception):
-            self.assertRaises(
+            raised = self.assertRaises(
                 expected,
                 pluginhandler._organize_filesets,
+                "part-name",
                 self.organize_set,
                 base_dir,
                 overwrite,
             )
+            self.assertThat(str(raised), MatchesRegex(self.expected_message))
         else:
-            pluginhandler._organize_filesets(self.organize_set, base_dir, overwrite)
+            pluginhandler._organize_filesets(
+                "part-name", self.organize_set, base_dir, overwrite
+            )
             for expect in expected:
                 dir_path = os.path.join(base_dir, expect[1])
                 dir_contents = os.listdir(dir_path)
