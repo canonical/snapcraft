@@ -109,7 +109,6 @@ class PythonPlugin(snapcraft.BasePlugin):
             "default": "python3",
             "enum": ["python2", "python3"],
         }
-        schema.pop("required")
 
         return schema
 

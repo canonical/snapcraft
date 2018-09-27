@@ -43,7 +43,6 @@ class BasePlugin:
             "properties": {},
             "pull-properties": [],
             "build-properties": [],
-            "required": [],
         }
 
     @classmethod

@@ -488,7 +488,6 @@ properties:
             description: plugin name
           source:
             $ref: "#/definitions/grammar-string"
-            default: '.'
           source-checksum:
               type: string
               default: ''

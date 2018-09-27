@@ -8,6 +8,7 @@ confinement: devmode
 
 parts:
   override-pull-scriptlet-test:
+    source: .
     plugin: dump
     override-pull: |
       touch before-pull

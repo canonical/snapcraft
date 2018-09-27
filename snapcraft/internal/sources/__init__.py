@@ -115,7 +115,7 @@ logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 
 __SOURCE_DEFAULTS = {
-    "source": ".",
+    "source": None,
     "source-commit": None,
     "source-checksum": None,
     "source-depth": None,

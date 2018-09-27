@@ -61,6 +61,8 @@ class AutotoolsPlugin(make.MakePlugin):
             "default": "destdir",
         }
 
+        schema["required"] = ["source"]
+
         return schema
 
     @classmethod
