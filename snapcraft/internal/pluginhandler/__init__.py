@@ -457,7 +457,7 @@ class PluginHandler:
                 stage_packages=self.stage_packages,
                 build_snaps=part_build_snaps,
                 build_packages=part_build_packages,
-                source_details=self.source_handler.source_details,
+                source_details=getattr(self.source_handler, "source_details", None),
                 metadata=metadata,
                 metadata_files=metadata_files,
                 scriptlet_metadata=self._scriptlet_metadata[steps.PULL],

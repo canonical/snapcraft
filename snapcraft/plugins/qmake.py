@@ -65,7 +65,7 @@ class QmakePlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
-        schema.pop("required")
+        schema["required"].append("source")
 
         return schema
 

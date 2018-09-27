@@ -121,6 +121,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
         schema["required"].append("modules")
         schema["required"].append("module-set")
+        schema["required"].append("source")
 
         return schema
 

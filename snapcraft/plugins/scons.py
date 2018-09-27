@@ -45,6 +45,7 @@ class SconsPlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["required"].append("source")
         return schema
 
     @classmethod

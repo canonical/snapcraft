@@ -43,6 +43,12 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
             ["python3-pip", "python3-wheel", "python3-setuptools"]
         )
 
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema["required"].append("source")
+        return schema
+
     def build(self):
         super().build()
 

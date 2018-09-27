@@ -218,6 +218,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
             "default": "http://localhost:11311",
         }
 
+        schema["required"].append("source")
+
         return schema
 
     @classmethod

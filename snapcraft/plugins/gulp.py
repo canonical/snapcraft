@@ -58,7 +58,7 @@ class GulpPlugin(snapcraft.BasePlugin):
             "default": [],
         }
         schema["properties"]["node-engine"] = node_properties["node-engine"]
-        schema["required"].append("gulp-tasks")
+        schema["required"].extend(["gulp-tasks", "source"])
 
         return schema
 
