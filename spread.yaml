@@ -36,9 +36,9 @@ backends:
       - ubuntu-14.04-64:
           workers: 3
       - ubuntu-16.04-64:
-          workers: 3
+          workers: 5
       - ubuntu-18.04-64:
-          workers: 3
+          workers: 5
   autopkgtest:
     type: adhoc
     allocate: |
