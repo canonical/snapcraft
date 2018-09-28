@@ -20,7 +20,7 @@ import os
 import subprocess
 from unittest import mock
 
-from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
+from testtools.matchers import Contains, DirExists, Equals, Not
 
 import snapcraft
 from snapcraft.plugins import rust
