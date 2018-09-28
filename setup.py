@@ -94,7 +94,6 @@ if sys.platform == "win32":
             "click",
             "responses",
             "configparser",
-            "docopt",
             "cffi",
         ],
         # Explicit inclusion data, which is then clobbered.
@@ -136,10 +135,6 @@ else:
         package_data=package_data,
         license=license,
         classifiers=classifiers,
-        # non-cx_Freeze arguments
-        entry_points={
-            "console_scripts": ["snapcraft-parser = snapcraft.internal.parser:main"]
-        },
         # snapcraftctl is not in console_scripts because we need a clean environment.
         # snapcraft isn't in console_scripts so we can dispatch to legacy depending on bases
         scripts=["bin/snapcraft", "bin/snapcraftctl"],

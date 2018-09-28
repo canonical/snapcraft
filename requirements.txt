@@ -1,6 +1,5 @@
 click~=6.0
 configparser==3.5.0
-docopt==0.6.2
 jsonschema==2.5.1
 paramiko==2.4.1
 progressbar33==2.4
