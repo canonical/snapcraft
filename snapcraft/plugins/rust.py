@@ -113,7 +113,7 @@ class RustPlugin(snapcraft.BasePlugin):
             "--root",
             self.installdir,
             "--path",
-            self.builddir
+            self.builddir,
         ]
         if self.project.is_cross_compiling:
             cmd.extend(["--target", self._target])
