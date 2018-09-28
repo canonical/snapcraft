@@ -36,9 +36,9 @@ backends:
       - ubuntu-14.04-64:
           workers: 3
       - ubuntu-16.04-64:
-          workers: 3
+          workers: 5
       - ubuntu-18.04-64:
-          workers: 3
+          workers: 5
   autopkgtest:
     type: adhoc
     allocate: |
@@ -132,7 +132,7 @@ prepare: |
   # This unfortunately cannot be extracted into a standalone script since this
   # portion of of YAML runs before the source code has been fetched.
 
-  # 'apt update' is hanging on security.ubuntu.com with IPv6. Prefer IPv4 over
+  # 'apt-get update' is hanging on security.ubuntu.com with IPv6. Prefer IPv4 over
   # IPv6
   cat <<EOF > gai.conf
   precedence  ::1/128       50
@@ -142,23 +142,23 @@ prepare: |
   precedence ::ffff:0:0/96 100
   EOF
   if ! mv gai.conf /etc/gai.conf; then
-      echo "/etc/gai.conf is not writable, ubuntu-core system? apt update won't"
+      echo "/etc/gai.conf is not writable, ubuntu-core system? apt-get update won't"
       echo "be affected in that case"
       rm -f gai.conf
   fi
 
-  # Now run 'apt update', but don't show output unless it fails. The logs are
+  # Now run 'apt-get update', but don't show output unless it fails. The logs are
   # long enough as it is.
   tempfile="$(mktemp)"
-  if ! apt update > "$tempfile" 2>&1; then
+  if ! apt-get update > "$tempfile" 2>&1; then
       cat "$tempfile"
       exit 1
   fi
 
-  apt install -y snapd
+  apt-get install -y snapd
 
   if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
-      apt install -y snapcraft
+      apt-get install -y snapcraft
   elif [ "$SNAPCRAFT_PACKAGE_TYPE" = "snap" ]; then
       # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
       # Otherwise, look for it in /snapcraft/.
@@ -224,5 +224,23 @@ suites:
 # Legacy tests
  tests/spread/legacy/:
    summary: legacy snapcraft tests
+
+# Legacy pending migration away from python runners
+ tests/spread/legacy_python/:
+   summary: theses tests are pending a migration away from python runners
+   kill-timeout: 60m
+   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+   priority: 100  # Run this test early so we're not waiting for it
+   systems:
+     - ubuntu-16.04*
+     - ubuntu-18.04*
+   environment:
+     # TODO: make generic
+     PIP_COMMAND: "/root/.local/bin/pip"
+   prepare: |
+     apt-get update
+     apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion
+     pip3 install --user --upgrade pip
+     $PIP_COMMAND install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
 
 path: /snapcraft/

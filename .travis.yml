@@ -37,8 +37,14 @@ jobs:
       script:
         - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
+    # CLA check, only in pull requests, not coming from the bot.
+    - if: type = pull_request AND sender != snappy-m-o
+      install:
+        - sudo apt update && sudo apt install -y git python-launchpadlib
+      script:
+        - ./tools/cla_check.py
 
-    - stage: unit
+    - stage: unit, snap and osx
       if: type != cron
       install:
         # Here until we have our snapcraft testing toolkit snap
@@ -53,9 +59,7 @@ jobs:
       after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
-
-    - stage: osx-integration-store
-      if: type != cron
+    - if: type != cron
       os: osx
       install:
         - brew upgrade python
@@ -66,9 +70,7 @@ jobs:
         - python3 -m pip install -r requirements-devel.txt
       script:
         - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-
-    - stage: snap
-      if: type != cron
+    - if: type != cron
       install:
         - sudo apt update
         - sudo apt install -y snapd
@@ -96,38 +98,4 @@ jobs:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
       - ./runtests.sh spread
     - if: type != cron
-      script: sudo ./tools/travis/run_integration_test.sh tests/integration/general
-    - if: type != cron
-      script: LXD_IMAGE="ubuntu:bionic" sudo ./tools/travis/run_integration_test.sh tests/integration/general
-    - if: type != cron
-      script: sudo ./tools/travis/run_integration_test.sh tests/integration/lifecycle
-    - if: type != cron
-      script: sudo ./tools/travis/run_integration_test.sh tests/integration/sources
-    - if: type != cron
-      script:
-      - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_integration_test.sh tests/integration/plugins
-    - if: type != cron
-      script:
-      - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_nodejs
-    - if: type != cron
-      script:
-      - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_java
-    - if: type != cron
-      script: sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
-    - if: type != cron
-      script: LXD_IMAGE="ubuntu-daily:bionic" sudo ./tools/travis/run_integration_test.sh tests.integration.plugins_python
-    - if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
-    - if: type != cron
-      script:
-      - "travis_wait 20 sleep 1200 &"
-      - sudo ./tools/travis/run_integration_test.sh tests/integration/snapd
-    # CLA check, only in pull requests, not coming from the bot.
-    - if: type = pull_request AND sender != snappy-m-o
-      install:
-        - sudo apt update && sudo apt install -y git python-launchpadlib
-      script:
-        - ./tools/cla_check.py
