@@ -117,7 +117,7 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
                         "--path",
                         plugin.builddir,
                         "--target",
-                        plugin._target
+                        plugin._target,
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
