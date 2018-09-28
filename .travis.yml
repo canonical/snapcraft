@@ -44,7 +44,7 @@ jobs:
       script:
         - ./tools/cla_check.py
 
-    - stage: unit
+    - stage: unit, snap and osx
       if: type != cron
       install:
         # Here until we have our snapcraft testing toolkit snap
@@ -59,9 +59,7 @@ jobs:
       after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
-
-    - stage: snap and osx
-      if: type != cron
+    - if: type != cron
       os: osx
       install:
         - brew upgrade python
