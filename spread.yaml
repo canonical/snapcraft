@@ -228,7 +228,7 @@ suites:
 # Legacy pending migration away from python runners
  tests/spread/legacy_python/:
    summary: theses tests are pending a migration away from python runners
-   kill-timeout: 30m
+   kill-timeout: 60m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 100  # Run this test early so we're not waiting for it
    systems:
