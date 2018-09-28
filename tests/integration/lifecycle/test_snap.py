@@ -215,8 +215,8 @@ class SnapTestCase(integration.TestCase):
             subprocess.CalledProcessError, self.run_snapcraft, "stage", "bad-yaml"
         )
         self.assertIn(
-            "Issues while validating snapcraft.yaml: found character '\\t' "
-            "that cannot start any token on line 13 of snapcraft.yaml",
+            "Issues while validating snapcraft.yaml: found character that cannot start "
+            "any token on line 13, column 1",
             str(error.output),
         )
 

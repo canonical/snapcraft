@@ -72,6 +72,42 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
         )
         self.check_output_mock.assert_not_called()
 
+    def test_launch_with_mem(self):
+        self.multipass_command.launch(
+            instance_name=self.instance_name, mem="2G", image="16.04"
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "launch",
+                "16.04",
+                "--name",
+                self.instance_name,
+                "--mem",
+                "2G",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_launch_with_disk(self):
+        self.multipass_command.launch(
+            instance_name=self.instance_name, disk="8G", image="16.04"
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "launch",
+                "16.04",
+                "--name",
+                self.instance_name,
+                "--disk",
+                "8G",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
     def test_launch_with_remote(self):
         self.multipass_command.launch(
             instance_name=self.instance_name, image="18.04", remote="daily"

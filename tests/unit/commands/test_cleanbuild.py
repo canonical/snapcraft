@@ -18,6 +18,7 @@ from textwrap import dedent
 from unittest.mock import patch, ANY
 
 from testtools.matchers import Equals, FileExists
+from unittest import mock
 
 from . import CommandBaseTestCase
 
@@ -74,3 +75,8 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
         self.cleanbuilder_mock.assert_called_once_with(
             project=ANY, remote=None, source="snap-test_source.tar.bz2"
         )
+
+    @mock.patch("snapcraft.cli.lifecycle.conduct_project_sanity_check")
+    def test_preflight_check_is_called(self, mock_check):
+        self.run_command(["cleanbuild"])
+        mock_check.assert_called_once_with(mock.ANY)

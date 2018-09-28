@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import click
 import os
 
-from snapcraft.internal import errors, lxd
+from snapcraft.internal import lxd, repo
 from ._options import get_project
 from . import env
 
@@ -32,25 +32,17 @@ def containerscli():
     "--debug", is_flag=True, help="Shells into the environment if the build fails."
 )
 def refresh(debug, **kwargs):
-    """Refresh an existing LXD container.
+    """Refresh existing packages.
 
     \b
     Examples:
         snapcraft refresh
-
-    This will take care of updating the apt package cache, upgrading packages
-    as needed as well as refreshing snaps.
     """
 
     build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        raise errors.SnapcraftEnvironmentError(
-            "The 'refresh' command only applies to LXD containers but "
-            "SNAPCRAFT_BUILD_ENVIRONMENT is not set or set to host.\n"
-            "Maybe you meant to update the parts cache instead? "
-            "You can do that with the following command:\n\n"
-            "snapcraft update"
-        )
 
-    project = get_project(**kwargs, debug=debug)
-    lxd.Project(project=project, output=None, source=os.path.curdir).refresh()
+    if build_environment.is_lxd:
+        project = get_project(**kwargs, debug=debug)
+        lxd.Project(project=project, output=None, source=os.path.curdir).refresh()
+    else:
+        repo.Repo.refresh_build_packages()

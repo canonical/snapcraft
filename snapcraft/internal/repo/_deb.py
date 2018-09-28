@@ -245,6 +245,15 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
+    def refresh_build_packages(cls) -> None:
+        try:
+            subprocess.check_call(["sudo", "apt", "update"])
+        except subprocess.CalledProcessError as call_error:
+            raise errors.CacheUpdateFailedError(
+                "failed to run apt update"
+            ) from call_error
+
+    @classmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
 

@@ -14,18 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
-
 import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
-
-
-def _prime_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return PrimeState(**parameters)
-
-
-yaml.add_constructor(u"!PrimeState", _prime_state_constructor)
 
 
 class PrimeState(PartState):

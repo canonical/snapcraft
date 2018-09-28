@@ -94,9 +94,14 @@ class RosdepTestCase(unit.TestCase):
 
         self.check_output_mock.side_effect = run
 
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
+        raised = self.assertRaises(rosdep.RosdepInitializationError, self.rosdep.setup)
 
-        self.assertThat(str(raised), Equals("Error initializing rosdep database:\nbar"))
+        self.assertThat(
+            str(raised),
+            Equals(
+                "Failed to initialize rosdep: Error initializing rosdep database:\nbar"
+            ),
+        )
 
     def test_setup_update_failure(self):
         def run(args, **kwargs):
@@ -107,9 +112,12 @@ class RosdepTestCase(unit.TestCase):
 
         self.check_output_mock.side_effect = run
 
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
+        raised = self.assertRaises(rosdep.RosdepInitializationError, self.rosdep.setup)
 
-        self.assertThat(str(raised), Equals("Error updating rosdep database:\nbar"))
+        self.assertThat(
+            str(raised),
+            Equals("Failed to initialize rosdep: Error updating rosdep database:\nbar"),
+        )
 
     def test_get_dependencies(self):
         self.check_output_mock.return_value = b"foo\nbar\nbaz"
@@ -131,10 +139,10 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(1, "foo")
 
         raised = self.assertRaises(
-            FileNotFoundError, self.rosdep.get_dependencies, "bar"
+            rosdep.RosdepPackageNotFoundError, self.rosdep.get_dependencies, "bar"
         )
 
-        self.assertThat(str(raised), Equals('Unable to find Catkin package "bar"'))
+        self.assertThat(str(raised), Equals("rosdep cannot find Catkin package 'bar'"))
 
     def test_get_dependencies_entire_workspace(self):
         self.check_output_mock.return_value = b"foo\nbar\nbaz"
@@ -169,7 +177,9 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(1, "foo")
 
         raised = self.assertRaises(
-            rosdep.RosdepDependencyNotFoundError, self.rosdep.resolve_dependency, "bar"
+            rosdep.RosdepDependencyNotResolvedError,
+            self.rosdep.resolve_dependency,
+            "bar",
         )
 
         self.assertThat(

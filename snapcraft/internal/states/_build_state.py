@@ -14,18 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
-
 import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
-
-
-def _build_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return BuildState(**parameters)
-
-
-yaml.add_constructor(u"!BuildState", _build_state_constructor)
 
 
 def _schema_properties():

@@ -49,8 +49,21 @@ class GlobalStateTest(unit.TestCase):
 
         global_state.save(filepath="state")
 
-        build_packages_str = ", ".join(self.build_packages)
-        build_snaps_str = ", ".join(self.build_snaps)
+        prepend = "  - "
+
+        if self.build_packages:
+            build_packages = "\n" + "\n".join(
+                ["{}{}".format(prepend, p) for p in self.build_packages]
+            )
+        else:
+            build_packages = " []"
+
+        if self.build_snaps:
+            build_snaps = "\n" + "\n".join(
+                ["{}{}".format(prepend, p) for p in self.build_snaps]
+            )
+        else:
+            build_snaps = " []"
 
         self.assertThat(
             "state",
@@ -59,10 +72,10 @@ class GlobalStateTest(unit.TestCase):
                     """\
                     !GlobalState
                     assets:
-                      build-packages: [{}]
-                      build-snaps: [{}]
+                      build-packages:{}
+                      build-snaps:{}
                     """
-                ).format(build_packages_str, build_snaps_str)
+                ).format(build_packages, build_snaps)
             ),
         )
 
