@@ -9,6 +9,10 @@ restore: |
 execute: |
   export XDG_DATA_HOME="$(pwd)/parts"
 
+  # Create a snapcraft.yaml with no base entry
+  snapcraft init
+
+  # Now update
   snapcraft update
   snapcraft define curl > define.txt
 
