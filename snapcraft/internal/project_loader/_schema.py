@@ -51,7 +51,7 @@ class Validator:
 
     def _load_schema(self):
         schema_file = os.path.abspath(
-            os.path.join(common.get_schemadir(), "snapcraft-v3.yaml")
+            os.path.join(common.get_schemadir(), "snapcraft.yaml")
         )
         try:
             with open(schema_file) as fp:
