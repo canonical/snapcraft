@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import site
-import subprocess
 import sys
 
 from snapcraft import project, yaml_utils
@@ -33,7 +31,13 @@ from snapcraft.internal import common
 
 if os.path.isdir(common.get_legacy_snapcraft_dir()):
     try:
-        snapcraft_yaml_path = project.get_snapcraft_yaml()
+        # Early bootstrapping does not allow us to use the existing utilities we
+        # have to manage this check.
+        if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+            base_dir = os.path.expanduser(os.path.join("~", "project"))
+        else:
+            base_dir = None
+        snapcraft_yaml_path = project.get_snapcraft_yaml(base_dir=base_dir)
         with open(snapcraft_yaml_path, "r") as f:
             data = yaml_utils.load(f)
         if data.get("base") is None:
