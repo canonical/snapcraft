@@ -15,29 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
+from textwrap import dedent
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
+from snapcraft.project import Project
 from snapcraft.plugins import meson
 from tests import unit
 
 
-class MesonPluginTestCase(unit.TestCase):
-    """Plugin to provide snapcraft support for the meson build system"""
-
-    def setUp(self):
-        super(MesonPluginTestCase, self).setUp()
-
-        class Options:
-            """Internal Options Class matching the Meson plugin"""
-
-            meson_parameters = []
-
-        self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
-
+class MesonPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         """Test validity of the Meson Plugin schema"""
         schema = meson.MesonPlugin.schema()
@@ -82,6 +72,17 @@ class MesonPluginTestCase(unit.TestCase):
             'Expected "meson-parameters" "uniqueItems" to be "True"',
         )
 
+    def test_get_pull_properties(self):
+        expected_pull_properties = ["meson-version"]
+        resulting_pull_properties = meson.MesonPlugin.get_pull_properties()
+
+        self.assertThat(
+            resulting_pull_properties, HasLength(len(expected_pull_properties))
+        )
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
     def test_get_build_properties(self):
         expected_build_properties = ["meson-parameters"]
         resulting_build_properties = meson.MesonPlugin.get_build_properties()
@@ -93,10 +94,64 @@ class MesonPluginTestCase(unit.TestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
+
+class MesonPluginBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: meson-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            """Internal Options Class matching the Meson plugin"""
+
+            meson_parameters = []
+            meson_version = []
+
+        self.options = Options()
+
+    @mock.patch("subprocess.check_call")
+    def test_pull(self, check_call_mock):
+        """Test pulling with the default settings."""
+        plugin = meson.MesonPlugin("test-part", self.options, self.project)
+
+        plugin.pull()
+
+        check_call_mock.assert_called_once_with(["pip3", "install", "-U", "meson"])
+
+    @mock.patch("subprocess.check_call")
+    def test_pull_meson_version(self, check_call_mock):
+        """Test pulling with the default settings."""
+        self.options.meson_version = "1.0"
+        plugin = meson.MesonPlugin("test-part", self.options, self.project)
+
+        plugin.pull()
+
+        check_call_mock.assert_called_once_with(["pip3", "install", "-U", "meson=1.0"])
+
+    @mock.patch(
+        "subprocess.check_call",
+        side_effect=subprocess.CalledProcessError(cmd=["meson-install"], returncode=1),
+    )
+    def test_pull_meson_installation_fails(self, check_call_mock):
+        """Test pulling with the default settings."""
+        self.options.meson_version = "1.0"
+        plugin = meson.MesonPlugin("test-part", self.options, self.project)
+
+        self.assertRaises(errors.SnapcraftPluginCommandError, plugin.pull)
+
     @mock.patch.object(meson.MesonPlugin, "run")
     def test_build(self, run_mock):
         """Test building via meson and check for known calls and destdir"""
-        plugin = meson.MesonPlugin("test-part", self.options, self.project_options)
+        plugin = meson.MesonPlugin("test-part", self.options, self.project)
 
         plugin.build()
 
@@ -116,7 +171,7 @@ class MesonPluginTestCase(unit.TestCase):
     def test_build_with_parameters(self, run_mock):
         """Test with parameters"""
         self.options.meson_parameters = ["--strip"]
-        plugin = meson.MesonPlugin("test-part", self.options, self.project_options)
+        plugin = meson.MesonPlugin("test-part", self.options, self.project)
 
         plugin.build()
 

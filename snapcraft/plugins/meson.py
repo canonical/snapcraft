@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,14 +24,21 @@ This plugin always runs 'meson snapbuild' followed by 'ninja' and
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
+    - meson-version:
+      (string, defaul: latest)
+      The version of meson to install from PyPI.
     - meson-parameters:
       (list of strings)
       Pass the given parameters to the meson command.
 
 """
 
+import subprocess
+
 import os
 import snapcraft
+
+from snapcraft.internal import errors
 
 
 class MesonPlugin(snapcraft.BasePlugin):
@@ -45,9 +52,14 @@ class MesonPlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["properties"]["meson-version"] = {"type": "string", "default": ""}
         schema["required"] = ["source"]
 
         return schema
+
+    @classmethod
+    def get_pull_properties(cls):
+        return ["meson-version"]
 
     @classmethod
     def get_build_properties(cls):
@@ -55,10 +67,35 @@ class MesonPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        self._setup_base_tools(project.info.base)
+
         self.snapbuildname = "snapbuild"
         self.mesonbuilddir = os.path.join(self.builddir, self.snapbuildname)
-        self.build_packages.append("meson")
-        self.build_packages.append("ninja-build")
+
+    def _setup_base_tools(self, base):
+        if base in ("core16", "core18"):
+            self.build_packages.append("python3-pip")
+            self.build_packages.append("ninja-build")
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
+
+    def pull(self):
+        super().pull()
+
+        if self.options.meson_version:
+            meson_package = "meson={}".format(self.options.meson_version)
+        else:
+            meson_package = "meson"
+
+        try:
+            subprocess.check_call(["pip3", "install", "-U", meson_package])
+        except subprocess.CalledProcessError as call_error:
+            raise errors.SnapcraftPluginCommandError(
+                command=call_error.cmd,
+                part_name=self.name,
+                exit_code=call_error.returncode,
+            ) from call_error
 
     def build(self):
         super().build()

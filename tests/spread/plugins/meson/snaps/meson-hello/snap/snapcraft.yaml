@@ -15,8 +15,9 @@ apps:
 
 parts:
   meson-project:
-    plugin: meson
     source: .
+    plugin: meson
+    meson-version: "0.48.0"
     meson-parameters:
       - --prefix=/
     build-packages: [gcc, libc6-dev]
