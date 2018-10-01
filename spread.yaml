@@ -196,7 +196,7 @@ suites:
    summary: tests of snapcraft's Catkin plugin
    kill-timeout: 180m
  tests/spread/plugins/copy/:
-   summary: tests of snapcraft's Copy plugin
+   summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/go/:
