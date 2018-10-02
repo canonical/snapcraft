@@ -66,6 +66,7 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
     # Do this early, if we are in managed-host and not root yet we want to re-exec with
     # sudo keeping the current environment settings.
+    # TODO: LP: #1795680
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host" and os.geteuid() != 0:
         snap_path = os.getenv("SNAP")
         # Use -E to keep the environment.
@@ -73,7 +74,14 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
         # Pick the correct interpreter if running from a snap (in managed-host mode, this
         # is most likely the only scenario).
         if os.getenv("SNAP_NAME") == "snapcraft":
-            cmd.append(os.path.join(snap_path, "usr", "bin", "python3"))
+            # First append the root path of the snap
+            # If legacy exists, append it
+            if os.path.exists(os.path.join(snap_path, "legacy_snapcraft")):
+                interpreter = os.path.join(snap_path, "legacy_snapcraft")
+            else:
+                interpreter = snap_path
+            interpreter = os.path.join(interpreter, "usr", "bin", "python3")
+            cmd.append(interpreter)
         cmd.extend(sys.argv)
         os.execve("/usr/bin/sudo", cmd, os.environ)
 
