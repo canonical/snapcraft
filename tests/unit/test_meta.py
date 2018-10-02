@@ -226,6 +226,17 @@ class CreateTestCase(CreateBaseTestCase):
             "See http://snapcraft.io/docs/deprecation-notices/dn3", fake_logger.output
         )
 
+    @patch("os.link", side_effect=OSError("Invalid cross-device link"))
+    def test_create_meta_with_declared_icon_when_os_link_raises(self, link_mock):
+        _create_file(os.path.join(os.curdir, "my-icon.png"))
+        self.config_data["icon"] = "my-icon.png"
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(os.path.join(self.meta_dir, "gui", "icon.png"), FileExists())
+
+        self.assertFalse("icon" in y, "icon found in snap.yaml {}".format(y))
+
     def test_create_meta_with_declared_icon_and_setup_ran_twice_ok(self):
         gui_path = os.path.join("setup", "gui")
         os.makedirs(gui_path)
