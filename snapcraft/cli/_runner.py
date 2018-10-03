@@ -28,7 +28,6 @@ from .containers import containerscli
 from .discovery import discoverycli
 from .lifecycle import lifecyclecli
 from .store import storecli
-from .parts import partscli
 from .inspect import inspectcli
 from .help import helpcli
 from .extensions import extensioncli
@@ -47,7 +46,6 @@ command_groups = [
     discoverycli,
     helpcli,
     lifecyclecli,
-    partscli,
     extensioncli,
     versioncli,
     inspectcli,

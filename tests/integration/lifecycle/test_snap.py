@@ -154,13 +154,10 @@ class SnapTestCase(integration.TestCase):
         self.run_snapcraft(["snap", "-o", "mysnap.snap"], "assemble")
         self.assertThat("mysnap.snap", FileExists())
 
-    def test_error_with_unexistent_build_package(self):
+    def test_error_with_inexistent_build_package(self):
         self.copy_project_to_cwd("assemble")
         with open("snapcraft.yaml", "a") as yaml_file:
             yaml_file.write("build-packages:\n  - inexistent-package\n")
-
-        # We update here to get a clean log/stdout later
-        self.run_snapcraft("update")
 
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, "snap"
