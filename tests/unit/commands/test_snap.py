@@ -276,7 +276,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(
             fake_logger.output,
-            Equals(
+            Contains(
                 "Skipping pull part1 (already ran)\n"
                 "Skipping build part1 (already ran)\n"
                 "Skipping stage part1 (already ran)\n"
@@ -427,7 +427,7 @@ type: os
 
         self.assertThat(
             fake_logger.output,
-            Equals(
+            Contains(
                 "Pulling part1 \n"
                 "Building part1 \n"
                 "Staging part1 \n"
@@ -497,7 +497,7 @@ type: os
         snap_build_renamed = snap_build + ".1234"
         self.assertThat(
             fake_logger.output.splitlines(),
-            Equals(
+            Contains(
                 [
                     "Pulling part1 ",
                     "Building part1 ",

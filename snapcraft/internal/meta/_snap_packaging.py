@@ -48,17 +48,18 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    "type",
-    "base",
     "architectures",
-    "confinement",
-    "grade",
     "assumes",
+    "base",
+    "confinement",
+    "environment",
+    "epoch",
+    "grade",
+    "hooks",
+    "license",
     "plugs",
     "slots",
-    "epoch",
-    "hooks",
-    "environment",
+    "type",
 ]
 
 
