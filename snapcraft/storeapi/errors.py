@@ -516,7 +516,7 @@ class StoreMetadataError(StoreError):
                     (
                         "Conflict in {!r} field:".format(field_name),
                         "    In snapcraft.yaml: {!r}".format(sent),
-                        "    In the Store:      {!r}".format(error["message"]),
+                        "    In the Store:      {!r}".format(error["extra"]["current"]),
                     )
                 )
             parts.append(

@@ -800,14 +800,19 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 error_list = []
                 for name, value in request.json_body.items():
                     if name == "test-conflict-with-braces":
-                        message = "value with {braces}"
+                        conflict_value = "value with {braces}"
                     else:
-                        message = value + "-changed"
+                        conflict_value = value + "-changed"
                     error_list.append(
                         {
-                            "message": message,
+                            "message": "Conflict on {}".format(name),
                             "code": "conflict",
-                            "extra": {"name": name},
+                            "extra": {
+                                "name": name,
+                                "field": name,
+                                "current": conflict_value,
+                                "value": value,
+                            },
                         }
                     )
                 payload = json.dumps({"error_list": error_list}).encode("utf8")
@@ -856,9 +861,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 # POST, return error
                 error_list = [
                     {
-                        "message": "original-icon",
+                        "message": "Conflict on icon",
                         "code": "conflict",
-                        "extra": {"name": "icon"},
+                        "extra": {
+                            "name": "icon",
+                            "field": "icon",
+                            "current": "original-icon",
+                            "value": "<posted-icon>",
+                        },
                     }
                 ]
                 payload = json.dumps({"error_list": error_list}).encode("utf8")
@@ -867,9 +877,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 # POST, return error
                 error_list = [
                     {
-                        "message": "original icon with {braces}",
+                        "message": "Conflict on icon",
                         "code": "conflict",
-                        "extra": {"name": "icon"},
+                        "extra": {
+                            "name": "icon",
+                            "field": "icon",
+                            "current": "original icon with {braces}",
+                            "value": "<posted-icon>",
+                        },
                     }
                 ]
                 payload = json.dumps({"error_list": error_list}).encode("utf8")
