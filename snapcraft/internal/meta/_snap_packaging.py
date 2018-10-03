@@ -366,7 +366,7 @@ class _SnapPackaging:
                 os.mkdir(icon_dir)
             if os.path.exists(icon_path):
                 os.unlink(icon_path)
-            os.link(self._config_data["icon"], icon_path)
+            file_utils.link_or_copy(self._config_data["icon"], icon_path)
 
         if self._config_data.get("type", "") == "gadget":
             if not os.path.exists("gadget.yaml"):
