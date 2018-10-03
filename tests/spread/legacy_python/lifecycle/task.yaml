@@ -1,0 +1,5 @@
+summary: Run the python driven lifecycle tests
+
+execute: |
+  cd /snapcraft
+  ./runtests.sh tests/integration/lifecycle

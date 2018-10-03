@@ -16,6 +16,8 @@
 import os
 import requests
 import shutil
+import subprocess
+import sys
 
 import snapcraft.internal.common
 from snapcraft.internal.cache import FileCache
@@ -24,7 +26,7 @@ from snapcraft.internal.indicators import (
     download_urllib_source,
 )
 from ._checksum import split_checksum, verify_checksum
-from .errors import SourceUpdateUnsupportedError
+from . import errors
 
 
 class Base:
@@ -74,11 +76,27 @@ class Base:
 
         :param str target: Path to target file.
         """
-        raise SourceUpdateUnsupportedError(self)
+        raise errors.SourceUpdateUnsupportedError(self)
 
     def _update(self):
         """Update pulled source."""
-        raise SourceUpdateUnsupportedError(self)
+        raise errors.SourceUpdateUnsupportedError(self)
+
+    def _run(self, command, **kwargs):
+        try:
+            subprocess.check_call(command, **kwargs)
+        except subprocess.CalledProcessError as e:
+            raise errors.SnapcraftPullError(command, e.returncode)
+
+    def _run_output(self, command, **kwargs):
+        try:
+            return (
+                subprocess.check_output(command, **kwargs)
+                .decode(sys.getfilesystemencoding())
+                .strip()
+            )
+        except subprocess.CalledProcessError as e:
+            raise errors.SnapcraftPullError(command, e.returncode)
 
 
 class FileBase(Base):

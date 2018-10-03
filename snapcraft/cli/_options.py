@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+
 import click
 
 from snapcraft.project import Project, get_snapcraft_yaml
@@ -23,15 +26,25 @@ class HiddenOption(click.Option):
         pass
 
 
-_BUILD_OPTION_NAMES = ["--enable-geoip", "--no-parallel-builds", "--target-arch"]
+_BUILD_OPTION_NAMES = [
+    "--enable-geoip",
+    "--no-parallel-builds",
+    "--target-arch",
+    "--debug",
+    "--shell",
+    "--shell-after",
+]
 
 _BUILD_OPTIONS = [
     dict(
         is_flag=True,
-        help=("Detect best candidate location for stage-packages using geoip"),
+        help="Detect best candidate location for stage-packages using geoip",
     ),
     dict(is_flag=True, help="Force a sequential build."),
     dict(metavar="<arch>", help="Target architecture to cross compile to"),
+    dict(is_flag=True, help="Shells into the environment if the build fails."),
+    dict(is_flag=True, help="Shells into the environment in lieu of the step to run."),
+    dict(is_flag=True, help="Shells into the environment after the step has run."),
 ]
 
 
@@ -49,7 +62,13 @@ def add_build_options(hidden=False):
     return _add_build_options
 
 
-def get_project(*, skip_snapcraft_yaml: bool = False, **kwargs):
+def get_project(
+    *, is_managed_host: bool = False, skip_snapcraft_yaml: bool = False, **kwargs
+):
+    # We need to do this here until we can get_snapcraft_yaml as part of Project.
+    if is_managed_host:
+        os.chdir(os.path.expanduser(os.path.join("~", "project")))
+
     if skip_snapcraft_yaml:
         snapcraft_yaml_file_path = None
     else:
@@ -66,5 +85,6 @@ def get_project(*, skip_snapcraft_yaml: bool = False, **kwargs):
         parallel_builds=not kwargs.pop("no_parallel_builds"),
         target_deb_arch=kwargs.pop("target_arch"),
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+        is_managed_host=is_managed_host,
     )
     return project

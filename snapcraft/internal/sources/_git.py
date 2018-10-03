@@ -132,7 +132,7 @@ class Git(Base):
 
         reset_spec = refspec if refspec != "HEAD" else "origin/master"
 
-        subprocess.check_call(
+        self._run(
             [
                 self.command,
                 "-C",
@@ -143,13 +143,14 @@ class Git(Base):
             ],
             **self._call_kwargs
         )
-        subprocess.check_call(
+
+        self._run(
             [self.command, "-C", self.source_dir, "reset", "--hard", reset_spec],
             **self._call_kwargs
         )
 
         # Merge any updates for the submodules (if any).
-        subprocess.check_call(
+        self._run(
             [
                 self.command,
                 "-C",
@@ -168,12 +169,10 @@ class Git(Base):
             command.extend(["--branch", self.source_tag or self.source_branch])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
-        subprocess.check_call(
-            command + [self.source, self.source_dir], **self._call_kwargs
-        )
+        self._run(command + [self.source, self.source_dir], **self._call_kwargs)
 
         if self.source_commit:
-            subprocess.check_call(
+            self._run(
                 [self.command, "-C", self.source_dir, "checkout", self.source_commit],
                 **self._call_kwargs
             )
@@ -193,12 +192,8 @@ class Git(Base):
         checksum = self.source_checksum
 
         if not tag and not branch and not commit:
-            commit = (
-                subprocess.check_output(
-                    ["git", "-C", self.source_dir, "rev-parse", "HEAD"]
-                )
-                .decode("utf-8")
-                .strip()
+            commit = self._run_output(
+                ["git", "-C", self.source_dir, "rev-parse", "HEAD"]
             )
 
         return {

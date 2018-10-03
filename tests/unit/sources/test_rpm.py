@@ -16,9 +16,10 @@
 
 import os
 import sys
+import subprocess
 
 from unittest import mock
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists, MatchesRegex
 
 from snapcraft.internal import sources
 from tests import unit
@@ -62,3 +63,15 @@ class TestRpm(unit.TestCase):
             self.assertTrue(sources._source_handler["rpm"] is sources.Rpm)
         else:
             self.assertRaises(KeyError, sources._source_handler["rpm"])
+
+    @mock.patch("subprocess.check_output")
+    def test_pull_failure(self, mock_run):
+        mock_run.side_effect = subprocess.CalledProcessError(1, [])
+
+        rpm_source = sources.Rpm(self.rpm_file_path, self.dest_dir)
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, rpm_source.pull)
+        self.assertThat(
+            raised.command,
+            MatchesRegex("rpm2cpio .*/dst/small-0.1-1.noarch.rpm | cpio -idmv"),
+        )
+        self.assertThat(raised.exit_code, Equals(1))

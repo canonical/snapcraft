@@ -17,10 +17,10 @@
 import os
 import subprocess
 import textwrap
-import yaml
 
 from testtools.matchers import Equals, Contains
 
+from snapcraft import yaml_utils
 from tests import integration
 
 
@@ -41,7 +41,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["grade"], Equals("devel"))
 
@@ -61,7 +61,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["grade"], Equals("devel"))
 

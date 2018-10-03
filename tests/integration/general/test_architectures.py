@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import yaml
 
 from testtools.matchers import Equals
 
+from snapcraft import yaml_utils
 from tests import integration
 
 
@@ -29,7 +29,7 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
@@ -41,7 +41,7 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))
 
@@ -51,6 +51,6 @@ class ArchitecturesTestCase(integration.TestCase):
         self.run_snapcraft("prime")
 
         with open(os.path.join("prime", "meta", "snap.yaml")) as f:
-            y = yaml.load(f)
+            y = yaml_utils.load(f)
 
         self.assertThat(y["architectures"], Equals([self.deb_arch]))

@@ -20,7 +20,6 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-import yaml
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
@@ -31,6 +30,7 @@ from snapcraft.internal.errors import (
     RequiredPathDoesNotExist,
 )
 from snapcraft.project import Project
+from snapcraft import yaml_utils
 import tests
 from tests import unit
 
@@ -233,7 +233,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated for snap CI.
         with open(".travis.yml") as fd:
-            travis_conf = yaml.load(fd)
+            travis_conf = yaml_utils.load(fd)
             self.assertThat(travis_conf["sudo"], Equals("required"))
             self.assertThat(travis_conf["services"], Equals(["docker"]))
             self.assertThat(
@@ -264,6 +264,15 @@ class TravisSuccessfulTestCase(unit.TestCase):
                     """\
                 Enabling Travis testbeds to push and release 'foo' snaps to edge channel in series '16'
                 Acquiring specific authorization information ...
+                """
+                )
+            ),
+        )
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                dedent(
+                    """\
                 Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
                 Configuring "deploy" phase to build and release the snap in the Store.
                 Done. Now you just have to review and commit changes in your Travis project (`.travis.yml`).
@@ -335,7 +344,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # '.travis.yml' updated only with the decrypt command.
         with open(".travis.yml") as fd:
-            travis_conf = yaml.load(fd)
+            travis_conf = yaml_utils.load(fd)
             self.assertThat(
                 travis_conf["after_success"], Equals(["<travis-cli-decrypt>"])
             )
@@ -348,9 +357,18 @@ class TravisSuccessfulTestCase(unit.TestCase):
                     """\
                 Refreshing credentials to push and release "foo" snaps to edge channel in series 16
                 Acquiring specific authorization information ...
+                """
+                )
+            ),
+        )
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                dedent(
+                    """\
                 Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
                 Done. Please commit the changes to `.snapcraft/travis_snapcraft.cfg` file.
-            """
+                """
                 )
             ),
         )  # noqa TODO this type of test should not be done

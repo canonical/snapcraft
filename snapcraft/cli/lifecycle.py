@@ -16,27 +16,104 @@
 
 import os
 import sys
+import typing
 
 import click
 
 from . import echo
 from . import env
 from ._options import add_build_options, get_project
-from snapcraft.internal import deprecations, lifecycle, lxd, project_loader, steps
+from snapcraft.internal import (
+    errors,
+    build_providers,
+    deprecations,
+    lifecycle,
+    lxd,
+    project_loader,
+    steps,
+)
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 from snapcraft.project.errors import YamlValidationError
 
+if typing.TYPE_CHECKING:
+    from snapcraft.internal.project import Project  # noqa: F401
 
-def _execute(step: steps.Step, parts, **kwargs):
-    project = get_project(**kwargs)
-    build_environment = env.BuilderEnvironmentConfig()
 
-    if build_environment.is_host:
+# TODO: when snap is a real step we can simplify the arguments here.
+# fmt: off
+def _execute(  # noqa: C901
+    step: steps.Step,
+    parts: str,
+    pack_project: bool = False,
+    output: str = None,
+    shell: bool = False,
+    shell_after: bool = False,
+    **kwargs
+) -> "Project":
+    # fmt: on
+    if sys.platform == "darwin":
+        default_provider = "multipass"
+    else:
+        default_provider = "host"
+
+    build_environment = env.BuilderEnvironmentConfig(default=default_provider)
+    project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
+
+    conduct_project_sanity_check(project)
+
+    #  When we are ready to pull the trigger we will trigger this when
+    # project.info.base is set
+    if build_environment.is_multipass:
+        build_provider_class = build_providers.get_provider_for(
+            build_environment.provider
+        )
+        echo.info("Launching a VM.")
+        with build_provider_class(project=project, echoer=echo) as instance:
+            instance.mount_project()
+            try:
+                if shell:
+                    # shell means we want to do everything right up to the previous
+                    # step and then go into a shell instead of the requested step.
+                    # the "snap" target is a special snowflake that has not made its
+                    # way to be a proper step.
+                    previous_step = None
+                    if pack_project:
+                        previous_step = steps.PRIME
+                    elif step > steps.PULL:
+                        previous_step = step.previous_step()
+                    # steps.PULL is the first step, so we would directly shell into it.
+                    if previous_step:
+                        instance.execute_step(previous_step)
+                elif pack_project:
+                    instance.pack_project(output=output)
+                else:
+                    instance.execute_step(step)
+            except Exception:
+                if project.debug:
+                    instance.shell()
+                else:
+                    echo.warning("Run the same command again with --debug to shell into the environment "
+                                 "if you wish to introspect this failure.")
+                    raise
+            else:
+                if shell or shell_after:
+                    instance.shell()
+    elif build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
+        if pack_project:
+            _pack(project.prime_dir, output=output)
     else:
         # containerbuild takes a snapcraft command name, not a step
         lifecycle.containerbuild(command=step.name, project=project, args=parts)
+        if pack_project:
+            _pack(project.prime_dir, output=output)
     return project
+
+
+def _pack(directory: str, *, output: str) -> None:
+    snap_name = lifecycle.pack(directory, output)
+    echo.info("Snapped {}".format(snap_name))
 
 
 @click.group()
@@ -132,12 +209,9 @@ def snap(directory, output, **kwargs):
     """
     if directory:
         deprecations.handle_deprecation_notice("dn6")
+        _pack(directory, output=output)
     else:
-        project = _execute(steps.PRIME, parts=[], **kwargs)
-        directory = project.prime_dir
-
-    snap_name = lifecycle.pack(directory, output)
-    echo.info("Snapped {}".format(snap_name))
+        _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
 
 
 @lifecyclecli.command()
@@ -155,12 +229,10 @@ def pack(directory, output, **kwargs):
         snapcraft pack my-snap-directory --output renamed-snap.snap
 
     """
-    snap_name = lifecycle.pack(directory, output)
-    echo.info("Snapped {}".format(snap_name))
+    _pack(directory, output=output)
 
 
 @lifecyclecli.command()
-@add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--step",
@@ -169,7 +241,7 @@ def pack(directory, output, **kwargs):
     type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
     help="only clean the specified step and those that depend on it.",
 )
-def clean(parts, step_name, **kwargs):
+def clean(parts, step_name):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -177,12 +249,17 @@ def clean(parts, step_name, **kwargs):
         snapcraft clean
         snapcraft clean my-part --step build
     """
+    build_environment = env.BuilderEnvironmentConfig()
     try:
-        project = get_project(**kwargs)
+        project = get_project(
+            is_managed_host=build_environment.is_managed_host
+        )
     except YamlValidationError:
         # We need to be able to clean invalid projects too.
-        project = get_project(skip_snapcraft_yaml=True, **kwargs)
-    build_environment = env.BuilderEnvironmentConfig()
+        project = get_project(
+            is_managed_host=build_environment.is_managed_host,
+            skip_snapcraft_yaml=True
+        )
 
     step = None
     if step_name:
@@ -193,12 +270,22 @@ def clean(parts, step_name, **kwargs):
             step_name = "prime"
         step = steps.get_step_by_name(step_name)
 
-    if build_environment.is_host:
-        lifecycle.clean(project, parts, step)
-    else:
+    if build_environment.is_lxd:
         lxd.Project(project=project, output=None, source=os.path.curdir).clean(
             parts, step
         )
+    elif build_environment.is_host:
+        lifecycle.clean(project, parts, step)
+    else:
+        # TODO support for steps.
+        if parts or step_name:
+            raise errors.SnapcraftEnvironmentError(
+                "Build providers are still not feature complete, specifying parts or a step name "
+                "is not yet supported.")
+        build_provider_class = build_providers.get_provider_for(
+            build_environment.provider
+        )
+        build_provider_class(project=project, echoer=echo).clean_project()
 
 
 @lifecyclecli.command()
@@ -208,10 +295,7 @@ def clean(parts, step_name, **kwargs):
     metavar="<remote>",
     help="Use a specific lxd remote instead of a local container.",
 )
-@click.option(
-    "--debug", is_flag=True, help="Shells into the environment if the build fails."
-)
-def cleanbuild(remote, debug, **kwargs):
+def cleanbuild(remote, **kwargs):
     """Create a snap using a clean environment managed by a build provider.
 
     \b
@@ -227,7 +311,6 @@ def cleanbuild(remote, debug, **kwargs):
     If using a remote, a prior setup is required which is described on:
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
-    project = get_project(**kwargs, debug=debug)
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
@@ -236,9 +319,12 @@ def cleanbuild(remote, debug, **kwargs):
     else:
         default_provider = "lxd"
 
-    build_environment = env.BuilderEnvironmentConfig(
-        default=default_provider, additional_providers=["multipass"]
+    build_environment = env.BuilderEnvironmentConfig(default=default_provider)
+    project = get_project(
+        is_managed=build_environment.is_managed_host, **kwargs
     )
+
+    conduct_project_sanity_check(project)
 
     snap_filename = lifecycle.cleanbuild(
         project=project, echoer=echo, remote=remote, build_environment=build_environment

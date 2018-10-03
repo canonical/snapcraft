@@ -25,7 +25,7 @@ from tests import integration
 class ContainerBuildsTestCase(integration.TestCase):
     def setUp(self):
         super().setUp()
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+        if os.getenv("SNAPCRAFT_PACKAGE_TYPE") == "snap":
             self.skipTest(
                 "container build tests when running from a snap are "
                 "currently broken LP: #1738210"

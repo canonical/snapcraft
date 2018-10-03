@@ -1,0 +1,5 @@
+summary: Run the python driven plugin tests for the python plugin
+
+execute: |
+  cd /snapcraft
+  ./runtests.sh tests/integration/plugins_python

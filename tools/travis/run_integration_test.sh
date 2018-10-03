@@ -61,7 +61,7 @@ setup_lxd() {
     $lxc config set "$name" environment.GITHUB_TEST_PASSWORD "$GITHUB_TEST_PASSWORD"
     $lxc config set "$name" environment.GH_TOKEN "$GH_TOKEN"
     $lxc config set "$name" environment.LC_ALL "C.UTF-8"
-    $lxc config set "$name" environment.SNAPCRAFT_FROM_SNAP "1"
+    $lxc config set "$name" environment.SNAPCRAFT_PACKAGE_TYPE "snap"
 
     $lxc exec "$name" -- apt update
 }
@@ -74,6 +74,7 @@ setup_lxd test-runner "${LXD_IMAGE:-ubuntu:16.04}"
 $lxc file push "snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" test-runner/root/ || true
 $lxc file push --recursive "$project_path" test-runner/root/
 $lxc exec test-runner -- sh -c "apt install -y bzr git libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd"
+$lxc exec test-runner -- sh -c "python3 -m pip install -I pip==9.0.3"
 $lxc exec test-runner -- sh -c "python3 -m pip install -r snapcraft/requirements-devel.txt -r snapcraft/requirements.txt"
 $lxc exec test-runner -- sh -c "${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite"

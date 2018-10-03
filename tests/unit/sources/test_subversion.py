@@ -16,6 +16,7 @@
 
 import os
 import shutil
+import subprocess
 from unittest import mock
 
 from testtools.matchers import Equals
@@ -123,6 +124,16 @@ class TestSubversion(unit.sources.SourceTestCase):  # type: ignore
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler["subversion"] is sources.Subversion)
+
+    def test_pull_failure(self):
+        self.mock_run.side_effect = subprocess.CalledProcessError(1, [])
+
+        svn = sources.Subversion("svn://my-source", "source_dir")
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, svn.pull)
+        self.assertThat(
+            raised.command, Equals("svn checkout svn://my-source source_dir")
+        )
+        self.assertThat(raised.exit_code, Equals(1))
 
 
 class SubversionBaseTestCase(unit.TestCase):

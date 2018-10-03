@@ -23,10 +23,8 @@ import tempfile
 from typing import Callable, Generator, List, Optional
 from typing import Any, Dict  # noqa: F401
 
-import yaml
-
 from . import errors
-from snapcraft import storeapi
+from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import repo
 
 logger = logging.getLogger(__name__)
@@ -42,6 +40,22 @@ class _SnapOp(enum.Enum):
     INJECT = 1
     INSTALL = 2
     REFRESH = 3
+
+
+def _get_snap_channel(snap_name: str) -> str:
+    """Returns the channel to use for snap_name."""
+    if snap_name == "snapcraft":
+        channel = os.getenv(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/stable"
+        )
+        logger.warning(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+            "snapcraft from {}".format(channel)
+        )
+    else:
+        channel = "latest/stable"
+
+    return channel
 
 
 class _SnapManager:
@@ -164,13 +178,15 @@ class _SnapManager:
             install_cmd.append(os.path.join(self._snap_dir, snap_file_name))
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd.append(op.name.lower())
+            snap_channel = _get_snap_channel(self.snap_name)
             store_snap_info = storeapi.StoreClient().cpi.get_package(
-                self.snap_name, "latest/stable", self._snap_arch
+                self.snap_name, snap_channel, self._snap_arch
             )
             snap_revision = store_snap_info["revision"]
             confinement = store_snap_info["confinement"]
             if confinement == "classic":
                 install_cmd.append("--classic")
+            install_cmd.extend(["--channel", snap_channel])
             install_cmd.append(host_snap_repo.name)
         elif op == _SnapOp.NOP:
             install_cmd = []
@@ -195,7 +211,7 @@ def _load_registry(registry_filepath: Optional[str]) -> Dict[str, List[Any]]:
         return dict()
 
     with open(registry_filepath) as registry_file:
-        return yaml.load(registry_file)
+        return yaml_utils.load(registry_file)
 
 
 def _save_registry(
@@ -209,7 +225,7 @@ def _save_registry(
         os.makedirs(dirpath, exist_ok=True)
 
     with open(registry_filepath, "w") as registry_file:
-        yaml.dump(registry_data, stream=registry_file)
+        yaml_utils.dump(registry_data, stream=registry_file)
 
 
 class SnapInjector:
@@ -357,8 +373,11 @@ class SnapInjector:
         # are acked.
         self._inject_assertions()
 
+        # Filter out snaps with no operations
+        snaps = [snap for snap in self._snaps if snap.get_op() != _SnapOp.NOP]
+
         with self._mounted_dir():
-            for snap in self._snaps:
+            for snap in snaps:
                 install_cmd = snap.get_install_cmd()
                 self._runner(install_cmd)
                 self._record_revision(snap.snap_name, snap.get_revision())

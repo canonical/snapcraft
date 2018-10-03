@@ -32,13 +32,17 @@ class Project(ProjectOptions):
         target_deb_arch=None,
         debug=False,
         snapcraft_yaml_file_path=None,
-        project_dir: str = None
+        work_dir: str = None,
+        is_managed_host: bool = False
     ) -> None:
 
-        if project_dir is None:
-            self.project_dir = os.getcwd()
+        project_dir = os.getcwd()
+        if is_managed_host:
+            work_dir = os.path.expanduser("~")
+            internal_dir = work_dir
         else:
-            self.project_dir = project_dir
+            work_dir = project_dir
+            internal_dir = os.path.join(work_dir, "snap", ".snapcraft")
 
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
@@ -47,10 +51,11 @@ class Project(ProjectOptions):
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
-        # These paths maintain backwards compatibility.
-        self._internal_dir = os.path.join(self.project_dir, "snap", ".snapcraft")
-        self._global_state_file = os.path.join(self._internal_dir, "state")
+        self._global_state_file = os.path.join(internal_dir, "state")
+        self._project_dir = project_dir
+        self._work_dir = work_dir
+        self._internal_dir = internal_dir
 
         super().__init__(
-            use_geoip, parallel_builds, target_deb_arch, debug, project_dir=project_dir
+            use_geoip, parallel_builds, target_deb_arch, debug, work_dir=work_dir
         )

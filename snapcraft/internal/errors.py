@@ -167,10 +167,8 @@ class InvalidAppCommandError(SnapcraftError):
     fmt = (
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app!r} does "
-        "not exist or is not executable"
-        # FIXME split the errors to include in the message how to fix them.
-        # https://bugs.launchpad.net/snapcraft/+bug/1727425
-        # --elopio - 2017-10-25
+        "not exist or is not executable.\n"
+        "Ensure that {command!r} is relative to the prime directory."
     )
 
     def __init__(self, command, app):
@@ -276,6 +274,14 @@ class SnapcraftPartConflictError(SnapcraftError):
             other_part_name=other_part_name,
             file_paths="\n".join(sorted(spaced_conflict_files)),
         )
+
+
+class SnapcraftOrganizeError(SnapcraftError):
+
+    fmt = "Failed to organize part {part_name!r}: {message}"
+
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)
 
 
 class MissingCommandError(SnapcraftError):

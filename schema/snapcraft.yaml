@@ -320,6 +320,8 @@ properties:
             description: What kind of wrapper to generate for the given command
             enum:
               - none
+              - legacy
+            default: legacy
           sockets:
             type: object
             additionalProperties: false
@@ -475,6 +477,8 @@ properties:
                   keywords. Use 'override-build' instead of 'install'."
         type: [object, 'null']
         minProperties: 1
+        required:
+          - plugin
         properties:
           plugin:
             type: string

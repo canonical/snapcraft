@@ -147,6 +147,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(snap_info, Equals(expected_snap_info))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -196,6 +202,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.report, Equals("A dependency has changed: 'part1'\n"))
 
     def test_dirty_build_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -239,6 +251,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.parts_names, Equals("part1"))
 
     def test_dirty_pull_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -283,6 +301,12 @@ class ExecutionTestCase(LifecycleTestBase):
     def test_pull_is_dirty_if_target_arch_changes(
         self, mock_install_build_packages, mock_enable_cross_compilation
     ):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         mock_install_build_packages.return_value = []
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -369,6 +393,15 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         ("build scriptlet", {"scriptlet": "build"}),
         ("install scriptlet", {"scriptlet": "install"}),
     )
+
+    def setUp(self):
+        super().setUp()
+
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
 
     @mock.patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     @mock.patch("snapcraft.repo.Repo.install_build_packages")

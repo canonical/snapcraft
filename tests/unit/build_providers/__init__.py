@@ -28,15 +28,23 @@ class ProviderImpl(Provider):
 
         self.run_mock = mock.Mock()
         self.launch_mock = mock.Mock()
+        self.start_mock = mock.Mock()
         self.mount_mock = mock.Mock()
         self.unmount_mock = mock.Mock()
         self.push_file_mock = mock.Mock()
+        self.create_mock = mock.Mock()
+        self.destroy_mock = mock.Mock()
+        self.mount_project_mock = mock.Mock()
+        self.shell_mock = mock.Mock()
 
     def _run(self, command, hide_output=False):
         self.run_mock(command)
 
     def _launch(self) -> None:
         self.launch_mock()
+
+    def _start(self) -> None:
+        self.start_mock()
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         self.mount_mock(mountpoint=mountpoint, dev_or_path=dev_or_path)
@@ -53,10 +61,40 @@ class ProviderImpl(Provider):
     def _push_file(self, *, source: str, destination: str) -> None:
         self.push_file_mock(source=source, destination=destination)
 
+    def _get_provider_name(self) -> str:
+        return "stub-provider"
 
-def get_project() -> Project:
+    def _umount(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def build_project(self) -> None:
+        raise NotImplementedError("test stub not implemented")
+
+    def create(self):
+        self.create_mock("create")
+        # raise EnvironmentError(self.create_mock.call_args)
+
+    def destroy(self):
+        self.destroy_mock("destroy")
+
+    def mount_project(self):
+        self.mount_project_mock("mount-project")
+
+    def provision_project(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def retrieve_snap(self):
+        raise NotImplementedError("test stub not implemented")
+
+    def shell(self):
+        self.shell_mock("shell")
+
+
+def get_project(base: str = "") -> Project:
     with open("snapcraft.yaml", "w") as snapcraft_file:
         print("name: project-name", file=snapcraft_file)
+        if base:
+            print("base: {}".format(base), file=snapcraft_file)
 
     return Project(snapcraft_yaml_file_path="snapcraft.yaml")
 
@@ -65,10 +103,7 @@ class BaseProviderBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.instance_name = "ridicoulus-hours"
-        patcher = mock.patch("petname.Generate", return_value=self.instance_name)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
             "snapcraft.internal.build_providers._base_provider.SnapInjector"
@@ -77,5 +112,27 @@ class BaseProviderBaseTest(unit.TestCase):
         self.addCleanup(patcher.stop)
 
         self.project = get_project()
+
+        self.echoer_mock = mock.Mock()
+
+
+class BaseProviderWithBasesBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.instance_name = "snapcraft-project-name"
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._base_provider.SnapInjector"
+        )
+        self.snap_injector_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._images._Image.get",
+            return_value="fake-base.qcow2",
+        )
+        self.images_get_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
         self.echoer_mock = mock.Mock()

@@ -251,12 +251,11 @@ class _NonBlockingRWFifo:
 def _get_env():
     env = ""
     if common.is_snap():
-        # Since the snap is classic, $SNAP/bin is not on the $PATH.
-        # Let's set an alias to make sure it's found (but only if it
-        # exists).
-        snapcraftctl_path = os.path.join(os.getenv("SNAP"), "bin", "snapcraftctl")
-        if os.path.exists(snapcraftctl_path):
-            env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
+        # Since the snap is classic, there is no $PATH pointing into the snap, which
+        # means snapcraftctl won't be found. We can't use aliases since they don't
+        # persist into subshells. However, we know that snapcraftctl lives in its own
+        # directory, so adding that to the PATH should have no ill side effects.
+        env += 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"\n'
     env += common.assemble_env()
 
     return env

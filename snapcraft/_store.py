@@ -28,14 +28,12 @@ from datetime import datetime
 from subprocess import Popen
 from typing import Dict, Iterable, TextIO
 
-import yaml
-
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
 from tabulate import tabulate
 
 from snapcraft.file_utils import calculate_sha3_384, get_tool_path
-from snapcraft import storeapi
+from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
@@ -64,7 +62,7 @@ def _get_data_from_snap_file(snap_path):
         with open(
             os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
         ) as yaml_file:
-            snap_yaml = yaml.safe_load(yaml_file)
+            snap_yaml = yaml_utils.load(yaml_file)
     return snap_yaml
 
 
@@ -213,7 +211,7 @@ def login(
         print(
             "Enter your Ubuntu One e-mail address and password.\n"
             "If you do not have an Ubuntu One account, you can create one "
-            "at https://dashboard.snapcraft.io/openid/login"
+            "at https://snapcraft.io/account"
         )
         email = input("Email: ")
         if os.environ.get("SNAPCRAFT_TEST_INPUT"):

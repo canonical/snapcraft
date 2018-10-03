@@ -41,6 +41,13 @@ class SnapTestCase(integration.TestCase):
             expected_binary1_wrapper = file_.read()
         self.assertThat(binary1_wrapper_path, FileContains(expected_binary1_wrapper))
 
+        command_chain_path = os.path.join(
+            self.prime_dir, "snap", "command-chain", "snapcraft-runner"
+        )
+        with open("command-chain", "r") as f:
+            expected_command_chain = f.read()
+        self.assertThat(command_chain_path, FileContains(expected_command_chain))
+
         self.useFixture(
             fixtures.EnvironmentVariable(
                 "SNAP", os.path.join(os.getcwd(), self.prime_dir)
@@ -54,7 +61,8 @@ class SnapTestCase(integration.TestCase):
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
-                os.path.join(self.prime_dir, binary), universal_newlines=True
+                [command_chain_path, os.path.join(self.prime_dir, binary)],
+                universal_newlines=True,
             )
             self.assertThat(output, Equals(expected_output))
 
@@ -92,15 +100,15 @@ class SnapTestCase(integration.TestCase):
                 grade: stable
                 apps:
                   assemble-bin:
-                    command: command-assemble-bin.wrapper
+                    command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-bin.wrapper
                   assemble-service:
-                    command: command-assemble-service.wrapper
+                    command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-service.wrapper
                     daemon: simple
-                    stop-command: stop-command-assemble-service.wrapper
+                    stop-command: snap/command-chain/snapcraft-runner $SNAP/stop-command-assemble-service.wrapper
                   binary-wrapper-none:
                     command: subdir/binary3
                   binary2:
-                    command: command-binary2.wrapper
+                    command: snap/command-chain/snapcraft-runner $SNAP/command-binary2.wrapper
             """
                 ).format(self.deb_arch)
             ),
@@ -146,13 +154,10 @@ class SnapTestCase(integration.TestCase):
         self.run_snapcraft(["snap", "-o", "mysnap.snap"], "assemble")
         self.assertThat("mysnap.snap", FileExists())
 
-    def test_error_with_unexistent_build_package(self):
+    def test_error_with_inexistent_build_package(self):
         self.copy_project_to_cwd("assemble")
         with open("snapcraft.yaml", "a") as yaml_file:
             yaml_file.write("build-packages:\n  - inexistent-package\n")
-
-        # We update here to get a clean log/stdout later
-        self.run_snapcraft("update")
 
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, "snap"
@@ -215,8 +220,8 @@ class SnapTestCase(integration.TestCase):
             subprocess.CalledProcessError, self.run_snapcraft, "stage", "bad-yaml"
         )
         self.assertIn(
-            "Issues while validating snapcraft.yaml: found character '\\t' "
-            "that cannot start any token on line 13 of snapcraft.yaml",
+            "Issues while validating snapcraft.yaml: found character that cannot start "
+            "any token on line 13, column 1",
             str(error.output),
         )
 
@@ -269,7 +274,7 @@ class SnapTestCase(integration.TestCase):
               stub_key: stub-value
             apps:
               stub-app:
-                command: command-stub-app.wrapper
+                command: snap/command-chain/snapcraft-runner $SNAP/command-stub-app.wrapper
         """
         )
         self.assertThat(

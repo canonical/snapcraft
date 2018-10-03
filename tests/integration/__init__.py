@@ -33,10 +33,10 @@ import pexpect
 from pexpect import popen_spawn
 import requests
 import testtools
-import yaml
 from testtools import content
 from testtools.matchers import MatchesRegex
 
+from snapcraft import yaml_utils
 from tests import fixture_setup, os_release, subprocess_utils
 from tests.integration import platform
 
@@ -48,9 +48,16 @@ class RegisterError(Exception):
 class TestCase(testtools.TestCase):
     def setUp(self):
         super().setUp()
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+
+        self.patchelf_command = "patchelf"
+        self.execstack_command = "execstack"
+
+        package_type = os.getenv("SNAPCRAFT_PACKAGE_TYPE")
+        if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
-        elif os.getenv("SNAPCRAFT_FROM_DEB", False):
+            self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
+            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
+        elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
             self.snapcraft_parser_command = "/usr/bin/snapcraft-parser"
         elif os.getenv("VIRTUAL_ENV") and sys.platform == "win32":
@@ -65,23 +72,15 @@ class TestCase(testtools.TestCase):
             self.snapcraft_parser_command = os.path.join(
                 os.getenv("VIRTUAL_ENV"), "bin", "snapcraft-parser"
             )
-        elif os.getenv("SNAPCRAFT_FROM_BREW", False):
+        elif package_type == "brew":
             self.snapcraft_command = "/usr/local/bin/snapcraft"
         else:
             raise EnvironmentError(
                 "snapcraft is not setup correctly for testing. Either set "
-                "SNAPCRAFT_FROM_SNAP, SNAPCRAFT_FROM_DEB or "
-                "SNAPCRAFT_FROM_BREW to run from either the snap, deb or "
-                "brew, or make sure your venv is properly setup as described "
-                "in HACKING.md."
+                "SNAPCRAFT_PACKAGE_TYPE to 'snap', 'deb' or 'brew', to run from "
+                "either the snap, deb or homebrew or make sure your venv is properly "
+                "setup as described in HACKING.md."
             )
-
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
-            self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
-            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
-        else:
-            self.patchelf_command = "patchelf"
-            self.execstack_command = "execstack"
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), "snaps")
         temp_cwd_fixture = fixture_setup.TempCWD()
@@ -101,6 +100,9 @@ class TestCase(testtools.TestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_ERROR_REPORTING", "false")
         )
+
+        # Don't let the managed host variable leak into tests
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_MANAGED_HOST"))
 
         # Note that these directories won't exist when the test starts,
         # they might be created after calling the snapcraft command on the
@@ -235,8 +237,8 @@ class TestCase(testtools.TestCase):
             "name": name,
             "summary": summary,
             "description": description,
-            "parts": yaml.load(parts),
-            "build-packages": yaml.load(build_packages),
+            "parts": yaml_utils.load(parts),
+            "build-packages": yaml_utils.load(build_packages),
         }
 
         if version:
@@ -249,7 +251,7 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml["architectures"] = architectures
 
         with open("snapcraft.yaml", "w") as f:
-            yaml.dump(snapcraft_yaml, f, default_flow_style=False)
+            yaml_utils.dump(snapcraft_yaml, stream=f)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.
@@ -279,7 +281,7 @@ class TestCase(testtools.TestCase):
     ):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:
-            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+            snapcraft_yaml = yaml_utils.load(snapcraft_yaml_file)
         if part:
             packages = snapcraft_yaml["parts"][part].get(type_, [])
         else:
@@ -297,7 +299,7 @@ class TestCase(testtools.TestCase):
             self.fail("The part {} doesn't have a package {}".format(part, package))
 
         with open(snapcraft_yaml_path, "w") as snapcraft_yaml_file:
-            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_yaml_file)
         return version
 
     def set_build_package_architecture(
@@ -305,7 +307,7 @@ class TestCase(testtools.TestCase):
     ):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:
-            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+            snapcraft_yaml = yaml_utils.load(snapcraft_yaml_file)
         packages = snapcraft_yaml["parts"][part]["build-packages"]
         for index, package_in_yaml in enumerate(packages):
             if package_in_yaml == package:
@@ -315,7 +317,7 @@ class TestCase(testtools.TestCase):
             self.fail("The part {} doesn't have a package {}".format(part, package))
 
         with open(snapcraft_yaml_path, "w") as snapcraft_yaml_file:
-            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_yaml_file)
 
 
 class BzrSourceBaseTestCase(TestCase):
@@ -453,7 +455,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
@@ -536,7 +538,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
@@ -747,10 +749,10 @@ def add_stage_packages(
         snapcraft_yaml_file = os.path.join("snap", "snapcraft.yaml")
 
     with open(snapcraft_yaml_file) as file_read:
-        y = yaml.load(file_read)
+        y = yaml_utils.load(file_read)
         if "stage-packages" in y["parts"][part_name]:
             y["parts"][part_name]["stage-packages"].extend(stage_packages)
         else:
             y["parts"][part_name]["stage-packages"] = stage_packages
     with open(snapcraft_yaml_file, "w") as file_write:
-        yaml.dump(y, file_write)
+        yaml_utils.dump(y, stream=file_write)

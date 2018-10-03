@@ -18,6 +18,7 @@ import os
 from textwrap import dedent
 from unittest.mock import call, patch, ANY
 
+import fixtures
 from testtools.matchers import FileContains
 
 from . import ProviderImpl, get_project
@@ -130,9 +131,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '123'}
+                    - revision: '123'
                     snapcraft:
-                    - {revision: '345'}
+                    - revision: '345'
                     """
                 )
             ),
@@ -160,8 +161,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "core"]),
-                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
         self.provider.mount_mock.assert_not_called()
@@ -173,9 +184,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
                     """
                 )
             ),
@@ -262,9 +273,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '123'}
+                    - revision: '123'
                     snapcraft:
-                    - {revision: x20}
+                    - revision: x20
                     """
                 )
             ),
@@ -291,8 +302,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "core"]),
-                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
         self.provider.mount_mock.assert_not_called()
@@ -304,9 +325,66 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
+                    """
+                )
+            ),
+        )
+
+    def test_snapcraft_not_installed_on_host_with_channel_from_environment(self):
+        self.useFixture(fixture_setup.FakeStore())
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/edge"
+            )
+        )
+
+        snap_injector = SnapInjector(
+            snap_dir=self.provider._SNAPS_MOUNTPOINT,
+            registry_filepath=self.registry_filepath,
+            snap_arch="amd64",
+            runner=self.provider._run,
+            snap_dir_mounter=self.provider._mount_snaps_directory,
+            snap_dir_unmounter=self.provider._unmount_snaps_directory,
+            file_pusher=self.provider._push_file,
+        )
+        snap_injector.add("core")
+        snap_injector.add("snapcraft")
+        snap_injector.apply()
+
+        self.get_assertion_mock.assert_not_called()
+        self.provider.run_mock.assert_has_calls(
+            [
+                call(["sudo", "snap", "set", "core", ANY]),
+                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/edge",
+                        "snapcraft",
+                    ]
+                ),
+            ]
+        )
+        self.provider.mount_mock.assert_not_called()
+        self.provider.unmount_mock.assert_not_called()
+        self.provider.push_file_mock.assert_not_called()
+        self.assertThat(
+            self.registry_filepath,
+            FileContains(
+                dedent(
+                    """\
+                    core:
+                    - revision: '10000'
+                    snapcraft:
+                    - revision: '25'
                     """
                 )
             ),
@@ -332,8 +410,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "core"]),
-                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
         self.provider.run_mock.reset_mock()
@@ -355,8 +443,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "core"]),
-                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
 
@@ -448,8 +546,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "refresh", "core"]),
-                call(["sudo", "snap", "refresh", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "refresh", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "refresh",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
 
@@ -479,8 +587,18 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["sudo", "snap", "set", "core", ANY]),
                 call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "core"]),
-                call(["sudo", "snap", "install", "--classic", "snapcraft"]),
+                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(
+                    [
+                        "sudo",
+                        "snap",
+                        "install",
+                        "--classic",
+                        "--channel",
+                        "latest/stable",
+                        "snapcraft",
+                    ]
+                ),
             ]
         )
         self.provider.mount_mock.assert_not_called()
@@ -492,9 +610,9 @@ class SnapInjectionTest(unit.TestCase):
                 dedent(
                     """\
                     core:
-                    - {revision: '10000'}
+                    - revision: '10000'
                     snapcraft:
-                    - {revision: '25'}
+                    - revision: '25'
                     """
                 )
             ),

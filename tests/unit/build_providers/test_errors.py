@@ -103,6 +103,17 @@ class ErrorFormattingTest(unit.TestCase):
             ),
         ),
         (
+            "ProviderShellError",
+            dict(
+                exception=errors.ProviderShellError,
+                kwargs=dict(provider_name="multipass", exit_code=1),
+                expected_message=(
+                    "An error occurred when trying to provide a shell with "
+                    "'multipass': returned exit code 1."
+                ),
+            ),
+        ),
+        (
             "ProviderMountError",
             dict(
                 exception=errors.ProviderMountError,
@@ -128,11 +139,19 @@ class ErrorFormattingTest(unit.TestCase):
             "ProviderInfoError",
             dict(
                 exception=errors.ProviderInfoError,
-                kwargs=dict(provider_name="multipass", exit_code=1),
+                kwargs=dict(provider_name="multipass", exit_code=1, stderr=b"error"),
                 expected_message=(
                     "An error occurred when using 'multipass' to query the status "
-                    "of the instance: returned exit code 1."
+                    "of the instance: returned exit code 1: error."
                 ),
+            ),
+        ),
+        (
+            "ProviderInstanceNotFoundError",
+            dict(
+                exception=errors.ProviderInstanceNotFoundError,
+                kwargs=dict(instance_name="test-build"),
+                expected_message=("Cannot find an instance named 'test-build'."),
             ),
         ),
         (
@@ -230,6 +249,16 @@ class ErrorFormattingTest(unit.TestCase):
                     "Expected the 'sha256' calculated digest for the build image to be '1234567890', "
                     "but it was '0987654321'.\n"
                     "Please verify there are no network issues and try again."
+                ),
+            ),
+        ),
+        (
+            "UnsupportedHostError",
+            dict(
+                exception=errors.UnsupportedHostError,
+                kwargs=dict(base="core66", platform="beos", provider="multipass"),
+                expected_message=(
+                    "Building for 'core66' is not supported on platform 'beos' using provider: 'multipass'."
                 ),
             ),
         ),

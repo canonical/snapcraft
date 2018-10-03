@@ -88,6 +88,7 @@ summary: test {step}
 description: if the {step} is successful the state file will be updated
 confinement: strict
 grade: stable
+{base}
 
 parts:
 {parts}"""
@@ -95,12 +96,19 @@ parts:
     yaml_part = """  {step}{iter:d}:
     plugin: nil"""
 
-    def make_snapcraft_yaml(self, step, n=1, yaml_part=None, create=False):
+    def make_snapcraft_yaml(self, step, n=1, yaml_part=None, create=False, base=""):
         if not yaml_part:
             yaml_part = self.yaml_part
 
+        if base:
+            base = "base: {}".format(base)
+        else:
+            base = ""
+
         parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
-        super().make_snapcraft_yaml(self.yaml_template.format(step=step, parts=parts))
+        super().make_snapcraft_yaml(
+            self.yaml_template.format(step=step, parts=parts, base=base)
+        )
 
         parts = []
         for i in range(n):
