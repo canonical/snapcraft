@@ -1,0 +1,18 @@
+summary: Ensure a provider with dependencies can be staged
+
+systems: [ubuntu-16*, ubuntu-18*]
+
+environment:
+  SNAP_DIR: ../snaps/provider-with-deps
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage
+
+  [ -d stage ]
+  # No additional assertion required as the project will fail to complete to the
+  # stage step if validation fails

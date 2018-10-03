@@ -1,6 +1,6 @@
 name: plainbox-provider-python-stage-pkg-mix
 summary: test the python plugin
-version: '1'
+version: "1"
 description: |
   This is a snap with parts in some cases using python stage-packages
   and other python-packages. It is required to test
