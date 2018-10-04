@@ -1,15 +1,18 @@
 summary: Cross-compile Go snaps using cgo
 
-# cgo doesn't build on 14.04
-systems: [-ubuntu-14*]
-
 environment:
   SNAP_DIR: ../snaps/go-cgo
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set-base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore-yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"

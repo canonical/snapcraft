@@ -3,10 +3,16 @@ summary: Build Go snap with multiple main packages
 environment:
   SNAP_DIR: ../snaps/go-with-multiple-main-packages
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set-base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore-yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"

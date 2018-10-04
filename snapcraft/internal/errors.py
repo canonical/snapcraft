@@ -250,6 +250,14 @@ class PluginError(SnapcraftError):
         super().__init__(message=message)
 
 
+class PluginBaseError(SnapcraftError):
+
+    fmt = "The {plugin_name!r} plugin does not support snaps targeting base {base!r}."
+
+    def __init__(self, *, plugin_name, base):
+        super().__init__(plugin_name=plugin_name, base=base)
+
+
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (

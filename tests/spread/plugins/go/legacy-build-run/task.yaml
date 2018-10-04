@@ -1,20 +1,14 @@
-summary: Build and run a basic Go snap
+summary: Build and run a basic Go snap with no base
 
 environment:
   SNAP_DIR: ../snaps/go-hello
 
-prepare: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  cd "$SNAP_DIR"
-  set-base snap/snapcraft.yaml
+systems: [ubuntu-*]
 
 restore: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  restore-yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"

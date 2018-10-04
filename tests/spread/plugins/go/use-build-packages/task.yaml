@@ -1,7 +1,7 @@
 summary: Build and run a basic Go snap
 
 environment:
-  SNAP_DIR: ../snaps/go-hello
+  SNAP_DIR: ../snaps/go-use-build-packages
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -18,6 +18,9 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft
-  sudo snap install go-hello_*.snap --dangerous
-  [ "$(go-hello)" = "hello world" ]
+  snapcraft build
+
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
+    exit 1
+  fi
