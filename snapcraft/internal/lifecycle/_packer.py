@@ -55,10 +55,10 @@ def pack(directory, output=None):
     # core and the snapcraft snap lives on top of it (on the side
     # rather).
     if os.path.exists(_SNAP_PATH):
-        _run_snap_pack_verification(directory=directory),
-    if snap.get("license"):
+        _run_snap_pack_verification(directory=directory)
+    elif snap.get("license"):
         logger.warning(
-            "Could not find {!r}, validity of the license string will only "
+            "Could not find {!r}, validation of the license string will only "
             "take place once pushed to the store.".format(_SNAP_PATH)
         )
 
