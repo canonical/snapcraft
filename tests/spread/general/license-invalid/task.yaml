@@ -24,4 +24,7 @@ restore: |
 execute: |
   cd test-snap
 
-  snapcraft && FATAL "An invalid license field value slipped through"
+  if snapcraft; then
+      echo "snapcraft should have detected the bad license value"
+      exit 1
+  fi
