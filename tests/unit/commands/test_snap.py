@@ -496,13 +496,13 @@ type: os
 
         snap_build_renamed = snap_build + ".1234"
         self.assertThat(
-            fake_logger.output.splitlines(),
-            Contains(
+            [l.strip() for l in fake_logger.output.splitlines()],
+            Equals(
                 [
-                    "Pulling part1 ",
-                    "Building part1 ",
-                    "Staging part1 ",
-                    "Priming part1 ",
+                    "Pulling part1",
+                    "Building part1",
+                    "Staging part1",
+                    "Priming part1",
                     "Renaming stale build assertion to {}".format(snap_build_renamed),
                 ]
             ),
