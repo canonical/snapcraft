@@ -219,7 +219,7 @@ suites:
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
  tests/spread/plugins/tar-content/:
-   summary: tests of snapcraft's tar-content plugin
+   summary: tests of snapcraft's tar-content plugin when not using a base
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
 
