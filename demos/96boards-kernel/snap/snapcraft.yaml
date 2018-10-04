@@ -34,6 +34,6 @@ parts:
       - qcom/msm8916-mtp
     build-packages: [bc, kmod, cpio]
   410c-firmware:
-    plugin: tar-content
+    plugin: dump
     source: firmware.tar # from developer.qualcomm.com v1.2
     destination: firmware
