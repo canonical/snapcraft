@@ -3,8 +3,9 @@ summary: A checkbox Test Tool
 description: >
   The Checkbox tool itself coupled with a Provider which contains the test
   definitions
-version: 0.1
+version: "0.1"
 confinement: strict
+grade: devel
 
 apps:
     checkbox-cli:
@@ -17,7 +18,7 @@ parts:
     checkbox-ng-local:
         plugin: python3
         python-packages:
-            - checkbox-ng
+            - checkbox-ng==1.0.0
             - requests-oauthlib
             - xlsxwriter
         build-packages:

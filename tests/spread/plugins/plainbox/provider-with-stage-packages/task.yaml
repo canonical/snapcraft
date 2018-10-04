@@ -1,0 +1,17 @@
+summary: Ensure a basic provider using stage-packages works
+
+systems: [ubuntu-16*, ubuntu-18*]
+
+environment:
+  SNAP_DIR: ../snaps/provider-with-stage-packages
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage
+
+  [ -d stage ]
+  [ -f stage/providers/simple-plainbox-provider/plainbox-provider-simple.provider ]
