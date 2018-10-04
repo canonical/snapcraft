@@ -544,3 +544,67 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         ][0]
         env = project_config.parts.build_env_for_part(part1)
         self.assertThat(env, Contains('SNAPCRAFT_EXTENSIONS_DIR="/foo"'))
+
+    def test_build_environment(self):
+        self.useFixture(FakeOsRelease())
+
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            base: core
+
+            parts:
+              part1:
+                plugin: nil
+                build-environment:
+                  - FOO: BAR
+        """
+        )
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+        part = project_config.parts.get_part("part1")
+        environment = project_config.parts.build_env_for_part(part)
+        self.assertThat(environment, Contains('FOO="BAR"'))
+
+    def test_build_environment_with_dependencies(self):
+        self.useFixture(FakeOsRelease())
+
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            base: core
+
+            parts:
+              part1:
+                plugin: nil
+                build-environment:
+                  - FOO: BAR
+
+              part2:
+                plugin: nil
+                after: [part1]
+                build-environment:
+                  - BAZ: QUX
+        """
+        )
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+        part1 = project_config.parts.get_part("part1")
+        part2 = project_config.parts.get_part("part2")
+        self.assertThat(
+            project_config.parts.build_env_for_part(part1), Contains('FOO="BAR"')
+        )
+        self.assertThat(
+            project_config.parts.build_env_for_part(part2), Contains('FOO="BAR"')
+        )
+        self.assertThat(
+            project_config.parts.build_env_for_part(part2), Contains('BAZ="QUX"')
+        )

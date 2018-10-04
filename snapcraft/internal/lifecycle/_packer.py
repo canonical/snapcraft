@@ -102,7 +102,7 @@ def _run_mksquashfs(
                     count = 0
                 progress_indicator.update(count)
                 count += 1
-                time.sleep(.2)
+                time.sleep(0.2)
                 ret = proc.poll()
         print("")
         if ret != 0:
