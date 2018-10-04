@@ -91,13 +91,13 @@ class SnapTestCase(integration.TestCase):
                 dedent(
                     """\
                 name: assemble
-                version: 1.0
+                version: '1.0'
                 summary: one line summary
                 description: a longer description
                 architectures:
                 - {}
                 confinement: strict
-                grade: stable
+                grade: devel
                 apps:
                   assemble-bin:
                     command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-bin.wrapper
