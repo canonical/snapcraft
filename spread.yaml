@@ -212,6 +212,8 @@ suites:
    summary: tests of snapcraft's Meson plugin
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
+ tests/spread/plugins/plainbox/:
+   summary: tests of snapcraft's Plainbox plugin
  tests/spread/plugins/python/:
    summary: tests of snapcraft's Python plugin
  tests/spread/plugins/ruby/:
