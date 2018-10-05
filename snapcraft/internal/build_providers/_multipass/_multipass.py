@@ -57,16 +57,10 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        if self.project.info.base == "core18":
-            image = "18.04"
-        elif self.project.info.base in ("core16", None):
-            image = "16.04"
+        if self.project.info.base is None:
+            image = "snapcraft:core16"
         else:
-            raise errors.UnsupportedHostError(
-                base=self.project.info.base,
-                platform=_get_platform(),
-                provider=self._get_provider_name(),
-            )
+            image = "snapcraft:{}".format(self.project.info.base)
 
         return image
 
