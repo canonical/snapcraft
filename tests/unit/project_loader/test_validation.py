@@ -1451,6 +1451,46 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
         )
 
 
+class LicenseTest(ProjectLoaderBaseTest):
+    def test_yaml_valid_license_string(self):
+        self.make_snapcraft_project(
+            dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: nothing
+                license: MIT-0
+                parts:
+                  part1:
+                    plugin: nil
+                """
+            )
+        )
+
+    def test_invalid_yaml_invalid_license_non_string(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: nothing
+            license: 23.1
+            parts:
+              part1:
+                plugin: nil
+            """
+        )
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+        self.assertRegex(
+            raised.message,
+            "The 'license' property does not match the required schema:.*is "
+            "not of type 'string'",
+        )
+
+
 class ValidAdaptersTest(ProjectLoaderBaseTest):
     scenarios = [("none", {"yaml": "none"}), ("legacy", {"yaml": "legacy"})]
 

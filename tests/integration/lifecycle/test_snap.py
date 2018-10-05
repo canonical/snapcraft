@@ -91,13 +91,13 @@ class SnapTestCase(integration.TestCase):
                 dedent(
                     """\
                 name: assemble
-                version: 1.0
+                version: '1.0'
                 summary: one line summary
                 description: a longer description
                 architectures:
                 - {}
                 confinement: strict
-                grade: stable
+                grade: devel
                 apps:
                   assemble-bin:
                     command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-bin.wrapper
@@ -229,54 +229,3 @@ class SnapTestCase(integration.TestCase):
         self.copy_project_to_cwd("yaml-merge-tag")
         self.run_snapcraft("stage")
         self.assertThat(os.path.join(self.stage_dir, "test.txt"), FileExists())
-
-    def test_ordered_snap_yaml(self):
-        with open("snapcraft.yaml", "w") as s:
-            s.write(
-                dedent(
-                    """\
-                apps:
-                    stub-app:
-                        command: sh
-                grade: stable
-                version: "2"
-                assumes: [snapd_227]
-                architectures: [all]
-                description: stub description
-                summary: stub summary
-                confinement: strict
-                name: stub-snap
-                environment:
-                    stub_key: stub-value
-                epoch: 1
-                parts:
-                    nothing:
-                        plugin: nil
-            """
-                )
-            )
-        self.run_snapcraft("prime")
-
-        expected_snap_yaml = dedent(
-            """\
-            name: stub-snap
-            version: '2'
-            summary: stub summary
-            description: stub description
-            architectures:
-            - all
-            confinement: strict
-            grade: stable
-            assumes:
-            - snapd_227
-            epoch: 1
-            environment:
-              stub_key: stub-value
-            apps:
-              stub-app:
-                command: snap/command-chain/snapcraft-runner $SNAP/command-stub-app.wrapper
-        """
-        )
-        self.assertThat(
-            os.path.join("prime", "meta", "snap.yaml"), FileContains(expected_snap_yaml)
-        )

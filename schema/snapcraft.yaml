@@ -145,6 +145,9 @@ properties:
   version-script:
     type: string
     description: a script that echoes the version to set.
+  license:
+    type: string
+    description: the license the package holds
   icon:
     type: string
     description: path to a 512x512 icon representing the package.
