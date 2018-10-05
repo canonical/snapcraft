@@ -75,7 +75,7 @@ class GodepsPlugin(snapcraft.BasePlugin):
         }
 
         # The import path must be specified.
-        schema["required"].extend(["source", "go-importpath"])
+        schema["required"] = ["source", "go-importpath"]
 
         return schema
 

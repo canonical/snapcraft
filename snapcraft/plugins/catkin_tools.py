@@ -34,6 +34,12 @@ logger = logging.getLogger(__name__)
 
 
 class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema["required"] = ["source"]
+        return schema
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.stage_packages.append("python-catkin-tools")

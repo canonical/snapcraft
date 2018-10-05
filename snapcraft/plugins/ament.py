@@ -68,7 +68,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         schema = super().schema()
         schema["properties"]["version"] = {"type": "string", "default": "release-beta3"}
-        schema["required"].append("source")
+        schema["required"] = ["source"]
         return schema
 
     @classmethod

@@ -77,12 +77,14 @@ class InspectProvidesCommandTest(CommandBaseTestCase):
 
                 parts:
                     part1:
+                        source: .
                         plugin: dump
                         override-pull: |
                             mkdir dir
                             touch dir/file1
 
                     part2:
+                        source: .
                         plugin: dump
                         override-pull: |
                             mkdir dir

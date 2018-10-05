@@ -64,7 +64,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             "default": [""],
         }
 
-        schema["required"].append("source")
+        schema["required"] = ["source"]
 
         return schema
 

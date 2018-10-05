@@ -46,7 +46,7 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["required"].append("source")
+        schema["required"] = ["source"]
         return schema
 
     def build(self):

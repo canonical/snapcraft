@@ -75,7 +75,7 @@ class MakePlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
-        schema["required"].append("source")
+        schema["required"] = ["source"]
 
         return schema
 

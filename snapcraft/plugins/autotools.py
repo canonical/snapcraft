@@ -61,7 +61,7 @@ class AutotoolsPlugin(make.MakePlugin):
             "default": "destdir",
         }
 
-        schema["required"].append("source")
+        schema["required"] = ["source"]
 
         return schema
 

@@ -110,8 +110,6 @@ class NodePlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
-        schema["required"].append("source")
-
         return schema
 
     @classmethod

@@ -63,7 +63,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             "type": "string",
             "default": "build/libs",
         }
-        schema["required"].append("source")
+        schema["required"] = ["source"]
 
         return schema
 
