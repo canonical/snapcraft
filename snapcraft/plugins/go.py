@@ -25,7 +25,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - go-channel:
       (string, default: latest/stable)
       The Snap Store channel to install go from. If set to an empty string,
-      go will be installed using the systems's traditional package manager.
+      go will be installed using the system's traditional package manager.
 
     - go-packages:
       (list of strings)
