@@ -705,7 +705,11 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
             "description": "test-description",
             "adopt-info": "test-part",
             "parts": {
-                "test-part": {"plugin": "nil", "parse-info": ["test-metadata-file"]}
+                "test-part": {
+                    "plugin": "dump",
+                    "source": ".",
+                    "parse-info": ["test-metadata-file"],
+                }
             },
             "apps": {"test-app": {"command": "echo"}},
         }

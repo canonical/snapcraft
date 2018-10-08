@@ -23,7 +23,7 @@ import jsonschema
 
 import snapcraft
 from snapcraft.internal.project_loader.errors import YamlValidationError
-from snapcraft.internal import errors, sources
+from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
 
@@ -167,21 +167,7 @@ def _make_options(part_schema, definitions_schema, properties, plugin_schema):
         part_schema, definitions_schema, plugin_schema
     )
 
-    # This is for backwards compatibility for when most of the
-    # schema was overridable by the plugins.
-    if "required" in plugin_schema and not plugin_schema["required"]:
-        del plugin_schema["required"]
-    # With the same backwards compatibility in mind we need to remove
-    # the source entry before validation. To those concerned, it has
-    # already been validated.
-    validated_properties = properties.copy()
-    remove_set = [
-        k for k in sources.get_source_defaults().keys() if k in validated_properties
-    ]
-    for key in remove_set:
-        del validated_properties[key]
-
-    jsonschema.validate(validated_properties, plugin_schema)
+    jsonschema.validate(properties, plugin_schema)
 
     options = _populate_options(properties, plugin_schema)
 

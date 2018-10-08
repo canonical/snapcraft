@@ -34,7 +34,7 @@ class JHBuildPluginTestCase(unit.TestCase):  # type: ignore
             self.assertIn("type", schema["properties"][key])
 
         for key in schema["required"]:
-            self.assertIn(key, schema["properties"])
+            self.assertIn(key, ["modules", "module-set", "source"])
 
         for key in schema["pull-properties"]:
             self.assertIn(key, schema["properties"])

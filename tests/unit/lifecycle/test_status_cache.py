@@ -32,7 +32,8 @@ class StatusCacheTestCase(LifecycleTestBase):
                 """\
                 parts:
                   main:
-                    plugin: nil
+                    source: .
+                    plugin: dump
                   dependent:
                     plugin: nil
                     after: [main]

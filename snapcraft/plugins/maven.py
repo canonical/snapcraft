@@ -64,6 +64,8 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             "default": [""],
         }
 
+        schema["required"] = ["source"]
+
         return schema
 
     def __init__(self, name, options, project):

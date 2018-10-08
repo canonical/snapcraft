@@ -954,7 +954,8 @@ class StateTestCase(StateBaseTestCase):
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state_with_extracted_metadata(self, repo_mock):
         self.handler = self.load_part(
-            "test_part", part_properties={"parse-info": ["metadata-file"]}
+            "test_part",
+            part_properties={"source": ".", "parse-info": ["metadata-file"]},
         )
 
         # Create metadata file
@@ -2080,7 +2081,7 @@ class IsOutdatedTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.handler = self.load_part("test-part")
+        self.handler = self.load_part("test-part", part_properties=dict(source="."))
         self.handler.makedirs()
 
     def set_modified_time_later(self, target, reference):
