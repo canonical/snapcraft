@@ -288,6 +288,8 @@ class PartsConfig:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
 
+        env += part.build_environment
+
         # LP: #1767625
         # Remove duplicates from using the same plugin in dependent parts.
         seen = set()  # type: Set[str]

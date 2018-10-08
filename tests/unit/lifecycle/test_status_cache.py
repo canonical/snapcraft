@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2018 Canonical Ltd

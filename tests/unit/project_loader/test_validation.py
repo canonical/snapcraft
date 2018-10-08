@@ -1745,3 +1745,57 @@ class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
                 "not allowed ('{}' was unexpected)".format(self.property)
             ),
         )
+
+
+class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
+
+    scenarios = [
+        (
+            "wrong type (string)",
+            {
+                "environment": "a string",
+                "message": ".*property does not match the required schema: 'a string' is not of type 'array'.*",
+            },
+        ),
+        (
+            "wrong type (list of strings)",
+            {
+                "environment": "['a string']",
+                "message": ".*property does not match the required schema: 'a string' is not of type 'object'.*",
+            },
+        ),
+        (
+            "too many properties",
+            {
+                "environment": "[{key1: value1, key2: value2}]",
+                "message": ".*property does not match the required schema:.*has too many properties.*",
+            },
+        ),
+        (
+            "wrong property type",
+            {
+                "environment": "[{key1: 5}]",
+                "message": ".*property does not match the required schema: 5 is not of type 'string'.*",
+            },
+        ),
+    ]
+
+    def test_build_environment(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: my-package-1
+            version: 1.0-snapcraft1~ppa1
+            summary: my summary less that 79 chars
+            description: description which can be pretty long
+            parts:
+                part1:
+                    plugin: nil
+                    build-environment: {}
+        """
+        ).format(self.environment)
+
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+
+        self.assertThat(raised.message, MatchesRegex(self.message))

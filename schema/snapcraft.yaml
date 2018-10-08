@@ -542,6 +542,16 @@ properties:
           build-packages:
             $ref: "#/definitions/grammar-array"
             default: [] # For some reason this doesn't work if in the ref
+          build-environment:
+            type: array
+            default: []
+            minitems: 1
+            items:
+              type: object
+              minProperties: 1
+              maxProperties: 1
+              additionalProperties:
+                type: string
           build-attributes:
             type: array
             minitems: 1
