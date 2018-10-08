@@ -20,5 +20,10 @@ execute: |
 
   snapcraft prime
 
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
   # Ensure binaries are properly patched
   patchelf --print-interpreter prime/bin/gotty | MATCH "/snap/core[0-9]*/current"

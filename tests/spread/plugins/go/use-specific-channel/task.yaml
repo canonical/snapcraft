@@ -1,27 +1,27 @@
-summary: Cross-compile Go snaps using cgo
+summary: Build part of a go snap using a specific store channel for go
 
 environment:
-  SNAP_DIR: ../snaps/go-cgo
+  SNAP_DIR: ../snaps/go-use-specific-channel
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  cd "$SNAP_DIR"
+  set_base snap/snapcraft.yaml
 
 restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
+
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  restore_yaml "snap/snapcraft.yaml"
+  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft stage --target-arch=armhf
+  snapcraft build
 
   if ! snap list go; then
     echo "The go snap from the Snap Store should have been installed."
     exit 1
   fi
-
-  file stage/bin/go-cgo | MATCH ",\s*ARM\s*,"

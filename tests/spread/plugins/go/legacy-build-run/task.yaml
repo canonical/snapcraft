@@ -12,6 +12,13 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
+
   snapcraft
+
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
+    exit 1
+  fi
+
   sudo snap install go-hello_*.snap --dangerous
   [ "$(go-hello)" = "hello world" ]

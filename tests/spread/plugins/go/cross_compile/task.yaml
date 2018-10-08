@@ -18,3 +18,8 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft stage --target-arch=armhf
   file stage/bin/go-hello | MATCH ",\s*ARM\s*,"
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi

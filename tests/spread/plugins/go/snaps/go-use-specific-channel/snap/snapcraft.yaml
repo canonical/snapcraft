@@ -15,5 +15,5 @@ apps:
 parts:
   go-hello:
     plugin: go
-    go-channel: ""
+    go-channel: "1.10/stable"
     source: go-hello

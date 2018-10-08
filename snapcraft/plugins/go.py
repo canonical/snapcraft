@@ -112,7 +112,7 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
 
     def _setup_base_tools(self, go_channel, base):
-        if go_channel != "":
+        if go_channel:
             self.build_snaps.append("go/{}".format(go_channel))
         elif base in ("core16", "core18"):
             self.build_packages.append("golang-go")

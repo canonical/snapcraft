@@ -1,4 +1,4 @@
-summary: Build and run a basic Go snap
+summary: Build part of a go snap using packages from the system's repositories
 
 environment:
   SNAP_DIR: ../snaps/go-use-build-packages
