@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-set-base()
+set_base()
 {
     snapcraft_yaml_path="$1"
 
@@ -17,7 +17,7 @@ set-base()
     sed -i "1ibase: $base"  "$snapcraft_yaml_path"
 }
 
-restore-yaml()
+restore_yaml()
 {
     snapcraft_yaml_path="$1"
 

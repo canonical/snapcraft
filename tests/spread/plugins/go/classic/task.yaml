@@ -5,7 +5,7 @@ environment:
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set-base "$SNAP_DIR/snap/snapcraft.yaml"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
   apt install patchelf -y
 
 restore: |
@@ -13,7 +13,7 @@ restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  restore-yaml "snap/snapcraft.yaml"
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"
