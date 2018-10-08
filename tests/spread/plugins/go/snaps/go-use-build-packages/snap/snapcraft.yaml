@@ -17,4 +17,4 @@ parts:
     plugin: go
     source: go-hello
     build-packages:
-      -golang-go
+      - golang-go
