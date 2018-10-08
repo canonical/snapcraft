@@ -1,0 +1,42 @@
+summary: Build and run a basic Godeps snap with no base
+
+environment:
+  SNAP_DIR: ../snaps/godeps
+  GOBIN/gobin: gobin
+  GOBIN/no_gobin:
+
+systems: [ubuntu-*]
+
+prepare: |
+  # Make sure no additional snaps are installed before running this test.
+  $TOOLS_DIR/restore.sh
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  if [ -z "$GOBIN" ]; then
+    unset GOBIN
+  fi
+
+  cd "$SNAP_DIR"
+
+  snapcraft
+
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if ! dpkg -s golang-go; then
+    echo "The go deb for the system repositories should have been installed."
+    exit 1
+  fi
+
+  sudo snap install godeps_*.snap --dangerous
+  hash="$(godeps.bcrypt hash 10 password)"
+  check="$(godeps.bcrypt check "$hash" password)"
+  [ "$check" = "Equal" ]

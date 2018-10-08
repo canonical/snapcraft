@@ -5,10 +5,23 @@ environment:
   GOBIN/gobin: gobin
   GOBIN/no_gobin:
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # Ensure golang-go is not installed
+  if dpkg -s golang-go; then
+      apt-get autoremove --purge -y golang-go
+  fi
+
 restore: |
+  $TOOLS_DIR/restore.sh
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   if [ -z "$GOBIN" ]; then
@@ -16,12 +29,24 @@ execute: |
   fi
 
   cd "$SNAP_DIR"
+
   snapcraft
-  sudo snap install godeps-with-go-packages_*.snap --dangerous
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -s golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
+    exit 1
+  fi
 
   # Verify that bcrypt was not built
   [ ! -e "prime/bin/bcrypt" ]
 
+  sudo snap install godeps-with-go-packages_*.snap --dangerous
   hash="$(godeps-with-go-packages.bcrypt hash 10 password)"
   check="$(godeps-with-go-packages.bcrypt check "$hash" password)"
   [ "$check" = "Equal" ]
