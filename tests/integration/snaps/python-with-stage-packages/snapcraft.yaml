@@ -8,7 +8,8 @@ grade: devel
 
 parts:
   python2:
-    plugin: python2
+    plugin: python
+    python-version: python2
     stage-packages: [python-yaml]
     python-packages: ['yamllint']
     stage:
@@ -17,6 +18,6 @@ parts:
         - -bin/yamllint
 
   python3:
-    plugin: python3
+    plugin: python
     stage-packages: [python3-yaml]
     python-packages: ['yamllint']
