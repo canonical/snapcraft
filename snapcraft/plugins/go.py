@@ -117,7 +117,7 @@ class GoPlugin(snapcraft.BasePlugin):
         elif base in ("core16", "core18"):
             self.build_packages.append("golang-go")
         else:
-            raise errors.PluginBaseError(plugin_name=self.name, base=base)
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def pull(self):
         # use -d to only download (build will happen later)

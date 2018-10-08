@@ -338,6 +338,14 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
+            "PluginBaseError",
+            {
+                "exception": errors.PluginBaseError,
+                "kwargs": {"part_name": "go-part", "base": "arch"},
+                "expected_message": "The plugin used by part 'go-part' does not support snaps using base 'arch'.",
+            },
+        ),
+        (
             "SnapcraftPartConflictError",
             {
                 "exception": errors.SnapcraftPartConflictError,
