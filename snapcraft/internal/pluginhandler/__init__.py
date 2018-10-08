@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import cast, Dict, Set, Sequence  # noqa: F401
+from typing import cast, Dict, List, Set, Sequence
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
@@ -95,6 +95,10 @@ class PluginHandler:
             self.source_handler = self._get_source_handler(self._part_properties)
         else:
             self.source_handler = None
+
+        self.build_environment = _list_of_dicts_to_env(
+            self._part_properties["build-environment"]
+        )
 
         self._build_attributes = BuildAttributes(
             self._part_properties["build-attributes"]
@@ -1345,3 +1349,15 @@ def _combine_filesets(starting_fileset, modifying_fileset):
         return list(set(starting_fileset + modifying_fileset))
     else:
         return modifying_fileset
+
+
+def _list_of_dicts_to_env(l: List[Dict[str, str]]) -> List[str]:
+    env = []  # type: List[str]
+
+    # We're iterating anyway, but thanks to the schema validation, we can rest assured
+    # that each dict only has one key/value pair.
+    for d in l:
+        for key, value in d.items():
+            env.append('{}="{}"'.format(key, value))
+
+    return env

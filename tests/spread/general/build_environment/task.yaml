@@ -1,0 +1,27 @@
+summary: Build a snap that uses build-environment
+
+# This test snap uses core18
+systems: [ubuntu-18*]
+
+environment:
+  SNAP_DIR: snaps/build-environment-test
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft)"
+
+  # Verify that part1 had FOO defined as expected
+  echo "$output" | MATCH "part1: BAR"
+
+  # Verify that part2 had FOO defined as expected, including taking its dependency into
+  # account.
+  echo "$output" | MATCH "part2: BAR BAZ QUX"
+
+  # Finally, install it and ensure FOO didn't make it into the final app
+  sudo snap install build-environment-test_*.snap --dangerous
+  [ "$(build-environment-test)" = "" ]

@@ -188,7 +188,7 @@ suites:
 
  # Plugin-specific suites
  tests/spread/plugins/ament/:
-   summary: tests of snapcraft's Ament plugin
+   summary: tests of snapcraft's Ament plugin when not using a base
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin

@@ -130,18 +130,14 @@ class PythonPluginTestCase(integration.TestCase):
         self.run_snapcraft("stage", "python-entry-point")
         python2_entry_point = os.path.join(self.stage_dir, "bin", "python2_test")
         python3_entry_point = os.path.join(self.stage_dir, "bin", "python3_test")
-        python_entry_point = os.path.join(self.stage_dir, "bin", "python_test")
 
         with open(python2_entry_point) as f:
             python2_shebang = f.readline().strip()
         with open(python3_entry_point) as f:
             python3_shebang = f.readline().strip()
-        with open(python_entry_point) as f:
-            python_shebang = f.readline().strip()
 
         self.assertThat(python2_shebang, Equals("#!/usr/bin/env python2"))
         self.assertThat(python3_shebang, Equals("#!/usr/bin/env python3"))
-        self.assertThat(python_shebang, Equals("#!/usr/bin/env python3"))
 
     def test_pbr_console_scripts(self):
         """Verify that LP: #1670852 doesn't come back."""
