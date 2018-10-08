@@ -17,6 +17,7 @@ apps:
 
 parts:
   jhbuild:
+    source: .
     plugin: jhbuild
     modules:
       - main-module
