@@ -5,12 +5,13 @@ environment:
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  cd "$SNAP_DIR"
-  set_base snap/snapcraft.yaml
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  $TOOLS_DIR/restore.sh
+  apt-get autoremove --purge -y
 
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -18,9 +19,16 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
+
   snapcraft build
 
   if snap list go; then
     echo "The go snap from the Snap Store should not have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -l golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
     exit 1
   fi

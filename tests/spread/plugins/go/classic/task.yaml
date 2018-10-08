@@ -1,4 +1,4 @@
-summary: Build and run a basic Go snap
+summary: Build and run a basic Go snap with classic confinement
 
 environment:
   SNAP_DIR: ../snaps/go-gotty
@@ -6,14 +6,20 @@ environment:
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
-  apt install patchelf -y
+
+  apt-get install patchelf -y
 
 restore: |
+  $TOOLS_DIR/restore.sh
+  apt-get autoremove --purge -y patchelf
+  apt-get autoremove --purge -y
+
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
   restore_yaml "snap/snapcraft.yaml"
+
 
 execute: |
   cd "$SNAP_DIR"
@@ -22,6 +28,12 @@ execute: |
 
   if ! snap list go; then
     echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -l golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
     exit 1
   fi
 

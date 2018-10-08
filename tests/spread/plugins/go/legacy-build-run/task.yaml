@@ -6,6 +6,9 @@ environment:
 systems: [ubuntu-*]
 
 restore: |
+  $TOOLS_DIR/restore.sh
+  apt autoremove --purge -y
+
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -17,6 +20,12 @@ execute: |
 
   if snap list go; then
     echo "The go snap from the Snap Store should not have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if ! dpkg -l golang-go; then
+    echo "The go deb for the system repositories should have been installed."
     exit 1
   fi
 

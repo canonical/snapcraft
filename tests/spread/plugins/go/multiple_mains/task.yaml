@@ -8,6 +8,9 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
+  $TOOLS_DIR/restore.sh
+  apt-get autoremove --purge -y
+
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
@@ -19,6 +22,18 @@ execute: |
 
   # Ensure that all mains get built and installed
   snapcraft stage
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -l golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
+    exit 1
+  fi
+
   [ -f stage/bin/main1 ]
   [ -f stage/bin/main2 ]
   [ -f stage/bin/main3 ]
