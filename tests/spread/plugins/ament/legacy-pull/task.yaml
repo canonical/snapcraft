@@ -1,4 +1,6 @@
-summary: Build and run a basic ROS2 snap
+summary: |
+  Minimally ensure the plugin works by running pull.
+  The plugin in full can be tested through the legacy release of snapcraft.
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 100  # Run this test early so we're not waiting for it
 
@@ -15,6 +17,4 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft
-  sudo snap install ros2-talker-listener_*.snap --dangerous
-  ros2-talker-listener | MATCH "I heard: Hello world"
+  snapcraft pull
