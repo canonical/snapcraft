@@ -21,7 +21,7 @@ execute: |
 
   snapcraft
 
-  if snap list go; then
+  if ! snap list go; then
     echo "The go snap from the Snap Store should have been installed."
     exit 1
   fi
