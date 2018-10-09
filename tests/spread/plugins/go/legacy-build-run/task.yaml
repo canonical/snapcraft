@@ -7,7 +7,6 @@ systems: [ubuntu-*]
 
 restore: |
   $TOOLS_DIR/restore.sh
-  apt autoremove --purge -y
 
   cd "$SNAP_DIR"
   snapcraft clean
@@ -24,7 +23,7 @@ execute: |
   fi
 
   # This only works on ubuntu
-  if ! dpkg -l golang-go; then
+  if ! dpkg -s golang-go; then
     echo "The go deb for the system repositories should have been installed."
     exit 1
   fi

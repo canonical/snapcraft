@@ -9,7 +9,6 @@ prepare: |
 
 restore: |
   $TOOLS_DIR/restore.sh
-  apt-get autoremove --purge -y
 
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
@@ -29,7 +28,7 @@ execute: |
   fi
 
   # This only works on ubuntu
-  if dpkg -l golang-go; then
+  if dpkg -s golang-go; then
     echo "The go deb for the system repositories should not have been installed."
     exit 1
   fi
