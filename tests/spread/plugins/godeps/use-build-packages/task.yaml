@@ -1,7 +1,7 @@
 summary: Build and run a basic Godeps snap
 
 environment:
-  SNAP_DIR: ../snaps/godeps
+  SNAP_DIR: ../snaps/godeps-use-build-packages
   GOBIN/gobin: gobin
   GOBIN/no_gobin:
 
@@ -19,20 +19,15 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft
+  snapcraft build
 
-  if ! snap list go; then
-    echo "The go snap from the Snap Store should have been installed."
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
     exit 1
   fi
 
   # This only works on ubuntu
-  if dpkg -s golang-go; then
-    echo "The go deb for the system repositories should not have been installed."
+  if ! dpkg -s golang-go; then
+    echo "The go deb for the system repositories should have been installed."
     exit 1
   fi
-
-  sudo snap install godeps_*.snap --dangerous
-  hash="$(godeps.bcrypt hash 10 password)"
-  check="$(godeps.bcrypt check "$hash" password)"
-  [ "$check" = "Equal" ]
