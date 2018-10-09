@@ -74,57 +74,6 @@ class PluginLoaderTestCase(unit.TestCase):
         import_mock.assert_called_with("snapcraft.plugins.mock")
         local_load_mock.assert_called_with("x-mock", self.local_plugins_dir)
 
-    def test_plugin_without_project(self):
-        class OldPlugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["fake-property"] = {"type": "string"}
-                return schema
-
-            def __init__(self, name, options):
-                super().__init__(name, options)
-
-        self.useFixture(fixture_setup.FakePlugin("oldplugin", OldPlugin))
-        handler = self.load_part("fake-part", "oldplugin", {"fake-property": "."})
-
-        self.assertTrue(handler.plugin.project is not None)
-
-    @patch("importlib.import_module")
-    @patch("snapcraft.internal.pluginhandler._plugin_loader._load_local")
-    @patch("snapcraft.internal.pluginhandler._plugin_loader._get_plugin")
-    def test_plugin_without_project_not_from_base(
-        self, plugin_mock, local_load_mock, import_mock
-    ):
-        class NonBaseOldPlugin:
-            @classmethod
-            def schema(cls):
-                return {}
-
-            @classmethod
-            def get_pull_properties(cls):
-                return []
-
-            @classmethod
-            def get_build_properties(cls):
-                return []
-
-            def __init__(self, name, options):
-                self.name = "old_plugin"
-                self.osrepodir = "osrepodir"
-                self.statedir = "statedir"
-                self.sourcedir = "sourcedir"
-                self.build_basedir = "build_basedir"
-
-            def build(self):
-                pass
-
-        plugin_mock.return_value = NonBaseOldPlugin
-        local_load_mock.side_effect = ImportError()
-        handler = self.load_part("fake-part", "nonbaseoldplugin")
-
-        self.assertTrue(handler.plugin.project is not None)
-
     def test_plugin_schema_step_hint_pull(self):
         class Plugin(snapcraft.BasePlugin):
             @classmethod
