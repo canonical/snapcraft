@@ -13,4 +13,3 @@ parts:
   ros-project:
     plugin: catkin
     source: .
-    rosdistro: indigo

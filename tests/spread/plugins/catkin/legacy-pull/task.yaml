@@ -1,0 +1,22 @@
+summary: |
+  Minimally ensure the plugin works without bases by running pull.
+  The plugin can be tested without bases in full through the legacy release of
+  snapcraft.
+warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/ros-talker-listener
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+# ROS Indigo doesn't support arm64 (there are no packages in the archive). Also,
+# Indigo snaps have trouble building past 16.04.
+systems: [-ubuntu-*-arm64, -ubuntu-18*]
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft pull

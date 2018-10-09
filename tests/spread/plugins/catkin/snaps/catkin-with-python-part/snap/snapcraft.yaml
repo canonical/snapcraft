@@ -17,7 +17,7 @@ parts:
 
   catkin-part:
     plugin: catkin
-    rosdistro: kinetic
+    source: .
     rosinstall-files: [ros_tutorials.rosinstall]
     catkin-packages:
       - roscpp_tutorials

@@ -18,7 +18,7 @@ parts:
   # producer.
   overlay:
     plugin: catkin
-    rosdistro: kinetic
+    source: .
     include-roscore: false
     catkin-packages: [overlay_package]
     underlay:

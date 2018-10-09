@@ -10,6 +10,6 @@ confinement: strict
 parts:
   catkin-part:
     plugin: catkin
-    rosdistro: kinetic
+    source: .
     rosinstall-files: [root.rosinstall]
     recursive-rosinstall: true

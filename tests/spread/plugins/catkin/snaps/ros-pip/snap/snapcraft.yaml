@@ -14,7 +14,6 @@ parts:
   ros-project:
     plugin: catkin
     source: .
-    rosdistro: kinetic
     catkin-packages:
       - timezone_test
     include-roscore: true
