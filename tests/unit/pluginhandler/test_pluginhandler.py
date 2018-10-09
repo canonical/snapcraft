@@ -1115,7 +1115,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
@@ -1161,7 +1161,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
@@ -1210,7 +1210,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",

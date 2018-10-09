@@ -78,7 +78,7 @@ class BuildStateTestCase(BuildStateBaseTestCase):
         )
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(10))
+        self.assertThat(len(properties), Equals(7))
         self.assertThat(properties["foo"], Equals("bar"))
         self.assertThat(properties["after"], Equals("test-after"))
         self.assertThat(
