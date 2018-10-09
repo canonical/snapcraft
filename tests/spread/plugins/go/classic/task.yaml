@@ -7,16 +7,12 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  # Install patchelf but mark it autoinstalled
+  # to automatically restore
   apt-get install patchelf -y
-  # Ensure golang-go is not installed
-  if dpkg -s golang-go; then
-      apt-get autoremove --purge -y golang-go
-  fi
-
+  apt-mark auto patchelf
+  
 restore: |
-  $TOOLS_DIR/restore.sh
-  apt-get autoremove --purge -y patchelf
-
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
