@@ -43,18 +43,6 @@ class TestParts(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project([("part1", dict(plugin="nil"))])
         self.assertThat(project_config.parts.get_part("not-a-part"), Equals(None))
 
-    def test_slash_warning(self):
-        fake_logger = fixtures.FakeLogger(level=logging.WARN)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_project([("part/1", dict(plugin="nil"))])
-        self.assertThat(
-            fake_logger.output,
-            Contains(
-                'DEPRECATED: Found a "/" in the name of the {!r} part'.format("part/1")
-            ),
-        )
-
     def test_snap_deprecation(self):
         """Test that using the 'snap' keyword results in a warning."""
 
