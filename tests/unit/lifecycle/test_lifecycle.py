@@ -396,6 +396,7 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
 
     def setUp(self):
         super().setUp()
+
         # Set the option to error on dirty/outdated steps
         with snapcraft.config.CLIConfig() as cli_config:
             cli_config.set_outdated_step_action(
@@ -418,11 +419,14 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
                 """
             ).format(self.scriptlet)
         )
+
         # Build it
         lifecycle.execute(self.step, project_config)
+
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
+
         # Change prepare scriptlet
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -434,11 +438,13 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
                 """
             ).format(self.scriptlet)
         )
+
         # Build it again. Should catch that the scriptlet changed and it needs
         # to be rebuilt.
         raised = self.assertRaises(
             errors.StepOutdatedError, lifecycle.execute, self.step, project_config
         )
+
         self.assertThat(raised.step, Equals(self.step))
         self.assertThat(raised.part, Equals("part1"))
         self.assertThat(
