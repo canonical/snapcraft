@@ -5,11 +5,12 @@ description: |
   Snaps that organize should be able to be staged, clean the stage, and staged
   again.
 
-grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+grade: devel
+confinement: devmode
 
 parts:
   my-part:
+    source: .
     plugin: dump
     source-subdir: dir/
     organize:
