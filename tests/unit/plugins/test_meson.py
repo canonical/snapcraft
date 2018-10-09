@@ -186,3 +186,33 @@ class MesonPluginBaseTest(unit.TestCase):
                 mock.call(["ninja", "install"], env=env, cwd=plugin.mesonbuilddir),
             ]
         )
+
+
+class MesonPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: meson-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            source = "dir"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            meson.MesonPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
