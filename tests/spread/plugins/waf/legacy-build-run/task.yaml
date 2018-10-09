@@ -1,18 +1,12 @@
-summary: Build and run a basic waf snap
+summary: Build and run a basic waf snap with no base
 
 environment:
   SNAP_DIR: ../snaps/waf-hello
 
-prepare: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "$SNAP_DIR/snap/snapcraft.yaml"
-
 restore: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"

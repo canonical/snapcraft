@@ -15,20 +15,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import waf
+from snapcraft.project import Project
 from tests import unit
 
 
-class WafPluginTestCase(unit.TestCase):
+class WafPluginBaseTest(unit.TestCase):
     """Plugin to provide snapcraft support for the waf build system"""
 
+    deb_arch = None
+
     def setUp(self):
-        super(WafPluginTestCase, self).setUp()
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: waf-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(
+            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
+        )
 
         class Options:
             """Internal Options Class matching the Waf plugin"""
@@ -36,8 +53,9 @@ class WafPluginTestCase(unit.TestCase):
             configflags = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
 
+
+class WafPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         """Test validity of the Waf Plugin schema"""
         schema = waf.WafPlugin.schema()
@@ -113,9 +131,11 @@ class WafPluginTestCase(unit.TestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
+
+class WafPluginTest(WafPluginBaseTest):
     def waf_build(self):
         """Helper to call a full build"""
-        plugin = waf.WafPlugin("test-part", self.options, self.project_options)
+        plugin = waf.WafPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         # Create fake waf
@@ -143,7 +163,37 @@ class WafPluginTestCase(unit.TestCase):
         )
 
 
-class WafCrossCompilePluginTestCase(unit.TestCase):
+class WafPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: waf-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            configflags = []
+
+        self.options = Options()
+
+    def test_unsupported_base(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            waf.WafPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
+
+
+class WafCrossCompilePluginTestCase(WafPluginBaseTest):
 
     scenarios = [
         ("armv7l", dict(deb_arch="armhf")),
@@ -155,12 +205,6 @@ class WafCrossCompilePluginTestCase(unit.TestCase):
 
     def setUp(self):
         super().setUp()
-
-        class Options:
-            configflags = []
-
-        self.options = Options()
-        self.project_options = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -175,10 +219,10 @@ class WafCrossCompilePluginTestCase(unit.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_cross_compile(self):
-        plugin = waf.WafPlugin("test-part", self.options, self.project_options)
+        plugin = waf.WafPlugin("test-part", self.options, self.project)
         # This shouldn't raise an exception
         plugin.enable_cross_compilation()
 
         env = plugin.env(plugin.sourcedir)
-        self.assertIn("CC={}-gcc".format(self.project_options.arch_triplet), env)
-        self.assertIn("CXX={}-g++".format(self.project_options.arch_triplet), env)
+        self.assertIn("CC={}-gcc".format(self.project.arch_triplet), env)
+        self.assertIn("CXX={}-g++".format(self.project.arch_triplet), env)
