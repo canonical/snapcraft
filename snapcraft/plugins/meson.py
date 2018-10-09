@@ -25,8 +25,9 @@ This plugin always runs 'meson snapbuild' followed by 'ninja' and
 Additionally, this plugin uses the following plugin-specific keywords:
 
     - meson-version:
-      (string, defaul: latest)
+      (string)
       The version of meson to install from PyPI.
+      If unspecified, the latest released version of meson will be used.
     - meson-parameters:
       (list of strings)
       Pass the given parameters to the meson command.
