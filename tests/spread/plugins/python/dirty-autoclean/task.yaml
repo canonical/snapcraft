@@ -6,11 +6,11 @@ environment:
   SNAP_DIR: ../snaps/python-hello
 
 prepare: |
-  . "$SETUP_DIR/config.sh"
+  . "$TOOLS_DIR/config.sh"
   set_outdated_step_action "clean"
 
 restore: |
-  . "$SETUP_DIR/config.sh"
+  . "$TOOLS_DIR/config.sh"
   clear_config
 
   cd "$SNAP_DIR"

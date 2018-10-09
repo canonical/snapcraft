@@ -1,7 +1,7 @@
-summary: Build and run a basic Go snap
+summary: Build part of a go snap using packages from the system's repositories
 
 environment:
-  SNAP_DIR: ../snaps/go-hello
+  SNAP_DIR: ../snaps/go-use-build-packages
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -24,18 +24,15 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft
+  snapcraft build
 
-  if ! snap list go; then
-    echo "The go snap from the Snap Store should have been installed."
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
     exit 1
   fi
 
   # This only works on ubuntu
-  if dpkg -s golang-go; then
-    echo "The go deb for the system repositories should not have been installed."
+  if ! dpkg -s golang-go; then
+    echo "The go deb for the system repositories should have been installed."
     exit 1
   fi
-
-  sudo snap install go-hello_*.snap --dangerous
-  [ "$(go-hello)" = "hello world" ]

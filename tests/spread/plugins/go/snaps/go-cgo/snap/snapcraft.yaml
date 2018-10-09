@@ -11,3 +11,5 @@ parts:
   go-cgo:
     plugin: go
     source: go-cgo
+    build-packages:
+      - gcc
