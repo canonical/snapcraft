@@ -7,14 +7,7 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
-  # Ensure golang-go is not installed
-  if dpkg -s golang-go; then
-      apt-get autoremove --purge -y golang-go
-  fi
-
 restore: |
-  $TOOLS_DIR/restore.sh
-
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean

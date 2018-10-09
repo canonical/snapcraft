@@ -379,10 +379,10 @@ properties:
     additionalProperties: false
     validation-failure:
         "{!r} is not a valid part name. Part names consist of lower-case
-        alphanumeric characters, hyphens, plus signs, and forward slashes. As a
+        alphanumeric characters, hyphens and plus signs. As a
         special case, 'plugins' is also not a valid part name."
     patternProperties:
-      ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
+      ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
         allOf:
           # Make sure snap/prime are mutually exclusive
           - not:

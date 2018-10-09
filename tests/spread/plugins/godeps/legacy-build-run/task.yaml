@@ -1,34 +1,30 @@
-summary: Build and run a basic Godeps snap
+summary: Build and run a basic Godeps snap with no base
 
 environment:
   SNAP_DIR: ../snaps/godeps
   GOBIN/gobin: gobin
   GOBIN/no_gobin:
 
-prepare: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+systems: [ubuntu-*]
 
 restore: |
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"
 
   snapcraft
 
-  if ! snap list go; then
-    echo "The go snap from the Snap Store should have been installed."
+  if snap list go; then
+    echo "The go snap from the Snap Store should not have been installed."
     exit 1
   fi
 
   # This only works on ubuntu
-  if dpkg -s golang-go; then
-    echo "The go deb for the system repositories should not have been installed."
+  if ! dpkg -s golang-go; then
+    echo "The go deb for the system repositories should have been installed."
     exit 1
   fi
 

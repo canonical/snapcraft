@@ -460,7 +460,14 @@ class InvalidPartNamesTest(ValidationBaseTest):
 
     scenarios = [
         (name, dict(name=name))
-        for name in ["plugins", "qwe#rty", "qwe_rty", "queue rty", "queue  rty"]
+        for name in [
+            "plugins",
+            "qwe#rty",
+            "qwe_rty",
+            "queue rty",
+            "queue  rty",
+            "part/sub",
+        ]
     ]
 
     def test_invalid_part_names(self):
@@ -472,9 +479,8 @@ class InvalidPartNamesTest(ValidationBaseTest):
         expected_message = (
             "The 'parts' property does not match the required schema: {!r} is "
             "not a valid part name. Part names consist of lower-case "
-            "alphanumeric characters, hyphens, plus signs, and forward "
-            "slashes. As a special case, 'plugins' is also not a valid part "
-            "name."
+            "alphanumeric characters, hyphens and plus signs. "
+            "As a special case, 'plugins' is also not a valid part name."
         ).format(self.name)
         self.assertThat(raised.message, Equals(expected_message), message=data)
 
