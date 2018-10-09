@@ -149,7 +149,7 @@ class ExecStackTestCase(integration.TestCase):
             {
                 "plugin": "nil",
                 "build-attributes": attributes,
-                "build": (
+                "override-build": (
                     "execstack --set-execstack $SNAPCRAFT_PART_INSTALL/usr/bin/hello"
                 ),
                 "prime": ["usr/bin/hello"],
