@@ -32,7 +32,7 @@ def load_plugin(
     plugin_name, part_name, project_options, properties, part_schema, definitions_schema
 ):
     module_name = plugin_name.replace("-", "_")
-    module = _load_module(module_name, plugin_name, project_options)
+    module = _load_module(module_name, plugin_name, project_options.local_plugins_dir)
     plugin_class = _get_plugin(module)
     if not plugin_class:
         raise errors.PluginError("no plugin found in module {!r}".format(plugin_name))
@@ -51,24 +51,7 @@ def load_plugin(
             "properties failed to load for {}: {}".format(part_name, error.message)
         )
 
-    # For backwards compatibility we add the project to the plugin
-    try:
-        plugin = plugin_class(part_name, options, project_options)
-    except TypeError:
-        logger.warning(
-            "DEPRECATED: the plugin used by part {!r} needs to be updated "
-            "to accept project options in its initializer. See "
-            "https://github.com/snapcore/snapcraft/blob/master/docs/"
-            "plugins.md#initializing-a-plugin for more information".format(part_name)
-        )
-        plugin = plugin_class(part_name, options)
-        # This is for plugins that don't inherit from BasePlugin
-        if not hasattr(plugin, "project"):
-            setattr(plugin, "project", project_options)
-        # This is for plugins that inherit from BasePlugin but don't have
-        # project in init.
-        if not plugin.project:
-            plugin.project = project_options
+    plugin = plugin_class(part_name, options, project_options)
 
     if project_options.is_cross_compiling:
         logger.debug(
@@ -81,12 +64,10 @@ def load_plugin(
     return plugin
 
 
-def _load_module(module_name, plugin_name, project_options):
+def _load_module(module_name, plugin_name, local_plugins_dir):
     module = None
     with contextlib.suppress(ImportError):
-        module = _load_local(
-            "x-{}".format(plugin_name), project_options.local_plugins_dir
-        )
+        module = _load_local("x-{}".format(plugin_name), local_plugins_dir)
         logger.info("Loaded local plugin for %s", plugin_name)
 
     if not module:
@@ -96,7 +77,7 @@ def _load_module(module_name, plugin_name, project_options):
     if not module:
         logger.info("Searching for local plugin for %s", plugin_name)
         with contextlib.suppress(ImportError):
-            module = _load_local(module_name, project_options.local_plugins_dir)
+            module = _load_local(module_name, local_plugins_dir)
         if not module:
             raise errors.PluginError("unknown plugin: {!r}".format(plugin_name))
 
