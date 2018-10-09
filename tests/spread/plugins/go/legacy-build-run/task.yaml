@@ -6,8 +6,6 @@ environment:
 systems: [ubuntu-*]
 
 restore: |
-  $TOOLS_DIR/restore.sh
-
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap

@@ -191,12 +191,6 @@ class PartsConfig:
                 )
 
     def load_part(self, part_name, plugin_name, part_properties):
-        # Some legacy parts can have a '/' in them to separate the main project
-        # part with the subparts. This is rather unfortunate as it affects the
-        # the layout of parts inside the parts directory causing collisions
-        # between the main project part and its subparts.
-        part_name = part_name.replace("/", "\N{BIG SOLIDUS}")
-
         plugin = pluginhandler.load_plugin(
             plugin_name=plugin_name,
             part_name=part_name,
