@@ -40,7 +40,7 @@ def _setup_dirs(plugin):
 class DotNetPluginTestCase(unit.TestCase):
     def test_schema(self):
         schema = dotnet.DotNetPlugin.schema()
-        self.assertThat(schema, Not(Contains("required")))
+        self.assertThat(schema, Contains("required"))
 
     def test_get_pull_properties(self):
         expected_pull_properties = ["dotnet-runtime-version"]

@@ -84,9 +84,6 @@ class GoPlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
-        if "required" in schema:
-            del schema["required"]
-
         return schema
 
     @classmethod

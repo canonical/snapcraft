@@ -86,9 +86,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
             "type": "string",
             "default": _RUNTIME_DEFAULT,
         }
-
-        if "required" in schema:
-            del schema["required"]
+        schema["required"] = ["source"]
 
         return schema
 

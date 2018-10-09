@@ -42,6 +42,12 @@ class DumpInvalidSymlinkError(errors.SnapcraftError):
 
 
 class DumpPlugin(snapcraft.BasePlugin):
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+        schema["required"] = ["source"]
+        return schema
+
     def enable_cross_compilation(self):
         pass
 

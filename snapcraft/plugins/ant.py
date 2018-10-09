@@ -59,6 +59,7 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["required"] = ["source"]
         return schema
 
     def __init__(self, name, options, project):

@@ -58,6 +58,7 @@ class RubyPlugin(BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["required"] = ["source"]
         return schema
 
     @classmethod

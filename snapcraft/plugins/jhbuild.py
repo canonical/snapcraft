@@ -119,8 +119,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             "cflags": {"type": "string", "default": ""},
         }
 
-        schema["required"].append("modules")
-        schema["required"].append("module-set")
+        schema["required"] = ["modules", "module-set", "source"]
 
         return schema
 
