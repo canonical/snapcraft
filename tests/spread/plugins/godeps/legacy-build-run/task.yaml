@@ -7,20 +7,12 @@ environment:
 
 systems: [ubuntu-*]
 
-prepare: |
-  # Make sure no additional snaps are installed before running this test.
-  $TOOLS_DIR/restore.sh
-
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
 
 execute: |
-  if [ -z "$GOBIN" ]; then
-    unset GOBIN
-  fi
-
   cd "$SNAP_DIR"
 
   snapcraft

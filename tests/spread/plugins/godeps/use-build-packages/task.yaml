@@ -10,8 +10,6 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
-  $TOOLS_DIR/restore.sh
-
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
@@ -19,10 +17,6 @@ restore: |
   restore_yaml snap/snapcraft.yaml
 
 execute: |
-  if [ -z "$GOBIN" ]; then
-    unset GOBIN
-  fi
-
   cd "$SNAP_DIR"
 
   snapcraft build
