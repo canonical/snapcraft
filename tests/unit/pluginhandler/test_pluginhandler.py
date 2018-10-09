@@ -1122,9 +1122,6 @@ class StateTestCase(StateBaseTestCase):
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertTrue(expected in state.properties)
@@ -1171,9 +1168,6 @@ class StateTestCase(StateBaseTestCase):
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))
@@ -1223,9 +1217,6 @@ class StateTestCase(StateBaseTestCase):
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))

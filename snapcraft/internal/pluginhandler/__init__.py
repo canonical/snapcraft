@@ -543,9 +543,7 @@ class PluginHandler:
         self._do_build(update=True)
 
     def _do_build(self, *, update=False):
-        self._runner.prepare()
         self._runner.build()
-        self._runner.install()
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:

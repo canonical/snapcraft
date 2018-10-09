@@ -74,9 +74,6 @@ class BuildStateTestCase(BuildStateBaseTestCase):
                 "disable-parallel": "test-disable-parallel",
                 "organize": {"baz": "qux"},
                 "override-build": "touch override-build",
-                "prepare": "touch prepare",
-                "build": "touch build",
-                "install": "touch install",
             }
         )
 
@@ -91,9 +88,6 @@ class BuildStateTestCase(BuildStateBaseTestCase):
         self.assertThat(properties["disable-parallel"], Equals("test-disable-parallel"))
         self.assertThat(properties["organize"], Equals({"baz": "qux"}))
         self.assertThat(properties["override-build"], Equals("touch override-build"))
-        self.assertThat(properties["prepare"], Equals("touch prepare"))
-        self.assertThat(properties["build"], Equals("touch build"))
-        self.assertThat(properties["install"], Equals("touch install"))
 
     def test_project_options_of_interest(self):
         options = self.state.project_options_of_interest(self.project)

@@ -383,101 +383,6 @@ properties:
         special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
-        allOf:
-          # Make sure snap/prime are mutually exclusive
-          - not:
-              type: object
-              required: [snap, prime]
-              validation-failure:
-                  "Parts cannot contain both 'snap' and 'prime' keywords."
-
-          # Make sure prepare/override-pull are mutually exclusive
-          - not:
-              type: object
-              required: [prepare, override-pull]
-              validation-failure:
-                  "Parts cannot contain both 'prepare' and 'override-*'
-                  keywords. Use 'override-build' instead of 'prepare'."
-          # Make sure build/override-pull are mutually exclusive
-          - not:
-              type: object
-              required: [build, override-pull]
-              validation-failure:
-                  "Parts cannot contain both 'build' and 'override-*'
-                  keywords. Use 'override-build' instead of 'build'."
-          # Make sure install/override-pull are mutually exclusive
-          - not:
-              type: object
-              required: [install, override-pull]
-              validation-failure:
-                  "Parts cannot contain both 'install' and 'override-*'
-                  keywords. Use 'override-build' instead of 'install'."
-
-          # Make sure prepare/override-build are mutually exclusive
-          - not:
-              type: object
-              required: [prepare, override-build]
-              validation-failure:
-                  "Parts cannot contain both 'prepare' and 'override-*'
-                  keywords. Use 'override-build' instead of 'prepare'."
-          # Make sure build/override-build are mutually exclusive
-          - not:
-              type: object
-              required: [build, override-build]
-              validation-failure:
-                  "Parts cannot contain both 'build' and 'override-*'
-                  keywords. Use 'override-build' instead of 'build'."
-          # Make sure install/override-build are mutually exclusive
-          - not:
-              type: object
-              required: [install, override-build]
-              validation-failure:
-                  "Parts cannot contain both 'install' and 'override-*'
-                  keywords. Use 'override-build' instead of 'install'."
-
-          # Make sure prepare/override-stage are mutually exclusive
-          - not:
-              type: object
-              required: [prepare, override-stage]
-              validation-failure:
-                  "Parts cannot contain both 'prepare' and 'override-*'
-                  keywords. Use 'override-build' instead of 'prepare'."
-          # Make sure build/override-stage are mutually exclusive
-          - not:
-              type: object
-              required: [build, override-stage]
-              validation-failure:
-                  "Parts cannot contain both 'build' and 'override-*'
-                  keywords. Use 'override-build' instead of 'build'."
-          # Make sure install/override-stage are mutually exclusive
-          - not:
-              type: object
-              required: [install, override-stage]
-              validation-failure:
-                  "Parts cannot contain both 'install' and 'override-*'
-                  keywords. Use 'override-build' instead of 'install'."
-
-          # Make sure prepare/override-prime are mutually exclusive
-          - not:
-              type: object
-              required: [prepare, override-prime]
-              validation-failure:
-                  "Parts cannot contain both 'prepare' and 'override-*'
-                  keywords. Use 'override-build' instead of 'prepare'."
-          # Make sure build/override-prime are mutually exclusive
-          - not:
-              type: object
-              required: [build, override-prime]
-              validation-failure:
-                  "Parts cannot contain both 'build' and 'override-*'
-                  keywords. Use 'override-build' instead of 'build'."
-          # Make sure install/override-prime are mutually exclusive
-          - not:
-              type: object
-              required: [install, override-prime]
-              validation-failure:
-                  "Parts cannot contain both 'install' and 'override-*'
-                  keywords. Use 'override-build' instead of 'install'."
         type: [object, 'null']
         minProperties: 1
         required:
@@ -583,13 +488,6 @@ properties:
             items:
               type: string
             default: ['*']
-          snap: # FIXME: This is deprecated, replaced by `prime`, below.
-            type: array
-            minitems: 1
-            uniqueItems: true
-            items:
-              type: string
-            default: ['*']
           prime:
             type: array
             minitems: 1
@@ -597,15 +495,6 @@ properties:
             items:
               type: string
             default: ['*']
-          install:
-            type: string
-            default: ''
-          build:
-            type: string
-            default: ''
-          prepare:
-            type: string
-            default: ''
           override-pull:
             type: string
             default: 'snapcraftctl pull'
