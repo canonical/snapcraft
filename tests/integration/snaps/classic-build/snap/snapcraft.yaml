@@ -10,4 +10,5 @@ confinement: classic
 
 parts:
   hello:
+    source: .
     plugin: make

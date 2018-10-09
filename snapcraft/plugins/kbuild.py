@@ -90,6 +90,7 @@ class KBuildPlugin(BasePlugin):
         }
 
         schema["properties"]["kconfigflavour"] = {"type": "string", "default": None}
+        schema["required"] = ["source"]
 
         return schema
 

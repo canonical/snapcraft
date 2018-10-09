@@ -51,7 +51,8 @@ class AppstreamMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "nil", "parse-info": ["test.metainfo.xml"]}
+            "test-part",
+            {"plugin": "dump", "source": ".", "parse-info": ["test.metainfo.xml"]},
         )
         self.useFixture(snapcraft_yaml)
 
@@ -65,7 +66,8 @@ class AppstreamMetadataTestCase(integration.TestCase):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, description=None)
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "dump", "parse-info": ["test.metainfo.xml"]}
+            "test-part",
+            {"plugin": "dump", "source": ".", "parse-info": ["test.metainfo.xml"]},
         )
         self.useFixture(snapcraft_yaml)
 
@@ -87,7 +89,8 @@ class AppstreamMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "dump", "parse-info": ["test.metainfo.xml"]}
+            "test-part",
+            {"plugin": "dump", "source": ".", "parse-info": ["test.metainfo.xml"]},
         )
         self.useFixture(snapcraft_yaml)
 
@@ -108,7 +111,8 @@ class AppstreamMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "dump", "parse-info": ["test.metainfo.xml"]}
+            "test-part",
+            {"plugin": "dump", "source": ".", "parse-info": ["test.metainfo.xml"]},
         )
         snapcraft_yaml.update_app(
             "test-app", {"command": "echo", "common-id": "com.example.testid"}

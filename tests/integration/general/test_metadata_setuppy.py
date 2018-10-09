@@ -52,7 +52,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "nil", "parse-info": ["setup.py"]}
+            "test-part", {"plugin": "dump", "source": ".", "parse-info": ["setup.py"]}
         )
         self.useFixture(snapcraft_yaml)
 
@@ -70,7 +70,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "dump", "parse-info": ["setup.py"]}
+            "test-part", {"plugin": "dump", "source": ".", "parse-info": ["setup.py"]}
         )
         self.useFixture(snapcraft_yaml)
 
@@ -88,7 +88,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
         )
         snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            "test-part", {"plugin": "dump", "parse-info": ["setup.py"]}
+            "test-part", {"plugin": "dump", "source": ".", "parse-info": ["setup.py"]}
         )
         self.useFixture(snapcraft_yaml)
 
