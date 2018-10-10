@@ -56,6 +56,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     "epoch",
     "grade",
     "hooks",
+    "layout",
     "license",
     "plugs",
     "slots",
@@ -531,6 +532,11 @@ class _SnapPackaging:
             self._render_socket_modes(snap_yaml["apps"])
 
         self._process_passthrough_properties(snap_yaml)
+
+        # FIXME: Remove this warning once layouts are stable and no longer behind a
+        # feature flag in snapd.
+        if "layout" in self._config_data:
+            logger.warn("Layouts are experimental and may break, use at your own risk")
 
         return snap_yaml
 

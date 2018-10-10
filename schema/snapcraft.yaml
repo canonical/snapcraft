@@ -214,6 +214,28 @@ properties:
   passthrough:
     type: object
     description: properties to be passed into snap.yaml as-is
+  layout:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      "^.*$":
+        type: object
+        additionalProperties: false
+        properties:
+          bind:
+            type: string
+            description: bind-mount a directory
+          bind-file:
+            type: string
+            description: bind-mount a file
+          symlink:
+            type: string
+            description: create a symbolic link
+          type:
+            type: string
+            description: type of filesystem used for path
+            enum:
+              - tmpfs
   apps:
     type: object
     additionalProperties: false

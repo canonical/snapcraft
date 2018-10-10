@@ -1756,3 +1756,153 @@ class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
         )
 
         self.assertThat(raised.message, MatchesRegex(self.message))
+
+
+class ValidLayoutTest(ProjectLoaderBaseTest):
+
+    bind_scenarios = [
+        (
+            "bind",
+            {
+                "bind_target_path": "/bind/target",
+                "bind_declaration": "bind: $SNAP/bind",
+            },
+        ),
+        ("no bind", {"bind_target_path": None, "bind_declaration": None}),
+    ]
+
+    bind_file_scenarios = [
+        (
+            "bind-file",
+            {
+                "bind_file_target_path": "/bind-file/target",
+                "bind_file_declaration": "bind-file: $SNAP/bind",
+            },
+        ),
+        (
+            "no bind-file",
+            {"bind_file_target_path": None, "bind_file_declaration": None},
+        ),
+    ]
+
+    symlink_scenarios = [
+        (
+            "symlink",
+            {
+                "symlink_target_path": "/symlink/target",
+                "symlink_declaration": "symlink: $SNAP/symlink",
+            },
+        ),
+        ("no symlink", {"symlink_target_path": None, "symlink_declaration": None}),
+    ]
+
+    type_scenarios = [
+        (
+            "type",
+            {"type_target_path": "/type/target", "type_declaration": "type: tmpfs"},
+        ),
+        ("no type", {"type_target_path": None, "type_declaration": None}),
+    ]
+
+    scenarios = multiply_scenarios(
+        bind_scenarios, bind_file_scenarios, symlink_scenarios, type_scenarios
+    )
+
+    def test_valid_layout(self):
+        layout = ""
+        for target_path, declaration in (
+            (self.bind_target_path, self.bind_declaration),
+            (self.bind_file_target_path, self.bind_file_declaration),
+            (self.symlink_target_path, self.symlink_declaration),
+            (self.type_target_path, self.type_declaration),
+        ):
+            if target_path:
+                layout += "    {}:\n".format(target_path)
+                layout += "        {}\n".format(declaration)
+
+        if layout:
+            layout = "layout:\n{}".format(layout)
+
+        self.make_snapcraft_project(
+            dedent(
+                """\
+                name: test-snap
+                version: "1.0"
+                summary: test summary
+                description: test description
+
+                {}
+
+                parts:
+                    my-part:
+                        plugin: nil
+                """
+            ).format(layout)
+        )
+
+
+class InvalidLayoutTest(ProjectLoaderBaseTest):
+
+    scenarios = [
+        (
+            "invalid declaration",
+            {
+                "layout": dedent(
+                    """\
+                    layout:
+                        /target:
+                            invalid-key: foo
+                    """
+                ),
+                "message": ".*Additional properties are not allowed.*'invalid-key' was unexpected.*",
+            },
+        ),
+        (
+            "not a string",
+            {
+                "layout": dedent(
+                    """\
+                    layout:
+                        /target:
+                            bind: 1
+                    """
+                ),
+                "message": ".*1 is not of type 'string'.*",
+            },
+        ),
+        (
+            "invalid type",
+            {
+                "layout": dedent(
+                    """\
+                    layout:
+                        /target:
+                            type: not-tmpfs
+                    """
+                ),
+                "message": ".*'not-tmpfs' is not one of \['tmpfs'\].*",
+            },
+        ),
+    ]
+
+    def test_invalid_layout(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test-snap
+            version: "1.0"
+            summary: test summary
+            description: test description
+
+            {}
+
+            parts:
+                my-part:
+                    plugin: nil
+            """
+        ).format(self.layout)
+
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+
+        self.assertThat(raised.message, MatchesRegex(self.message))
