@@ -326,6 +326,10 @@ properties:
             enum:
               - none
               - legacy
+              - full
+            # Full should be the default, but it requires command-chain which isn't
+            # available in snapd until 2.36, which isn't yet stable. Until 2.36 is
+            # generally available, continue with legacy as the default.
             default: legacy
           command-chain:
             type: array

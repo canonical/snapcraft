@@ -68,6 +68,7 @@ _OPTIONAL_PACKAGE_KEYS = [
 class Adapter(enum.Enum):
     NONE = 1
     LEGACY = 2
+    FULL = 3
 
 
 class OctInt(yaml_utils.SnapcraftYAMLObject):
@@ -87,6 +88,10 @@ class OctInt(yaml_utils.SnapcraftYAMLObject):
         return dumper.represent_scalar(
             "tag:yaml.org,2002:int", "{:04o}".format(data._value)
         )
+
+
+# From snapd's snap/validate.go, appContentWhitelist
+_APP_COMMAND_PATTERN = re.compile("^[A-Za-z0-9/. _#:$-]*$")
 
 
 def create_snap_packaging(project_config: _config.Config) -> str:
@@ -605,8 +610,39 @@ class _SnapPackaging:
             adapter = Adapter[app.pop("adapter").upper()]
             if adapter == Adapter.LEGACY:
                 self._wrap_app(app_name, app)
+            elif adapter == Adapter.FULL:
+                self._add_command_chain_to_app(app_name, app)
             self._generate_desktop_file(app_name, app)
         return apps
+
+    def _add_command_chain_to_app(self, app_name, app):
+        # First, validate the commands. Without a wrapper, we're bound by snapd's
+        # restrictions. No quotes, and the first string must be a relative path from
+        # the root of the snap.
+        commands = (app[k] for k in ("command", "stop-command") if k in app)
+        for command in commands:
+            if not _APP_COMMAND_PATTERN.match(command):
+                raise errors.InvalidAppCommandFormatError(command, app_name)
+
+            command_without_args = command.split()[0]
+            binary_path = os.path.join(self._prime_dir, command_without_args)
+            is_executable = False
+            with contextlib.suppress(FileNotFoundError):
+                mode = os.stat(binary_path).st_mode
+                is_executable = (
+                    mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH
+                )
+
+            if not is_executable:
+                raise errors.InvalidAppCommandError(command_without_args, app_name)
+
+        # Finally, assuming there is a meta runner, add it to the BEGINNING of the
+        # command chain. This is to ensure all subsequent commands in the chain get
+        # a valid environment.
+        if os.path.isfile(self._meta_runner):
+            app["command-chain"] = [
+                os.path.relpath(self._meta_runner, self._prime_dir)
+            ] + app.get("command-chain", [])
 
     def _wrap_app(self, name, app):
         cmds = (k for k in ("command", "stop-command") if k in app)

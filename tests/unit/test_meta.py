@@ -1561,6 +1561,112 @@ class WrapExeTest(BaseWrapTest):
         )
 
 
+class FullAdapterTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.snapcraft_yaml = {
+            "name": "test-snap",
+            "version": "test-version",
+            "summary": "test summary",
+            "description": "test description",
+            "confinement": "devmode",
+            "apps": {"app": {"command": "test-command", "adapter": "full"}},
+            "parts": {"my-part": {"plugin": "nil"}},
+        }
+
+    def _get_packager(self):
+        with open("snapcraft.yaml", "w") as f:
+            yaml_utils.dump(self.snapcraft_yaml, stream=f)
+
+        project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
+        config = project_loader.load_config(project)
+        # TODO move to use outer interface
+        packager = _snap_packaging._SnapPackaging(config)
+        packager._is_host_compatible_with_base = True
+
+        return packager
+
+    def test_invalid_command(self):
+        self.snapcraft_yaml["apps"]["app"]["command"] = "invalid'app"
+
+        raised = self.assertRaises(
+            errors.InvalidAppCommandFormatError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.command, Equals("invalid'app"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_missing_command(self):
+        raised = self.assertRaises(
+            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.command, Equals("test-command"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_missing_command_with_spaces(self):
+        self.snapcraft_yaml["apps"]["app"]["command"] = "test-command arg1 arg2"
+        raised = self.assertRaises(
+            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.command, Equals("test-command"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_non_executable_command(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=False)
+
+        raised = self.assertRaises(
+            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.command, Equals("test-command"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_command_chain_insertion(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
+
+    def test_command_with_spaces(self):
+        _create_file(
+            os.path.join(self.prime_dir, "bin", "test-command"), executable=True
+        )
+
+        self.snapcraft_yaml["apps"]["app"]["command"] = "bin/test-command arg1 arg2"
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(
+            y["apps"]["app"]["command"], Equals("bin/test-command arg1 arg2")
+        )
+
+    def test_command_chain_insertion_is_at_beginning(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "existing-chain"), executable=True)
+
+        self.snapcraft_yaml["apps"]["app"]["command-chain"] = ["existing-chain"]
+
+        # Verify that the meta chain is added before anything in the YAML
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner", "existing-chain"]),
+        )
+
+
 class CommandChainTest(unit.TestCase):
     def setUp(self):
         super().setUp()
