@@ -139,7 +139,7 @@ class ExecutionTestCase(LifecycleTestBase):
 
         expected_snap_info = {
             "name": "test",
-            "version": 0,
+            "version": "1.0",
             "arch": [project_config.project.deb_arch],
             "type": "os",
         }
@@ -527,7 +527,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -614,7 +614,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -667,7 +667,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -725,7 +725,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -785,7 +785,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -846,7 +846,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -905,7 +905,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -967,7 +967,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1028,7 +1028,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1080,7 +1080,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1137,7 +1137,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1219,7 +1219,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
