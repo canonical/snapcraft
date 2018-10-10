@@ -56,6 +56,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     "epoch",
     "grade",
     "hooks",
+    "layout",
     "license",
     "plugs",
     "slots",
