@@ -92,6 +92,13 @@ class TestCase(testtools.TestCase):
         self.xdg_path = self.useFixture(fixtures.TempDir()).path
         self.useFixture(fixture_setup.TempXDG(self.xdg_path))
 
+        # Use this host to run through the lifecycle tests
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT", "destructive-host"
+            )
+        )
+
         # Use a dumb terminal for tests
         self.useFixture(fixtures.EnvironmentVariable("TERM", "dumb"))
 

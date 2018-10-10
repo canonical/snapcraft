@@ -157,6 +157,13 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.parts_dir = os.path.join(os.getcwd(), "parts")
         self.local_plugins_dir = os.path.join(self.snap_dir, "plugins")
 
+        # Use this host to run through the lifecycle tests
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT", "destructive-host"
+            )
+        )
+
         # Avoid installing patchelf in the tests
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_NO_PATCHELF", "1"))
 

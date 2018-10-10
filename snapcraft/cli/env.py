@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,31 +28,32 @@ class BuilderEnvironmentConfig:
 
     Valid values are:
 
-    - host: the host will drive the build.
+    - destructive-host: the host will drive the build.
+    - managed-host: the host will drive the build, but work best for discardable
+                    build providers.
     - multipass: a vm driven by multipass will be created to drive the build.
     """
 
-    def __init__(self, *, default="host") -> None:
+    def __init__(self, *, force_provider: str = None) -> None:
         """Instantiate a BuildEnvironmentConfig.
 
-        :param str default: the default provider to use among the list of valid
-                            ones.
-        :param str additional_providers: Additional providers allowed in the
-                                         environment.
+        :param str force_provider: ignore the hints from the environment and use
+                                   the specified provider.
         """
-        valid_providers = ["host", "multipass", "managed-host"]
-        build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT")
+        if force_provider:
+            build_provider = force_provider
+        else:
+            build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
 
-        if not build_provider:
-            build_provider = default
-        elif build_provider not in valid_providers:
+        valid_providers = ["destructive-host", "multipass", "managed-host"]
+        if build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
-                "SNAPCRAFT_BUILD_ENVIRONMENT must be one of: {}.".format(
+                "The snapcraft build environment must be one of: {}.".format(
                     humanize_list(items=valid_providers, conjunction="or")
                 )
             )
 
         self.provider = build_provider
-        self.is_host = build_provider == "host"
+        self.is_host = build_provider == "destructive-host"
         self.is_multipass = build_provider == "multipass"
         self.is_managed_host = build_provider == "managed-host"

@@ -37,6 +37,11 @@ if os.path.isdir(common.get_legacy_snapcraft_dir()):
             base_dir = os.path.expanduser(os.path.join("~", "project"))
         else:
             base_dir = None
+
+        # Backwards compatibility to allow legacy to keep working
+        if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "destructive-host":
+            del os.environ["SNAPCRAFT_BUILD_ENVIRONMENT"]
+
         snapcraft_yaml_path = project.get_snapcraft_yaml(base_dir=base_dir)
         with open(snapcraft_yaml_path, "r") as f:
             data = yaml_utils.load(f)
