@@ -94,7 +94,9 @@ class MesonPlugin(snapcraft.BasePlugin):
             meson_package = "meson"
 
         try:
-            subprocess.check_call(["pip3", "install", "-U", meson_package])
+            subprocess.check_call(
+                ["python3", "-m", "pip", "install", "-U", meson_package]
+            )
         except subprocess.CalledProcessError as call_error:
             raise errors.SnapcraftPluginCommandError(
                 command=call_error.cmd,

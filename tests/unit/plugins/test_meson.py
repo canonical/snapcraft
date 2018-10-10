@@ -125,7 +125,9 @@ class MesonPluginBaseTest(unit.TestCase):
 
         plugin.pull()
 
-        check_call_mock.assert_called_once_with(["pip3", "install", "-U", "meson"])
+        check_call_mock.assert_called_once_with(
+            ["python3", "-m", "pip", "install", "-U", "meson"]
+        )
 
     @mock.patch("subprocess.check_call")
     def test_pull_meson_version(self, check_call_mock):
@@ -135,7 +137,9 @@ class MesonPluginBaseTest(unit.TestCase):
 
         plugin.pull()
 
-        check_call_mock.assert_called_once_with(["pip3", "install", "-U", "meson=1.0"])
+        check_call_mock.assert_called_once_with(
+            ["python3", "-m", "pip", "install", "-U", "meson=1.0"]
+        )
 
     @mock.patch(
         "subprocess.check_call",
