@@ -301,6 +301,14 @@ class CreateTestCase(CreateBaseTestCase):
         with testtools.ExpectedException(meta_errors.CommandError):
             self.generate_meta_yaml()
 
+    def test_layout(self):
+        layout = {"/target": {"bind": "$SNAP/foo"}}
+        self.config_data["layout"] = layout
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y["layout"], Equals(layout))
+
     def test_create_meta_with_app(self):
         os.mkdir(self.prime_dir)
         _create_file(os.path.join(self.prime_dir, "app.sh"))

@@ -214,6 +214,9 @@ properties:
   passthrough:
     type: object
     description: properties to be passed into snap.yaml as-is
+  layout:
+    type: object
+    description: layout property to be passed into the snap.yaml as-is
   apps:
     type: object
     additionalProperties: false
