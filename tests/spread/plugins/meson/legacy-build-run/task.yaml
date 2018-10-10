@@ -1,7 +1,7 @@
 summary: Build and run a basic meson snap with no base
 
 environment:
-  SNAP_DIR: ../snaps/meson-hello
+  SNAP_DIR: ../snaps/legacy-meson
 
 restore: |
   cd "$SNAP_DIR"

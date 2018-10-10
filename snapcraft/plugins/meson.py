@@ -89,7 +89,7 @@ class MesonPlugin(snapcraft.BasePlugin):
         super().pull()
 
         if self.options.meson_version:
-            meson_package = "meson={}".format(self.options.meson_version)
+            meson_package = "meson=={}".format(self.options.meson_version)
         else:
             meson_package = "meson"
 

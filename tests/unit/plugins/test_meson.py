@@ -138,7 +138,7 @@ class MesonPluginBaseTest(unit.TestCase):
         plugin.pull()
 
         check_call_mock.assert_called_once_with(
-            ["python3", "-m", "pip", "install", "-U", "meson=1.0"]
+            ["python3", "-m", "pip", "install", "-U", "meson==1.0"]
         )
 
     @mock.patch(
