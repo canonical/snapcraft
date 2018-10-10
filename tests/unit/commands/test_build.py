@@ -16,7 +16,6 @@
 
 from unittest import mock
 
-import fixtures
 from testtools.matchers import Equals, DirExists, Not
 
 from . import LifecycleCommandsBaseTestCase
@@ -48,44 +47,6 @@ class BuildCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(parts[0]["part_dir"], DirExists())
 
         self.verify_state("build0", parts[0]["state_dir"], "build")
-
-    def test_build_with_lxd_build_environment(self):
-        self.make_snapcraft_yaml("build", n=2)
-
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
-        )
-
-        patcher = mock.patch("snapcraft.internal.lxd.Project")
-        lxd_project_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        result = self.run_command(["build"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        lxd_project_mock.assert_called_once_with(
-            project=mock.ANY, source=".", output=None
-        )
-        lxd_project_mock().execute.assert_called_once_with("build", ())
-
-    def test_build_part_with_lxd_build_environment(self):
-        self.make_snapcraft_yaml("build", n=2)
-
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
-        )
-
-        patcher = mock.patch("snapcraft.internal.lxd.Project")
-        lxd_project_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        result = self.run_command(["build", "build1"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        lxd_project_mock.assert_called_once_with(
-            project=mock.ANY, source=".", output=None
-        )
-        lxd_project_mock().execute.assert_called_once_with("build", ("build1",))
 
     def test_build_one_part_only_from_3(self):
         parts = self.make_snapcraft_yaml("build", n=3)

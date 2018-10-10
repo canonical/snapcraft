@@ -1,0 +1,27 @@
+<<<<<<< HEAD:tests/spread/legacy/snaps/scriplets/snapcraft.yaml
+name: scriptlet-test
+version: '0.1'
+=======
+name: build-scriptlet-test
+version: "0.1"
+>>>>>>> schema: enfore string for versions:tests/integration/snaps/scriptlet-build/snapcraft.yaml
+summary: Runs the build scriptlet for a part
+description: |
+  Runs the shell script defined in `prepare` to set everything up,
+  build` overriding the plugins build directives and `install` to
+  make things get through.
+
+grade: devel
+confinement: devmode
+
+parts:
+  build-scriptlet-test:
+    source: .
+    plugin: make
+    prepare: |
+      touch prepared
+    build: |
+      make build
+    install: |
+      make move-to-dest DESTDIR=$SNAPCRAFT_PART_INSTALL
+

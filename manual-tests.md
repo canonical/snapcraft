@@ -31,54 +31,6 @@
    from $HOME.
 
 
-# Test cleanbuild with debug shell
-
-1. Run `snapcraft cleanbuild --debug` for a snap.
-2. Insert an error such that the code will fail to compile or
-   mistype the name of an entry in `stage-packages`.
-3. Run `snapcraft cleanbuild --debug` again.
-4. Ensure you are dropped into a debug shell.
-5. Exit the shell.
-6. Ensure you are dropped back into your original shell session.
-
-
-# Test cleanbuild with non-ascii characters in the desktop file.
-
-1. Run `snapcraft cleanbuild` for the snap in `integration_tests/snaps/desktop-with-non-ascii`
-   * Check that the build succeeds and you get the `.snap` file.
-
-
-# Test cleanbuild with a remote.
-
-1. Setup a remote as described on
-   https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
-2. Select a project to build.
-3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
-   the name you gave the remote on step 1.
-
-
-# Test containerized building
-
-1. Setup LXD as described on
-   https://linuxcontainers.org/lxd/getting-started-cli/
-2. Select a project <project> to build.
-3. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft`.
-4. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft clean` and observe that
-   build folders as well as the container `snapcraft-<project>` is gone.
-
-
-# Test containerized building with LXD on a remote host
-
-1. Setup LXD on a remote host as described on
-   https://linuxcontainers.org/lxd/getting-started-cli/
-2. Add your remote locally via `lxc remote add <remote>`
-2. Select a project <project> to build.
-3. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft -d` and observe that
-   the debug message `Setting up user <user> in container` shows up.
-4. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft clean` and observe that
-   build folders as well as the container `snapcraft-<project>` is gone.
-
-
 # Test cross-compilation with Go
 
 1. Go to integration_tests/snaps/go-hello.
