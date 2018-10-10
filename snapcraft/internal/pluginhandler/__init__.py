@@ -862,8 +862,11 @@ class PluginHandler:
             formatted_system = "\n".join(sorted(system))
             # We cannot error if we consider the content interface...
             logger.warning(
-                "Files from the build host were use to build this snap "
-                "but are not part of the snap or base: \n{}".format(formatted_system)
+                "The {part_name!r} part needs the following libraries that are not "
+                "included in the snap or base: \n{}\nThese dependencies can be "
+                "satisfied via more stage-packages, more parts, or content sharing.".format(
+                    formatted_system
+                )
             )
         return dependency_paths
 
