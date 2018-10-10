@@ -1,5 +1,5 @@
 name: test-jhbuild
-version: 1.0.0
+version: "1.0".0
 grade: stable
 confinement: strict
 summary: Simple JHBuild integration test

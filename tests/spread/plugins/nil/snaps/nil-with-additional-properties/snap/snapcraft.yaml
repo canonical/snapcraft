@@ -1,5 +1,5 @@
 name: nil-with-additional-properties
-version: '1.0'
+version: "1.0"
 summary: Use additional property with nil
 description: Use additional property with nil (which should error out)
 

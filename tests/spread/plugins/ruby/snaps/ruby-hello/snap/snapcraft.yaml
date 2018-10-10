@@ -1,5 +1,5 @@
 name: "ruby-hello"
-version: '1.0'
+version: "1.0"
 summary: Test ruby
 description: |
   Snap to test ruby compiled correctly, exists, and works
