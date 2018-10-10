@@ -307,12 +307,6 @@ of the choice of plugin.
     A list of special attributes that affect the build of this specific part.
     Supported attributes:
 
-      - no-system-libraries:
-        Do not automatically copy required libraries from the system to satisfy
-        the dependencies of this part. This might be useful if one knows these
-        dependencies will be satisfied in other manner, e.g. via content
-        sharing from other snaps.
-
       - no-install:
         Do not run the install target provided by the plugin's build system.
 

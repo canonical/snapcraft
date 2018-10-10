@@ -27,7 +27,7 @@ import elftools.elf.elffile
 from pkg_resources import parse_version
 
 from snapcraft import file_utils
-from snapcraft.internal import common, errors, os_release, repo
+from snapcraft.internal import common, errors, repo
 
 
 logger = logging.getLogger(__name__)
@@ -137,12 +137,6 @@ class Library:
         # Required for libraries on the host and the fetching mechanism
         if not self.path:
             self.path = path
-
-        system_libs = _get_system_libs()
-        if soname in system_libs:
-            self.system_lib = True
-        else:
-            self.system_lib = False
 
         # self.path has the correct resulting path.
         if self.path.startswith(core_base_path):
@@ -369,7 +363,7 @@ class ElfFile:
         # Return a set useful only for fetching libraries from the host
         library_paths = set()  # type: Set[str]
         for l in libs:
-            if os.path.exists(l.path) and not l.in_base_snap and not l.system_lib:
+            if os.path.exists(l.path) and not l.in_base_snap:
                 library_paths.add(l.path)
         return library_paths
 
@@ -592,30 +586,6 @@ def _extract_ld_library_paths(ld_conf_file: str) -> List[str]:
 
 
 _libraries = None
-
-
-def _get_system_libs() -> FrozenSet[str]:
-    global _libraries
-    if _libraries:  # type: ignore
-        return _libraries  # type: ignore
-
-    lib_path = None
-
-    release = os_release.OsRelease()
-    with contextlib.suppress(errors.OsReleaseVersionIdError):
-        lib_path = os.path.join(common.get_librariesdir(), release.version_id())
-
-    if not lib_path or not os.path.exists(lib_path):
-        logger.debug("Only excluding libc libraries from the release")
-        libc6_libs = [
-            os.path.basename(l) for l in repo.Repo.get_package_libraries("libc6")
-        ]
-        _libraries = frozenset(libc6_libs)
-    else:
-        with open(lib_path) as fn:
-            _libraries = frozenset(fn.read().split())
-
-    return _libraries
 
 
 def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:

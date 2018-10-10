@@ -218,6 +218,9 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
 
+        # Always add the base for building
+        self.build_snaps |= project.info.base
+
         self.parts = PartsConfig(
             parts=self.data,
             project=project,

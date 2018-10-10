@@ -471,7 +471,6 @@ properties:
               type: string
               enum:
                 - no-patchelf
-                - no-system-libraries
                 - no-install
                 - debug
                 - keep-execstack

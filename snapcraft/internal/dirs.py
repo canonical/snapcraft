@@ -30,7 +30,6 @@ def setup_dirs() -> None:
     if os.path.exists(os.path.join(topdir, "setup.py")):
         common.set_plugindir(os.path.join(topdir, "snapcraft", "plugins"))
         common.set_schemadir(os.path.join(topdir, "schema"))
-        common.set_librariesdir(os.path.join(topdir, "libraries"))
         common.set_extensionsdir(os.path.join(topdir, "extensions"))
 
     # The default paths are relative to sys.prefix, which works well for
@@ -42,7 +41,6 @@ def setup_dirs() -> None:
         parent_dir = os.path.join(os.environ.get("SNAP"), "share", "snapcraft")
         common.set_plugindir(os.path.join(parent_dir, "plugins"))
         common.set_schemadir(os.path.join(parent_dir, "schema"))
-        common.set_librariesdir(os.path.join(parent_dir, "libraries"))
         common.set_extensionsdir(os.path.join(parent_dir, "extensions"))
         common.set_legacy_snapcraft_dir(
             os.path.join(os.environ.get("SNAP"), "legacy_snapcraft")

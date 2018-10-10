@@ -97,7 +97,6 @@ if sys.platform == "win32":
         ],
         # Explicit inclusion data, which is then clobbered.
         "include_files": [
-            ("libraries", os.path.join("share", "snapcraft", "libraries")),
             ("schema", os.path.join("share", "snapcraft", "schema")),
             ("extensions", os.path.join("share", "snapcraft", "extensions")),
         ],
@@ -139,10 +138,6 @@ else:
         scripts=["bin/snapcraft", "bin/snapcraftctl"],
         data_files=[
             ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")]),
-            (
-                "share/snapcraft/libraries",
-                ["libraries/" + x for x in os.listdir("libraries")],
-            ),
             (
                 "share/snapcraft/extensions",
                 ["extensions/" + x for x in os.listdir("extensions")],
