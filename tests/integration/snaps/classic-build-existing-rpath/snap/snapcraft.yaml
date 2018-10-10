@@ -13,5 +13,6 @@ parts:
     source: .
     plugin: make
     build-packages: [patchelf]
-    install: |
+    override-build: |
+      snapcraftctl build
       patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $SNAPCRAFT_PART_INSTALL/bin/hello-classic

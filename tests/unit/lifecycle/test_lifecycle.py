@@ -386,11 +386,12 @@ class ExecutionTestCase(LifecycleTestBase):
 
 
 class DirtyBuildScriptletTestCase(LifecycleTestBase):
-
     scenarios = (
-        ("prepare scriptlet", {"scriptlet": "prepare"}),
-        ("build scriptlet", {"scriptlet": "build"}),
-        ("install scriptlet", {"scriptlet": "install"}),
+        ("override-pull scriptlet", dict(scriptlet="override-pull", step=steps.PULL)),
+        (
+            "override-build scriptlet",
+            dict(scriptlet="override-build", step=steps.BUILD),
+        ),
     )
 
     def setUp(self):
@@ -420,7 +421,7 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         )
 
         # Build it
-        lifecycle.execute(steps.BUILD, project_config)
+        lifecycle.execute(self.step, project_config)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -441,10 +442,10 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         # Build it again. Should catch that the scriptlet changed and it needs
         # to be rebuilt.
         raised = self.assertRaises(
-            errors.StepOutdatedError, lifecycle.execute, steps.BUILD, project_config
+            errors.StepOutdatedError, lifecycle.execute, self.step, project_config
         )
 
-        self.assertThat(raised.step, Equals(steps.BUILD))
+        self.assertThat(raised.step, Equals(self.step))
         self.assertThat(raised.part, Equals("part1"))
         self.assertThat(
             raised.report,

@@ -14,49 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import multiprocessing
 import os
 
-from testtools.matchers import FileContains, FileExists, Not
+from testtools.matchers import FileExists, Not
 
 from tests import integration
 
 
 class ScriptletTestCase(integration.TestCase):
-    def test_prepare_scriptlet(self):
-        self.run_snapcraft("build", "scriptlet-prepare")
-
-        installdir = os.path.join(self.parts_dir, "prepare-scriptlet-test", "install")
-        touch_file_path = os.path.join(installdir, "prepared")
-        self.assertThat(touch_file_path, FileExists())
-
-    def test_build_scriptlet(self):
-        self.run_snapcraft("build", "scriptlet-build")
-
-        partdir = os.path.join(self.parts_dir, "build-scriptlet-test")
-        builddir = os.path.join(partdir, "build")
-        installdir = os.path.join(partdir, "install")
-
-        touch_file_path = os.path.join(builddir, "build-build")
-        self.assertThat(touch_file_path, FileExists())
-        jobs_file_name = "jobs-{}".format(multiprocessing.cpu_count())
-        touch_file_path = os.path.join(builddir, jobs_file_name)
-        self.assertThat(touch_file_path, FileExists())
-        touch_file_path = os.path.join(installdir, "build-install")
-        self.assertThat(touch_file_path, FileExists())
-
-    def test_install_scriptlet(self):
-        self.run_snapcraft("build", "scriptlet-install")
-
-        installdir = os.path.join(self.parts_dir, "install-scriptlet-test", "install")
-        touch_file_path = os.path.join(installdir, "build-done")
-        self.assertThat(touch_file_path, FileExists())
-        echoed_file_path = os.path.join(installdir, "config.ini")
-        self.assertThat(echoed_file_path, FileExists())
-        self.assertThat(echoed_file_path, FileContains("config-key=config-value\n"))
-        arch_triplet_file = os.path.join(installdir, "lib", self.arch_triplet, "lib.so")
-        self.assertThat(arch_triplet_file, FileExists())
-
     def test_override_pull(self):
         self.run_snapcraft("pull", "scriptlet-override-pull")
 

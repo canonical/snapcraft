@@ -176,55 +176,6 @@ class ValidationTest(ValidationBaseTest):
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 
 
-class OldConflictsWithNewScriptletTest(ValidationBaseTest):
-
-    old_scriptlet_scenarios = [
-        ("prepare", {"old_keyword": "prepare", "old_value": ["test-prepare"]}),
-        ("build", {"old_keyword": "build", "old_value": ["test-build"]}),
-        ("install", {"old_keyword": "install", "old_value": ["test-install"]}),
-    ]
-
-    new_scriptlet_scenarios = [
-        (
-            "override-pull",
-            {"new_keyword": "override-pull", "new_value": ["test-override-pull"]},
-        ),
-        (
-            "override-build",
-            {"new_keyword": "override-build", "new_value": ["test-override-build"]},
-        ),
-        (
-            "override-stage",
-            {"new_keyword": "override-stage", "new_value": ["test-override-stage"]},
-        ),
-        (
-            "override-prime",
-            {"new_keyword": "override-prime", "new_value": ["test-override-prime"]},
-        ),
-    ]
-
-    scenarios = multiply_scenarios(old_scriptlet_scenarios, new_scriptlet_scenarios)
-
-    def test_both_old_and_new_keywords_specified(self):
-        self.data["parts"]["part1"][self.old_keyword] = self.old_value
-        self.data["parts"]["part1"][self.new_keyword] = self.new_value
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        self.assertThat(
-            str(raised),
-            MatchesRegex(
-                (
-                    ".*The 'parts/part1' property does not match the required "
-                    "schema: Parts cannot contain both {0!r} and 'override-\*' "
-                    "keywords. Use 'override-build' instead of {0!r}.*"
-                ).format(self.old_keyword)
-            ),
-        )
-
-
 class DaemonDependencyTest(ValidationBaseTest):
 
     scenarios = [

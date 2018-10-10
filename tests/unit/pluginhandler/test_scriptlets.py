@@ -16,11 +16,10 @@
 
 import contextlib
 import functools
-import os
 import subprocess
 
 import testtools
-from testtools.matchers import Equals, FileExists
+from testtools.matchers import Equals
 from testscenarios.scenarios import multiply_scenarios
 from unittest import mock
 
@@ -156,26 +155,3 @@ class ScriptletMultipleSettersErrorTestCase(unit.TestCase):
                 handler.build()
                 handler.stage()
                 handler.prime()
-
-
-# These are deprecated
-class OldScripletTestCase(unit.TestCase):
-    def test_run_prepare_scriptlet(self):
-        handler = self.load_part(
-            "test-part", part_properties={"prepare": "touch prepare"}
-        )
-
-        handler.build()
-
-        before_build_file_path = os.path.join(handler.plugin.build_basedir, "prepare")
-        self.assertThat(before_build_file_path, FileExists())
-
-    def test_run_install_scriptlet(self):
-        handler = self.load_part(
-            "test-part", part_properties={"install": "touch install"}
-        )
-
-        handler.build()
-
-        after_build_file_path = os.path.join(handler.plugin.build_basedir, "install")
-        self.assertThat(after_build_file_path, FileExists())
