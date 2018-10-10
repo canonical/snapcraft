@@ -35,7 +35,8 @@ class LifecycleTestBase(unit.TestCase):
         yaml = textwrap.dedent(
             """\
             name: test
-            version: 0
+            base: core18
+            version: "1.0"
             summary: test
             description: test
             confinement: strict

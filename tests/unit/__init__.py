@@ -207,7 +207,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         part_properties=None,
         project_options=None,
         stage_packages_repo=None,
-        base="core",
+        base="core18",
         confinement="strict",
         snap_type="app",
     ):

@@ -536,6 +536,7 @@ properties:
     type: object
 required:
   - name
+  - base
   - parts
 
 # Either summary/description/version is required, or adopt-info is required to
