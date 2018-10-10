@@ -149,6 +149,11 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        # Do not attempt to install any snaps
+        patcher = mock.patch("snapcraft.internal.repo.snaps.install_snaps")
+        self.install_snaps_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         # These are what we expect by default
         self.snap_dir = os.path.join(os.getcwd(), "snap")
         self.prime_dir = os.path.join(os.getcwd(), "prime")

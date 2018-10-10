@@ -37,9 +37,6 @@ logger = logging.getLogger(__name__)
 
 class PartsConfig:
     def __init__(self, *, parts, project, validator, build_snaps, build_tools):
-        self._snap_name = parts["name"]
-        self._base = parts.get("base", "core")
-        self._confinement = parts.get("confinement")
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get("parts", {})
         self._snap_type = parts.get("type", "app")
@@ -225,9 +222,9 @@ class PartsConfig:
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
-            snap_base_path=path.join("/", "snap", self._snap_name, "current"),
-            base=self._base,
-            confinement=self._confinement,
+            snap_base_path=path.join("/", "snap", self._project.info.name, "current"),
+            base=self._project.info.base,
+            confinement=self._project.info.confinement,
             snap_type=self._snap_type,
             soname_cache=self._soname_cache,
         )
@@ -252,7 +249,6 @@ class PartsConfig:
 
         env = []  # type: List[str]
         stagedir = self._project.stage_dir
-        is_host_compat = self._project.is_host_compatible_with_base(self._base)
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -260,15 +256,19 @@ class PartsConfig:
             env += runtime_env(part.plugin.installdir, self._project.arch_triplet)
             env += runtime_env(stagedir, self._project.arch_triplet)
             env += build_env(
-                part.plugin.installdir, self._snap_name, self._project.arch_triplet
+                part.plugin.installdir,
+                self._project.info.name,
+                self._project.arch_triplet,
             )
             env += build_env_for_stage(
-                stagedir, self._snap_name, self._project.arch_triplet
+                stagedir, self._project.info.name, self._project.arch_triplet
             )
             # Only set the paths to the base snap if we are building on the
             # same host. Failing to do so will cause Segmentation Faults.
-            if self._confinement == "classic" and is_host_compat:
-                env += env_for_classic(self._base, self._project.arch_triplet)
+            if self._project.info.confinement == "classic":
+                env += env_for_classic(
+                    self._project.info.base, self._project.arch_triplet
+                )
 
             global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)

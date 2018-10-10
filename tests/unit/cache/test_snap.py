@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import glob
 import os
+from textwrap import dedent
 
 from testtools.matchers import Equals
 
@@ -53,21 +55,24 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
     def test_snap_cache_get_latest(self):
         # Create snaps
         with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-architectures: ['{}']
-confinement: devmode
-grade: devel
-version: '0.1'
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                base: core18
+                architectures: ['{}']
+                confinement: devmode
+                grade: devel
+                version: '0.1'
 
-parts:
-    my-part:
-      plugin: nil
-""".format(
-                    self.deb_arch
-                )
+                parts:
+                    my-part:
+                      plugin: nil
+                """
+                ).format(self.deb_arch),
+                file=f,
             )
         result = self.run_command(["snap"])
         self.assertThat(result.exit_code, Equals(0))
@@ -77,21 +82,24 @@ parts:
         snap_cache.cache(snap_filename=snap_file)
 
         with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-architectures: ['{}']
-confinement: devmode
-grade: devel
-version: '0.2'
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                base: core18
+                architectures: ['{}']
+                confinement: devmode
+                grade: devel
+                version: '0.2'
 
-parts:
-    my-part:
-      plugin: nil
-""".format(
-                    self.deb_arch
-                )
+                parts:
+                    my-part:
+                      plugin: nil
+                """
+                ).format(self.deb_arch),
+                file=f,
             )
         result = self.run_command(["snap"])
         self.assertThat(result.exit_code, Equals(0))
@@ -114,14 +122,18 @@ parts:
         meta_dir = os.path.join(self.path, "prime", "meta")
         os.makedirs(meta_dir)
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-confinement: devmode
-grade: devel
-version: '0.1'
-"""
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                confinement: devmode
+                grade: devel
+                version: '0.1'
+                """
+                ),
+                file=f,
             )
         result = self.run_command(["pack", os.path.join(self.path, "prime")])
         self.assertThat(result.exit_code, Equals(0))
@@ -131,14 +143,18 @@ version: '0.1'
         snap_cache.cache(snap_filename=snap_file)
 
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-confinement: devmode
-grade: devel
-version: '0.2'
-"""
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                confinement: devmode
+                grade: devel
+                version: '0.2'
+                """
+                ),
+                file=f,
             )
         result = self.run_command(["pack", os.path.join(self.path, "prime")])
         self.assertThat(result.exit_code, Equals(0))
@@ -175,21 +191,24 @@ class SnapCachePruneTestCase(SnapCacheBaseTestCase):
     def test_prune_snap_cache(self):
         # Create snaps
         with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-architectures: ['{}']
-confinement: devmode
-grade: devel
-version: '0.1'
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                base: core18
+                architectures: ['{}']
+                confinement: devmode
+                grade: devel
+                version: '0.1'
 
-parts:
-    my-part:
-      plugin: nil
-""".format(
-                    self.deb_arch
-                )
+                parts:
+                    my-part:
+                      plugin: nil
+                """
+                ).format(self.deb_arch),
+                file=f,
             )
         result = self.run_command(["snap"])
         self.assertThat(result.exit_code, Equals(0))
@@ -200,21 +219,24 @@ parts:
         _, snap_file_hash = os.path.split(snap_file_path)
 
         with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            f.write(
-                """name: my-snap-name
-summary: test cached snap
-description: test cached snap
-architectures: ['{}']
-confinement: devmode
-grade: devel
-version: '0.2'
+            print(
+                dedent(
+                    """\
+                name: my-snap-name
+                summary: test cached snap
+                description: test cached snap
+                base: core18
+                architectures: ['{}']
+                confinement: devmode
+                grade: devel
+                version: '0.2'
 
-parts:
-    my-part:
-      plugin: nil
-""".format(
-                    self.deb_arch
-                )
+                parts:
+                    my-part:
+                      plugin: nil
+                """
+                ).format(self.deb_arch),
+                file=f,
             )
         result = self.run_command(["snap"])
         self.assertThat(result.exit_code, Equals(0))

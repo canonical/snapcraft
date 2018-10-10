@@ -219,7 +219,7 @@ class Config:
         self.build_tools |= set(project.additional_build_packages)
 
         # Always add the base for building
-        self.build_snaps |= project.info.base
+        self.build_snaps.add(project.info.base)
 
         self.parts = PartsConfig(
             parts=self.data,
