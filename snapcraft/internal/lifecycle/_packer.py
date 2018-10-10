@@ -54,7 +54,8 @@ def pack(directory, output=None):
     # The snap command will most likely be found as it lives in
     # core and the snapcraft snap lives on top of it (on the side
     # rather).
-    if os.path.exists(_SNAP_PATH):
+    # We can only run verifications on non base or os types.
+    if os.path.exists(_SNAP_PATH) and snap.get("type") not in ("base", "os"):
         _run_snap_pack_verification(directory=directory)
     elif snap.get("license"):
         logger.warning(

@@ -241,7 +241,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         os.makedirs(meta_dir)
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
             f.write(
-                """name: my_snap
+                """name: mysnap
 version: 99
 architectures: [amd64, armhf]
 """
@@ -250,13 +250,13 @@ architectures: [amd64, armhf]
         result = self.run_command(["snap", "mysnap"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_multi.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_multi.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_multi.snap",
+                "mysnap_99_multi.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -268,7 +268,7 @@ architectures: [amd64, armhf]
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_multi.snap", FileExists())
+        self.assertThat("mysnap_99_multi.snap", FileExists())
 
     def test_snap_from_dir_with_no_arch(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -278,7 +278,7 @@ architectures: [amd64, armhf]
         os.makedirs(meta_dir)
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
             f.write(
-                """name: my_snap
+                """name: mysnap
 version: 99
 """
             )
@@ -286,13 +286,13 @@ version: 99
         result = self.run_command(["snap", "mysnap"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_all.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_all.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_all.snap",
+                "mysnap_99_all.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -304,7 +304,7 @@ version: 99
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_all.snap", FileExists())
+        self.assertThat("mysnap_99_all.snap", FileExists())
 
     def test_snap_from_dir_type_os_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -314,7 +314,7 @@ version: 99
         os.makedirs(meta_dir)
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
             f.write(
-                """name: my_snap
+                """name: mysnap
 version: 99
 architectures: [amd64, armhf]
 type: os
@@ -325,13 +325,13 @@ type: os
         result = self.run_command(["snap", "mysnap"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_multi.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_multi.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_multi.snap",
+                "mysnap_99_multi.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -342,7 +342,7 @@ type: os
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_multi.snap", FileExists())
+        self.assertThat("mysnap_99_multi.snap", FileExists())
 
     def test_snap_with_output(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
