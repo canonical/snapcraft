@@ -15,11 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
-import os
 
-from snapcraft.internal import lxd, repo
-from ._options import get_project
-from . import env
+from snapcraft.internal import repo
 
 
 @click.group()
@@ -38,11 +35,4 @@ def refresh(debug, **kwargs):
     Examples:
         snapcraft refresh
     """
-
-    build_environment = env.BuilderEnvironmentConfig()
-
-    if build_environment.is_lxd:
-        project = get_project(**kwargs, debug=debug)
-        lxd.Project(project=project, output=None, source=os.path.curdir).refresh()
-    else:
-        repo.Repo.refresh_build_packages()
+    repo.Repo.refresh_build_packages()

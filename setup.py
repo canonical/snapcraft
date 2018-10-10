@@ -39,7 +39,6 @@ packages = [
     "snapcraft.internal.build_providers._multipass",
     "snapcraft.internal.deltas",
     "snapcraft.internal.lifecycle",
-    "snapcraft.internal.lxd",
     "snapcraft.internal.meta",
     "snapcraft.internal.pluginhandler",
     "snapcraft.internal.project_loader",

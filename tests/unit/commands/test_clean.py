@@ -13,16 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import shutil
-import fixtures
-from unittest.mock import call, patch, ANY
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
 import snapcraft
 from snapcraft.internal import errors, steps
-from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
@@ -98,95 +96,6 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
         self.assertThat(self.parts_dir, Not(DirExists()))
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
-
-
-class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
-
-    scenarios = [("local", dict(snapcraft_container_builds="1", remote="local"))]
-
-    def test_clean_containerized_noop(self):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_CONTAINER_BUILDS", self.snapcraft_container_builds
-            )
-        )
-        self.make_snapcraft_yaml(n=3)
-
-        result = self.run_command(["clean"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        # clean should be a noop if no container exists yet/ anymore
-        fake_lxd.check_call_mock.assert_not_called()
-
-    @patch("snapcraft.internal.lifecycle.clean")
-    def test_clean_containerized_exists_stopped(self, mock_lifecycle_clean):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        # Container was created before, and isn't running
-        fake_lxd.name = "{}:snapcraft-clean-test".format(self.remote)
-        fake_lxd.status = "Stopped"
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_CONTAINER_BUILDS", self.snapcraft_container_builds
-            )
-        )
-        self.make_snapcraft_yaml(n=3)
-
-        result = self.run_command(["clean"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        # clean with no parts should delete the container
-        fake_lxd.check_call_mock.assert_has_calls(
-            [call(["lxc", "delete", "-f", fake_lxd.name])]
-        )
-        # no other commands should be run in the container
-        self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
-        # clean should be called normally, outside of the container
-        mock_lifecycle_clean.assert_has_calls([call(ANY, (), steps.PULL)])
-
-    @patch("snapcraft.internal.lifecycle.clean")
-    def test_clean_containerized_pull_retains_container(self, mock_lifecycle_clean):
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        # Container was created before, and isn't running
-        fake_lxd.name = "{}:snapcraft-clean-test".format(self.remote)
-        fake_lxd.status = "Stopped"
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_CONTAINER_BUILDS", self.snapcraft_container_builds
-            )
-        )
-        self.make_snapcraft_yaml(n=3)
-
-        result = self.run_command(["clean", "-s", "pull"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        # clean pull should NOT delete the container
-        fake_lxd.check_call_mock.assert_not_called()
-        # clean should be called normally, outside of the container
-        mock_lifecycle_clean.assert_has_calls([call(ANY, (), steps.PULL)])
-
-    def test_clean_containerized_with_part(self):
-        fake_lxd = fixture_setup.FakeLXD()
-        fake_lxd.name = "local:snapcraft-clean-test"
-        fake_lxd.status = "Stopped"
-        self.useFixture(fake_lxd)
-        # Container should not be initialized at all
-        fake_lxd.check_output_mock.side_effect = FileNotFoundError("lxc")
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_CONTAINER_BUILDS", self.snapcraft_container_builds
-            )
-        )
-        self.make_snapcraft_yaml(n=3)
-
-        result = self.run_command(["clean", "clean1"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        # clean with parts should NOT delete the container
-        fake_lxd.check_call_mock.assert_not_called()
 
 
 class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
