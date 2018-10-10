@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
-from snapcraft.internal import errors
+from snapcraft.internal import common, errors
 from snapcraft.formatting_utils import humanize_list
 
 
@@ -42,6 +42,8 @@ class BuilderEnvironmentConfig:
         """
         if force_provider:
             build_provider = force_provider
+        elif common.is_docker_instance:
+            build_provider = "destructive-host"
         else:
             build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
 
