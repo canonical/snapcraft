@@ -11,7 +11,7 @@ parts:
   # Create the underlay, the stuff shared from the producer.
   underlay:
     plugin: catkin
-    rosdistro: kinetic
+    source: .
     include-roscore: false
     catkin-packages: [underlay_package]
 

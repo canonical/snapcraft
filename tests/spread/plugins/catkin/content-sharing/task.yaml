@@ -6,21 +6,36 @@ environment:
   PRODUCER_DIR: ../snaps/catkin-shared-ros/producer
   CONSUMER_DIR: ../snaps/catkin-shared-ros/consumer
 
+prepare: |
+  CWD="$(pwd)"
+  PRODUCER_DIR="$CWD/$PRODUCER_DIR"
+  CONSUMER_DIR="$CWD/$CONSUMER_DIR"
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$PRODUCER_DIR/snap/snapcraft.yaml"
+  set_base "$CONSUMER_DIR/snap/snapcraft.yaml"
+
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
+      sed -i 's/kinetic/melodic/' "$PRODUCER_DIR/snap/snapcraft.yaml"
+      sed -i 's/kinetic/melodic/' "$CONSUMER_DIR/snap/snapcraft.yaml"
+  fi
+
 restore: |
   CWD="$(pwd)"
   PRODUCER_DIR="$CWD/$PRODUCER_DIR"
   CONSUMER_DIR="$CWD/$CONSUMER_DIR"
 
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
   cd "$PRODUCER_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore_yaml "snap/snapcraft.yaml"
 
   cd "$CONSUMER_DIR"
   snapcraft clean
   rm -f ./*.snap
-
-# ROS Kinetic only supports 16.04
-systems: [ubuntu-16.04*]
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   CWD="$(pwd)"

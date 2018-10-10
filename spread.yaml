@@ -195,6 +195,8 @@ suites:
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
    kill-timeout: 180m
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
