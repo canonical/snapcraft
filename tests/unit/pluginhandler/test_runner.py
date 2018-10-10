@@ -15,12 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import functools
-import logging
 import os
 import subprocess
 from textwrap import dedent
 
-import fixtures
 from unittest import mock
 from testtools.matchers import Contains, FileContains, FileExists
 
@@ -78,67 +76,13 @@ class RunnerTestCase(unit.TestCase):
 
         self.assertThat(os.path.join("sourcedir", "fake-pull"), FileExists())
 
-    def test_prepare(self):
-        os.mkdir("builddir")
-
-        runner = _runner.Runner(
-            part_properties={"prepare": "touch prepare"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        runner.prepare()
-
-        self.assertThat(os.path.join("builddir", "prepare"), FileExists())
-
-    def test_builtin_function_from_prepare(self):
-        os.mkdir("builddir")
-
-        runner = _runner.Runner(
-            part_properties={"prepare": "snapcraftctl build"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={"build": _fake_build},
-        )
-
-        runner.prepare()
-
-        self.assertThat(os.path.join("builddir", "fake-build"), FileExists())
-
     def test_snapcraft_utils_in_path_if_snap(self):
         self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         os.mkdir("builddir")
 
         runner = _runner.Runner(
-            part_properties={"prepare": "echo $PATH > path"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        runner.prepare()
-
-        expected_path_segment = "/snap/snapcraft/current/bin/scriptlet-bin"
-
-        self.assertThat(os.path.join("builddir", "path"), FileExists())
-        self.assertThat(
-            os.path.join("builddir", "path"),
-            FileContains(matcher=Contains(expected_path_segment)),
-        )
-
-    def test_old_build(self):
-        os.mkdir("builddir")
-
-        runner = _runner.Runner(
-            part_properties={"build": "touch build"},
+            part_properties={"override-build": "echo $PATH > path"},
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -148,7 +92,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner.build()
 
-        self.assertThat(os.path.join("builddir", "build"), FileExists())
+        expected_path_segment = "/snap/snapcraft/current/bin/scriptlet-bin"
+
+        self.assertThat(os.path.join("builddir", "path"), FileExists())
+        self.assertThat(
+            os.path.join("builddir", "path"),
+            FileContains(matcher=Contains(expected_path_segment)),
+        )
 
     def test_build(self):
         os.mkdir("builddir")
@@ -179,38 +129,6 @@ class RunnerTestCase(unit.TestCase):
         )
 
         runner.build()
-
-        self.assertThat(os.path.join("builddir", "fake-build"), FileExists())
-
-    def test_install(self):
-        os.mkdir("builddir")
-
-        runner = _runner.Runner(
-            part_properties={"install": "touch install"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        runner.install()
-
-        self.assertThat(os.path.join("builddir", "install"), FileExists())
-
-    def test_builtin_function_from_install(self):
-        os.mkdir("builddir")
-
-        runner = _runner.Runner(
-            part_properties={"install": "snapcraftctl build"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={"build": _fake_build},
-        )
-
-        runner.install()
 
         self.assertThat(os.path.join("builddir", "fake-build"), FileExists())
 
@@ -291,7 +209,7 @@ class RunnerFailureTestCase(unit.TestCase):
         )
 
         runner = _runner.Runner(
-            part_properties={"build": script},
+            part_properties={"override-build": script},
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -312,7 +230,7 @@ class RunnerFailureTestCase(unit.TestCase):
         )
 
         runner = _runner.Runner(
-            part_properties={"build": script},
+            part_properties={"override-build": script},
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -326,7 +244,7 @@ class RunnerFailureTestCase(unit.TestCase):
         os.mkdir("builddir")
 
         runner = _runner.Runner(
-            part_properties={"build": "alias snapcraftctl 2> /dev/null"},
+            part_properties={"override-build": "alias snapcraftctl 2> /dev/null"},
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -360,73 +278,3 @@ class RunnerFailureTestCase(unit.TestCase):
 
         with mock.patch("subprocess.Popen", wraps=silent_popen):
             self.assertRaises(errors.ScriptletRunError, runner.prime)
-
-
-class RunnerDeprecationTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        os.mkdir("builddir")
-
-    def test_prepare_deprecation(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-
-        _runner.Runner(
-            part_properties={"prepare": "foo"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        self.assertThat(
-            self.fake_logger.output,
-            Contains(
-                "DEPRECATED: The 'prepare' keyword has been replaced by "
-                "'override-build'"
-            ),
-        )
-
-    def test_build_deprecation(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-
-        _runner.Runner(
-            part_properties={"build": "foo"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        self.assertThat(
-            self.fake_logger.output,
-            Contains(
-                "DEPRECATED: The 'build' keyword has been replaced by "
-                "'override-build'"
-            ),
-        )
-
-    def test_install_deprecation(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-
-        _runner.Runner(
-            part_properties={"install": "foo"},
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-        )
-
-        self.assertThat(
-            self.fake_logger.output,
-            Contains(
-                "DEPRECATED: The 'install' keyword has been replaced by "
-                "'override-build'"
-            ),
-        )

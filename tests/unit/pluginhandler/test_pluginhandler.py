@@ -1115,16 +1115,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertTrue(expected in state.properties)
@@ -1164,16 +1161,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))
@@ -1216,16 +1210,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))
