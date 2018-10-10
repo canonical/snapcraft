@@ -1,0 +1,16 @@
+name: layout-test
+version: "1.0"
+summary: Test that a snap using layout can be created
+description: This is a snap that uses layout
+
+grade: devel
+confinement: strict
+
+layout:
+  /etc/test-dir:
+    bind: $SNAP/test-dir
+
+parts:
+  my-part:
+    plugin: dump
+    source: .
