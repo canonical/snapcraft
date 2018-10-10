@@ -1,5 +1,5 @@
 name: deb-with-checksum
-version: '0.1'
+version: "0.1"
 summary: test checksum with deb's sources
 description: |
   This integration tests verifies that deb files can be used with checksums.

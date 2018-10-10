@@ -1,5 +1,5 @@
 name: build-snap-grammar-on-else
-version: '0.1'
+version: "0.1"
 summary: Test build snap grammar on statement else
 description: Verify that the on statement moves to else on other architectures
 grade: devel
