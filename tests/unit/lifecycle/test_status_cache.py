@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2018 Canonical Ltd
@@ -33,7 +32,8 @@ class StatusCacheTestCase(LifecycleTestBase):
                 """\
                 parts:
                   main:
-                    plugin: nil
+                    source: .
+                    plugin: dump
                   dependent:
                     plugin: nil
                     after: [main]

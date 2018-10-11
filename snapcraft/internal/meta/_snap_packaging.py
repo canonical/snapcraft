@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import enum
 import collections
 import contextlib
 import itertools
@@ -47,18 +48,26 @@ logger = logging.getLogger(__name__)
 _MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    "type",
-    "base",
     "architectures",
-    "confinement",
-    "grade",
     "assumes",
+    "base",
+    "confinement",
+    "environment",
+    "epoch",
+    "grade",
+    "hooks",
+    "layout",
+    "license",
     "plugs",
     "slots",
-    "epoch",
-    "hooks",
-    "environment",
+    "type",
 ]
+
+
+@enum.unique
+class Adapter(enum.Enum):
+    NONE = 1
+    LEGACY = 2
 
 
 class OctInt(yaml_utils.SnapcraftYAMLObject):
@@ -278,6 +287,15 @@ def _update_yaml_with_defaults(config_data, schema):
                     )
                 )
 
+    # Set default adapter
+    app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][
+        "properties"
+    ]
+    default_adapter = app_schema["adapter"]["default"]
+    for app in config_data.get("apps", {}).values():
+        if "adapter" not in app:
+            app["adapter"] = default_adapter
+
 
 def _ensure_required_keywords(config_data):
     # Verify that all mandatory keys have been satisfied
@@ -308,12 +326,24 @@ class _SnapPackaging:
         self._meta_dir = os.path.join(self._prime_dir, "meta")
         self._config_data = project_config.data.copy()
         self._original_snapcraft_yaml = project_config.project.info.get_raw_snapcraft()
+        self._meta_runner = os.path.join(
+            self._prime_dir, "snap", "command-chain", "snapcraft-runner"
+        )
+
+        self._install_path_pattern = re.compile(
+            r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
+        )
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
     def write_snap_yaml(self) -> str:
         common.env = self._project_config.snap_env()
+
         try:
+            # Only generate the meta command chain if there are apps that need it
+            if self._config_data.get("apps", None):
+                self._generate_command_chain()
+
             package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
             snap_yaml = self._compose_snap_yaml()
 
@@ -338,7 +368,7 @@ class _SnapPackaging:
                 os.mkdir(icon_dir)
             if os.path.exists(icon_path):
                 os.unlink(icon_path)
-            os.link(self._config_data["icon"], icon_path)
+            file_utils.link_or_copy(self._config_data["icon"], icon_path)
 
         if self._config_data.get("type", "") == "gadget":
             if not os.path.exists("gadget.yaml"):
@@ -346,6 +376,31 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
+
+    def _generate_command_chain(self):
+        # Classic confinement or building on a host that does not match the target base
+        # means we cannot setup an environment that will work.
+        if (
+            self._config_data["confinement"] == "classic"
+            or not self._is_host_compatible_with_base
+        ):
+            assembled_env = None
+        else:
+            assembled_env = common.assemble_env()
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+
+            if assembled_env:
+                os.makedirs(os.path.dirname(self._meta_runner), exist_ok=True)
+                with open(self._meta_runner, "w") as f:
+                    print("#!/bin/sh", file=f)
+                    print(assembled_env, file=f)
+                    print(
+                        "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
+                        file=f,
+                    )
+                    print('exec "$@"', file=f)
+                os.chmod(self._meta_runner, 0o755)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
@@ -472,7 +527,7 @@ class _SnapPackaging:
                 snap_yaml[key_name] = self._config_data[key_name]
 
         if "apps" in self._config_data:
-            _verify_app_paths(basedir="prime", apps=self._config_data["apps"])
+            _verify_app_paths(basedir=self._prime_dir, apps=self._config_data["apps"])
             snap_yaml["apps"] = self._wrap_apps(self._config_data["apps"])
             self._render_socket_modes(snap_yaml["apps"])
 
@@ -488,32 +543,12 @@ class _SnapPackaging:
         args = " ".join(quoted_args) + ' "$@"' if args else '"$@"'
         cwd = "cd {}".format(cwd) if cwd else ""
 
-        # If we are dealing with classic confinement it means all our
-        # binaries are linked with `nodefaultlib` but we still do
-        # not want to leak PATH or other environment variables
-        # that would affect the applications view of the classic
-        # environment it is dropped into.
-        replace_path = re.compile(
-            r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
-        )
-        # Confinement classic or when building on a host that does not match
-        # the target base means we cannot setup an environment that will work.
-        if (
-            self._config_data["confinement"] == "classic"
-            or not self._is_host_compatible_with_base
-        ):
-            assembled_env = None
-        else:
-            assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-            assembled_env = replace_path.sub("$SNAP", assembled_env)
-
         executable = '"{}"'.format(wrapexec)
 
         if shebang:
             if shebang.startswith("/usr/bin/env "):
                 shebang = shell_utils.which(shebang.split()[1])
-            new_shebang = replace_path.sub("$SNAP", shebang)
+            new_shebang = self._install_path_pattern.sub("$SNAP", shebang)
             new_shebang = re.sub(self._prime_dir, "$SNAP", new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
@@ -523,11 +558,6 @@ class _SnapPackaging:
 
         with open(wrappath, "w+") as f:
             print("#!/bin/sh", file=f)
-            if assembled_env:
-                print("{}".format(assembled_env), file=f)
-                print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
-                )
             if cwd:
                 print("{}".format(cwd), file=f)
             print("exec {} {}".format(executable, args), file=f)
@@ -563,28 +593,34 @@ class _SnapPackaging:
         return os.path.relpath(wrappath, self._prime_dir)
 
     def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
+        apps = copy.deepcopy(apps)
         gui_dir = os.path.join(self.meta_dir, "gui")
         if not os.path.exists(gui_dir):
             os.mkdir(gui_dir)
         for f in os.listdir(gui_dir):
             if os.path.splitext(f)[1] == ".desktop":
                 os.remove(os.path.join(gui_dir, f))
-        for app in apps:
-            adapter = apps[app].pop("adapter", "")
-            if adapter != "none":
-                self._wrap_app(app, apps[app])
-            self._generate_desktop_file(app, apps[app])
+        for app_name, app in apps.items():
+            adapter = Adapter[app.pop("adapter").upper()]
+            if adapter == Adapter.LEGACY:
+                self._wrap_app(app_name, app)
+            self._generate_desktop_file(app_name, app)
         return apps
 
     def _wrap_app(self, name, app):
         cmds = (k for k in ("command", "stop-command") if k in app)
         for k in cmds:
             try:
-                app[k] = self._wrap_exe(app[k], "{}-{}".format(k, name))
+                new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
             except FileNotFoundError:
                 raise errors.InvalidAppCommandError(command=app[k], app=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
+
+            if os.path.isfile(self._meta_runner):
+                snap_runner = os.path.relpath(self._meta_runner, self._prime_dir)
+                new_command = "{} $SNAP/{}".format(snap_runner, new_command)
+            app[k] = new_command
 
     def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop("desktop", "")

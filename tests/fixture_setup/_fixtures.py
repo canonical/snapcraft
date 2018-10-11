@@ -22,7 +22,6 @@ import os
 import platform
 import pkgutil
 import shutil
-import string
 import subprocess
 import sys
 import tempfile
@@ -32,7 +31,6 @@ import urllib.parse
 from functools import partial
 from types import ModuleType
 from unittest import mock
-from subprocess import CalledProcessError
 from typing import Callable
 
 import fixtures
@@ -493,120 +491,6 @@ class FakeMetadataExtractor(fixtures.Fixture):
 
     def _remove_module(self) -> None:
         del sys.modules[self._import_name]
-
-
-class FakeLXD(fixtures.Fixture):
-    """..."""
-
-    def __init__(self):
-        self.status = None
-        self.files = []
-        self.kernel_arch = "x86_64"
-        self.devices = "{}"
-
-    def _setUp(self):
-        patcher = mock.patch("subprocess.check_call")
-        self.check_call_mock = patcher.start()
-        self.check_call_mock.side_effect = self.check_output_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("subprocess.check_output")
-        self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = self.check_output_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("time.sleep", lambda _: None)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("platform.machine")
-        self.machine_mock = patcher.start()
-        self.machine_mock.return_value = "x86_64"
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch("platform.architecture")
-        self.architecture_mock = patcher.start()
-        self.architecture_mock.return_value = ("64bit", "ELF")
-        self.addCleanup(patcher.stop)
-
-    def call_effect(self, *args, **kwargs):
-        if args[0] == ["lxc", "remote", "get-default"]:
-            return "local".encode("utf-8")
-        elif args[0][:2] == ["lxc", "info"]:
-            return "Architecture: {}".format(self.kernel_arch).encode("utf-8")
-        elif args[0][:3] == ["lxc", "list", "--format=json"]:
-            if self.status and args[0][3] == self.name:
-                return (
-                    string.Template(
-                        """
-                    [{"name": "$NAME",
-                      "status": "$STATUS",
-                      "devices": $DEVICES}]
-                    """
-                    )
-                    .substitute(
-                        {
-                            # Container name without remote prefix
-                            "NAME": self.name.split(":")[-1],
-                            "STATUS": self.status,
-                            "DEVICES": self.devices,
-                        }
-                    )
-                    .encode("utf-8")
-                )
-            return "[]".encode("utf-8")
-        elif args[0][0] == "lxc" and args[0][1] in ["init", "start", "launch", "stop"]:
-            return self._lxc_create_start_stop(args)
-        elif args[0][:2] == ["lxc", "exec"]:
-            return self._lxc_exec(args)
-        elif args[0][:4] == ["lxc", "image", "list", "--format=json"]:
-            return (
-                '[{"architecture":"test-architecture",'
-                '"fingerprint":"test-fingerprint",'
-                '"created_at":"test-created-at"}]'
-            ).encode("utf-8")
-        elif args[0][0] == "sha384sum":
-            return "deadbeef {}".format(args[0][1]).encode("utf-8")
-        else:
-            return "".encode("utf-8")
-
-    def check_output_side_effect(self):
-        return self.call_effect
-
-    def _lxc_create_start_stop(self, args):
-        if args[0][1] == "init":
-            self.name = args[0][3]
-            self.status = "Stopped"
-        elif args[0][1] == "launch":
-            self.name = args[0][4]
-            self.status = "Running"
-        elif args[0][1] == "start" and self.name == args[0][2]:
-            self.status = "Running"
-        elif args[0][1] == "stop" and not self.status:
-            # error: not found
-            raise CalledProcessError(returncode=1, cmd=args[0])
-
-    def _lxc_exec(self, args):
-        if self.status and args[0][2] == self.name:
-            cmd = args[0][4]
-            if cmd == "sudo":
-                cmd = args[0][8]
-            if cmd == "ls":
-                return " ".join(self.files).encode("utf-8")
-            elif cmd == "readlink":
-                if args[0][-1].endswith("/current"):
-                    raise CalledProcessError(returncode=1, cmd=cmd)
-            elif "sha384sum" in args[0][-1]:
-                raise CalledProcessError(returncode=1, cmd=cmd)
-
-    def _popen(self, args):
-        class Popen:
-            def __init__(self, args):
-                self.args = args
-
-            def terminate(self):
-                pass
-
-        return Popen(args)
 
 
 class GitRepo(fixtures.Fixture):

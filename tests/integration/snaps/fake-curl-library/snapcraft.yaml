@@ -1,5 +1,5 @@
 name: test-package
-version: 0.1
+version: "0.1"
 summary: Fake curl library test.
 description: A snap with two parts, a curl-like library and a user of it.
 confinement: strict

@@ -64,14 +64,14 @@ class Subversion(Base):
             opts = ["-r", self.source_commit]
 
         if os.path.exists(os.path.join(self.source_dir, ".svn")):
-            subprocess.check_call(
+            self._run(
                 [self.command, "update"] + opts,
                 cwd=self.source_dir,
                 **self._call_kwargs
             )
         else:
             if os.path.isdir(self.source):
-                subprocess.check_call(
+                self._run(
                     [
                         self.command,
                         "checkout",
@@ -82,7 +82,7 @@ class Subversion(Base):
                     **self._call_kwargs
                 )
             else:
-                subprocess.check_call(
+                self._run(
                     [self.command, "checkout", self.source, self.source_dir] + opts,
                     **self._call_kwargs
                 )
@@ -96,19 +96,15 @@ class Subversion(Base):
         commit = self.source_commit
 
         if not commit:
-            commit = (
-                subprocess.check_output(
-                    [
-                        "svn",
-                        "info",
-                        "--show-item",
-                        "last-changed-revision",
-                        "--no-newline",
-                        self.source_dir,
-                    ]
-                )
-                .decode("utf-8")
-                .strip()
+            commit = self._run_output(
+                [
+                    "svn",
+                    "info",
+                    "--show-item",
+                    "last-changed-revision",
+                    "--no-newline",
+                    self.source_dir,
+                ]
             )
 
         return {

@@ -69,21 +69,21 @@ class ErrorsBaseTestCase(unit.TestCase):
             exception_handler(*sys.exc_info(), debug=debug)
 
     def assert_exception_traceback_exit_1_with_debug(self):
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
             RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
         )
 
     def assert_exception_traceback_exit_1_without_raven(self):
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
             RuntimeError, mock.ANY, mock.ANY, file=sys.stdout
         )
 
     def assert_no_exception_traceback_exit_1_without_debug(self):
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_not_called()
 
@@ -112,7 +112,7 @@ class ErrorsTestCase(ErrorsBaseTestCase):
 
         self.error_mock.assert_called_once_with("is a SnapcraftError")
         self.exit_mock.assert_called_once_with(123)
-        self.print_exception_mock.assert_not_called
+        self.print_exception_mock.assert_not_called()
 
     def test_handler_traces_snapcraft_exceptions_with_debug(self):
         try:
@@ -120,8 +120,8 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.error_mock.assert_not_called
-        self.exit_mock.assert_not_called
+        self.error_mock.assert_not_called()
+        self.exit_mock.assert_called_once_with(123)
         self.print_exception_mock.assert_called_once_with(
             TestSnapcraftError, mock.ANY, mock.ANY
         )
@@ -198,7 +198,7 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
         # It we have a tty, then the trace should be saved to a file and sent to sentry.
         # If we don't have a tty, then the same should happen, but the trace should
         # also be printed.
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
         expected_calls = [
@@ -236,7 +236,7 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         # It we have a tty, then the trace should be saved to a file and sent to sentry.
         # If we don't have a tty, then the same should happen, but the trace should
         # also be printed.
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
         expected_calls = [
@@ -297,7 +297,7 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         # It we have a tty, then the trace should be saved to a file and sent to sentry.
         # If we don't have a tty, then the same should happen, but the trace should
         # also be printed.
-        self.error_mock.assert_not_called
+        self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
         expected_calls = [

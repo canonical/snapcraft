@@ -16,8 +16,9 @@
 
 import os
 import shutil
-from unittest import mock
+import subprocess
 
+from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
@@ -173,6 +174,14 @@ class TestMercurial(unit.sources.SourceTestCase):  # type: ignore
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler["mercurial"] is sources.Mercurial)
+
+    def test_pull_failure(self):
+        self.mock_run.side_effect = subprocess.CalledProcessError(1, [])
+
+        hg = sources.Mercurial("hg://my-source", "source_dir")
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, hg.pull)
+        self.assertThat(raised.command, Equals("hg clone hg://my-source source_dir"))
+        self.assertThat(raised.exit_code, Equals(1))
 
 
 class MercurialBaseTestCase(unit.TestCase):

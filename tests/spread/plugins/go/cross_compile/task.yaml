@@ -3,12 +3,29 @@ summary: Cross-compile Go snaps
 environment:
   SNAP_DIR: ../snaps/go-hello
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"
   snapcraft stage --target-arch=armhf
   file stage/bin/go-hello | MATCH ",\s*ARM\s*,"
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -s golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
+    exit 1
+  fi

@@ -27,6 +27,7 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^snapcraft.yaml$"),
     re.compile(r"^.snapcraft(/state)?$"),
     re.compile(r"^hooks(/.*)?$"),
+    re.compile(r"^local(/.*)?$"),
     re.compile(r"^plugins(/.*)?$"),
     re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
 }
@@ -40,7 +41,7 @@ def conduct_project_sanity_check(project: snapcraft.project.Project):
     The checks done here are meant to be light, and not rely on the build environment.
     """
 
-    snap_dir_path = os.path.join(project._work_dir, "snap")
+    snap_dir_path = os.path.join(project._project_dir, "snap")
     if os.path.isdir(snap_dir_path):
         _check_snap_dir(snap_dir_path)
 
@@ -58,7 +59,11 @@ def _check_snap_dir(snap_dir_path: str):
             "The snap/ directory is meant specifically for snapcraft, but it contains "
             "the following non-snapcraft-related paths, which is unsupported and will "
             "cause unexpected behavior:"
-            "\n- {}".format("\n- ".join(sorted(unexpected_paths)))
+            "\n- {}\n\n"
+            "If you must store these files within the snap/ directory, move them to "
+            "snap/local/, which is ignored by snapcraft.".format(
+                "\n- ".join(sorted(unexpected_paths))
+            )
         )
 
 

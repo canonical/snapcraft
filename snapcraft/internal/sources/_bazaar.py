@@ -73,7 +73,7 @@ class Bazaar(Base):
             os.rmdir(self.source_dir)
             cmd = [self.command, "branch"] + tag_opts + [self.source, self.source_dir]
 
-        subprocess.check_call(cmd, **self._call_kwargs)
+        self._run(cmd, **self._call_kwargs)
         self.source_details = self._get_source_details()
 
     def _get_source_details(self):
@@ -82,11 +82,7 @@ class Bazaar(Base):
 
         if not tag:
             if os.path.exists(self.source_dir):
-                commit = (
-                    subprocess.check_output(["bzr", "revno", self.source_dir])
-                    .decode("utf-8")
-                    .strip()
-                )
+                commit = self._run_output(["bzr", "revno", self.source_dir])
 
         branch = None
         source = self.source

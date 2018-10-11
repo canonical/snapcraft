@@ -277,19 +277,6 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
-            "InvalidContainerRemoteError",
-            {
-                "exception": errors.InvalidContainerRemoteError,
-                "kwargs": {"remote": "test-remote"},
-                "expected_message": (
-                    "Failed to use LXD remote: "
-                    "'test-remote' is not a valid name.\n"
-                    "Use a LXD remote without colons, spaces and slashes in the "
-                    "name.\n"
-                ),
-            },
-        ),
-        (
             "InvalidDesktopFileError",
             {
                 "exception": errors.InvalidDesktopFileError,
@@ -335,6 +322,14 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "exception": errors.PluginError,
                 "kwargs": {"message": "test-message"},
                 "expected_message": "Failed to load plugin: test-message",
+            },
+        ),
+        (
+            "PluginBaseError",
+            {
+                "exception": errors.PluginBaseError,
+                "kwargs": {"part_name": "go-part", "base": "arch"},
+                "expected_message": "The plugin used by part 'go-part' does not support snaps using base 'arch'.",
             },
         ),
         (

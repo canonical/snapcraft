@@ -1,5 +1,5 @@
 name: assemble
-version: 1.0
+version: "1.0"
 vendor: mterry@ubuntu.com
 services:
   - name: assemble-service

@@ -28,4 +28,4 @@ EOF
 
 systemctl daemon-reload
 
-su ubuntu -c "ADT_TEST=1 SNAPCRAFT_FROM_DEB=1 python3 -m snaps_tests --ip localhost"
+su ubuntu -c "ADT_TEST=1 SNAPCRAFT_PACKAGE_TYPE=deb python3 -m snaps_tests --ip localhost"

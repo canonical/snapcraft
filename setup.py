@@ -39,7 +39,6 @@ packages = [
     "snapcraft.internal.build_providers._multipass",
     "snapcraft.internal.deltas",
     "snapcraft.internal.lifecycle",
-    "snapcraft.internal.lxd",
     "snapcraft.internal.meta",
     "snapcraft.internal.pluginhandler",
     "snapcraft.internal.project_loader",
@@ -94,7 +93,6 @@ if sys.platform == "win32":
             "click",
             "responses",
             "configparser",
-            "docopt",
             "cffi",
         ],
         # Explicit inclusion data, which is then clobbered.
@@ -136,15 +134,9 @@ else:
         package_data=package_data,
         license=license,
         classifiers=classifiers,
-        # non-cx_Freeze arguments
-        entry_points={
-            "console_scripts": [
-                "snapcraft = snapcraft.cli.__main__:run",
-                "snapcraft-parser = snapcraft.internal.parser:main",
-            ]
-        },
-        # This is not in console_scripts because we need a clean environment
-        scripts=["bin/snapcraftctl"],
+        # snapcraftctl is not in console_scripts because we need a clean environment.
+        # snapcraft isn't in console_scripts so we can dispatch to legacy depending on bases
+        scripts=["bin/snapcraft", "bin/snapcraftctl"],
         data_files=[
             ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")]),
             (

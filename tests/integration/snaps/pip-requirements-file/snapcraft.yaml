@@ -1,19 +1,19 @@
 name: pip-requirements-file
-version: 1
+version: "1"
 summary: Test a requirements file
 description: |
   The python plugins can specify their requirements
   as a requirements.txt file with the list of packages
   that will be downloaded using pip.
-icon: icon.svg
 confinement: strict
 
 parts:
   python2:
-    plugin: python2
+    plugin: python
+    python-version: python2
     source: .
     requirements: requirements.txt
   python3:
-    plugin: python3
+    plugin: python
     source: .
     requirements: requirements.txt

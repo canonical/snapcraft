@@ -28,7 +28,6 @@ from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
-from snapcraft.internal.lxd import errors as lxd_errors
 
 # raven is not available on 16.04
 try:
@@ -108,11 +107,7 @@ def exception_handler(  # noqa: C901
         traceback.print_exception(*exc_info)
     elif is_snapcraft_error and not debug:
         exit_code = exception.get_exit_code()
-        # if the error comes from running snapcraft in the container, it
-        # has already been displayed so we should avoid that situation
-        # of a double error print
-        if exception_type != lxd_errors.ContainerSnapcraftCmdError:
-            echo.error(str(exception))
+        echo.error(str(exception))
         if is_snapcraft_reportable_error:
             ask_to_report = True
     else:

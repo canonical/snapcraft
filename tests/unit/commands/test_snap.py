@@ -34,7 +34,7 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
     yaml_template = dedent(
         """\
         name: snap-test
-        version: 1.0
+        version: "1.0"
         summary: test snapping
         description: if snap is successful a snap package will be available
         architectures:
@@ -99,32 +99,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stdout=subprocess.PIPE,
         )
 
-    def test_snap_with_lxd_build_environment(self):
-        self.make_snapcraft_yaml()
-
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
-        )
-
-        patcher = mock.patch("snapcraft.internal.lifecycle.pack")
-        pack_mock = patcher.start()
-        pack_mock.return_value = "snap-test_1.0.snap"
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("snapcraft.internal.lxd.Project")
-        lxd_project_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        result = self.run_command(["snap"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped snap-test_1.0.snap"))
-        self.assertFalse(self.popen_spy.called)
-        lxd_project_mock.assert_called_once_with(
-            project=mock.ANY, source=".", output=None
-        )
-        lxd_project_mock().execute.assert_called_once_with("prime", [])
-
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type="bad-type")
 
@@ -163,51 +137,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             ],
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
-        )
-
-    def test_snap_containerized_remote_fails(self):
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "myremote")
-        )
-        self.make_snapcraft_yaml()
-
-        raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
-            self.run_command,
-            ["snap"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Contains(
-                "The experimental feature of using non-local LXD remotes "
-                "with SNAPCRAFT_CONTAINER_BUILDS has been dropped."
-            ),
-        )
-
-    def test_use_of_both_build_env_affecting_vars_fails(self):
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_CONTAINER_BUILDS", "on")
-        )
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
-        )
-        self.make_snapcraft_yaml()
-
-        raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
-            self.run_command,
-            ["snap"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Contains(
-                "SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS "
-                "cannot be used together.\n"
-                "Given that SNAPCRAFT_CONTAINER_BUILDS is deprecated, "
-                "unset that variable from the environment and try again."
-            ),
         )
 
     def test_snap_type_os_does_not_use_all_root(self):
@@ -276,7 +205,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(
             fake_logger.output,
-            Equals(
+            Contains(
                 "Skipping pull part1 (already ran)\n"
                 "Skipping build part1 (already ran)\n"
                 "Skipping stage part1 (already ran)\n"
@@ -427,7 +356,7 @@ type: os
 
         self.assertThat(
             fake_logger.output,
-            Equals(
+            Contains(
                 "Pulling part1 \n"
                 "Building part1 \n"
                 "Staging part1 \n"
@@ -458,7 +387,7 @@ type: os
             snapcraft_yaml=dedent(
                 """\
             name: test-package
-            version: 1
+            version: "1.0"
             summary: test
             description: test
             confinement: strict
@@ -496,13 +425,13 @@ type: os
 
         snap_build_renamed = snap_build + ".1234"
         self.assertThat(
-            fake_logger.output.splitlines(),
+            [l.strip() for l in fake_logger.output.splitlines()],
             Equals(
                 [
-                    "Pulling part1 ",
-                    "Building part1 ",
-                    "Staging part1 ",
-                    "Priming part1 ",
+                    "Pulling part1",
+                    "Building part1",
+                    "Staging part1",
+                    "Priming part1",
                     "Renaming stale build assertion to {}".format(snap_build_renamed),
                 ]
             ),

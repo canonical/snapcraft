@@ -3,13 +3,16 @@ summary: Build and run a basic meson snap
 environment:
   SNAP_DIR: ../snaps/meson-hello
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-
-# There is no meson on trusty
-systems: [-ubuntu-14.04*]
+  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"

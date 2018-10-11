@@ -185,6 +185,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
             "enum": ["gz"],
         }
 
+        schema["required"] = ["source"]
+
         return schema
 
     @classmethod

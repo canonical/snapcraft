@@ -176,55 +176,6 @@ class ValidationTest(ValidationBaseTest):
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 
 
-class OldConflictsWithNewScriptletTest(ValidationBaseTest):
-
-    old_scriptlet_scenarios = [
-        ("prepare", {"old_keyword": "prepare", "old_value": ["test-prepare"]}),
-        ("build", {"old_keyword": "build", "old_value": ["test-build"]}),
-        ("install", {"old_keyword": "install", "old_value": ["test-install"]}),
-    ]
-
-    new_scriptlet_scenarios = [
-        (
-            "override-pull",
-            {"new_keyword": "override-pull", "new_value": ["test-override-pull"]},
-        ),
-        (
-            "override-build",
-            {"new_keyword": "override-build", "new_value": ["test-override-build"]},
-        ),
-        (
-            "override-stage",
-            {"new_keyword": "override-stage", "new_value": ["test-override-stage"]},
-        ),
-        (
-            "override-prime",
-            {"new_keyword": "override-prime", "new_value": ["test-override-prime"]},
-        ),
-    ]
-
-    scenarios = multiply_scenarios(old_scriptlet_scenarios, new_scriptlet_scenarios)
-
-    def test_both_old_and_new_keywords_specified(self):
-        self.data["parts"]["part1"][self.old_keyword] = self.old_value
-        self.data["parts"]["part1"][self.new_keyword] = self.new_value
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        self.assertThat(
-            str(raised),
-            MatchesRegex(
-                (
-                    ".*The 'parts/part1' property does not match the required "
-                    "schema: Parts cannot contain both {0!r} and 'override-\*' "
-                    "keywords. Use 'override-build' instead of {0!r}.*"
-                ).format(self.old_keyword)
-            ),
-        )
-
-
 class DaemonDependencyTest(ValidationBaseTest):
 
     scenarios = [
@@ -509,7 +460,14 @@ class InvalidPartNamesTest(ValidationBaseTest):
 
     scenarios = [
         (name, dict(name=name))
-        for name in ["plugins", "qwe#rty", "qwe_rty", "queue rty", "queue  rty"]
+        for name in [
+            "plugins",
+            "qwe#rty",
+            "qwe_rty",
+            "queue rty",
+            "queue  rty",
+            "part/sub",
+        ]
     ]
 
     def test_invalid_part_names(self):
@@ -521,9 +479,8 @@ class InvalidPartNamesTest(ValidationBaseTest):
         expected_message = (
             "The 'parts' property does not match the required schema: {!r} is "
             "not a valid part name. Part names consist of lower-case "
-            "alphanumeric characters, hyphens, plus signs, and forward "
-            "slashes. As a special case, 'plugins' is also not a valid part "
-            "name."
+            "alphanumeric characters, hyphens and plus signs. "
+            "As a special case, 'plugins' is also not a valid part name."
         ).format(self.name)
         self.assertThat(raised.message, Equals(expected_message), message=data)
 
@@ -964,7 +921,7 @@ class ValidVersionTest(ProjectLoaderBaseTest):
 class InvalidVersionTest(ProjectLoaderBaseTest):
 
     scenarios = [
-        (version, dict(version=version))
+        (str(version), dict(version=version))
         for version in [
             "*",
             "",
@@ -979,6 +936,7 @@ class InvalidVersionTest(ProjectLoaderBaseTest):
             "v_",
             "v-",
             "underscores_are_bad",
+            0.1,
         ]
     ]
 
@@ -997,7 +955,7 @@ class InvalidVersionTest(ProjectLoaderBaseTest):
             raised.message,
             Equals(
                 "The 'version' property does not match the required "
-                "schema: {!r} is not a valid snap version. Snap versions "
+                "schema: {!r} is not a valid snap version string. Snap versions "
                 "consist of upper- and lower-case alphanumeric characters, "
                 "as well as periods, colons, plus signs, tildes, and "
                 "hyphens. They cannot begin with a period, colon, plus "
@@ -1451,6 +1409,104 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
         )
 
 
+class LicenseTest(ProjectLoaderBaseTest):
+    def test_yaml_valid_license_string(self):
+        self.make_snapcraft_project(
+            dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: nothing
+                license: MIT-0
+                parts:
+                  part1:
+                    plugin: nil
+                """
+            )
+        )
+
+    def test_invalid_yaml_invalid_license_non_string(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: nothing
+            license: 23.1
+            parts:
+              part1:
+                plugin: nil
+            """
+        )
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+        self.assertRegex(
+            raised.message,
+            "The 'license' property does not match the required schema:.*is "
+            "not of type 'string'",
+        )
+
+
+class ValidAdaptersTest(ProjectLoaderBaseTest):
+    scenarios = [("none", {"yaml": "none"}), ("legacy", {"yaml": "legacy"})]
+
+    def test_yaml_valid_adapters(self):
+        self.make_snapcraft_project(
+            dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: nothing
+                apps:
+                  app:
+                    command: foo
+                    adapter: {}
+                parts:
+                  part1:
+                    plugin: nil
+                """
+            ).format(self.yaml)
+        )
+
+
+class InvalidAdapterTest(ProjectLoaderBaseTest):
+    scenarios = [
+        ("NONE", {"yaml": "NONE"}),
+        ("none-", {"yaml": "none-"}),
+        ("invalid", {"yaml": "invalid"}),
+        ("LeGaCY", {"yaml": "LeGaCY"}),
+        ("leg-acy", {"yaml": "leg-acy"}),
+    ]
+
+    def test_invalid_yaml_invalid_adapters(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: nothing
+            apps:
+              app:
+                command: foo
+                adapter: {}
+            parts:
+              part1:
+                plugin: nil
+            """
+        ).format(self.yaml)
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+        self.assertRegex(
+            raised.message,
+            "The 'apps/app/adapter' property does not match the required schema:.*is "
+            "not one of \['none', 'legacy'\]",
+        )
+
+
 class ValidArchitecturesTest(ProjectLoaderBaseTest):
 
     yaml_scenarios = [
@@ -1647,3 +1703,57 @@ class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
                 "not allowed ('{}' was unexpected)".format(self.property)
             ),
         )
+
+
+class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
+
+    scenarios = [
+        (
+            "wrong type (string)",
+            {
+                "environment": "a string",
+                "message": ".*property does not match the required schema: 'a string' is not of type 'array'.*",
+            },
+        ),
+        (
+            "wrong type (list of strings)",
+            {
+                "environment": "['a string']",
+                "message": ".*property does not match the required schema: 'a string' is not of type 'object'.*",
+            },
+        ),
+        (
+            "too many properties",
+            {
+                "environment": "[{key1: value1, key2: value2}]",
+                "message": ".*property does not match the required schema:.*has too many properties.*",
+            },
+        ),
+        (
+            "wrong property type",
+            {
+                "environment": "[{key1: 5}]",
+                "message": ".*property does not match the required schema: 5 is not of type 'string'.*",
+            },
+        ),
+    ]
+
+    def test_build_environment(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: my-package-1
+            version: 1.0-snapcraft1~ppa1
+            summary: my summary less that 79 chars
+            description: description which can be pretty long
+            parts:
+                part1:
+                    plugin: nil
+                    build-environment: {}
+        """
+        ).format(self.environment)
+
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+
+        self.assertThat(raised.message, MatchesRegex(self.message))

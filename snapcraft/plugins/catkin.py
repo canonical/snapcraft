@@ -16,6 +16,11 @@
 
 """The catkin plugin is useful for building ROS parts.
 
+The rosdistro used depends upon the base of the snap:
+
+  - core16: Uses Kinetic
+  - core18: Uses Melodic
+
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -28,9 +33,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
-    - rosdistro:
-      (string)
-      The ROS distro required by this system. Defaults to 'indigo'.
     - include-roscore:
       (boolean)
       Whether or not to include roscore with the part. Defaults to true.
@@ -83,13 +85,11 @@ from snapcraft.internal import errors, mangling
 
 logger = logging.getLogger(__name__)
 
-# Map ROS releases to Ubuntu releases
-_ROS_RELEASE_MAP = {
-    "indigo": "trusty",
-    "jade": "trusty",
-    "kinetic": "xenial",
-    "lunar": "xenial",
-}
+# Map bases to ROS releases
+_BASE_TO_ROS_RELEASE_MAP = {"core16": "kinetic", "core18": "melodic"}
+
+# Map bases to Ubuntu releases
+_BASE_TO_UBUNTU_RELEASE_MAP = {"core16": "xenial", "core18": "bionic"}
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
@@ -114,19 +114,6 @@ class CatkinUnsupportedDependencyTypeError(errors.SnapcraftError):
 
     def __init__(self, dependency_type, dependency):
         super().__init__(dependency_type=dependency_type, dependency=dependency)
-
-
-class CatkinUnsupportedRosdistroError(errors.SnapcraftError):
-    fmt = (
-        "Unsupported ROS distribution: {rosdistro!r}. The supported ROS distributions "
-        "are {supported}."
-    )
-
-    def __init__(self, rosdistro):
-        super().__init__(
-            rosdistro=rosdistro,
-            supported=formatting_utils.humanize_list(_ROS_RELEASE_MAP.keys(), "and"),
-        )
 
 
 class CatkinWorkspaceIsRootError(errors.SnapcraftError):
@@ -169,7 +156,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["properties"]["rosdistro"] = {"type": "string", "default": "indigo"}
         schema["properties"]["catkin-packages"] = {
             "type": "array",
             "minitems": 1,
@@ -218,6 +204,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
             "default": "http://localhost:11311",
         }
 
+        schema["required"] = ["source"]
+
         return schema
 
     @classmethod
@@ -225,7 +213,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
         return [
-            "rosdistro",
             "catkin-packages",
             "source-space",
             "include-roscore",
@@ -257,6 +244,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         ros_repo = "http://packages.ros.org/ros/ubuntu/"
         ubuntu_repo = "http://${prefix}.ubuntu.com/${suffix}/"
         security_repo = "http://${security}.ubuntu.com/${suffix}/"
+
         return textwrap.dedent(
             """
             deb {ros_repo} {codename} main
@@ -268,19 +256,24 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 ros_repo=ros_repo,
                 ubuntu_repo=ubuntu_repo,
                 security_repo=security_repo,
-                codename=_ROS_RELEASE_MAP[self.options.rosdistro],
+                codename=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.base],
             )
         )
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
+        self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[project.info.base]
+
         self.build_packages.extend(["libc6-dev", "make", "python-pip"])
         self.__pip = None
 
         # roslib is the base requiremet to actually create a workspace with
         # setup.sh and the necessary hooks.
-        self.stage_packages.append("ros-{}-roslib".format(self.options.rosdistro))
+        self.stage_packages.append("ros-{}-roslib".format(self._rosdistro))
 
         # Get a unique set of packages
         self.catkin_packages = None
@@ -309,10 +302,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         if os.path.abspath(self.sourcedir) == os.path.abspath(self._ros_package_path):
             raise CatkinWorkspaceIsRootError()
-
-        # Validate selected ROS distro
-        if self.options.rosdistro not in _ROS_RELEASE_MAP:
-            raise CatkinUnsupportedRosdistroError(self.options.rosdistro)
 
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
@@ -459,7 +448,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
             # Use catkin_find to discover dependencies already in the underlay
             catkin = _Catkin(
-                self.options.rosdistro,
+                self._rosdistro,
                 underlay_build_path,
                 self._catkin_path,
                 self.PLUGIN_STAGE_SOURCES,
@@ -478,10 +467,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         # Use rosdep for dependency detection and resolution
         rosdep = _ros.rosdep.Rosdep(
-            ros_distro=self.options.rosdistro,
+            ros_distro=self._rosdistro,
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
-            ubuntu_distro=_ROS_RELEASE_MAP[self.options.rosdistro],
+            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.base],
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
             project=self.project,
         )
@@ -563,7 +552,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         self._pip.clean_packages()
 
     def _source_setup_sh(self, root, underlay_path):
-        rosdir = os.path.join(root, "opt", "ros", self.options.rosdistro)
+        rosdir = os.path.join(root, "opt", "ros", self._rosdistro)
         if underlay_path:
             source_script = textwrap.dedent(
                 """
@@ -625,7 +614,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
     @property
     def rosdir(self):
-        return os.path.join(self.installdir, "opt", "ros", self.options.rosdistro)
+        return os.path.join(self.installdir, "opt", "ros", self._rosdistro)
 
     def _run_in_bash(self, commandlist, cwd=None, env=None):
         with tempfile.NamedTemporaryFile(mode="w") as f:
@@ -721,9 +710,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             with open(setup_sh_file, "r+") as f:
                 pattern = re.compile(r"\${_CATKIN_SETUP_DIR:=.*}")
                 replaced = pattern.sub(
-                    "${{_CATKIN_SETUP_DIR:=$SNAP/opt/ros/{}}}".format(
-                        self.options.rosdistro
-                    ),
+                    "${{_CATKIN_SETUP_DIR:=$SNAP/opt/ros/{}}}".format(self._rosdistro),
                     f.read(),
                 )
                 f.seek(0)
@@ -820,9 +807,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         fileset = super().snap_fileset()
         fileset.append(
-            "-{}".format(
-                os.path.join("opt", "ros", self.options.rosdistro, ".rosinstall")
-            )
+            "-{}".format(os.path.join("opt", "ros", self._rosdistro, ".rosinstall"))
         )
         return fileset
 

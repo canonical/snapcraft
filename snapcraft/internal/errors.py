@@ -175,18 +175,6 @@ class InvalidAppCommandError(SnapcraftError):
         super().__init__(command=command, app=app)
 
 
-class InvalidContainerRemoteError(SnapcraftError):
-
-    fmt = (
-        "Failed to use LXD remote: "
-        "{remote!r} is not a valid name.\n"
-        "Use a LXD remote without colons, spaces and slashes in the name.\n"
-    )
-
-    def __init__(self, remote):
-        super().__init__(remote=remote)
-
-
 class InvalidDesktopFileError(SnapcraftError):
 
     fmt = (
@@ -250,6 +238,14 @@ class PluginError(SnapcraftError):
         super().__init__(message=message)
 
 
+class PluginBaseError(SnapcraftError):
+
+    fmt = "The plugin used by part {part_name!r} does not support snaps using base {base!r}."
+
+    def __init__(self, *, part_name, base):
+        super().__init__(part_name=part_name, base=base)
+
+
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (
@@ -274,6 +270,14 @@ class SnapcraftPartConflictError(SnapcraftError):
             other_part_name=other_part_name,
             file_paths="\n".join(sorted(spaced_conflict_files)),
         )
+
+
+class SnapcraftOrganizeError(SnapcraftError):
+
+    fmt = "Failed to organize part {part_name!r}: {message}"
+
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)
 
 
 class MissingCommandError(SnapcraftError):

@@ -17,7 +17,6 @@
 import os
 import shlex
 import shutil
-import subprocess
 import tempfile
 
 from . import errors
@@ -67,7 +66,7 @@ class Rpm(FileBase):
             shutil.move(tmp_rpm, rpm_file)
 
         extract_command = "rpm2cpio {} | cpio -idmv".format(shlex.quote(rpm_file))
-        subprocess.check_output(extract_command, shell=True, cwd=dst)
+        self._run_output(extract_command, shell=True, cwd=dst)
 
         if not keep_rpm:
             os.remove(rpm_file)

@@ -31,9 +31,9 @@ def _run(command: Sequence[str]) -> None:
     subprocess.check_call(command)
 
 
-def _run_output(command: Sequence[str]) -> bytes:
+def _run_output(command: Sequence[str], **kwargs) -> bytes:
     logger.debug("Running {}".format(" ".join(command)))
-    return subprocess.check_output(command)
+    return subprocess.check_output(command, **kwargs)
 
 
 def _ignore_signal(sig, stack):
@@ -67,6 +67,7 @@ class MultipassCommand:
         *,
         instance_name: str,
         image: str,
+        cpus: str = None,
         mem: str = None,
         disk: str = None,
         remote: str = None,
@@ -76,6 +77,7 @@ class MultipassCommand:
 
         :param str instance_name: the name the launched instance will have.
         :param str image: the image to create the instance with.
+        :param str cpus: amount of virtual CPUs to assign to the launched instance.
         :param str mem: amount of RAM to assign to the launched instance.
         :param str disk: amount of disk space the instance will see.
         :param str remote: the remote server to retrieve the image from.
@@ -86,6 +88,8 @@ class MultipassCommand:
         cmd = [self.provider_cmd, "launch", image, "--name", instance_name]
         if cloud_init is not None:
             cmd.extend(["--cloud-init", cloud_init])
+        if cpus is not None:
+            cmd.extend(["--cpus", cpus])
         if mem is not None:
             cmd.extend(["--mem", mem])
         if disk is not None:
@@ -110,12 +114,17 @@ class MultipassCommand:
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
-    def stop(self, *, instance_name: str) -> None:
+    def stop(self, *, instance_name: str, time: int = None) -> None:
         """Passthrough for running multipass stop.
 
         :param str instance_name: the name of the instance to stop.
+        :param str time: time from now, in minutes, to delay shutdown of the
+                         instance.
         """
-        cmd = [self.provider_cmd, "stop", instance_name]
+        cmd = [self.provider_cmd, "stop"]
+        if time:
+            cmd.extend(["--time", str(time)])
+        cmd.append(instance_name)
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
@@ -225,9 +234,12 @@ class MultipassCommand:
         cmd = [self.provider_cmd, "info", instance_name]
         if output_format is not None:
             cmd.extend(["--format", output_format])
-        try:
-            return _run_output(cmd)
-        except subprocess.CalledProcessError as process_error:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if process.returncode != 0:
             raise errors.ProviderInfoError(
-                provider_name=self.provider_name, exit_code=process_error.returncode
-            ) from process_error
+                provider_name=self.provider_name,
+                exit_code=process.returncode,
+                stderr=stderr,
+            )
+        return stdout

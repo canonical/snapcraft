@@ -16,6 +16,7 @@
 import os
 import os.path
 import re
+import textwrap
 
 from unittest import mock
 from testtools.matchers import Contains, Equals
@@ -25,7 +26,7 @@ from snapcraft.plugins import catkin_tools
 from tests import unit
 
 
-class CatkinToolsPluginBaseTestCase(unit.TestCase):
+class CatkinToolsPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -42,7 +43,16 @@ class CatkinToolsPluginBaseTestCase(unit.TestCase):
             build_attributes = []
 
         self.properties = props()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: catkin-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
         patcher = mock.patch("snapcraft.plugins._python.Pip")
         self.pip_mock = patcher.start()
@@ -50,11 +60,10 @@ class CatkinToolsPluginBaseTestCase(unit.TestCase):
         self.pip_mock.return_value.list.return_value = {}
 
 
-class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
+class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        self.project = snapcraft.ProjectOptions()
         self.compilers = catkin_tools.Compilers(
             "compilers_path", "sources", self.project
         )
@@ -85,7 +94,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
         self.properties.catkin_packages.append("package_2")
 
         plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project_options
+            "test-part", self.properties, self.project
         )
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
@@ -111,7 +120,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
     def test_build_runs_in_bash(self, run_output_mock, run_mock, compilers_mock):
         plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project_options
+            "test-part", self.properties, self.project
         )
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
@@ -137,7 +146,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
         compilers_mock,
     ):
         plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project_options
+            "test-part", self.properties, self.project
         )
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
@@ -159,7 +168,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
         finish_build_mock.assert_called_once_with()
 
 
-class PrepareBuildTestCase(CatkinToolsPluginBaseTestCase):
+class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
 
     scenarios = [
         (
@@ -191,7 +200,7 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTestCase):
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_use_in_snap_python")
     def test_prepare_build(self, use_python_mock, bashrun_mock, compilers_mock):
         plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project_options
+            "test-part", self.properties, self.project
         )
         os.makedirs(os.path.join(plugin.rosdir, "test"))
 

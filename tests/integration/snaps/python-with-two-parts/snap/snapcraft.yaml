@@ -1,5 +1,5 @@
 name: python-with-two-parts
-version: 0
+version: "0"
 summary: test the python plugin
 description: |
   This is a snap with two python parts. It's a regression test for

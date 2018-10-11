@@ -48,6 +48,8 @@ _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, "share", "snapcraft", "librarie
 _librariesdir = _DEFAULT_LIBRARIESDIR
 _DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensions")
 _extensionsdir = _DEFAULT_EXTENSIONSDIR
+_DEFAULT_LEGACY_SNAPCRAFT_DIR = os.path.join(sys.prefix, "legacy_snapcraft")
+_legacy_snapcraft_dir = _DEFAULT_LEGACY_SNAPCRAFT_DIR
 _DOCKERENV_FILE = "/.dockerenv"
 
 MAX_CHARACTERS_WRAP = 120
@@ -180,6 +182,15 @@ def set_librariesdir(librariesdir):
 
 def get_librariesdir():
     return _librariesdir
+
+
+def set_legacy_snapcraft_dir(snapcraftdir):
+    global _legacy_snapcraft_dir
+    _legacy_snapcraft_dir = snapcraftdir
+
+
+def get_legacy_snapcraft_dir():
+    return _legacy_snapcraft_dir
 
 
 def get_python2_path(root):

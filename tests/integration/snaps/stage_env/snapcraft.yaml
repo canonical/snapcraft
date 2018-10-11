@@ -1,5 +1,5 @@
 name: test-package
-version: 0.1
+version: "0.1"
 summary: try out $SNAPCRAFT_STAGE
 description: |
   The cmake-project expects to have a copied directory in the stage directory
@@ -8,13 +8,14 @@ confinement: strict
 
 parts:
   cmake-project:
-    plugin: cmake
     source: .
+    plugin: cmake
     configflags:
         - -DDEP_DIR=$SNAPCRAFT_STAGE/copied
     after:
       - copy
   copy:
-    plugin: copy
-    files:
-        copied: copied
+    source: .
+    plugin: dump
+    stage:
+      - copied

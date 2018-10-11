@@ -4,91 +4,57 @@ description: |
     A snapcraft.yaml that has a relatively complex tree of
     dependencies that can stress test the dependency resolution
     code in Snapcraft.
-version: 1.0
+version: "1.0"
 confinement: strict
 
 parts:
     root:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
     a:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [root]
     b:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [root]
     c:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [root]
     aa:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [a]
     ab:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [a]
     ac:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [a]
     ba:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [b]
     bb:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [b]
     bc:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [b]
     ca:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [c]
     cb:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [c]
     cc:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [c]
     x:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [aa, ba, ca]
     y:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [ab, bb, cb]
     z:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [ac, bc, cc]
     last:
-        plugin: copy
-        files:
-            file: file
+        plugin: nil
         after: [x, y, z]

@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015-2018 Canonical Ltd
@@ -140,13 +139,19 @@ class ExecutionTestCase(LifecycleTestBase):
 
         expected_snap_info = {
             "name": "test",
-            "version": 0,
+            "version": "1.0",
             "arch": [project_config.project.deb_arch],
             "type": "os",
         }
         self.assertThat(snap_info, Equals(expected_snap_info))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -196,6 +201,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.report, Equals("A dependency has changed: 'part1'\n"))
 
     def test_dirty_build_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -239,6 +250,12 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.parts_names, Equals("part1"))
 
     def test_dirty_pull_raises(self):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -283,6 +300,12 @@ class ExecutionTestCase(LifecycleTestBase):
     def test_pull_is_dirty_if_target_arch_changes(
         self, mock_install_build_packages, mock_enable_cross_compilation
     ):
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
+
         mock_install_build_packages.return_value = []
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -363,12 +386,22 @@ class ExecutionTestCase(LifecycleTestBase):
 
 
 class DirtyBuildScriptletTestCase(LifecycleTestBase):
-
     scenarios = (
-        ("prepare scriptlet", {"scriptlet": "prepare"}),
-        ("build scriptlet", {"scriptlet": "build"}),
-        ("install scriptlet", {"scriptlet": "install"}),
+        ("override-pull scriptlet", dict(scriptlet="override-pull", step=steps.PULL)),
+        (
+            "override-build scriptlet",
+            dict(scriptlet="override-build", step=steps.BUILD),
+        ),
     )
+
+    def setUp(self):
+        super().setUp()
+
+        # Set the option to error on dirty/outdated steps
+        with snapcraft.config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                snapcraft.config.OutdatedStepAction.ERROR
+            )
 
     @mock.patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     @mock.patch("snapcraft.repo.Repo.install_build_packages")
@@ -388,7 +421,7 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         )
 
         # Build it
-        lifecycle.execute(steps.BUILD, project_config)
+        lifecycle.execute(self.step, project_config)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -409,10 +442,10 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         # Build it again. Should catch that the scriptlet changed and it needs
         # to be rebuilt.
         raised = self.assertRaises(
-            errors.StepOutdatedError, lifecycle.execute, steps.BUILD, project_config
+            errors.StepOutdatedError, lifecycle.execute, self.step, project_config
         )
 
-        self.assertThat(raised.step, Equals(steps.BUILD))
+        self.assertThat(raised.step, Equals(self.step))
         self.assertThat(raised.part, Equals("part1"))
         self.assertThat(
             raised.report,
@@ -494,7 +527,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
-            version: 0
+            version: "1.0"
             summary: test
             description: test
             confinement: strict
@@ -581,7 +614,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -634,7 +667,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -692,7 +725,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -752,7 +785,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -813,7 +846,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -872,7 +905,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -934,7 +967,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -995,7 +1028,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1047,7 +1080,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1104,7 +1137,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict
@@ -1186,7 +1219,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
-            version: 0
+            version: '1.0'
             summary: test
             description: test
             confinement: strict

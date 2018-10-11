@@ -1,5 +1,5 @@
 name: override-stage-scriptlet-test
-version: '0.1'
+version: "0.1"
 summary: Runs the override-stage scriptlet for a part
 description: |
   Runs the shell script defined in `override-stage` instead of plugin stage.

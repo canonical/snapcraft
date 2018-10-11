@@ -26,6 +26,11 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
+    - go-channel:
+      (string, default: latest/stable)
+      The Snap Store channel to install go from. If set to an empty string,
+      go will be installed using the system's traditional package manager.
+
     - go-packages:
       (list of strings)
       Go packages to build/install, these must be a "main" package.
@@ -52,6 +57,7 @@ import shutil
 
 import snapcraft
 from snapcraft import common
+from snapcraft.internal import errors
 
 
 logger = logging.getLogger(__name__)
@@ -61,6 +67,10 @@ class GodepsPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
+        schema["properties"]["go-channel"] = {
+            "type": "string",
+            "default": "latest/stable",
+        }
         schema["properties"]["godeps-file"] = {
             "type": "string",
             "default": "dependencies.tsv",
@@ -75,7 +85,7 @@ class GodepsPlugin(snapcraft.BasePlugin):
         }
 
         # The import path must be specified.
-        schema["required"].append("go-importpath")
+        schema["required"] = ["source", "go-importpath"]
 
         return schema
 
@@ -89,15 +99,25 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ["godeps-file", "go-importpath"]
+        return ["go-channel", "godeps-file", "go-importpath"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(["golang-go", "git"])
+
+        self._setup_base_tools(options.go_channel, project.info.base)
+
         self._gopath = os.path.join(self.partdir, "go")
         self._gopath_src = os.path.join(self._gopath, "src")
         self._gopath_bin = os.path.join(self._gopath, "bin")
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
+
+    def _setup_base_tools(self, go_channel, base):
+        if go_channel:
+            self.build_snaps.append("go/{}".format(go_channel))
+        elif base in ("core16", "core18"):
+            self.build_packages.append("golang-go")
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def pull(self):
         super().pull()

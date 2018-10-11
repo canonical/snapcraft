@@ -86,7 +86,7 @@ class Mercurial(Base):
                 ]
             cmd = [self.command, "clone"] + ref + [self.source, self.source_dir]
 
-        subprocess.check_call(cmd, **self._call_kwargs)
+        self._run(cmd, **self._call_kwargs)
         self.source_details = self._get_source_details()
 
     def _get_source_details(self):
@@ -96,12 +96,7 @@ class Mercurial(Base):
         source = self.source
 
         if not (tag or commit or branch):
-            commit = (
-                subprocess.check_output(["hg", "id", self.source_dir])
-                .split()[0]
-                .decode("utf-8")
-                .strip()
-            )
+            commit = self._run_output(["hg", "id", self.source_dir]).split()[0]
 
         return {
             "source-commit": commit,

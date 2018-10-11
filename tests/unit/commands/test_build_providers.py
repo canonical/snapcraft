@@ -27,6 +27,8 @@ from snapcraft.internal.build_providers.errors import ProviderExecError
 
 
 class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
+
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -52,7 +54,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.shell_mock = shell_mock
 
-        self.make_snapcraft_yaml("pull", base="core18")
+        self.make_snapcraft_yaml("pull", base=self.base)
 
     def test_step_with_debug_using_build_provider_fails(self):
         result = self.run_command(["--debug", "pull"])
@@ -73,6 +75,8 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
 
 class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
+
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -103,7 +107,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock = pack_project_mock
         self.execute_step_mock = execute_step_mock
 
-        self.make_snapcraft_yaml("pull", base="core18")
+        self.make_snapcraft_yaml("pull", base=self.base)
 
     def test_step_with_shell_after(self):
         result = self.run_command(["pull", "--shell-after"])
