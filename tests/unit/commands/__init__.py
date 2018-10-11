@@ -83,7 +83,7 @@ class CommandBaseTestCase(unit.TestCase):
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
 
     yaml_template = """name: {step}-test
-version: 1.0
+version: "1.0"
 summary: test {step}
 description: if the {step} is successful the state file will be updated
 confinement: strict

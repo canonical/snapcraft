@@ -617,7 +617,7 @@ class StoreTestCase(TestCase):
             if "name: " in line:
                 print("name: {}".format(name))
             elif "version: " in line:
-                print("version: {}".format(version))
+                print('version: "{}"'.format(version))
             elif "architectures: " in line:
                 print("architectures: [{}]".format(arch))
             else:
@@ -634,7 +634,7 @@ class StoreTestCase(TestCase):
             if "name: " in line:
                 print("name: {}".format(name))
             elif "version: " in line:
-                print("version: {}".format(version))
+                print('version: "{}"'.format(version))
             else:
                 print(line)
 

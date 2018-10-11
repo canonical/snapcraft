@@ -1,5 +1,5 @@
 name: independent-parts
-version: 1
+version: "1"
 summary: Two independent parts
 description: Two independent parts
 confinement: strict

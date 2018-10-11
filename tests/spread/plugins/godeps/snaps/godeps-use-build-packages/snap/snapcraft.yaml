@@ -1,5 +1,5 @@
 name: godeps
-version: '1.0'
+version: "1.0"
 summary: A simple godeps project.
 description: |
   Proves that it is possible to build a snap using godeps.

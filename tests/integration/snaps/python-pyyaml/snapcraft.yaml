@@ -1,5 +1,5 @@
 name: python-pyyaml
-version: 0
+version: "0"
 summary: summary
 description: description
 confinement: strict

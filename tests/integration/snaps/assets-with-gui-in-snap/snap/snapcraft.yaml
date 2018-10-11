@@ -1,5 +1,5 @@
 name: snap-with-assets-in-snap
-version: '0.1'
+version: "0.1"
 summary: Make gui assets in snap available in meta
 description: |
   Verify the assets in snap are respected and copied over

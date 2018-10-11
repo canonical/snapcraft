@@ -1,5 +1,5 @@
 name: invalid-checksums
-version: 1.0
+version: "1.0"
 summary: Invalid source-checksum's
 description: |
     Invalid source checksums that snapcraft should

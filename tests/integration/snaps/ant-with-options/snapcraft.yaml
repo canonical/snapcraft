@@ -1,5 +1,5 @@
 name: ant-with-options
-version: 0
+version: "0"
 summary: test ant builds
 description: |
  Test ant builds and options.

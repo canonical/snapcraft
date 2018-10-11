@@ -1,5 +1,5 @@
 name: ruby-gem-install
-version: '1.0'
+version: "1.0"
 summary: Test gem install
 description: |
   Snap to test 'gem install <gem>' command

@@ -1,5 +1,5 @@
 name: pip-bzr
-version: 1
+version: "1"
 summary: Test that bzr VCS based packages can be pulled.
 description: |
   bzr requires special consideration when using the python

@@ -34,7 +34,7 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
     yaml_template = dedent(
         """\
         name: snap-test
-        version: 1.0
+        version: "1.0"
         summary: test snapping
         description: if snap is successful a snap package will be available
         architectures:
@@ -387,7 +387,7 @@ type: os
             snapcraft_yaml=dedent(
                 """\
             name: test-package
-            version: 1
+            version: "1.0"
             summary: test
             description: test
             confinement: strict

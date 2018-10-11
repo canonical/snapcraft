@@ -1,5 +1,5 @@
 name: python-with-stage-packages
-version: 0
+version: "0"
 summary: this will install yamllint from pypi
 description: |
     Install yamllint from pypi but use pyyaml as a stage-packages entry.

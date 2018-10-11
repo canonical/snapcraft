@@ -921,7 +921,7 @@ class ValidVersionTest(ProjectLoaderBaseTest):
 class InvalidVersionTest(ProjectLoaderBaseTest):
 
     scenarios = [
-        (version, dict(version=version))
+        (str(version), dict(version=version))
         for version in [
             "*",
             "",
@@ -936,6 +936,7 @@ class InvalidVersionTest(ProjectLoaderBaseTest):
             "v_",
             "v-",
             "underscores_are_bad",
+            0.1,
         ]
     ]
 
@@ -954,7 +955,7 @@ class InvalidVersionTest(ProjectLoaderBaseTest):
             raised.message,
             Equals(
                 "The 'version' property does not match the required "
-                "schema: {!r} is not a valid snap version. Snap versions "
+                "schema: {!r} is not a valid snap version string. Snap versions "
                 "consist of upper- and lower-case alphanumeric characters, "
                 "as well as periods, colons, plus signs, tildes, and "
                 "hyphens. They cannot begin with a period, colon, plus "

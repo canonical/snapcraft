@@ -1,5 +1,5 @@
 name: hooks-test
-version: '0.1'
+version: "0.1"
 summary: Hooks test
 description: |
   This snap simply includes a few hooks. It does so via two methods:

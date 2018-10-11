@@ -1,5 +1,5 @@
 name: catkin-with-python-part
-version: '1.0'
+version: "1.0"
 summary: Snap with a Catkin and Python part
 description: |
   This snap ensures that the Catkin plugin plays nicely with the Python plugin.
