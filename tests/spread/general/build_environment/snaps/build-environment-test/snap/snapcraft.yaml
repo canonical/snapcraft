@@ -1,5 +1,5 @@
 name: build-environment-test
-version: '1.0'
+version: "1.0"
 summary: Quick snap to ensure build-environment works
 description: Quick snap to ensure build-environment works
 

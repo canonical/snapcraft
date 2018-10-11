@@ -1,5 +1,5 @@
 name: scriptlet-test
-version: '0.1'
+version: "0.1"
 summary: Runs the build scriptlet for a part
 description: |
   Runs the shell script defined in `prepare` to set everything up,

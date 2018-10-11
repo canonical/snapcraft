@@ -1,5 +1,5 @@
 name: bad-multiarch
-version: '1.0'
+version: "1.0"
 summary: Stage a package with an architecture not configured
 description: The error should give helpful multiarch pointers
 

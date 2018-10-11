@@ -1,5 +1,5 @@
 name: ros-base
-version: '1.0'
+version: "1.0"
 grade: stable
 confinement: strict
 summary: ROS Base Snap

@@ -15,12 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
-from subprocess import check_call
-from tempfile import TemporaryDirectory
 from typing import Sequence
 
-import snapcraft
 from snapcraft import config
 from snapcraft.internal import (
     common,
@@ -32,7 +28,6 @@ from snapcraft.internal import (
     states,
     steps,
 )
-from snapcraft.internal.cache import SnapCache
 from ._status_cache import StatusCache
 
 
@@ -41,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def execute(
     step: steps.Step,
-    project_config: "snapcraft.internal.project_loader._config.Config",
+    project_config: "project_loader._config.Config",
     part_names: Sequence[str] = None,
 ):
     """Execute until step in the lifecycle for part_names or all parts.
@@ -81,11 +76,6 @@ def execute(
     global_state.append_build_snaps(installed_snaps)
     global_state.save(filepath=project_config.project._global_state_file)
 
-    if _should_get_core(project_config.data.get("confinement")):
-        _setup_core(
-            project_config.project.deb_arch, project_config.data.get("base", "core")
-        )
-
     executor = _Executor(project_config)
     executor.run(step, part_names)
     if not executor.steps_were_run:
@@ -100,56 +90,6 @@ def execute(
         "arch": project_config.data["architectures"],
         "type": project_config.data.get("type", ""),
     }
-
-
-def _setup_core(deb_arch, base):
-    core_path = common.get_core_path(base)
-    if os.path.exists(core_path) and os.listdir(core_path):
-        logger.debug("{!r} already exists, skipping core setup".format(core_path))
-        return
-
-    # for backwards compatibility
-    if base == "core":
-        snap_cache = SnapCache(project_name="snapcraft-core")
-    else:
-        snap_cache = SnapCache(project_name=base)
-
-    # Try to get the latest revision.
-    core_snap = snap_cache.get(deb_arch=deb_arch)
-    if core_snap:
-        # The current hash matches the filename
-        current_hash = os.path.splitext(os.path.basename(core_snap))[0]
-    else:
-        current_hash = ""
-
-    with TemporaryDirectory() as d:
-        download_path = os.path.join(d, "{}.snap".format(base))
-        download_hash = snapcraft.download(
-            base, "stable", download_path, deb_arch, except_hash=current_hash
-        )
-        if download_hash != current_hash:
-            snap_cache.cache(snap_filename=download_path)
-            snap_cache.prune(deb_arch=deb_arch, keep_hash=download_hash)
-
-    core_snap = snap_cache.get(deb_arch=deb_arch)
-
-    # Now unpack
-    logger.info("Setting up {!r} in {!r}".format(core_snap, core_path))
-    if os.path.exists(core_path) and not os.listdir(core_path):
-        check_call(["sudo", "rmdir", core_path])
-    check_call(["sudo", "mkdir", "-p", os.path.dirname(core_path)])
-    unsquashfs_path = snapcraft.file_utils.get_tool_path("unsquashfs")
-    check_call(["sudo", unsquashfs_path, "-d", core_path, core_snap])
-
-
-def _should_get_core(confinement: str) -> bool:
-    is_env_var_set = os.environ.get("SNAPCRAFT_SETUP_CORE", False) is not False
-    # This is a quirk so that docker users not using the Dockerfile
-    # we distribute and create can automatically build classic
-    is_docker_instance = common.is_docker_instance()  # type: bool
-    is_classic = confinement == "classic"  # type: bool
-
-    return is_classic and (is_env_var_set or is_docker_instance)
 
 
 def _replace_in_part(part):

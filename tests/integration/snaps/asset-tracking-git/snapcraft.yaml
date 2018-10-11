@@ -1,5 +1,5 @@
 name: asset-tracking-git
-version: 0.1
+version: "0.1"
 summary: Git asset tracking
 description: Git asset tracking
 architectures: [all]

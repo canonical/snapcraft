@@ -1,5 +1,5 @@
 name: kbuild-hello
-version: '1.0'
+version: "1.0"
 summary: simple example using the kbuild build system
 description: this is a basic snap using kbuild to build a hello-world
    example program

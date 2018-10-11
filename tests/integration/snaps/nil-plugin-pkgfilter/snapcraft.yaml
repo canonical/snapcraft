@@ -1,5 +1,5 @@
 name: test-package
-version: 0.1
+version: "0.1"
 summary: Create a snap containing only the nmcli tool
 description: |
  This snap uses the nil plugin to define a part with no source.

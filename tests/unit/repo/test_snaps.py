@@ -14,79 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 from unittest import mock
 
-import fixtures
 from testtools.matchers import Equals, Is
 
 from snapcraft.internal.repo import errors, snaps
 from tests import fixture_setup, unit
-
-
-class FakeSnapCommand(fixtures.Fixture):
-    def __init__(self):
-        self.calls = []
-        self.install_success = True
-        self.refresh_success = True
-        self._email = "-"
-
-    def _setUp(self):
-        original_check_call = snaps.check_call
-        original_check_output = snaps.check_output
-
-        def side_effect_check_call(cmd, *args, **kwargs):
-            return side_effect(original_check_call, cmd, *args, **kwargs)
-
-        def side_effect_check_output(cmd, *args, **kwargs):
-            return side_effect(original_check_output, cmd, *args, **kwargs)
-
-        def side_effect(original, cmd, *args, **kwargs):
-            if self._is_snap_command(cmd):
-                self.calls.append(cmd)
-                return self._fake_snap_command(cmd, *args, **kwargs)
-            else:
-                return original(cmd, *args, **kwargs)
-
-        check_call_patcher = mock.patch(
-            "snapcraft.internal.repo.snaps.check_call",
-            side_effect=side_effect_check_call,
-        )
-        self.mock_call = check_call_patcher.start()
-        self.addCleanup(check_call_patcher.stop)
-
-        check_output_patcher = mock.patch(
-            "snapcraft.internal.repo.snaps.check_output",
-            side_effect=side_effect_check_output,
-        )
-        self.mock_call = check_output_patcher.start()
-        self.addCleanup(check_output_patcher.stop)
-
-    def login(self, email):
-        self._email = email
-
-    def _get_snap_cmd(self, snap_cmd):
-        try:
-            snap_cmd_index = snap_cmd.index("snap")
-        except ValueError:
-            return ""
-
-        try:
-            return snap_cmd[snap_cmd_index + 1]
-        except IndexError:
-            return ""
-
-    def _is_snap_command(self, cmd):
-        return self._get_snap_cmd(cmd) in ["install", "refresh", "whoami"]
-
-    def _fake_snap_command(self, cmd, *args, **kwargs):
-        cmd = self._get_snap_cmd(cmd)
-        if cmd == "install" and not self.install_success:
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        elif cmd == "refresh" and not self.refresh_success:
-            raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        elif cmd == "whoami":
-            return "email: {}".format(self._email).encode()
 
 
 class SnapPackageBaseTestCase(unit.TestCase):
@@ -350,11 +283,6 @@ class SnapPackageIsValidTest(SnapPackageBaseTestCase):
 
 
 class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
-    def setUp(self):
-        super().setUp()
-        self.fake_snap_command = FakeSnapCommand()
-        self.useFixture(self.fake_snap_command)
-
     def test_install_classic(self):
         self.fake_snapd.find_result = [
             {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}

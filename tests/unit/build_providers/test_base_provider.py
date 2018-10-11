@@ -94,9 +94,13 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             file_pusher=provider._push_file,
         )
         self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core"), call(snap_name="snapcraft")]
+            [
+                call(snap_name="core"),
+                call(snap_name="snapcraft"),
+                call(snap_name="core16"),
+            ]
         )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_ephemeral_setup_snapcraft(self):
@@ -117,9 +121,13 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             file_pusher=provider._push_file,
         )
         self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core"), call(snap_name="snapcraft")]
+            [
+                call(snap_name="core"),
+                call(snap_name="snapcraft"),
+                call(snap_name="core16"),
+            ]
         )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_for_classic_build(self):
@@ -137,17 +145,4 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
-        self.snap_injector_mock().apply.assert_called_once_with()
-
-    def test_setup_snapcraft_for_with_base_but_not_a_classic_build(self):
-        self.project.info.base = "core18"
-        self.project.info.confinement = "strict"
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_snapcraft()
-
-        self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core"), call(snap_name="snapcraft")]
-        )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()

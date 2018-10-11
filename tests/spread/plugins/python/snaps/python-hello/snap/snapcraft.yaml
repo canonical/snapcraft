@@ -1,5 +1,5 @@
 name: python-hello
-version: '1.0'
+version: "1.0"
 summary: A simple hello world in python
 description: |
   This is a basic python snap. It just hosts a hello world.

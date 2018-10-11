@@ -863,9 +863,9 @@ class PluginHandler:
             # We cannot error if we consider the content interface...
             logger.warning(
                 "The {part_name!r} part needs the following libraries that are not "
-                "included in the snap or base: \n{}\nThese dependencies can be "
+                "included in the snap or base: \n{files}\nThese dependencies can be "
                 "satisfied via more stage-packages, more parts, or content sharing.".format(
-                    formatted_system
+                    part_name=self.name, files=formatted_system
                 )
             )
         return dependency_paths
