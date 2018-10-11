@@ -387,7 +387,7 @@ type: os
             snapcraft_yaml=dedent(
                 """\
             name: test-package
-            version: 1
+            version: "1.0"
             summary: test
             description: test
             confinement: strict

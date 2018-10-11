@@ -527,7 +527,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
-            version: '1.0'
+            version: "1.0"
             summary: test
             description: test
             confinement: strict
