@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -61,7 +61,7 @@ from snapcraft.internal import errors
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = "node-v{version}-linux-{arch}"
-_NODEJS_VERSION = "6.14.2"
+_NODEJS_VERSION = "8.12.0"
 _NODEJS_TMPL = "https://nodejs.org/dist/v{version}/{base}.tar.gz"
 _NODEJS_ARCHES = {
     "i386": "x86",
