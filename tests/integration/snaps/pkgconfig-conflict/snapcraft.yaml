@@ -1,5 +1,5 @@
 name: pkgconfig-conflict
-version: 0
+version: "0"
 summary: This has 2 pkgconfig packages that would conflict
 description: "This is a regression test for LP: #1604472"
 confinement: strict

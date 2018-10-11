@@ -1,5 +1,5 @@
 name: yaml-merge-tag
-version: '0.1'
+version: "0.1"
 summary: This is a test snap
 description: |
     This test uses the yaml merge tag feature.

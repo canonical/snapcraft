@@ -1,5 +1,5 @@
 name: gulp-hello
-version: 0
+version: "0"
 summary: test the gulp plugin
 description: |
   This is a basic gulp snap. It just prints a hello world.

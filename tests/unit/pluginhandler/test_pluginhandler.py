@@ -711,7 +711,7 @@ class RealStageTestCase(unit.TestCase):
             dedent(
                 """\
             name: pc-file-test
-            version: 1.0
+            version: "1.0"
             summary: test pkg-config .pc
             description: when the .pc files reach stage the should be reprefixed
             confinement: strict

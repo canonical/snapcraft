@@ -1,5 +1,5 @@
 name: waf-hello
-version: '1.0'
+version: "1.0"
 summary: test the waf plugin
 description: |
   This is a basic waf snap with configflags.

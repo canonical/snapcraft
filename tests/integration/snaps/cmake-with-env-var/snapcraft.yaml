@@ -1,5 +1,5 @@
 name: cmake-with-env-var
-version: 0.1
+version: "0.1"
 summary: test the replacement of environment variables
 description: |
   This is a basic cmake snap with a snapcraft environment variable.

@@ -1,5 +1,5 @@
 name: libc-dl
-version: '1.0'
+version: "1.0"
 summary: Use libdl from libc
 description: |
   This snap links to libdl from libc. It requires the shared library, and will

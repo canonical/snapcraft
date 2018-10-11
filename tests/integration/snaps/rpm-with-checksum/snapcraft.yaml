@@ -1,5 +1,5 @@
 name: rpm-with-checksum
-version: '0.1'
+version: "0.1"
 summary: test checksum with RPMs sources
 description: |
   This integration test verifies that RPM files can be with checksums.

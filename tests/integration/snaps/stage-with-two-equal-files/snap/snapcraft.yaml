@@ -1,5 +1,5 @@
 name: stage-with-two-equal-files
-version: 0.1
+version: "0.1"
 summary: A snap with two equal files to stage
 description: |
   A snap with two parts, each with one file to stage, both files with the same

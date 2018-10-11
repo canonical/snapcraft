@@ -1,5 +1,5 @@
 name: scons-hello
-version: '1.0'
+version: "1.0"
 summary: test the scons plugin
 description: |
   This is a basic scons snap. It just prints a hello world.

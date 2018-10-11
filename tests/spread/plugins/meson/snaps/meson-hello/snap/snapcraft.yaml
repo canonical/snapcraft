@@ -1,5 +1,5 @@
 name: meson-hello
-version: '1.0'
+version: "1.0"
 summary: test the meson plugin
 description: |
   This is a basic meson snap. It just prints a hello world.

@@ -4,7 +4,7 @@ description: |
     A snapcraft.yaml that has a relatively complex tree of
     dependencies that can stress test the dependency resolution
     code in Snapcraft.
-version: 1.0
+version: "1.0"
 confinement: strict
 
 parts:
