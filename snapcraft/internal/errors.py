@@ -175,18 +175,6 @@ class InvalidAppCommandError(SnapcraftError):
         super().__init__(command=command, app=app)
 
 
-class InvalidContainerRemoteError(SnapcraftError):
-
-    fmt = (
-        "Failed to use LXD remote: "
-        "{remote!r} is not a valid name.\n"
-        "Use a LXD remote without colons, spaces and slashes in the name.\n"
-    )
-
-    def __init__(self, remote):
-        super().__init__(remote=remote)
-
-
 class InvalidDesktopFileError(SnapcraftError):
 
     fmt = (

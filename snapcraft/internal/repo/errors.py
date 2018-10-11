@@ -29,10 +29,7 @@ class RepoError(errors.SnapcraftError):
 
 class NoNativeBackendError(RepoError):
 
-    fmt = (
-        "Native builds aren't supported on {distro}. "
-        "You can however use 'snapcraft cleanbuild' with a container."
-    )
+    fmt = "Native builds aren't supported on {distro}."
 
     def __init__(self):
         try:

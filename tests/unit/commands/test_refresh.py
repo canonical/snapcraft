@@ -17,9 +17,7 @@ import os
 from textwrap import dedent
 from unittest import mock
 
-import fixtures
 from testtools.matchers import Equals
-from xdg import BaseDirectory
 
 from tests.unit import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
@@ -44,12 +42,6 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         """
     )
 
-    def setUp(self):
-        super().setUp()
-        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, "snapcraft")
-        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
-        self.headers_yaml = os.path.join(self.parts_dir, "headers.yaml")
-
     def make_snapcraft_yaml(self, n=1, snap_type="app", snapcraft_yaml=None):
         if not snapcraft_yaml:
             snapcraft_yaml = self.yaml_template.format(snap_type)
@@ -58,26 +50,6 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
 
 class RefreshCommandTestCase(RefreshCommandBaseTestCase):
-    @mock.patch("snapcraft.internal.lxd.Containerbuild._container_run")
-    def test_refresh_lxd(self, mock_container_run):
-        self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "lxd")
-        )
-        self.make_snapcraft_yaml()
-
-        patcher = mock.patch("snapcraft.internal.lxd.Project")
-        lxd_project_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.make_snapcraft_yaml(self.yaml_template)
-
-        result = self.run_command(["refresh"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        lxd_project_mock.assert_called_once_with(
-            project=mock.ANY, source=".", output=None
-        )
-        lxd_project_mock().refresh.assert_called_once_with()
-
     @mock.patch("snapcraft.cli.containers.repo.Repo.refresh_build_packages")
     def test_refresh(self, mock_repo_refresh):
         self.make_snapcraft_yaml()

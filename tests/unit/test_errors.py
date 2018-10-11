@@ -277,19 +277,6 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
-            "InvalidContainerRemoteError",
-            {
-                "exception": errors.InvalidContainerRemoteError,
-                "kwargs": {"remote": "test-remote"},
-                "expected_message": (
-                    "Failed to use LXD remote: "
-                    "'test-remote' is not a valid name.\n"
-                    "Use a LXD remote without colons, spaces and slashes in the "
-                    "name.\n"
-                ),
-            },
-        ),
-        (
             "InvalidDesktopFileError",
             {
                 "exception": errors.InvalidDesktopFileError,
