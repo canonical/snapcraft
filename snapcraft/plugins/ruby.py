@@ -37,7 +37,7 @@ import os
 import re
 
 from snapcraft import BasePlugin, file_utils
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal import errors
 from snapcraft.sources import Tar
 
 
@@ -69,6 +69,10 @@ class RubyPlugin(BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
         # Beta Warning
         # Remove this comment and warning once ruby plugin is stable.
         logger.warn(
@@ -83,7 +87,6 @@ class RubyPlugin(BasePlugin):
         )
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []
-
         self.build_packages.extend(
             ["gcc", "g++", "make", "zlib1g-dev", "libssl-dev", "libreadline-dev"]
         )
@@ -139,7 +142,7 @@ class RubyPlugin(BasePlugin):
             # rbconfig.rb. There should only be one.
             paths = glob.glob(os.path.join(rubylib, "*", "rbconfig.rb"))
             if len(paths) != 1:
-                raise SnapcraftEnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     "Expected a single rbconfig.rb, but found {}".format(len(paths))
                 )
 
@@ -147,7 +150,7 @@ class RubyPlugin(BasePlugin):
             env["GEM_HOME"] = os.path.join(rubydir, "gems", ruby_version)
             env["GEM_PATH"] = os.path.join(rubydir, "gems", ruby_version)
         elif len(versions) > 1:
-            raise SnapcraftEnvironmentError(
+            raise errors.SnapcraftEnvironmentError(
                 "Expected a single Ruby version, but found {}".format(len(versions))
             )
 

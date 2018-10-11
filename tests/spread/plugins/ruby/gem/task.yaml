@@ -1,15 +1,19 @@
 summary: Build and run a ruby snap using gems
 
-# This snap only builds and runs on 16.04
-systems: [ubuntu-16.04*]
-
 environment:
   SNAP_DIR: ../snaps/ruby-gem-install
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"
