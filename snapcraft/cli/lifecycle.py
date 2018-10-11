@@ -49,7 +49,7 @@ def _execute(  # noqa: C901
     **kwargs
 ) -> "Project":
     # fmt: on
-    provider = "destructive-host" if destructive_mode else None
+    provider = "host" if destructive_mode else None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 

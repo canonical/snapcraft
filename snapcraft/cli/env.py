@@ -24,11 +24,14 @@ class BuilderEnvironmentConfig:
 
     To determine the build environment, SNAPCRAFT_BUILD_ENVIRONMENT is
     retrieved from the environment and used to determine the build
-    provider. If it is not set, a value of `host` is assumed.
+    provider. An environment can be forced by use of force_provider
+    during initialization. The default environment is multipass
+    unless the snapcraft is run inside docker for which the preferred
+    environment will be to use the host.
 
     Valid values are:
 
-    - destructive-host: the host will drive the build.
+    - host: the host will drive the build.
     - managed-host: the host will drive the build, but work best for discardable
                     build providers.
     - multipass: a vm driven by multipass will be created to drive the build.
@@ -43,11 +46,11 @@ class BuilderEnvironmentConfig:
         if force_provider:
             build_provider = force_provider
         elif common.is_docker_instance:
-            build_provider = "destructive-host"
+            build_provider = "host"
         else:
             build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
 
-        valid_providers = ["destructive-host", "multipass", "managed-host"]
+        valid_providers = ["host", "multipass", "managed-host"]
         if build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
                 "The snapcraft build environment must be one of: {}.".format(
@@ -56,6 +59,6 @@ class BuilderEnvironmentConfig:
             )
 
         self.provider = build_provider
-        self.is_host = build_provider == "destructive-host"
+        self.is_host = build_provider == "host"
         self.is_multipass = build_provider == "multipass"
         self.is_managed_host = build_provider == "managed-host"

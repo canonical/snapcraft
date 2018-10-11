@@ -159,9 +159,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # Use this host to run through the lifecycle tests
         self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_BUILD_ENVIRONMENT", "destructive-host"
-            )
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
 
         # Avoid installing patchelf in the tests

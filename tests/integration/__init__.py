@@ -94,9 +94,7 @@ class TestCase(testtools.TestCase):
 
         # Use this host to run through the lifecycle tests
         self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_BUILD_ENVIRONMENT", "destructive-host"
-            )
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
 
         # Use a dumb terminal for tests

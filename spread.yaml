@@ -2,7 +2,7 @@ project: snapcraft
 
 environment:
   # Tell snapcraft to use the current host to build
-  SNAPCRAFT_BUILD_ENVIRONMENT: "destructive-host"
+  SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
   # This variable can be set to either "deb" or "snap". It defaults to "snap".
   SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
