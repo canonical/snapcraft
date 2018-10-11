@@ -19,18 +19,10 @@ from unittest import mock
 from testtools.matchers import Equals, Is
 
 from snapcraft.internal.repo import errors, snaps
-from tests import fixture_setup, unit
+from tests import unit
 
 
-class SnapPackageBaseTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(self.fake_snapd)
-
-
-class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
+class SnapPackageCurrentChannelTest(unit.TestCase):
 
     scenarios = [
         (
@@ -98,7 +90,7 @@ class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
         self.assertThat(snap_pkg.get_current_channel(), Equals(self.expected))
 
 
-class SnapPackageIsInstalledTest(SnapPackageBaseTestCase):
+class SnapPackageIsInstalledTest(unit.TestCase):
 
     scenarios = [
         (
@@ -139,7 +131,7 @@ class SnapPackageIsInstalledTest(SnapPackageBaseTestCase):
         )
 
 
-class SnapPackageIsInStoreTest(SnapPackageBaseTestCase):
+class SnapPackageIsInStoreTest(unit.TestCase):
 
     scenarios = [
         (
@@ -167,7 +159,7 @@ class SnapPackageIsInStoreTest(SnapPackageBaseTestCase):
         self.assertThat(snap_pkg.in_store, Is(self.expected))
 
 
-class SnapPackageIsClassicTest(SnapPackageBaseTestCase):
+class SnapPackageIsClassicTest(unit.TestCase):
 
     scenarios = [
         (
@@ -220,7 +212,7 @@ class SnapPackageIsClassicTest(SnapPackageBaseTestCase):
         self.assertThat(snap_pkg.is_classic(), Is(self.expected))
 
 
-class SnapPackageIsValidTest(SnapPackageBaseTestCase):
+class SnapPackageIsValidTest(unit.TestCase):
 
     scenarios = [
         (
@@ -282,7 +274,7 @@ class SnapPackageIsValidTest(SnapPackageBaseTestCase):
         self.assertThat(snaps.SnapPackage.is_valid_snap(self.snap), Is(self.expected))
 
 
-class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
+class SnapPackageLifecycleTest(unit.TestCase):
     def test_install_classic(self):
         self.fake_snapd.find_result = [
             {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
@@ -507,7 +499,7 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         )
 
 
-class InstalledSnapsTestCase(SnapPackageBaseTestCase):
+class InstalledSnapsTestCase(unit.TestCase):
     def test_get_installed_snaps(self):
         self.fake_snapd.snaps_result = [
             {"name": "test-snap-1", "revision": "test-snap-1-revision"},

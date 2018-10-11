@@ -149,16 +149,31 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        # Do not attempt to install any snaps
-        self.fake_snap_command = fixture_setup.FakeSnapCommand()
-        self.useFixture(self.fake_snap_command)
-
         # These are what we expect by default
         self.snap_dir = os.path.join(os.getcwd(), "snap")
         self.prime_dir = os.path.join(os.getcwd(), "prime")
         self.stage_dir = os.path.join(os.getcwd(), "stage")
         self.parts_dir = os.path.join(os.getcwd(), "parts")
         self.local_plugins_dir = os.path.join(self.snap_dir, "plugins")
+
+        # Make sure snap installation does the right thing
+        self.fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(self.fake_snapd)
+        self.fake_snapd.installed_snaps = [
+            dict(name="core16", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="latest/stable", revision="10"),
+        ]
+        self.fake_snapd.snaps_result = [
+            dict(name="core16", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="latest/stable", revision="10"),
+        ]
+        self.fake_snapd.find_result = [
+            dict(core16=dict(channels={"latest/stable": {"confinement": "strict"}})),
+            dict(core18=dict(channels={"latest/stable": {"confinement": "strict"}})),
+        ]
+
+        self.fake_snap_command = fixture_setup.FakeSnapCommand()
+        self.useFixture(self.fake_snap_command)
 
         # Avoid installing patchelf in the tests
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_NO_PATCHELF", "1"))
