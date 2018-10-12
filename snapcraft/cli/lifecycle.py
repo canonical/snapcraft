@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import typing
 
 import click
@@ -46,22 +45,22 @@ def _execute(  # noqa: C901
     output: str = None,
     shell: bool = False,
     shell_after: bool = False,
+    destructive_mode: bool = False,
     **kwargs
 ) -> "Project":
     # fmt: on
-    if sys.platform == "darwin":
-        default_provider = "multipass"
-    else:
-        default_provider = "host"
-
-    build_environment = env.BuilderEnvironmentConfig(default=default_provider)
+    provider = "host" if destructive_mode else None
+    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     conduct_project_sanity_check(project)
 
-    #  When we are ready to pull the trigger we will trigger this when
-    # project.info.base is set
-    if build_environment.is_multipass:
+    if build_environment.is_managed_host or build_environment.is_host:
+        project_config = project_loader.load_config(project)
+        lifecycle.execute(step, project_config, parts)
+        if pack_project:
+            _pack(project.prime_dir, output=output)
+    else:
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
@@ -96,14 +95,6 @@ def _execute(  # noqa: C901
             else:
                 if shell or shell_after:
                     instance.shell()
-    elif build_environment.is_managed_host or build_environment.is_host:
-        project_config = project_loader.load_config(project)
-        lifecycle.execute(step, project_config, parts)
-        if pack_project:
-            _pack(project.prime_dir, output=output)
-    else:
-        # TODO support destructive host
-        raise RuntimeError("Unexpected code path")
     return project
 
 
