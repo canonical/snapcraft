@@ -15,12 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import textwrap
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import ruby
+from snapcraft.internal import errors
 from tests import unit
 
 
@@ -35,7 +37,16 @@ class RubyPluginTestCase(unit.TestCase):
             use_bundler = False
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: ruby-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
     def test_schema(self):
         schema = ruby.RubyPlugin.schema()
@@ -56,6 +67,25 @@ class RubyPluginTestCase(unit.TestCase):
         )
         self.assertDictEqual(expected_gems, schema["properties"]["gems"])
 
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: ruby-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError, ruby.RubyPlugin, "test-part", self.options, project
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))
+
     def test_get_pull_properties(self):
         expected_pull_properties = ["ruby-version", "gems", "use-bundler"]
         resulting_pull_properties = ruby.RubyPlugin.get_pull_properties()
@@ -70,18 +100,18 @@ class RubyPluginTestCase(unit.TestCase):
     def test_snap_fileset(self):
         expected_fileset = ["-include/", "-share/"]
 
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         fileset = plugin.snap_fileset()
 
         self.assertThat(fileset, Equals(expected_fileset))
 
     def test_env_without_ruby(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         env = plugin.env("dummy-path")
         self.assertThat(env, Equals([]))
 
     def test_env_with_ruby(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         part_dir = os.path.join(self.path, "test-part-path")
 
         os.makedirs(os.path.join(part_dir, "lib", "ruby", "gems", "test-version"))
@@ -100,7 +130,7 @@ class RubyPluginTestCase(unit.TestCase):
         self.assertThat(set(env), Equals(expected_env))
 
     def test_env_with_multiple_ruby(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         part_dir = os.path.join(self.path, "test-part-path")
 
         os.makedirs(os.path.join(part_dir, "lib", "ruby", "gems", "test-version1"))
@@ -117,7 +147,7 @@ class RubyPluginTestCase(unit.TestCase):
         )
 
     def test_env_with_rbconfigs(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         part_dir = os.path.join(self.path, "test-part-path")
 
         os.makedirs(os.path.join(part_dir, "lib", "ruby", "gems", "test-version"))
@@ -140,7 +170,7 @@ class RubyPluginTestCase(unit.TestCase):
         )
 
     def test_pull_downloads_ruby(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
 
         self.assertThat(
             plugin._ruby_tar.source,
@@ -162,7 +192,7 @@ class RubyPluginTestCase(unit.TestCase):
         mock_download.assert_called_once_with()
 
     def test_pull_installs_ruby(self):
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         with mock.patch.multiple(
             plugin, _ruby_tar=mock.DEFAULT, _gem_install=mock.DEFAULT
         ) as mocks:
@@ -195,7 +225,7 @@ class RubyPluginTestCase(unit.TestCase):
 
     def test_pull_installs_gems_without_bundler(self):
         self.options.gems = ["test-gem-1", "test-gem-2"]
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         with mock.patch.multiple(
             plugin, _ruby_tar=mock.DEFAULT, _ruby_install=mock.DEFAULT
         ):
@@ -218,7 +248,7 @@ class RubyPluginTestCase(unit.TestCase):
 
     def test_pull_with_bundler(self):
         self.options.gems = ["test-gem-1", "test-gem-2"]
-        plugin = ruby.RubyPlugin("test-part", self.options, self.project_options)
+        plugin = ruby.RubyPlugin("test-part", self.options, self.project)
         self.options.use_bundler = True
 
         with mock.patch.multiple(
