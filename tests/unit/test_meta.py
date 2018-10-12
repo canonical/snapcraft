@@ -1596,6 +1596,15 @@ class FullAdapterTest(unit.TestCase):
         self.assertThat(raised.command, Equals("invalid'app"))
         self.assertThat(raised.app_name, Equals("app"))
 
+    def test_invalid_command_absolute_path(self):
+        self.snapcraft_yaml["apps"]["app"]["command"] = "/test-command"
+
+        raised = self.assertRaises(
+            errors.InvalidAppCommandFormatError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.command, Equals("/test-command"))
+        self.assertThat(raised.app_name, Equals("app"))
+
     def test_missing_command(self):
         raised = self.assertRaises(
             errors.InvalidAppCommandError, self._get_packager().write_snap_yaml

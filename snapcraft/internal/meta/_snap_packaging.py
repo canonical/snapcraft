@@ -90,8 +90,9 @@ class OctInt(yaml_utils.SnapcraftYAMLObject):
         )
 
 
-# From snapd's snap/validate.go, appContentWhitelist
-_APP_COMMAND_PATTERN = re.compile("^[A-Za-z0-9/. _#:$-]*$")
+# From snapd's snap/validate.go, appContentWhitelist, with a slight modification: don't
+# allow leading slashes.
+_APP_COMMAND_PATTERN = re.compile("^[A-Za-z0-9. _#:$-][A-Za-z0-9/. _#:$-]*$")
 
 
 def create_snap_packaging(project_config: _config.Config) -> str:
