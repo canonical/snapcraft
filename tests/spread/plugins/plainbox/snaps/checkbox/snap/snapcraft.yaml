@@ -40,4 +40,4 @@ parts:
         filesets:
             wrapper: [bin/checkbox-cli-wrapper]
         stage: [$wrapper]
-        snap: [$wrapper]
+        prime: [$wrapper]

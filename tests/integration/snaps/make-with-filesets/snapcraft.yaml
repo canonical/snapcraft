@@ -15,7 +15,7 @@ parts:
     stage:
       - $share
       - bin
-    snap:
+    prime:
       - bin
     organize:
       to-share: share

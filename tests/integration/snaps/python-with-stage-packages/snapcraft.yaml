@@ -14,7 +14,7 @@ parts:
     python-packages: ['yamllint']
     stage:
         - -bin/yamllint
-    snap:
+    prime:
         - -bin/yamllint
 
   python3:

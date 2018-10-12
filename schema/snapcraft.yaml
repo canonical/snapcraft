@@ -394,13 +394,6 @@ properties:
         special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-]*$:
-        allOf:
-          # Make sure snap/prime are mutually exclusive
-          - not:
-              type: object
-              required: [snap, prime]
-              validation-failure:
-                  "Parts cannot contain both 'snap' and 'prime' keywords."
         type: [object, 'null']
         minProperties: 1
         required:
@@ -500,13 +493,6 @@ properties:
               type: array
               minitems: 1
           stage:
-            type: array
-            minitems: 1
-            uniqueItems: true
-            items:
-              type: string
-            default: ['*']
-          snap: # FIXME: This is deprecated, replaced by `prime`, below.
             type: array
             minitems: 1
             uniqueItems: true
