@@ -175,6 +175,20 @@ class InvalidAppCommandError(SnapcraftError):
         super().__init__(command=command, app_name=app_name)
 
 
+class InvalidAppCommandFormatError(SnapcraftError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "The specified command {command!r} defined in the app {app_name!r} does "
+        "not match the pattern expected by snapd.\n"
+        "The command must consist only of alphanumeric characters, spaces, and the "
+        "following special characters: / . _ # : $ -"
+    )
+
+    def __init__(self, command, app_name):
+        super().__init__(command=command, app_name=app_name)
+
+
 class InvalidCommandChainError(SnapcraftError):
 
     fmt = (

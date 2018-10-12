@@ -1503,7 +1503,7 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
         self.assertRegex(
             raised.message,
             "The 'apps/app/adapter' property does not match the required schema:.*is "
-            "not one of \['none', 'legacy'\]",
+            "not one of \['none', 'legacy', 'full'\]",
         )
 
 

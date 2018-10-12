@@ -277,6 +277,20 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
+            "InvalidAppCommandFormatError",
+            {
+                "exception": errors.InvalidAppCommandFormatError,
+                "kwargs": {"command": "test-command", "app_name": "test-app"},
+                "expected_message": (
+                    "Failed to generate snap metadata: "
+                    "The specified command 'test-command' defined in the app "
+                    "'test-app' does not match the pattern expected by snapd.\n"
+                    "The command must consist only of alphanumeric characters, spaces, "
+                    "and the following special characters: / . _ # : $ -"
+                ),
+            },
+        ),
+        (
             "InvalidCommandChainError",
             {
                 "exception": errors.InvalidCommandChainError,
