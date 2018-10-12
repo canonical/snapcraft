@@ -1,7 +1,6 @@
 click~=6.0
 configparser==3.5.0
 jsonschema==2.5.1
-paramiko==2.4.1
 progressbar33==2.4
 http://pyyaml.org/download/pyyaml/PyYAML-3.13-cp35-cp35m-win_amd64.whl; sys_platform == 'win32'
 PyYAML==3.13; sys_platform != 'win32'
