@@ -1194,12 +1194,6 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
 
 class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase):
-
-    scenarios = (
-        ("using snap keyword", {"keyword": "snap"}),
-        ("using prime keyword", {"keyword": "prime"}),
-    )
-
     def test_prime_step_records_prime_keyword(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
         parts = textwrap.dedent(
@@ -1207,10 +1201,10 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             parts:
                 test-part:
                     plugin: nil
-                    {}: [-*]
+                    prime: [-*]
         """
         )
-        project_config = self.make_snapcraft_project(parts.format(self.keyword))
+        project_config = self.make_snapcraft_project(parts)
         lifecycle.execute(steps.PRIME, project_config)
 
         expected = textwrap.dedent(

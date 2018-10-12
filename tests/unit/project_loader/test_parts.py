@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from textwrap import dedent
 
-import fixtures
-from testtools.matchers import Contains, Equals, HasLength
+from testtools.matchers import Equals, HasLength
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest
 from snapcraft.project import Project
-from snapcraft.internal import deprecations, project_loader
+from snapcraft.internal import project_loader
 from tests import fixture_setup
 
 
@@ -42,17 +40,6 @@ class TestParts(ProjectLoaderBaseTest):
     def test_get_parts_none(self):
         project_config = self.make_snapcraft_project([("part1", dict(plugin="nil"))])
         self.assertThat(project_config.parts.get_part("not-a-part"), Equals(None))
-
-    def test_snap_deprecation(self):
-        """Test that using the 'snap' keyword results in a warning."""
-
-        fake_logger = fixtures.FakeLogger(level=logging.WARN)
-        self.useFixture(fake_logger)
-        self.make_snapcraft_project([("part1", dict(plugin="nil", snap=["foo"]))])
-
-        self.assertThat(
-            fake_logger.output, Contains(deprecations._deprecation_message("dn1"))
-        )
 
 
 class PartOrderTestCase(ProjectLoaderBaseTest):
