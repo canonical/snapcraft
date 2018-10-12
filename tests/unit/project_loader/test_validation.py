@@ -146,22 +146,6 @@ class ValidationTest(ValidationBaseTest):
             ),
         )
 
-    def test_both_snap_and_prime_specified(self):
-        self.data["parts"]["part1"]["snap"] = ["foo"]
-        self.data["parts"]["part1"]["prime"] = ["bar"]
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        self.assertThat(
-            str(raised),
-            MatchesRegex(
-                ".*The 'parts/part1' property does not match the required "
-                "schema: .* cannot contain both 'snap' and 'prime' keywords.*"
-            ),
-        )
-
     def test_missing_required_property_and_missing_adopt_info(self):
         del self.data["summary"]
         del self.data["adopt-info"]
