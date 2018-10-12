@@ -1652,21 +1652,6 @@ class FullAdapterTest(unit.TestCase):
             y["apps"]["app"]["command"], Equals("bin/test-command arg1 arg2")
         )
 
-    def test_command_chain_insertion_absolute_path(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
-
-        self.snapcraft_yaml["apps"]["app"]["command"] = "/test-command"
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner"]),
-        )
-
-        # The command itself should not be touched/rewritten at all
-        self.expectThat(y["apps"]["app"]["command"], Equals("/test-command"))
-
     def test_command_chain_insertion_is_at_beginning(self):
         _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
         _create_file(os.path.join(self.prime_dir, "existing-chain"), executable=True)
