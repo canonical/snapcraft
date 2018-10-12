@@ -33,6 +33,7 @@ class ExtensionTestBase(ProjectLoaderBaseTest):
         self.useFixture(_environment_extension_fixture())
         self.useFixture(_plug_extension_fixture())
         self.useFixture(_daemon_extension_fixture())
+        self.useFixture(_adopt_info_extension_fixture())
         self.useFixture(_invalid_extension_fixture())
 
 
@@ -119,17 +120,23 @@ class BasicExtensionTest(ExtensionTestBase):
         self.assertThat(config.data["parts"], Contains("extension-part"))
         self.expectThat(config.data["parts"]["extension-part"]["plugin"], Equals("nil"))
 
+        # Verify that the extension added a root property
+        self.assertThat(config.data, Contains("environment"))
+        self.expectThat(config.data["environment"], Contains("TEST_EXTENSION"))
+
 
 class ExtensionMergeTest(ExtensionTestBase):
     scenarios = [
         (
             "merge plugs",
             {
-                "app_definition": {
-                    "command": "echo 'hello'",
-                    "plugs": ["foo"],
-                    "extensions": ["plug"],
-                },
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    plugs: [foo]
+                    extensions: [plug]
+                    """
+                ),
                 "expected_app_definition": {
                     "command": "echo 'hello'",
                     "plugs": ["foo", "test-plug"],
@@ -139,11 +146,14 @@ class ExtensionMergeTest(ExtensionTestBase):
         (
             "merge environment",
             {
-                "app_definition": {
-                    "command": "echo 'hello'",
-                    "environment": {"FOO": "BAR"},
-                    "extensions": ["environment"],
-                },
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [environment]
+                    environment:
+                      FOO: BAR
+                    """
+                ),
                 "expected_app_definition": {
                     "command": "echo 'hello'",
                     "environment": {"FOO": "BAR", "TEST_EXTENSION": 1},
@@ -153,11 +163,13 @@ class ExtensionMergeTest(ExtensionTestBase):
         (
             "scalars aren't overridden",
             {
-                "app_definition": {
-                    "command": "echo 'hello'",
-                    "daemon": "forking",
-                    "extensions": ["daemon"],
-                },
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    daemon: forking
+                    extensions: [daemon]
+                    """
+                ),
                 "expected_app_definition": {
                     "command": "echo 'hello'",
                     "daemon": "forking",
@@ -179,7 +191,7 @@ class ExtensionMergeTest(ExtensionTestBase):
 
             apps:
                 test-app:
-                    {app_definition}
+            {app_definition}
 
             parts:
                 part1:
@@ -187,7 +199,9 @@ class ExtensionMergeTest(ExtensionTestBase):
             """
         )
         config = self.make_snapcraft_project(
-            snapcraft_yaml.format(app_definition=self.app_definition)
+            snapcraft_yaml.format(
+                app_definition=textwrap.indent(self.app_definition, " " * 8)
+            )
         )
 
         # Verify that the extension was removed
@@ -198,6 +212,71 @@ class ExtensionMergeTest(ExtensionTestBase):
         self.assertThat(
             config.data["apps"]["test-app"], Equals(self.expected_app_definition)
         )
+
+
+class ExtensionRootMergeTest(ExtensionTestBase):
+    scenarios = [
+        (
+            "merge environment",
+            {
+                "root_definition": textwrap.dedent(
+                    """\
+                    extensions: [environment]
+                    environment:
+                      FOO: BAR
+                    """
+                ),
+                "expected_root_definition": {
+                    "environment": {"FOO": "BAR", "TEST_EXTENSION": 1}
+                },
+            },
+        ),
+        (
+            "scalars aren't overridden",
+            {
+                "root_definition": textwrap.dedent(
+                    """\
+                    extensions: [adopt]
+                    adopt-info: "test-part"
+                    """
+                ),
+                "expected_root_definition": {"adopt-info": "test-part"},
+            },
+        ),
+    ]
+
+    def test_extension_merge(self):
+        snapcraft_yaml = textwrap.dedent(
+            """\
+            name: test
+            version: "1"
+            summary: test
+            description: test
+            base: core18
+            grade: stable
+            confinement: strict
+
+            {root_definition}
+
+            apps:
+                test-app:
+                    command: test-command
+
+            parts:
+                part1:
+                    plugin: nil
+            """
+        )
+        config = self.make_snapcraft_project(
+            snapcraft_yaml.format(root_definition=self.root_definition)
+        )
+
+        # Verify that the extension was removed
+        self.expectThat(config.data, Not(Contains("extensions")))
+
+        # Verify that the extension took effect on the root of the YAML
+        for key, value in self.expected_root_definition.items():
+            self.assertThat(config.data[key], Equals(value))
 
 
 class InvalidExtensionTest(ExtensionTestBase):
@@ -414,6 +493,7 @@ def _environment_extension_fixture():
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
+            self.root_snippet = {"environment": {"TEST_EXTENSION": 1}}
             self.app_snippet = {"environment": {"TEST_EXTENSION": 1}}
             self.part_snippet = {"after": ["extension-part"]}
             self.parts = {"extension-part": {"plugin": "nil"}}
@@ -441,6 +521,17 @@ def _daemon_extension_fixture():
             self.app_snippet = {"daemon": "simple"}
 
     return fixture_setup.FakeExtension("daemon", DaemonExtension)
+
+
+def _adopt_info_extension_fixture():
+    class AdoptExtension(Extension):
+        supported_bases = ("core18",)
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.root_snippet = {"adopt-info": "some-part-name"}
+
+    return fixture_setup.FakeExtension("adopt", AdoptExtension)
 
 
 def _invalid_extension_fixture():
