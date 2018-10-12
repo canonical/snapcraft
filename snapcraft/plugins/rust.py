@@ -142,8 +142,7 @@ class RustPlugin(snapcraft.BasePlugin):
                 [target.{}]
                 linker = "{}"
                 """.format(
-                    self._target,
-                    "{}-gcc".format(self.project.arch_triplet),
+                    self._target, "{}-gcc".format(self.project.arch_triplet)
                 )
             )
 
