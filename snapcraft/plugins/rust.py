@@ -83,6 +83,7 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
         self._cargo_dir = os.path.join(self.builddir, ".cargo")
+        self._cargo_config = os.path.join(self._cargo_dir, "config")
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
@@ -104,6 +105,8 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
+        self._write_cross_compile_config()
+
         self._test()
 
         cmd = [
@@ -122,6 +125,26 @@ class RustPlugin(snapcraft.BasePlugin):
             cmd.append(" ".join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
         self._record_manifest()
+
+    def _write_cross_compile_config(self):
+        if not self.project.is_cross_compiling:
+            return
+
+        if os.path.isfile(self._cargo_config):
+            return
+
+        # Cf. http://doc.crates.io/config.html
+        os.makedirs(self._cargo_dir, exist_ok=True)
+        with open(os.path.join(self._cargo_dir, "config"), "w") as f:
+            f.write(
+                """
+                [target.{}]
+                linker = "{}"
+                """.format(
+                    self._target,
+                    "{}-gcc".format(self.project.arch_triplet),
+                )
+            )
 
     def _record_manifest(self):
         self._manifest["rustup-version"] = self.run_output([self._rustup, "--version"])
