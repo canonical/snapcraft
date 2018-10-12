@@ -625,7 +625,10 @@ class _SnapPackaging:
                 raise errors.InvalidAppCommandFormatError(command, app_name)
 
             command_without_args = command.split()[0]
-            binary_path = os.path.join(self._prime_dir, command_without_args)
+            # The app may have a leading slash which is acceptable to snapd
+            binary_path = os.path.join(
+                self._prime_dir, command_without_args.lstrip("/")
+            )
             is_executable = False
             with contextlib.suppress(FileNotFoundError):
                 mode = os.stat(binary_path).st_mode
