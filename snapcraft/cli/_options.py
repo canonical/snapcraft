@@ -33,6 +33,7 @@ _BUILD_OPTION_NAMES = [
     "--debug",
     "--shell",
     "--shell-after",
+    "--destructive-mode",
 ]
 
 _BUILD_OPTIONS = [
@@ -45,6 +46,9 @@ _BUILD_OPTIONS = [
     dict(is_flag=True, help="Shells into the environment if the build fails."),
     dict(is_flag=True, help="Shells into the environment in lieu of the step to run."),
     dict(is_flag=True, help="Shells into the environment after the step has run."),
+    dict(
+        is_flag=True, help="Forces snapcraft to try and use the current host to build."
+    ),
 ]
 
 

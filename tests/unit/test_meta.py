@@ -1513,7 +1513,7 @@ class WrapExeTest(BaseWrapTest):
             errors.InvalidAppCommandError, self.packager.write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app, Equals("app"))
+        self.assertThat(raised.app_name, Equals("app"))
 
     @patch("snapcraft.internal.project_loader._config.Config.snap_env")
     def test_command_is_not_executable(self, mock_snap_env):
@@ -1532,7 +1532,7 @@ class WrapExeTest(BaseWrapTest):
             errors.InvalidAppCommandError, self.packager.write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app, Equals("app"))
+        self.assertThat(raised.app_name, Equals("app"))
 
     @patch("snapcraft.internal.project_loader._config.Config.snap_env")
     def test_command_found(self, mock_snap_env):
@@ -1559,6 +1559,65 @@ class WrapExeTest(BaseWrapTest):
                 }
             ),
         )
+
+
+class CommandChainTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.snapcraft_yaml = {
+            "name": "test-snap",
+            "version": "test-version",
+            "summary": "test summary",
+            "description": "test description",
+            "confinement": "devmode",
+            "apps": {
+                "app": {
+                    "command": "test-command",
+                    "adapter": "legacy",
+                    "command-chain": ["test-chain"],
+                }
+            },
+            "parts": {"my-part": {"plugin": "nil"}},
+        }
+
+        cmd_path = os.path.join(self.prime_dir, "test-command")
+        _create_file(cmd_path, executable=True)
+
+    def _get_packager(self):
+        with open("snapcraft.yaml", "w") as f:
+            yaml_utils.dump(self.snapcraft_yaml, stream=f)
+
+        project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
+        config = project_loader.load_config(project)
+        # TODO move to use outer interface
+        packager = _snap_packaging._SnapPackaging(config)
+        packager._is_host_compatible_with_base = True
+
+        return packager
+
+    def test_missing_command_chain(self):
+        raised = self.assertRaises(
+            errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.item, Equals("test-chain"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_non_executable_command_chain(self):
+        cmd_path = os.path.join(self.prime_dir, "test-chain")
+        _create_file(cmd_path, executable=False)
+        raised = self.assertRaises(
+            errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
+        )
+        self.assertThat(raised.item, Equals("test-chain"))
+        self.assertThat(raised.app_name, Equals("app"))
+
+    def test_proper_command_chain(self):
+        cmd_path = os.path.join(self.prime_dir, "test-chain")
+        _create_file(cmd_path, executable=True)
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"]["command-chain"], Equals(["test-chain"]))
 
 
 def _create_file(path, *, content="", executable=False):

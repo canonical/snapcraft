@@ -530,6 +530,7 @@ class _SnapPackaging:
             _verify_app_paths(basedir=self._prime_dir, apps=self._config_data["apps"])
             snap_yaml["apps"] = self._wrap_apps(self._config_data["apps"])
             self._render_socket_modes(snap_yaml["apps"])
+            self._validate_command_chain(snap_yaml["apps"])
 
         self._process_passthrough_properties(snap_yaml)
 
@@ -613,7 +614,7 @@ class _SnapPackaging:
             try:
                 new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
             except FileNotFoundError:
-                raise errors.InvalidAppCommandError(command=app[k], app=app)
+                raise errors.InvalidAppCommandError(command=app[k], app_name=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
 
@@ -641,6 +642,16 @@ class _SnapPackaging:
                 mode = socket.get("socket-mode")
                 if mode is not None:
                     socket["socket-mode"] = OctInt(mode)
+
+    def _validate_command_chain(self, apps: Dict[str, Any]) -> None:
+        for app_name, app in apps.items():
+            for item in app.get("command-chain", []):
+                executable_path = os.path.join(self._prime_dir, item)
+
+                # command-chain entries must always be relative to the root of the snap,
+                # i.e. PATH is not used.
+                if not _executable_is_valid(executable_path):
+                    raise errors.InvalidCommandChainError(item, app_name)
 
     def _process_passthrough_properties(self, snap_yaml: Dict[str, Any]) -> None:
         passthrough_applied = False
@@ -708,3 +719,11 @@ def _verify_app_paths(basedir, apps):
                 raise errors.SnapcraftPathEntryError(
                     app=app, key=path_entry, value=file_path
                 )
+
+
+def _executable_is_valid(path: str) -> bool:
+    with contextlib.suppress(FileNotFoundError):
+        mode = os.stat(path).st_mode
+        return bool(mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH)
+
+    return False
