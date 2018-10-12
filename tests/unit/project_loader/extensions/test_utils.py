@@ -32,18 +32,17 @@ class ExtensionTestBase(ProjectLoaderBaseTest):
         # Create a few fake extensions
         self.useFixture(_environment_extension_fixture())
         self.useFixture(_plug_extension_fixture())
+        self.useFixture(_plug2_extension_fixture())
         self.useFixture(_daemon_extension_fixture())
         self.useFixture(_adopt_info_extension_fixture())
         self.useFixture(_invalid_extension_fixture())
 
 
 class BasicExtensionTest(ExtensionTestBase):
-    scenarios = [
-        (
-            "app extension",
-            {
-                "snapcraft_yaml": textwrap.dedent(
-                    """\
+    def test_one_app_one_extension(self):
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
                     name: test
                     version: "1"
                     summary: test
@@ -55,24 +54,16 @@ class BasicExtensionTest(ExtensionTestBase):
                     apps:
                         test-app:
                             command: echo "hello"
-                            {extensions}
+                            extensions: [environment]
 
                     parts:
                         part1:
                             plugin: nil
                     """
-                )
-            },
-        )
-    ]
-
-    def test_extension(self):
-        config = self.make_snapcraft_project(
-            self.snapcraft_yaml.format(extensions="extensions: [environment]")
+            )
         )
 
         # Verify that the extension was removed
-        self.expectThat(config.data, Not(Contains("extensions")))
         self.expectThat(config.data["apps"]["test-app"], Not(Contains("extensions")))
 
         # Verify that the extension took effect on the app
@@ -97,6 +88,148 @@ class BasicExtensionTest(ExtensionTestBase):
         # Verify that the extension added a root property
         self.assertThat(config.data, Contains("environment"))
         self.expectThat(config.data["environment"], Contains("TEST_EXTENSION"))
+
+    def test_two_apps_one_extension(self):
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core18
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        app1:
+                            command: app1
+                            extensions: [environment]
+                        app2:
+                            command: app2
+                            extensions: [environment]
+
+                    parts:
+                        part1:
+                            plugin: nil
+                    """
+            )
+        )
+
+        # Verify that the extension was removed from both apps, and took effect on both
+        for app_name in ("app1", "app2"):
+            self.expectThat(config.data["apps"][app_name], Not(Contains("extensions")))
+            self.assertThat(config.data["apps"][app_name], Contains("environment"))
+            self.assertThat(
+                config.data["apps"][app_name]["environment"], Contains("TEST_EXTENSION")
+            )
+            self.expectThat(
+                config.data["apps"][app_name]["environment"]["TEST_EXTENSION"],
+                Equals(1),
+            )
+
+        # Verify that the extension took effect on the part only once
+        self.assertThat(config.parts.after_requests, Contains("part1"))
+        self.expectThat(
+            config.parts.after_requests["part1"], Equals(["extension-part"])
+        )
+
+        # Verify that the extension added a single part
+        self.assertThat(config.data["parts"], Contains("extension-part"))
+        self.expectThat(config.data["parts"]["extension-part"]["plugin"], Equals("nil"))
+
+        # Verify that the extension added a root property
+        self.assertThat(config.data, Contains("environment"))
+        self.expectThat(config.data["environment"], Contains("TEST_EXTENSION"))
+
+    def test_multiple_extensions(self):
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core18
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        test-app:
+                            command: test-app
+                            extensions: [environment, daemon]
+
+                    parts:
+                        part1:
+                            plugin: nil
+                    """
+            )
+        )
+
+        # Verify that both extensions were applied to the app
+        self.expectThat(config.data["apps"]["test-app"], Not(Contains("extensions")))
+        self.assertThat(config.data["apps"]["test-app"], Contains("environment"))
+        self.assertThat(
+            config.data["apps"]["test-app"]["environment"], Contains("TEST_EXTENSION")
+        )
+        self.expectThat(
+            config.data["apps"]["test-app"]["environment"]["TEST_EXTENSION"], Equals(1)
+        )
+        self.assertThat(config.data["apps"]["test-app"], Contains("daemon"))
+        self.expectThat(config.data["apps"]["test-app"]["daemon"], Equals("simple"))
+
+        # Verify that the environment took effect
+        self.assertThat(config.parts.after_requests, Contains("part1"))
+        self.expectThat(
+            config.parts.after_requests["part1"], Equals(["extension-part"])
+        )
+
+        # Verify that the environment extension added a part
+        self.assertThat(config.data["parts"], Contains("extension-part"))
+        self.expectThat(config.data["parts"]["extension-part"]["plugin"], Equals("nil"))
+
+        # Verify that the environment extension added a root property
+        self.assertThat(config.data, Contains("environment"))
+        self.expectThat(config.data["environment"], Contains("TEST_EXTENSION"))
+
+
+class ExtensionOrderConsistencyTest(ExtensionTestBase):
+    scenarios = [
+        ("plug, plug2", {"extensions": "[plug, plug2]"}),
+        ("plug2, plug", {"extensions": "[plug2, plug]"}),
+    ]
+
+    def test_extension_merge(self):
+        config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: core18
+                    grade: stable
+                    confinement: strict
+
+                    apps:
+                        test-app:
+                            command: test-app
+                            extensions: {extensions}
+
+                    parts:
+                        part1:
+                            plugin: nil
+                    """
+            ).format(extensions=self.extensions)
+        )
+
+        # Verify that both extensions were applied to the app
+        self.expectThat(config.data["apps"]["test-app"], Not(Contains("extensions")))
+        self.assertThat(config.data["apps"]["test-app"], Contains("plugs"))
+        self.assertThat(
+            config.data["apps"]["test-app"]["plugs"],
+            Equals(["test-plug", "test-plug2"]),
+        )
 
 
 class ExtensionMergeTest(ExtensionTestBase):
@@ -291,6 +424,40 @@ class InvalidExtensionTest(ExtensionTestBase):
             ),
         )
 
+    def test_duplicate_extensions(self):
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            self.make_snapcraft_project,
+            textwrap.dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                grade: stable
+                confinement: strict
+                base: core18
+
+                apps:
+                    test-app:
+                        command: echo "hello"
+                        extensions: [environment, environment]
+
+                parts:
+                    my-part:
+                        plugin: nil
+                """
+            ),
+        )
+
+        self.assertThat(
+            str(raised),
+            Contains(
+                "The 'extensions' property does not match the required schema: "
+                "['environment', 'environment'] has non-unique elements"
+            ),
+        )
+
     def test_invalid_extension_is_validated(self):
         raised = self.assertRaises(
             errors.YamlValidationError,
@@ -452,6 +619,17 @@ def _plug_extension_fixture():
             self.app_snippet = {"plugs": ["test-plug"]}
 
     return fixture_setup.FakeExtension("plug", PlugExtension)
+
+
+def _plug2_extension_fixture():
+    class Plug2Extension(Extension):
+        supported_bases = ("core18",)
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.app_snippet = {"plugs": ["test-plug2"]}
+
+    return fixture_setup.FakeExtension("plug2", Plug2Extension)
 
 
 def _daemon_extension_fixture():
