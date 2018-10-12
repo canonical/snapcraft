@@ -59,6 +59,12 @@ class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
         self.check_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("subprocess.Popen")
+        self.popen_mock = patcher.start()
+        self.popen_mock().communicate.return_value = (b"", b"error")
+        self.popen_mock().returncode = 0
+        self.addCleanup(patcher.stop)
+
         self.multipass_command = MultipassCommand()
         self.instance_name = "stub-instance"
 
@@ -69,6 +75,24 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
 
         self.check_call_mock.assert_called_once_with(
             ["multipass", "launch", "16.04", "--name", self.instance_name]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_launch_with_cpus(self):
+        self.multipass_command.launch(
+            instance_name=self.instance_name, cpus="10", image="16.04"
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "launch",
+                "16.04",
+                "--name",
+                self.instance_name,
+                "--cpus",
+                "10",
+            ]
         )
         self.check_output_mock.assert_not_called()
 
@@ -168,6 +192,14 @@ class MultipassCommandStopTest(MultipassCommandPassthroughBaseTest):
 
         self.check_call_mock.assert_called_once_with(
             ["multipass", "stop", self.instance_name]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_stop_time(self):
+        self.multipass_command.stop(instance_name=self.instance_name, time=10)
+
+        self.check_call_mock.assert_called_once_with(
+            ["multipass", "stop", "--time", "10", self.instance_name]
         )
         self.check_output_mock.assert_not_called()
 
@@ -278,9 +310,16 @@ class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
     def test_info(self):
         self.multipass_command.info(instance_name=self.instance_name)
 
-        self.check_output_mock.assert_called_once_with(
-            ["multipass", "info", self.instance_name]
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
         )
+        self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()
 
     def test_info_with_format(self):
@@ -288,21 +327,34 @@ class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
             instance_name=self.instance_name, output_format="json"
         )
 
-        self.check_output_mock.assert_called_once_with(
-            ["multipass", "info", self.instance_name, "--format", "json"]
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name, "--format", "json"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
         )
+        self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()
 
     def test_info_fails(self):
-        # multipass can fail due to several reasons and will display the error
-        # right above this exception message.
-        cmd = ["multipass", "info", self.instance_name]
-        self.check_output_mock.side_effect = subprocess.CalledProcessError(1, cmd)
+        self.popen_mock().returncode = 1
 
         self.assertRaises(
             errors.ProviderInfoError,
             self.multipass_command.info,
             instance_name=self.instance_name,
         )
-        self.check_output_mock.assert_called_once_with(cmd)
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["multipass", "info", self.instance_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            ]
+        )
+        self.check_output_mock.assert_not_called()
         self.check_call_mock.assert_not_called()

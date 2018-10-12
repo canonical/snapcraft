@@ -194,7 +194,7 @@ class Provider(abc.ABC):
         try:
             # An ProviderStartError exception here means we need to create
             self._start()
-        except errors.ProviderStartError:
+        except errors.ProviderInstanceNotFoundError:
             # If starting failed, we need to make sure our data directory is
             # clean
             if os.path.exists(self.provider_project_dir):

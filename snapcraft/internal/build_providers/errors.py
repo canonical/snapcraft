@@ -160,11 +160,21 @@ class ProviderInfoError(_SnapcraftError):
 
     fmt = (
         "An error occurred when using {provider_name!r} to "
-        "query the status of the instance: returned exit code {exit_code!r}."
+        "query the status of the instance: returned exit code {exit_code!r}: {stderr!s}."
     )
 
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
+    def __init__(self, *, provider_name: str, exit_code: int, stderr: bytes) -> None:
+        super().__init__(
+            provider_name=provider_name, exit_code=exit_code, stderr=stderr.decode()
+        )
+
+
+class ProviderInstanceNotFoundError(_SnapcraftError):
+
+    fmt = "Cannot find an instance named {instance_name!r}."
+
+    def __init__(self, *, instance_name: str) -> None:
+        super().__init__(instance_name=instance_name)
 
 
 class ProviderInfoDataKeyError(_SnapcraftError):
@@ -247,13 +257,3 @@ class BuildImageChecksumError(_SnapcraftError):
 
     def __init__(self, *, expected: str, calculated: str, algorithm: str) -> None:
         super().__init__(expected=expected, calculated=calculated, algorithm=algorithm)
-
-
-class UnsupportedHostError(_SnapcraftError):
-    fmt = (
-        "Building for {base!r} is not supported on platform {platform!r} using "
-        "provider: {provider!r}."
-    )
-
-    def __init__(self, *, base: str, platform: str, provider: str) -> None:
-        super().__init__(base=base, platform=platform, provider=provider)

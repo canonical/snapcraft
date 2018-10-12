@@ -52,8 +52,8 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_launch_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.start_mock.side_effect = errors.ProviderStartError(
-            exit_code=1, provider_name="provider"
+        provider.start_mock.side_effect = errors.ProviderInstanceNotFoundError(
+            instance_name=self.instance_name
         )
         provider.launch_instance()
 

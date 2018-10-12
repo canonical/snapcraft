@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,10 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ._clean import clean  # noqa
-from ._containers import cleanbuild  # noqa
-from ._containers import containerbuild  # noqa
-from ._init import init, get_init_data  # noqa
-from ._packer import pack  # noqa
-from ._runner import execute  # noqa
-from ._status_cache import StatusCache  # noqa
+from ._clean import clean  # noqa: F401
+from ._init import init, get_init_data  # noqa: F401
+from ._packer import pack  # noqa: F401
+from ._runner import execute  # noqa: F401
+from ._status_cache import StatusCache  # noqa: F401

@@ -24,7 +24,7 @@ import jsonschema
 from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
-from snapcraft.internal import deprecations, remote_parts, states, steps
+from snapcraft.internal import deprecations, states, steps
 
 from ._schema import Validator
 from ._parts_config import PartsConfig
@@ -196,12 +196,6 @@ class Config:
     def all_parts(self):
         return self.parts.all_parts
 
-    @property
-    def _remote_parts(self):
-        if getattr(self, "_remote_parts_attr", None) is None:
-            self._remote_parts_attr = remote_parts.get_remote_parts()
-        return self._remote_parts_attr
-
     def __init__(self, project: project.Project) -> None:
         self.build_snaps = set()  # type: Set[str]
         self.project = project
@@ -212,7 +206,6 @@ class Config:
         self.validator = Validator(snapcraft_yaml)
         self.validator.validate()
 
-        snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
         self.data = self._expand_env(snapcraft_yaml)
@@ -330,30 +323,6 @@ class Config:
                 step_fileset = _expand_filesets_for(step, parts[part_name])
                 parts[part_name][step] = step_fileset
 
-        return snapcraft_yaml
-
-    def _process_remote_parts(self, snapcraft_yaml):
-        parts = snapcraft_yaml.get("parts", {})
-        new_parts = {}
-
-        for part_name in parts:
-            if not parts[part_name]:
-                parts[part_name] = dict()
-
-            if "plugin" not in parts[part_name]:
-                properties = self._remote_parts.compose(part_name, parts[part_name])
-                new_parts[part_name] = properties
-            else:
-                new_parts[part_name] = parts[part_name].copy()
-
-            after_parts = parts[part_name].get("after", [])
-            after_remote_parts = [p for p in after_parts if p not in parts]
-
-            for after_part in after_remote_parts:
-                properties = self._remote_parts.get_part(after_part)
-                new_parts[after_part] = properties
-
-        snapcraft_yaml["parts"] = new_parts
         return snapcraft_yaml
 
 

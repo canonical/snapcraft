@@ -49,6 +49,7 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["required"] = ["source"]
 
         return schema
 

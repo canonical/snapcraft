@@ -13,5 +13,5 @@ confinement: devmode
 parts:
   dummy:
     plugin: nil
-    install: |
+    override-build: |
       echo "test-build" > $SNAPCRAFT_PART_INSTALL/version

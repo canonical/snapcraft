@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import cast, Dict, Set, Sequence  # noqa: F401
+from typing import cast, Dict, List, Set, Sequence
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
@@ -95,6 +95,10 @@ class PluginHandler:
             self.source_handler = self._get_source_handler(self._part_properties)
         else:
             self.source_handler = None
+
+        self.build_environment = _list_of_dicts_to_env(
+            self._part_properties["build-environment"]
+        )
 
         self._build_attributes = BuildAttributes(
             self._part_properties["build-attributes"]
@@ -457,7 +461,7 @@ class PluginHandler:
                 stage_packages=self.stage_packages,
                 build_snaps=part_build_snaps,
                 build_packages=part_build_packages,
-                source_details=self.source_handler.source_details,
+                source_details=getattr(self.source_handler, "source_details", None),
                 metadata=metadata,
                 metadata_files=metadata_files,
                 scriptlet_metadata=self._scriptlet_metadata[steps.PULL],
@@ -536,22 +540,28 @@ class PluginHandler:
                 return
             source.update()
 
-        self._do_build()
+        self._do_build(update=True)
 
-    def _do_build(self):
-        self._runner.prepare()
+    def _do_build(self, *, update=False):
         self._runner.build()
-        self._runner.install()
 
-        # Organize the installed files as requested. We do this in the build
-        # step for two reasons:
+        # Organize the installed files as requested. We do this in the build step for
+        # two reasons:
         #
-        #   1. So cleaning and re-running the stage step works even if
-        #      `organize` is used
-        #   2. So collision detection takes organization into account, i.e. we
-        #      can use organization to get around file collisions between
-        #      parts when staging.
-        self._organize()
+        #   1. So cleaning and re-running the stage step works even if `organize` is
+        #      used
+        #   2. So collision detection takes organization into account, i.e. we can use
+        #      organization to get around file collisions between parts when staging.
+        #
+        # If `update` is true, we give the snapcraft CLI permission to overwrite files
+        # that already exist. Typically we do NOT want this, so that parts don't
+        # accidentally clobber e.g. files brought in from stage-packages, but in the
+        # case of updating build, we want the part to have the ability to organize over
+        # the files it organized last time around. We can be confident that this won't
+        # overwrite anything else, because to do so would require changing the
+        # `organize` keyword, which will make the build step dirty and require a clean
+        # instead of an update.
+        self._organize(overwrite=update)
 
         self.mark_build_done()
 
@@ -669,10 +679,10 @@ class PluginHandler:
         fileset = getattr(self.plugin.options, option, default)
         return fileset if fileset else default
 
-    def _organize(self):
+    def _organize(self, *, overwrite=False):
         fileset = self._get_fileset("organize", {})
 
-        _organize_filesets(fileset.copy(), self.plugin.installdir)
+        _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
         self.makedirs()
@@ -1079,7 +1089,7 @@ def _migrate_files(
         fixup_func(dst)
 
 
-def _organize_filesets(fileset, base_dir):
+def _organize_filesets(part_name, fileset, base_dir, overwrite):
     for key in sorted(fileset, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, key)
         # Remove the leading slash if there so os.path.join
@@ -1088,22 +1098,47 @@ def _organize_filesets(fileset, base_dir):
 
         sources = iglob(src, recursive=True)
 
+        # Keep track of the number of glob expansions so we can properly error if more
+        # than one tries to organize to the same file
+        src_count = 0
         for src in sources:
+            src_count += 1
+
             if os.path.isdir(src) and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 # TODO create alternate organization location to avoid
                 # deletions.
                 shutil.rmtree(src)
+                continue
             elif os.path.isfile(dst):
-                raise errors.SnapcraftEnvironmentError(
-                    "Trying to organize file {key!r} to {dst!r}, "
-                    "but {dst!r} already exists".format(
-                        key=key, dst=os.path.relpath(dst, base_dir)
+                if overwrite and src_count <= 1:
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(dst)
+                elif src_count > 1:
+                    raise errors.SnapcraftOrganizeError(
+                        part_name,
+                        "multiple files to be organized into {!r}. If this is supposed "
+                        "to be a directory, end it with a forward slash.".format(
+                            os.path.relpath(dst, base_dir)
+                        ),
                     )
-                )
-            else:
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                shutil.move(src, dst)
+                else:
+                    raise errors.SnapcraftOrganizeError(
+                        part_name,
+                        "trying to organize file {key!r} to {dst!r}, but {dst!r} "
+                        "already exists".format(
+                            key=key, dst=os.path.relpath(dst, base_dir)
+                        ),
+                    )
+            if os.path.isdir(dst) and overwrite:
+                real_dst = os.path.join(dst, os.path.basename(src))
+                if os.path.isdir(real_dst):
+                    shutil.rmtree(real_dst)
+                else:
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(real_dst)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.move(src, dst)
 
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
@@ -1312,3 +1347,15 @@ def _combine_filesets(starting_fileset, modifying_fileset):
         return list(set(starting_fileset + modifying_fileset))
     else:
         return modifying_fileset
+
+
+def _list_of_dicts_to_env(l: List[Dict[str, str]]) -> List[str]:
+    env = []  # type: List[str]
+
+    # We're iterating anyway, but thanks to the schema validation, we can rest assured
+    # that each dict only has one key/value pair.
+    for d in l:
+        for key, value in d.items():
+            env.append('{}="{}"'.format(key, value))
+
+    return env

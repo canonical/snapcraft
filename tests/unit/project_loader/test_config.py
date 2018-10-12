@@ -216,12 +216,10 @@ class DependenciesTest(ProjectLoaderBaseTest):
 
             parts:
               p1:
-                plugin: tar-content
-                source: .
+                plugin: nil
                 after: [p2]
               p2:
-                plugin: tar-content
-                source: .
+                plugin: nil
                 after: [p1]
         """
         )

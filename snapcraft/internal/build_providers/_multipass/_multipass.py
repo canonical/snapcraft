@@ -22,10 +22,26 @@ from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 def _get_platform() -> str:
     return sys.platform
+
+
+def _get_stop_time() -> int:
+    try:
+        timeout = int(os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "10"))
+    except ValueError:
+        raise SnapcraftEnvironmentError(
+            "'SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME' is incorrectly set, found {!r} "
+            "but expected a number representing the minutes to delay the actual stop "
+            "operation (or 0 to stop immediately).".format(
+                os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME")
+            )
+        )
+
+    return timeout
 
 
 class Multipass(Provider):
@@ -41,16 +57,10 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        if self.project.info.base == "core18":
-            image = "18.04"
-        elif self.project.info.base in ("core16", None):
-            image = "16.04"
+        if self.project.info.base is None:
+            image = "snapcraft:core16"
         else:
-            raise errors.UnsupportedHostError(
-                base=self.project.info.base,
-                platform=_get_platform(),
-                provider=self._get_provider_name(),
-            )
+            image = "snapcraft:{}".format(self.project.info.base)
 
         return image
 
@@ -58,11 +68,15 @@ class Multipass(Provider):
         cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
+        cpus = os.getenv(
+            "SNAPCRAFT_BUILD_ENVIRONMENT_CPU", str(self.project.parallel_build_count)
+        )
         mem = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "2G")
         disk = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "256G")
 
         self._multipass_cmd.launch(
             instance_name=self.instance_name,
+            cpus=cpus,
             mem=mem,
             disk=disk,
             image=image,
@@ -70,6 +84,16 @@ class Multipass(Provider):
         )
 
     def _start(self):
+        try:
+            self._get_instance_info()
+        except errors.ProviderInfoError as instance_error:
+            # Until we have proper multipass error codes to know if this
+            # was a communication error we should keep this error tracking
+            # and generation here.
+            raise errors.ProviderInstanceNotFoundError(
+                instance_name=self.instance_name
+            ) from instance_error
+
         self._multipass_cmd.start(instance_name=self.instance_name)
 
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
@@ -109,7 +133,16 @@ class Multipass(Provider):
             return
 
         if not self._instance_info.is_stopped():
-            self._multipass_cmd.stop(instance_name=self.instance_name)
+            stop_time = _get_stop_time()
+            if stop_time > 0:
+                try:
+                    self._multipass_cmd.stop(
+                        instance_name=self.instance_name, time=stop_time
+                    )
+                except errors.ProviderStopError:
+                    self._multipass_cmd.stop(instance_name=self.instance_name)
+            else:
+                self._multipass_cmd.stop(instance_name=self.instance_name)
         if self._is_ephemeral:
             self.clean_project()
 

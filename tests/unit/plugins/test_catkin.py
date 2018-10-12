@@ -67,13 +67,11 @@ class _CompareContainers:
         return True
 
 
-class CatkinPluginBaseTestCase(unit.TestCase):
+class CatkinPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
         class props:
-            rosdistro = "indigo"
-            ubuntu_distro = "trusty"
             catkin_packages = ["my_package"]
             source_space = "src"
             source_subdir = None
@@ -86,7 +84,19 @@ class CatkinPluginBaseTestCase(unit.TestCase):
             catkin_ros_master_uri = "http://localhost:11311"
 
         self.properties = props()
-        self.project_options = snapcraft.ProjectOptions()
+        self.ros_distro = "kinetic"
+        self.ubuntu_distro = "xenial"
+
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: catkin-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
@@ -126,7 +136,7 @@ class CatkinPluginBaseTestCase(unit.TestCase):
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
                     ubuntu_sources=sources,
-                    project=self.project_options,
+                    project=self.project,
                 ),
                 mock.call().setup(),
             ]
@@ -135,7 +145,7 @@ class CatkinPluginBaseTestCase(unit.TestCase):
     def assert_wstool_setup(self, package_path, wstool_path, sources):
         self.wstool_mock.assert_has_calls(
             [
-                mock.call(package_path, wstool_path, sources, self.project_options),
+                mock.call(package_path, wstool_path, sources, self.project),
                 mock.call().setup(),
             ]
         )
@@ -154,13 +164,12 @@ class CatkinPluginBaseTestCase(unit.TestCase):
         )
 
 
-class CatkinPluginTestCase(CatkinPluginBaseTestCase):
+class CatkinPluginTestCase(CatkinPluginBaseTest):
     def test_schema(self):
         schema = catkin.CatkinPlugin.schema()
 
         properties = schema["properties"]
         expected = (
-            "rosdistro",
             "catkin-packages",
             "source-space",
             "include-roscore",
@@ -173,18 +182,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
-
-    def test_schema_rosdistro(self):
-        schema = catkin.CatkinPlugin.schema()
-
-        # Check rosdistro property
-        rosdistro = schema["properties"]["rosdistro"]
-        expected = ("type", "default")
-        self.assertThat(rosdistro, HasLength(len(expected)))
-        for prop in expected:
-            self.assertThat(rosdistro, Contains(prop))
-        self.assertThat(rosdistro["type"], Equals("string"))
-        self.assertThat(rosdistro["default"], Equals("indigo"))
 
     def test_schema_catkin_packages(self):
         schema = catkin.CatkinPlugin.schema()
@@ -313,7 +310,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     def test_get_pull_properties(self):
         expected_pull_properties = [
-            "rosdistro",
             "catkin-packages",
             "source-space",
             "include-roscore",
@@ -341,47 +337,39 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         for property in expected_build_properties:
             self.assertIn(property, actual_build_properties)
 
-    def test_invalid_rosdistro(self):
-        self.properties.rosdistro = "invalid"
-        raised = self.assertRaises(
-            catkin.CatkinUnsupportedRosdistroError,
-            catkin.CatkinPlugin,
-            "test-part",
-            self.properties,
-            self.project_options,
+    def test_get_stage_sources_core16(self):
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: catkin-snap
+                    base: core16
+                    """
+                )
+            )
         )
 
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Unsupported ROS distribution: 'invalid'. The supported ROS "
-                "distributions are 'indigo', 'jade', 'kinetic', and 'lunar'."
-            ),
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
+
+    def test_get_stage_sources_core18(self):
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: catkin-snap
+                    base: core18
+                    """
+                )
+            )
         )
 
-    def test_get_stage_sources_indigo(self):
-        self.properties.rosdistro = "indigo"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        self.assertTrue("trusty" in plugin.PLUGIN_STAGE_SOURCES)
-
-    def test_get_stage_sources_jade(self):
-        self.properties.rosdistro = "jade"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        self.assertTrue("trusty" in plugin.PLUGIN_STAGE_SOURCES)
-
-    def test_get_stage_sources_kinetic(self):
-        self.properties.rosdistro = "kinetic"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
-
-    def test_get_stage_sources_lunar(self):
-        self.properties.rosdistro = "lunar"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        self.assertTrue("bionic" in plugin.PLUGIN_STAGE_SOURCES)
 
     @mock.patch("snapcraft.plugins.catkin.Compilers")
     def test_pull_invalid_dependency(self, compilers_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
@@ -400,7 +388,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     def test_pull_unable_to_resolve_roscore(self):
         self.properties.include_roscore = True
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         # No system dependencies
@@ -416,7 +404,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             "build-path": "test-build-path",
             "run-path": "test-run-path",
         }
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         # No system dependencies
@@ -430,7 +418,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         )
 
     def test_clean_pull(self):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         self.dependencies_mock.return_value = {"apt": {"foo", "bar", "baz"}}
@@ -444,7 +432,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_valid_catkin_workspace_src(self):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it contains a 'src' directory, this is a valid Catkin workspace.
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
         # An exception will be raised if pull can't handle the valid workspace.
         plugin.pull()
@@ -453,7 +441,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and `source-space` is 'src', this
         # should fail.
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
@@ -471,7 +459,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # sourcedir is expected to be the root of the Catkin workspace.
         # Normally this would mean it contained a `src` directory, but it can
         # be remapped via the `source-space` key.
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, self.properties.source_space))
         # An exception will be raised if pull can't handle the source space.
         plugin.pull()
@@ -482,7 +470,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
@@ -501,7 +489,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         # sourcedir is expected to be the root of the Catkin workspace. Since
         # it does not contain a `src` folder and source_space wasn't
         # specified, this should fail.
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         raised = self.assertRaises(catkin.CatkinPackagePathNotFoundError, plugin.pull)
 
         self.assertThat(
@@ -518,7 +506,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.properties.source_space = "foo"
         self.properties.catkin_packages = []
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         # Normally pulling should fail, but since there are no packages to
         # build, even an invalid workspace should be okay.
@@ -535,7 +523,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             catkin.CatkinPlugin,
             "test-part",
             self.properties,
-            self.project_options,
+            self.project,
         )
 
     @mock.patch("snapcraft.plugins.catkin.Compilers")
@@ -555,7 +543,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     ):
         self.properties.catkin_packages.append("package_2")
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -584,7 +572,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     def test_build_runs_in_bash(self, run_output_mock, run_mock, compilers_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -594,7 +582,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         )
 
     def test_use_in_snap_python_rewrites_shebangs(self):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.rosdir, "bin"))
 
         # Place a few files with bad shebangs, and some files that shouldn't be
@@ -630,7 +618,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     def test_use_in_snap_python_skips_binarys(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(plugin.rosdir)
 
         # Place a file to be discovered by _use_in_snap_python().
@@ -648,7 +636,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             plugin._use_in_snap_python()
 
     def test_use_in_snap_python_rewrites_10_ros_sh(self):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.rosdir, "etc", "catkin", "profile.d"))
 
         ros_profile = os.path.join(
@@ -670,7 +658,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             )
 
     def test_use_in_snap_python_rewrites_1_ros_package_path_sh(self):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.rosdir, "etc", "catkin", "profile.d"))
 
         ros_profile = os.path.join(
@@ -731,7 +719,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     )
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="bar")
     def test_run_environment(self, run_mock, source_setup_sh_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         environment = self._verify_run_environment(plugin)
 
@@ -744,7 +732,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             "build-path": "test-build-path",
             "run-path": "test-run-path",
         }
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         environment = self._verify_run_environment(plugin)
 
@@ -777,12 +765,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     ):
 
         self.properties.catkin_ros_master_uri = "http://rosmaster:11311"
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         self._verify_run_environment(plugin)
 
     def _evaluate_environment(self, predefinition=""):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         python_path = os.path.join(
             plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
@@ -861,7 +849,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         catkin.CatkinPlugin, "_source_setup_sh", return_value="test-source-setup"
     )
     def test_generate_snapcraft_sh(self, source_setup_sh_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         plugin._generate_snapcraft_setup_sh("test-root", None)
         source_setup_sh_mock.assert_called_with("test-root", None)
@@ -869,10 +857,10 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertThat(f.read(), Equals("test-source-setup"))
 
     def test_source_setup_sh(self):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
-        rosdir = os.path.join("test-root", "opt", "ros", self.properties.rosdistro)
+        rosdir = os.path.join("test-root", "opt", "ros", self.ros_distro)
         setup_path = os.path.join(rosdir, "setup.sh")
         lines_of_interest = [
             "set --",
@@ -900,11 +888,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             "build-path": "test-build-underlay",
             "run-path": "test-run-underlay",
         }
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
         underlay_setup_path = os.path.join("test-underlay", "setup.sh")
-        rosdir = os.path.join("test-root", "opt", "ros", self.properties.rosdistro)
+        rosdir = os.path.join("test-root", "opt", "ros", self.ros_distro)
         setup_path = os.path.join(rosdir, "setup.sh")
         lines_of_interest = [
             "set --",
@@ -935,7 +923,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="bar")
     def test_run_environment_no_python(self, run_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
         python_path = os.path.join(
             plugin.installdir, "usr", "lib", "python2.7", "dist-packages"
@@ -949,7 +937,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, "_use_in_snap_python")
     def test_prepare_build(self, use_python_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.rosdir, "test"))
 
         # Place a few .cmake files with incorrect paths, and some files that
@@ -993,7 +981,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                 self.assertThat(f.read(), Equals(file_info["expected"]))
 
 
-class PullTestCase(CatkinPluginBaseTestCase):
+class PullTestCase(CatkinPluginBaseTest):
 
     scenarios = [
         ("no underlay", {"underlay": None, "expected_underlay_path": None}),
@@ -1020,7 +1008,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_debian_dependencies(self, generate_setup_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         self.dependencies_mock.return_value = {"apt": {"foo", "bar", "baz"}}
@@ -1028,10 +1016,10 @@ class PullTestCase(CatkinPluginBaseTestCase):
         plugin.pull()
 
         self.assert_rosdep_setup(
-            self.properties.rosdistro,
+            self.ros_distro,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
-            self.properties.ubuntu_distro,
+            self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
         )
 
@@ -1061,7 +1049,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
     def test_pull_local_dependencies(self, generate_setup_mock):
         self.properties.catkin_packages.append("package_2")
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         # No system dependencies (only local)
@@ -1070,10 +1058,10 @@ class PullTestCase(CatkinPluginBaseTestCase):
         plugin.pull()
 
         self.assert_rosdep_setup(
-            self.properties.rosdistro,
+            self.ros_distro,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
-            self.properties.ubuntu_distro,
+            self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
         )
 
@@ -1103,7 +1091,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_with_roscore(self, generate_setup_mock):
         self.properties.include_roscore = True
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         # No system dependencies
@@ -1118,10 +1106,10 @@ class PullTestCase(CatkinPluginBaseTestCase):
         plugin.pull()
 
         self.assert_rosdep_setup(
-            self.properties.rosdistro,
+            self.ros_distro,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
-            self.properties.ubuntu_distro,
+            self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
         )
 
@@ -1142,7 +1130,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_with_rosinstall_files(self, generate_setup_mock):
         self.properties.rosinstall_files = ["rosinstall-file"]
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         # No system dependencies
@@ -1151,10 +1139,10 @@ class PullTestCase(CatkinPluginBaseTestCase):
         plugin.pull()
 
         self.assert_rosdep_setup(
-            self.properties.rosdistro,
+            self.ros_distro,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
-            self.properties.ubuntu_distro,
+            self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
         )
 
@@ -1186,7 +1174,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_pip_dependencies(self, generate_setup_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         self.dependencies_mock.return_value = {"pip": {"foo", "bar", "baz"}}
@@ -1194,10 +1182,10 @@ class PullTestCase(CatkinPluginBaseTestCase):
         plugin.pull()
 
         self.assert_rosdep_setup(
-            self.properties.rosdistro,
+            self.ros_distro,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
-            self.properties.ubuntu_distro,
+            self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
         )
 
@@ -1230,7 +1218,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
         )
 
 
-class BuildTestCase(CatkinPluginBaseTestCase):
+class BuildTestCase(CatkinPluginBaseTest):
 
     scenarios = [
         (
@@ -1271,7 +1259,7 @@ class BuildTestCase(CatkinPluginBaseTestCase):
         run_mock,
         compilers_mock,
     ):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -1339,7 +1327,7 @@ class BuildTestCase(CatkinPluginBaseTestCase):
         compilers_mock,
     ):
         self.properties.catkin_packages = None
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project_options)
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
@@ -1391,7 +1379,7 @@ class BuildTestCase(CatkinPluginBaseTestCase):
         finish_build_mock.assert_called_once_with()
 
 
-class FinishBuildTestCase(CatkinPluginBaseTestCase):
+class FinishBuildTestCase(CatkinPluginBaseTest):
 
     scenarios = [
         ("no underlay", {"underlay": None, "expected_underlay_path": None}),
@@ -1411,9 +1399,7 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
         super().setUp()
 
         self.properties.underlay = self.underlay
-        self.plugin = catkin.CatkinPlugin(
-            "test-part", self.properties, self.project_options
-        )
+        self.plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     @mock.patch.object(catkin.CatkinPlugin, "_use_in_snap_python")
@@ -1492,7 +1478,7 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
         with open(setup_file, "w") as f:
             f.write(
                 "CMAKE_PREFIX_PATH = '{0}/{1};{0}\n".format(
-                    self.plugin.rosdir, self.plugin.options.rosdistro
+                    self.plugin.rosdir, self.ros_distro
                 )
             )
 
@@ -1764,7 +1750,7 @@ class RecursivelyHandleRosinstallFilesTestCase(unit.TestCase):
 class CompilersTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.project = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project()
         self.compilers = catkin.Compilers("compilers_path", "sources", self.project)
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -1910,7 +1896,7 @@ class CatkinFindTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project()
         self.catkin = catkin._Catkin(
             "kinetic", "workspace_path", "catkin_path", "sources", self.project
         )

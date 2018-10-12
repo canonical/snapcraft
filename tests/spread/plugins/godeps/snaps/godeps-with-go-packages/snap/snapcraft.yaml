@@ -1,5 +1,5 @@
 name: godeps-with-go-packages
-version: '1.0'
+version: "1.0"
 summary: A simple godeps project which targets a specific go package.
 description: |
   By unsing go-packages this we ensure that only `only-main` gets built

@@ -144,7 +144,7 @@ def _get_local_plugins_dir(project_dir: str, parts_dir: str) -> str:
 
 class ProjectOptions:
     @property
-    def parallel_build_count(self):
+    def parallel_build_count(self) -> int:
         build_count = 1
         if self._parallel_builds:
             try:

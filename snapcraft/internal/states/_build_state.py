@@ -21,14 +21,11 @@ from snapcraft.internal.states._state import PartState
 def _schema_properties():
     return {
         "after",
-        "build",
         "build-attributes",
         "build-packages",
         "disable-parallel",
-        "install",
         "organize",
         "override-build",
-        "prepare",
     }
 
 

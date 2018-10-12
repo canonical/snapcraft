@@ -331,6 +331,16 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler["git"] is sources.Git)
 
+    def test_pull_failure(self):
+        self.mock_run.side_effect = CalledProcessError(1, [])
+
+        git = sources.Git("git://my-source", "source_dir")
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, git.pull)
+        self.assertThat(
+            raised.command, Equals("git clone --recursive git://my-source source_dir")
+        )
+        self.assertThat(raised.exit_code, Equals(1))
+
 
 class GitBaseTestCase(unit.TestCase):
     def rm_dir(self, dir):

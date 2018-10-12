@@ -1,5 +1,5 @@
 name: build-package-grammar-try
-version: '0.1'
+version: "0.1"
 summary: Test build package grammar try statement
 description: Verify that the try statement results in an optional build package
 grade: devel

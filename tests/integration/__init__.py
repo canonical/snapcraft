@@ -48,9 +48,16 @@ class RegisterError(Exception):
 class TestCase(testtools.TestCase):
     def setUp(self):
         super().setUp()
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+
+        self.patchelf_command = "patchelf"
+        self.execstack_command = "execstack"
+
+        package_type = os.getenv("SNAPCRAFT_PACKAGE_TYPE")
+        if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
-        elif os.getenv("SNAPCRAFT_FROM_DEB", False):
+            self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
+            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
+        elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
             self.snapcraft_parser_command = "/usr/bin/snapcraft-parser"
         elif os.getenv("VIRTUAL_ENV") and sys.platform == "win32":
@@ -65,23 +72,15 @@ class TestCase(testtools.TestCase):
             self.snapcraft_parser_command = os.path.join(
                 os.getenv("VIRTUAL_ENV"), "bin", "snapcraft-parser"
             )
-        elif os.getenv("SNAPCRAFT_FROM_BREW", False):
+        elif package_type == "brew":
             self.snapcraft_command = "/usr/local/bin/snapcraft"
         else:
             raise EnvironmentError(
                 "snapcraft is not setup correctly for testing. Either set "
-                "SNAPCRAFT_FROM_SNAP, SNAPCRAFT_FROM_DEB or "
-                "SNAPCRAFT_FROM_BREW to run from either the snap, deb or "
-                "brew, or make sure your venv is properly setup as described "
-                "in HACKING.md."
+                "SNAPCRAFT_PACKAGE_TYPE to 'snap', 'deb' or 'brew', to run from "
+                "either the snap, deb or homebrew or make sure your venv is properly "
+                "setup as described in HACKING.md."
             )
-
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
-            self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
-            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
-        else:
-            self.patchelf_command = "patchelf"
-            self.execstack_command = "execstack"
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), "snaps")
         temp_cwd_fixture = fixture_setup.TempCWD()
@@ -456,7 +455,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
@@ -539,7 +538,7 @@ class StoreTestCase(TestCase):
         )
         process.expect_exact(
             "If you do not have an Ubuntu One account, you can create one at "
-            "https://dashboard.snapcraft.io/openid/login" + os.linesep
+            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)
@@ -618,7 +617,7 @@ class StoreTestCase(TestCase):
             if "name: " in line:
                 print("name: {}".format(name))
             elif "version: " in line:
-                print("version: {}".format(version))
+                print('version: "{}"'.format(version))
             elif "architectures: " in line:
                 print("architectures: [{}]".format(arch))
             else:
@@ -635,7 +634,7 @@ class StoreTestCase(TestCase):
             if "name: " in line:
                 print("name: {}".format(name))
             elif "version: " in line:
-                print("version: {}".format(version))
+                print('version: "{}"'.format(version))
             else:
                 print(line)
 

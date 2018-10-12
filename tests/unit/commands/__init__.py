@@ -83,7 +83,7 @@ class CommandBaseTestCase(unit.TestCase):
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
 
     yaml_template = """name: {step}-test
-version: 1.0
+version: "1.0"
 summary: test {step}
 description: if the {step} is successful the state file will be updated
 confinement: strict
@@ -102,6 +102,8 @@ parts:
 
         if base:
             base = "base: {}".format(base)
+        else:
+            base = ""
 
         parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
         super().make_snapcraft_yaml(

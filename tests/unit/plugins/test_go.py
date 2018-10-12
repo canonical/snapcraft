@@ -15,78 +15,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
+from textwrap import dedent
 from unittest import mock
-from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from testtools.matchers import Contains, Equals, HasLength, Not
+
+from snapcraft.internal import errors
+from snapcraft.project import Project
 from snapcraft.plugins import go
 from tests import fixture_setup, unit
 
 
-class GoPluginCrossCompileTestCase(unit.TestCase):
+class GoPluginBaseTest(unit.TestCase):
 
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf", go_arch="arm")),
-        ("aarch64", dict(deb_arch="arm64", go_arch="arm64")),
-        ("i386", dict(deb_arch="i386", go_arch="386")),
-        ("x86_64", dict(deb_arch="amd64", go_arch="amd64")),
-        ("ppc64le", dict(deb_arch="ppc64el", go_arch="ppc64le")),
-    ]
+    deb_arch = None
 
     def setUp(self):
         super().setUp()
 
-        self.project_options = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
-
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_cross_compile(self):
-        class Options:
-            source = ""
-            go_packages = ["github.com/gotools/vet"]
-            go_importpath = ""
-            go_buildtags = ""
-
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
-
-        os.makedirs(plugin.sourcedir)
-
-        plugin.pull()
-
-        self.assertThat(self.run_mock.call_count, Equals(1))
-        for call_args in self.run_mock.call_args_list:
-            env = call_args[1]["env"]
-            self.assertIn("CC", env)
-            self.assertThat(
-                env["CC"], Equals("{}-gcc".format(self.project_options.arch_triplet))
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: go-snap
+            base: core18
+        """
             )
-            self.assertIn("CXX", env)
-            self.assertThat(
-                env["CXX"], Equals("{}-g++".format(self.project_options.arch_triplet))
-            )
-            self.assertIn("CGO_ENABLED", env)
-            self.assertThat(env["CGO_ENABLED"], Equals("1"))
-            self.assertIn("GOARCH", env)
-            self.assertThat(env["GOARCH"], Equals(self.go_arch))
-            if self.deb_arch == "armhf":
-                self.assertIn("GOARM", env)
-                self.assertThat(env["GOARM"], Equals("7"))
+        )
 
-
-class GoPluginTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.useFixture(fixture_setup.CleanEnvironment())
-
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = Project(
+            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
+        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -96,10 +54,8 @@ class GoPluginTestCase(unit.TestCase):
         self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("sys.stdout")
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
+class GoPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = go.GoPlugin.schema()
 
@@ -109,6 +65,30 @@ class GoPluginTestCase(unit.TestCase):
                 expected in properties,
                 "Expected {!r} to be included in properties".format(expected),
             )
+
+        # Check go-channel
+        go_channel = properties["go-channel"]
+        for expected in ["type", "default"]:
+            self.assertTrue(
+                expected in go_channel,
+                "Expected {!r} to be included in 'go-channel'".format(expected),
+            )
+
+        go_channel_type = go_channel["type"]
+        self.assertThat(
+            go_channel_type,
+            Equals("string"),
+            'Expected "go-channel" "type" to be "string", but '
+            'it was "{}"'.format(go_channel_type),
+        )
+
+        go_channel_default = go_channel["default"]
+        self.assertThat(
+            go_channel_default,
+            Equals("latest/stable"),
+            'Expected "go-channel" "default" to be '
+            '"latest/stable", but it was "{}"'.format(go_channel_default),
+        )
 
         # Check go-packages
         go_packages = properties["go-packages"]
@@ -256,13 +236,26 @@ class GoPluginTestCase(unit.TestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
+
+class GoPluginTest(GoPluginBaseTest):
+    def setUp(self):
+
+        super().setUp()
+
+        self.useFixture(fixture_setup.CleanEnvironment())
+
+        patcher = mock.patch("sys.stdout")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_pull_local_sources(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "main.go"), "w").close()
@@ -286,10 +279,11 @@ class GoPluginTestCase(unit.TestCase):
     def test_no_local_source_with_go_packages(self):
         class Options:
             source = None
+            go_channel = "latest/stable"
             go_packages = ["github.com/gotools/vet"]
             go_importpath = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
 
@@ -312,10 +306,11 @@ class GoPluginTestCase(unit.TestCase):
     def test_pull_with_local_sources_or_go_packages(self):
         class Options:
             source = None
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
         plugin.pull()
 
         self.run_mock.assert_has_calls([])
@@ -327,11 +322,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_with_local_sources(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "main.go"), "w").close()
@@ -367,11 +363,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_go_packages(self):
         class Options:
             source = ""
+            go_channel = "latest/stable"
             go_packages = ["github.com/gotools/vet"]
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
 
@@ -401,11 +398,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_with_no_local_sources_or_go_packages(self):
         class Options:
             source = ""
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
 
@@ -425,11 +423,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_clean_build(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         plugin.pull()
 
@@ -453,11 +452,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_clean_pull(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "main.go"), "w").close()
@@ -473,11 +473,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_with_local_sources_and_go_importpath(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = "github.com/snapcore/launcher"
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "main.go"), "w").close()
@@ -527,11 +528,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_environment(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_packages = []
             go_importpath = ""
             go_buildtags = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "main.go"), "w").close()
@@ -566,11 +568,12 @@ class GoPluginTestCase(unit.TestCase):
     def test_build_with_buildtag(self):
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
             go_importpath = ""
             go_packages = []
             go_buildtags = ["testbuildtag1", "testbuildtag2"]
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.options.source)
         os.makedirs(plugin.sourcedir)
@@ -605,27 +608,113 @@ class GoPluginTestCase(unit.TestCase):
             env=mock.ANY,
         )
 
-    def test_build_stage_packages_default(self):
+
+class GoPluginToolSetupTest(GoPluginBaseTest):
+    def setUp(self):
+        super().setUp()
+
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
-        self.assertIn("golang-go", plugin.build_packages)
+        self.options = Options()
 
-    def test_build_stage_packages_with_go_build_snap(self):
+    def test_snap(self):
+        plugin = go.GoPlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.build_packages, Not(Contains("golang-go")))
+        self.assertThat(plugin.build_snaps, Contains("go/latest/stable"))
+
+    def test_build_packages(self):
+        self.options.go_channel = ""
+
+        plugin = go.GoPlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.build_packages, Contains("golang-go"))
+        self.assertThat(plugin.build_snaps, Not(Contains("go/latest/stable")))
+
+
+class GoPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: go-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
         class Options:
             source = "dir"
+            go_channel = "latest/stable"
+
+        self.options = Options()
+
+    def test_unsupported_base_using_snap(self):
+        plugin = go.GoPlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.build_packages, Not(Contains("golang-go")))
+        self.assertThat(plugin.build_snaps, Contains("go/latest/stable"))
+
+    def test_unsupported_base_using_without_snap_raises(self):
+        self.options.go_channel = ""
+
+        self.assertRaises(
+            errors.PluginBaseError, go.GoPlugin, "test-part", self.options, self.project
+        )
+
+
+class GoPluginCrossCompileTest(GoPluginBaseTest):
+
+    scenarios = [
+        ("armv7l", dict(deb_arch="armhf", go_arch="arm")),
+        ("aarch64", dict(deb_arch="arm64", go_arch="arm64")),
+        ("i386", dict(deb_arch="i386", go_arch="386")),
+        ("x86_64", dict(deb_arch="amd64", go_arch="amd64")),
+        ("ppc64le", dict(deb_arch="ppc64el", go_arch="ppc64le")),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_cross_compile(self):
+        class Options:
+            source = ""
+            go_packages = ["github.com/gotools/vet"]
             go_importpath = ""
-            build_snaps = ["go"]
+            go_buildtags = ""
+            go_channel = ""
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
-        self.assertNotIn("golang-go", plugin.build_packages)
+        plugin = go.GoPlugin("test-part", Options(), self.project)
 
-    def test_build_stage_packages_with_go_build_snap_channel(self):
-        class Options:
-            source = "dir"
-            go_importpath = ""
-            build_snaps = ["go/foo"]
+        os.makedirs(plugin.sourcedir)
 
-        plugin = go.GoPlugin("test-part", Options(), self.project_options)
-        self.assertNotIn("golang-go", plugin.build_packages)
+        plugin.pull()
+
+        self.assertThat(self.run_mock.call_count, Equals(1))
+        for call_args in self.run_mock.call_args_list:
+            env = call_args[1]["env"]
+            self.assertIn("CC", env)
+            self.assertThat(
+                env["CC"], Equals("{}-gcc".format(self.project.arch_triplet))
+            )
+            self.assertIn("CXX", env)
+            self.assertThat(
+                env["CXX"], Equals("{}-g++".format(self.project.arch_triplet))
+            )
+            self.assertIn("CGO_ENABLED", env)
+            self.assertThat(env["CGO_ENABLED"], Equals("1"))
+            self.assertIn("GOARCH", env)
+            self.assertThat(env["GOARCH"], Equals(self.go_arch))
+            if self.deb_arch == "armhf":
+                self.assertIn("GOARM", env)
+                self.assertThat(env["GOARM"], Equals("7"))

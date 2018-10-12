@@ -1,5 +1,5 @@
 name: catkin-shared-ros-consumer
-version: '0.1'
+version: "0.1"
 summary: Test building a consumer for a shared part.
 description: |
   The shared part doesn't contain Catkin, so this makes sure the Catkin
@@ -18,7 +18,7 @@ parts:
   # producer.
   overlay:
     plugin: catkin
-    rosdistro: kinetic
+    source: .
     include-roscore: false
     catkin-packages: [overlay_package]
     underlay:

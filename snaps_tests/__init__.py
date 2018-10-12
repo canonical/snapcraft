@@ -109,10 +109,11 @@ class SnapsTestCase(testtools.TestCase):
         super().setUp()
 
         self.patchelf_command = "patchelf"
-        if os.getenv("SNAPCRAFT_FROM_SNAP", False):
+        package_type = os.getenv("SNAPCRAFT_PACKAGE_TYPE")
+        if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
             self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
-        elif os.getenv("SNAPCRAFT_FROM_DEB", False):
+        elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
         elif os.getenv("VIRTUAL_ENV"):
             self.snapcraft_command = os.path.join(
@@ -124,7 +125,7 @@ class SnapsTestCase(testtools.TestCase):
         else:
             raise EnvironmentError(
                 "snapcraft is not setup correctly for testing. Either set "
-                "SNAPCRAFT_FROM_SNAP or SNAPCRAFT_FROM_DEB to run from either "
+                "SNAPCRAFT_PACKAGE_TYPE to 'snap' or 'deb', to run from either "
                 "the snap or deb, or make sure your venv is properly setup "
                 "as described in HACKING.md."
             )

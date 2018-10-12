@@ -24,7 +24,7 @@ import textwrap
 import time
 from typing import Any, Callable, Dict  # noqa
 
-from snapcraft.internal import common, deprecations, errors
+from snapcraft.internal import common, errors
 
 
 class Runner:
@@ -63,19 +63,6 @@ class Runner:
         self._override_stage_scriptlet = part_properties.get("override-stage")
         self._override_prime_scriptlet = part_properties.get("override-prime")
 
-        # These are all deprecated
-        self._prepare_scriptlet = part_properties.get("prepare")
-        if self._prepare_scriptlet:
-            deprecations.handle_deprecation_notice("dn7")
-
-        self._build_scriptlet = part_properties.get("build")
-        if self._build_scriptlet:
-            deprecations.handle_deprecation_notice("dn8")
-
-        self._install_scriptlet = part_properties.get("install")
-        if self._install_scriptlet:
-            deprecations.handle_deprecation_notice("dn9")
-
     def pull(self) -> None:
         """Run override-pull scriptlet."""
         if self._override_pull_scriptlet:
@@ -83,24 +70,12 @@ class Runner:
                 "override-pull", self._override_pull_scriptlet, self._sourcedir
             )
 
-    def prepare(self) -> None:
-        """Run prepare scriptlet."""
-        if self._prepare_scriptlet:
-            self._run_scriptlet("prepare", self._prepare_scriptlet, self._builddir)
-
     def build(self) -> None:
         """Run override-build scriptlet."""
-        if self._build_scriptlet:
-            self._run_scriptlet("build", self._build_scriptlet, self._builddir)
-        elif self._override_build_scriptlet:
+        if self._override_build_scriptlet:
             self._run_scriptlet(
                 "override-build", self._override_build_scriptlet, self._builddir
             )
-
-    def install(self) -> None:
-        """Run install scriptlet."""
-        if self._install_scriptlet:
-            self._run_scriptlet("install", self._install_scriptlet, self._builddir)
 
     def stage(self) -> None:
         """Run override-stage scriptlet."""

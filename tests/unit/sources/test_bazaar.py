@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from unittest import mock
+import subprocess
 
+from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
@@ -132,6 +133,14 @@ class TestBazaar(unit.sources.SourceTestCase):  # type: ignore
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler["bzr"] is sources.Bazaar)
+
+    def test_pull_failure(self):
+        self.mock_run.side_effect = subprocess.CalledProcessError(1, [])
+
+        bzr = sources.Bazaar("lp:my-source", "source_dir")
+        raised = self.assertRaises(sources.errors.SnapcraftPullError, bzr.pull)
+        self.assertThat(raised.command, Equals("bzr branch lp:my-source source_dir"))
+        self.assertThat(raised.exit_code, Equals(1))
 
 
 class BazaarDetailsTestCase(unit.TestCase):

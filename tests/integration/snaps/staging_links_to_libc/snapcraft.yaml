@@ -1,5 +1,5 @@
 name: staged-libc-links
-version: '0.1'
+version: "0.1"
 summary: Attempt to stage libc6-dev twice
 description: |
   Once by pulling it in via stage-packages, and the other time via

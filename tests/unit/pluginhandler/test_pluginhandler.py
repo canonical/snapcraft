@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import copy
 import os
 import shutil
@@ -23,7 +24,7 @@ from collections import OrderedDict
 from textwrap import dedent
 from unittest.mock import call, Mock, MagicMock, patch
 
-from testtools.matchers import Contains, Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
 from . import mocks
@@ -368,6 +369,30 @@ class PluginTestCase(unit.TestCase):
 
         self.assertThat(raised.message, Equals('path "/abs/exclude" must be relative'))
 
+    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    def test_build_organizes(self, mock_organize):
+        handler = self.load_part("test-part")
+        handler.build()
+        mock_organize.assert_called_once_with(
+            "test-part", {}, handler.plugin.installdir, False
+        )
+
+    @patch("snapcraft.internal.pluginhandler._organize_filesets")
+    def test_update_build_organizes_with_overwrite(self, mock_organize):
+        class TestPlugin(snapcraft.BasePlugin):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.out_of_source_build = True
+
+        self.useFixture(fixture_setup.FakePlugin("test-plugin", TestPlugin))
+
+        handler = self.load_part("test-part", plugin_name="test-plugin")
+        handler.makedirs()
+        handler.update_build()
+        mock_organize.assert_called_once_with(
+            "test-part", {}, handler.plugin.installdir, True
+        )
+
 
 class MigratePluginTestCase(unit.TestCase):
 
@@ -566,7 +591,9 @@ class OrganizeTestCase(unit.TestCase):
                 setup_dirs=[],
                 setup_files=["foo", "bar"],
                 organize_set={"foo": "bar"},
-                expected=errors.SnapcraftEnvironmentError,
+                expected=errors.SnapcraftOrganizeError,
+                expected_message=".*trying to organize file 'foo' to 'bar', but 'bar' already exists.*",
+                expected_overwrite=[(["bar"], "")],
             ),
         ),
         (
@@ -584,7 +611,8 @@ class OrganizeTestCase(unit.TestCase):
                 setup_dirs=[],
                 setup_files=["foo.conf", "bar.conf"],
                 organize_set={"*.conf": "dir"},
-                expected=errors.SnapcraftEnvironmentError,
+                expected=errors.SnapcraftOrganizeError,
+                expected_message=".*multiple files to be organized into 'dir'.*",
             ),
         ),
         (
@@ -619,33 +647,62 @@ class OrganizeTestCase(unit.TestCase):
                 ],
             ),
         ),
+        (
+            "*_into_dir",
+            dict(
+                setup_dirs=["dir"],
+                setup_files=[os.path.join("dir", "foo"), os.path.join("dir", "bar")],
+                organize_set={"dir/f*": "nested/dir/"},
+                expected=[
+                    (["dir", "nested"], ""),
+                    (["bar"], "dir"),
+                    (["dir"], "nested"),
+                    (["foo"], os.path.join("nested", "dir")),
+                ],
+            ),
+        ),
     ]
 
-    def test_organize_file(self):
+    def _organize_and_assert(self, overwrite):
         base_dir = "install"
-        os.makedirs(base_dir)
+        os.makedirs(base_dir, exist_ok=True)
 
         for directory in self.setup_dirs:
-            os.makedirs(os.path.join(base_dir, directory))
+            os.makedirs(os.path.join(base_dir, directory), exist_ok=True)
 
         for file_entry in self.setup_files:
             with open(os.path.join(base_dir, file_entry), "w") as f:
                 f.write(file_entry)
 
-        if isinstance(self.expected, type) and issubclass(self.expected, Exception):
-            self.assertRaises(
-                self.expected,
+        expected = self.expected
+        if overwrite:
+            with contextlib.suppress(AttributeError):
+                expected = self.expected_overwrite
+        if isinstance(expected, type) and issubclass(expected, Exception):
+            raised = self.assertRaises(
+                expected,
                 pluginhandler._organize_filesets,
+                "part-name",
                 self.organize_set,
                 base_dir,
+                overwrite,
             )
+            self.assertThat(str(raised), MatchesRegex(self.expected_message))
         else:
-            pluginhandler._organize_filesets(self.organize_set, base_dir)
-            for expect in self.expected:
+            pluginhandler._organize_filesets(
+                "part-name", self.organize_set, base_dir, overwrite
+            )
+            for expect in expected:
                 dir_path = os.path.join(base_dir, expect[1])
                 dir_contents = os.listdir(dir_path)
                 dir_contents.sort()
                 self.assertThat(dir_contents, Equals(expect[0]))
+
+    def test_organize(self):
+        self._organize_and_assert(False)
+
+        # Verify that it can be organized again by overwriting
+        self._organize_and_assert(True)
 
 
 class RealStageTestCase(unit.TestCase):
@@ -654,7 +711,7 @@ class RealStageTestCase(unit.TestCase):
             dedent(
                 """\
             name: pc-file-test
-            version: 1.0
+            version: "1.0"
             summary: test pkg-config .pc
             description: when the .pc files reach stage the should be reprefixed
             confinement: strict
@@ -897,7 +954,8 @@ class StateTestCase(StateBaseTestCase):
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state_with_extracted_metadata(self, repo_mock):
         self.handler = self.load_part(
-            "test_part", part_properties={"parse-info": ["metadata-file"]}
+            "test_part",
+            part_properties={"source": ".", "parse-info": ["metadata-file"]},
         )
 
         # Create metadata file
@@ -1057,16 +1115,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertTrue(expected in state.properties)
@@ -1106,16 +1161,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))
@@ -1158,16 +1210,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected build to save state YAML")
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(6))
         for expected in [
             "after",
             "build-attributes",
             "build-packages",
             "disable-parallel",
             "organize",
-            "prepare",
-            "build",
-            "install",
             "override-build",
         ]:
             self.assertThat(state.properties, Contains(expected))
@@ -2023,7 +2072,7 @@ class IsOutdatedTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.handler = self.load_part("test-part")
+        self.handler = self.load_part("test-part", part_properties=dict(source="."))
         self.handler.makedirs()
 
     def set_modified_time_later(self, target, reference):

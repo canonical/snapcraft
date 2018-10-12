@@ -1,0 +1,29 @@
+summary: Valid licenses can pack properly
+
+# We currently only have core18 on a stable channel
+systems: [ubuntu-18*]
+
+prepare: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+  
+  # License is currently base triggered only
+  if [[ "$SPREAD_SYSTEM" =~ "ubuntu-18.04" ]]; then
+      echo "base: core18" >> snap/snapcraft.yaml
+  elif [[ "$SPREAD_SYSTEM" =~ "ubuntu-16.04" ]]; then
+      echo "base: core16" >> snap/snapcraft.yaml
+  else
+      FAIL "Test not supported for $SPREAD_SYSTEM"
+  fi 
+  echo "license: MIT" >> snap/snapcraft.yaml
+
+restore: |
+  rm -rf test-snap
+
+execute: |
+  cd test-snap
+
+  snapcraft  
+
+  cat meta/snap.yaml | MATCH -v "license: MIT"

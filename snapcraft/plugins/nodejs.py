@@ -63,7 +63,14 @@ logger = logging.getLogger(__name__)
 _NODEJS_BASE = "node-v{version}-linux-{arch}"
 _NODEJS_VERSION = "6.14.2"
 _NODEJS_TMPL = "https://nodejs.org/dist/v{version}/{base}.tar.gz"
-_NODEJS_ARCHES = {"i386": "x86", "amd64": "x64", "armhf": "armv7l", "arm64": "arm64"}
+_NODEJS_ARCHES = {
+    "i386": "x86",
+    "amd64": "x64",
+    "armhf": "armv7l",
+    "arm64": "arm64",
+    "ppc64el": "ppc64le",
+    "s390x": "s390x",
+}
 _YARN_URL = "https://yarnpkg.com/latest.tar.gz"
 
 
@@ -102,9 +109,6 @@ class NodePlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
-
-        if "required" in schema:
-            del schema["required"]
 
         return schema
 

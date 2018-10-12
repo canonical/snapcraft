@@ -1,5 +1,5 @@
 name: valid-checksums
-version: 1.0
+version: "1.0"
 summary: Valid source-checksum's
 description: |
     Valid source checksums that snapcraft should accept.
