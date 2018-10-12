@@ -126,6 +126,13 @@ def _load_extension(base: str, extension_name: str, yaml_data) -> Extension:
 def _apply_extension(
     yaml_data: Dict[str, Any], app_name: str, extension_name: str, extension: Extension
 ):
+    # Apply the root components of the extension (if any)
+    root_extension = extension.root_snippet
+    for property_name, property_value in root_extension.items():
+        yaml_data[property_name] = _apply_extension_property(
+            yaml_data.get(property_name), property_value
+        )
+
     # Apply the app-specific components of the extension (if any)
     app_extension = extension.app_snippet
     app_definition = yaml_data["apps"][app_name]
