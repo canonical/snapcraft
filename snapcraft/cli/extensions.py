@@ -22,7 +22,7 @@ import textwrap
 import tabulate
 
 from ._options import get_project
-from snapcraft.internal import lifecycle
+from snapcraft.internal import project_loader
 from snapcraft import yaml_utils
 
 
@@ -37,7 +37,6 @@ def list_extensions(**kwargs):
 
     This command has an alias of `extensions`.
     """
-    from snapcraft.internal import project_loader
 
     extension_names = []
     for _, modname, _ in pkgutil.iter_modules(project_loader._extensions.__path__):
@@ -64,35 +63,22 @@ def list_extensions(**kwargs):
 @click.argument("name")
 def extension(name, **kwargs):
     """Show contents of extension."""
-    from snapcraft.internal import project_loader
 
-    dummy_data = lifecycle.get_init_data()
-    extension_instance = project_loader.find_extension(name)(dummy_data)
+    extension_cls = project_loader.find_extension(name)
+    docstring = extension_cls.__doc__
+    if not docstring:
+        raise project_loader.errors.ExtensionMissingDocumentationError(name)
 
-    app_snippet = extension_instance.app_snippet
-    part_snippet = extension_instance.part_snippet
-    parts = extension_instance.parts
-
-    intro = "The {} extension".format(name)
-    if app_snippet:
-        click.echo("{} adds the following to apps that use it:".format(intro))
-        click.echo(textwrap.indent(yaml_utils.dump(app_snippet), "    "))
-        intro = "It"
-
-    if part_snippet:
-        click.echo("{} adds the following to all parts:".format(intro))
-        click.echo(textwrap.indent(yaml_utils.dump(part_snippet), "    "))
-        intro = "It"
-
-    if parts:
-        click.echo("{} adds the following part definitions:".format(intro))
-        click.echo(textwrap.indent(yaml_utils.dump(parts), "    "))
+    # In order to dedent, we need to ignore the first line and then throw it back on
+    # afterward.
+    lines = docstring.split("\n")
+    docstring = "{}\n{}".format(lines[0], textwrap.dedent("\n".join(lines[1:]))).strip()
+    print(docstring)
 
 
 @extensioncli.command("expand-extensions")
 def expand_extensions(**kwargs):
     """Display snapcraft.yaml with all extensions applied."""
-    from snapcraft.internal import project_loader
 
     project = get_project(**kwargs)
     yaml_with_extensions = project_loader.apply_extensions(

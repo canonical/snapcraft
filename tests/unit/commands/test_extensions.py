@@ -19,6 +19,7 @@ import textwrap
 from unittest import mock
 from testtools.matchers import Equals
 
+from snapcraft.internal.project_loader import errors
 from snapcraft.internal.project_loader._extensions._extension import Extension
 
 from tests import fixture_setup
@@ -70,19 +71,10 @@ class ExtensionsCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    The test1 extension adds the following to apps that use it:
-                        environment:
-                          EXTENSION_NAME: test1
+                    This is the Test1 extension.
 
-                    It adds the following to all parts:
-                        after:
-                        - extension-part
-
-                    It adds the following part definitions:
-                        extension-part:
-                          plugin: nil
-
-                    """  # Extra line break due to click.echo
+                    It does stuff.
+                    """
                 )
             ),
         )
@@ -95,33 +87,27 @@ class ExtensionsCommandTest(CommandBaseTestCase):
             Equals(
                 textwrap.dedent(
                     """\
-                    The test2 extension adds the following to all parts:
-                        after:
-                        - extension-part
+                    This is the Test2 extension.
 
-                    It adds the following part definitions:
-                        extension-part:
-                          plugin: nil
-
-                    """  # Extra line break due to click.echo
+                    It does other stuff.
+                    """
                 )
             ),
         )
 
-        result = self.run_command(["extension", "test3"])
+    def test_extension_missing_docs(self):
+        raised = self.assertRaises(
+            errors.ExtensionMissingDocumentationError,
+            self.run_command,
+            ["extension", "test3"],
+        )
 
-        self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
-            result.output,
+            str(raised),
             Equals(
-                textwrap.dedent(
-                    """\
-                    The test3 extension adds the following part definitions:
-                        extension-part:
-                          plugin: nil
-
-                    """  # Extra line break due to click.echo
-                )
+                "The 'test3' extension appears to be missing documentation.\n"
+                "We would appreciate it if you created a bug report about this at "
+                "https://launchpad.net/snapcraft/+filebug"
             ),
         )
 
@@ -184,6 +170,11 @@ class ExtensionsCommandTest(CommandBaseTestCase):
 
 def _test1_extension_fixture():
     class Test1Extension(Extension):
+        """This is the Test1 extension.
+
+        It does stuff.
+        """
+
         supported_bases = ("core16",)
 
         def __init__(self, yaml_data):
@@ -197,6 +188,11 @@ def _test1_extension_fixture():
 
 def _test2_extension_fixture():
     class Test2Extension(Extension):
+        """This is the Test2 extension.
+
+        It does other stuff.
+        """
+
         supported_bases = ("core16",)
 
         def __init__(self, yaml_data):
