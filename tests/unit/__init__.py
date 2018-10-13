@@ -107,6 +107,15 @@ class LinkExists:
 
 
 class TestCase(testscenarios.WithScenarios, testtools.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.fake_snapd = fixture_setup.FakeSnapd()
+        cls.fake_snapd.setUp()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.fake_snapd.cleanUp()
+
     def setUp(self):
         super().setUp()
         temp_cwd_fixture = fixture_setup.TempCWD()
@@ -162,8 +171,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         )
 
         # Make sure snap installation does the right thing
-        self.fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(self.fake_snapd)
         self.fake_snapd.installed_snaps = [
             dict(name="core16", channel="latest/stable", revision="10"),
             dict(name="core18", channel="latest/stable", revision="10"),
