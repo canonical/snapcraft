@@ -53,7 +53,7 @@ class PackCommandTestCase(PackCommandBaseTestCase):
             f.write(
                 dedent(
                     """\
-                name: my_snap
+                name: mysnap
                 version: 99
                 architectures: [amd64, armhf]
             """
@@ -63,13 +63,13 @@ class PackCommandTestCase(PackCommandBaseTestCase):
         result = self.run_command([self.command, self.snap_dir])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_multi.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_multi.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_multi.snap",
+                "mysnap_99_multi.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -81,14 +81,14 @@ class PackCommandTestCase(PackCommandBaseTestCase):
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_multi.snap", FileExists())
+        self.assertThat("mysnap_99_multi.snap", FileExists())
 
     def test_snap_from_dir_with_no_arch(self):
         with open(self.snap_yaml, "w") as f:
             f.write(
                 dedent(
                     """\
-                name: my_snap
+                name: mysnap
                 version: 99
             """
                 )
@@ -97,13 +97,13 @@ class PackCommandTestCase(PackCommandBaseTestCase):
         result = self.run_command([self.command, self.snap_dir])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_all.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_all.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_all.snap",
+                "mysnap_99_all.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -115,14 +115,14 @@ class PackCommandTestCase(PackCommandBaseTestCase):
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_all.snap", FileExists())
+        self.assertThat("mysnap_99_all.snap", FileExists())
 
     def test_snap_from_dir_type_os_does_not_use_all_root(self):
         with open(self.snap_yaml, "w") as f:
             f.write(
                 dedent(
                     """\
-                name: my_snap
+                name: mysnap
                 version: 99
                 architectures: [amd64, armhf]
                 type: os
@@ -133,13 +133,13 @@ class PackCommandTestCase(PackCommandBaseTestCase):
         result = self.run_command([self.command, self.snap_dir])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped my_snap_99_multi.snap\n"))
+        self.assertThat(result.output, Contains("Snapped mysnap_99_multi.snap\n"))
 
         self.popen_spy.assert_called_once_with(
             [
                 "mksquashfs",
                 "mysnap",
-                "my_snap_99_multi.snap",
+                "mysnap_99_multi.snap",
                 "-noappend",
                 "-comp",
                 "xz",
@@ -150,4 +150,4 @@ class PackCommandTestCase(PackCommandBaseTestCase):
             stdout=subprocess.PIPE,
         )
 
-        self.assertThat("my_snap_99_multi.snap", FileExists())
+        self.assertThat("mysnap_99_multi.snap", FileExists())
