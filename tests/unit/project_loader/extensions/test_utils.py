@@ -63,33 +63,7 @@ class BasicExtensionTest(ExtensionTestBase):
                     """
                 )
             },
-        ),
-        (
-            "root extension",
-            {
-                "snapcraft_yaml": textwrap.dedent(
-                    """\
-                    name: test
-                    version: "1"
-                    summary: test
-                    description: test
-                    base: core18
-                    grade: stable
-                    confinement: strict
-
-                    {extensions}
-
-                    apps:
-                        test-app:
-                            command: echo "hello"
-
-                    parts:
-                        part1:
-                            plugin: nil
-                    """
-                )
-            },
-        ),
+        )
     ]
 
     def test_extension(self):
@@ -221,11 +195,11 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             {
                 "root_definition": textwrap.dedent(
                     """\
-                    extensions: [environment]
                     environment:
                       FOO: BAR
                     """
                 ),
+                "extensions": "[environment]",
                 "expected_root_definition": {
                     "environment": {"FOO": "BAR", "TEST_EXTENSION": 1}
                 },
@@ -236,10 +210,10 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             {
                 "root_definition": textwrap.dedent(
                     """\
-                    extensions: [adopt]
                     adopt-info: "test-part"
                     """
                 ),
+                "extensions": "[adopt]",
                 "expected_root_definition": {"adopt-info": "test-part"},
             },
         ),
@@ -261,6 +235,7 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             apps:
                 test-app:
                     command: test-command
+                    extensions: {extensions}
 
             parts:
                 part1:
@@ -268,7 +243,9 @@ class ExtensionRootMergeTest(ExtensionTestBase):
             """
         )
         config = self.make_snapcraft_project(
-            snapcraft_yaml.format(root_definition=self.root_definition)
+            snapcraft_yaml.format(
+                root_definition=self.root_definition, extensions=self.extensions
+            )
         )
 
         # Verify that the extension was removed
@@ -280,41 +257,6 @@ class ExtensionRootMergeTest(ExtensionTestBase):
 
 
 class InvalidExtensionTest(ExtensionTestBase):
-    def test_invalid_root_extension_format(self):
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            self.make_snapcraft_project,
-            textwrap.dedent(
-                """\
-                name: test
-                version: "1"
-                summary: test
-                description: test
-                base: core18
-                grade: stable
-                confinement: strict
-
-                extensions: I-should-be-a-list
-
-                apps:
-                    test-app:
-                        command: echo "hello"
-
-                parts:
-                    part1:
-                        plugin: nil
-                """
-            ),
-        )
-
-        self.assertThat(
-            str(raised),
-            Contains(
-                "The 'extensions' property does not match the required schema: "
-                "'I-should-be-a-list' is not of type 'array'"
-            ),
-        )
-
     def test_invalid_app_extension_format(self):
         raised = self.assertRaises(
             errors.YamlValidationError,
