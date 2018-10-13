@@ -144,6 +144,15 @@ class Library:
         else:
             self.in_base_snap = False
 
+        logger.debug(
+            "{soname} with original path {original_path} found on {path} in base: {in_base}".format(
+                soname=soname,
+                original_path=path,
+                path=self.path,
+                in_base=self.in_base_snap,
+            )
+        )
+
 
 def _crawl_for_path(
     *,
