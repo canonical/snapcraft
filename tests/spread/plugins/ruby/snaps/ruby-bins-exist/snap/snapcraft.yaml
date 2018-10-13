@@ -10,6 +10,7 @@ confinement: strict
 parts:
   ruby-exists:
     plugin: ruby
+    source: .
     build-packages: [lsb-release]
     stage:
       - bin

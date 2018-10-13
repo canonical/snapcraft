@@ -12,7 +12,7 @@ parts:
         - without-a
         - without-b
         - without-c
-    snap:
+    prime:
         - -without-b
   with-excludes:
     plugin: make

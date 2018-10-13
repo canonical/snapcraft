@@ -127,11 +127,4 @@ class BaseProviderWithBasesBaseTest(unit.TestCase):
         self.snap_injector_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch(
-            "snapcraft.internal.build_providers._images._Image.get",
-            return_value="fake-base.qcow2",
-        )
-        self.images_get_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.echoer_mock = mock.Mock()

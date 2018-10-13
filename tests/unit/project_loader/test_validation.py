@@ -146,22 +146,6 @@ class ValidationTest(ValidationBaseTest):
             ),
         )
 
-    def test_both_snap_and_prime_specified(self):
-        self.data["parts"]["part1"]["snap"] = ["foo"]
-        self.data["parts"]["part1"]["prime"] = ["bar"]
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        self.assertThat(
-            str(raised),
-            MatchesRegex(
-                ".*The 'parts/part1' property does not match the required "
-                "schema: .* cannot contain both 'snap' and 'prime' keywords.*"
-            ),
-        )
-
     def test_missing_required_property_and_missing_adopt_info(self):
         del self.data["summary"]
         del self.data["adopt-info"]
@@ -1503,7 +1487,7 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
         self.assertRegex(
             raised.message,
             "The 'apps/app/adapter' property does not match the required schema:.*is "
-            "not one of \['none', 'legacy'\]",
+            "not one of \['none', 'legacy', 'full'\]",
         )
 
 
@@ -1751,6 +1735,65 @@ class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
                     build-environment: {}
         """
         ).format(self.environment)
+
+        raised = self.assertRaises(
+            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+        )
+
+        self.assertThat(raised.message, MatchesRegex(self.message))
+
+
+class InvalidCommandChainTest(ProjectLoaderBaseTest):
+
+    scenarios = [
+        (
+            "a string",
+            {
+                "command_chain": "a string",
+                "message": ".*'a string' is not of type 'array'.*",
+            },
+        ),
+        (
+            "list of numbers",
+            {
+                "command_chain": [1],
+                "message": ".*1 is not a valid command-chain entry.*",
+            },
+        ),
+        (
+            "spaces",
+            {
+                "command_chain": ["test chain"],
+                "message": ".*'test chain' is not a valid command-chain entry.*",
+            },
+        ),
+        (
+            "quotes",
+            {
+                "command_chain": ["test'chain"],
+                "message": '.*"test\'chain" is not a valid command-chain entry.*',
+            },
+        ),
+    ]
+
+    def test_command_chain(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test-snap
+            version: "1.0"
+            summary: test summary
+            description: test description
+
+            apps:
+                my-app:
+                    command: foo
+                    command-chain: {}
+
+            parts:
+                my-part:
+                    plugin: nil
+        """
+        ).format(self.command_chain)
 
         raised = self.assertRaises(
             errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml

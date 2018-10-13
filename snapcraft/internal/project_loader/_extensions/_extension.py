@@ -26,6 +26,8 @@ class Extension:
 
     :cvar supported_bases: Class variable, tuple of base names supported by the
                            extension.
+    :ivar root_snippet: Instance variable, dict of properties to apply to root of the
+                        snapcraft.yaml.
     :ivar app_snippet: Instance variable, dict of properties to apply to apps using this
                        extension.
     :ivar part_snippet: Instance variable, dict of properties to apply to parts using
@@ -40,6 +42,7 @@ class Extension:
 
         :param dict yaml_data: Loaded snapcraft.yaml data.
         """
+        self.root_snippet = dict()  # type: Dict[str, Any]
         self.app_snippet = dict()  # type: Dict[str, Any]
         self.part_snippet = dict()  # type: Dict[str, Any]
         self.parts = dict()  # type: Dict[str, Any]

@@ -21,7 +21,7 @@ from typing import List
 from typing import Set  # noqa: F401
 
 import snapcraft
-from snapcraft.internal import deprecations, elf, pluginhandler, repo
+from snapcraft.internal import elf, pluginhandler, repo
 from ._env import (
     env_for_classic,
     build_env,
@@ -57,11 +57,6 @@ class PartsConfig:
 
     def _process_parts(self):
         for part_name in self._parts_data:
-            if "/" in part_name:
-                logger.warning(
-                    'DEPRECATED: Found a "/" '
-                    "in the name of the {!r} part".format(part_name)
-                )
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 
@@ -72,13 +67,6 @@ class PartsConfig:
 
             if "filesets" in properties:
                 del properties["filesets"]
-
-            # Handle the deprecated snap keyword.
-            if "snap" in properties:
-                snap = properties.pop("snap")
-                if snap:
-                    deprecations.handle_deprecation_notice("dn1")
-                    properties["prime"] = snap
 
             self.load_part(part_name, plugin_name, properties)
 
