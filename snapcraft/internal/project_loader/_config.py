@@ -218,8 +218,9 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
 
-        # Always add the base for building
-        self.build_snaps.add(project.info.base)
+        # Always add the base for building for non os and base snaps
+        if project.info.type not in ("base", "os"):
+            self.build_snaps.add(project.info.base)
 
         self.parts = PartsConfig(
             parts=self.data,

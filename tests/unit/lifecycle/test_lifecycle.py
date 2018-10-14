@@ -576,9 +576,9 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
             fixture_setup.FakeAptCachePackage("patchelf", "0.9", installed=True)
         )
 
-        self.fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(self.fake_snapd)
-        self.fake_snapd.snaps_result = []
+        self.fake_snapd.snaps_result = [
+            dict(name="core18", channel="latest/stable", revision="10")
+        ]
 
         self.useFixture(FakeOsRelease())
 
@@ -614,7 +614,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -623,7 +624,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -636,8 +638,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
         self.fake_snapd.snaps_result = [
-            {"name": "test-snap-1", "revision": "test-snap-1-revision"},
-            {"name": "test-snap-2", "revision": "test-snap-2-revision"},
+            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="test-snap-1", revision="test-snap-1-revision"),
+            dict(name="test-snap-2", revision="test-snap-2-revision"),
         ]
 
         project_config = self.make_snapcraft_project(
@@ -669,6 +672,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-packages:
                 - patchelf=0.9
                 installed-snaps:
+                - core18=10
                 - test-snap-1=test-snap-1-revision
                 - test-snap-2=test-snap-2-revision
                 plugin: nil
@@ -679,7 +683,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -729,7 +734,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - patchelf=0.9
                 - test-package1=test-version1
                 - test-package2=test-version2
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -738,7 +744,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -767,7 +774,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     stage-packages: [test-package1=test-version1, test-package2]
                 """
             )
-        )  # NOQA
+        )
 
         lifecycle.execute(steps.PRIME, project_config)
 
@@ -788,7 +795,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -799,7 +807,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -853,7 +862,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -861,7 +871,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 uname: Linux test uname 4.10 x86_64
             architectures:
             - {}
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -910,7 +921,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 source: test-source
@@ -926,7 +938,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - git=testversion
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -974,7 +987,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - test-package:any
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -984,7 +998,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-package=test-version
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1036,7 +1051,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - test-virtual-package
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1046,7 +1062,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-provider-package=test-version
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1088,7 +1105,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1098,7 +1116,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1146,7 +1165,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1159,7 +1179,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               created_at: test-created-at
               fingerprint: test-fingerprint
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1223,7 +1244,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime:
                 - -*
@@ -1233,7 +1255,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )

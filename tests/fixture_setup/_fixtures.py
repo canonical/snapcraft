@@ -864,6 +864,7 @@ class SnapcraftYaml(fixtures.Fixture):
         self,
         path,
         name="test-snap",
+        base="core18",
         version="test-version",
         summary="test-summary",
         description="test-description",
@@ -872,7 +873,7 @@ class SnapcraftYaml(fixtures.Fixture):
     ):
         super().__init__()
         self.path = path
-        self.data = {"confinement": confinement, "parts": {}, "apps": {}}
+        self.data = {"confinement": confinement, "base": base, "parts": {}, "apps": {}}
         if name is not None:
             self.data["name"] = name
         if version is not None:

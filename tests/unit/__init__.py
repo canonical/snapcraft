@@ -180,9 +180,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             dict(name="core18", channel="latest/stable", revision="10"),
         ]
         self.fake_snapd.find_result = [
-            dict(core16=dict(channels={"latest/stable": {"confinement": "strict"}})),
-            dict(core18=dict(channels={"latest/stable": {"confinement": "strict"}})),
+            dict(core16=dict(channels={"latest/stable": dict(confinement="strict")})),
+            dict(core18=dict(channels={"latest/stable": dict(confinement="strict")})),
         ]
+        self.fake_snapd.snap_details_func = None
 
         self.fake_snap_command = fixture_setup.FakeSnapCommand()
         self.useFixture(self.fake_snap_command)
