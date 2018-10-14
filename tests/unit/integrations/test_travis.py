@@ -37,6 +37,7 @@ from tests import unit
 
 test_snapcraft_yaml = """
 name: foo
+base: core18
 version: "1.0"
 summary: a summary
 description: a description
