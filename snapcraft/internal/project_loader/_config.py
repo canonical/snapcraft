@@ -219,8 +219,16 @@ class Config:
         self.build_tools |= set(project.additional_build_packages)
 
         # Always add the base for building for non os and base snaps
-        if project.info.type not in ("base", "os"):
+        if project.info.base is not None and project.info.type not in ("base", "os"):
             self.build_snaps.add(project.info.base)
+        else:
+            # This exception is here to help with porting issues with bases. In normal
+            # executions, when no base is set, the legacy snapcraft will be executed.
+            raise RuntimeError(
+                "A base is required for the scenario of snap type {!r}".format(
+                    project.info.type
+                )
+            )
 
         self.parts = PartsConfig(
             parts=self.data,

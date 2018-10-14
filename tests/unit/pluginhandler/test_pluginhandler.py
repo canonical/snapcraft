@@ -711,6 +711,7 @@ class RealStageTestCase(unit.TestCase):
             dedent(
                 """\
             name: pc-file-test
+            base: core18
             version: "1.0"
             summary: test pkg-config .pc
             description: when the .pc files reach stage the should be reprefixed
@@ -722,7 +723,7 @@ class RealStageTestCase(unit.TestCase):
                     plugin: nil
         """
             )
-        )  # noqa: E501
+        )
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         return project_loader.load_config(project)
 
