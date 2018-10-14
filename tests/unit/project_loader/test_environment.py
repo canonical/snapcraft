@@ -37,6 +37,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         self.snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -206,6 +207,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -270,6 +272,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -379,6 +382,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -507,6 +511,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -532,6 +537,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test

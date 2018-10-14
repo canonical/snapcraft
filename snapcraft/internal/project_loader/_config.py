@@ -221,7 +221,7 @@ class Config:
         # Always add the base for building for non os and base snaps
         if project.info.base is not None and project.info.type not in ("base", "os"):
             self.build_snaps.add(project.info.base)
-        else:
+        elif project.info.type not in ("base", "os"):
             # This exception is here to help with porting issues with bases. In normal
             # executions, when no base is set, the legacy snapcraft will be executed.
             raise RuntimeError(

@@ -391,6 +391,7 @@ type: os
             snapcraft_yaml=dedent(
                 """\
             name: test-package
+            base: core18
             version: "1.0"
             summary: test
             description: test

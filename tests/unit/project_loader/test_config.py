@@ -31,6 +31,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1.0"
             version-script: echo $SNAPCRAFT_PROJECT_VERSION-$SNAPCRAFT_PROJECT_GRADE
             summary: test
@@ -54,6 +55,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -100,6 +102,7 @@ class VariableExpansionTest(LoadPartBaseTest):
             dedent(
                 """\
             name: project-name
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -136,6 +139,7 @@ class DependenciesTest(ProjectLoaderBaseTest):
                 dedent(
                     """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -208,6 +212,7 @@ class DependenciesTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
