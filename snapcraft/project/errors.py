@@ -52,3 +52,25 @@ class DuplicateSnapcraftYamlError(SnapcraftError):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
             other_snapcraft_yaml_file_path=other_snapcraft_yaml_file_path,
         )
+
+
+class MultipassMissingNonLinuxError(SnapcraftError):
+    fmt = (
+        "You need multipass installed to build snaps:\n"
+        "https://github.com/CanonicalLtd/multipass/releases"
+    )
+
+
+class MultipassMissingLinuxError(SnapcraftError):
+    fmt = (
+        "You need multipass installed to build snaps which use the base keyword.\n"
+        "Would you like to install it now?"
+    )
+
+
+class SnapMissingLinuxError(SnapcraftError):
+    fmt = (
+        "You need multipass installed to build snaps which use the base keyword.\n"
+        "Enable snap support (https://docs.snapcraft.io/core/install) and run:\n"
+        "snap install multipass --classic --beta"
+    )

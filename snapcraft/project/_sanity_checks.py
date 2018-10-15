@@ -16,9 +16,12 @@
 
 import logging
 import os
+import sys
 import re
+import shutil
 
-from snapcraft.project import Project
+import snapcraft
+from snapcraft.project import Project, errors
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +35,21 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
 }
 
-# TODO: Add conduct_environment_sanity_check() to be run in the build environment
+
+def conduct_build_environment_sanity_check(provider: str):
+    if provider == "multipass":
+        _check_multipass_installed()
+
+
+def _check_multipass_installed():
+    if not shutil.which("multipass"):
+        if sys.platform == "linux":
+            if not shutil.which("snap"):
+                raise errors.SnapMissingLinuxError()
+            else:
+                raise errors.MultipassMissingLinuxError()
+        else:
+            raise errors.MultipassMissingNonLinuxError()
 
 
 def conduct_project_sanity_check(project: Project):

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import typing
-
+import sys
 import click
 
 from . import echo
@@ -28,9 +28,16 @@ from snapcraft.internal import (
     lifecycle,
     project_loader,
     steps,
+    repo,
 )
-from snapcraft.project._sanity_checks import conduct_project_sanity_check
-from snapcraft.project.errors import YamlValidationError
+from snapcraft.project._sanity_checks import (
+    conduct_project_sanity_check,
+    conduct_build_environment_sanity_check,
+)
+from snapcraft.project.errors import (
+    YamlValidationError,
+    MultipassMissingLinuxError,
+)
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
@@ -51,6 +58,13 @@ def _execute(  # noqa: C901
     # fmt: on
     provider = "host" if destructive_mode else None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
+    try:
+        conduct_build_environment_sanity_check(build_environment.provider)
+    except MultipassMissingLinuxError as e:
+        if click.confirm(e):
+            repo.snaps.install_snaps(['multipass/beta'])
+        else:
+            sys.exit(1)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     conduct_project_sanity_check(project)
