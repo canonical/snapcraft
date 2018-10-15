@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
 import copy
 import jsonschema
@@ -44,20 +45,31 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
+    original_yaml_data = copy.deepcopy(yaml_data)
     base = yaml_data.get("base")
+
+    # Mapping of extension names to set of app names to which the extension needs to be
+    # applied.
+    declared_extensions = collections.defaultdict(set)  # type: Dict[str, Set[str]]
 
     for app_name, app_definition in yaml_data.get("apps", dict()).items():
         extension_names = app_definition.get("extensions", [])
         _validate_extension_format(extension_names)
 
         for extension_name in extension_names:
-            extension = _load_extension(base, extension_name, yaml_data)
-            _apply_extension(yaml_data, app_name, extension_name, extension)
+            declared_extensions[extension_name].add(app_name)
 
-        # Now that extensions have been applied, remove the specification from
-        # this app
+        # Now that we've saved the app -> extension relationship, remove the property
+        # from this app's declaration in the YAML.
         with contextlib.suppress(KeyError):
             del yaml_data["apps"][app_name]["extensions"]
+
+    # Process extensions in a consistent order
+    for extension_name in sorted(declared_extensions.keys()):
+        extension = _load_extension(base, extension_name, original_yaml_data)
+        _apply_extension(
+            yaml_data, declared_extensions[extension_name], extension_name, extension
+        )
 
     return yaml_data
 
@@ -84,7 +96,9 @@ def find_extension(extension_name: str) -> Type[Extension]:
     return getattr(extension_module, extension_class_name)
 
 
-def _load_extension(base: str, extension_name: str, yaml_data) -> Extension:
+def _load_extension(
+    base: str, extension_name: str, yaml_data: Dict[str, Any]
+) -> Extension:
     # A base is required in order to use extensions, so raise an error if not specified.
     if not base:
         raise errors.ExtensionBaseRequiredError()
@@ -99,7 +113,10 @@ def _load_extension(base: str, extension_name: str, yaml_data) -> Extension:
 
 
 def _apply_extension(
-    yaml_data: Dict[str, Any], app_name: str, extension_name: str, extension: Extension
+    yaml_data: Dict[str, Any],
+    app_names: Set[str],
+    extension_name: str,
+    extension: Extension,
 ):
     # Apply the root components of the extension (if any)
     root_extension = extension.root_snippet
@@ -110,11 +127,12 @@ def _apply_extension(
 
     # Apply the app-specific components of the extension (if any)
     app_extension = extension.app_snippet
-    app_definition = yaml_data["apps"][app_name]
-    for property_name, property_value in app_extension.items():
-        app_definition[property_name] = _apply_extension_property(
-            app_definition.get(property_name), property_value
-        )
+    for app_name in app_names:
+        app_definition = yaml_data["apps"][app_name]
+        for property_name, property_value in app_extension.items():
+            app_definition[property_name] = _apply_extension_property(
+                app_definition.get(property_name), property_value
+            )
 
     # Next, apply the part-specific components
     part_extension = extension.part_snippet
