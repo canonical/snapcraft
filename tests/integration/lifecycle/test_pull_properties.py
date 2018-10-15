@@ -19,9 +19,9 @@ import os
 import subprocess
 
 import testscenarios
+import yaml as yaml_utils
 from testtools.matchers import Equals, FileExists
 
-from snapcraft import yaml_utils
 from tests import fixture_setup, integration
 
 

@@ -24,9 +24,9 @@ import tempfile
 import apt
 import fixtures
 import testscenarios
+import yaml as yaml_utils
 from testtools.matchers import Contains, Equals
 
-from snapcraft import yaml_utils
 from tests.integration import repo
 from tests import integration, fixture_setup, os_release
 

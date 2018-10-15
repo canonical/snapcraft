@@ -30,13 +30,13 @@ from typing import Callable, List, Union
 
 import fixtures
 import pexpect
-from pexpect import popen_spawn
 import requests
 import testtools
+import yaml as yaml_utils
+from pexpect import popen_spawn
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from snapcraft import yaml_utils
 from tests import fixture_setup, os_release, subprocess_utils
 from tests.integration import platform
 

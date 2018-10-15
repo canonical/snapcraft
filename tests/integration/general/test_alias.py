@@ -17,9 +17,9 @@
 import os
 import stat
 
+import yaml as yaml_utils
 from testtools.matchers import Equals, FileExists
 
-from snapcraft import yaml_utils
 from tests import integration
 
 

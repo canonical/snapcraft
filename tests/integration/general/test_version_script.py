@@ -18,9 +18,9 @@ import subprocess
 from textwrap import dedent
 
 import testscenarios
+import yaml as yaml_utils
 from testtools.matchers import Contains, FileExists
 
-from snapcraft import yaml_utils
 from tests import integration
 
 

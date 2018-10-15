@@ -23,7 +23,11 @@ import os
 import urllib.parse
 import pymacaroons
 
-from snapcraft import yaml_utils
+# we do not want snapcraft imports for the integration tests
+try:
+    from snapcraft import yaml_utils
+except ImportError:
+    import yaml as yaml_utils
 
 logger = logging.getLogger(__name__)
 
