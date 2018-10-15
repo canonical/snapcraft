@@ -1,0 +1,16 @@
+summary: ensure that an setup.py sdist is installable
+
+systems: [ubuntu-16*]
+
+prepare: |
+  apt-get update
+  apt-get install -y python3 python3-pip
+  cp -R /snapcraft /snapcraft-sdist
+
+restore: |
+  rm -rf /snapcraft-sdist
+
+execute: |
+  cd /snapcraft-sdist
+  python3 setup.py sdist
+  pip3 install dist/*.tar.gz

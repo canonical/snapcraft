@@ -260,4 +260,8 @@ suites:
      pip3 install --user --upgrade pip
      $PIP_COMMAND install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
 
+ tests/spread/packaging/:
+   # TODO: we do not need the generalist prepare.
+   summary: tests that create different packagings for snapcraft
+
 path: /snapcraft/
