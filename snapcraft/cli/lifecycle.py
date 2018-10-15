@@ -34,10 +34,7 @@ from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_build_environment_sanity_check,
 )
-from snapcraft.project.errors import (
-    YamlValidationError,
-    MultipassMissingLinuxError,
-)
+from snapcraft.project.errors import YamlValidationError, MultipassMissingLinuxError
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
