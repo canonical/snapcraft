@@ -1,19 +1,32 @@
+import os
 import socket
 
 if hasattr(socket, "AF_UNIX"):
     from ._unix import FakeSnapd  # noqa: F401
+try:
+    from ._unittests import (  # noqa: F401
+        FakeAptBaseDependency,
+        FakeAptCache,
+        FakeAptCachePackage,
+        FakeElf,
+        FakeExtension,
+        FakeMetadataExtractor,
+        FakePlugin,
+        FakeProjectOptions,
+        FakeSnapCommand,
+        FakeSnapcraftctl,
+        SilentSnapProgress,
+    )
+except ImportError as import_error:
+    if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "snapcraft")):
+        raise import_error
+
 from ._fixtures import (  # noqa: F401
     BzrRepo,
     CleanEnvironment,
     GitRepo,
     HgRepo,
-    FakeAptBaseDependency,
-    FakeAptCache,
-    FakeAptCachePackage,
     FakeBaseEnvironment,
-    FakeElf,
-    FakeMetadataExtractor,
-    FakeProjectOptions,
     FakeParts,
     FakePartsServerRunning,
     FakePartsWiki,
@@ -22,9 +35,7 @@ from ._fixtures import (  # noqa: F401
     FakePartsWikiOrigin,
     FakePartsWikiOriginRunning,
     FakePartsWikiRunning,
-    FakePlugin,
     FakeServerRunning,
-    FakeSnapcraftctl,
     FakeSnapcraftIsASnap,
     FakeSSOServerRunning,
     FakeStore,
@@ -33,7 +44,6 @@ from ._fixtures import (  # noqa: F401
     FakeStoreUploadServerRunning,
     FakeTerminal,
     SharedCache,
-    SilentSnapProgress,
     SnapcraftYaml,
     StagingStore,
     SvnRepo,
@@ -41,5 +51,4 @@ from ._fixtures import (  # noqa: F401
     TempXDG,
     TestStore,
     WithoutSnapInstalled,
-    FakeExtension,
 )

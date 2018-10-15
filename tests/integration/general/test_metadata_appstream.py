@@ -18,9 +18,9 @@ import os
 import textwrap
 import shutil
 
+import yaml as yaml_utils
 from testtools.matchers import Equals, FileExists
 
-from snapcraft import yaml_utils
 import tests
 from tests import fixture_setup, integration
 

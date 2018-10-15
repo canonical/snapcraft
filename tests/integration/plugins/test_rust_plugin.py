@@ -20,9 +20,9 @@ import subprocess
 
 import fixtures
 import testscenarios
+import yaml as yaml_utils
 from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
-from snapcraft import yaml_utils
 from tests import integration
 from tests.matchers import HasArchitecture
 
