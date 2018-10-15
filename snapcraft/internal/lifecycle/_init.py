@@ -18,7 +18,6 @@ import os
 from textwrap import dedent
 
 from snapcraft.internal import errors
-from snapcraft import yaml_utils
 
 
 _TEMPLATE_YAML = dedent(
@@ -62,7 +61,3 @@ def init():
         f.write(text)
 
     return snapcraft_yaml_path
-
-
-def get_init_data():
-    return yaml_utils.load(_TEMPLATE_YAML)

@@ -130,6 +130,17 @@ class ExtensionUnsupportedBaseError(ProjectLoaderError):
         super().__init__(extension_name=extension_name, base=base)
 
 
+class ExtensionMissingDocumentationError(ProjectLoaderError):
+    fmt = (
+        "The {extension_name!r} extension appears to be missing documentation.\n"
+        "We would appreciate it if you created a bug report about this at "
+        "https://launchpad.net/snapcraft/+filebug"
+    )
+
+    def __init__(self, extension_name: str) -> None:
+        super().__init__(extension_name=extension_name)
+
+
 def _determine_preamble(error):
     messages = []
     path = _determine_property_path(error)
