@@ -9,6 +9,5 @@ confinement: strict
 parts:
     x-local-plugin:
       plugin: x-local-plugin
-      stage-packages: [curl]
       foo: bar
       source: .
