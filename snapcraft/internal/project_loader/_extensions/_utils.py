@@ -21,7 +21,6 @@ import importlib
 import logging
 from typing import Any, Dict, List, Set, Type  # noqa: F401
 
-from snapcraft import formatting_utils
 from .. import errors
 from ._extension import Extension
 
@@ -47,42 +46,18 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     yaml_data = copy.deepcopy(yaml_data)
     base = yaml_data.get("base")
 
-    applied_extension_names = set()  # type: Set[str]
-    global_extension_names = yaml_data.get("extensions", [])
-    _validate_extension_format(global_extension_names)
-
     for app_name, app_definition in yaml_data.get("apps", dict()).items():
-        extension_names = app_definition.get("extensions")
+        extension_names = app_definition.get("extensions", [])
         _validate_extension_format(extension_names)
-
-        # Make sure global extensions are assigned to any app without extensions
-        if extension_names is None:
-            extension_names = global_extension_names
 
         for extension_name in extension_names:
             extension = _load_extension(base, extension_name, yaml_data)
             _apply_extension(yaml_data, app_name, extension_name, extension)
 
-        # Keep track of the extensions applied so we can warn about any that
-        # are declared, but not used
-        applied_extension_names.update(extension_names)
-
         # Now that extensions have been applied, remove the specification from
         # this app
         with contextlib.suppress(KeyError):
             del yaml_data["apps"][app_name]["extensions"]
-
-    # Now that extensions have been applied, remove the global specification
-    with contextlib.suppress(KeyError):
-        del yaml_data["extensions"]
-
-    unused_extensions = set(global_extension_names) - applied_extension_names
-    if unused_extensions:
-        logger.warning(
-            "The following extensions are declared, but not used: {}".format(
-                formatting_utils.humanize_list(unused_extensions, "and")
-            )
-        )
 
     return yaml_data
 
