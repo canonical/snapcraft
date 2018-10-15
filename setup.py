@@ -21,6 +21,14 @@ import re
 import sys
 
 
+def recursive_data_files(directory, install_directory):
+    data_files = []
+    for root, directories, file_names in os.walk(directory):
+        file_paths = [os.path.join(root, file_name) for file_name in file_names]
+        data_files.append((os.path.join(install_directory, root), file_paths))
+    return data_files
+
+
 # Common distribution data
 name = "snapcraft"
 version = "devel"
@@ -143,11 +151,8 @@ else:
                 "share/snapcraft/libraries",
                 ["libraries/" + x for x in os.listdir("libraries")],
             ),
-            (
-                "share/snapcraft/extensions",
-                ["extensions/" + x for x in os.listdir("extensions")],
-            ),
-        ],
+        ]
+        + recursive_data_files("extensions", "share/snapcraft"),
         install_requires=["pysha3", "pyxdg", "requests"],
         test_suite="tests.unit",
     )

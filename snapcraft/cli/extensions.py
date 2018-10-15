@@ -17,7 +17,6 @@
 import click
 import collections
 import inspect
-import pkgutil
 import sys
 import tabulate
 
@@ -38,11 +37,7 @@ def list_extensions(**kwargs):
     This command has an alias of `extensions`.
     """
 
-    extension_names = []
-    for _, modname, _ in pkgutil.iter_modules(project_loader._extensions.__path__):
-        # Only add non-private modules/packages to the extension list
-        if not modname.startswith("_"):
-            extension_names.append(modname)
+    extension_names = project_loader.supported_extension_names()
 
     if not extension_names:
         click.echo("No extensions supported")
