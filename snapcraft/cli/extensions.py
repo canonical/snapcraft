@@ -16,9 +16,9 @@
 
 import click
 import collections
+import inspect
 import pkgutil
 import sys
-import textwrap
 import tabulate
 
 from ._options import get_project
@@ -60,20 +60,21 @@ def list_extensions(**kwargs):
 
 
 @extensioncli.command()
+@click.pass_context
 @click.argument("name")
-def extension(name, **kwargs):
+def extension(ctx, name, **kwargs):
     """Show contents of extension."""
 
     extension_cls = project_loader.find_extension(name)
+
+    # Not using inspect.getdoc here since it'll fall back to the base class
     docstring = extension_cls.__doc__
     if not docstring:
         raise project_loader.errors.ExtensionMissingDocumentationError(name)
 
-    # In order to dedent, we need to ignore the first line and then throw it back on
-    # afterward.
-    lines = docstring.split("\n")
-    docstring = "{}\n{}".format(lines[0], textwrap.dedent("\n".join(lines[1:]))).strip()
-    print(docstring)
+    formatter = ctx.make_formatter()
+    formatter.write_text(inspect.cleandoc(docstring))
+    click.echo(formatter.getvalue().rstrip("\n"))
 
 
 @extensioncli.command("expand-extensions")
