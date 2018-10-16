@@ -19,7 +19,7 @@ import textwrap
 from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.internal.project_loader import errors
+from snapcraft.internal.project_loader import errors, supported_extension_names
 from snapcraft.internal.project_loader._extensions._extension import Extension
 
 from tests import fixture_setup
@@ -166,6 +166,17 @@ class ExtensionsCommandTest(CommandBaseTestCase):
                 )
             ),
         )
+
+    def test_all_extension_docs(self):
+        for extension_name in supported_extension_names():
+            try:
+                self.run_command(["extension", extension_name])
+            except Exception:
+                self.fail(
+                    "The {!r} extension appears to be missing documentation".format(
+                        extension_name
+                    )
+                )
 
 
 def _test1_extension_fixture():

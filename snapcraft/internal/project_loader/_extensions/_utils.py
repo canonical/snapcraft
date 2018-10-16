@@ -20,6 +20,8 @@ import copy
 import jsonschema
 import importlib
 import logging
+import os
+import pkgutil
 from typing import Any, Dict, List, Set, Type  # noqa: F401
 
 from .. import errors
@@ -94,6 +96,22 @@ def find_extension(extension_name: str) -> Type[Extension]:
     # is hacking on extensions.
     extension_class_name = "{}Extension".format(extension_name.capitalize())
     return getattr(extension_module, extension_class_name)
+
+
+def supported_extension_names() -> List[str]:
+    """Return a list of supported extension names.
+
+    :returns: List of supported extension names.
+    :rtype: list
+    """
+
+    extension_names = []  # type: List[str]
+    for _, modname, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
+        # Only add non-private modules/packages to the extension list
+        if not modname.startswith("_"):
+            extension_names.append(modname)
+
+    return extension_names
 
 
 def _load_extension(

@@ -21,6 +21,14 @@ import re
 import sys
 
 
+def recursive_data_files(directory, install_directory):
+    data_files = []
+    for root, directories, file_names in os.walk(directory):
+        file_paths = [os.path.join(root, file_name) for file_name in file_names]
+        data_files.append((os.path.join(install_directory, root), file_paths))
+    return data_files
+
+
 # Common distribution data
 name = "snapcraft"
 version = "devel"
@@ -137,12 +145,9 @@ else:
         # snapcraft isn't in console_scripts so we can dispatch to legacy depending on bases
         scripts=["bin/snapcraft", "bin/snapcraftctl"],
         data_files=[
-            ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")]),
-            (
-                "share/snapcraft/extensions",
-                ["extensions/" + x for x in os.listdir("extensions")],
-            ),
-        ],
+            ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")])
+        ]
+        + recursive_data_files("extensions", "share/snapcraft"),
         install_requires=["pysha3", "pyxdg", "requests"],
         test_suite="tests.unit",
     )
