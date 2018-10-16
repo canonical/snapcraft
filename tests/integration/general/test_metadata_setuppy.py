@@ -17,9 +17,9 @@
 import os
 from textwrap import dedent
 
+import yaml as yaml_utils
 from testtools.matchers import Equals
 
-from snapcraft import yaml_utils
 from tests import integration, fixture_setup
 
 

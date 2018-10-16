@@ -30,13 +30,13 @@ from typing import Callable, List, Union
 
 import fixtures
 import pexpect
-from pexpect import popen_spawn
 import requests
 import testtools
+import yaml as yaml_utils
+from pexpect import popen_spawn
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from snapcraft import yaml_utils
 from tests import fixture_setup, os_release, subprocess_utils
 from tests.integration import platform
 
@@ -458,10 +458,6 @@ class StoreTestCase(TestCase):
         process.expect_exact(
             "Enter your Ubuntu One e-mail address and password." + os.linesep
         )
-        process.expect_exact(
-            "If you do not have an Ubuntu One account, you can create one at "
-            "https://snapcraft.io/account" + os.linesep
-        )
         process.expect_exact("Email: ")
         process.sendline(email)
         process.expect_exact("Password: ")
@@ -540,10 +536,6 @@ class StoreTestCase(TestCase):
 
         process.expect_exact(
             "Enter your Ubuntu One e-mail address and password." + os.linesep
-        )
-        process.expect_exact(
-            "If you do not have an Ubuntu One account, you can create one at "
-            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)

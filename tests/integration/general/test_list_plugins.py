@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pkgutil
-
-from snapcraft import plugins
-
 from testtools.matchers import Equals
 
 from tests import integration
@@ -27,8 +23,33 @@ class ListPluginsTestCase(integration.TestCase):
     def test_list_plugins(self):
         output = self.run_snapcraft("list-plugins")
         plugins_list = set(output.split())
-        expected = set()
-        for _, modname, _ in pkgutil.iter_modules(plugins.__path__):
-            if not modname.startswith("_"):
-                expected.add(modname.replace("_", "-"))
+        expected = {
+            "ant",
+            "catkin-tools",
+            "dump",
+            "gradle",
+            "jhbuild",
+            "make",
+            "nil",
+            "python",
+            "rust",
+            "autotools",
+            "cmake",
+            "go",
+            "gulp",
+            "kbuild",
+            "maven",
+            "nodejs",
+            "qmake",
+            "scons",
+            "catkin",
+            "dotnet",
+            "godeps",
+            "jdk",
+            "kernel",
+            "meson",
+            "plainbox-provider",
+            "ruby",
+            "waf",
+        }
         self.assertThat(plugins_list, Equals(expected))

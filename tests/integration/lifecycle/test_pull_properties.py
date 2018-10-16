@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import namedtuple
 import os
 import subprocess
+from collections import namedtuple
+from textwrap import dedent
 
 import testscenarios
-from testtools.matchers import Equals, FileExists
+from testtools.matchers import Contains, FileContains, FileExists
 
-from snapcraft import yaml_utils
 from tests import fixture_setup, integration
 
 
@@ -37,40 +37,51 @@ class PullPropertiesTestCase(integration.TestCase):
 
         state_file = os.path.join(self.parts_dir, "x-local-plugin", "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
         # Verify that the correct schema dependencies made it into the state.
-        self.assertTrue("foo" in state.schema_properties)
-        self.assertTrue("stage-packages" in state.schema_properties)
-
-        # Verify that the contents of the dependencies made it in as well.
-        self.assertTrue("foo" in state.properties)
-        self.assertTrue(len(state.assets["stage-packages"]) > 0)
-        self.assertIn("build-packages", state.assets)
-        self.assertTrue("stage-packages" in state.properties)
-        self.assertThat(state.properties["foo"], Equals("bar"))
-        self.assertThat(state.properties["stage-packages"], Equals(["curl"]))
-
-    def test_pull_with_arch(self):
-        if self.deb_arch == "armhf":
-            self.skipTest("For now, we just support crosscompile from amd64")
-        self.run_snapcraft(["pull", "--target-arch=i386", "go-hello"], "go-hello")
-        state_file = os.path.join(self.parts_dir, "go-hello", "state", "pull")
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-        self.assertThat(state.project_options["deb_arch"], Equals("i386"))
-
-    def test_arch_with_pull(self):
-        if self.deb_arch == "armhf":
-            self.skipTest("For now, we just support crosscompile from amd64")
-        self.run_snapcraft(["--target-arch=i386", "pull", "go-hello"], "go-hello")
-        state_file = os.path.join(self.parts_dir, "go-hello", "state", "pull")
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-        self.assertThat(state.project_options["deb_arch"], Equals("i386"))
+        # and that the contents of the dependencies made it in as well.
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                properties:
+                  foo: bar
+                  override-pull: snapcraftctl pull
+                  parse-info: []
+                  plugin: x-local-plugin
+                  source: .
+                  source-branch: ''
+                  source-commit: ''
+                  source-depth: 0
+                  source-subdir: ''
+                  source-tag: ''
+                  source-type: ''
+                  stage-packages: []
+                schema_properties:
+                - foo
+                - stage-packages
+              """
+                    )
+                )
+            ),
+        )
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details: null
+                  stage-packages: []
+                """
+                    )
+                )
+            ),
+        )
 
 
 class AssetTrackingTestCase(integration.TestCase):
@@ -87,15 +98,27 @@ class AssetTrackingTestCase(integration.TestCase):
 
         state_file = os.path.join(self.parts_dir, "asset-tracking", "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
         # Verify that the correct version of 'hello' is installed
-        self.assertTrue(len(state.assets["stage-packages"]) > 0)
-        self.assertTrue(len(state.assets["build-packages"]) > 0)
-        self.assertIn("hello={}".format(stage_version), state.assets["stage-packages"])
-        self.assertIn("hello={}".format(build_version), state.assets["build-packages"])
-        self.assertIn("source-details", state.assets)
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages:
+                  - hello={}
+                  build-snaps: []
+                  source-details: null
+                  stage-packages:
+                  - hello={}
+                """.format(
+                            build_version, stage_version
+                        )
+                    )
+                )
+            ),
+        )
 
     def test_pull_global_build_packages_are_excluded(self):
         """
@@ -110,10 +133,22 @@ class AssetTrackingTestCase(integration.TestCase):
 
         state_file = os.path.join(self.parts_dir, "empty-part", "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
-        self.assertTrue(len(state.assets["build-packages"]) == 0)
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details: null
+                  stage-packages: []
+                """
+                    )
+                )
+            ),
+        )
 
     def test_pull_build_package_with_any_architecture(self):
         self.copy_project_to_cwd("build-package")
@@ -126,9 +161,24 @@ class AssetTrackingTestCase(integration.TestCase):
         self.run_snapcraft("pull")
 
         state_file = os.path.join(self.parts_dir, "hello", "state", "pull")
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-        self.assertIn("hello", state.assets["build-packages"][0])
+        self.assertThat(state_file, FileExists())
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages:
+                  - hello:any
+                  build-snaps: []
+                  source-details: null
+                  stage-packages: []
+                """
+                    )
+                )
+            ),
+        )
 
     def test_pull_with_virtual_build_package(self):
         virtual_package = "fortunes-off"
@@ -136,16 +186,23 @@ class AssetTrackingTestCase(integration.TestCase):
         self.run_snapcraft("pull", "build-virtual-package")
 
         state_file = os.path.join("snap", ".snapcraft", "state")
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-        self.assertIn(
-            "{}={}".format(
-                virtual_package,
-                integration.get_package_version(
-                    virtual_package, self.distro_series, self.deb_arch
-                ),
+        self.assertThat(state_file, FileExists())
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                  - {}={}
+                """.format(
+                            virtual_package,
+                            integration.get_package_version(
+                                virtual_package, self.distro_series, self.deb_arch
+                            ),
+                        )
+                    )
+                )
             ),
-            state.assets["build-packages"],
         )
 
 
@@ -155,20 +212,32 @@ TestDetail = namedtuple("TestDetail", ["field", "value"])
 class GitAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ("plain", {"part_name": "git-part", "expected_details": None}),
+        (
+            "plain",
+            dict(
+                part_name="git-part",
+                source_branch="''",
+                source_commit=True,
+                source_tag="''",
+            ),
+        ),
         (
             "branch",
-            {
-                "part_name": "git-part-branch",
-                "expected_details": TestDetail("source-branch", "test-branch"),
-            },
+            dict(
+                part_name="git-part-branch",
+                source_branch="test-branch",
+                source_commit=False,
+                source_tag="''",
+            ),
         ),
         (
             "tag",
-            {
-                "part_name": "git-part-tag",
-                "expected_details": TestDetail("source-tag", "feature-tag"),
-            },
+            dict(
+                part_name="git-part-tag",
+                source_branch="''",
+                source_commit=False,
+                source_tag="feature-tag",
+            ),
         ),
     ]
 
@@ -177,38 +246,49 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestCase
         self.useFixture(repo_fixture)
         project_dir = "asset-tracking-git"
 
+        source_commit = repo_fixture.commit if self.source_commit else "''"
+
         self.run_snapcraft(["pull", self.part_name], project_dir)
 
         state_file = os.path.join(self.parts_dir, self.part_name, "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
-        self.assertIn("source-details", state.assets)
-
         # fall back to the commit if no other source option is provided
         # snapcraft.source.Git doesn't allow both a tag and a commit
-        if self.expected_details:
-            self.assertThat(
-                state.assets["source-details"][self.expected_details.field],
-                Equals(self.expected_details.value),
-            )
-        else:
-            self.assertThat(
-                state.assets["source-details"]["source-commit"],
-                Equals(repo_fixture.commit),
-            )
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details:
+                    source: git-source
+                    source-branch: {source_branch}
+                    source-checksum: ''
+                    source-commit: {source_commit}
+                    source-tag: {source_tag}
+                  stage-packages: []
+                """.format(
+                            source_branch=self.source_branch,
+                            source_commit=source_commit,
+                            source_tag=self.source_tag,
+                        )
+                    )
+                )
+            ),
+        )
 
 
 class BazaarAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestCase):
     scenarios = [
-        ("plain", {"part_name": "bzr-part", "expected_details": None}),
+        ("plain", dict(part_name="bzr-part", source_commit=True, source_tag="''")),
         (
             "tag",
-            {
-                "part_name": "bzr-part-tag",
-                "expected_details": TestDetail("source-tag", "feature-tag"),
-            },
+            dict(
+                part_name="bzr-part-tag", source_commit=False, source_tag="feature-tag"
+            ),
         ),
     ]
 
@@ -216,37 +296,45 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestC
         repo_fixture = fixture_setup.BzrRepo("bzr-source")
         self.useFixture(repo_fixture)
         project_dir = "asset-tracking-bzr"
-        part = self.part_name
-        self.run_snapcraft(["pull", part], project_dir)
 
-        state_file = os.path.join(self.parts_dir, part, "state", "pull")
+        source_commit = repo_fixture.commit if self.source_commit else ""
+
+        self.run_snapcraft(["pull", self.part_name], project_dir)
+
+        state_file = os.path.join(self.parts_dir, self.part_name, "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
-        self.assertIn("source-details", state.assets)
-
-        if self.expected_details:
-            self.assertThat(
-                state.assets["source-details"][self.expected_details.field],
-                Equals(self.expected_details.value),
-            )
-        else:
-            self.assertThat(
-                state.assets["source-details"]["source-commit"],
-                Equals(repo_fixture.commit),
-            )
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details:
+                    source: bzr-source
+                    source-branch: null
+                    source-commit: '{source_commit}'
+                    source-tag: {source_tag}
+                  stage-packages: []
+                """.format(
+                            source_commit=source_commit, source_tag=self.source_tag
+                        )
+                    )
+                )
+            ),
+        )
 
 
 class MercurialAssetTrackingTestCase(testscenarios.WithScenarios, integration.TestCase):
     scenarios = [
-        ("plain", {"part_name": "hg-part", "expected_details": None}),
+        ("plain", dict(part_name="hg-part", source_commit=True, source_tag="''")),
         (
             "tag",
-            {
-                "part_name": "hg-part-tag",
-                "expected_details": TestDetail("source-tag", "feature-tag"),
-            },
+            dict(
+                part_name="hg-part-tag", source_commit=False, source_tag="feature-tag"
+            ),
         ),
     ]
 
@@ -254,26 +342,35 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios, integration.Te
         repo_fixture = fixture_setup.HgRepo("hg-source")
         self.useFixture(repo_fixture)
         project_dir = "asset-tracking-hg"
-        part = self.part_name
-        self.run_snapcraft(["pull", part], project_dir)
 
-        state_file = os.path.join(self.parts_dir, part, "state", "pull")
+        source_commit = repo_fixture.commit if self.source_commit else "''"
+
+        self.run_snapcraft(["pull", self.part_name], project_dir)
+
+        state_file = os.path.join(self.parts_dir, self.part_name, "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
-        self.assertIn("source-details", state.assets)
-
-        if self.expected_details:
-            self.assertThat(
-                state.assets["source-details"][self.expected_details.field],
-                Equals(self.expected_details.value),
-            )
-        else:
-            self.assertThat(
-                state.assets["source-details"]["source-commit"],
-                Equals(repo_fixture.commit),
-            )
+        self.assertThat(
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details:
+                    source: hg-source
+                    source-branch: ''
+                    source-commit: {source_commit}
+                    source-tag: {source_tag}
+                  stage-packages: []
+                """.format(
+                            source_commit=source_commit, source_tag=self.source_tag
+                        )
+                    )
+                )
+            ),
+        )
 
 
 class SubversionAssetTrackingTestCase(integration.TestCase):
@@ -281,16 +378,32 @@ class SubversionAssetTrackingTestCase(integration.TestCase):
         repo_fixture = fixture_setup.SvnRepo("svn-source")
         self.useFixture(repo_fixture)
         project_dir = "asset-tracking-svn"
-        part = "svn-part"
-        expected_commit = repo_fixture.commit
-        self.run_snapcraft(["pull", part], project_dir)
+        part_name = "svn-part"
 
-        state_file = os.path.join(self.parts_dir, part, "state", "pull")
+        self.run_snapcraft(["pull", part_name], project_dir)
+
+        state_file = os.path.join(self.parts_dir, part_name, "state", "pull")
         self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml_utils.load(f)
-
-        self.assertIn("source-details", state.assets)
+        self.assertThat(state_file, FileExists())
         self.assertThat(
-            state.assets["source-details"]["source-commit"], Equals(expected_commit)
+            state_file,
+            FileContains(
+                matcher=Contains(
+                    dedent(
+                        """\
+                assets:
+                  build-packages: []
+                  build-snaps: []
+                  source-details:
+                    source: svn-source
+                    source-branch: null
+                    source-commit: '{source_commit}'
+                    source-tag: null
+                  stage-packages: []
+                """.format(
+                            source_commit=repo_fixture.commit
+                        )
+                    )
+                )
+            ),
         )
