@@ -58,7 +58,7 @@ def _execute(  # noqa: C901
     try:
         conduct_build_environment_sanity_check(build_environment.provider)
     except MultipassMissingLinuxError as e:
-        if click.confirm(e):
+        if click.confirm(str(e)):
             repo.snaps.install_snaps(['multipass/beta'])
         else:
             sys.exit(1)
