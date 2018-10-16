@@ -20,7 +20,7 @@ import os
 import subprocess
 from unittest import mock
 
-from testtools.matchers import Contains, DirExists, Equals, Not
+from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
 
 import snapcraft
 from snapcraft.plugins import rust
@@ -104,6 +104,7 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
         )
 
         plugin.build()
+        self.assertThat(os.path.join(plugin._cargo_dir, "config"), FileExists())
         self.assertThat(self.run_mock.call_count, Equals(3))
         self.run_mock.assert_has_calls(
             [
