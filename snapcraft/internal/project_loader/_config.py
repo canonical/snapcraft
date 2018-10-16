@@ -225,9 +225,7 @@ class Config:
             # This exception is here to help with porting issues with bases. In normal
             # executions, when no base is set, the legacy snapcraft will be executed.
             raise RuntimeError(
-                "A base is required for the scenario of snap type {!r}".format(
-                    project.info.type
-                )
+                "A base is required for {!r} snaps.".format(project.info.type)
             )
 
         self.parts = PartsConfig(
