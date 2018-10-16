@@ -8,8 +8,6 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-systems: [ubuntu-16.04]
-
 execute: |
   cd "$SNAP_DIR"
   snapcraft

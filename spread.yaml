@@ -205,6 +205,8 @@ suites:
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
  tests/spread/plugins/dotnet/:
+   # Keep this 16.04 as it is the only supported system for this plugin
+   systems: [ubuntu-16.04*]
    summary: tests of snapcraft's Dotnet plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin

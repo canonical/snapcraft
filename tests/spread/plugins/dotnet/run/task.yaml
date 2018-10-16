@@ -5,7 +5,6 @@ environment:
 
 # This plugin does not support core18 and core16 is stable yet
 manual: true
-systems: [ubuntu-16*]
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
