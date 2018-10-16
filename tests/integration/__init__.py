@@ -458,10 +458,6 @@ class StoreTestCase(TestCase):
         process.expect_exact(
             "Enter your Ubuntu One e-mail address and password." + os.linesep
         )
-        process.expect_exact(
-            "If you do not have an Ubuntu One account, you can create one at "
-            "https://snapcraft.io/account" + os.linesep
-        )
         process.expect_exact("Email: ")
         process.sendline(email)
         process.expect_exact("Password: ")
@@ -540,10 +536,6 @@ class StoreTestCase(TestCase):
 
         process.expect_exact(
             "Enter your Ubuntu One e-mail address and password." + os.linesep
-        )
-        process.expect_exact(
-            "If you do not have an Ubuntu One account, you can create one at "
-            "https://snapcraft.io/account" + os.linesep
         )
         process.expect_exact("Email: ")
         process.sendline(email)

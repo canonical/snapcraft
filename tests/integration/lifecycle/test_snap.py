@@ -41,13 +41,6 @@ class SnapTestCase(integration.TestCase):
             expected_binary1_wrapper = file_.read()
         self.assertThat(binary1_wrapper_path, FileContains(expected_binary1_wrapper))
 
-        command_chain_path = os.path.join(
-            self.prime_dir, "snap", "command-chain", "snapcraft-runner"
-        )
-        with open("command-chain", "r") as f:
-            expected_command_chain = f.read()
-        self.assertThat(command_chain_path, FileContains(expected_command_chain))
-
         self.useFixture(
             fixtures.EnvironmentVariable(
                 "SNAP", os.path.join(os.getcwd(), self.prime_dir)
@@ -61,8 +54,7 @@ class SnapTestCase(integration.TestCase):
         )
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
-                [command_chain_path, os.path.join(self.prime_dir, binary)],
-                universal_newlines=True,
+                os.path.join(self.prime_dir, binary), universal_newlines=True
             )
             self.assertThat(output, Equals(expected_output))
 
@@ -100,15 +92,15 @@ class SnapTestCase(integration.TestCase):
                 grade: devel
                 apps:
                   assemble-bin:
-                    command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-bin.wrapper
+                    command: command-assemble-bin.wrapper
                   assemble-service:
-                    command: snap/command-chain/snapcraft-runner $SNAP/command-assemble-service.wrapper
+                    command: command-assemble-service.wrapper
                     daemon: simple
-                    stop-command: snap/command-chain/snapcraft-runner $SNAP/stop-command-assemble-service.wrapper
+                    stop-command: stop-command-assemble-service.wrapper
                   binary-wrapper-none:
                     command: subdir/binary3
                   binary2:
-                    command: snap/command-chain/snapcraft-runner $SNAP/command-binary2.wrapper
+                    command: command-binary2.wrapper
             """
                 ).format(self.deb_arch)
             ),
