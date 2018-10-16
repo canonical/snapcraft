@@ -10,7 +10,8 @@ confinement: strict
 apps:
   dotnet-hello:
     command: dotnet-hello
+
 parts:
   dotnet-hello:
-    plugin: dotnet
     source: .
+    plugin: dotnet

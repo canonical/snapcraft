@@ -24,7 +24,9 @@ from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
 
 import snapcraft
 from snapcraft import file_utils
+from snapcraft.internal import errors
 from snapcraft.internal import sources
+from snapcraft.project import Project
 from snapcraft.plugins import dotnet
 from tests import unit
 
@@ -37,7 +39,7 @@ def _setup_dirs(plugin):
     open(executable_path, "w").close()
 
 
-class DotNetPluginTestCase(unit.TestCase):
+class DotNetPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = dotnet.DotNetPlugin.schema()
         self.assertThat(schema, Contains("required"))
@@ -56,16 +58,26 @@ class DotNetPluginTestCase(unit.TestCase):
         )
 
 
-class DotNetProjectBaseTestCase(unit.TestCase):
+class DotNetProjectBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: dotnet-snap
+            base: core16
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             build_attributes = []
             dotnet_runtime_version = dotnet._RUNTIME_DEFAULT
 
         self.options = Options()
-        self.project = snapcraft.ProjectOptions()
 
         # Only amd64 is supported for now.
         patcher = mock.patch(
@@ -139,7 +151,7 @@ class DotNetProjectBaseTestCase(unit.TestCase):
         self.mock_check_call.side_effect = side_effect
 
 
-class DotNetErrorsTestCase(unit.TestCase):
+class DotNetErrorsTest(unit.TestCase):
 
     scenarios = (
         (
@@ -174,7 +186,7 @@ class DotNetErrorsTestCase(unit.TestCase):
         )
 
 
-class DotNetProjectTestCase(DotNetProjectBaseTestCase):
+class DotNetProjectTest(DotNetProjectBaseTest):
     def test_sdk_in_path(self):
         plugin = dotnet.DotNetPlugin("test-part", self.options, self.project)
         self.assertThat(
@@ -228,7 +240,7 @@ class DotNetProjectTestCase(DotNetProjectBaseTestCase):
         )
 
 
-class DotNetProjectBuildCommandsTestCase(DotNetProjectBaseTestCase):
+class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
 
     scenarios = [
         ("Debug", dict(configuration="Debug", build_attributes=["debug"])),
@@ -267,4 +279,34 @@ class DotNetProjectBuildCommandsTestCase(DotNetProjectBaseTestCase):
                     ),
                 ]
             ),
+        )
+
+
+class DotnetPluginUnsupportedBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: dotnet-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            source = "dir"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            dotnet.DotNetPlugin,
+            "test-part",
+            self.options,
+            self.project,
         )

@@ -1,0 +1,17 @@
+summary: Build and run a basic dotnet snap with no base
+
+environment:
+  SNAP_DIR: ../snaps/dotnet-hello
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+systems: [ubuntu-16.04]
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install meson-hello_*.snap --dangerous
+  [ "$(dotnet-hello)" = "Hello World!" ]

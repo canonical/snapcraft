@@ -38,6 +38,7 @@ import json
 import snapcraft
 from snapcraft import sources
 from snapcraft import formatting_utils
+from snapcraft.internal import errors
 from typing import List
 
 
@@ -102,24 +103,30 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_dir = os.path.join(self.partdir, "dotnet")
         self._dotnet_sdk_dir = os.path.join(self._dotnet_dir, "sdk")
 
-        self.stage_packages.extend(
-            [
-                "libcurl3",
-                "libcurl3-gnutls",
-                "libicu55",
-                "liblttng-ust0",
-                "libunwind8",
-                "lldb",
-                "libssl1.0.0",
-                "libgssapi-krb5-2",
-                "libc6",
-                "zlib1g",
-                "libgcc1",
-            ]
-        )
+        self._setup_base_tools(project.info.base)
 
         self._sdk = self._get_sdk()
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")
+
+    def _setup_base_tools(self, base):
+        if base == "core16":
+            self.stage_packages.extend(
+                [
+                    "libcurl3",
+                    "libcurl3-gnutls",
+                    "libicu55",
+                    "liblttng-ust0",
+                    "libunwind8",
+                    "lldb",
+                    "libssl1.0.0",
+                    "libgssapi-krb5-2",
+                    "libc6",
+                    "zlib1g",
+                    "libgcc1",
+                ]
+            )
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def _get_sdk(self):
         sdk_arch = self.project.deb_arch
