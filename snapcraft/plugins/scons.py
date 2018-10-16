@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,6 +32,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import os
 
 import snapcraft
+from snapcraft.internal import errors
 
 
 class SconsPlugin(snapcraft.BasePlugin):
@@ -56,7 +57,13 @@ class SconsPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append("scons")
+        self._setup_base_tools(project.info.base)
+
+    def _setup_base_tools(self, base):
+        if base in ("core16", "core18"):
+            self.build_packages.append("scons")
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def build(self):
         super().build()
