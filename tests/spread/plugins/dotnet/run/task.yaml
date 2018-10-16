@@ -22,4 +22,4 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft
   sudo snap install dotnet-hello_*.snap --dangerous
-  [ "$(dotnetmeson-hello)" = "Hello World!" ]
+  [ "$(dotnet-hello)" = "Hello World!" ]
