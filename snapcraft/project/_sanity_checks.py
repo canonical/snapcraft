@@ -42,14 +42,16 @@ def conduct_build_environment_sanity_check(provider: str):
 
 
 def _check_multipass_installed():
-    if not shutil.which("multipass"):
-        if sys.platform == "linux":
-            if not shutil.which("snap"):
-                raise errors.SnapMissingLinuxError()
-            else:
-                raise errors.MultipassMissingLinuxError()
-        else:
-            raise errors.MultipassMissingNonLinuxError()
+    if shutil.which("multipass"):
+        return
+
+    if sys.platform != "linux":
+        raise errors.MultipassMissingNonLinuxError()
+
+    if not shutil.which("snap"):
+        raise errors.SnapMissingLinuxError()
+    else:
+        raise errors.MultipassMissingLinuxError()
 
 
 def conduct_project_sanity_check(project: Project):
