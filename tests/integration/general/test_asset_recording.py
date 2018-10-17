@@ -193,8 +193,9 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml_utils.load(recorded_yaml_file)
 
+        # spread tests might leave bases behind which would affect this check
         self.assertThat(
-            recorded_yaml["build-snaps"], Equals(["hello={}".format(expected_revision)])
+            recorded_yaml["build-snaps"], Contains("hello={}".format(expected_revision))
         )
 
 
