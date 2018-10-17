@@ -582,6 +582,18 @@ class FakeSnapcraftctl(fixtures.Fixture):
         os.chmod(snapcraftctl_path, 0o755)
 
 
+class FakeMultipass(fixtures.Fixture):
+    def _setUp(self):
+        super()._setUp()
+
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        altered_path = "{}:{}".format(tempdir, os.environ.get("PATH"))
+        self.useFixture(fixtures.EnvironmentVariable("PATH", altered_path))
+
+        multipass = os.path.join(tempdir, "multipass")
+        os.symlink('/bin/true', multipass)
+
+
 class SilentSnapProgress(fixtures.Fixture):
     def setUp(self):
         super().setUp()

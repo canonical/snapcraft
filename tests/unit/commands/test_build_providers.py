@@ -22,6 +22,7 @@ from testtools.matchers import Equals
 
 from . import LifecycleCommandsBaseTestCase
 from tests.unit.build_providers import ProviderImpl
+from tests import fixture_setup
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
 
@@ -34,6 +35,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
 
@@ -82,6 +84,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
         pack_project_mock = mock.Mock()
