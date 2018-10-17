@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,22 +32,31 @@ For more information check the 'plugins' topic for the former and the
 import os
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.internal import mangling
 
 
 class PlainboxProviderPlugin(snapcraft.BasePlugin):
-    def __init__(self, name, options, project):
-        super().__init__(name, options, project)
-        self.build_packages.extend(["intltool"])
-        self.stage_packages.extend(
-            ["python3-pip", "python3-wheel", "python3-setuptools"]
-        )
-
     @classmethod
     def schema(cls):
         schema = super().schema()
         schema["required"] = ["source"]
         return schema
+
+    def __init__(self, name, options, project):
+        super().__init__(name, options, project)
+
+        self.build_packages.extend(["intltool"])
+        self._setup_base_tools(project.info.base)
+
+    def _setup_base_tools(self, base):
+        if base in ("core16", "core18"):
+            self.stage_packages.extend(
+                ["python3-pip", "python3-wheel", "python3-setuptools"]
+            )
+            self.build_packages.append("intltool")
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def build(self):
         super().build()
