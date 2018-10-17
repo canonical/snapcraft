@@ -591,7 +591,7 @@ class FakeMultipass(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable("PATH", altered_path))
 
         multipass = os.path.join(tempdir, "multipass")
-        os.symlink('/bin/true', multipass)
+        os.symlink("/bin/true", multipass)
 
 
 class SilentSnapProgress(fixtures.Fixture):
