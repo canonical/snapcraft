@@ -47,7 +47,7 @@ class RpathTestCase(integration.TestCase):
 
 class Libc6TestCase(integration.TestCase):
     def test_primed_libc6(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part", {"plugin": "nil", "stage-packages": ["libc6", "hello"]}
         )
@@ -69,7 +69,7 @@ class Libc6TestCase(integration.TestCase):
 class OriginRPATHTestCase(integration.TestCase):
     def test_origin(self):
         # We stage libc6 for this to work on non xenial
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part", {"plugin": "nil", "stage-packages": ["libc6", "python3"]}
         )
@@ -96,7 +96,7 @@ class OriginRPATHTestCase(integration.TestCase):
     @skip.skip_unless_codename("xenial", "we currently only have core")
     def test_origin_runpath_migrated_to_rpath(self):
         # We stage libc6 for this to work on non xenial
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, confinement="classic")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part",
             {
@@ -144,6 +144,7 @@ class ExecStackTestCase(integration.TestCase):
             attributes = []
 
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part",
             {
