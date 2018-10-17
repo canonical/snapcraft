@@ -1,7 +1,5 @@
 summary: Ensure a basic provider using stage-packages works
 
-systems: [ubuntu-16*, ubuntu-18*]
-
 environment:
   SNAP_DIR: ../snaps/provider-with-stage-packages
 

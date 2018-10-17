@@ -1,7 +1,5 @@
 summary: Ensure a provider with dependencies can be staged
 
-systems: [ubuntu-16*, ubuntu-18*]
-
 environment:
   SNAP_DIR: ../snaps/provider-with-deps
 
