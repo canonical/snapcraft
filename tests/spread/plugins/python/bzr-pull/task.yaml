@@ -1,0 +1,22 @@
+summary: |
+  "Ensure we pickup setup.py from the source subdir
+   Verifies LP: #1752481"
+
+environment:
+  SNAP_DIR: ../snaps/pip-bzr
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft pull
+
+  [ -f "parts/pip-bzr/python-packages/bzrtest/bzrtest-*.zip" ]

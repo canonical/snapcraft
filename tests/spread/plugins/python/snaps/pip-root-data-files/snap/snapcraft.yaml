@@ -9,5 +9,5 @@ grade: devel
 
 parts:
   root:
-    plugin: python
     source: .
+    plugin: python

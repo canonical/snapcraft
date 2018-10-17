@@ -6,14 +6,17 @@ description: |
   as a requirements.txt file with the list of packages
   that will be downloaded using pip.
 confinement: strict
+grade: devel
 
 parts:
   python2:
+    source: .
     plugin: python
     python-version: python2
-    source: .
-    requirements: requirements.txt
+    requirements:
+      - requirements.txt
   python3:
-    plugin: python
     source: .
-    requirements: requirements.txt
+    plugin: python
+    requirements:
+      - requirements.txt

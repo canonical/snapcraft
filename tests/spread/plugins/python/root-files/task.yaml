@@ -1,0 +1,20 @@
+summary: "Ensure that the root files are installed from setup.py"
+
+environment:
+  SNAP_DIR: ../snaps/pip-root-data-files
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft build
+
+  [ -f "parts/python3/install/lib/python3*/site-packages/etc/broken.txt" ]

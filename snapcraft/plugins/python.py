@@ -29,11 +29,11 @@ For more information check the 'plugins' topic for the former and the
 Additionally, this plugin uses the following plugin-specific keywords:
 
     - requirements:
-      (string)
-      Path to a requirements.txt file
+      (list of strings)
+      List of paths to requirements files.
     - constraints:
-      (string)
-      Path to a constraints file
+      (list of strings)
+      List of paths to constraint files.
     - process-dependency-links:
       (bool; default: false)
       Enable the processing of dependency links in pip, which allow one
@@ -63,7 +63,7 @@ import requests
 
 import snapcraft
 from snapcraft.common import isurl
-from snapcraft.internal import mangling, os_release
+from snapcraft.internal import errors, mangling
 from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
@@ -91,8 +91,20 @@ class PythonPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["properties"]["requirements"] = {"type": "string"}
-        schema["properties"]["constraints"] = {"type": "string"}
+        schema["properties"]["requirements"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+        schema["properties"]["constraints"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
         schema["properties"]["python-packages"] = {
             "type": "array",
             "minitems": 1,
@@ -125,37 +137,16 @@ class PythonPlugin(snapcraft.BasePlugin):
         ]
 
     @property
-    def plugin_build_packages(self):
-        if self.options.python_version == "python3":
-            return [
-                "python3-dev",
-                "python3-pip",
-                "python3-pkg-resources",
-                "python3-setuptools",
-            ]
-        elif self.options.python_version == "python2":
-            return [
-                "python-dev",
-                "python-pip",
-                "python-pkg-resources",
-                "python-setuptools",
-            ]
-
-    @property
     def plugin_stage_packages(self):
-        release_codename = os_release.OsRelease().version_codename()
         if self.options.python_version == "python2":
             python_base = "python"
         elif self.options.python_version == "python3":
             python_base = "python3"
-        else:
-            return
 
         stage_packages = [python_base]
-        # In bionic, python3's pip started requiring python-distutils
-        # to be installed.
-        if python_base == "python3" and release_codename == "bionic":
+        if self.project.info.base == "core18" and python_base == "python3":
             stage_packages.append("{}-distutils".format(python_base))
+
         return stage_packages
 
     # ignore mypy error: Read-only property cannot override read-write property
@@ -185,7 +176,9 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(self.plugin_build_packages)
+
+        self._setup_base_tools(project.info.base)
+
         self._manifest = collections.OrderedDict()
 
         # Pip requires only the major version of python rather than the command
@@ -198,6 +191,30 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         self._python_major_version = match.group("major_version")
         self.__pip = None
+
+    def _setup_base_tools(self, base):
+        # NOTE: stage-packages are lazily loaded.
+        if base in ("core16", "core18"):
+            if self.options.python_version == "python3":
+                self.build_packages.extend(
+                    [
+                        "python3-dev",
+                        "python3-pip",
+                        "python3-pkg-resources",
+                        "python3-setuptools",
+                    ]
+                )
+            elif self.options.python_version == "python2":
+                self.build_packages.extend(
+                    [
+                        "python-dev",
+                        "python-pip",
+                        "python-pkg-resources",
+                        "python-setuptools",
+                    ]
+                )
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def pull(self):
         super().pull()

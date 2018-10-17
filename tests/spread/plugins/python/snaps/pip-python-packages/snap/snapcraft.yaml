@@ -1,4 +1,4 @@
-name: pip-requirements-list
+name: pip-python-packages
 version: "1"
 summary: Test a list of requirements
 description: |
@@ -14,9 +14,7 @@ parts:
     python-version: python2
     python-packages:
       - argparse==1.2.2
-      - jsonschema
   python3:
     plugin: python
     python-packages:
       - argparse==1.2.2
-      - jsonschema
