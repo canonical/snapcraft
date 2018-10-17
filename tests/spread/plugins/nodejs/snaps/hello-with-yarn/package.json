@@ -1,0 +1,13 @@
+{
+  "name": "nodejs-hello",
+  "version": "1.0.0",
+  "description": "Testing grounds for snapcraft integration tests",
+  "bin": {
+    "nodejs-hello": "index.js"
+  },
+  "scripts": {
+    "nodejs-hello": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0"
+}

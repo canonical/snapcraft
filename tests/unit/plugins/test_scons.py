@@ -15,29 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
+from snapcraft.project import Project
 from snapcraft.plugins import scons
 from tests import unit
 
 
-class SconsPluginTestCase(unit.TestCase):
-    """Plugin to provide snapcraft support for the scons build system"""
-
-    def setUp(self):
-        super(SconsPluginTestCase, self).setUp()
-
-        class Options:
-            """Internal Options Class matching the Scons plugin"""
-
-            scons_options = ["--debug=explain"]
-
-        self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
-
+class SconsPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         """Test validity of the Scons Plugin schema"""
         schema = scons.SconsPlugin.schema()
@@ -81,6 +70,17 @@ class SconsPluginTestCase(unit.TestCase):
             'Expected "scons-options" "uniqueItems" to be "True"',
         )
 
+    def test_get_pull_properties(self):
+        expected_pull_properties = []
+        resulting_pull_properties = scons.SconsPlugin.get_pull_properties()
+
+        self.assertThat(
+            resulting_pull_properties, HasLength(len(expected_pull_properties))
+        )
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
     def test_get_build_properties(self):
         expected_build_properties = ["scons-options"]
         resulting_build_properties = scons.SconsPlugin.get_build_properties()
@@ -92,9 +92,34 @@ class SconsPluginTestCase(unit.TestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
+
+class SconsPluginTest(unit.TestCase):
+    """Plugin to provide snapcraft support for the scons build system"""
+
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: scons-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            """Internal Options Class matching the Scons plugin"""
+
+            scons_options = ["--debug=explain"]
+
+        self.options = Options()
+
     def scons_build(self):
         """Helper to call a full build"""
-        plugin = scons.SconsPlugin("test-part", self.options, self.project_options)
+        plugin = scons.SconsPlugin("test-part", self.options, self.project)
         # Create fake scons
         plugin.build()
         return plugin
@@ -112,4 +137,34 @@ class SconsPluginTestCase(unit.TestCase):
                 mock.call(["scons", "--debug=explain"]),
                 mock.call(["scons", "install", "--debug=explain"], env=env),
             ]
+        )
+
+
+class SconsPluginUnsupportedBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: scons-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            source = "dir"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            scons.SconsPlugin,
+            "test-part",
+            self.options,
+            self.project,
         )

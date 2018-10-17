@@ -1,7 +1,8 @@
-summary: Build and run a basic SCons snap
+summary: Build and run a basic Nodejs snap
 
 environment:
-  SNAP_DIR: ../snaps/scons-hello
+  SNAP_DIR/npm: ../snaps/hello-with-npm
+  SNAP_DIR/yarn: ../snaps/hello-with-yarn
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -16,6 +17,8 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
+
   snapcraft
-  sudo snap install scons-hello_*.snap --dangerous
-  [ "$(scons-hello)" = "hello world" ]
+
+  sudo snap install nodejs-hello_*.snap --dangerous
+  [ "$(nodejs-hello)" = "Hello world!" ]
