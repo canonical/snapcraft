@@ -115,11 +115,6 @@ class WafPluginPropertiesTest(unit.TestCase):
             '"string", but it was "{}"'.format(configflags_items_type),
         )
 
-        self.assertTrue(
-            "build-properties" in schema,
-            'Expected schema to include "build-properties"',
-        )
-
     def test_get_build_properties(self):
         expected_build_properties = ["configflags"]
         resulting_build_properties = waf.WafPlugin.get_build_properties()
