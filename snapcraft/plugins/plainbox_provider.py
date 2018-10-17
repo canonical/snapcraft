@@ -46,7 +46,6 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self.build_packages.extend(["intltool"])
         self._setup_base_tools(project.info.base)
 
     def _setup_base_tools(self, base):
