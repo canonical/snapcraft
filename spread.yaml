@@ -204,6 +204,10 @@ suites:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
+ tests/spread/plugins/dotnet/:
+   # Keep this 16.04 as it is the only supported system for this plugin
+   systems: [ubuntu-16.04*]
+   summary: tests of snapcraft's Dotnet plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
    # Keep this 18.04 only for now as it is the only stable base.

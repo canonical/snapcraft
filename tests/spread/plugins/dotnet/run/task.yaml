@@ -1,0 +1,24 @@
+summary: Build and run a basic dotnet snap
+
+environment:
+  SNAP_DIR: ../snaps/dotnet-hello
+
+# This plugin does not support core18 and core16 is stable yet
+manual: true
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install dotnet-hello_*.snap --dangerous
+  [ "$(dotnet-hello)" = "Hello World!" ]
