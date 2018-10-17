@@ -82,7 +82,9 @@ class PrimeTestCase(integration.TestCase):
         self.copy_project_to_cwd(project_dir)
 
         # Create a new snapcraft.yaml
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, confinement="classic")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, base=None, confinement="classic"
+        )
         snapcraft_yaml.update_part(
             "hello",
             {"source": ".", "plugin": "make", "build-attributes": ["no-patchelf"]},

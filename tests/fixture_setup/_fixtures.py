@@ -581,7 +581,7 @@ class SnapcraftYaml(fixtures.Fixture):
     ):
         super().__init__()
         self.path = path
-        self.data = {"confinement": confinement, "base": base, "parts": {}, "apps": {}}
+        self.data = {"confinement": confinement, "parts": {}, "apps": {}}
         if name is not None:
             self.data["name"] = name
         if version is not None:
@@ -592,6 +592,8 @@ class SnapcraftYaml(fixtures.Fixture):
             self.data["description"] = description
         if architectures is not None:
             self.data["architectures"] = architectures
+        if base is not None:
+            self.data["base"] = base
 
     def update_part(self, name, data):
         part = {name: data}
