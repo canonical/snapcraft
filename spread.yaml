@@ -222,6 +222,10 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Meson plugin
+ tests/spread/plugins/nodejs/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Nodejs plugin
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
  tests/spread/plugins/plainbox/:

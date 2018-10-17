@@ -36,7 +36,6 @@ class ListPluginsTestCase(integration.TestCase):
             "autotools",
             "cmake",
             "go",
-            "gulp",
             "kbuild",
             "maven",
             "nodejs",
