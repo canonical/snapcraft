@@ -51,6 +51,7 @@ class PartOrderTestCase(ProjectLoaderBaseTest):
                 "contents": dedent(
                     """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: test
@@ -72,6 +73,7 @@ class PartOrderTestCase(ProjectLoaderBaseTest):
                 "contents": dedent(
                     """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: test
@@ -93,6 +95,7 @@ class PartOrderTestCase(ProjectLoaderBaseTest):
                 "contents": dedent(
                     """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: test
@@ -117,6 +120,7 @@ class PartOrderTestCase(ProjectLoaderBaseTest):
                 "contents": dedent(
                     """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: test
@@ -153,6 +157,7 @@ class PluginLoadTest(LoadPartBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test

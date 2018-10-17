@@ -1,4 +1,3 @@
-include libraries/*
 include schema/*
 include extensions/*
 include debian/changelog

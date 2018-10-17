@@ -354,10 +354,6 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             dict(platform="linux", base="core18", expected_image="snapcraft:core18"),
         ),
         (
-            "linux no base",
-            dict(platform="linux", base=None, expected_image="snapcraft:core16"),
-        ),
-        (
             "darwin",
             dict(platform="darwin", base="core18", expected_image="snapcraft:core18"),
         ),

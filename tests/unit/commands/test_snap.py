@@ -34,13 +34,14 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
     yaml_template = dedent(
         """\
         name: snap-test
+        {base_entry}
         version: "1.0"
         summary: test snapping
         description: if snap is successful a snap package will be available
         architectures:
           - build-on: all
             run-on: 'amd64'
-        type: {}
+        type: {snap_type}
         confinement: strict
         grade: stable
 
@@ -69,7 +70,10 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
 
     def make_snapcraft_yaml(self, n=1, snap_type="app", snapcraft_yaml=None):
         if not snapcraft_yaml:
-            snapcraft_yaml = self.yaml_template.format(snap_type)
+            base_entry = "base: core18" if snap_type == "app" else ""
+            snapcraft_yaml = self.yaml_template.format(
+                snap_type=snap_type, base_entry=base_entry
+            )
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, "part1", "state")
 
@@ -387,6 +391,7 @@ type: os
             snapcraft_yaml=dedent(
                 """\
             name: test-package
+            base: core18
             version: "1.0"
             summary: test
             description: test

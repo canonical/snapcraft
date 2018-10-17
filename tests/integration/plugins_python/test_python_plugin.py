@@ -26,7 +26,7 @@ from tests import integration, fixture_setup
 
 class PythonPluginTestCase(integration.TestCase):
     def test_use_staged_pip(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part",
             {"plugin": "python", "source": ".", "stage-packages": ["python3-pip"]},
@@ -367,7 +367,7 @@ class PythonPluginTestCase(integration.TestCase):
         self.assertThat(os.path.join(self.stage_dir, "bin", "hello"), FileExists())
 
     def test_plugin_plays_nice_with_stage_packages(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "python-from-archive",
             {"plugin": "nil", "source": ".", "stage-packages": ["python3-yaml"]},
@@ -386,7 +386,7 @@ class PythonPluginTestCase(integration.TestCase):
     def test_python_part_can_be_cleaned(self):
         # Regression test for LP: #1778716
 
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part("python-part", {"plugin": "python", "source": "."})
         snapcraft_yaml.update_part("dummy-part", {"plugin": "nil"})
         self.useFixture(snapcraft_yaml)

@@ -14,32 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import logging
 import os
-import re
-import shutil
 import subprocess
 import textwrap
 from unittest import mock
 
 import fixtures
-from testtools.matchers import (
-    DirExists,
-    Equals,
-    FileContains,
-    FileExists,
-    MatchesRegex,
-    Not,
-)
+from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
 import snapcraft
-from snapcraft import storeapi
-from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
-from tests import fixture_setup, unit
+from tests import fixture_setup
 from tests.fixture_setup.os_release import FakeOsRelease
 from . import LifecycleTestBase
 
@@ -527,6 +515,7 @@ class RecordSnapcraftYamlTestCase(LifecycleTestBase):
         expected = textwrap.dedent(
             """\
             name: test
+            base: core18
             version: "1.0"
             summary: test
             description: test
@@ -587,9 +576,9 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
             fixture_setup.FakeAptCachePackage("patchelf", "0.9", installed=True)
         )
 
-        self.fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(self.fake_snapd)
-        self.fake_snapd.snaps_result = []
+        self.fake_snapd.snaps_result = [
+            dict(name="core18", channel="latest/stable", revision="10")
+        ]
 
         self.useFixture(FakeOsRelease())
 
@@ -614,6 +603,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -624,7 +614,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -633,7 +624,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -646,8 +638,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
         self.fake_snapd.snaps_result = [
-            {"name": "test-snap-1", "revision": "test-snap-1-revision"},
-            {"name": "test-snap-2", "revision": "test-snap-2-revision"},
+            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="test-snap-1", revision="test-snap-1-revision"),
+            dict(name="test-snap-2", revision="test-snap-2-revision"),
         ]
 
         project_config = self.make_snapcraft_project(
@@ -667,6 +660,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -678,6 +672,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-packages:
                 - patchelf=0.9
                 installed-snaps:
+                - core18=10
                 - test-snap-1=test-snap-1-revision
                 - test-snap-2=test-snap-2-revision
                 plugin: nil
@@ -688,7 +683,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -725,6 +721,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -737,7 +734,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - patchelf=0.9
                 - test-package1=test-version1
                 - test-package2=test-version2
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -746,7 +744,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -775,7 +774,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     stage-packages: [test-package1=test-version1, test-package2]
                 """
             )
-        )  # NOQA
+        )
 
         lifecycle.execute(steps.PRIME, project_config)
 
@@ -785,6 +784,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -795,7 +795,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -806,7 +807,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -846,6 +848,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -859,7 +862,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -867,7 +871,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 uname: Linux test uname 4.10 x86_64
             architectures:
             - {}
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -905,6 +910,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -915,7 +921,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 source: test-source
@@ -931,7 +938,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - git=testversion
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -967,6 +975,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -978,7 +987,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - test-package:any
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -988,7 +998,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-package=test-version
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1028,6 +1039,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -1039,7 +1051,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 - test-virtual-package
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1049,7 +1062,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-provider-package=test-version
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1080,6 +1094,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -1090,7 +1105,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1100,7 +1116,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1137,6 +1154,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -1147,7 +1165,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime: []
                 stage: []
@@ -1160,7 +1179,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               created_at: test-created-at
               fingerprint: test-fingerprint
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1213,6 +1233,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
+            base: core18
             version: '1.0'
             summary: test
             description: test
@@ -1223,7 +1244,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
                 build-packages: []
                 installed-packages:
                 - patchelf=0.9
-                installed-snaps: []
+                installed-snaps:
+                - core18=10
                 plugin: nil
                 prime:
                 - -*
@@ -1233,7 +1255,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             architectures:
             - {}
             build-packages: []
-            build-snaps: []
+            build-snaps:
+            - core18=10
             """.format(
                 project_config.project.deb_arch
             )
@@ -1242,149 +1265,3 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             os.path.join(steps.PRIME.name, "snap", "manifest.yaml"),
             FileContains(expected),
         )
-
-
-class CoreSetupTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.core_path = os.path.join(self.path, "core", "current")
-        patcher = mock.patch("snapcraft.internal.common.get_core_path")
-        core_path_mock = patcher.start()
-        core_path_mock.return_value = self.core_path
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.object(snapcraft.ProjectOptions, "get_core_dynamic_linker")
-        get_linker_mock = patcher.start()
-        get_linker_mock.return_value = "/lib/ld"
-        self.addCleanup(patcher.stop)
-
-        self.tempdir = os.path.join(self.path, "tmpdir")
-        patcher = mock.patch("snapcraft.internal.lifecycle._runner.TemporaryDirectory")
-        self.tempdir_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        # Create a fake sudo that just echos
-        bin_override = os.path.join(self.path, "bin")
-        os.mkdir(bin_override)
-
-        fake_sudo_path = os.path.join(bin_override, "sudo")
-        self.witness_path = os.path.join(self.path, "sudo_witness")
-        with open(fake_sudo_path, "w") as f:
-            print("#!/bin/sh", file=f)
-            print("echo $@ >> {}".format(self.witness_path), file=f)
-        os.chmod(fake_sudo_path, 0o755)
-
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "PATH", "{}:{}".format(bin_override, os.path.expandvars("$PATH"))
-            )
-        )
-
-    @mock.patch.object(storeapi.StoreClient, "download")
-    def test_core_setup_with_env_var(self, download_mock):
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_SETUP_CORE", "1"))
-
-        project_config = self.make_snapcraft_project(confinement="classic")
-        core_snap = self.create_core_snap(project_config.project.deb_arch)
-        core_snap_hash = calculate_sha3_384(core_snap)
-        download_mock.return_value = core_snap_hash
-        self.tempdir_mock.side_effect = self._setup_tempdir_side_effect(core_snap)
-
-        lifecycle.execute(steps.PULL, project_config)
-
-        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
-            os.path.dirname(self.core_path), self.core_path, core_snap_hash
-        )
-        self.assertThat(
-            self.witness_path,
-            FileContains(matcher=MatchesRegex(regex, flags=re.DOTALL)),
-        )
-
-        download_mock.assert_called_once_with(
-            "core",
-            "stable",
-            os.path.join(self.tempdir, "core.snap"),
-            project_config.project.deb_arch,
-            "",
-        )
-
-    @mock.patch.object(storeapi.StoreClient, "download")
-    @mock.patch("snapcraft.internal.common._DOCKERENV_FILE")
-    def test_core_setup_if_docker_env(self, dockerenv_fake, download_mock):
-        dockerenv_file = os.path.join(self.tempdir, "dockerenv")
-        os.makedirs(self.tempdir)
-        open(dockerenv_file, "w").close()
-        dockerenv_fake.return_value = dockerenv_file
-
-        project_config = self.make_snapcraft_project(confinement="classic")
-        core_snap = self.create_core_snap(project_config.project.deb_arch)
-        core_snap_hash = calculate_sha3_384(core_snap)
-        download_mock.return_value = core_snap_hash
-        self.tempdir_mock.side_effect = self._setup_tempdir_side_effect(core_snap)
-
-        lifecycle.execute(steps.PULL, project_config)
-
-        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
-            os.path.dirname(self.core_path), self.core_path, core_snap_hash
-        )
-        self.assertThat(
-            self.witness_path,
-            FileContains(matcher=MatchesRegex(regex, flags=re.DOTALL)),
-        )
-
-        download_mock.assert_called_once_with(
-            "core",
-            "stable",
-            os.path.join(self.tempdir, "core.snap"),
-            project_config.project.deb_arch,
-            "",
-        )
-
-    def test_core_setup_skipped_if_not_classic(self):
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_SETUP_CORE", "1"))
-
-        project_config = self.make_snapcraft_project(confinement="strict")
-        lifecycle.execute(steps.PULL, project_config)
-
-        self.assertThat(self.witness_path, Not(FileExists()))
-
-    def test_core_setup_skipped_if_core_exists(self):
-        os.makedirs(self.core_path)
-        open(os.path.join(self.core_path, "fake-content"), "w").close()
-
-        project_config = self.make_snapcraft_project(confinement="classic")
-        lifecycle.execute(steps.PULL, project_config)
-
-    def make_snapcraft_project(self, *, confinement: str):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.data["confinement"] = confinement
-        snapcraft_yaml.update_part("test-part", dict(plugin="nil"))
-        self.useFixture(snapcraft_yaml)
-
-        project = Project(
-            snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path
-        )
-        return project_loader.load_config(project)
-
-    def _setup_tempdir_side_effect(self, core_snap):
-        @contextlib.contextmanager
-        def _tempdir():
-            os.makedirs(self.tempdir, exist_ok=True)
-            shutil.move(core_snap, os.path.join(self.tempdir, "core.snap"))
-            yield self.tempdir
-
-        return _tempdir
-
-    def create_core_snap(self, deb_arch):
-        core_path = os.path.join(self.path, "core")
-        snap_yaml_path = os.path.join(core_path, "meta", "snap.yaml")
-        os.makedirs(os.path.dirname(snap_yaml_path))
-        with open(snap_yaml_path, "w") as f:
-            print("name: core", file=f)
-            print("version: 1", file=f)
-            print("architectures: [{}]".format(deb_arch), file=f)
-            print("summary: summary", file=f)
-            print("description: description", file=f)
-
-        return lifecycle.pack(directory=core_path)

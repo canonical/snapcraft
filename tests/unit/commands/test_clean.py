@@ -16,6 +16,7 @@
 
 import os
 import shutil
+from textwrap import dedent
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
@@ -26,16 +27,19 @@ from . import CommandBaseTestCase
 
 class CleanCommandBaseTestCase(CommandBaseTestCase):
 
-    yaml_template = """name: clean-test
-version: "1.0"
-summary: test clean
-description: if the clean is successful the state file will be updated
-icon: icon.png
-confinement: strict
-grade: stable
+    yaml_template = dedent(
+        """\
+        name: clean-test
+        base: core18
+        version: "1.0"
+        summary: test clean
+        description: if the clean is successful the state file will be updated
+        confinement: strict
+        grade: stable
 
-parts:
-{parts}"""
+        parts:
+        {parts}"""
+    )
 
     yaml_part = """  clean{:d}:
     plugin: nil"""
@@ -43,7 +47,6 @@ parts:
     def make_snapcraft_yaml(self, n=1, create=True):
         parts = "\n".join([self.yaml_part.format(i) for i in range(n)])
         super().make_snapcraft_yaml(self.yaml_template.format(parts=parts))
-        open("icon.png", "w").close()
 
         parts = []
         for i in range(n):
@@ -172,24 +175,29 @@ class CleanCommandReverseDependenciesTestCase(CommandBaseTestCase):
         super().setUp()
 
         self.make_snapcraft_yaml(
-            """name: clean-test
-version: "1.0"
-summary: test clean
-description: test clean
-confinement: strict
-grade: stable
+            dedent(
+                """\
+            name: clean-test
+            base: core18
+            version: "1.0"
+            summary: test clean
+            description: test clean
+            confinement: strict
+            grade: stable
 
-parts:
-  main:
-    plugin: nil
+            parts:
+                main:
+                    plugin: nil
 
-  dependent:
-    plugin: nil
-    after: [main]
+                dependent:
+                    plugin: nil
+                    after: [main]
 
-  nested-dependent:
-    plugin: nil
-    after: [dependent]"""
+                nested-dependent:
+                    plugin: nil
+                    after: [dependent]
+        """
+            )
         )
 
         self.part_dirs = {}

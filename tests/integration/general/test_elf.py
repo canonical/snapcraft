@@ -47,7 +47,7 @@ class RpathTestCase(integration.TestCase):
 
 class Libc6TestCase(integration.TestCase):
     def test_primed_libc6(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part", {"plugin": "nil", "stage-packages": ["libc6", "hello"]}
         )
@@ -69,7 +69,7 @@ class Libc6TestCase(integration.TestCase):
 class OriginRPATHTestCase(integration.TestCase):
     def test_origin(self):
         # We stage libc6 for this to work on non xenial
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part", {"plugin": "nil", "stage-packages": ["libc6", "python3"]}
         )
@@ -96,7 +96,9 @@ class OriginRPATHTestCase(integration.TestCase):
     @skip.skip_unless_codename("xenial", "we currently only have core")
     def test_origin_runpath_migrated_to_rpath(self):
         # We stage libc6 for this to work on non xenial
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, confinement="classic")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, base=None, confinement="classic"
+        )
         snapcraft_yaml.update_part(
             "test-part",
             {
@@ -124,10 +126,18 @@ class OriginRPATHTestCase(integration.TestCase):
         lines_with_runpath = [l for l in readelf_d.splitlines() if "RUNPATH" in l]
         lines_with_rpath = [l for l in readelf_d.splitlines() if "RPATH" in l]
         self.assertThat(
-            len(lines_with_runpath), Annotate("Expected no RUNPATH entries", Equals(0))
+            len(lines_with_runpath),
+            Annotate(
+                "Expected no RUNPATH entries but found {}".format(lines_with_runpath),
+                Equals(0),
+            ),
         )
         self.assertThat(
-            len(lines_with_rpath), Annotate("Expected one RPATH entry", Equals(1))
+            len(lines_with_rpath),
+            Annotate(
+                "Expected one RPATH entry but found {}".format(lines_with_rpath),
+                Equals(1),
+            ),
         )
 
 
@@ -144,6 +154,7 @@ class ExecStackTestCase(integration.TestCase):
             attributes = []
 
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=None)
         snapcraft_yaml.update_part(
             "test-part",
             {

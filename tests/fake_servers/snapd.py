@@ -86,6 +86,13 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         if snap_name == "new-fake-snap":
             status_code = 200
             params = {"channels": {"latest/stable": {"confinement": "strict"}}}
+        elif snap_name in ("core16", "core18"):
+            status_code = 200
+            params = {
+                "channels": {
+                    "latest/stable": {"confinement": "strict", "revision": "10"}
+                }
+            }
 
         self.send_response(status_code)
         self.send_header("Content-Type", "text/application+json")

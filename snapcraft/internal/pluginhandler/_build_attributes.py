@@ -19,9 +19,6 @@ class BuildAttributes:
     def __init__(self, build_attributes):
         self._attributes = build_attributes
 
-    def no_system_libraries(self):
-        return "no-system-libraries" in self._attributes
-
     def no_patchelf(self):
         return "no-patchelf" in self._attributes
 

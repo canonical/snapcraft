@@ -18,7 +18,7 @@ import logging
 import os
 import re
 
-import snapcraft
+from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
 # TODO: Add conduct_environment_sanity_check() to be run in the build environment
 
 
-def conduct_project_sanity_check(project: snapcraft.project.Project):
+def conduct_project_sanity_check(project: Project):
     """Sanity check the project itself before continuing.
 
     The checks done here are meant to be light, and not rely on the build environment.

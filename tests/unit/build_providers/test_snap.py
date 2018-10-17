@@ -34,9 +34,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(self.fake_snapd)
-
         self.registry_filepath = os.path.join(self.path, "registry.yaml")
 
         self.provider = ProviderImpl(project=get_project(), echoer=lambda x: x)
