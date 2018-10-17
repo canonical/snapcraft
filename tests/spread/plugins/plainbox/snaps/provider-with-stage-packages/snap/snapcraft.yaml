@@ -6,10 +6,11 @@ description: |
     based stage-packages can still work transparently with the python3
     based plainbox-provider plugin.
 confinement: strict
+grade: devel
 
 parts:
     checkbox-ng-local:
-        plugin: python3
+        plugin: python
         python-packages:
             - checkbox-ng
             - requests-oauthlib
