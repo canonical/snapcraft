@@ -1,8 +1,7 @@
 # -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 4 -*-
 
 all:
-	gcc -o test test.c
+	gcc -o hello hello.c
 
 install:
-	mkdir -p $(DESTDIR)/bin
-	cp -a test $(DESTDIR)/bin/
+	install -D -m755 hello "$(DESTDIR)/bin/hello"
