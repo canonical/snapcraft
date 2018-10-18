@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,6 +39,7 @@ import os
 
 import snapcraft
 from snapcraft import common
+from snapcraft.internal import errors
 
 
 class QmakePlugin(snapcraft.BasePlugin):
@@ -83,6 +84,9 @@ class QmakePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
 
         self.build_packages.append("make")
         if self.options.qt_version == "qt5":
