@@ -195,6 +195,8 @@ suites:
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
    kill-timeout: 180m
@@ -204,6 +206,8 @@ suites:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/dotnet/:
    # Keep this 16.04 as it is the only supported system for this plugin
    systems: [ubuntu-16.04*]
@@ -218,6 +222,10 @@ suites:
    systems: [ubuntu-18.04*]
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
+ tests/spread/plugins/make/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Make plugin
  tests/spread/plugins/meson/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
@@ -229,6 +237,8 @@ suites:
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
  tests/spread/plugins/plainbox/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Plainbox plugin
  tests/spread/plugins/python/:
    # Keep this 18.04 only for now as it is the only stable base.

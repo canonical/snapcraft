@@ -24,7 +24,7 @@ from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.internal import errors
-from tests import fixture_setup, unit
+from tests import unit
 
 
 class PluginLoaderTestCase(unit.TestCase):
@@ -73,79 +73,3 @@ class PluginLoaderTestCase(unit.TestCase):
         self.load_part("mock-part", "mock")
         import_mock.assert_called_with("snapcraft.plugins.mock")
         local_load_mock.assert_called_with("x-mock", self.local_plugins_dir)
-
-    def test_plugin_schema_step_hint_pull(self):
-        class Plugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["foo"] = {"type": "string"}
-                schema["pull-properties"] = ["foo"]
-
-                return schema
-
-        self.useFixture(fixture_setup.FakePlugin("plugin", Plugin))
-        self.load_part("fake-part", "plugin")
-
-    def test_plugin_schema_step_hint_build(self):
-        class Plugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["foo"] = {"type": "string"}
-                schema["build-properties"] = ["foo"]
-
-                return schema
-
-        self.useFixture(fixture_setup.FakePlugin("plugin", Plugin))
-        self.load_part("fake-part", "plugin")
-
-    def test_plugin_schema_step_hint_pull_and_build(self):
-        class Plugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["foo"] = {"type": "string"}
-                schema["pull-properties"] = ["foo"]
-                schema["build-properties"] = ["foo"]
-
-                return schema
-
-        self.useFixture(fixture_setup.FakePlugin("plugin", Plugin))
-        self.load_part("fake-part", "plugin")
-
-    def test_plugin_schema_invalid_pull_hint(self):
-        class Plugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["foo"] = {"type": "string"}
-                schema["pull-properties"] = ["bar"]
-
-                return schema
-
-        self.useFixture(fixture_setup.FakePlugin("plugin", Plugin))
-        raised = self.assertRaises(
-            errors.InvalidPullPropertiesError, self.load_part, "fake-part", "plugin"
-        )
-
-        self.assertThat(raised.plugin_name, Equals("plugin"))
-        self.assertThat(raised.properties, Equals(["bar"]))
-
-    def test_plugin_schema_invalid_build_hint(self):
-        class Plugin(snapcraft.BasePlugin):
-            @classmethod
-            def schema(cls):
-                schema = super().schema()
-                schema["properties"]["foo"] = {"type": "string"}
-                schema["build-properties"] = ["bar"]
-
-                return schema
-
-        self.useFixture(fixture_setup.FakePlugin("plugin", Plugin))
-        raised = self.assertRaises(
-            errors.InvalidBuildPropertiesError, self.load_part, "fake-part", "plugin"
-        )
-
-        self.assertThat(raised.plugin_name, Equals("plugin"))
-        self.assertThat(raised.properties, Equals(["bar"]))

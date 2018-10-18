@@ -1,7 +1,7 @@
-summary: Build and run a basic Autotools snap
+summary: Build and run a make snap that uses a nonstandard Makefile location
 
 environment:
-  SNAP_DIR: ../snaps/autotools-hello
+  SNAP_DIR: ../snaps/make-with-nonstandard-makefile
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -18,5 +18,5 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   snapcraft
-  sudo snap install autotools-hello_*.snap --dangerous
-  [ "$(autotools-hello)" = "Hello, world!" ]
+  sudo snap install make-with-nonstandard-makefile_*.snap --dangerous
+  [ "$(make-with-nonstandard-makefile)" = "hello world" ]

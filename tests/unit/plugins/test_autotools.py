@@ -17,11 +17,13 @@
 
 import os
 import stat
+import textwrap
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import autotools
 from snapcraft.plugins import make
 from tests import unit
@@ -41,7 +43,16 @@ class AutotoolsPluginTestCase(unit.TestCase):
             artifacts = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: make-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
     def test_schema(self):
         schema = autotools.AutotoolsPlugin.schema()
@@ -145,7 +156,7 @@ class AutotoolsPluginTestCase(unit.TestCase):
             autotools.AutotoolsPlugin,
             "test-part",
             self.options,
-            self.project_options,
+            self.project,
         )
 
         self.assertThat(
@@ -153,9 +164,7 @@ class AutotoolsPluginTestCase(unit.TestCase):
         )
 
     def build_with_configure(self):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.builddir)
 
         # Create both configure and autogen.sh.
@@ -198,9 +207,7 @@ class AutotoolsPluginTestCase(unit.TestCase):
         )
 
     def build_with_autogen(self, files=None, dirs=None):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.builddir)
 
         if not files:
@@ -306,9 +313,7 @@ class AutotoolsPluginTestCase(unit.TestCase):
         )
 
     def build_with_autoreconf(self):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         # No configure or autogen.sh.
@@ -369,9 +374,7 @@ class AutotoolsPluginTestCase(unit.TestCase):
 
     @mock.patch("sys.stdout")
     def test_build_nonexecutable_autogen(self, stdout_mock):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         # Make a non-executable autogen.sh
@@ -396,12 +399,33 @@ class AutotoolsPluginTestCase(unit.TestCase):
         plugin.build()
 
     def test_fileset_ignores(self):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         expected_fileset = ["-**/*.la"]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
+
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: cmake-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError,
+            autotools.AutotoolsPlugin,
+            "test-part",
+            self.options,
+            project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))
 
 
 class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
@@ -427,7 +451,17 @@ class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
             artifacts = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
+        self.project = snapcraft.project.Project(
+            target_deb_arch=self.deb_arch,
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: make-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -440,9 +474,7 @@ class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_cross_compile(self):
-        plugin = autotools.AutotoolsPlugin(
-            "test-part", self.options, self.project_options
-        )
+        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
         plugin.enable_cross_compilation()
         plugin.build()
         self.run_mock.assert_has_calls(

@@ -124,15 +124,6 @@ class QMakeTestCase(unit.TestCase):
             "it was {}".format(qt_version_default),
         )
 
-        self.assertTrue(
-            "build-properties" in schema,
-            'Expected schema to include "build-properties"',
-        )
-
-        self.assertTrue(
-            "pull-properties" in schema, 'Expected schema to include "pull-properties"'
-        )
-
         # Check project-files property
         project_files = properties["project-files"]
         for item in ["type", "minitems", "uniqueItems", "items", "default"]:
