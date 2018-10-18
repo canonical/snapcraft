@@ -19,10 +19,12 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft build
 
-  [ -d "parts/python2/install/lib/python2*/site-packages/yamllint" ]
-  [ -d "parts/python2/install/usr/lib/python2*/dist-packages/yaml" ]
-  [ ! -d "parts/python2/install/lib/python2*/site-packages/yaml" ]
+  python2="$(ls parts/python2/install/lib | grep python2)"
+  [ -d "parts/python2/install/lib/$python2/site-packages/yamllint" ]
+  [ -d "parts/python2/install/usr/lib/$python2/dist-packages/yaml" ]
+  [ ! -d "parts/python2/install/lib/$python2/site-packages/yaml" ]
 
-  [ -d "parts/python3/install/lib/python3*/site-packages/yamllint" ]
-  [ -d "parts/python3/install/usr/lib/python3*/dist-packages/yaml" ]
-  [ ! -d "parts/python3/install/lib/python3*/site-packages/yaml" ]
+  python3="$(ls parts/python3/install/lib | grep python3)"
+  [ -d "parts/python3/install/lib/$python3/site-packages/yamllint" ]
+  [ -d "parts/python3/install/usr/lib/$python3/dist-packages/yaml" ]
+  [ ! -d "parts/python3/install/lib/$python3/site-packages/yaml" ]

@@ -18,5 +18,7 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft build
 
-  [ -f "parts/python2/install/lib/python2*/site-packages/argparse.py" ]
-  [ -f "parts/python3/install/lib/python3*/site-packages/argparse.py" ]
+  python2="$(ls parts/python2/install/lib | grep python2)"
+  [ -f "parts/python2/install/lib/$python2/site-packages/argparse.py" ]
+  python3="$(ls parts/python3/install/lib | grep python3)"
+  [ -f "parts/python3/install/lib/$python3/site-packages/argparse.py" ]

@@ -17,4 +17,5 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft build
 
-  [ -f "parts/python3/install/lib/python3*/site-packages/etc/broken.txt" ]
+  python3="$(ls parts/root/install/lib | grep python3)"
+  [ -f "parts/root/install/lib/$python3/site-packages/etc/broken.txt" ]

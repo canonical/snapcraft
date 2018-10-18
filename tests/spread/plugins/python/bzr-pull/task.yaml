@@ -9,6 +9,10 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  # TODO fix bzr installation LP: #1798580
+  apt-get install bzr
+  apt-mark auto bzr
+
 restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
@@ -19,4 +23,4 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft pull
 
-  [ -f "parts/pip-bzr/python-packages/bzrtest/bzrtest-*.zip" ]
+  [ -f "parts/pip-bzr/python-packages/bzrtest-0.0.1.zip" ]

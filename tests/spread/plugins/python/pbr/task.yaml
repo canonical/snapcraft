@@ -13,7 +13,7 @@ prepare: |
   apt-get install git diffutils
   apt-mark auto git diffutils
 
-  for python_dir in "python2 python3"; do
+  for python_dir in python2 python3; do
       pushd "$python_dir"
       git init
       git config user.name "Test User"
@@ -21,13 +21,14 @@ prepare: |
       git add .
       git commit -m "initial commit"
       popd
+  done
 
 restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
-  git rm -rf python2/.git
-  git rm -rf python3/.git
+  rm -rf python2/.git
+  rm -rf python3/.git
   restore_yaml snap/snapcraft.yaml
 
 execute: |
