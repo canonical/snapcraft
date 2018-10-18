@@ -73,7 +73,7 @@ class PythonPluginBaseTest(unit.TestCase):
         class Options:
             source = "."
             source_subdir = ""
-            requirements = ""
+            requirements = []
             constraints = ""
             python_version = "python3"
             python_packages = []
@@ -175,7 +175,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints=None,
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -183,7 +183,7 @@ class PythonPluginTest(PythonPluginBaseTest):
         self.mock_pip.return_value.install.assert_not_called()
 
     def test_pull_with_requirements(self):
-        self.options.requirements = "requirements.txt"
+        self.options.requirements = ["requirements.txt"]
         self.options.python_packages = ["test", "packages"]
 
         plugin = python.PythonPlugin("test-part", self.options, self.project)
@@ -223,7 +223,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             ["test", "packages"],
             constraints={constraints_path},
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -232,7 +232,7 @@ class PythonPluginTest(PythonPluginBaseTest):
 
     @mock.patch.object(python.snapcraft.BasePlugin, "build")
     def test_build(self, mock_base_build):
-        self.options.requirements = "requirements.txt"
+        self.options.requirements = ["requirements.txt"]
         self.options.constraints = "constraints.txt"
         self.options.python_packages = ["test", "packages"]
 
@@ -245,7 +245,7 @@ class PythonPluginTest(PythonPluginBaseTest):
         plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
-        for file_name in (self.options.requirements, self.options.constraints):
+        for file_name in self.options.requirements + [self.options.constraints]:
             path = os.path.join(plugin.sourcedir, file_name)
             open(path, "w").close()
 
@@ -287,7 +287,7 @@ class PythonPluginTest(PythonPluginBaseTest):
         )
 
     def test_pip_with_url(self):
-        self.options.requirements = "https://test.com/requirements.txt"
+        self.options.requirements = ["https://test.com/requirements.txt"]
         self.options.constraints = "http://test.com/constraints.txt"
 
         plugin = python.PythonPlugin("test-part", self.options, self.project)
@@ -305,7 +305,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints={self.options.constraints},
             process_dependency_links=False,
-            requirements={self.options.requirements},
+            requirements=set(self.options.requirements),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -319,7 +319,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints={self.options.constraints},
             process_dependency_links=False,
-            requirements={self.options.requirements},
+            requirements=set(self.options.requirements),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -352,7 +352,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints=None,
             process_dependency_links=True,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -366,7 +366,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints=None,
             process_dependency_links=True,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -389,7 +389,7 @@ class PythonPluginTest(PythonPluginBaseTest):
         )
 
     def test_get_manifest_with_local_requirements(self):
-        self.options.requirements = "requirements.txt"
+        self.options.requirements = ["requirements.txt"]
         plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
         requirements_path = os.path.join(plugin.sourcedir, "requirements.txt")
@@ -401,7 +401,25 @@ class PythonPluginTest(PythonPluginBaseTest):
 
         self.assertThat(
             plugin.get_manifest()["requirements-contents"],
-            Equals("testpackage1==1.0\ntestpackage2==1.2"),
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
+        )
+
+    def test_get_manifest_with_multiple_local_requirements(self):
+        self.options.requirements = ["requirements1.txt", "requirements2.txt"]
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        setup_directories(plugin, self.options.python_version)
+        requirements1_path = os.path.join(plugin.sourcedir, "requirements1.txt")
+        requirements2_path = os.path.join(plugin.sourcedir, "requirements2.txt")
+        with open(requirements1_path, "w") as requirements_file:
+            requirements_file.write("testpackage1==1.0\n")
+        with open(requirements2_path, "w") as requirements_file:
+            requirements_file.write("testpackage2==1.2")
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest()["requirements-contents"],
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
         )
 
     def test_get_manifest_with_local_constraints(self):
@@ -444,7 +462,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             [],
             constraints=None,
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=None,
         )
 
@@ -522,14 +540,14 @@ class PythonPluginWithURLTestCase(
         )
 
     def test_get_manifest_with_requirements_url(self):
-        self.options.requirements = self.source
+        self.options.requirements = [self.source]
         plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         plugin.build()
 
         self.assertThat(
-            plugin.get_manifest()["requirements-contents"], Equals("Test fake file")
+            plugin.get_manifest()["requirements-contents"], Equals(["Test fake file"])
         )
 
     def test_get_manifest_with_constraints_url(self):

@@ -237,12 +237,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             # Install the packages that have already been downloaded
             installed_pipy_packages = self._install_project()
 
-        # We record the requirements and constraints files only if they are
-        # remote. If they are local, they are already tracked with the source.
-        if self.options.requirements:
-            self._manifest["requirements-contents"] = self._get_file_contents(
-                self.options.requirements
-            )
+        requirements = list()  # type: List[str]
+        for requirements_entry in self.options.requirements:
+            contents = self._get_file_contents(requirements_entry)
+            requirements.extend(contents.splitlines())
+        if requirements:
+            self._manifest["requirements-contents"] = requirements
+
         if self.options.constraints:
             self._manifest["constraints-contents"] = self._get_file_contents(
                 self.options.constraints
@@ -297,18 +298,18 @@ class PythonPlugin(snapcraft.BasePlugin):
         return constraints
 
     def _get_requirements(self):
-        requirements = None
-        if self.options.requirements:
-            if isurl(self.options.requirements):
-                requirements = {self.options.requirements}
+        requirements = set()  # type: Set[str]
+        for requirements_entry in self.options.requirements:
+            if isurl(requirements_entry):
+                requirements.add(requirements_entry)
             else:
-                requirements_file = self._find_file(filename=self.options.requirements)
+                requirements_file = self._find_file(filename=requirements_entry)
                 if not requirements_file:
                     raise SnapcraftPluginPythonFileMissing(
                         plugin_property="requirements",
-                        plugin_property_value=self.options.requirements,
+                        plugin_property_value=requirements_entry,
                     )
-                requirements = {requirements_file}
+                requirements.add(requirements_file)
 
         return requirements
 
