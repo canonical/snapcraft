@@ -15,24 +15,72 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 from unittest import mock
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import plainbox_provider
+from snapcraft.project import Project
 from tests import fixture_setup, unit
 
 
-class PythonPluginTestCase(unit.TestCase):
+class PlainboxProviderPluginPropertiesTest(unit.TestCase):
+    def test_schema(self):
+        """Test validity of the Scons Plugin schema"""
+        schema = plainbox_provider.PlainboxProviderPlugin.schema()
+
+        # Verify the presence of all properties
+        properties = schema["properties"]
+        self.assertThat(properties, Equals({}))
+
+    def test_get_pull_properties(self):
+        expected_pull_properties = []
+        resulting_pull_properties = (
+            plainbox_provider.PlainboxProviderPlugin.get_pull_properties()
+        )
+
+        self.assertThat(
+            resulting_pull_properties, HasLength(len(expected_pull_properties))
+        )
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
+    def test_get_build_properties(self):
+        expected_build_properties = []
+        resulting_build_properties = (
+            plainbox_provider.PlainboxProviderPlugin.get_build_properties()
+        )
+
+        self.assertThat(
+            resulting_build_properties, HasLength(len(expected_build_properties))
+        )
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
+
+
+class PlainboxProviderPluginTest(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: plainbox-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch.object(plainbox_provider.PlainboxProviderPlugin, "run")
         self.mock_run = patcher.start()
@@ -40,7 +88,7 @@ class PythonPluginTestCase(unit.TestCase):
 
     def test_build(self):
         plugin = plainbox_provider.PlainboxProviderPlugin(
-            "test-part", self.options, self.project_options
+            "test-part", self.options, self.project
         )
 
         os.makedirs(plugin.sourcedir)
@@ -104,12 +152,12 @@ class PythonPluginTestCase(unit.TestCase):
         self.useFixture(fixture_setup.CleanEnvironment())
 
         plugin = plainbox_provider.PlainboxProviderPlugin(
-            "test-part", self.options, self.project_options
+            "test-part", self.options, self.project
         )
 
         os.makedirs(plugin.sourcedir)
         provider_path = os.path.join(
-            self.project_options.stage_dir, "providers", "test-provider"
+            self.project.stage_dir, "providers", "test-provider"
         )
         os.makedirs(provider_path)
 
@@ -171,7 +219,7 @@ class PythonPluginTestCase(unit.TestCase):
 
     def test_fileset_ignores(self):
         plugin = plainbox_provider.PlainboxProviderPlugin(
-            "test-part", self.options, self.project_options
+            "test-part", self.options, self.project
         )
 
         expected_fileset = [
@@ -180,3 +228,33 @@ class PythonPluginTestCase(unit.TestCase):
         ]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
+
+
+class PlainboxProviderPluginUnsupportedBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: plainbox-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            source = "dir"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            plainbox_provider.PlainboxProviderPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )

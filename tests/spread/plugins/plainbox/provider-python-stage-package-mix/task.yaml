@@ -1,13 +1,17 @@
 summary: "Ensure stage-packages can be used with plainbox LP: #1768233"
 
-systems: [ubuntu-16*, ubuntu-18*]
-
 environment:
   SNAP_DIR: ../snaps/provider-python-stage-package-mix
 
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
+  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"
