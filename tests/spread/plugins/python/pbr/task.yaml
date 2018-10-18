@@ -32,8 +32,8 @@ restore: |
   restore_yaml snap/snapcraft.yaml
 
 execute: |
-  expected_python2_entry_point="$PWD/expected_python2_entry_point"
-  expected_python3_entry_point="$PWD/expected_python3_entry_point"
+  expected_python2_entry_point="$PWD/expected_python2_entry_point.py"
+  expected_python3_entry_point="$PWD/expected_python3_entry_point.py"
 
   cd "$SNAP_DIR"
   snapcraft stage
