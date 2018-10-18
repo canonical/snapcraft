@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# PBR Generated from console_scripts
+# PBR Generated from u'console_scripts'
 
 import sys
 
