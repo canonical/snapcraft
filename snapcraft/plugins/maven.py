@@ -54,11 +54,12 @@ import logging
 import os
 import shutil
 from glob import glob
+from typing import Sequence
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import snapcraft
-from snapcraft import file_utils
+from snapcraft import file_utils, formatting_utils
 from snapcraft.internal import errors, sources
 
 
@@ -68,6 +69,25 @@ logger = logging.getLogger(__name__)
 _DEFAULT_MAVEN_VERSION = "3.5.4"
 _DEFAULT_MAVEN_CHECKSUM = "sha512/2a803f578f341e164f6753e410413d16ab60fabe31dc491d1fe35c984a5cce696bc71f57757d4538fe7738be04065a216f3ebad4ef7e0ce1bb4c51bc36d6be86"
 _MAVEN_URL = "https://archive.apache.org/dist/maven/maven-3/{version}/binaries/apache-maven-{version}-bin.tar.gz"
+
+
+class UnsupportedJDKVersionError(errors.SnapcraftError):
+
+    fmt = (
+        "The maven-openjdk-version plugin property was set to {version!r}.\n"
+        "Valid values for the {base!r} base are: {valid_versions}."
+    )
+
+    def __init__(
+        self, *, base: str, version: str, valid_versions: Sequence[str]
+    ) -> None:
+        super().__init__(
+            base=base,
+            version=version,
+            valid_versions=formatting_utils.humanize_list(
+                valid_versions, conjunction="or"
+            ),
+        )
 
 
 class MavenPlugin(snapcraft.BasePlugin):
@@ -131,21 +151,27 @@ class MavenPlugin(snapcraft.BasePlugin):
         self._setup_base_tools(project.info.base)
 
     def _setup_base_tools(self, base):
-        version = self.options.maven_openjdk_version
-        if base == "core16":
-            if not version:
-                version = "8"
-            self.stage_packages.append("openjdk-{}-jre-headless".format(version))
-            self.build_packages.append("openjdk-{}-jdk-headless".format(version))
-        elif base == "core18":
-            if not version:
-                version = "11"
-            self.stage_packages.append("openjdk-{}-jre-headless".format(version))
-            self.build_packages.append("openjdk-{}-jdk-headless".format(version))
-        else:
+        if base not in ("core16", "core18"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.base
             )
+
+        if base == "core16":
+            valid_versions = ["8", "9"]
+        elif base == "core18":
+            valid_versions = ["8", "11"]
+
+        version = self.options.maven_openjdk_version
+        if version and version not in valid_versions:
+            raise UnsupportedJDKVersionError(
+                version=version, base=base, valid_versions=valid_versions
+            )
+        else:
+            # Get the latest version from the slice
+            version = valid_versions[-1]
+
+        self.stage_packages.append("openjdk-{}-jre-headless".format(version))
+        self.build_packages.append("openjdk-{}-jdk-headless".format(version))
 
     def _setup_maven(self):
         self._maven_tar_handle = None

@@ -215,6 +215,14 @@ class MavenPluginTest(unit.TestCase):
             Equals(self._canonicalize_settings(expected)),
         )
 
+    def test_get_defaul_openjdk(self):
+        self.options.maven_openjdk_version = ""
+
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
+        self.assertThat(plugin.build_packages, Equals(["openjdk-11-jdk-headless"]))
+
     def test_build(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:
@@ -588,3 +596,66 @@ class MavenPluginUnsupportedBase(unit.TestCase):
             self.options,
             self.project,
         )
+
+
+class UnsupportedJDKVersionErrorTest(unit.TestCase):
+
+    scenarios = (
+        (
+            "core16",
+            dict(
+                base="core16",
+                version="11",
+                expected_message=(
+                    "The maven-openjdk-version plugin property was set to '11'.\n"
+                    "Valid values for the 'core16' base are: '8' or '9'."
+                ),
+            ),
+        ),
+        (
+            "core18",
+            dict(
+                base="core18",
+                version="9",
+                expected_message=(
+                    "The maven-openjdk-version plugin property was set to '9'.\n"
+                    "Valid values for the 'core18' base are: '11' or '8'."
+                ),
+            ),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: maven-snap
+            base: {base}
+        """.format(
+                    base=self.base
+                )
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            maven_options = []
+            maven_targets = [""]
+            maven_version = maven._DEFAULT_MAVEN_VERSION
+            maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
+            maven_openjdk_version = self.version
+
+        self.options = Options()
+
+    def test_use_invalid_openjdk_version_fails(self):
+        raised = self.assertRaises(
+            maven.UnsupportedJDKVersionError,
+            maven.MavenPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
+        self.assertThat(str(raised), Equals(self.expected_message))
