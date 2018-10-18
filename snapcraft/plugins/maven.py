@@ -41,7 +41,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - maven-version-checksum:
       (string)
-      The checkum for maven-version in the form of <digest-type>/<digest>.
+      The checksum for maven-version in the form of <digest-type>/<digest>.
       As an example "sha512/2a803f578f341e164f6753e410413d16ab60fab...".
 
     - maven-openjdk-version:
