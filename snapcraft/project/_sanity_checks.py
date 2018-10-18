@@ -20,8 +20,7 @@ import sys
 import re
 import shutil
 
-import snapcraft
-from snapcraft.project import Project, errors
+from . import Project, errors
 
 logger = logging.getLogger(__name__)
 
