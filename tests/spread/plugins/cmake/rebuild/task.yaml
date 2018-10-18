@@ -1,4 +1,4 @@
-summary: Build and run a basic cmake snap
+summary: Build and rebuild a cmake snap
 
 environment:
   SNAP_DIR: ../snaps/cmake-with-lib
@@ -7,13 +7,19 @@ prepare: |
   . "$TOOLS_DIR/config.sh"
   set_outdated_step_action "clean"
 
-restore: |
-  . "$TOOLS_DIR/config.sh"
-  clear_config
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+
+  . "$TOOLS_DIR/config.sh"
+  clear_config
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "$SNAP_DIR"

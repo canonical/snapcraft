@@ -50,6 +50,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import os
 import snapcraft
 import snapcraft.common
+from snapcraft.internal import errors
 
 
 class MakePlugin(snapcraft.BasePlugin):
@@ -87,6 +88,10 @@ class MakePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
         self.build_packages.append("make")
 
     def make(self, env=None):

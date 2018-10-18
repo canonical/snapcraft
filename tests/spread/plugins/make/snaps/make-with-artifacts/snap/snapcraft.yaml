@@ -1,13 +1,18 @@
 name: make-with-artifacts
-version: "0.1"
+version: "1.0"
 summary: test make with artifacts
 description: test make artifacts are correctly collected
+
+grade: devel
 confinement: strict
 
-build-packages: [gcc, libc6-dev]
+apps:
+  make-with-artifacts:
+    command: hello
 
 parts:
   make-project:
     plugin: make
     source: .
-    artifacts: [test]
+    artifacts: [hello]
+    build-packages: [gcc, libc6-dev]
