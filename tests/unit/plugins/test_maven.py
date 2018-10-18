@@ -223,6 +223,14 @@ class MavenPluginTest(unit.TestCase):
         self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
         self.assertThat(plugin.build_packages, Equals(["openjdk-11-jdk-headless"]))
 
+    def test_get_non_defaul_openjdk(self):
+        self.options.maven_openjdk_version = "8"
+
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.stage_packages, Equals(["openjdk-8-jre-headless"]))
+        self.assertThat(plugin.build_packages, Equals(["openjdk-8-jdk-headless"]))
+
     def test_build(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:

@@ -166,7 +166,7 @@ class MavenPlugin(snapcraft.BasePlugin):
             raise UnsupportedJDKVersionError(
                 version=version, base=base, valid_versions=valid_versions
             )
-        else:
+        elif not version:
             # Get the latest version from the slice
             version = valid_versions[-1]
 
