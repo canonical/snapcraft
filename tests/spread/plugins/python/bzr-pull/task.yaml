@@ -10,7 +10,7 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # TODO fix bzr installation LP: #1798580
-  apt-get install bzr
+  apt-get install bzr -y
   apt-mark auto bzr
 
 restore: |
