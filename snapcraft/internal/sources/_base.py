@@ -135,7 +135,6 @@ class FileBase(Base):
                 # We make this copy as the provisioning logic can delete
                 # this file and we don't want that.
                 shutil.copy2(cache_file, self.file)
-                print(self.file)
                 return self.file
 
         # If not we download and store
