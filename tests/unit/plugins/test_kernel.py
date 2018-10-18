@@ -18,15 +18,17 @@ import contextlib
 import logging
 import os
 import subprocess
-from unittest import mock
+import textwrap
 
 import fixtures
 from testtools.matchers import Contains, Equals, FileContains, HasLength
+from unittest import mock
 
 from textwrap import dedent
 
 import snapcraft
 from snapcraft import storeapi
+from snapcraft.internal import errors
 from snapcraft.plugins import kernel
 from tests import unit
 
@@ -50,7 +52,16 @@ class KernelPluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
         patcher = mock.patch("subprocess.check_call")
         self.check_call_mock = patcher.start()
@@ -194,7 +205,7 @@ class KernelPluginTestCase(unit.TestCase):
 
         def create_assets():
             build_arch_path = os.path.join(
-                builddir, "arch", self.project_options.kernel_arch, "boot"
+                builddir, "arch", self.project.kernel_arch, "boot"
             )
 
             initrd_path = os.path.join(
@@ -244,7 +255,7 @@ class KernelPluginTestCase(unit.TestCase):
 
         self.check_call_mock.side_effect = check_call_effect
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls(
@@ -259,7 +270,7 @@ class KernelPluginTestCase(unit.TestCase):
         )
 
     def test_unpack_lzma_initrd(self):
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         plugin._unpack_generic_initrd()
 
@@ -280,14 +291,14 @@ class KernelPluginTestCase(unit.TestCase):
                 raise subprocess.CalledProcessError(1, args)
 
         self.check_call_mock.side_effect = check_call_effect
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self.assertRaises(RuntimeError, plugin._unpack_generic_initrd)
 
     def test_pack_initrd_modules(self):
         self.options.kernel_initrd_modules = ["squashfs", "vfat"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         # Fake some assets
         plugin.kernel_release = "4.4"
@@ -322,7 +333,7 @@ class KernelPluginTestCase(unit.TestCase):
     def test_pack_initrd_modules_return_same_deps(self):
         self.options.kernel_initrd_modules = ["squashfs", "vfat"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         # Fake some assets
         plugin.kernel_release = "4.4"
@@ -365,7 +376,7 @@ class KernelPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -413,7 +424,7 @@ class KernelPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -484,7 +495,7 @@ class KernelPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -510,7 +521,7 @@ class KernelPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -528,7 +539,7 @@ class KernelPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -580,7 +591,7 @@ ACCEPT=n
         self.options.kdefconfig = ["defconfig"]
         self.options.kconfigs = ["SOMETHING=y", "ACCEPT=n"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         config_file = os.path.join(plugin.builddir, ".config")
 
@@ -641,7 +652,7 @@ ACCEPT=n
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ["defconfig", "defconfig2"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         config_file = os.path.join(plugin.builddir, ".config")
 
@@ -692,7 +703,7 @@ ACCEPT=n
             f.write("ACCEPT=y\n")
         self.options.kernel_device_trees = ["fake-dtb"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True
@@ -742,7 +753,7 @@ ACCEPT=n
             f.write("ACCEPT=y\n")
         self.options.kernel_device_trees = ["fake-dtb"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -759,7 +770,7 @@ ACCEPT=n
             f.write("ACCEPT=y\n")
         self.options.kernel_initrd_modules = ["my-fake-module"]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -863,7 +874,7 @@ ACCEPT=n
             "lib/firmware/fake-fw.bin",
         ]
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
@@ -922,7 +933,7 @@ ACCEPT=n
             f.write("ACCEPT=y\n")
         self.options.kernel_with_firmware = False
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(
             plugin.sourcedir,
@@ -959,12 +970,12 @@ ACCEPT=n
 
     @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_with_kconfigflavour(self):
-        arch = self.project_options.deb_arch
+        arch = self.project.deb_arch
         branch = "master"
         flavour = "vanilla"
         self.options.kconfigflavour = flavour
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
         self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
 
         debiandir = os.path.join(plugin.sourcedir, "debian")
@@ -1042,7 +1053,7 @@ ACCEPT=n
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_kernel=False
@@ -1058,7 +1069,7 @@ ACCEPT=n
                     os.path.join(
                         plugin.builddir,
                         "arch",
-                        self.project_options.kernel_arch,
+                        self.project.kernel_arch,
                         "boot",
                         "bzImage",
                     )
@@ -1072,7 +1083,7 @@ ACCEPT=n
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_release=False
@@ -1094,7 +1105,7 @@ ACCEPT=n
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self._simulate_build(
             plugin.sourcedir, plugin.builddir, plugin.installdir, do_system_map=False
@@ -1108,8 +1119,18 @@ ACCEPT=n
         )
 
     def test_enable_cross_compilation(self):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
         plugin.enable_cross_compilation()
 
         self.assertThat(
@@ -1128,8 +1149,18 @@ ACCEPT=n
         )
 
     def test_override_cross_compile(self):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
         self.useFixture(
             fixtures.EnvironmentVariable("CROSS_COMPILE", "foo-bar-toolchain-")
         )
@@ -1151,8 +1182,18 @@ ACCEPT=n
         )
 
     def test_override_cross_compile_empty(self):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
         self.useFixture(fixtures.EnvironmentVariable("CROSS_COMPILE", ""))
         plugin.enable_cross_compilation()
 
@@ -1173,15 +1214,35 @@ ACCEPT=n
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {"arm64": "Image"}
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = "Image"
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
 
@@ -1197,19 +1258,52 @@ ACCEPT=n
             kernel_device_trees = []
             kernel_initrd_compression = "gz"
 
-        project_options = snapcraft.ProjectOptions(target_deb_arch="arm64")
-        plugin = kernel.KernelPlugin("test-part", self.options, project_options)
+        project = snapcraft.project.Project(
+            target_deb_arch="arm64",
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+        plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["bzImage", "modules", "dtbs"]))
 
     @mock.patch.object(storeapi.StoreClient, "download")
     def test_pull(self, download_mock):
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project_options)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
         plugin.pull()
 
         download_mock.assert_called_once_with(
-            "core", "stable", plugin.os_snap, self.project_options.deb_arch, ""
+            "core", "stable", plugin.os_snap, self.project.deb_arch, ""
         )
+
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError,
+            kernel.KernelPlugin,
+            "test-part",
+            self.options,
+            project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))
 
 
 class KernelPluginDefaulTargetsTestCase(unit.TestCase):
@@ -1239,7 +1333,17 @@ class KernelPluginDefaulTargetsTestCase(unit.TestCase):
         self.options = Options()
 
     def test_default(self):
-        project = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
+        project = snapcraft.project.Project(
+            target_deb_arch=self.deb_arch,
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
         plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.kernel_image_target, Equals(self.expected))
