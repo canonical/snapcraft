@@ -244,10 +244,13 @@ class PythonPlugin(snapcraft.BasePlugin):
         if requirements:
             self._manifest["requirements-contents"] = requirements
 
-        if self.options.constraints:
-            self._manifest["constraints-contents"] = self._get_file_contents(
-                self.options.constraints
-            )
+        constraints = list()  # type: List[str]
+        for constraints_entry in self.options.constraints:
+            contents = self._get_file_contents(constraints_entry)
+            constraints.extend(contents.splitlines())
+        if constraints:
+            self._manifest["constraints-contents"] = constraints
+
         self._manifest["python-packages"] = [
             "{}={}".format(name, installed_pipy_packages[name])
             for name in installed_pipy_packages
@@ -283,18 +286,19 @@ class PythonPlugin(snapcraft.BasePlugin):
         return setup_py_dir
 
     def _get_constraints(self):
-        constraints = None
-        if self.options.constraints:
-            if isurl(self.options.constraints):
-                constraints = {self.options.constraints}
+        constraints = set()  # type: Set[str]
+        for constraints_entry in self.options.constraints:
+            if isurl(constraints_entry):
+                constraints.add(constraints_entry)
             else:
-                constraints_file = self._find_file(filename=self.options.constraints)
+                constraints_file = self._find_file(filename=constraints_entry)
                 if not constraints_file:
                     raise SnapcraftPluginPythonFileMissing(
                         plugin_property="constraints",
-                        plugin_property_value=self.options.constraints,
+                        plugin_property_value=constraints_entry,
                     )
-                constraints = {constraints_file}
+                constraints.add(constraints_file)
+
         return constraints
 
     def _get_requirements(self):
