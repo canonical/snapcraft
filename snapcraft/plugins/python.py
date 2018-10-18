@@ -58,6 +58,7 @@ import os
 import re
 from shutil import which
 from textwrap import dedent
+from typing import List, Set
 
 import requests
 
@@ -237,17 +238,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             # Install the packages that have already been downloaded
             installed_pipy_packages = self._install_project()
 
-        requirements = list()  # type: List[str]
-        for requirements_entry in self.options.requirements:
-            contents = self._get_file_contents(requirements_entry)
-            requirements.extend(contents.splitlines())
+        requirements = self._get_list_of_packages_from_property(
+            self.options.requirements
+        )
         if requirements:
             self._manifest["requirements-contents"] = requirements
 
-        constraints = list()  # type: List[str]
-        for constraints_entry in self.options.constraints:
-            contents = self._get_file_contents(constraints_entry)
-            constraints.extend(contents.splitlines())
+        constraints = self._get_list_of_packages_from_property(self.options.constraints)
         if constraints:
             self._manifest["constraints-contents"] = constraints
 
@@ -285,37 +282,31 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         return setup_py_dir
 
-    def _get_constraints(self):
-        constraints = set()  # type: Set[str]
-        for constraints_entry in self.options.constraints:
-            if isurl(constraints_entry):
-                constraints.add(constraints_entry)
+    def _get_list_of_packages_from_property(self, property_list: Set[str]) -> List[str]:
+        """Return a sorted list of all packages found in property."""
+        package_list = list()  # type: List[str]
+        for entry in property_list:
+            contents = self._get_file_contents(entry)
+            package_list.extend(contents.splitlines())
+        return package_list
+
+    def _get_normalized_property_set(
+        self, property_name, property_list: List[str]
+    ) -> Set[str]:
+        """Return a normalized set from a requirements or constraints list."""
+        normalized = set()  # type: Set[str]
+        for entry in property_list:
+            if isurl(entry):
+                normalized.add(entry)
             else:
-                constraints_file = self._find_file(filename=constraints_entry)
-                if not constraints_file:
+                entry_file = self._find_file(filename=entry)
+                if not entry_file:
                     raise SnapcraftPluginPythonFileMissing(
-                        plugin_property="constraints",
-                        plugin_property_value=constraints_entry,
+                        plugin_property=property_name, plugin_property_value=entry
                     )
-                constraints.add(constraints_file)
+                normalized.add(entry_file)
 
-        return constraints
-
-    def _get_requirements(self):
-        requirements = set()  # type: Set[str]
-        for requirements_entry in self.options.requirements:
-            if isurl(requirements_entry):
-                requirements.add(requirements_entry)
-            else:
-                requirements_file = self._find_file(filename=requirements_entry)
-                if not requirements_file:
-                    raise SnapcraftPluginPythonFileMissing(
-                        plugin_property="requirements",
-                        plugin_property_value=requirements_entry,
-                    )
-                requirements.add(requirements_file)
-
-        return requirements
+        return normalized
 
     def _install_wheels(self, wheels):
         installed = self._pip.list()
@@ -333,8 +324,12 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _download_project(self):
         setup_py_dir = self._get_setup_py_dir()
-        constraints = self._get_constraints()
-        requirements = self._get_requirements()
+        constraints = self._get_normalized_property_set(
+            "constraints", self.options.constraints
+        )
+        requirements = self._get_normalized_property_set(
+            "requirements", self.options.requirements
+        )
 
         self._pip.download(
             self.options.python_packages,
@@ -346,8 +341,12 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _install_project(self):
         setup_py_dir = self._get_setup_py_dir()
-        constraints = self._get_constraints()
-        requirements = self._get_requirements()
+        constraints = self._get_normalized_property_set(
+            "constraints", self.options.constraints
+        )
+        requirements = self._get_normalized_property_set(
+            "requirements", self.options.requirements
+        )
 
         wheels = self._pip.wheel(
             self.options.python_packages,
