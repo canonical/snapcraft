@@ -1,6 +1,6 @@
 summary: |
-  "Ensure that the installation directory is sane when building a python part.
-   Verifies LP: #1586546"
+  Ensure yamllint, a python package from PyPI is satisfied by yaml installed
+  using stage-packages.
 
 environment:
   SNAP_DIR: ../snaps/python-with-stage-packages
@@ -26,5 +26,5 @@ execute: |
 
   python3="$(ls parts/python3/install/lib | grep python3)"
   [ -d "parts/python3/install/lib/$python3/site-packages/yamllint" ]
-  [ -d "parts/python3/install/usr/lib/$python3/dist-packages/yaml" ]
+  [ -d "parts/python3/install/usr/lib/python3/dist-packages/yaml" ]
   [ ! -d "parts/python3/install/lib/$python3/site-packages/yaml" ]
