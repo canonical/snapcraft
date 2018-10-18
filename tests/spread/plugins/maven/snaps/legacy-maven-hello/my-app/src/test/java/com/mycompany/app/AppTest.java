@@ -1,4 +1,4 @@
-package com.canonical.testapp;
+package com.mycompany.app;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -29,10 +29,10 @@ public class AppTest
     }
 
     /**
-     * Rigorous Test :-)
+     * Rigourous Test :-)
      */
     public void testApp()
     {
-        assertTrue( false );
+        assertTrue( true );
     }
 }

@@ -124,21 +124,21 @@ class FileBase(Base):
         self.provision(self.source_dir, src=source_file, clean_target=False)
 
     def download(self):
+        self.file = os.path.join(self.source_dir, os.path.basename(self.source))
+
         # First check if we already have the source file cached.
         file_cache = FileCache()
         if self.source_checksum:
             algorithm, hash = split_checksum(self.source_checksum)
             cache_file = file_cache.get(algorithm=algorithm, hash=hash)
             if cache_file:
-                self.file = os.path.join(self.source_dir, os.path.basename(cache_file))
                 # We make this copy as the provisioning logic can delete
                 # this file and we don't want that.
                 shutil.copy2(cache_file, self.file)
+                print(self.file)
                 return self.file
 
         # If not we download and store
-        self.file = os.path.join(self.source_dir, os.path.basename(self.source))
-
         if snapcraft.internal.common.get_url_scheme(self.source) == "ftp":
             download_urllib_source(self.source, self.file)
         else:

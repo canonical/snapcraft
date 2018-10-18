@@ -16,64 +16,21 @@
 
 import io
 import os
+import tarfile
+from textwrap import dedent
 from unittest import mock
 from xml.etree import ElementTree
 
 import fixtures
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals, FileExists, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import maven
+from snapcraft.project import Project
 from tests import unit
 
 
-class MavenPluginTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        class Options:
-            maven_options = []
-            maven_targets = [""]
-
-        self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
-
-    @staticmethod
-    def _canonicalize_settings(settings):
-        with io.StringIO(settings) as f:
-            tree = ElementTree.parse(f)
-        for element in tree.iter():
-            if element.text is not None and element.text.isspace():
-                element.text = None
-            if element.tail is not None and element.tail.isspace():
-                element.tail = None
-        with io.StringIO() as f:
-            tree.write(
-                f,
-                encoding="unicode",
-                default_namespace="http://maven.apache.org/SETTINGS/1.0.0",
-            )
-            return f.getvalue() + "\n"
-
-    def test_get_build_properties(self):
-        expected_build_properties = ["maven-options", "maven-targets"]
-        resulting_build_properties = maven.MavenPlugin.get_build_properties()
-
-        self.assertThat(
-            resulting_build_properties, HasLength(len(expected_build_properties))
-        )
-
-        for property in expected_build_properties:
-            self.assertIn(property, resulting_build_properties)
-
-    def assertSettingsEqual(self, expected, observed):
-        print(repr(self._canonicalize_settings(expected)))
-        print(repr(self._canonicalize_settings(observed)))
-        self.assertThat(
-            self._canonicalize_settings(observed),
-            Equals(self._canonicalize_settings(expected)),
-        )
-
+class MavenPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = maven.MavenPlugin.schema()
 
@@ -147,69 +104,186 @@ class MavenPluginTestCase(unit.TestCase):
             'Expected "maven-targets" "uniqueItems" to be "True"',
         )
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build(self, run_mock):
+    def test_get_pull_properties(self):
+        expected_pull_properties = [
+            "maven-version",
+            "maven-version-checksum",
+            "maven-openjdk-version",
+        ]
+        resulting_pull_properties = maven.MavenPlugin.get_pull_properties()
+
+        self.assertThat(
+            resulting_pull_properties, HasLength(len(expected_pull_properties))
+        )
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
+    def test_get_build_properties(self):
+        expected_build_properties = ["maven-options", "maven-targets"]
+        resulting_build_properties = maven.MavenPlugin.get_build_properties()
+
+        self.assertThat(
+            resulting_build_properties, HasLength(len(expected_build_properties))
+        )
+
+        for property in expected_build_properties:
+            self.assertIn(property, resulting_build_properties)
+
+
+class MavenPluginTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: maven-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            maven_options = []
+            maven_targets = [""]
+            maven_version = maven._DEFAULT_MAVEN_VERSION
+            maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
+            maven_openjdk_version = "11"
+
+        self.options = Options()
+
+        patcher = mock.patch("snapcraft.internal.common.run")
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("snapcraft.sources.Tar")
+        self.tar_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def create_assets(self, plugin):
+        os.makedirs(plugin.sourcedir)
+
+        fake_java_path = os.path.join(
+            plugin.installdir,
+            "usr",
+            "lib",
+            "jvm",
+            "java-11-openjdk-amd64",
+            "jre",
+            "bin",
+            "java",
+        )
+        os.makedirs(os.path.dirname(fake_java_path))
+        open(fake_java_path, "w").close()
+
+        maven_tar_path = os.path.join(
+            plugin.partdir,
+            "maven",
+            "apache-maven-{}-bin.tar.gz".format(plugin.options.maven_version),
+        )
+        os.makedirs(os.path.dirname(maven_tar_path))
+        tarfile.TarFile(maven_tar_path, "w").close()
+
+    @staticmethod
+    def _canonicalize_settings(settings):
+        with io.StringIO(settings) as f:
+            tree = ElementTree.parse(f)
+        for element in tree.iter():
+            if element.text is not None and element.text.isspace():
+                element.text = None
+            if element.tail is not None and element.tail.isspace():
+                element.tail = None
+        with io.StringIO() as f:
+            tree.write(
+                f,
+                encoding="unicode",
+                default_namespace="http://maven.apache.org/SETTINGS/1.0.0",
+            )
+            return f.getvalue() + "\n"
+
+    def assertSettingsEqual(self, expected, actual_file):
+        with open(actual_file) as fr:
+            observed = fr.read()
+
+        print(repr(self._canonicalize_settings(expected)))
+        print(repr(self._canonicalize_settings(observed)))
+        self.assertThat(
+            self._canonicalize_settings(observed),
+            Equals(self._canonicalize_settings(expected)),
+        )
+
+    def test_build(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
-            open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
+            open(os.path.join(plugin.builddir, "target", "jar.jar"), "w").close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package"])])
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_fail(self, run_mock):
+    def test_build_fail(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        os.makedirs(plugin.sourcedir)
+        self.create_assets(plugin)
 
         self.assertRaises(RuntimeError, plugin.build)
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package"])])
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_war(self, run_mock):
+    def test_build_war(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
-            open(os.path.join(plugin.builddir, "target", "dummy.war"), "w").close()
+            open(os.path.join(plugin.builddir, "target", "war.war"), "w").close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package"])])
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_targets(self, run_mock):
+    def test_build_with_targets(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
         opts = self.options
         opts.maven_targets = ["child1", "child2"]
-        plugin = maven.MavenPlugin("test-part", opts, self.project_options)
+        plugin = maven.MavenPlugin("test-part", opts, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "child1", "target"))
             os.makedirs(os.path.join(plugin.builddir, "child2", "target"))
             open(
@@ -219,15 +293,15 @@ class MavenPluginTestCase(unit.TestCase):
                 os.path.join(plugin.builddir, "child2", "target", "child2.jar"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package"])])
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_http_proxy(self, run_mock):
+    def test_build_with_http_proxy(self):
         env_vars = (
             ("http_proxy", "http://localhost:3132"),
             ("https_proxy", None),
@@ -236,50 +310,45 @@ class MavenPluginTestCase(unit.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
-        run_mock.side_effect = side
-        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package", "-s", settings_path])])
-
-        self.assertTrue(
-            os.path.exists(settings_path),
-            "expected {!r} to exist".format(settings_path),
+        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package", "-s", settings_path], cwd=plugin.builddir, env=mock.ANY
         )
-
-        with open(settings_path) as f:
-            settings_contents = f.read()
-
-        expected_contents = (
-            '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
-            '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
-            '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
-            '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
-            "  <interactiveMode>false</interactiveMode>\n"
-            "  <proxies>\n"
-            "    <proxy>\n"
-            "      <id>http_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>http</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3132</port>\n"
-            "      <nonProxyHosts>localhost</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "  </proxies>\n"
-            "</settings>\n"
+        self.assertThat(settings_path, FileExists())
+        expected_content = dedent(
+            """\
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <interactiveMode>false</interactiveMode>
+              <proxies>
+                <proxy>
+                  <id>http_proxy</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>localhost</host>
+                  <port>3132</port>
+                  <nonProxyHosts>localhost</nonProxyHosts>
+                </proxy>
+              </proxies>
+            </settings>
+        """
         )
-        self.assertSettingsEqual(expected_contents, settings_contents)
+        self.assertSettingsEqual(expected_content, settings_path)
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_http_proxy_and_no_proxy(self, run_mock):
+    def test_build_with_http_proxy_and_no_proxy(self):
         env_vars = (
             ("http_proxy", "http://localhost:3132"),
             ("https_proxy", None),
@@ -288,50 +357,45 @@ class MavenPluginTestCase(unit.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
-        run_mock.side_effect = side
-        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package", "-s", settings_path])])
-
-        self.assertTrue(
-            os.path.exists(settings_path),
-            "expected {!r} to exist".format(settings_path),
+        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package", "-s", settings_path], cwd=plugin.builddir, env=mock.ANY
         )
-
-        with open(settings_path) as f:
-            settings_contents = f.read()
-
-        expected_contents = (
-            '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
-            '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
-            '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
-            '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
-            "  <interactiveMode>false</interactiveMode>\n"
-            "  <proxies>\n"
-            "    <proxy>\n"
-            "      <id>http_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>http</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3132</port>\n"
-            "      <nonProxyHosts>internal</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "  </proxies>\n"
-            "</settings>\n"
+        self.assertThat(settings_path, FileExists())
+        expected_content = dedent(
+            """\
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <interactiveMode>false</interactiveMode>
+              <proxies>
+                <proxy>
+                  <id>http_proxy</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>localhost</host>
+                  <port>3132</port>
+                  <nonProxyHosts>internal</nonProxyHosts>
+                </proxy>
+              </proxies>
+            </settings>
+        """
         )
-        self.assertSettingsEqual(expected_contents, settings_contents)
+        self.assertSettingsEqual(expected_content, settings_path)
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_http_proxy_and_no_proxies(self, run_mock):
+    def test_build_with_http_proxy_and_no_proxies(self):
         env_vars = (
             ("http_proxy", "http://localhost:3132"),
             ("https_proxy", None),
@@ -340,50 +404,45 @@ class MavenPluginTestCase(unit.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
-        run_mock.side_effect = side
-        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package", "-s", settings_path])])
-
-        self.assertTrue(
-            os.path.exists(settings_path),
-            "expected {!r} to exist".format(settings_path),
+        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package", "-s", settings_path], cwd=plugin.builddir, env=mock.ANY
         )
-
-        with open(settings_path) as f:
-            settings_contents = f.read()
-
-        expected_contents = (
-            '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
-            '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
-            '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
-            '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
-            "  <interactiveMode>false</interactiveMode>\n"
-            "  <proxies>\n"
-            "    <proxy>\n"
-            "      <id>http_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>http</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3132</port>\n"
-            "      <nonProxyHosts>internal|pseudo-dmz</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "  </proxies>\n"
-            "</settings>\n"
+        self.assertThat(settings_path, FileExists())
+        expected_content = dedent(
+            """\
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <interactiveMode>false</interactiveMode>
+              <proxies>
+                <proxy>
+                  <id>http_proxy</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>localhost</host>
+                  <port>3132</port>
+                  <nonProxyHosts>internal|pseudo-dmz</nonProxyHosts>
+                </proxy>
+              </proxies>
+            </settings>
+            """
         )
-        self.assertSettingsEqual(expected_contents, settings_contents)
+        self.assertSettingsEqual(expected_content, settings_path)
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_http_and_https_proxy(self, run_mock):
+    def test_build_with_http_and_https_proxy(self):
         env_vars = (
             ("http_proxy", "http://localhost:3132"),
             ("https_proxy", "http://localhost:3133"),
@@ -392,58 +451,53 @@ class MavenPluginTestCase(unit.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
-        run_mock.side_effect = side
-        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package", "-s", settings_path])])
-
-        self.assertTrue(
-            os.path.exists(settings_path),
-            "expected {!r} to exist".format(settings_path),
+        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package", "-s", settings_path], cwd=plugin.builddir, env=mock.ANY
         )
-
-        with open(settings_path) as f:
-            settings_contents = f.read()
-
-        expected_contents = (
-            '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
-            '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
-            '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
-            '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
-            "  <interactiveMode>false</interactiveMode>\n"
-            "  <proxies>\n"
-            "    <proxy>\n"
-            "      <id>http_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>http</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3132</port>\n"
-            "      <nonProxyHosts>localhost</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "    <proxy>\n"
-            "      <id>https_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>https</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3133</port>\n"
-            "      <nonProxyHosts>localhost</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "  </proxies>\n"
-            "</settings>\n"
+        self.assertThat(settings_path, FileExists())
+        expected_content = dedent(
+            """\
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <interactiveMode>false</interactiveMode>
+              <proxies>
+                <proxy>
+                  <id>http_proxy</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>localhost</host>
+                  <port>3132</port>
+                  <nonProxyHosts>localhost</nonProxyHosts>
+                </proxy>
+                <proxy>
+                  <id>https_proxy</id>
+                  <active>true</active>
+                  <protocol>https</protocol>
+                  <host>localhost</host>
+                  <port>3133</port>
+                  <nonProxyHosts>localhost</nonProxyHosts>
+                </proxy>
+              </proxies>
+            </settings>
+            """
         )
-        self.assertSettingsEqual(expected_contents, settings_contents)
+        self.assertSettingsEqual(expected_content, settings_path)
 
-    @mock.patch.object(maven.MavenPlugin, "run")
-    def test_build_with_authenticated_proxies(self, run_mock):
+    def test_build_with_authenticated_proxies(self):
         env_vars = (
             ("http_proxy", "http://user1:pass1@localhost:3132"),
             ("https_proxy", "http://user2:pass2@localhost:3133"),
@@ -452,56 +506,85 @@ class MavenPluginTestCase(unit.TestCase):
         for v in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
 
-        plugin = maven.MavenPlugin("test-part", self.options, self.project_options)
+        plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "target"))
             open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
-        run_mock.side_effect = side
-        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["mvn", "package", "-s", settings_path])])
+        settings_path = os.path.join(plugin.partdir, "m2", "settings.xml")
+        self.run_mock.assert_called_once_with(
+            ["mvn", "package", "-s", settings_path], cwd=plugin.builddir, env=mock.ANY
+        )
+        self.assertThat(settings_path, FileExists())
+        expected_content = dedent(
+            """\
+            <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+              <interactiveMode>false</interactiveMode>
+              <proxies>
+                <proxy>
+                  <id>http_proxy</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>localhost</host>
+                  <port>3132</port>
+                  <username>user1</username>
+                  <password>pass1</password>
+                  <nonProxyHosts>localhost</nonProxyHosts>
+                </proxy>
+                <proxy>
+                  <id>https_proxy</id>
+                  <active>true</active>
+                  <protocol>https</protocol>
+                  <host>localhost</host>
+                  <port>3133</port>
+                  <username>user2</username>
+                  <password>pass2</password>
+                  <nonProxyHosts>localhost</nonProxyHosts>
+                </proxy>
+              </proxies>
+            </settings>
+            """
+        )
+        self.assertSettingsEqual(expected_content, settings_path)
 
-        self.assertTrue(
-            os.path.exists(settings_path),
-            "expected {!r} to exist".format(settings_path),
+
+class MavenPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: maven-snap
+            base: unsupported-base
+        """
+            )
         )
 
-        with open(settings_path) as f:
-            settings_contents = f.read()
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
-        expected_contents = (
-            '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"\n'
-            '          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
-            '          xsi:schemaLocation="http://maven.apache.org/SETTINGS/'
-            '1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">\n'
-            "  <interactiveMode>false</interactiveMode>\n"
-            "  <proxies>\n"
-            "    <proxy>\n"
-            "      <id>http_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>http</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3132</port>\n"
-            "      <username>user1</username>\n"
-            "      <password>pass1</password>\n"
-            "      <nonProxyHosts>localhost</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "    <proxy>\n"
-            "      <id>https_proxy</id>\n"
-            "      <active>true</active>\n"
-            "      <protocol>https</protocol>\n"
-            "      <host>localhost</host>\n"
-            "      <port>3133</port>\n"
-            "      <username>user2</username>\n"
-            "      <password>pass2</password>\n"
-            "      <nonProxyHosts>localhost</nonProxyHosts>\n"
-            "    </proxy>\n"
-            "  </proxies>\n"
-            "</settings>\n"
+        class Options:
+            source = "dir"
+            maven_version = "3.3"
+            maven_version_checksum = "sha1/1234567890"
+            maven_openjdk_version = "10"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            maven.MavenPlugin,
+            "test-part",
+            self.options,
+            self.project,
         )
-        self.assertSettingsEqual(expected_contents, settings_contents)
