@@ -190,6 +190,10 @@ suites:
    summary: tests of snapcraft core functionality
 
  # Plugin-specific suites
+ tests/spread/plugins/ant/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Ant plugin
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    kill-timeout: 360m
