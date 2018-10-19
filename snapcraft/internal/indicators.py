@@ -66,8 +66,9 @@ def download_requests_stream(request_stream, destination, message=None, total_re
     with open(destination, mode) as destination_file:
         for buf in request_stream.iter_content(1024):
             destination_file.write(buf)
-            total_read += len(buf)
-            progress_bar.update(total_read)
+            if not is_dumb_terminal():
+                total_read += len(buf)
+                progress_bar.update(total_read)
     progress_bar.finish()
 
 
