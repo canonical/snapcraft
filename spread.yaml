@@ -222,10 +222,16 @@ suites:
    systems: [ubuntu-18.04*]
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/make/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Make plugin
+ tests/spread/plugins/maven/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Maven plugin
  tests/spread/plugins/meson/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
@@ -241,7 +247,13 @@ suites:
    systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Plainbox plugin
  tests/spread/plugins/python/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Python plugin
+ tests/spread/plugins/qmake/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's qmake plugin
  tests/spread/plugins/ruby/:
    summary: tests of snapcraft's Ruby plugin
    kill-timeout: 180m

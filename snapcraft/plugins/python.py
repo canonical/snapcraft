@@ -29,11 +29,11 @@ For more information check the 'plugins' topic for the former and the
 Additionally, this plugin uses the following plugin-specific keywords:
 
     - requirements:
-      (string)
-      Path to a requirements.txt file
+      (list of strings)
+      List of paths to requirements files.
     - constraints:
-      (string)
-      Path to a constraints file
+      (list of strings)
+      List of paths to constraint files.
     - process-dependency-links:
       (bool; default: false)
       Enable the processing of dependency links in pip, which allow one
@@ -58,12 +58,13 @@ import os
 import re
 from shutil import which
 from textwrap import dedent
+from typing import List, Set
 
 import requests
 
 import snapcraft
 from snapcraft.common import isurl
-from snapcraft.internal import mangling, os_release
+from snapcraft.internal import errors, mangling
 from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
@@ -91,8 +92,20 @@ class PythonPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["properties"]["requirements"] = {"type": "string"}
-        schema["properties"]["constraints"] = {"type": "string"}
+        schema["properties"]["requirements"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+        schema["properties"]["constraints"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
         schema["properties"]["python-packages"] = {
             "type": "array",
             "minitems": 1,
@@ -125,37 +138,16 @@ class PythonPlugin(snapcraft.BasePlugin):
         ]
 
     @property
-    def plugin_build_packages(self):
-        if self.options.python_version == "python3":
-            return [
-                "python3-dev",
-                "python3-pip",
-                "python3-pkg-resources",
-                "python3-setuptools",
-            ]
-        elif self.options.python_version == "python2":
-            return [
-                "python-dev",
-                "python-pip",
-                "python-pkg-resources",
-                "python-setuptools",
-            ]
-
-    @property
     def plugin_stage_packages(self):
-        release_codename = os_release.OsRelease().version_codename()
         if self.options.python_version == "python2":
             python_base = "python"
         elif self.options.python_version == "python3":
             python_base = "python3"
-        else:
-            return
 
         stage_packages = [python_base]
-        # In bionic, python3's pip started requiring python-distutils
-        # to be installed.
-        if python_base == "python3" and release_codename == "bionic":
+        if self.project.info.base == "core18" and python_base == "python3":
             stage_packages.append("{}-distutils".format(python_base))
+
         return stage_packages
 
     # ignore mypy error: Read-only property cannot override read-write property
@@ -185,7 +177,9 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(self.plugin_build_packages)
+
+        self._setup_base_tools(project.info.base)
+
         self._manifest = collections.OrderedDict()
 
         # Pip requires only the major version of python rather than the command
@@ -198,6 +192,30 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         self._python_major_version = match.group("major_version")
         self.__pip = None
+
+    def _setup_base_tools(self, base):
+        # NOTE: stage-packages are lazily loaded.
+        if base in ("core16", "core18"):
+            if self.options.python_version == "python3":
+                self.build_packages.extend(
+                    [
+                        "python3-dev",
+                        "python3-pip",
+                        "python3-pkg-resources",
+                        "python3-setuptools",
+                    ]
+                )
+            elif self.options.python_version == "python2":
+                self.build_packages.extend(
+                    [
+                        "python-dev",
+                        "python-pip",
+                        "python-pkg-resources",
+                        "python-setuptools",
+                    ]
+                )
+        else:
+            raise errors.PluginBaseError(part_name=self.name, base=base)
 
     def pull(self):
         super().pull()
@@ -220,16 +238,16 @@ class PythonPlugin(snapcraft.BasePlugin):
             # Install the packages that have already been downloaded
             installed_pipy_packages = self._install_project()
 
-        # We record the requirements and constraints files only if they are
-        # remote. If they are local, they are already tracked with the source.
-        if self.options.requirements:
-            self._manifest["requirements-contents"] = self._get_file_contents(
-                self.options.requirements
-            )
-        if self.options.constraints:
-            self._manifest["constraints-contents"] = self._get_file_contents(
-                self.options.constraints
-            )
+        requirements = self._get_list_of_packages_from_property(
+            self.options.requirements
+        )
+        if requirements:
+            self._manifest["requirements-contents"] = requirements
+
+        constraints = self._get_list_of_packages_from_property(self.options.constraints)
+        if constraints:
+            self._manifest["constraints-contents"] = constraints
+
         self._manifest["python-packages"] = [
             "{}={}".format(name, installed_pipy_packages[name])
             for name in installed_pipy_packages
@@ -264,36 +282,31 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         return setup_py_dir
 
-    def _get_constraints(self):
-        constraints = None
-        if self.options.constraints:
-            if isurl(self.options.constraints):
-                constraints = {self.options.constraints}
-            else:
-                constraints_file = self._find_file(filename=self.options.constraints)
-                if not constraints_file:
-                    raise SnapcraftPluginPythonFileMissing(
-                        plugin_property="constraints",
-                        plugin_property_value=self.options.constraints,
-                    )
-                constraints = {constraints_file}
-        return constraints
+    def _get_list_of_packages_from_property(self, property_list: Set[str]) -> List[str]:
+        """Return a sorted list of all packages found in property."""
+        package_list = list()  # type: List[str]
+        for entry in property_list:
+            contents = self._get_file_contents(entry)
+            package_list.extend(contents.splitlines())
+        return package_list
 
-    def _get_requirements(self):
-        requirements = None
-        if self.options.requirements:
-            if isurl(self.options.requirements):
-                requirements = {self.options.requirements}
+    def _get_normalized_property_set(
+        self, property_name, property_list: List[str]
+    ) -> Set[str]:
+        """Return a normalized set from a requirements or constraints list."""
+        normalized = set()  # type: Set[str]
+        for entry in property_list:
+            if isurl(entry):
+                normalized.add(entry)
             else:
-                requirements_file = self._find_file(filename=self.options.requirements)
-                if not requirements_file:
+                entry_file = self._find_file(filename=entry)
+                if not entry_file:
                     raise SnapcraftPluginPythonFileMissing(
-                        plugin_property="requirements",
-                        plugin_property_value=self.options.requirements,
+                        plugin_property=property_name, plugin_property_value=entry
                     )
-                requirements = {requirements_file}
+                normalized.add(entry_file)
 
-        return requirements
+        return normalized
 
     def _install_wheels(self, wheels):
         installed = self._pip.list()
@@ -311,8 +324,12 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _download_project(self):
         setup_py_dir = self._get_setup_py_dir()
-        constraints = self._get_constraints()
-        requirements = self._get_requirements()
+        constraints = self._get_normalized_property_set(
+            "constraints", self.options.constraints
+        )
+        requirements = self._get_normalized_property_set(
+            "requirements", self.options.requirements
+        )
 
         self._pip.download(
             self.options.python_packages,
@@ -324,8 +341,12 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _install_project(self):
         setup_py_dir = self._get_setup_py_dir()
-        constraints = self._get_constraints()
-        requirements = self._get_requirements()
+        constraints = self._get_normalized_property_set(
+            "constraints", self.options.constraints
+        )
+        requirements = self._get_normalized_property_set(
+            "requirements", self.options.requirements
+        )
 
         wheels = self._pip.wheel(
             self.options.python_packages,

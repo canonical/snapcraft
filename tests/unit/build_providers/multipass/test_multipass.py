@@ -106,7 +106,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="256G",
             image="snapcraft:core16",
@@ -190,7 +190,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="4G",
             disk="256G",
             image="snapcraft:core16",
@@ -207,7 +207,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="400G",
             image="snapcraft:core16",
@@ -410,7 +410,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="256G",
             image=self.expected_image,

@@ -1,0 +1,24 @@
+summary: Build using python parts using dependencies from PyPI
+
+environment:
+  SNAP_DIR/requirements: ../snaps/pip-requirements-file
+  SNAP_DIR/python_packages: ../snaps/pip-python-packages
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft build
+
+  python2="$(ls parts/python2/install/lib | grep python2)"
+  [ -f "parts/python2/install/lib/$python2/site-packages/argparse.py" ]
+  python3="$(ls parts/python3/install/lib | grep python3)"
+  [ -f "parts/python3/install/lib/$python3/site-packages/argparse.py" ]

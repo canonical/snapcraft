@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import textwrap
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import qmake
 from tests import unit
 
@@ -28,7 +30,16 @@ class QMakeTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -197,17 +208,13 @@ class QMakeTestCase(unit.TestCase):
     def test_unsupported_qt_version(self):
         self.options.qt_version = "qt3"
         raised = self.assertRaises(
-            RuntimeError,
-            qmake.QmakePlugin,
-            "test-part",
-            self.options,
-            self.project_options,
+            RuntimeError, qmake.QmakePlugin, "test-part", self.options, self.project
         )
 
         self.assertThat(str(raised), Equals("Unsupported Qt version: 'qt3'"))
 
     def test_build_referencing_sourcedir_if_no_subdir(self):
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -226,7 +233,7 @@ class QMakeTestCase(unit.TestCase):
     def test_build_referencing_sourcedir_with_subdir(self):
         self.options.source_subdir = "subdir"
 
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -245,7 +252,7 @@ class QMakeTestCase(unit.TestCase):
     def test_build_with_project_file(self):
         self.options.project_files = ["project_file.pro"]
 
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -268,7 +275,7 @@ class QMakeTestCase(unit.TestCase):
         self.options.source_subdir = "subdir"
         self.options.project_files = ["project_file.pro"]
 
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -292,7 +299,7 @@ class QMakeTestCase(unit.TestCase):
     def test_build_with_options(self):
         self.options.options = ["-foo"]
 
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -309,7 +316,7 @@ class QMakeTestCase(unit.TestCase):
         )
 
     def test_build_with_libs_and_includes_in_installdir(self):
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(os.path.join(plugin.installdir, "include"))
         os.makedirs(os.path.join(plugin.installdir, "lib"))
@@ -336,7 +343,7 @@ class QMakeTestCase(unit.TestCase):
         )
 
     def test_build_with_libs_and_includes_in_stagedir(self):
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(os.path.join(plugin.project.stage_dir, "include"))
         os.makedirs(os.path.join(plugin.project.stage_dir, "lib"))
@@ -362,9 +369,32 @@ class QMakeTestCase(unit.TestCase):
             ]
         )
 
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError,
+            qmake.QmakePlugin,
+            "test-part",
+            self.options,
+            project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))
+
     def test_build_environment_qt4(self):
         self.options.qt_version = "qt4"
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
@@ -372,7 +402,7 @@ class QMakeTestCase(unit.TestCase):
 
     def test_build_environment_qt5(self):
         self.options.qt_version = "qt5"
-        plugin = qmake.QmakePlugin("test-part", self.options, self.project_options)
+        plugin = qmake.QmakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
