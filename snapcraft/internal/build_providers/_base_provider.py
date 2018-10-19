@@ -86,15 +86,21 @@ class Provider(abc.ABC):
             self.snap_filename = "{}_{}.snap".format(
                 project.info.name, project.deb_arch
             )
+
         self.provider_project_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"),
             "projects",
-            self._get_provider_name(),
             project.info.name,
+            self._get_provider_name(),
         )
 
     def __enter__(self):
-        self.create()
+        try:
+            self.create()
+        except errors.ProviderBaseError:
+            # Destroy is idempotent
+            self.destroy()
+            raise
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
