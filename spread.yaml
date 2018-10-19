@@ -26,12 +26,6 @@ backends:
     systems:
       - ubuntu-16.04
       - ubuntu-18.04
-  linode:
-    key: "$(HOST: echo $SPREAD_LINODE_KEY)"
-    systems:
-      - ubuntu-16.04-64:
-          kernel: GRUB 2
-          workers: 3
   google:
     key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
@@ -40,8 +34,10 @@ backends:
           workers: 3
       - ubuntu-16.04-64:
           workers: 5
+          image: ubuntu-1604-64-nested-vm
       - ubuntu-18.04-64:
           workers: 8
+          image: ubuntu-1804-64-nested-vm
   autopkgtest:
     type: adhoc
     allocate: |
@@ -159,6 +155,10 @@ prepare: |
   fi
 
   apt-get install -y snapd
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+      sudo snap install --classic --beta multipass
+  fi
 
   if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
       apt-get install -y snapcraft

@@ -186,9 +186,9 @@ Then, you can run them using a local LXD as the backend with:
 
     ./spread -v lxd:
 
-Or, you can run them in linode if you have a `SPREAD_LINODE_KEY`, with:
+Or, you can run them in google if you have a `SPREAD_GOOGLE_KEY`, with:
 
-    SPREAD_LINODE_KEY={key} ./spread -v linode:
+    SPREAD_GOOGLE_KEY={key} ./spread -v google:
 
 ## External snaps tests
 
