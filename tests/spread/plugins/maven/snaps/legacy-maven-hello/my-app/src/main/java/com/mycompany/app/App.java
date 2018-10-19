@@ -1,4 +1,4 @@
-package com.canonical.testapp;
+package com.mycompany.app;
 
 /**
  * Hello world!
