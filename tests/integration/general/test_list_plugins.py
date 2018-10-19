@@ -28,7 +28,6 @@ class ListPluginsTestCase(integration.TestCase):
             "catkin-tools",
             "dump",
             "gradle",
-            "jhbuild",
             "make",
             "nil",
             "python",
