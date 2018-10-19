@@ -190,6 +190,10 @@ suites:
    summary: tests of snapcraft core functionality
 
  # Plugin-specific suites
+ tests/spread/plugins/ant/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Ant plugin
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    kill-timeout: 360m
@@ -259,6 +263,10 @@ suites:
    kill-timeout: 180m
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
+ tests/spread/plugins/rust/:
+   summary: tests of snapcraft's Rust plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/scons/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
@@ -276,7 +284,7 @@ suites:
 
 # Legacy pending migration away from python runners
  tests/spread/legacy_python/:
-   summary: theses tests are pending a migration away from python runners
+   summary: these tests are pending a migration away from python runners
    kill-timeout: 60m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 100  # Run this test early so we're not waiting for it
