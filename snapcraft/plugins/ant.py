@@ -95,7 +95,9 @@ class AntPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
+
         schema["properties"]["ant-properties"] = {"type": "object", "default": {}}
+
         schema["properties"]["ant-build-targets"] = {
             "type": "array",
             "uniqueItems": True,
@@ -107,10 +109,10 @@ class AntPlugin(snapcraft.BasePlugin):
 
         schema["properties"]["ant-version-checksum"] = {"type": "string"}
 
-        schema["required"] = ["source"]
         schema["properties"]["ant-openjdk-version"] = {"type": "string", "default": ""}
 
         schema["required"] = ["source"]
+
         return schema
 
     @classmethod
