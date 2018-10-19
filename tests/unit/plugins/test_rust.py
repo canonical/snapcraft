@@ -105,7 +105,6 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
 
         plugin.build()
         self.assertThat(os.path.join(plugin._cargo_dir, "config"), FileExists())
-
         self.assertThat(self.run_mock.call_count, Equals(3))
         self.run_mock.assert_has_calls(
             [
@@ -118,6 +117,8 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
                         plugin.installdir,
                         "--path",
                         plugin.builddir,
+                        "--target",
+                        plugin._target,
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),

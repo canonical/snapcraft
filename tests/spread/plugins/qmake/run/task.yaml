@@ -1,7 +1,7 @@
-summary: Cross-compile a Kbuild snap
+summary: Build and run a basic qmake snap
 
 environment:
-  SNAP_DIR: ../snaps/kbuild-hello
+  SNAP_DIR: ../snaps/qmake-hello
 
 prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -17,5 +17,6 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft stage --target-arch=armhf
-  file stage/bin/myapp | MATCH ",\s*ARM\s*,"
+  snapcraft
+  sudo snap install qmake-hello_*.snap --dangerous
+  [ "$(qmake-hello)" = "hello world" ]
