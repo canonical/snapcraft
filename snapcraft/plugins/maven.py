@@ -93,7 +93,9 @@ class UnsupportedJDKVersionError(errors.SnapcraftError):
 class MavenPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
+
         schema = super().schema()
+
         schema["properties"]["maven-options"] = {
             "type": "array",
             "minitems": 1,
@@ -114,11 +116,11 @@ class MavenPlugin(snapcraft.BasePlugin):
 
         schema["properties"]["maven-version-checksum"] = {"type": "string"}
 
-        schema["required"] = ["source"]
         schema["properties"]["maven-openjdk-version"] = {
             "type": "string",
             "default": "",
         }
+
         schema["required"] = ["source"]
 
         return schema
