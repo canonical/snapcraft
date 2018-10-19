@@ -81,7 +81,7 @@ class AntPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class AntPluginTest(unit.TestCase):
+class AntPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -109,7 +109,7 @@ class AntPluginTest(unit.TestCase):
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.sources.Tar")
+        patcher = mock.patch("snapcraft.internal.sources.Tar")
         self.tar_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -137,6 +137,8 @@ class AntPluginTest(unit.TestCase):
         os.makedirs(os.path.dirname(ant_tar_path))
         tarfile.TarFile(ant_tar_path, "w").close()
 
+
+class AntPluginTest(AntPluginBaseTest):
     def test_get_defaul_openjdk(self):
         self.options.ant_openjdk_version = ""
 
@@ -223,7 +225,7 @@ class AntPluginTest(unit.TestCase):
         )
 
 
-class AntPluginUnsupportedBase(unit.TestCase):
+class AntPluginUnsupportedBase(AntPluginBaseTest):
     def setUp(self):
         super().setUp()
 
@@ -238,14 +240,6 @@ class AntPluginUnsupportedBase(unit.TestCase):
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
-        class Options:
-            source = "dir"
-            ant_version = "3.3"
-            ant_version_checksum = "sha1/1234567890"
-            ant_openjdk_version = "10"
-
-        self.options = Options()
-
     def test_unsupported_base_raises(self):
         self.assertRaises(
             errors.PluginBaseError,
@@ -256,7 +250,7 @@ class AntPluginUnsupportedBase(unit.TestCase):
         )
 
 
-class UnsupportedJDKVersionErrorTest(unit.TestCase):
+class UnsupportedJDKVersionErrorTest(AntPluginBaseTest):
 
     scenarios = (
         (
@@ -297,16 +291,9 @@ class UnsupportedJDKVersionErrorTest(unit.TestCase):
             )
         )
 
+        self.options.ant_openjdk_version = self.version
+
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
-
-        class Options:
-            ant_options = []
-            ant_targets = [""]
-            ant_version = ant._DEFAULT_ANT_VERSION
-            ant_version_checksum = ant._DEFAULT_ANT_CHECKSUM
-            ant_openjdk_version = self.version
-
-        self.options = Options()
 
     def test_use_invalid_openjdk_version_fails(self):
         raised = self.assertRaises(
