@@ -1,21 +1,23 @@
-summary: Ensure a python part is automatically cleaned if dirty
-
-systems: [ubuntu-18*]
+summary: "Ensure a python part can run and is automatically cleaned if dirty"
 
 environment:
   SNAP_DIR: ../snaps/python-hello
 
 prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
   . "$TOOLS_DIR/config.sh"
   set_outdated_step_action "clean"
 
 restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
   . "$TOOLS_DIR/config.sh"
   clear_config
 
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+  restore_yaml snap/snapcraft.yaml
 
 execute: |
   cd "$SNAP_DIR"

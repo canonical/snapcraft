@@ -6,7 +6,6 @@ description: |
   If you want to add other functionalities to this snap, please don't.
   Make a new one.
 
-base: core18
 grade: devel
 confinement: strict
 

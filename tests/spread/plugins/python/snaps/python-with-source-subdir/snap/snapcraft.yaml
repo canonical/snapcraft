@@ -8,6 +8,7 @@ description: |
   This snapcraft project specifically tests that source-subdirs are
   properly handled.
 confinement: strict
+grade: devel
 
 apps:
   python-hello:
