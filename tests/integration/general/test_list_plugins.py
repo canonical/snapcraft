@@ -43,7 +43,6 @@ class ListPluginsTestCase(integration.TestCase):
             "catkin",
             "dotnet",
             "godeps",
-            "jdk",
             "kernel",
             "meson",
             "plainbox-provider",

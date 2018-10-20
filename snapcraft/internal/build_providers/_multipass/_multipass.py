@@ -150,20 +150,25 @@ class Multipass(Provider):
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
-        if self._instance_info is None:
+        try:
+            instance_info = self._instance_info = self._get_instance_info()
+        except errors.ProviderInfoError:
             return
 
-        if not self._instance_info.is_stopped():
-            stop_time = _get_stop_time()
-            if stop_time > 0:
-                try:
-                    self._multipass_cmd.stop(
-                        instance_name=self.instance_name, time=stop_time
-                    )
-                except errors.ProviderStopError:
-                    self._multipass_cmd.stop(instance_name=self.instance_name)
-            else:
+        if instance_info.is_stopped():
+            return
+
+        stop_time = _get_stop_time()
+        if stop_time > 0:
+            try:
+                self._multipass_cmd.stop(
+                    instance_name=self.instance_name, time=stop_time
+                )
+            except errors.ProviderStopError:
                 self._multipass_cmd.stop(instance_name=self.instance_name)
+        else:
+            self._multipass_cmd.stop(instance_name=self.instance_name)
+
         if self._is_ephemeral:
             self.clean_project()
 
