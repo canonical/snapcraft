@@ -1699,7 +1699,7 @@ class CommandChainTest(unit.TestCase):
             "apps": {
                 "app": {
                     "command": "test-command",
-                    "adapter": "legacy",
+                    "adapter": "full",
                     "command-chain": ["test-chain"],
                 }
             },
@@ -1742,7 +1742,10 @@ class CommandChainTest(unit.TestCase):
         _create_file(cmd_path, executable=True)
 
         y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"]["command-chain"], Equals(["test-chain"]))
+        self.assertThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner", "test-chain"]),
+        )
 
 
 def _create_file(path, *, content="", executable=False):
