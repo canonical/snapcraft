@@ -1,0 +1,22 @@
+summary: Build and run a basic rust snap
+
+environment:
+  SNAP_DIR: ../snaps/rust-hello
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install rust-hello_*.snap --dangerous
+  [ "$(rust-hello)" = "hello world" ]

@@ -1,7 +1,0 @@
-[package]
-name = "rust-hello"
-version = "0.1.0"
-authors = ["Marius Gripsgard <mariogrip@ubuntu.com>"]
-
-[dependencies]
-log = "*"
