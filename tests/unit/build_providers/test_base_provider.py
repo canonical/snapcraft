@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
-from unittest.mock import call
+from unittest.mock import call, Mock
 
 from testtools.matchers import Equals, EndsWith, DirExists, Not
 
@@ -32,13 +33,42 @@ class BaseProviderTest(BaseProviderBaseTest):
         self.assertThat(
             provider.provider_project_dir,
             EndsWith(
-                os.path.join("snapcraft", "projects", "stub-provider", "project-name")
+                os.path.join("snapcraft", "projects", "project-name", "stub-provider")
             ),
         )
         self.assertThat(
             provider.snap_filename,
             Equals("project-name_{}.snap".format(self.project.deb_arch)),
         )
+
+    def test_context(self):
+        with ProviderImpl(project=self.project, echoer=self.echoer_mock) as provider:
+            provider.shell()
+            fake_provider = provider
+
+        fake_provider.create_mock.assert_called_once_with("create")
+        fake_provider.destroy_mock.assert_called_once_with("destroy")
+
+    def test_context_fails_create(self):
+        create_mock = Mock()
+        destroy_mock = Mock()
+
+        class BadProviderImpl(ProviderImpl):
+            def create(self):
+                super().create()
+                create_mock("create bad")
+                raise errors.ProviderBaseError()
+
+            def destroy(self):
+                super().destroy()
+                destroy_mock("destroy bad")
+
+        with contextlib.suppress(errors.ProviderBaseError):
+            with BadProviderImpl(project=self.project, echoer=self.echoer_mock):
+                pass
+
+        create_mock.assert_called_once_with("create bad")
+        destroy_mock.assert_called_once_with("destroy bad")
 
     def test_initialize_snap_filename_with_version(self):
         self.project.info.version = "test-version"
