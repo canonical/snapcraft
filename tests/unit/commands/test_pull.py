@@ -63,7 +63,7 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
 
     @mock.patch("snapcraft.repo.Repo.get")
     @mock.patch("snapcraft.repo.Repo.unpack")
-    def test_pull_stage_packages_without_geoip(self, mock_unpack, mock_get):
+    def test_pull_stage_packages(self, mock_unpack, mock_get):
         yaml_part = """  {step}{iter:d}:
         plugin: nil
         stage-packages: ['mir']"""
@@ -72,20 +72,6 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
         mock_get.return_value = "[mir=0.0]"
 
         result = self.run_command(["pull", "pull1"])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-    @mock.patch("snapcraft.repo.Repo.get")
-    @mock.patch("snapcraft.repo.Repo.unpack")
-    def test_pull_stage_packages_with_geoip(self, mock_unpack, mock_get):
-        yaml_part = """  {step}{iter:d}:
-        plugin: nil
-        stage-packages: ['mir']"""
-        self.make_snapcraft_yaml("pull", n=3, yaml_part=yaml_part)
-
-        mock_get.return_value = "[mir=0.0]"
-
-        result = self.run_command(["pull", "pull1", "--enable-geoip"])
 
         self.assertThat(result.exit_code, Equals(0))
 

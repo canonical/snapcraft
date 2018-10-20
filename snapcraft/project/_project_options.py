@@ -146,13 +146,10 @@ class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
         build_count = 1
-        if self._parallel_builds:
-            try:
-                build_count = multiprocessing.cpu_count()
-            except NotImplementedError:
-                logger.warning(
-                    "Unable to determine CPU count; disabling parallel builds"
-                )
+        try:
+            build_count = multiprocessing.cpu_count()
+        except NotImplementedError:
+            logger.warning("Unable to determine CPU count; disabling parallel builds")
 
         return build_count
 
@@ -217,25 +214,11 @@ class ProjectOptions:
         return self._prime_dir
 
     @property
-    def use_geoip(self):
-        return self._use_geoip
-
-    @property
-    def parallel_builds(self):
-        return self._parallel_builds
-
-    @property
     def debug(self):
         return self._debug
 
     def __init__(
-        self,
-        use_geoip=False,
-        parallel_builds=True,
-        target_deb_arch=None,
-        debug=False,
-        *,
-        work_dir: str = None
+        self, target_deb_arch=None, debug=False, *, work_dir: str = None
     ) -> None:
 
         # Here for backwards compatibility.
@@ -243,8 +226,6 @@ class ProjectOptions:
         if work_dir is None:
             work_dir = project_dir
 
-        self._use_geoip = use_geoip
-        self._parallel_builds = parallel_builds
         self._debug = debug
 
         self._parts_dir = os.path.join(work_dir, "parts")
