@@ -48,6 +48,11 @@ class GlibExtension(Extension):
         if yaml_data.get("confinement") == "classic":
             raise GlibExtensionClassicConfinementError()
 
+        # This extension utilizes command-chain; add the proper assumes so a snap using
+        # this extension can't be installed on a snapd that doesn't support
+        # command-chain.
+        self.root_snippet = {"assumes": ["command-chain"]}
+
         # Add the following snippet to each app that uses the glib extension
         self.app_snippet = {
             "command-chain": [
