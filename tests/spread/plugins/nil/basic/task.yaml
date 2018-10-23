@@ -11,7 +11,7 @@ restore: |
 execute: |
   list_dir_contents()
   {
-      find "$1" ! -path "$1" -printf "%P\n" | sort | xargs
+      find "$1" ! -path "$1" -printf '%P\n' | sort | xargs
   }
 
   cd "$SNAP_DIR"

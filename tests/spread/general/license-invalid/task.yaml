@@ -9,9 +9,9 @@ prepare: |
   snapcraft init
   
   # License is currently base triggered only
-  if [[ "$SPREAD_SYSTEM" =~ "ubuntu-18.04" ]]; then
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
       echo "base: core18" >> snap/snapcraft.yaml
-  elif [[ "$SPREAD_SYSTEM" =~ "ubuntu-16.04" ]]; then
+  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
       echo "base: core16" >> snap/snapcraft.yaml
   else
       FAIL "Test not supported for $SPREAD_SYSTEM"
