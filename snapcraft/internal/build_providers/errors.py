@@ -21,7 +21,11 @@ from typing import Sequence  # noqa: F401
 from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
 
 
-class ProviderNotSupportedError(_SnapcraftError):
+class ProviderBaseError(_SnapcraftError):
+    """Base Exception for all provider related exceptions."""
+
+
+class ProviderNotSupportedError(ProviderBaseError):
 
     fmt = (
         "The {provider!r} provider is not supported, please choose a "
@@ -32,7 +36,7 @@ class ProviderNotSupportedError(_SnapcraftError):
         super().__init__(provider=provider)
 
 
-class ProviderCommandNotFound(_SnapcraftError):
+class ProviderCommandNotFound(ProviderBaseError):
 
     fmt = (
         "{command!r} command not found: this command is necessary to build in "
@@ -45,7 +49,7 @@ class ProviderCommandNotFound(_SnapcraftError):
         super().__init__(command=command)
 
 
-class _GenericProviderError(_SnapcraftError):
+class _GenericProviderError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to {action} the instance with "
@@ -54,7 +58,7 @@ class _GenericProviderError(_SnapcraftError):
     )
 
 
-class ProviderCommunicationError(_SnapcraftError):
+class ProviderCommunicationError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to communicate with the instance "
@@ -93,7 +97,7 @@ class ProviderDeleteError(_GenericProviderError):
         )
 
 
-class ProviderExecError(_SnapcraftError):
+class ProviderExecError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to execute {command_string!r} with "
@@ -112,7 +116,7 @@ class ProviderExecError(_SnapcraftError):
         )
 
 
-class ProviderShellError(_SnapcraftError):
+class ProviderShellError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to provide a shell with "
@@ -123,7 +127,7 @@ class ProviderShellError(_SnapcraftError):
         super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
-class ProviderMountError(_SnapcraftError):
+class ProviderMountError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to mount using {provider_name!r}: "
@@ -134,7 +138,7 @@ class ProviderMountError(_SnapcraftError):
         super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
-class ProviderUnMountError(_SnapcraftError):
+class ProviderUnMountError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to unmount using {provider_name!r}: "
@@ -145,7 +149,7 @@ class ProviderUnMountError(_SnapcraftError):
         super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
-class ProviderFileCopyError(_SnapcraftError):
+class ProviderFileCopyError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to copy files using {provider_name!r}: "
@@ -156,7 +160,7 @@ class ProviderFileCopyError(_SnapcraftError):
         super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
-class ProviderInfoError(_SnapcraftError):
+class ProviderInfoError(ProviderBaseError):
 
     fmt = (
         "An error occurred when using {provider_name!r} to "
@@ -169,7 +173,7 @@ class ProviderInfoError(_SnapcraftError):
         )
 
 
-class ProviderInstanceNotFoundError(_SnapcraftError):
+class ProviderInstanceNotFoundError(ProviderBaseError):
 
     fmt = "Cannot find an instance named {instance_name!r}."
 
@@ -177,7 +181,7 @@ class ProviderInstanceNotFoundError(_SnapcraftError):
         super().__init__(instance_name=instance_name)
 
 
-class ProviderInfoDataKeyError(_SnapcraftError):
+class ProviderInfoDataKeyError(ProviderBaseError):
 
     fmt = (
         "The data returned by {provider_name!r} was not expected. "
@@ -192,7 +196,7 @@ class ProviderInfoDataKeyError(_SnapcraftError):
         )
 
 
-class ProviderBadDataError(_SnapcraftError):
+class ProviderBadDataError(ProviderBaseError):
 
     fmt = (
         "The data returned by {provider_name!r} was not expected "

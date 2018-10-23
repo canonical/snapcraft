@@ -72,7 +72,6 @@ class ProviderImpl(Provider):
 
     def create(self):
         self.create_mock("create")
-        # raise EnvironmentError(self.create_mock.call_args)
 
     def destroy(self):
         self.destroy_mock("destroy")

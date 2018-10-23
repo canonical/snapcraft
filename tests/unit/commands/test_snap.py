@@ -450,17 +450,7 @@ type: os
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
 
-    scenarios = [
-        ("no parallel builds", dict(options=["--no-parallel-builds"])),
-        ("target architecture", dict(options=["--target-arch", "i386"])),
-        ("geo ip", dict(options=["--enable-geoip"])),
-        (
-            "all",
-            dict(
-                options=["--no-parallel-builds", "--target-arch=i386", "--enable-geoip"]
-            ),
-        ),
-    ]
+    scenarios = [("target architecture", dict(options=["--target-arch", "i386"]))]
 
     def test_snap_defaults(self):
         """The arguments should not be rejected when 'snap' is implicit."""

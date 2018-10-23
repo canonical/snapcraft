@@ -23,12 +23,8 @@ from snapcraft.project import Project
 
 class ProjectTest(unit.TestCase):
     def test_project_with_arguments(self):
-        project = Project(
-            use_geoip=True, parallel_builds=False, target_deb_arch="armhf", debug=True
-        )
+        project = Project(target_deb_arch="armhf", debug=True)
 
-        self.assertThat(project.use_geoip, Equals(True))
-        self.assertThat(project.parallel_builds, Equals(False))
         self.assertThat(project.deb_arch, Equals("armhf"))
         self.assertThat(project.debug, Equals(True))
         # This is a backwards compatibility check

@@ -94,6 +94,7 @@ class MultipassTest(BaseProviderBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
     def test_ephemeral_instance_with_contextmanager(self):
@@ -134,7 +135,7 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),
@@ -399,6 +400,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
     def test_lifecycle(self):
@@ -435,7 +437,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             target="{}:{}".format(self.instance_name, "/home/multipass/project"),
         )
         self.multipass_cmd_mock().umount.assert_not_called()
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),

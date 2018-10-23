@@ -52,7 +52,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
-        project_options = snapcraft.ProjectOptions(use_geoip=False)
+        project_options = snapcraft.ProjectOptions()
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         self.assertRaises(errors.CacheUpdateFailedError, ubuntu.get, ["fake-package"])
 
@@ -70,7 +70,7 @@ class UbuntuTestCase(RepoBaseTestCase):
             ),
             DEFAULT,
         ]
-        project_options = snapcraft.ProjectOptions(use_geoip=False)
+        project_options = snapcraft.ProjectOptions()
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(["fake-package"])
 
@@ -97,7 +97,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
-        project_options = snapcraft.ProjectOptions(use_geoip=False)
+        project_options = snapcraft.ProjectOptions()
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(["fake-package"])
 
@@ -140,7 +140,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
-        project_options = snapcraft.ProjectOptions(use_geoip=False)
+        project_options = snapcraft.ProjectOptions()
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(["fake-package:arch"])
 

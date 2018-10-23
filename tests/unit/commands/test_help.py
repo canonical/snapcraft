@@ -58,11 +58,6 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains("1234567890..."))
 
-    def test_print_module_help_when_no_help_for_valid_plugin(self):
-        result = self.run_command(["help", "jdk"])
-
-        self.assertThat(result.output, Equals("The plugin has no documentation\n"))
-
     def test_print_module_help_for_valid_plugin(self):
         result = self.run_command(["help", "nil"])
 

@@ -16,11 +16,13 @@
 
 import collections
 import os
+from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
+from snapcraft.project import Project
 from snapcraft.plugins import python
 from tests import fixture_setup, unit
 
@@ -53,21 +55,31 @@ def setup_directories(plugin, python_version, create_setup_py=True):
         )
 
 
-class BasePythonPluginTestCase(unit.TestCase):
+class PythonPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: python-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."
             source_subdir = ""
-            requirements = ""
+            requirements = []
             constraints = ""
             python_version = "python3"
             python_packages = []
             process_dependency_links = False
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch("snapcraft.plugins._python.Pip")
         self.mock_pip = patcher.start()
@@ -77,22 +89,36 @@ class BasePythonPluginTestCase(unit.TestCase):
         self.mock_setup_tools = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.internal.os_release.OsRelease")
-        self.mock_os_release = patcher.start()
-        self.addCleanup(patcher.stop)
 
-
-class PythonPluginTestCase(BasePythonPluginTestCase):
+class PythonPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = python.PythonPlugin.schema()
-        expected_requirements = {"type": "string"}
-        expected_constraints = {"type": "string"}
+        expected_requirements = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+        expected_constraints = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
         expected_python_packages = {
             "type": "array",
             "minitems": 1,
             "uniqueItems": True,
             "items": {"type": "string"},
             "default": [],
+        }
+        expected_process_dependency_links = {"type": "boolean", "default": False}
+        expected_python_version = {
+            "type": "string",
+            "default": "python3",
+            "enum": ["python2", "python3"],
         }
 
         self.assertDictEqual(
@@ -101,6 +127,13 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.assertDictEqual(expected_constraints, schema["properties"]["constraints"])
         self.assertDictEqual(
             expected_python_packages, schema["properties"]["python-packages"]
+        )
+        self.assertDictEqual(
+            expected_process_dependency_links,
+            schema["properties"]["process-dependency-links"],
+        )
+        self.assertDictEqual(
+            expected_python_version, schema["properties"]["python-version"]
         )
 
     def test_get_pull_properties(self):
@@ -120,8 +153,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         for property in expected_pull_properties:
             self.assertIn(property, resulting_pull_properties)
 
+
+class PythonPluginTest(PythonPluginBaseTest):
     def test_env(self):
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         expected_env = []
         env = plugin.env("/testpath")
         self.assertListEqual(expected_env, env)
@@ -130,7 +165,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.assertTrue("PYTHONPATH=/testpath" not in env_missing_path)
 
     def test_pull_with_setup_py(self):
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         plugin.pull()
@@ -138,9 +173,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
             [],
-            constraints=None,
+            constraints=set(),
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -148,10 +183,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.mock_pip.return_value.install.assert_not_called()
 
     def test_pull_with_requirements(self):
-        self.options.requirements = "requirements.txt"
+        self.options.requirements = ["requirements.txt"]
         self.options.python_packages = ["test", "packages"]
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         requirements_path = os.path.join(plugin.sourcedir, "requirements.txt")
@@ -162,7 +197,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
             ["test", "packages"],
-            constraints=None,
+            constraints=set(),
             process_dependency_links=False,
             requirements={requirements_path},
             setup_py_dir=plugin.sourcedir,
@@ -172,10 +207,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.mock_pip.return_value.install.assert_not_called()
 
     def test_pull_with_constraints(self):
-        self.options.constraints = "constraints.txt"
+        self.options.constraints = ["constraints.txt"]
         self.options.python_packages = ["test", "packages"]
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         constraints_path = os.path.join(plugin.sourcedir, "constraints.txt")
@@ -188,7 +223,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
             ["test", "packages"],
             constraints={constraints_path},
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -197,8 +232,8 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
     @mock.patch.object(python.snapcraft.BasePlugin, "build")
     def test_build(self, mock_base_build):
-        self.options.requirements = "requirements.txt"
-        self.options.constraints = "constraints.txt"
+        self.options.requirements = ["requirements.txt"]
+        self.options.constraints = ["constraints.txt"]
         self.options.python_packages = ["test", "packages"]
 
         packages = collections.OrderedDict()
@@ -207,10 +242,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.mock_pip.return_value.list.return_value = packages
 
         self.useFixture(fixture_setup.CleanEnvironment())
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
-        for file_name in (self.options.requirements, self.options.constraints):
+        for file_name in self.options.requirements + self.options.constraints:
             path = os.path.join(plugin.sourcedir, file_name)
             open(path, "w").close()
 
@@ -252,10 +287,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         )
 
     def test_pip_with_url(self):
-        self.options.requirements = "https://test.com/requirements.txt"
-        self.options.constraints = "http://test.com/constraints.txt"
+        self.options.requirements = ["https://test.com/requirements.txt"]
+        self.options.constraints = ["http://test.com/constraints.txt"]
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         # Patch requests so we don't hit the network when the requirements
@@ -268,9 +303,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
             [],
-            constraints={self.options.constraints},
+            constraints=set(self.options.constraints),
             process_dependency_links=False,
-            requirements={self.options.requirements},
+            requirements=set(self.options.requirements),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -282,14 +317,14 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_wheel = self.mock_pip.return_value.wheel
         pip_wheel.assert_called_once_with(
             [],
-            constraints={self.options.constraints},
+            constraints=set(self.options.constraints),
             process_dependency_links=False,
-            requirements={self.options.requirements},
+            requirements=set(self.options.requirements),
             setup_py_dir=plugin.sourcedir,
         )
 
     def test_fileset_ignores(self):
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         expected_fileset = [
             "-bin/pip",
             "-bin/pip2",
@@ -307,7 +342,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
     def test_process_dependency_links(self):
         self.options.process_dependency_links = True
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
         plugin.pull()
         plugin.build()
@@ -315,9 +350,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
             [],
-            constraints=None,
+            constraints=set(),
             process_dependency_links=True,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -329,9 +364,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_wheel = self.mock_pip.return_value.wheel
         pip_wheel.assert_called_once_with(
             [],
-            constraints=None,
+            constraints=set(),
             process_dependency_links=True,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=plugin.sourcedir,
         )
 
@@ -341,7 +376,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         packages["testpackage2"] = "1.2"
         self.mock_pip.return_value.list.return_value = packages
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
         plugin.build()
         self.assertThat(
@@ -354,8 +389,8 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         )
 
     def test_get_manifest_with_local_requirements(self):
-        self.options.requirements = "requirements.txt"
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        self.options.requirements = ["requirements.txt"]
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
         requirements_path = os.path.join(plugin.sourcedir, "requirements.txt")
         with open(requirements_path, "w") as requirements_file:
@@ -366,13 +401,31 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         self.assertThat(
             plugin.get_manifest()["requirements-contents"],
-            Equals("testpackage1==1.0\ntestpackage2==1.2"),
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
+        )
+
+    def test_get_manifest_with_multiple_local_requirements(self):
+        self.options.requirements = ["requirements1.txt", "requirements2.txt"]
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        setup_directories(plugin, self.options.python_version)
+        requirements1_path = os.path.join(plugin.sourcedir, "requirements1.txt")
+        requirements2_path = os.path.join(plugin.sourcedir, "requirements2.txt")
+        with open(requirements1_path, "w") as requirements_file:
+            requirements_file.write("testpackage1==1.0\n")
+        with open(requirements2_path, "w") as requirements_file:
+            requirements_file.write("testpackage2==1.2")
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest()["requirements-contents"],
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
         )
 
     def test_get_manifest_with_local_constraints(self):
-        self.options.constraints = "constraints.txt"
+        self.options.constraints = ["constraints.txt"]
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
         constraints_path = os.path.join(plugin.sourcedir, "constraints.txt")
         with open(constraints_path, "w") as constraints_file:
@@ -383,37 +436,26 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         self.assertThat(
             plugin.get_manifest()["constraints-contents"],
-            Equals("testpackage1==1.0\ntestpackage2==1.2"),
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
         )
 
-    def test_plugin_stage_packages_python2_xenial(self):
-        self.options.python_version = "python2"
-        self.mock_os_release.return_value.version_codename.return_value = "xenial"
+    def test_get_manifest_with_multiple_local_constraints(self):
+        self.options.constraints = ["constraints1.txt", "constraints2.txt"]
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
-        self.assertThat(plugin.plugin_stage_packages, Equals(["python"]))
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        setup_directories(plugin, self.options.python_version)
+        constraints1_path = os.path.join(plugin.sourcedir, "constraints1.txt")
+        with open(constraints1_path, "w") as constraints_file:
+            constraints_file.write("testpackage1==1.0\n")
+        constraints2_path = os.path.join(plugin.sourcedir, "constraints2.txt")
+        with open(constraints2_path, "w") as constraints_file:
+            constraints_file.write("testpackage2==1.2")
 
-    def test_plugin_stage_packages_python3_xenial(self):
-        self.options.python_version = "python3"
-        self.mock_os_release.return_value.version_codename.return_value = "xenial"
+        plugin.build()
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
-        self.assertThat(plugin.plugin_stage_packages, Equals(["python3"]))
-
-    def test_plugin_stage_packages_python2_bionic(self):
-        self.options.python_version = "python2"
-        self.mock_os_release.return_value.version_codename.return_value = "bionic"
-
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
-        self.assertThat(plugin.plugin_stage_packages, Equals(["python"]))
-
-    def test_plugin_stage_packages_python3_bionic(self):
-        self.options.python_version = "python3"
-        self.mock_os_release.return_value.version_codename.return_value = "bionic"
-
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
         self.assertThat(
-            plugin.plugin_stage_packages, Equals(["python3", "python3-distutils"])
+            plugin.get_manifest()["constraints-contents"],
+            Equals(["testpackage1==1.0", "testpackage2==1.2"]),
         )
 
     def test_no_python_packages_does_nothing(self):
@@ -423,7 +465,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.mock_pip.return_value.list.return_value = dict()
 
         self.useFixture(fixture_setup.CleanEnvironment())
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version, create_setup_py=False)
 
         pip_wheel = self.mock_pip.return_value.wheel
@@ -437,9 +479,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         pip_wheel.assert_called_once_with(
             [],
-            constraints=None,
+            constraints=set(),
             process_dependency_links=False,
-            requirements=None,
+            requirements=set(),
             setup_py_dir=None,
         )
 
@@ -447,7 +489,51 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_install.assert_not_called()
 
 
-class FileMissingPythonPluginTest(BasePythonPluginTestCase):
+class PythonCore18Test(PythonPluginBaseTest):
+    def test_plugin_stage_packages_python2(self):
+        self.options.python_version = "python2"
+
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        self.assertThat(plugin.plugin_stage_packages, Equals(["python"]))
+
+    def test_plugin_stage_packages_python3(self):
+        self.options.python_version = "python3"
+
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        self.assertThat(
+            plugin.plugin_stage_packages, Equals(["python3", "python3-distutils"])
+        )
+
+
+class PythonCore16Test(PythonPluginBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: python-snap
+            base: core16
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+    def test_plugin_stage_packages_python2(self):
+        self.options.python_version = "python2"
+
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        self.assertThat(plugin.plugin_stage_packages, Equals(["python"]))
+
+    def test_plugin_stage_packages_python3(self):
+        self.options.python_version = "python3"
+
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        self.assertThat(plugin.plugin_stage_packages, Equals(["python3"]))
+
+
+class FileMissingPythonPluginTest(PythonPluginBaseTest):
 
     scenarios = (
         ("constraints", dict(property="constraints", file_path="constraints.txt")),
@@ -457,14 +543,14 @@ class FileMissingPythonPluginTest(BasePythonPluginTestCase):
     def test_constraints_file_missing(self):
         setattr(self.options, self.property, self.file_path)
 
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         self.assertRaises(python.SnapcraftPluginPythonFileMissing, plugin.pull)
 
 
 class PythonPluginWithURLTestCase(
-    BasePythonPluginTestCase, unit.FakeFileHTTPServerBasedTestCase
+    PythonPluginBaseTest, unit.FakeFileHTTPServerBasedTestCase
 ):
     def setUp(self):
         super().setUp()
@@ -473,23 +559,53 @@ class PythonPluginWithURLTestCase(
         )
 
     def test_get_manifest_with_requirements_url(self):
-        self.options.requirements = self.source
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        self.options.requirements = [self.source]
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         plugin.build()
 
         self.assertThat(
-            plugin.get_manifest()["requirements-contents"], Equals("Test fake file")
+            plugin.get_manifest()["requirements-contents"], Equals(["Test fake file"])
         )
 
     def test_get_manifest_with_constraints_url(self):
-        self.options.constraints = self.source
-        plugin = python.PythonPlugin("test-part", self.options, self.project_options)
+        self.options.constraints = [self.source]
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)
 
         plugin.build()
 
         self.assertThat(
-            plugin.get_manifest()["constraints-contents"], Equals("Test fake file")
+            plugin.get_manifest()["constraints-contents"], Equals(["Test fake file"])
+        )
+
+
+class PythonPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: python-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            source = "dir"
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            python.PythonPlugin,
+            "test-part",
+            self.options,
+            self.project,
         )
