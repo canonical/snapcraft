@@ -22,6 +22,7 @@ jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
+      name: static tests
       if: type != cron
       install:
         - sudo apt update
@@ -37,13 +38,16 @@ jobs:
         - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
     # CLA check, only in pull requests, not coming from the bot.
-    - if: type = pull_request AND sender != snappy-m-o
+    - stage: static
+      name:  CLA check
+      if: type = pull_request AND sender != snappy-m-o
       install:
         - sudo apt update && sudo apt install -y git python-launchpadlib
       script:
         - ./tools/cla_check.py
 
     - stage: unit, snap and osx
+      name: unit tests
       if: type != cron
       install:
         # Here until we have our snapcraft testing toolkit snap
@@ -58,7 +62,9 @@ jobs:
       after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: osx
+      if: type != cron
       os: osx
       addons:
         homebrew:
@@ -71,7 +77,9 @@ jobs:
         - python3 -m pip install -r requirements-devel.txt
       script:
         - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: snap
+      if: type != cron
       install:
         - sudo apt update
         - sudo apt install -y snapd
@@ -94,9 +102,12 @@ jobs:
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
+      name: spread
       if: type != cron
       script:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
       - ./runtests.sh spread
-    - if: type != cron
+    - stage: integration
+      name: store
+      if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
