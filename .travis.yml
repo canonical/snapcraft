@@ -1,7 +1,5 @@
 language: bash
 
-services: [docker]
-
 env:
   global:
     # SPREAD_GOOGLE_KEY
@@ -61,10 +59,12 @@ jobs:
         - codecov --token="$CODECOV_TOKEN"
     - if: type != cron
       os: osx
+      addons:
+        homebrew:
+          packages:
+            - python
+            - coreutils
       install:
-        - brew upgrade python
-        # readlink -f doesn't work on osx.
-        - brew upgrade coreutils || brew install coreutils
         - python3 ./tools/brew_install_from_source.py
         - python3 -m pip install -r requirements.txt
         - python3 -m pip install -r requirements-devel.txt
