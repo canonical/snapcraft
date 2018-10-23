@@ -711,6 +711,7 @@ class RealStageTestCase(unit.TestCase):
             dedent(
                 """\
             name: pc-file-test
+            base: core18
             version: "1.0"
             summary: test pkg-config .pc
             description: when the .pc files reach stage the should be reprefixed
@@ -722,7 +723,7 @@ class RealStageTestCase(unit.TestCase):
                     plugin: nil
         """
             )
-        )  # noqa: E501
+        )
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         return project_loader.load_config(project)
 
@@ -1593,6 +1594,10 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.mark_done(steps.BUILD)
         self.handler.stage()
+
+        # Resetting for test clarity
+        mock_migrate_files.reset_mock()
+
         self.handler.prime()
 
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
@@ -1607,14 +1612,7 @@ class StateTestCase(StateBaseTestCase):
                     {"bin"},
                     self.handler.stagedir,
                     self.handler.primedir,
-                ),
-                call(
-                    {"foo/bar/baz"},
-                    {"foo/bar"},
-                    "/",
-                    self.handler.primedir,
-                    follow_symlinks=True,
-                ),
+                )
             ]
         )
 
@@ -1630,8 +1628,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue("bin/2" in state.files)
         self.assertThat(len(state.directories), Equals(1))
         self.assertTrue("bin" in state.directories)
-        self.assertThat(len(state.dependency_paths), Equals(3))
-        self.assertTrue("foo/bar" in state.dependency_paths)
+        self.assertThat(len(state.dependency_paths), Equals(2))
+        self.assertFalse("foo/bar" in state.dependency_paths)
         self.assertTrue("lib1" in state.dependency_paths)
         self.assertTrue("lib2" in state.dependency_paths)
         self.assertTrue("prime" in state.properties)
@@ -1645,13 +1643,10 @@ class StateTestCase(StateBaseTestCase):
     )
     @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft.internal.pluginhandler._migrate_files")
-    def test_prime_state_disable_ldd_crawl(
+    def test_prime_state_missing_libraries(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):
-        # Disable system library migration (i.e. ldd crawling).
-        self.handler = self.load_part(
-            "test_part", part_properties={"build-attributes": ["no-system-libraries"]}
-        )
+        self.handler = self.load_part("test_part")
 
         self.get_elf_files_mock.return_value = frozenset(
             [elf.ElfFile(path=os.path.join(self.handler.primedir, "bin", "file"))]

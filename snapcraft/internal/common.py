@@ -44,8 +44,6 @@ _DEFAULT_PLUGINDIR = os.path.join(sys.prefix, "share", "snapcraft", "plugins")
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = os.path.join(sys.prefix, "share", "snapcraft", "schema")
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, "share", "snapcraft", "libraries")
-_librariesdir = _DEFAULT_LIBRARIESDIR
 _DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensions")
 _extensionsdir = _DEFAULT_EXTENSIONSDIR
 _DEFAULT_LEGACY_SNAPCRAFT_DIR = os.path.join(sys.prefix, "legacy_snapcraft")
@@ -173,15 +171,6 @@ def get_arch():
 
 def get_parallel_build_count():
     raise errors.PluginOutdatedError("use 'parallel_build_count'")
-
-
-def set_librariesdir(librariesdir):
-    global _librariesdir
-    _librariesdir = librariesdir
-
-
-def get_librariesdir():
-    return _librariesdir
 
 
 def set_legacy_snapcraft_dir(snapcraftdir):

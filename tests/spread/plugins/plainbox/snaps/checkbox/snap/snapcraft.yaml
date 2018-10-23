@@ -16,7 +16,7 @@ apps:
 parts:
     # The testing framework
     checkbox-ng-local:
-        plugin: python3
+        plugin: python
         python-packages:
             - checkbox-ng==1.0.0
             - requests-oauthlib

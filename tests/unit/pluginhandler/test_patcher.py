@@ -51,7 +51,7 @@ class PrimeTypeAppDoesPatchingTestCase(unit.TestCase):
             handler.prime()
             patcher_mock.assert_called_with(
                 confinement="strict",
-                core_base="core",
+                core_base="core18",
                 elf_files=frozenset(),
                 plugin=mock.ANY,
                 primedir=self.prime_dir,

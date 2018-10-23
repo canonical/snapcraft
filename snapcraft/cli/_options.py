@@ -27,8 +27,6 @@ class HiddenOption(click.Option):
 
 
 _BUILD_OPTION_NAMES = [
-    "--enable-geoip",
-    "--no-parallel-builds",
     "--target-arch",
     "--debug",
     "--shell",
@@ -37,11 +35,6 @@ _BUILD_OPTION_NAMES = [
 ]
 
 _BUILD_OPTIONS = [
-    dict(
-        is_flag=True,
-        help="Detect best candidate location for stage-packages using geoip",
-    ),
-    dict(is_flag=True, help="Force a sequential build."),
     dict(metavar="<arch>", help="Target architecture to cross compile to"),
     dict(is_flag=True, help="Shells into the environment if the build fails."),
     dict(is_flag=True, help="Shells into the environment in lieu of the step to run."),
@@ -85,8 +78,6 @@ def get_project(
 
     project = Project(
         debug=kwargs.pop("debug"),
-        use_geoip=kwargs.pop("enable_geoip"),
-        parallel_builds=not kwargs.pop("no_parallel_builds"),
         target_deb_arch=kwargs.pop("target_arch"),
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         is_managed_host=is_managed_host,

@@ -22,7 +22,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals, Not, StartsWith
+from testtools.matchers import Contains, Equals
 
 import snapcraft
 from snapcraft.internal import common
@@ -37,6 +37,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         self.snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -206,6 +207,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -270,6 +272,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -294,50 +297,6 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             ),
             environment,
         )
-
-    def test_stage_environment_confinement_classic_with_incompat_host(self):
-        self.useFixture(FakeOsRelease(version_codename="incompatible-fake"))
-
-        snapcraft_yaml = dedent(
-            """\
-            name: test
-            version: "1"
-            summary: test
-            description: test
-            confinement: classic
-            grade: stable
-            base: core
-
-            parts:
-              part1:
-                plugin: nil
-        """
-        )
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
-        part = project_config.parts.get_part("part1")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
-        for env_item in environment:
-            self.assertThat(env_item, Not(StartsWith("LD_LIBRARY_PATH")))
-
-    def test_stage_environment_confinement_classic_with_incompat_base(self):
-        snapcraft_yaml = """\
-            name: test
-            version: "1"
-            summary: test
-            description: test
-            confinement: classic
-            grade: stable
-            base: fake-core
-
-            parts:
-              part1:
-                plugin: nil
-        """
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
-        part = project_config.parts.get_part("part1")
-        environment = project_config.parts.build_env_for_part(part, root_part=True)
-        for env_item in environment:
-            self.assertThat(env_item, Not(StartsWith("LD_LIBRARY_PATH")))
 
     def test_config_stage_environment(self):
         arch_triplet = snapcraft.ProjectOptions().arch_triplet
@@ -423,6 +382,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -551,6 +511,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -576,6 +537,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test

@@ -33,6 +33,7 @@ class InspectInvalidOptionsCommandTest(CommandBaseTestCase):
             textwrap.dedent(
                 """\
                 name: my-snap-name
+                base: core18
                 version: '0.1'
                 summary: summary
                 description: description
@@ -68,6 +69,7 @@ class InspectProvidesCommandTest(CommandBaseTestCase):
             textwrap.dedent(
                 """\
                 name: my-snap-name
+                base: core18
                 version: '0.1'
                 summary: summary
                 description: description
@@ -156,6 +158,7 @@ class InspectLatestStepTest(CommandBaseTestCase):
             textwrap.dedent(
                 """\
                 name: my-snap-name
+                base: core18
                 version: '0.1'
                 summary: summary
                 description: description
@@ -212,6 +215,7 @@ class InspectLifecycleStatusTest(CommandBaseTestCase):
             textwrap.dedent(
                 """\
                 name: my-snap-name
+                base: core18
                 version: '0.1'
                 summary: summary
                 description: description

@@ -49,6 +49,7 @@ class CreateBaseTestCase(unit.TestCase):
         self.config_data = {
             "architectures": [{"build-on": "all", "run-on": "amd64"}],
             "name": "my-package",
+            "base": "core18",
             "version": "1.0",
             "description": "my description",
             "summary": "my summary",
@@ -102,6 +103,7 @@ class CreateTestCase(CreateBaseTestCase):
             "environment": {"GLOBAL": "y"},
             "summary": "my summary",
             "name": "my-package",
+            "base": "core18",
             "version": "1.0",
         }
 
@@ -120,6 +122,7 @@ class CreateTestCase(CreateBaseTestCase):
             "environment": {"GLOBAL": "y"},
             "summary": "my summary",
             "name": "my-package",
+            "base": "core18",
             "version": "1.0",
         }
 
@@ -363,6 +366,7 @@ class CreateTestCase(CreateBaseTestCase):
             "description": "my description",
             "summary": "my summary",
             "name": "my-package",
+            "base": "core18",
             "version": "1.0",
             "confinement": "devmode",
             "grade": "stable",
@@ -519,6 +523,7 @@ class PassthroughBaseTestCase(CreateBaseTestCase):
 
         self.config_data = {
             "name": "my-package",
+            "base": "core18",
             "version": "1.0",
             "grade": "stable",
             "description": "my description",
@@ -708,6 +713,7 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
         super().setUp()
         self.config_data = {
             "name": "test-name",
+            "base": "core18",
             "version": "test-version",
             "summary": "test-summary",
             "description": "test-description",
@@ -1283,6 +1289,7 @@ class BaseWrapTest(unit.TestCase):
         snapcraft_yaml_file_path = "snapcraft.yaml"
         self.snapcraft_yaml = {
             "name": "test-snap",
+            "base": "core18",
             "version": "test-version",
             "summary": "test summary",
             "description": "test description",
@@ -1379,6 +1386,7 @@ class WrapExeTest(BaseWrapTest):
         snapcraft_yaml_file_path = "snapcraft.yaml"
         snapcraft_yaml = {
             "name": "test-snap",
+            "base": "core18",
             "version": "test-version",
             "summary": "test-summary",
             "description": "test-description",
@@ -1567,6 +1575,7 @@ class FullAdapterTest(unit.TestCase):
 
         self.snapcraft_yaml = {
             "name": "test-snap",
+            "base": "core18",
             "version": "test-version",
             "summary": "test summary",
             "description": "test description",
@@ -1682,6 +1691,7 @@ class CommandChainTest(unit.TestCase):
 
         self.snapcraft_yaml = {
             "name": "test-snap",
+            "base": "core18",
             "version": "test-version",
             "summary": "test summary",
             "description": "test description",
@@ -1689,7 +1699,7 @@ class CommandChainTest(unit.TestCase):
             "apps": {
                 "app": {
                     "command": "test-command",
-                    "adapter": "legacy",
+                    "adapter": "full",
                     "command-chain": ["test-chain"],
                 }
             },
@@ -1732,7 +1742,10 @@ class CommandChainTest(unit.TestCase):
         _create_file(cmd_path, executable=True)
 
         y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"]["command-chain"], Equals(["test-chain"]))
+        self.assertThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner", "test-chain"]),
+        )
 
 
 def _create_file(path, *, content="", executable=False):

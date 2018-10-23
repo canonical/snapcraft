@@ -78,12 +78,17 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
         self.build_packages.extend(["gcc", "git", "curl", "file"])
         self._rustpath = os.path.join(self.partdir, "rust")
         self._rustc = os.path.join(self._rustpath, "bin", "rustc")
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
         self._cargo_dir = os.path.join(self.builddir, ".cargo")
+        self._cargo_config = os.path.join(self._cargo_dir, "config")
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
@@ -118,6 +123,8 @@ class RustPlugin(snapcraft.BasePlugin):
             "--path",
             self.builddir,
         ]
+        if self.project.is_cross_compiling:
+            cmd.extend(["--target", self._target])
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(" ".join(self.options.rust_features))
@@ -128,20 +135,18 @@ class RustPlugin(snapcraft.BasePlugin):
         if not self.project.is_cross_compiling:
             return
 
+        if os.path.isfile(self._cargo_config):
+            return
+
         # Cf. http://doc.crates.io/config.html
         os.makedirs(self._cargo_dir, exist_ok=True)
         with open(os.path.join(self._cargo_dir, "config"), "w") as f:
             f.write(
                 """
-                [build]
-                target = "{}"
-
                 [target.{}]
                 linker = "{}"
                 """.format(
-                    self._target,
-                    self._target,
-                    "{}-gcc".format(self.project.arch_triplet),
+                    self._target, "{}-gcc".format(self.project.arch_triplet)
                 )
             )
 

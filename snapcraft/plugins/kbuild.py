@@ -65,14 +65,13 @@ import os
 import subprocess
 import re
 
-from snapcraft import BasePlugin
-
 import snapcraft
+from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
 
 
-class KBuildPlugin(BasePlugin):
+class KBuildPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
@@ -102,6 +101,10 @@ class KBuildPlugin(BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
         self.build_packages.extend(["bc", "gcc", "make"])
 
         self.make_targets = []

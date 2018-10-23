@@ -44,6 +44,7 @@ class ProjectInfo:
         self.architectures = self.__raw_snapcraft.get("architectures")
         self.grade = self.__raw_snapcraft.get("grade")
         self.base = self.__raw_snapcraft.get("base")
+        self.type = self.__raw_snapcraft.get("type")
 
     def get_raw_snapcraft(self):
         # TODO this should be a MappingProxyType, but ordered writing

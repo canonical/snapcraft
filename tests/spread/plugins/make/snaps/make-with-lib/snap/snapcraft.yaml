@@ -1,0 +1,12 @@
+name: make-with-lib
+version: "1.0"
+summary: Test make rebuilds
+description: Test make rebuilds
+
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: make
+    source: src/

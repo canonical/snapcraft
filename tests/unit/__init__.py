@@ -107,6 +107,15 @@ class LinkExists:
 
 
 class TestCase(testscenarios.WithScenarios, testtools.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.fake_snapd = fixture_setup.FakeSnapd()
+        cls.fake_snapd.setUp()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.fake_snapd.cleanUp()
+
     def setUp(self):
         super().setUp()
         temp_cwd_fixture = fixture_setup.TempCWD()
@@ -125,7 +134,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         # value when a test ends.
         self.addCleanup(common.set_plugindir, common.get_plugindir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
-        self.addCleanup(common.set_librariesdir, common.get_librariesdir())
         self.addCleanup(common.set_extensionsdir, common.get_extensionsdir())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(get_snapcraft_path(), "schema"))
@@ -161,6 +169,24 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
+
+        # Make sure snap installation does the right thing
+        self.fake_snapd.installed_snaps = [
+            dict(name="core16", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="latest/stable", revision="10"),
+        ]
+        self.fake_snapd.snaps_result = [
+            dict(name="core16", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="latest/stable", revision="10"),
+        ]
+        self.fake_snapd.find_result = [
+            dict(core16=dict(channels={"latest/stable": dict(confinement="strict")})),
+            dict(core18=dict(channels={"latest/stable": dict(confinement="strict")})),
+        ]
+        self.fake_snapd.snap_details_func = None
+
+        self.fake_snap_command = fixture_setup.FakeSnapCommand()
+        self.useFixture(self.fake_snap_command)
 
         # Avoid installing patchelf in the tests
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_NO_PATCHELF", "1"))
@@ -213,7 +239,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         part_properties=None,
         project_options=None,
         stage_packages_repo=None,
-        base="core",
+        base="core18",
         confinement="strict",
         snap_type="app",
     ):

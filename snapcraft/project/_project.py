@@ -27,8 +27,6 @@ class Project(ProjectOptions):
     def __init__(
         self,
         *,
-        use_geoip=False,
-        parallel_builds=True,
         target_deb_arch=None,
         debug=False,
         snapcraft_yaml_file_path=None,
@@ -56,6 +54,4 @@ class Project(ProjectOptions):
         self._work_dir = work_dir
         self._internal_dir = internal_dir
 
-        super().__init__(
-            use_geoip, parallel_builds, target_deb_arch, debug, work_dir=work_dir
-        )
+        super().__init__(target_deb_arch, debug, work_dir=work_dir)

@@ -16,12 +16,14 @@
 
 import logging
 import os
-from unittest import mock
+import textwrap
 
 import fixtures
 from testtools.matchers import Equals, HasLength
+from unittest import mock
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import kbuild
 from tests import unit
 
@@ -39,7 +41,16 @@ class KBuildPluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
     def test_schema(self):
         schema = kbuild.KBuildPlugin.schema()
@@ -83,7 +94,7 @@ class KBuildPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project_options)
+        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
 
         os.makedirs(plugin.builddir)
 
@@ -127,7 +138,7 @@ class KBuildPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project_options)
+        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
 
         os.makedirs(plugin.builddir)
 
@@ -175,7 +186,7 @@ class KBuildPluginTestCase(unit.TestCase):
         with open(self.options.kconfigfile, "w") as f:
             f.write("ACCEPT=y\n")
 
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project_options)
+        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
 
         os.makedirs(plugin.builddir)
 
@@ -228,7 +239,7 @@ ACCEPT=n
         self.options.kdefconfig = ["defconfig"]
         self.options.kconfigs = ["SOMETHING=y", "ACCEPT=n"]
 
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project_options)
+        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
 
         config_file = os.path.join(plugin.builddir, ".config")
 
@@ -300,7 +311,17 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
+        self.project = snapcraft.project.Project(
+            target_deb_arch=self.deb_arch,
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -317,7 +338,7 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
     @mock.patch("subprocess.check_call")
     @mock.patch.object(kbuild.KBuildPlugin, "run")
     def test_cross_compile(self, run_mock, check_call_mock):
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project_options)
+        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
         plugin.enable_cross_compilation()
 
         plugin.build()
@@ -327,15 +348,35 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
                     [
                         "make",
                         "-j1",
-                        "ARCH={}".format(self.project_options.kernel_arch),
-                        "CROSS_COMPILE={}".format(
-                            self.project_options.cross_compiler_prefix
-                        ),
+                        "ARCH={}".format(self.project.kernel_arch),
+                        "CROSS_COMPILE={}".format(self.project.cross_compiler_prefix),
                         "PATH={}:/usr/{}/bin".format(
-                            os.environ.copy().get("PATH", ""),
-                            self.project_options.arch_triplet,
+                            os.environ.copy().get("PATH", ""), self.project.arch_triplet
                         ),
                     ]
                 )
             ]
         )
+
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError,
+            kbuild.KBuildPlugin,
+            "test-part",
+            self.options,
+            project,
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))

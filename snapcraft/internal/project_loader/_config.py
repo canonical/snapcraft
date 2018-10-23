@@ -25,6 +25,7 @@ from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
 from snapcraft.internal import deprecations, states, steps
+from snapcraft.project._sanity_checks import conduct_environment_sanity_check
 
 from ._schema import Validator
 from ._parts_config import PartsConfig
@@ -218,6 +219,16 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
 
+        # Always add the base for building for non os and base snaps
+        if project.info.base is not None and project.info.type not in ("base", "os"):
+            self.build_snaps.add(project.info.base)
+        elif project.info.type not in ("base", "os"):
+            # This exception is here to help with porting issues with bases. In normal
+            # executions, when no base is set, the legacy snapcraft will be executed.
+            raise RuntimeError(
+                "A base is required for {!r} snaps.".format(project.info.type)
+            )
+
         self.parts = PartsConfig(
             parts=self.data,
             project=project,
@@ -229,6 +240,8 @@ class Config:
         self.data["architectures"] = _process_architectures(
             self.data.get("architectures"), project.deb_arch
         )
+
+        conduct_environment_sanity_check(self.project, self.data, self.validator.schema)
 
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names

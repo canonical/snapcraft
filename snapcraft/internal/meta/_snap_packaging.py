@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import enum
 import collections
 import contextlib
 import itertools
@@ -62,13 +61,6 @@ _OPTIONAL_PACKAGE_KEYS = [
     "slots",
     "type",
 ]
-
-
-@enum.unique
-class Adapter(enum.Enum):
-    NONE = 1
-    LEGACY = 2
-    FULL = 3
 
 
 class OctInt(yaml_utils.SnapcraftYAMLObject):
@@ -608,10 +600,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == ".desktop":
                 os.remove(os.path.join(gui_dir, f))
         for app_name, app in apps.items():
-            adapter = Adapter[app.pop("adapter").upper()]
-            if adapter == Adapter.LEGACY:
+            adapter = project_loader.Adapter[app.pop("adapter").upper()]
+            if adapter == project_loader.Adapter.LEGACY:
                 self._wrap_app(app_name, app)
-            elif adapter == Adapter.FULL:
+            elif adapter == project_loader.Adapter.FULL:
                 self._add_command_chain_to_app(app_name, app)
             self._generate_desktop_file(app_name, app)
         return apps

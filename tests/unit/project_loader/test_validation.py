@@ -41,6 +41,7 @@ class ValidationBaseTest(unit.TestCase):
 
         self.data = {
             "name": "my-package-1",
+            "base": "core18",
             "version": "1.0-snapcraft1~ppa1",
             "summary": "my summary less that 79 chars",
             "description": "description which can be pretty long",
@@ -607,6 +608,7 @@ class NameTest(unit.TestCase):
         snapcraft_yaml = dedent(
             """\
             name: {}
+            base: core18
             summary: test
             description: nothing
             confinement: strict
@@ -674,6 +676,7 @@ class IconTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -699,6 +702,7 @@ class IconTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -726,6 +730,7 @@ class OrganizeTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -755,6 +760,7 @@ class OrganizeTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -859,6 +865,7 @@ class VersionTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: 'abcdefghijklmnopqrstuvwxyz1234567' # Max is 32 in the store
             summary: test
             description: test
@@ -955,6 +962,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             dedent(
                 """\
             name: project-name
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -991,6 +999,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: project-name
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -1047,6 +1056,7 @@ class ValidAppNamesTest(ProjectLoaderBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1097,6 +1107,7 @@ class InvalidAppNamesYamlTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1156,6 +1167,7 @@ class InvalidHookNamesYamlTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1196,6 +1208,7 @@ class ValidConfinmentTest(ProjectLoaderBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1224,6 +1237,7 @@ class InvalidConfinementTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1260,6 +1274,7 @@ class ValidGradeTest(ProjectLoaderBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1286,6 +1301,7 @@ class InvalidGradeTest(ProjectLoaderBaseTest):
         snapcraft_yaml = (
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1332,6 +1348,7 @@ class ValidEpochsTest(ProjectLoaderBaseTest):
             dedent(
                 """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1371,6 +1388,7 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1399,6 +1417,7 @@ class LicenseTest(ProjectLoaderBaseTest):
             dedent(
                 """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: nothing
@@ -1414,6 +1433,7 @@ class LicenseTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1441,6 +1461,7 @@ class ValidAdaptersTest(ProjectLoaderBaseTest):
             dedent(
                 """\
                 name: test
+                base: core18
                 version: "1"
                 summary: test
                 description: nothing
@@ -1469,6 +1490,7 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: nothing
@@ -1638,6 +1660,7 @@ class ValidArchitecturesTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -1666,6 +1689,7 @@ class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: my-package-1
+            base: core18
             version: 1.0-snapcraft1~ppa1
             summary: my summary less that 79 chars
             description: description which can be pretty long
@@ -1726,6 +1750,7 @@ class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: my-package-1
+            base: core18
             version: 1.0-snapcraft1~ppa1
             summary: my summary less that 79 chars
             description: description which can be pretty long
@@ -1780,6 +1805,7 @@ class InvalidCommandChainTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test-snap
+            base: core18
             version: "1.0"
             summary: test summary
             description: test description

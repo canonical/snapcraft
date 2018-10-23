@@ -49,6 +49,7 @@ class VCSBuildPackagesTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -84,6 +85,7 @@ class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
         snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test
@@ -111,6 +113,7 @@ class XCompileTest(ProjectLoaderBaseTest):
         self.snapcraft_yaml = dedent(
             """\
             name: test
+            base: core18
             version: "1"
             summary: test
             description: test

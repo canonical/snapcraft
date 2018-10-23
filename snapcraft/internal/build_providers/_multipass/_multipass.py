@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import shlex
 import sys
@@ -23,6 +24,9 @@ from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_platform() -> str:
@@ -42,6 +46,23 @@ def _get_stop_time() -> int:
         )
 
     return timeout
+
+
+class _MachineSetting:
+    def __init__(self, *, envvar: str, default: str) -> None:
+        self._default = default
+        self._envvar = envvar
+
+    def get_value(self):
+        value = os.getenv(self._envvar, self._default)
+        if value != self._default:
+            logger.warning(
+                "{!r} was set to {!r} in the environment. "
+                "Changing the default allocation upon user request".format(
+                    self._envvar, value
+                )
+            )
+        return value
 
 
 class Multipass(Provider):
@@ -68,17 +89,17 @@ class Multipass(Provider):
         cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
-        cpus = os.getenv(
-            "SNAPCRAFT_BUILD_ENVIRONMENT_CPU", str(self.project.parallel_build_count)
+        cpus = _MachineSetting(envvar="SNAPCRAFT_BUILD_ENVIRONMENT_CPU", default="2")
+        mem = _MachineSetting(envvar="SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", default="2G")
+        disk = _MachineSetting(
+            envvar="SNAPCRAFT_BUILD_ENVIRONMENT_DISK", default="256G"
         )
-        mem = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "2G")
-        disk = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "256G")
 
         self._multipass_cmd.launch(
             instance_name=self.instance_name,
-            cpus=cpus,
-            mem=mem,
-            disk=disk,
+            cpus=cpus.get_value(),
+            mem=mem.get_value(),
+            disk=disk.get_value(),
             image=image,
             cloud_init=cloud_user_data_filepath,
         )
@@ -129,20 +150,25 @@ class Multipass(Provider):
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
-        if self._instance_info is None:
+        try:
+            instance_info = self._instance_info = self._get_instance_info()
+        except errors.ProviderInfoError:
             return
 
-        if not self._instance_info.is_stopped():
-            stop_time = _get_stop_time()
-            if stop_time > 0:
-                try:
-                    self._multipass_cmd.stop(
-                        instance_name=self.instance_name, time=stop_time
-                    )
-                except errors.ProviderStopError:
-                    self._multipass_cmd.stop(instance_name=self.instance_name)
-            else:
+        if instance_info.is_stopped():
+            return
+
+        stop_time = _get_stop_time()
+        if stop_time > 0:
+            try:
+                self._multipass_cmd.stop(
+                    instance_name=self.instance_name, time=stop_time
+                )
+            except errors.ProviderStopError:
                 self._multipass_cmd.stop(instance_name=self.instance_name)
+        else:
+            self._multipass_cmd.stop(instance_name=self.instance_name)
+
         if self._is_ephemeral:
             self.clean_project()
 

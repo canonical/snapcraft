@@ -572,6 +572,7 @@ class SnapcraftYaml(fixtures.Fixture):
         self,
         path,
         name="test-snap",
+        base="core18",
         version="test-version",
         summary="test-summary",
         description="test-description",
@@ -591,6 +592,8 @@ class SnapcraftYaml(fixtures.Fixture):
             self.data["description"] = description
         if architectures is not None:
             self.data["architectures"] = architectures
+        if base is not None:
+            self.data["base"] = base
 
     def update_part(self, name, data):
         part = {name: data}

@@ -72,7 +72,6 @@ class ProviderImpl(Provider):
 
     def create(self):
         self.create_mock("create")
-        # raise EnvironmentError(self.create_mock.call_args)
 
     def destroy(self):
         self.destroy_mock("destroy")
@@ -90,11 +89,10 @@ class ProviderImpl(Provider):
         self.shell_mock("shell")
 
 
-def get_project(base: str = "") -> Project:
+def get_project(base: str = "core16") -> Project:
     with open("snapcraft.yaml", "w") as snapcraft_file:
         print("name: project-name", file=snapcraft_file)
-        if base:
-            print("base: {}".format(base), file=snapcraft_file)
+        print("base: {}".format(base), file=snapcraft_file)
 
     return Project(snapcraft_yaml_file_path="snapcraft.yaml")
 

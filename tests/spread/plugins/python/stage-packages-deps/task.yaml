@@ -1,0 +1,30 @@
+summary: |
+  Ensure yamllint, a python package from PyPI is satisfied by yaml installed
+  using stage-packages.
+
+environment:
+  SNAP_DIR: ../snaps/python-with-stage-packages
+
+prepare: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft build
+
+  python2="$(ls parts/python2/install/lib | grep python2)"
+  [ -d "parts/python2/install/lib/$python2/site-packages/yamllint" ]
+  [ -d "parts/python2/install/usr/lib/$python2/dist-packages/yaml" ]
+  [ ! -d "parts/python2/install/lib/$python2/site-packages/yaml" ]
+
+  python3="$(ls parts/python3/install/lib | grep python3)"
+  [ -d "parts/python3/install/lib/$python3/site-packages/yamllint" ]
+  [ -d "parts/python3/install/usr/lib/python3/dist-packages/yaml" ]
+  [ ! -d "parts/python3/install/lib/$python3/site-packages/yaml" ]

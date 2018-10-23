@@ -763,7 +763,6 @@ class PluginHandler:
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
-        # TODO: base snap support
         core_path = common.get_core_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
@@ -849,8 +848,7 @@ class PluginHandler:
 
     def _handle_dependencies(self, all_dependencies: Set[str]):
         # Split the necessary dependencies into their corresponding location.
-        # We'll both migrate and track the system dependencies, but we'll only
-        # track the part and staged dependencies, since they should have
+        # We'll only track the part and staged dependencies, since they should have
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
@@ -860,32 +858,16 @@ class PluginHandler:
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
-        if not self._build_attributes.no_system_libraries():
-            system_dependency_paths = {os.path.dirname(d) for d in system}
-            dependency_paths.update(system_dependency_paths)
-
-            if system:
-                # Lots of dependencies are linked with a symlink, so we need to
-                # make sure we follow those symlinks when we migrate the
-                # dependencies.
-                _migrate_files(
-                    system,
-                    system_dependency_paths,
-                    "/",
-                    self.primedir,
-                    follow_symlinks=True,
+        if system:
+            formatted_system = "\n".join(sorted(system))
+            # We cannot error if we consider the content interface...
+            logger.warning(
+                "The {part_name!r} part needs the following libraries that are not "
+                "included in the snap or base: \n{files}\nThese dependencies can be "
+                "satisfied via more stage-packages, more parts, or content sharing.".format(
+                    part_name=self.name, files=formatted_system
                 )
-                formatted_system = "\n".join(sorted(system))
-                logger.warning(
-                    "Files from the build host were migrated into the snap to "
-                    "satisfy dependencies that would otherwise not be met. "
-                    "This feature will be removed in a future release. If "
-                    "these libraries are needed in the final snap, ensure "
-                    "that the following are either satisfied by a "
-                    "stage-packages entry or through a part:\n{}".format(
-                        formatted_system
-                    )
-                )
+            )
         return dependency_paths
 
     def get_primed_dependency_paths(self):

@@ -18,11 +18,13 @@
 import collections
 import os
 import subprocess
-from unittest import mock
+import textwrap
 
 from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
+from unittest import mock
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import rust
 from tests import unit
 
@@ -49,7 +51,17 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
             source_subdir = ""
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
+        self.project = snapcraft.project.Project(
+            target_deb_arch=self.deb_arch,
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -69,7 +81,7 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
 
     @mock.patch("snapcraft.internal.sources._script.Script.download")
     def test_cross_compile(self, mock_download):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         plugin.enable_cross_compilation()
@@ -105,7 +117,6 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
 
         plugin.build()
         self.assertThat(os.path.join(plugin._cargo_dir, "config"), FileExists())
-
         self.assertThat(self.run_mock.call_count, Equals(3))
         self.run_mock.assert_has_calls(
             [
@@ -118,6 +129,8 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
                         plugin.installdir,
                         "--path",
                         plugin.builddir,
+                        "--target",
+                        plugin._target,
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -151,7 +164,16 @@ class RustPluginTestCase(unit.TestCase):
             source_subdir = ""
 
         self.options = Options()
-        self.project_options = snapcraft.ProjectOptions()
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            )
+        )
 
     def test_schema(self):
         schema = rust.RustPlugin.schema()
@@ -195,7 +217,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.RustPlugin, "run")
     @mock.patch.object(rust.RustPlugin, "run_output")
     def test_build_with_conditional_compilation(self, _, run_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         plugin.options.rust_features = ["conditional-compilation"]
         os.makedirs(plugin.sourcedir)
 
@@ -234,7 +256,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.sources, "Script")
     @mock.patch.object(rust.RustPlugin, "run")
     def test_pull(self, run_mock, script_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = []
         plugin.options.rust_channel = []
@@ -269,7 +291,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.sources, "Script")
     @mock.patch.object(rust.RustPlugin, "run")
     def test_pull_with_channel(self, run_mock, script_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = ""
         plugin.options.rust_channel = "nightly"
@@ -305,7 +327,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.sources, "Script")
     @mock.patch.object(rust.RustPlugin, "run")
     def test_pull_with_revision(self, run_mock, script_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = "1.13.0"
         plugin.options.rust_channel = ""
@@ -341,7 +363,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.sources, "Script")
     @mock.patch.object(rust.RustPlugin, "run")
     def test_pull_with_source_and_source_subdir(self, run_mock, script_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.source_subdir = "test-subdir"
 
@@ -364,7 +386,7 @@ class RustPluginTestCase(unit.TestCase):
 
     @mock.patch("snapcraft.ProjectOptions.deb_arch", "fantasy-arch")
     def test_cross_compiling_unsupported_arch_raises_exception(self):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
@@ -372,7 +394,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.RustPlugin, "run")
     @mock.patch.object(rust.RustPlugin, "run_output")
     def test_build(self, _, run_mock):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
@@ -406,7 +428,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.RustPlugin, "run")
     @mock.patch.object(rust.RustPlugin, "run_output")
     def test_get_manifest_with_cargo_lock_file(self, *_):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(plugin.builddir)
 
@@ -423,7 +445,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.RustPlugin, "run")
     @mock.patch.object(rust.RustPlugin, "run_output")
     def test_get_manifest_with_unexisting_cargo_lock(self, *_):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(plugin.builddir)
 
@@ -434,7 +456,7 @@ class RustPluginTestCase(unit.TestCase):
     @mock.patch.object(rust.RustPlugin, "run")
     @mock.patch.object(rust.RustPlugin, "run_output")
     def test_get_manifest_with_cargo_lock_dir(self, *_):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(plugin.builddir)
 
@@ -446,7 +468,7 @@ class RustPluginTestCase(unit.TestCase):
 
     @mock.patch.object(rust.RustPlugin, "run")
     def test_get_manifest_with_versions(self, _):
-        plugin = rust.RustPlugin("test-part", self.options, self.project_options)
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         original_check_output = subprocess.check_output
@@ -467,3 +489,22 @@ class RustPluginTestCase(unit.TestCase):
         expected_manifest["cargo-version"] = "test cargo version"
 
         self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+    def test_unsupported_base(self):
+        project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: unsupported-base
+                    """
+                )
+            )
+        )
+
+        raised = self.assertRaises(
+            errors.PluginBaseError, rust.RustPlugin, "test-part", self.options, project
+        )
+
+        self.assertThat(raised.part_name, Equals("test-part"))
+        self.assertThat(raised.base, Equals("unsupported-base"))

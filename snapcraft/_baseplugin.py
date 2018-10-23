@@ -41,32 +41,14 @@ class BasePlugin:
             "type": "object",
             "additionalProperties": False,
             "properties": {},
-            "pull-properties": [],
-            "build-properties": [],
         }
 
     @classmethod
     def get_pull_properties(cls):
-        schema_pull_properties = cls.schema().get("pull-properties", [])
-        if schema_pull_properties:
-            logger.warning(
-                "Use of pull-properties in the schema is deprecated.\n"
-                "Plugins should now implement get_pull_properties"
-            )
-            return schema_pull_properties
-
         return []
 
     @classmethod
     def get_build_properties(cls):
-        schema_build_properties = cls.schema().get("build-properties", [])
-        if schema_build_properties:
-            logger.warning(
-                "Use of build-properties in the schema is deprecated.\n"
-                "Plugins should now implement get_build_properties"
-            )
-            return schema_build_properties
-
         return []
 
     @property

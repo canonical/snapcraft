@@ -94,6 +94,7 @@ class MultipassTest(BaseProviderBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
     def test_ephemeral_instance_with_contextmanager(self):
@@ -106,7 +107,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="256G",
             image="snapcraft:core16",
@@ -134,7 +135,7 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),
@@ -190,7 +191,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="4G",
             disk="256G",
             image="snapcraft:core16",
@@ -207,7 +208,7 @@ class MultipassTest(BaseProviderBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="400G",
             image="snapcraft:core16",
@@ -354,10 +355,6 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             dict(platform="linux", base="core18", expected_image="snapcraft:core18"),
         ),
         (
-            "linux no base",
-            dict(platform="linux", base=None, expected_image="snapcraft:core16"),
-        ),
-        (
             "darwin",
             dict(platform="darwin", base="core18", expected_image="snapcraft:core18"),
         ),
@@ -403,6 +400,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
     def test_lifecycle(self):
@@ -414,7 +412,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
-            cpus=mock.ANY,
+            cpus="2",
             mem="2G",
             disk="256G",
             image=self.expected_image,
@@ -439,7 +437,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             target="{}:{}".format(self.instance_name, "/home/multipass/project"),
         )
         self.multipass_cmd_mock().umount.assert_not_called()
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),

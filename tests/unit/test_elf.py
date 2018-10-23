@@ -25,7 +25,6 @@ from unittest import mock
 
 from snapcraft.internal import errors, elf
 from tests import unit, fixture_setup
-from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class TestElfBase(unit.TestCase):
@@ -101,12 +100,6 @@ class TestElfFileSmoketest(unit.TestCase):
 class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
-
-        patcher = mock.patch("snapcraft.internal.elf._get_system_libs")
-        self.get_system_libs_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.get_system_libs_mock.return_value = frozenset()
 
         patcher = mock.patch("os.path.exists")
         self.path_exists_mock = patcher.start()
@@ -194,15 +187,6 @@ class TestGetLibraries(TestElfBase):
             ),
         )
 
-    def test_get_libraries_filtered_by_system_libraries(self):
-        self.get_system_libs_mock.return_value = frozenset(["foo.so.1"])
-
-        elf_file = self.fake_elf["fake_elf-2.23"]
-        libs = elf_file.load_dependencies(
-            root_path="/", core_base_path="/snap/core/current"
-        )
-        self.assertThat(libs, Equals(frozenset(["/usr/lib/bar.so.2"])))
-
     def test_get_libraries_ldd_failure_logs_warning(self):
         elf_file = self.fake_elf["fake_elf-bad-ldd"]
         libs = elf_file.load_dependencies(
@@ -214,36 +198,6 @@ class TestGetLibraries(TestElfBase):
         self.assertThat(
             self.fake_logger.output,
             Contains("Unable to determine library dependencies for"),
-        )
-
-
-class TestSystemLibsOnNewRelease(TestElfBase):
-    def setUp(self):
-        super().setUp()
-        self.useFixture(FakeOsRelease())
-
-    def test_fail_gracefully_if_system_libs_not_found(self):
-        elf_file = self.fake_elf["fake_elf-2.23"]
-        libs = elf_file.load_dependencies(
-            root_path="/fake", core_base_path="/fake-core"
-        )
-        self.assertThat(libs, Equals(frozenset()))
-
-
-class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        elf._libraries = None
-        self.useFixture(FakeOsRelease(version_id=None))
-
-    @mock.patch(
-        "snapcraft.internal.elf.repo.Repo.get_package_libraries",
-        return_value=["/usr/lib/libc.so.6", "/lib/libpthreads.so.6"],
-    )
-    def test_fail_gracefully_if_no_version_id_found(self, mock_package_libs):
-        self.assertThat(
-            elf._get_system_libs(), Equals(frozenset(["libc.so.6", "libpthreads.so.6"]))
         )
 
 
