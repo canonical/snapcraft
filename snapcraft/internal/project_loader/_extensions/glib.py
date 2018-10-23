@@ -63,7 +63,7 @@ class GlibExtension(Extension):
         }
 
         # Add the following snippet to each part in the snapcraft.yaml
-        self.part_snippet = {"after": ["glib-extension-init"]}
+        self.part_snippet = {"after": ["glib-extension"]}
 
         # Add the following part
         self.parts = {
