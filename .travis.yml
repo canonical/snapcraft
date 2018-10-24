@@ -24,9 +24,14 @@ jobs:
     - stage: static
       name: static tests
       if: type != cron
+      addons:
+        apt:
+          packages:
+            python3.5-dev
+            snapd
+            python3-yaml
+            libyaml-dev
       install:
-        - sudo apt update
-        - sudo apt install -y python3.5-dev snapd shellcheck libyaml-dev
         # workaround for "cannot locate the core snap: No such file or directory"
         - sudo snap install core
         - sudo snap install black --devmode --edge

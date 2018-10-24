@@ -1,4 +1,4 @@
-#!/snap/core/current/usr/bin/python3
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Canonical Ltd
 #
@@ -24,7 +24,7 @@ from multiprocessing import cpu_count
 import yaml
 
 # path for shellcheck binary
-SHELLCHECK = os.getenv("SHELLCHECK", "/snap/bin/shellcheck")
+SHELLCHECK = os.getenv("SHELLCHECK", "shellcheck")
 # set to non-empty to ignore all errors
 NO_FAIL = os.getenv("NO_FAIL")
 # set to non empty to enable 'set -x'

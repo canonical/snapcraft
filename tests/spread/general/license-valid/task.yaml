@@ -26,4 +26,4 @@ execute: |
 
   snapcraft  
 
-  MATCH -v "license: MIT" < meta/snap.yaml
+  MATCH -v "license: MIT" < prime/meta/snap.yaml
