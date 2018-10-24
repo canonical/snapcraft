@@ -18,6 +18,7 @@ import logging
 import os
 import shlex
 import sys
+from typing import Sequence
 
 from .. import errors
 from .._base_provider import Provider
@@ -72,7 +73,8 @@ class Multipass(Provider):
     def _get_provider_name(cls):
         return "multipass"
 
-    def _run(self, command, hide_output: bool = False) -> None:
+    def _run(self, command: Sequence[str], hide_output: bool = False) -> None:
+        command = ["sudo", "-i"] + list(command)
         self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
@@ -176,7 +178,7 @@ class Multipass(Provider):
         # Resolve the home directory
         home_dir = (
             self._multipass_cmd.execute(
-                command=["printenv", "HOME"],
+                command=["sudo", "-i", "printenv", "HOME"],
                 hide_output=True,
                 instance_name=self.instance_name,
             )
@@ -199,7 +201,7 @@ class Multipass(Provider):
 
         # First create a working directory
         self._multipass_cmd.execute(
-            command=["mkdir", self._INSTANCE_PROJECT_DIR],
+            command=["sudo", "-i", "mkdir", self._INSTANCE_PROJECT_DIR],
             instance_name=self.instance_name,
         )
 
@@ -208,7 +210,15 @@ class Multipass(Provider):
         self._multipass_cmd.copy_files(source=tarball, destination=destination)
 
         # Finally extract it into project_dir.
-        extract_cmd = ["tar", "-xvf", tarball, "-C", self._INSTANCE_PROJECT_DIR]
+        extract_cmd = [
+            "sudo",
+            "-i",
+            "tar",
+            "-xvf",
+            tarball,
+            "-C",
+            self._INSTANCE_PROJECT_DIR,
+        ]
         self._multipass_cmd.execute(
             command=extract_cmd, instance_name=self.instance_name
         )
@@ -222,7 +232,7 @@ class Multipass(Provider):
     def build_project(self) -> None:
         # TODO add instance check.
         self._multipass_cmd.execute(
-            command=["snapcraft", "snap", "--output", self.snap_filename],
+            command=["sudo", "-i", "snapcraft", "snap", "--output", self.snap_filename],
             instance_name=self.instance_name,
         )
 
@@ -235,7 +245,9 @@ class Multipass(Provider):
         return self.snap_filename
 
     def shell(self) -> None:
-        self._multipass_cmd.shell(instance_name=self.instance_name)
+        self._multipass_cmd.execute(
+            instance_name=self.instance_name, command=["sudo", "-i", "/bin/bash"]
+        )
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(

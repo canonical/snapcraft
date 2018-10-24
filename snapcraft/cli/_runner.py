@@ -22,7 +22,8 @@ from distutils import util
 import click
 
 import snapcraft
-from snapcraft.internal import log
+from snapcraft import project, yaml_utils
+from snapcraft.internal import common, log
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
@@ -52,6 +53,38 @@ command_groups = [
 ]
 
 
+def _is_legacy_reexec() -> bool:
+    if not os.path.isdir(common.get_legacy_snapcraft_dir()):
+        return False
+
+    try:
+        # Early bootstrapping does not allow us to use the existing utilities we
+        # have to manage this check.
+        if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+            base_dir = os.path.expanduser(os.path.join("~", "project"))
+        else:
+            base_dir = None
+        snapcraft_yaml_path = project.get_snapcraft_yaml(base_dir=base_dir)
+        with open(snapcraft_yaml_path, "r") as f:
+            data = yaml_utils.load(f)
+        return data.get("base") is None
+    except Exception:
+        # If there are issues loading/parsing the YAML, just pass off to the current version
+        # where the error should be properly handled
+        return False
+
+
+def _legacy_reexec() -> None:
+    legacy_python = os.path.join(
+        common.get_legacy_snapcraft_dir(), "usr", "bin", "python3"
+    )
+    legacy_snapcraft = os.path.join(
+        common.get_legacy_snapcraft_dir(), "bin", "snapcraft"
+    )
+
+    os.execv(legacy_python, [legacy_python, legacy_snapcraft] + sys.argv[1:])
+
+
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
 @click.version_option(
     message=SNAPCRAFT_VERSION_TEMPLATE, version=snapcraft.__version__  # type: ignore
@@ -62,18 +95,8 @@ command_groups = [
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
-    # Do this early, if we are in managed-host and not root yet we want to re-exec with
-    # sudo keeping the current environment settings.
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host" and os.geteuid() != 0:
-        snap_path = os.getenv("SNAP")
-        # Use -E to keep the environment.
-        cmd = ["usr/bin/sudo", "-E"]
-        # Pick the correct interpreter if running from a snap (in managed-host mode, this
-        # is most likely the only scenario).
-        if os.getenv("SNAP_NAME") == "snapcraft":
-            cmd.append(os.path.join(snap_path, "usr", "bin", "python3"))
-        cmd.extend(sys.argv)
-        os.execve("/usr/bin/sudo", cmd, os.environ)
+    if _is_legacy_reexec():
+        _legacy_reexec()
 
     # Debugging snapcraft itself is not tied to debugging a snapcraft project.
     try:

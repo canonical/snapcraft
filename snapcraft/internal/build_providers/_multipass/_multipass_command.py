@@ -149,16 +149,16 @@ class MultipassCommand:
             ) from process_error
 
     def execute(
-        self, *, command: List[str], instance_name: str, hide_output: bool = False
+        self, *, command: Sequence[str], instance_name: str, hide_output: bool = False
     ) -> Optional[bytes]:
         """Passthrough for running multipass exec.
 
         :param list command: the command to exectute on the instance.
         :param str instance_name: the name of the instance to execute command.
         """
-        cmd = [self.provider_cmd, "exec", instance_name, "--"] + command
+        cmd = [self.provider_cmd, "exec", instance_name, "--"] + list(command)
         if hide_output:
-            runnable = _run_output  # type: Callable[[List[Any]], Optional[bytes]]
+            runnable = _run_output  # type: Callable[[Sequence[Any]], Optional[bytes]]
         else:
             runnable = _run
         try:

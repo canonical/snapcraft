@@ -141,9 +141,9 @@ else:
         package_data=package_data,
         license=license,
         classifiers=classifiers,
+        entry_points=dict(console_scripts=["snapcraft = snapcraft.cli.__main__:run"]),
         # snapcraftctl is not in console_scripts because we need a clean environment.
-        # snapcraft isn't in console_scripts so we can dispatch to legacy depending on bases
-        scripts=["bin/snapcraft", "bin/snapcraftctl"],
+        scripts=["bin/snapcraftctl"],
         data_files=[
             ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")])
         ]
