@@ -18,7 +18,7 @@ import logging
 import os
 import shlex
 import sys
-from typing import Sequence
+from typing import Dict, Sequence
 
 from .. import errors
 from .._base_provider import Provider
@@ -124,8 +124,8 @@ class Multipass(Provider):
         *,
         mountpoint: str,
         dev_or_path: str,
-        uid_map: str = None,
-        gid_map: str = None
+        uid_map: Dict[str, str] = None,
+        gid_map: Dict[str, str] = None
     ) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.mount(
@@ -195,8 +195,8 @@ class Multipass(Provider):
             .strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
-        uid_map = "{}:0".format(os.getuid())
-        gid_map = "{}:0".format(os.getgid())
+        uid_map = {str(os.getuid()): "0"}
+        gid_map = {str(os.getgid()): "0"}
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):

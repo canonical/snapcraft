@@ -264,28 +264,8 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
     def test_mount_uid(self):
         source = "mountpath"
         target = "{}/mountpoint".format(self.instance_name)
-        self.multipass_command.mount(source=source, target=target, uid_map="1000:0")
-
-        self.check_call_mock.assert_called_once_with(
-            ["multipass", "mount", source, target, "--uid-map", "1000:0"]
-        )
-        self.check_output_mock.assert_not_called()
-
-    def test_mount_gid(self):
-        source = "mountpath"
-        target = "{}/mountpoint".format(self.instance_name)
-        self.multipass_command.mount(source=source, target=target, gid_map="1000:0")
-
-        self.check_call_mock.assert_called_once_with(
-            ["multipass", "mount", source, target, "--gid-map", "1000:0"]
-        )
-        self.check_output_mock.assert_not_called()
-
-    def test_mount_uid_and_gid(self):
-        source = "mountpath"
-        target = "{}/mountpoint".format(self.instance_name)
         self.multipass_command.mount(
-            source=source, target=target, uid_map="1000:0", gid_map="1000:0"
+            source=source, target=target, uid_map={"1000": "0", "900": "0"}
         )
 
         self.check_call_mock.assert_called_once_with(
@@ -296,8 +276,57 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
                 target,
                 "--uid-map",
                 "1000:0",
+                "--uid-map",
+                "900:0",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_mount_gid(self):
+        source = "mountpath"
+        target = "{}/mountpoint".format(self.instance_name)
+        self.multipass_command.mount(
+            source=source, target=target, gid_map={"1000": "0", "900": "0"}
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "mount",
+                source,
+                target,
                 "--gid-map",
                 "1000:0",
+                "--gid-map",
+                "900:0",
+            ]
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_mount_uid_and_gid(self):
+        source = "mountpath"
+        target = "{}/mountpoint".format(self.instance_name)
+        self.multipass_command.mount(
+            source=source,
+            target=target,
+            uid_map={"1000": "0", "900": "1"},
+            gid_map={"1000": "0", "900": "2"},
+        )
+
+        self.check_call_mock.assert_called_once_with(
+            [
+                "multipass",
+                "mount",
+                source,
+                target,
+                "--uid-map",
+                "1000:0",
+                "--uid-map",
+                "900:1",
+                "--gid-map",
+                "1000:0",
+                "--gid-map",
+                "900:2",
             ]
         )
         self.check_output_mock.assert_not_called()

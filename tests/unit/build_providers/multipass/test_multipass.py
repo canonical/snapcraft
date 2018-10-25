@@ -458,8 +458,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.multipass_cmd_mock().mount.assert_called_once_with(
             source=mock.ANY,
             target="{}:{}".format(self.instance_name, "/root/project"),
-            uid_map="{}:0".format(os.getuid()),
-            gid_map="{}:0".format(os.getgid()),
+            uid_map={str(os.getuid()): "0"},
+            gid_map={str(os.getgid()): "0"},
         )
         self.multipass_cmd_mock().umount.assert_not_called()
         self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))

@@ -18,7 +18,7 @@ import logging
 import signal
 import shutil
 import subprocess
-from typing import Any, Callable, List, Optional, Sequence, Union  # noqa: F401
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
 
 from snapcraft.internal.build_providers import errors
 
@@ -183,28 +183,37 @@ class MultipassCommand:
             ) from process_error
 
     def mount(
-        self, *, source: str, target: str, uid_map: str = None, gid_map: str = None
+        self,
+        *,
+        source: str,
+        target: str,
+        uid_map: Dict[str, str] = None,
+        gid_map: Dict[str, str] = None
     ) -> None:
         """Passthrough for running multipass mount.
 
         :param str source: path to the local directory to mount.
         :param str target: mountpoint inside the instance in the form of
                            <instance-name>:path.
-        :param str uid_map: A mapping of user IDs for use in the mount of the form
-                            <host>:<instance-name>.
-                            File and folder ownership will be mapped from
-                            <host> to <instance-name> inside the instance.
-        :param str gid_map: A mapping of group IDs for use in the mount of the form
-                            <host>:<instance-name>.
-                            File and folder ownership will be mapped from
-                            <host> to <instance-name> inside the instance.
+        :param dict uid_map: A mapping of user IDs for use in the mount of the form
+                             <host-id> -> <instance-id>.
+                             File and folder ownership will be mapped from
+                             <host> to <instance-name> inside the instance.
+        :param dict gid_map: A mapping of group IDs for use in the mount of the form
+                             <host-id> -> <instance-id>.
+                             File and folder ownership will be mapped from
+                             <host> to <instance-name> inside the instance.
         :raises errors.ProviderMountError: when the mount operation fails.
         """
         cmd = [self.provider_cmd, "mount", source, target]
-        if uid_map is not None:
-            cmd.extend(["--uid-map", uid_map])
-        if gid_map is not None:
-            cmd.extend(["--gid-map", gid_map])
+        if uid_map is None:
+            uid_map = dict()
+        for host_map, instance_map in uid_map.items():
+            cmd.extend(["--uid-map", "{}:{}".format(host_map, instance_map)])
+        if gid_map is None:
+            gid_map = dict()
+        for host_map, instance_map in gid_map.items():
+            cmd.extend(["--gid-map", "{}:{}".format(host_map, instance_map)])
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
