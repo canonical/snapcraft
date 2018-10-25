@@ -119,9 +119,18 @@ class Multipass(Provider):
 
         self._multipass_cmd.start(instance_name=self.instance_name)
 
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
+    def _mount(
+        self,
+        *,
+        mountpoint: str,
+        dev_or_path: str,
+        uid_map: str = None,
+        gid_map: str = None
+    ) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
-        self._multipass_cmd.mount(source=dev_or_path, target=target)
+        self._multipass_cmd.mount(
+            source=dev_or_path, target=target, uid_map=uid_map, gid_map=gid_map
+        )
 
     def _umount(self, *, mountpoint: str) -> None:
         mount = "{}:{}".format(self.instance_name, mountpoint)
@@ -186,11 +195,16 @@ class Multipass(Provider):
             .strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
+        uid_map = "{}:0".format(os.getuid())
+        gid_map = "{}:0".format(os.getgid())
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
             self._mount(
-                mountpoint=project_mountpoint, dev_or_path=self.project._project_dir
+                mountpoint=project_mountpoint,
+                dev_or_path=self.project._project_dir,
+                uid_map=uid_map,
+                gid_map=gid_map,
             )
 
     def provision_project(self, tarball: str) -> None:

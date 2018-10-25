@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from textwrap import dedent
 from unittest import mock
 
@@ -455,7 +456,10 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             ]
         )
         self.multipass_cmd_mock().mount.assert_called_once_with(
-            source=mock.ANY, target="{}:{}".format(self.instance_name, "/root/project")
+            source=mock.ANY,
+            target="{}:{}".format(self.instance_name, "/root/project"),
+            uid_map="{}:0".format(os.getuid()),
+            gid_map="{}:0".format(os.getgid()),
         )
         self.multipass_cmd_mock().umount.assert_not_called()
         self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
