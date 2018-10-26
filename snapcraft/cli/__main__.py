@@ -56,7 +56,6 @@ def _needs_legacy() -> bool:
         snapcraft_yaml_path = project.get_snapcraft_yaml(base_dir=base_dir)
         with open(snapcraft_yaml_path, "r") as f:
             data = yaml_utils.load(f)
-        print(data.get("base"), data.get("base") is None)
         return data.get("base") is None
     except Exception:
         # If there are issues loading/parsing the YAML, just pass off to the current version
