@@ -141,6 +141,20 @@ class ExtensionMissingDocumentationError(ProjectLoaderError):
         super().__init__(extension_name=extension_name)
 
 
+class SnapcraftAfterPartMissingError(ProjectLoaderError):
+
+    fmt = (
+        "Failed to get part information: "
+        "Cannot find the definition for part {after_part_name!r}, required by part "
+        "{part_name!r}.\n"
+        "Remote parts are not supported with bases, so make sure that this part is "
+        "defined in the `snapcraft.yaml`."
+    )
+
+    def __init__(self, part_name, after_part_name):
+        super().__init__(part_name=part_name, after_part_name=after_part_name)
+
+
 def _determine_preamble(error):
     messages = []
     path = _determine_property_path(error)
