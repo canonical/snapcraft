@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from collections import OrderedDict
 from unittest import mock
 
 from testtools.matchers import Equals
@@ -265,7 +266,9 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
         source = "mountpath"
         target = "{}/mountpoint".format(self.instance_name)
         self.multipass_command.mount(
-            source=source, target=target, uid_map={"1000": "0", "900": "0"}
+            source=source,
+            target=target,
+            uid_map=OrderedDict([("1000", "0"), ("900", "0")]),
         )
 
         self.check_call_mock.assert_called_once_with(
@@ -286,7 +289,9 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
         source = "mountpath"
         target = "{}/mountpoint".format(self.instance_name)
         self.multipass_command.mount(
-            source=source, target=target, gid_map={"1000": "0", "900": "0"}
+            source=source,
+            target=target,
+            gid_map=OrderedDict([("1000", "0"), ("900", "0")]),
         )
 
         self.check_call_mock.assert_called_once_with(
@@ -309,8 +314,8 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.mount(
             source=source,
             target=target,
-            uid_map={"1000": "0", "900": "1"},
-            gid_map={"1000": "0", "900": "2"},
+            uid_map=OrderedDict([("1000", "0"), ("900", "1")]),
+            gid_map=OrderedDict([("1000", "0"), ("900", "2")]),
         )
 
         self.check_call_mock.assert_called_once_with(
