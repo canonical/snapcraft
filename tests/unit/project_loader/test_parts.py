@@ -41,6 +41,16 @@ class TestParts(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project([("part1", dict(plugin="nil"))])
         self.assertThat(project_config.parts.get_part("not-a-part"), Equals(None))
 
+    def test_after_inexistent_part(self):
+        raised = self.assertRaises(
+            project_loader.errors.SnapcraftAfterPartMissingError,
+            self.make_snapcraft_project,
+            [("part1", dict(plugin="nil", after=["inexistent-part"]))],
+        )
+
+        self.assertThat(raised.part_name, Equals("part1"))
+        self.assertThat(raised.after_part_name, Equals("inexistent-part"))
+
 
 class PartOrderTestCase(ProjectLoaderBaseTest):
 

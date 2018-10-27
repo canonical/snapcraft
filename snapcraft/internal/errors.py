@@ -216,41 +216,6 @@ class InvalidDesktopFileError(SnapcraftError):
         super().__init__(filename=filename, message=message)
 
 
-class SnapcraftPartMissingError(SnapcraftError):
-
-    fmt = (
-        "Failed to get part information: "
-        "Cannot find the definition for part {part_name!r}. "
-        "If it is a remote part, run `snapcraft update` "
-        "to refresh the remote parts cache. "
-        "If it is a local part, make sure that it is defined in the "
-        "`snapcraft.yaml`."
-    )
-
-
-class RemotePartsError(SnapcraftError):
-    pass
-
-
-class PartNotInCacheError(RemotePartsError):
-
-    fmt = (
-        "Failed to get remote part information: "
-        "Cannot find the part name {part_name!r} in the cache. "
-        "If it is an existing remote part, run `snapcraft update` and try "
-        "again. If it has not been defined, consider going to "
-        "https://wiki.ubuntu.com/snapcraft/parts to add it."
-    )
-
-
-class RemotePartsUpdateConnectionError(RemotePartsError):
-
-    fmt = "Failed to update cache of remote parts: {message}\nPlease try again."
-
-    def __init__(self, requests_exception):
-        super().__init__(message=requests_exception.__doc__)
-
-
 class PluginError(SnapcraftError):
 
     fmt = (
