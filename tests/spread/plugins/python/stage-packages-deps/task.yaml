@@ -23,11 +23,11 @@ execute: |
 
   for d in parts/python2/install/lib/*python2*; do
     test -d "$d/site-packages/yamllint"
-    test -d "$d/dist-packages/yaml"
     test ! -d "$d/site-packages/yaml"
+    test -d "parts/python2/install/usr/lib/$(basename "$d")/dist-packages/yaml"
   done
   for d in parts/python3/install/lib/*python3*; do
     test -d "$d/site-packages/yamllint"
-    test -d "parts/python3/install/usr/lib/python3/dist-packages/yaml"
     test ! -d "$d/site-packages/yaml"
+    test -d "parts/python3/install/usr/lib/python3/dist-packages/yaml"
   done
