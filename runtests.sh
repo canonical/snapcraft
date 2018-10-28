@@ -10,7 +10,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU General Public License for more details.f-1
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -82,9 +82,9 @@ run_static_tests(){
 }
 
 run_snapcraft_tests(){
-    if [[ ! -z "$use_run" ]]; then
+    if [[ -n "$use_run" ]]; then
         python3 -m unittest -b -v run "$test_suite"
-    elif [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    elif [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
     else
@@ -112,7 +112,7 @@ fi
 
 parseargs "$@"
 
-if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+if [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
     coverage report
 
     echo
