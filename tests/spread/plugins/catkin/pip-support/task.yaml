@@ -6,6 +6,7 @@ environment:
   SNAP_DIR: ../snaps/ros-pip
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
@@ -14,6 +15,7 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 

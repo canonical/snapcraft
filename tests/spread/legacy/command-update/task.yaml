@@ -6,7 +6,7 @@ restore: |
   rm -rf ./parts
 
 execute: |
-  export XDG_DATA_HOME="$(pwd)/parts"
+  export XDG_DATA_HOME="$PWD/parts"
 
   # Create a snapcraft.yaml with no base entry
   snapcraft init
@@ -14,5 +14,19 @@ execute: |
   # Now update
   snapcraft update
 
-  [ -f parts/snapcraft/*/headers.yaml ]
-  [ -f parts/snapcraft/*/parts.yaml ]
+  nheaders=0
+  nparts=0
+
+  for f in parts/snapcraft/*/headers.yaml; do
+    if [ -f "$f" ]; then
+      (( ++nheaders ))
+    fi
+  done
+  test $nheaders = 1
+  for f in parts/snapcraft/*/parts.yaml; do
+    if [ -f "$f" ]; then
+      (( ++nparts ))
+    fi
+  done
+  test $nparts = 1
+

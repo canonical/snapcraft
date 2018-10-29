@@ -27,7 +27,7 @@ quote()
 
 # Which python3 are we using? By default, the one from the PATH. If
 # SNAPCRAFT_INTERPRETER is specified, use that one instead.
-python3_command="${SNAPCRAFT_INTERPRETER:-$(which python3)}"
+python3_command="${SNAPCRAFT_INTERPRETER:-$(command -v python3)}"
 
 snapcraftctl_command="$python3_command -I -c '
 import snapcraft.cli.__main__

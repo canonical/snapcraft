@@ -6,19 +6,19 @@ environment:
   SNAP_DIR: snaps/wiki-filesets
 
 prepare: |
-  cd $SNAP_DIR
-  echo -e "share\nshare/file1\nshare/file2\nnew\nnew/dir1\nnew/dir2\nnew/dir2/file1" | sort > expected_staged.txt
+  cd "$SNAP_DIR"
+  echo -e 'share\nshare/file1\nshare/file2\nnew\nnew/dir1\nnew/dir2\nnew/dir2/file1' | sort > expected_staged.txt
 
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
-  rm *.txt
+  rm -- *.txt
 
 execute: |
   compare_dir_contents()
   {
-      find "$1" ! -path "$1" -printf "%P\n" | sort > found.txt
+      find "$1" ! -path "$1" -printf '%P\n' | sort > found.txt
       comm -3 found.txt "$2"
   }
 
