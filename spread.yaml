@@ -182,7 +182,8 @@ prepare: |
     exit 1
   fi
 
-restore-each: $TOOLS_DIR/restore.sh
+restore-each: |
+  "$TOOLS_DIR"/restore.sh
 
 suites:
  # General, core suite

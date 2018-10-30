@@ -19,7 +19,7 @@ import logging
 import os
 import shutil
 from textwrap import dedent
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from xdg import BaseDirectory
 
@@ -41,7 +41,7 @@ _CLOUD_USER_DATA_TMPL = dedent(
         devices: ["/"]
         ignore_growroot_disabled: false
     write_files:
-        - path: /etc/skel/.bashrc
+        - path: /root/.bashrc
           permissions: 0644
           content: |
             export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
@@ -123,7 +123,7 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: List) -> None:
+    def _run(self, command: Sequence[str]) -> None:
         """Run a command on the instance."""
 
     @abc.abstractmethod

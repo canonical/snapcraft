@@ -22,13 +22,20 @@ jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
+      name: static tests
       if: type != cron
+      addons:
+        apt:
+          packages:
+            python3.5-dev
+            snapd
+            python3-yaml
+            libyaml-dev
       install:
-        - sudo apt update
-        - sudo apt install -y python3.5-dev snapd shellcheck libyaml-dev
         # workaround for "cannot locate the core snap: No such file or directory"
         - sudo snap install core
         - sudo snap install black --devmode --edge
+        - sudo snap install shellcheck --edge
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt
@@ -36,13 +43,16 @@ jobs:
         - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
     # CLA check, only in pull requests, not coming from the bot.
-    - if: type = pull_request AND sender != snappy-m-o
+    - stage: static
+      name:  CLA check
+      if: type = pull_request AND sender != snappy-m-o
       install:
         - sudo apt update && sudo apt install -y git python-launchpadlib
       script:
         - ./tools/cla_check.py
 
     - stage: unit, snap and osx
+      name: unit tests
       if: type != cron
       install:
         # Here until we have our snapcraft testing toolkit snap
@@ -57,7 +67,9 @@ jobs:
       after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: osx
+      if: type != cron
       os: osx
       addons:
         homebrew:
@@ -70,7 +82,9 @@ jobs:
         - python3 -m pip install -r requirements-devel.txt
       script:
         - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: snap
+      if: type != cron
       install:
         - sudo apt update
         - sudo apt install -y snapd
@@ -93,9 +107,12 @@ jobs:
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
+      name: spread
       if: type != cron
       script:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
       - ./runtests.sh spread
-    - if: type != cron
+    - stage: integration
+      name: store
+      if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/store

@@ -24,7 +24,7 @@ import jsonschema
 from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
-from snapcraft.internal import deprecations, states, steps
+from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.project._sanity_checks import conduct_environment_sanity_check
 
 from ._schema import Validator
@@ -221,7 +221,9 @@ class Config:
 
         # Always add the base for building for non os and base snaps
         if project.info.base is not None and project.info.type not in ("base", "os"):
-            self.build_snaps.add(project.info.base)
+            # If the base is already installed by other means, skip its installation.
+            if not repo.snaps.SnapPackage.is_snap_installed(project.info.base):
+                self.build_snaps.add(project.info.base)
         elif project.info.type not in ("base", "os"):
             # This exception is here to help with porting issues with bases. In normal
             # executions, when no base is set, the legacy snapcraft will be executed.

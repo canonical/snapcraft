@@ -11,6 +11,7 @@ prepare: |
   PRODUCER_DIR="$CWD/$PRODUCER_DIR"
   CONSUMER_DIR="$CWD/$CONSUMER_DIR"
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$PRODUCER_DIR/snap/snapcraft.yaml"
   set_base "$CONSUMER_DIR/snap/snapcraft.yaml"
@@ -25,6 +26,7 @@ restore: |
   PRODUCER_DIR="$CWD/$PRODUCER_DIR"
   CONSUMER_DIR="$CWD/$CONSUMER_DIR"
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
 
   cd "$PRODUCER_DIR"

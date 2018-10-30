@@ -4,10 +4,12 @@ environment:
   SNAP_DIR: ../snaps/go-cgo
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
@@ -30,4 +32,4 @@ execute: |
     exit 1
   fi
 
-  file stage/bin/go-cgo | MATCH ",\s*ARM\s*,"
+  file stage/bin/go-cgo | MATCH ',\s*ARM\s*,'

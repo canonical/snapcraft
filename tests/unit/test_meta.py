@@ -1568,6 +1568,8 @@ class WrapExeTest(BaseWrapTest):
             ),
         )
 
+        self.assertThat(snap_yaml, Not(Contains("assumes")))
+
 
 class FullAdapterTest(unit.TestCase):
     def setUp(self):
@@ -1651,6 +1653,10 @@ class FullAdapterTest(unit.TestCase):
         # The command itself should not be touched/rewritten at all
         self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
 
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
     def test_command_with_spaces(self):
         _create_file(
             os.path.join(self.prime_dir, "bin", "test-command"), executable=True
@@ -1670,6 +1676,10 @@ class FullAdapterTest(unit.TestCase):
             y["apps"]["app"]["command"], Equals("bin/test-command arg1 arg2")
         )
 
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
     def test_command_chain_insertion_is_at_beginning(self):
         _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
         _create_file(os.path.join(self.prime_dir, "existing-chain"), executable=True)
@@ -1683,6 +1693,46 @@ class FullAdapterTest(unit.TestCase):
             y["apps"]["app"]["command-chain"],
             Equals(["snap/command-chain/snapcraft-runner", "existing-chain"]),
         )
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
+    def test_command_chain_with_assumes(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+        self.snapcraft_yaml["assumes"] = ["test-feature"]
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain", "test-feature"]))
+
+    def test_command_chain_with_assumes_no_duplicatation(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+        self.snapcraft_yaml["assumes"] = ["command-chain"]
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
 
 
 class CommandChainTest(unit.TestCase):

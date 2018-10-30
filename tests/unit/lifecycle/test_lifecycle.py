@@ -624,8 +624,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -683,8 +682,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -744,8 +742,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -807,8 +804,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -871,8 +867,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 uname: Linux test uname 4.10 x86_64
             architectures:
             - {}
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -938,8 +933,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - git=testversion
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -998,8 +992,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-package=test-version
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1062,8 +1055,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages:
             - test-provider-package=test-version
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1116,8 +1108,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1179,8 +1170,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               created_at: test-created-at
               fingerprint: test-fingerprint
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1255,8 +1245,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             architectures:
             - {}
             build-packages: []
-            build-snaps:
-            - core18=10
+            build-snaps: []
             """.format(
                 project_config.project.deb_arch
             )
