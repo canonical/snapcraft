@@ -72,6 +72,6 @@ class GlibExtension(Extension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
                 "organize": {"desktop-*": "snap/command-chain/"},
                 "build-packages": ["libglib2.0-dev"],
-                "stage-packages": ["libglib2.0-bin"],
+                "stage-packages": ["libglib2.0-0"],
             }
         }
