@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Set, Type  # noqa: F401
 
 from .. import errors
 from ._extension import Extension
+from snapcraft.project import errors as project_errors
 
 logger = logging.getLogger(__name__)
 
@@ -209,8 +210,8 @@ def _validate_extension_format(extension_names):
                 extension_names, extension_schema, format_checker=format_check
             )
         except jsonschema.ValidationError as e:
-            raise errors.YamlValidationError(
+            raise project_errors.YamlValidationError(
                 "The 'extensions' property does not match the required schema: {}".format(
-                    errors.YamlValidationError.from_validation_error(e).message
+                    project_errors.YamlValidationError.from_validation_error(e).message
                 )
             )

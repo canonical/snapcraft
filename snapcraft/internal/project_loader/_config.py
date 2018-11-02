@@ -26,8 +26,7 @@ from typing import Set  # noqa: F401
 from snapcraft import project, formatting_utils
 from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.project._sanity_checks import conduct_environment_sanity_check
-
-from ._schema import Validator
+from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
 from ._env import (
