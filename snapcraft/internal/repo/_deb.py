@@ -331,13 +331,15 @@ class Ubuntu(BaseRepo):
             {"DEBIAN_FRONTEND": "noninteractive", "DEBCONF_NONINTERACTIVE_SEEN": "true"}
         )
 
-        apt_command = ["sudo", "apt-get", "--no-install-recommends", "-y"]
+        apt_command = ["sudo", "apt-get", "-y"]
         if not is_dumb_terminal():
             apt_command.extend(["-o", "Dpkg::Progress-Fancy=1"])
-        apt_command.append("install")
+        apt_update = apt_command + ["update"]
+        apt_install = apt_command + ["--no-install-recommends", "install"]
 
         try:
-            subprocess.check_call(apt_command + package_names, env=env)
+            subprocess.check_call(apt_update, env=env)
+            subprocess.check_call(apt_install + package_names, env=env)
         except subprocess.CalledProcessError:
             raise errors.BuildPackagesNotInstalledError(packages=package_names)
 
