@@ -383,7 +383,7 @@ class BuildPackagesTestCase(unit.TestCase):
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                    }
+                    },
                 ),
                 call(
                     "sudo apt-get -y -o Dpkg::Progress-Fancy=1 "
@@ -393,7 +393,7 @@ class BuildPackagesTestCase(unit.TestCase):
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                     },
-                )
+                ),
             ]
         )
 
@@ -413,7 +413,7 @@ class BuildPackagesTestCase(unit.TestCase):
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                    }
+                    },
                 ),
                 call(
                     "sudo apt-get -y --no-install-recommends install".split()
@@ -422,7 +422,7 @@ class BuildPackagesTestCase(unit.TestCase):
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
                     },
-                )
+                ),
             ]
         )
 
