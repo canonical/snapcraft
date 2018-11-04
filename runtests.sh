@@ -61,7 +61,7 @@ coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
     echo "Running black"
-    black --check .
+    black --check --diff .
 
     echo "Running flake8"
     python3 -m flake8 .
