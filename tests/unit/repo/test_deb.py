@@ -379,8 +379,15 @@ class BuildPackagesTestCase(unit.TestCase):
         mock_check_call.assert_has_calls(
             [
                 call(
-                    "sudo apt-get --no-install-recommends -y "
-                    "-o Dpkg::Progress-Fancy=1 install".split()
+                    "sudo apt-get -y -o Dpkg::Progress-Fancy=1 update".split(),
+                    env={
+                        "DEBIAN_FRONTEND": "noninteractive",
+                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    }
+                ),
+                call(
+                    "sudo apt-get -y -o Dpkg::Progress-Fancy=1 "
+                    "--no-install-recommends install".split()
                     + sorted(set(installable)),
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
@@ -392,7 +399,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
     @patch("snapcraft.repo._deb.is_dumb_terminal")
     @patch("subprocess.check_call")
-    def test_install_buid_package_in_dumb_terminal(
+    def test_install_build_package_in_dumb_terminal(
         self, mock_check_call, mock_is_dumb_terminal
     ):
         mock_is_dumb_terminal.return_value = True
@@ -402,7 +409,14 @@ class BuildPackagesTestCase(unit.TestCase):
         mock_check_call.assert_has_calls(
             [
                 call(
-                    "sudo apt-get --no-install-recommends -y install".split()
+                    "sudo apt-get -y update".split(),
+                    env={
+                        "DEBIAN_FRONTEND": "noninteractive",
+                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                    }
+                ),
+                call(
+                    "sudo apt-get -y --no-install-recommends install".split()
                     + sorted(set(installable)),
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
