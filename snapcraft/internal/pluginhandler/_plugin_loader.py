@@ -22,7 +22,7 @@ import sys
 import jsonschema
 
 import snapcraft
-from snapcraft.internal.project_loader.errors import YamlValidationError
+from snapcraft.project.errors import YamlValidationError
 from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
