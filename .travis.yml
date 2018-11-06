@@ -60,7 +60,6 @@ jobs:
             - libyaml-dev
             - mercurial
             - p7zip-full
-            - python3-pip
             - python3-yaml
             - python3.5-dev
             - rpm2cpio
@@ -68,6 +67,7 @@ jobs:
             - subversion
             - xdelta3
       install:
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
       script:
         - ./runtests.sh tests/unit
