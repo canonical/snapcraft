@@ -93,6 +93,7 @@ jobs:
       name: snap
       if: type != cron
       install:
+        - sudo apt autoremove --purge --yes lxd
         - sudo snap install lxd --channel 3.0/stable
         - sudo snap install snapcraft --candidate --classic
         - sudo /snap/bin/lxd waitready
