@@ -18,6 +18,7 @@ import abc
 import logging
 import os
 import shutil
+import sys
 from textwrap import dedent
 from typing import Optional, Sequence
 
@@ -25,10 +26,14 @@ from xdg import BaseDirectory
 
 from . import errors
 from ._snap import SnapInjector
-from snapcraft.internal import steps
+from snapcraft.internal import common, steps
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_platform() -> str:
+    return sys.platform
 
 
 _CLOUD_USER_DATA_TMPL = dedent(
@@ -221,6 +226,10 @@ class Provider(abc.ABC):
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
         )
+
+        # We do not want to inject from the host if not running from the snap.
+        inject_from_host = common.is_snap()
+
         snap_injector = SnapInjector(
             snap_dir=self._SNAPS_MOUNTPOINT,
             registry_filepath=registry_filepath,
@@ -229,13 +238,17 @@ class Provider(abc.ABC):
             snap_dir_mounter=self._mount_snaps_directory,
             snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
+            inject_from_host=inject_from_host,
         )
         # Inject snapcraft
         snap_injector.add(snap_name="core")
         snap_injector.add(snap_name="snapcraft")
 
-        # We always install the base, if it exists on the host, let's inject.
-        snap_injector.add(snap_name=self.project.info.base)
+        # This build can be driven from a non snappy enabled system, so we may
+        # find ourself in a situation where the base is not set like on OSX or
+        # Windows.
+        if self.project.info.base is not None:
+            snap_injector.add(snap_name=self.project.info.base)
 
         snap_injector.apply()
 
