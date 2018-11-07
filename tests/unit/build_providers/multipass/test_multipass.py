@@ -371,19 +371,43 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
     scenarios = (
         (
             "linux",
-            dict(platform="linux", base="core16", expected_image="snapcraft:core16"),
+            dict(
+                platform="linux",
+                base="core16",
+                expected_uid_map={str(os.getuid()): "0"},
+                expected_gid_map={str(os.getgid()): "0"},
+                expected_image="snapcraft:core16",
+            ),
         ),
         (
             "linux",
-            dict(platform="linux", base="core18", expected_image="snapcraft:core18"),
+            dict(
+                platform="linux",
+                base="core18",
+                expected_uid_map={str(os.getuid()): "0"},
+                expected_gid_map={str(os.getgid()): "0"},
+                expected_image="snapcraft:core18",
+            ),
         ),
         (
             "darwin",
-            dict(platform="darwin", base="core18", expected_image="snapcraft:core18"),
+            dict(
+                platform="darwin",
+                base="core18",
+                expected_uid_map=None,
+                expected_gid_map=None,
+                expected_image="snapcraft:core18",
+            ),
         ),
         (
             "darwin",
-            dict(platform="darwin", base="core16", expected_image="snapcraft:core16"),
+            dict(
+                platform="darwin",
+                base="core16",
+                expected_uid_map=None,
+                expected_gid_map=None,
+                expected_image="snapcraft:core16",
+            ),
         ),
     )
 
@@ -458,8 +482,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.multipass_cmd_mock().mount.assert_called_once_with(
             source=mock.ANY,
             target="{}:{}".format(self.instance_name, "/root/project"),
-            uid_map={str(os.getuid()): "0"},
-            gid_map={str(os.getgid()): "0"},
+            uid_map=self.expected_uid_map,
+            gid_map=self.expected_gid_map,
         )
         self.multipass_cmd_mock().umount.assert_not_called()
         self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))

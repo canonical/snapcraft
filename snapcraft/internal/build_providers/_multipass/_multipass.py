@@ -17,21 +17,16 @@
 import logging
 import os
 import shlex
-import sys
 from typing import Dict, Sequence
 
 from .. import errors
-from .._base_provider import Provider
+from .._base_provider import Provider, _get_platform
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_platform() -> str:
-    return sys.platform
 
 
 def _get_stop_time() -> int:
@@ -195,8 +190,14 @@ class Multipass(Provider):
             .strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
-        uid_map = {str(os.getuid()): "0"}
-        gid_map = {str(os.getgid()): "0"}
+
+        # The mapping only makes sense on Linux
+        if _get_platform() == "linux":
+            uid_map = {str(os.getuid()): "0"}
+            gid_map = {str(os.getgid()): "0"}
+        else:
+            uid_map = None
+            gid_map = None
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):

@@ -20,7 +20,7 @@ from unittest.mock import call, Mock
 
 from testtools.matchers import Equals, EndsWith, DirExists, Not
 
-from . import BaseProviderBaseTest, ProviderImpl
+from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
 from snapcraft.internal.build_providers import errors
 
 
@@ -122,6 +122,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             snap_dir_mounter=provider._mount_snaps_directory,
             snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
+            inject_from_host=True,
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
@@ -149,6 +150,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             snap_dir_mounter=provider._mount_snaps_directory,
             snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
+            inject_from_host=True,
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
@@ -167,6 +169,89 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
 
+        self.snap_injector_mock().add.assert_has_calls(
+            [
+                call(snap_name="core"),
+                call(snap_name="snapcraft"),
+                call(snap_name="core18"),
+            ]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+
+class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
+    def test_setup_snapcraft_with_base(self):
+        self.project.info.base = "core18"
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock.assert_called_once_with(
+            snap_dir=provider._SNAPS_MOUNTPOINT,
+            registry_filepath=os.path.join(
+                provider.provider_project_dir, "snap-registry.yaml"
+            ),
+            snap_arch=self.project.deb_arch,
+            runner=provider._run,
+            snap_dir_mounter=provider._mount_snaps_directory,
+            snap_dir_unmounter=provider._unmount_snaps_directory,
+            file_pusher=provider._push_file,
+            inject_from_host=False,
+        )
+        self.snap_injector_mock().add.assert_has_calls(
+            [
+                call(snap_name="core"),
+                call(snap_name="snapcraft"),
+                call(snap_name="core18"),
+            ]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+    def test_setup_snapcraft_with_no_base(self):
+        self.project.info.base = None
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock.assert_called_once_with(
+            snap_dir=provider._SNAPS_MOUNTPOINT,
+            registry_filepath=os.path.join(
+                provider.provider_project_dir, "snap-registry.yaml"
+            ),
+            snap_arch=self.project.deb_arch,
+            runner=provider._run,
+            snap_dir_mounter=provider._mount_snaps_directory,
+            snap_dir_unmounter=provider._unmount_snaps_directory,
+            file_pusher=provider._push_file,
+            inject_from_host=False,
+        )
+        self.snap_injector_mock().add.assert_has_calls(
+            [call(snap_name="core"), call(snap_name="snapcraft")]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+    def test_setup_snapcraft_for_classic_build(self):
+        self.project.info.base = "core18"
+        self.project.info.confinement = "classic"
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock.assert_called_once_with(
+            snap_dir=provider._SNAPS_MOUNTPOINT,
+            registry_filepath=os.path.join(
+                provider.provider_project_dir, "snap-registry.yaml"
+            ),
+            snap_arch=self.project.deb_arch,
+            runner=provider._run,
+            snap_dir_mounter=provider._mount_snaps_directory,
+            snap_dir_unmounter=provider._unmount_snaps_directory,
+            file_pusher=provider._push_file,
+            inject_from_host=False,
+        )
         self.snap_injector_mock().add.assert_has_calls(
             [
                 call(snap_name="core"),
