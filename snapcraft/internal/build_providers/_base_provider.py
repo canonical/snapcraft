@@ -25,7 +25,7 @@ from xdg import BaseDirectory
 
 from . import errors
 from ._snap import SnapInjector
-from snapcraft.internal import steps
+from snapcraft.internal import common, steps
 
 
 logger = logging.getLogger(__name__)
@@ -229,13 +229,15 @@ class Provider(abc.ABC):
             snap_dir_mounter=self._mount_snaps_directory,
             snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
+            inject_from_host=common.is_snap(),
         )
         # Inject snapcraft
         snap_injector.add(snap_name="core")
         snap_injector.add(snap_name="snapcraft")
 
         # We always install the base, if it exists on the host, let's inject.
-        snap_injector.add(snap_name=self.project.info.base)
+        if self.project.info.base is not None:
+            snap_injector.add(snap_name=self.project.info.base)
 
         snap_injector.apply()
 

@@ -195,8 +195,12 @@ class Multipass(Provider):
             .strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
-        uid_map = {str(os.getuid()): "0"}
-        gid_map = {str(os.getgid()): "0"}
+        if sys.platform == "linux":
+            uid_map = {str(os.getuid()): "0"}
+            gid_map = {str(os.getgid()): "0"}
+        else:
+            uid_map = None
+            gid_map = None
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
