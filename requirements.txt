@@ -5,7 +5,7 @@ progressbar33==2.4
 http://pyyaml.org/download/pyyaml/PyYAML-3.13-cp35-cp35m-win_amd64.whl; sys_platform == 'win32'
 PyYAML==3.13; sys_platform != 'win32'
 pyxdg==0.25
-requests==2.9.1
+requests==2.20.0
 requests_unixsocket==0.1.5
 https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz; sys_platform == 'linux'
 https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz
