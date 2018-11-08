@@ -1,0 +1,38 @@
+#!/bin/bash
+
+##############################
+# GTK launcher specific part #
+##############################
+
+# select gtk version
+. $SNAP/flavor-select
+
+if [ "$USE_gtk3" = true ]; then
+  if [ "$wayland_available" = true ]; then
+    export GDK_BACKEND="wayland"
+    export CLUTTER_BACKEND="wayland"
+    # Does not hurt to specify this as well, just in case
+    export QT_QPA_PLATFORM=wayland-egl
+  fi
+else
+  [ "$wayland_available" = true ] && echo "Warning: GTK2 does not support Wayland!"
+fi
+
+export GTK_EXE_PREFIX=$RUNTIME/usr
+
+# ibus and fcitx integration
+GTK_IM_MODULE_DIR=$XDG_CACHE_HOME/immodules
+export GTK_IM_MODULE_FILE=$GTK_IM_MODULE_DIR/immodules.cache
+if [ $DESKTOP_LAUNCHER_NEEDS_UPDATE = true ]; then
+  rm -rf $GTK_IM_MODULE_DIR
+  mkdir -p $GTK_IM_MODULE_DIR
+  if [ "$USE_gtk3" = true ]; then
+    ln -s $RUNTIME/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules/*.so $GTK_IM_MODULE_DIR
+    $RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0 > $GTK_IM_MODULE_FILE
+  else
+    ln -s $RUNTIME/usr/lib/$ARCH/gtk-2.0/2.10.0/immodules/*.so $GTK_IM_MODULE_DIR
+    $RUNTIME/usr/lib/$ARCH/libgtk2.0-0/gtk-query-immodules-2.0 > $GTK_IM_MODULE_FILE
+  fi
+fi
+
+exec "$@"
