@@ -4,37 +4,34 @@
 # Launcher init #
 #################
 
-START=$(date +%s.%N)
-
 # On Fedora $SNAP is under /var and there is some magic to map it to /snap.
 # # We need to handle that case and reset $SNAP
-SNAP=`echo $SNAP | sed -e "s|/var/lib/snapd||g"`
+SNAP="${SNAP//\/var\/lib\/snapd/}"
 
-needs_update=true
+needs_update="true"
 
-. $SNAP_USER_DATA/.last_revision 2>/dev/null || true
+# shellcheck source=/dev/null
+. "$SNAP_USER_DATA/.last_revision" 2>/dev/null || true
 if [ "$SNAP_DESKTOP_LAST_REVISION" = "$SNAP_REVISION" ]; then
-  needs_update=false
+  needs_update="false"
 fi
 
 # Set $REALHOME to the users real home directory
-REALHOME=`getent passwd $UID | cut -d ':' -f 6`
+REALHOME="$(getent passwd $UID | cut -d ':' -f 6)"
 
 # Set config folder to local path
-export XDG_CONFIG_HOME=$SNAP_USER_DATA/.config
-mkdir -p $XDG_CONFIG_HOME -m 700
+export XDG_CONFIG_HOME="$SNAP_USER_DATA/.config"
+mkdir -p "$XDG_CONFIG_HOME" && chmod 700 "$XDG_CONFIG_HOME"
 
 # If the user has modified their user-dirs settings, force an update
-if [[ -f $XDG_CONFIG_HOME/user-dirs.dirs.md5sum && -f $XDG_CONFIG_HOME/user-dirs.locale.md5sum ]]; then
-  if [[ "$(md5sum < $REALHOME/.config/user-dirs.dirs)" != "$(cat $XDG_CONFIG_HOME/user-dirs.dirs.md5sum)" ||
-        "$(md5sum < $REALHOME/.config/user-dirs.locale)" != "$(cat $XDG_CONFIG_HOME/user-dirs.locale.md5sum)" ]]; then
-    needs_update=true
+if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" && -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]]; then
+  if [[ "$(md5sum < "$REALHOME/.config/user-dirs.dirs")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum")" ||
+        "$(md5sum < "$REALHOME/.config/user-dirs.locale")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.locale.md5sum")" ]]; then
+    needs_update="true"
   fi
-else
-  needs_update=true
 fi
 
-export DESKTOP_LAUNCHER_NEEDS_UPDATE=$needs_update
+export DESKTOP_LAUNCHER_NEEDS_UPDATE="$needs_update"
 
 if [ "$SNAP_ARCH" == "amd64" ]; then
   ARCH="x86_64-linux-gnu"
@@ -46,12 +43,12 @@ else
   ARCH="$SNAP_ARCH-linux-gnu"
 fi
 
-export SNAP_LAUNCHER_ARCH_TRIPLET=$ARCH
+export SNAP_LAUNCHER_ARCH_TRIPLET="$ARCH"
 
 # Don't LD_PRELOAD bindtextdomain for classic snaps
-if ! grep -qs "^\s*confinement:\s*classic\s*" $SNAP/meta/snap.yaml; then
-  if [ -f $SNAP/lib/bindtextdomain.so ]; then
-    export LD_PRELOAD=$LD_PRELOAD:$SNAP/lib/bindtextdomain.so
+if ! grep -qs "^\s*confinement:\s*classic\s*" "$SNAP/meta/snap.yaml"; then
+  if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
+    export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
   fi
 fi
 
