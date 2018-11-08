@@ -391,13 +391,6 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass._multipass._get_platform",
-            return_value=self.platform,
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch(
             "snapcraft.internal.build_providers._multipass."
             "_multipass.MultipassCommand",
             spec=MultipassCommand,
