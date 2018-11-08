@@ -1,0 +1,19 @@
+name: glib-hello
+version: "1.0"
+summary: test the gnome extension
+description: This is a basic gnome snap (*only* uses glib). It simply prints a hello world.
+
+grade: devel
+confinement: strict
+base: core18
+
+apps:
+  glib-hello:
+    command: bin/hello
+    adapter: full
+    extensions: [gnome]
+
+parts:
+  project:
+    plugin: cmake
+    source: .

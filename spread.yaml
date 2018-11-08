@@ -279,6 +279,12 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
 
+# Extensions tests
+ tests/spread/extensions/gnome/:
+   summary: tests of snapcraft's gnome extension
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+
 # Legacy tests
  tests/spread/legacy/:
    summary: legacy snapcraft tests
