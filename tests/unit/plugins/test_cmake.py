@@ -23,7 +23,7 @@ from testtools.matchers import Equals, HasLength
 import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins import cmake
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class CMakeTestCase(unit.TestCase):
@@ -62,12 +62,11 @@ class CMakeTestCase(unit.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.useFixture(fixture_setup.CleanEnvironment())
+
     def test_get_build_properties(self):
         expected_build_properties = ["configflags"]
         resulting_build_properties = cmake.CMakePlugin.get_build_properties()
-        expected_build_properties.extend(
-            snapcraft.plugins.make.MakePlugin.get_build_properties()
-        )
         self.assertThat(
             resulting_build_properties, HasLength(len(expected_build_properties))
         )
@@ -87,9 +86,13 @@ class CMakeTestCase(unit.TestCase):
                     cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
-                mock.call(["make", "-j2"], cwd=plugin.builddir, env=mock.ANY),
                 mock.call(
-                    ["make", "install", "DESTDIR={}".format(plugin.installdir)],
+                    ["cmake", "--build", ".", "--", "-j2"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    ["cmake", "--build", ".", "--target", "install"],
                     cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
@@ -111,9 +114,13 @@ class CMakeTestCase(unit.TestCase):
                     cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
-                mock.call(["make", "-j2"], cwd=plugin.builddir, env=mock.ANY),
                 mock.call(
-                    ["make", "install", "DESTDIR={}".format(plugin.installdir)],
+                    ["cmake", "--build", ".", "--", "-j2"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    ["cmake", "--build", ".", "--target", "install"],
                     cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
@@ -127,6 +134,7 @@ class CMakeTestCase(unit.TestCase):
 
         expected = {}
 
+        expected["DESTDIR"] = plugin.installdir
         expected["CMAKE_PREFIX_PATH"] = "$CMAKE_PREFIX_PATH:{}".format(self.stage_dir)
         expected["CMAKE_INCLUDE_PATH"] = "$CMAKE_INCLUDE_PATH:" + ":".join(
             ["{0}/include", "{0}/usr/include", "{0}/include/{1}", "{0}/usr/include/{1}"]

@@ -19,9 +19,6 @@
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
-This plugin also supports options from the `make` plugin. Run
-`snapcraft help make` for more details.
-
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -33,16 +30,29 @@ Additionally, this plugin uses the following plugin-specific keywords:
       configure flags to pass to the build using the common cmake semantics.
 """
 
+import logging
 import os
 
-import snapcraft.plugins.make
+import snapcraft
+from snapcraft.internal import errors
 
 
-class CMakePlugin(snapcraft.plugins.make.MakePlugin):
+logger = logging.getLogger(name=__name__)
+
+
+class CMakePlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
         schema["properties"]["configflags"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+        # For backwards compatibility
+        schema["properties"]["make-parameters"] = {
             "type": "array",
             "minitems": 1,
             "uniqueItems": True,
@@ -64,6 +74,12 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append("cmake")
         self.out_of_source_build = True
 
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
+        if options.make_parameters:
+            logger.warning("make-paramaters is deprecated, ignoring.")
+
     def build(self):
         source_subdir = getattr(self.options, "source_subdir", None)
         if source_subdir:
@@ -78,10 +94,24 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             env=env,
         )
 
-        self.make(env=env)
+        # TODO: there is a better way to specify the job count on newer versions of cmake
+        # https://github.com/Kitware/CMake/commit/1ab3881ec9e809ac5f6cad5cd84048310b8683e2
+        self.run(
+            [
+                "cmake",
+                "--build",
+                ".",
+                "--",
+                "-j{}".format(self.project.parallel_build_count),
+            ],
+            env=env,
+        )
+
+        self.run(["cmake", "--build", ".", "--target", "install"], env=env)
 
     def _build_environment(self):
         env = os.environ.copy()
+        env["DESTDIR"] = self.installdir
         env["CMAKE_PREFIX_PATH"] = "$CMAKE_PREFIX_PATH:{}".format(
             self.project.stage_dir
         )
