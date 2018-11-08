@@ -352,7 +352,7 @@ function compile_schemas {
         ln -s $schema_dir/*.override $GS_SCHEMA_DIR
       fi
     done
-    # Only compile schemas if we copied anyting
+    # Only compile schemas if we copied anything
     if [ -n "$(ls -A $GS_SCHEMA_DIR/*.xml $GS_SCHEMA_DIR/*.override 2>/dev/null)" ]; then
       "$1" $GS_SCHEMA_DIR
     fi
