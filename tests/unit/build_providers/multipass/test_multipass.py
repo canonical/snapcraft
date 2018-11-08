@@ -371,55 +371,24 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
     scenarios = (
         (
             "linux",
-            dict(
-                platform="linux",
-                base="core16",
-                expected_uid_map={str(os.getuid()): "0"},
-                expected_gid_map={str(os.getgid()): "0"},
-                expected_image="snapcraft:core16",
-            ),
+            dict(platform="linux", base="core16", expected_image="snapcraft:core16"),
         ),
         (
             "linux",
-            dict(
-                platform="linux",
-                base="core18",
-                expected_uid_map={str(os.getuid()): "0"},
-                expected_gid_map={str(os.getgid()): "0"},
-                expected_image="snapcraft:core18",
-            ),
+            dict(platform="linux", base="core18", expected_image="snapcraft:core18"),
         ),
         (
             "darwin",
-            dict(
-                platform="darwin",
-                base="core18",
-                expected_uid_map=None,
-                expected_gid_map=None,
-                expected_image="snapcraft:core18",
-            ),
+            dict(platform="darwin", base="core18", expected_image="snapcraft:core18"),
         ),
         (
             "darwin",
-            dict(
-                platform="darwin",
-                base="core16",
-                expected_uid_map=None,
-                expected_gid_map=None,
-                expected_image="snapcraft:core16",
-            ),
+            dict(platform="darwin", base="core16", expected_image="snapcraft:core16"),
         ),
     )
 
     def setUp(self):
         super().setUp()
-
-        patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass._multipass._get_platform",
-            return_value=self.platform,
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
             "snapcraft.internal.build_providers._multipass."
@@ -449,6 +418,9 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             _DEFAULT_INSTANCE_INFO.encode(),
             _DEFAULT_INSTANCE_INFO.encode(),
         ]
+
+        self.expected_uid_map = {str(os.getuid()): "0"}
+        self.expected_gid_map = {str(os.getgid()): "0"}
 
     def test_lifecycle(self):
         with Multipass(
