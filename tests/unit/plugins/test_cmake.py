@@ -26,7 +26,7 @@ from snapcraft.plugins import cmake
 from tests import fixture_setup, unit
 
 
-class CMakeTestCase(unit.TestCase):
+class CMakeBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -34,12 +34,9 @@ class CMakeTestCase(unit.TestCase):
             configflags = []
             source_subdir = None
 
-            # inherited from MakePlugin
-            makefile = None
             make_parameters = []
-            make_install_var = "DESTDIR"
             disable_parallel = False
-            artifacts = []
+            build_snaps = []
 
         self.options = Options()
 
@@ -58,12 +55,10 @@ class CMakeTestCase(unit.TestCase):
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("sys.stdout")
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.useFixture(fixture_setup.CleanEnvironment())
 
+
+class CMakeTest(CMakeBaseTest):
     def test_get_build_properties(self):
         expected_build_properties = ["configflags"]
         resulting_build_properties = cmake.CMakePlugin.get_build_properties()
@@ -182,3 +177,85 @@ class CMakeTestCase(unit.TestCase):
 
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
+
+
+class CMakeBuildTest(CMakeBaseTest):
+
+    scenarios = (
+        ("no snaps", dict(build_snaps=[], expected_root_paths=[])),
+        (
+            "one build snap",
+            dict(
+                build_snaps=["kde-plasma-sdk"],
+                expected_root_paths=["/snap/kde-plasma-sdk/current"],
+            ),
+        ),
+        (
+            "one build snap, preexisting root find path",
+            dict(
+                build_snaps=["kde-plasma-sdk"],
+                expected_root_paths=["/snap/kde-plasma-sdk/current"],
+                find_root_flag="-DCMAKE_FIND_ROOT_PATH=/yocto",
+            ),
+        ),
+        (
+            "one build snap with channel",
+            dict(
+                build_snaps=["kde-plasma-sdk/latest/edge"],
+                expected_root_paths=["/snap/kde-plasma-sdk/current"],
+            ),
+        ),
+        (
+            "two build snap with channel",
+            dict(
+                build_snaps=["gnome-sdk", "kde-plasma-sdk/latest/edge"],
+                expected_root_paths=[
+                    "/snap/gnome-sdk/current",
+                    "/snap/kde-plasma-sdk/current",
+                ],
+            ),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.options.build_snaps = self.build_snaps
+        if hasattr(self, "find_root_flag"):
+            self.options.configflags = [self.find_root_flag]
+
+        if self.expected_root_paths and not hasattr(self, "find_root_flag"):
+            self.expected_configflags = [
+                "-DCMAKE_FIND_ROOT_PATH={}".format(";".join(self.expected_root_paths))
+            ]
+        elif hasattr(self, "find_root_flag"):
+            self.expected_configflags = [
+                "{};{}".format(self.find_root_flag, ";".join(self.expected_root_paths))
+            ]
+        else:
+            self.expected_configflags = []
+
+    def test_build(self):
+        plugin = cmake.CMakePlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.builddir)
+        plugin.build()
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["cmake", plugin.sourcedir, "-DCMAKE_INSTALL_PREFIX="]
+                    + self.expected_configflags,
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    ["cmake", "--build", ".", "--", "-j2"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    ["cmake", "--build", ".", "--target", "install"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+            ]
+        )
