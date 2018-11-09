@@ -17,7 +17,6 @@
 import logging
 import os
 import shlex
-import sys
 from typing import Dict, Sequence
 
 from .. import errors
@@ -28,10 +27,6 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_platform() -> str:
-    return sys.platform
 
 
 def _get_stop_time() -> int:
@@ -195,16 +190,14 @@ class Multipass(Provider):
             .strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
-        uid_map = {str(os.getuid()): "0"}
-        gid_map = {str(os.getgid()): "0"}
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
             self._mount(
                 mountpoint=project_mountpoint,
                 dev_or_path=self.project._project_dir,
-                uid_map=uid_map,
-                gid_map=gid_map,
+                uid_map={str(os.getuid()): "0"},
+                gid_map={str(os.getgid()): "0"},
             )
 
     def provision_project(self, tarball: str) -> None:

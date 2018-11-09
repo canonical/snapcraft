@@ -21,6 +21,7 @@ from copy import deepcopy
 import yaml
 
 from snapcraft import yaml_utils
+from . import _schema
 from . import errors
 
 
@@ -45,6 +46,10 @@ class ProjectInfo:
         self.grade = self.__raw_snapcraft.get("grade")
         self.base = self.__raw_snapcraft.get("base")
         self.type = self.__raw_snapcraft.get("type")
+
+    def validate_raw_snapcraft(self):
+        """Validate the snapcraft.yaml for this project."""
+        _schema.Validator(self.__raw_snapcraft).validate()
 
     def get_raw_snapcraft(self):
         # TODO this should be a MappingProxyType, but ordered writing

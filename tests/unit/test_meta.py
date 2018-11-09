@@ -37,6 +37,7 @@ from testtools.matchers import (
 from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
 from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
+from snapcraft.project import errors as project_errors
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
 from tests import unit, fixture_setup
@@ -1000,9 +1001,7 @@ class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         ] = "snapcraftctl {} {}".format(self.setter, self.value)
 
         raised = self.assertRaises(
-            project_loader.errors.YamlValidationError,
-            self.generate_meta_yaml,
-            build=True,
+            project_errors.YamlValidationError, self.generate_meta_yaml, build=True
         )
         self.assertThat(
             str(raised),
@@ -1022,9 +1021,7 @@ class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
 
         raised = self.assertRaises(
-            project_loader.errors.YamlValidationError,
-            self.generate_meta_yaml,
-            build=True,
+            project_errors.YamlValidationError, self.generate_meta_yaml, build=True
         )
         self.assertThat(
             str(raised),

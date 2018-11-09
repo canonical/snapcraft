@@ -23,7 +23,6 @@ from ._env import (  # noqa: F401
     snapcraft_global_environment,
     snapcraft_part_environment,
 )
-from ._schema import Validator  # noqa: F401
 from ._parts_config import PartsConfig  # noqa: F401
 from ._extensions import (  # noqa: F401
     apply_extensions,

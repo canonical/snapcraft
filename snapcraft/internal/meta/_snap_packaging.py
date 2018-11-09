@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
+from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
@@ -103,7 +104,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
-    validator = project_loader.Validator(project_config.data)
+    validator = _schema.Validator(project_config.data)
     validator.validate(source="properties")
 
     # Update default values

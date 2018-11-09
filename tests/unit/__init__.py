@@ -28,6 +28,7 @@ import testscenarios
 import testtools
 
 import snapcraft
+from snapcraft.project import _schema
 from snapcraft.internal import common, elf, steps
 from snapcraft.internal.project_loader import grammar_processing
 from tests import fake_servers, fixture_setup
@@ -251,7 +252,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
-        validator = snapcraft.internal.project_loader.Validator()
+        validator = _schema.Validator()
         schema = validator.part_schema
         definitions_schema = validator.definitions_schema
         plugin = snapcraft.internal.pluginhandler.load_plugin(
