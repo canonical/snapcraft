@@ -15,4 +15,6 @@ parts:
   maven:
     plugin: maven
     maven-openjdk-version: "8"
+    maven-options:
+      - -DskipTests
     source: my-app

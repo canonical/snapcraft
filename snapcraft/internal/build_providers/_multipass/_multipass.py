@@ -20,7 +20,7 @@ import shlex
 from typing import Dict, Sequence
 
 from .. import errors
-from .._base_provider import Provider, _get_platform
+from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 from snapcraft.internal.errors import SnapcraftEnvironmentError
@@ -191,21 +191,13 @@ class Multipass(Provider):
         )
         project_mountpoint = os.path.join(home_dir, "project")
 
-        # The mapping only makes sense on Linux
-        if _get_platform() == "linux":
-            uid_map = {str(os.getuid()): "0"}
-            gid_map = {str(os.getgid()): "0"}
-        else:
-            uid_map = None
-            gid_map = None
-
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
             self._mount(
                 mountpoint=project_mountpoint,
                 dev_or_path=self.project._project_dir,
-                uid_map=uid_map,
-                gid_map=gid_map,
+                uid_map={str(os.getuid()): "0"},
+                gid_map={str(os.getgid()): "0"},
             )
 
     def provision_project(self, tarball: str) -> None:
