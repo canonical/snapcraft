@@ -25,7 +25,8 @@ jobs:
             - python3-yaml
             - python3.5-dev
         snap:
-          - core
+          - name: core
+          - name: core18
           - name: shellcheck
             channel: edge
       install:
@@ -100,8 +101,8 @@ jobs:
           - name: snapcraft
             channel: candidate
             classic: true
-          - transfer
-          - http
+          - name: transfer
+          - name: http
       install:
         - sudo apt autoremove --purge --yes lxd lxd-client
         - sudo /snap/bin/lxd waitready
