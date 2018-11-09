@@ -24,11 +24,12 @@ jobs:
             - libyaml-dev
             - python3-yaml
             - python3.5-dev
+        snap:
+          - core
+          - name: shellcheck
+            channel: edge
       install:
-        # workaround for "cannot locate the core snap: No such file or directory"
-        - sudo snap install core
         - sudo snap install black --devmode --edge
-        - sudo snap install shellcheck --edge
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt
@@ -92,10 +93,17 @@ jobs:
     - stage: unit, snap and osx
       name: snap
       if: type != cron
+      addons:
+        snaps:
+          - name: lxd
+            channel: 3.5/stable
+          - name: snapcraft
+            channel: candidate
+            classic: true
+          - transfer
+          - http
       install:
-        - sudo apt autoremove --purge --yes lxd
-        - sudo snap install lxd --channel 3.0/stable
-        - sudo snap install snapcraft --candidate --classic
+        - sudo apt autoremove --purge --yes lxd lxd-client
         - sudo /snap/bin/lxd waitready
         - sudo /snap/bin/lxd init --auto
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
@@ -105,11 +113,9 @@ jobs:
         - sudo cp snapcraft_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
         - sudo cp snapcraft_amd64.snap "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
-        - sudo snap install transfer
         - timeout 180 sudo /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
         - sudo journalctl -u snapd
-        - sudo snap install http
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
