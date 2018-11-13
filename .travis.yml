@@ -97,7 +97,7 @@ jobs:
       addons:
         snaps:
           - name: lxd
-            channel: 3.5/stable
+            channel: 3.0/stable
           - name: snapcraft
             channel: candidate
             classic: true
