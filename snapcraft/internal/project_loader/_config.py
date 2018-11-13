@@ -218,6 +218,10 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
 
+        # If version: git is used we want to add "git" to build-packages
+        if self.data.get("version") == "git":
+            self.build_tools.add("git")
+
         # Always add the base for building for non os and base snaps
         if project.info.base is not None and project.info.type not in ("base", "os"):
             # If the base is already installed by other means, skip its installation.
