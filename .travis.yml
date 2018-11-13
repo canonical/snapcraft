@@ -24,7 +24,7 @@ jobs:
             - libyaml-dev
             - python3-yaml
             - python3.5-dev
-        snap:
+        snaps:
           - name: core
           - name: core18
           - name: shellcheck
