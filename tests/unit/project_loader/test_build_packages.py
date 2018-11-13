@@ -151,7 +151,6 @@ class XCompileTest(ProjectLoaderBaseTest):
 
 
 class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
-
     def test_git_added_for_version_git(self):
         snapcraft_yaml = dedent(
             """\
