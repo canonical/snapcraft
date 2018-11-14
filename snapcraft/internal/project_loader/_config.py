@@ -225,6 +225,10 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
 
+        # If version: git is used we want to add "git" to build-packages
+        if self.data.get("version") == "git":
+            self.build_tools.add("git")
+
         self.parts = PartsConfig(
             parts=self.data,
             project=project,
