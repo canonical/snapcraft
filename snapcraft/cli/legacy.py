@@ -31,9 +31,7 @@ def legacycli(ctx, **kwargs):
     context_settings=dict(ignore_unknown_options=True, allow_extra_args=True)
 )
 def cleanbuild():
-    """
-    This command is no longer supported or available when using the base keyword.
-    """
+    """This command is no longer available when using the base keyword."""
     # We can only end up here with an invalid yaml
     project = get_project()
     conduct_project_sanity_check(project)
