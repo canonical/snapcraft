@@ -26,9 +26,9 @@ from snapcraft.internal.build_providers import errors
 logger = logging.getLogger(__name__)
 
 
-def _run(command: Sequence[str]) -> None:
+def _run(command: Sequence[str], stdin=None) -> None:
     logger.debug("Running {}".format(" ".join(command)))
-    subprocess.check_call(command)
+    subprocess.check_call(command, stdin=stdin)
 
 
 def _run_output(command: Sequence[str], **kwargs) -> bytes:
@@ -95,7 +95,7 @@ class MultipassCommand:
         if disk is not None:
             cmd.extend(["--disk", disk])
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderLaunchError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -108,7 +108,7 @@ class MultipassCommand:
         """
         cmd = [self.provider_cmd, "start", instance_name]
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderStartError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -126,7 +126,7 @@ class MultipassCommand:
             cmd.extend(["--time", str(time)])
         cmd.append(instance_name)
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderStopError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -142,7 +142,7 @@ class MultipassCommand:
         if purge:
             cmd.append("--purge")
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderDeleteError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -215,7 +215,7 @@ class MultipassCommand:
         for host_map, instance_map in gid_map.items():
             cmd.extend(["--gid-map", "{}:{}".format(host_map, instance_map)])
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderMountError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -230,7 +230,7 @@ class MultipassCommand:
         """
         cmd = [self.provider_cmd, "umount", mount]
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderUnMountError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -246,7 +246,7 @@ class MultipassCommand:
         """
         cmd = [self.provider_cmd, "copy-files", source, destination]
         try:
-            _run(cmd)
+            _run(cmd, stdin=subprocess.DEVNULL)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderFileCopyError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
