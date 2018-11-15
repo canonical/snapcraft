@@ -25,6 +25,7 @@ import fixtures
 import testscenarios
 import testtools
 from testtools.matchers import (
+    Annotate,
     Contains,
     DirExists,
     Equals,
@@ -577,12 +578,20 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             "foo": {"plugs": ["network"], "passthrough": {"foo": "bar", "spam": "eggs"}}
         }
         self.generate_meta_yaml()
+
+        output_lines = fake_logger.output.splitlines()
         self.assertThat(
-            fake_logger.output,
-            Equals(
+            output_lines,
+            Contains(
                 "The 'passthrough' property is being used to propagate "
                 "experimental properties to snap.yaml that have not been "
-                "validated.\n"
+                "validated."
+            ),
+        )
+        self.assertThat(
+            len(output_lines),
+            Annotate(
+                "There were duplicate lines logged.", Equals(len(set(output_lines)))
             ),
         )
 

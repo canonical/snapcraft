@@ -148,3 +148,26 @@ class XCompileTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
 
         self.assertThat(project_config.parts.build_tools, Equals(set()))
+
+
+class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
+    def test_git_added_for_version_git(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            base: core18
+            version: "git"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            parts:
+              part1:
+                plugin: nil
+            """
+        )
+
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+
+        self.assertThat(project_config.build_tools, Contains("git"))
