@@ -58,6 +58,8 @@ _CLOUD_USER_DATA_TMPL = dedent(
         mode: growpart
         devices: ["/"]
         ignore_growroot_disabled: false
+    runcmd:
+    - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
     write_files:
         - path: /root/.bashrc
           permissions: 0644
@@ -80,10 +82,6 @@ _CLOUD_USER_DATA_TMPL = dedent(
                 ps1="$PWD"
             fi
             echo -n $ps1
-        - path: /etc/timezone
-          permissions: 0644
-          content: |
-            {timezone}
     """
 )
 

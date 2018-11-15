@@ -285,6 +285,8 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
                 mode: growpart
                 devices: ["/"]
                 ignore_growroot_disabled: false
+            runcmd:
+            - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
             write_files:
                 - path: /root/.bashrc
                   permissions: 0644
@@ -307,10 +309,6 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
                         ps1="$PWD"
                     fi
                     echo -n $ps1
-                - path: /etc/timezone
-                  permissions: 0644
-                  content: |
-                    America/Argentina/Cordoba
         """
                 )
             ),
