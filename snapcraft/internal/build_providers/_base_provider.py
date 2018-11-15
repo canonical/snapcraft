@@ -37,7 +37,7 @@ def _get_platform() -> str:
 
 
 def _get_tzdata(timezone_filepath=os.path.join(os.path.sep, "etc", "timezone")) -> str:
-    """Return the host's timezone from timezon_filepath or Etc/UTC on error."""
+    """Return the host's timezone from timezone_filepath or Etc/UTC on error."""
     try:
         with open(timezone_filepath) as timezone_file:
             timezone = timezone_file.read().strip()
