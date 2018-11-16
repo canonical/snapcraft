@@ -75,7 +75,8 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.launch(instance_name=self.instance_name, image="16.04")
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "launch", "16.04", "--name", self.instance_name]
+            ["multipass", "launch", "16.04", "--name", self.instance_name],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -93,7 +94,8 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
                 self.instance_name,
                 "--cpus",
                 "10",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -111,7 +113,8 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
                 self.instance_name,
                 "--mem",
                 "2G",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -129,7 +132,8 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
                 self.instance_name,
                 "--disk",
                 "8G",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -139,7 +143,8 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
         )
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "launch", "daily:18.04", "--name", self.instance_name]
+            ["multipass", "launch", "daily:18.04", "--name", self.instance_name],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -159,7 +164,7 @@ class MultipassCommandLaunchTest(MultipassCommandPassthroughBaseTest):
             instance_name=self.instance_name,
             image="18.04",
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
         self.check_output_mock.assert_not_called()
 
 
@@ -168,7 +173,7 @@ class MultipassCommandShellTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.shell(instance_name=self.instance_name)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "shell", self.instance_name]
+            ["multipass", "shell", self.instance_name], stdin=None
         )
         self.check_output_mock.assert_not_called()
 
@@ -183,7 +188,7 @@ class MultipassCommandShellTest(MultipassCommandPassthroughBaseTest):
             self.multipass_command.shell,
             instance_name=self.instance_name,
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=None)
         self.check_output_mock.assert_not_called()
 
 
@@ -192,7 +197,7 @@ class MultipassCommandStopTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.stop(instance_name=self.instance_name)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "stop", self.instance_name]
+            ["multipass", "stop", self.instance_name], stdin=subprocess.DEVNULL
         )
         self.check_output_mock.assert_not_called()
 
@@ -200,7 +205,8 @@ class MultipassCommandStopTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.stop(instance_name=self.instance_name, time=10)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "stop", "--time", "10", self.instance_name]
+            ["multipass", "stop", "--time", "10", self.instance_name],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -215,7 +221,7 @@ class MultipassCommandStopTest(MultipassCommandPassthroughBaseTest):
             self.multipass_command.stop,
             instance_name=self.instance_name,
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
         self.check_output_mock.assert_not_called()
 
 
@@ -224,7 +230,8 @@ class MultipassCommandDeleteTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.delete(instance_name=self.instance_name)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "delete", self.instance_name, "--purge"]
+            ["multipass", "delete", self.instance_name, "--purge"],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -232,7 +239,7 @@ class MultipassCommandDeleteTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.delete(instance_name=self.instance_name, purge=False)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "delete", self.instance_name]
+            ["multipass", "delete", self.instance_name], stdin=subprocess.DEVNULL
         )
         self.check_output_mock.assert_not_called()
 
@@ -247,7 +254,7 @@ class MultipassCommandDeleteTest(MultipassCommandPassthroughBaseTest):
             self.multipass_command.delete,
             instance_name=self.instance_name,
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
         self.check_output_mock.assert_not_called()
 
 
@@ -258,7 +265,7 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.mount(source=source, target=target)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "mount", source, target]
+            ["multipass", "mount", source, target], stdin=subprocess.DEVNULL
         )
         self.check_output_mock.assert_not_called()
 
@@ -281,7 +288,8 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
                 "1000:0",
                 "--uid-map",
                 "900:0",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -304,7 +312,8 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
                 "1000:0",
                 "--gid-map",
                 "900:0",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -332,7 +341,8 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
                 "1000:0",
                 "--gid-map",
                 "900:2",
-            ]
+            ],
+            stdin=subprocess.DEVNULL,
         )
         self.check_output_mock.assert_not_called()
 
@@ -348,7 +358,7 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
             source=source,
             target=target,
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
         self.check_output_mock.assert_not_called()
 
 
@@ -359,7 +369,7 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
         self.multipass_command.copy_files(source=source, destination=destination)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "copy-files", source, destination]
+            ["multipass", "copy-files", source, destination], stdin=subprocess.DEVNULL
         )
         self.check_output_mock.assert_not_called()
 
@@ -377,7 +387,7 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             source=source,
             destination=destination,
         )
-        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
         self.check_output_mock.assert_not_called()
 
 
