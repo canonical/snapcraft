@@ -49,7 +49,7 @@ class MesonPlugin(snapcraft.BasePlugin):
         schema["properties"]["meson-parameters"] = {
             "type": "array",
             "minitems": 1,
-            "uniqueItems": True,
+            "uniqueItems": False,
             "items": {"type": "string"},
             "default": [],
         }
