@@ -286,7 +286,7 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
                 devices: ["/"]
                 ignore_growroot_disabled: false
             runcmd:
-            - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
+            - ["ln", "-s", "../usr/share/zoneinfo/America/Argentina/Cordoba", "/etc/localtime"]
             write_files:
                 - path: /root/.bashrc
                   permissions: 0644
