@@ -50,11 +50,9 @@ class InitCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                "Created snap/snapcraft.yaml.\nEdit the file to your liking or "
-                "run `snapcraft` to get started. "
-                "For more information about the format and values\n"
-                "accepted in snapcraft.yaml go to "
-                "https://docs.snapcraft.io/the-snapcraft-format/8337."
+                "Created snap/snapcraft.yaml.\n"
+                "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
+                "information about the snapcraft.yaml format."
             ),
         )
 

@@ -115,9 +115,8 @@ def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
     echo.info("Created {}.".format(snapcraft_yaml_path))
-    echo.wrapped("Edit the file to your liking or run `snapcraft` to get started. "
-                 "For more information about the format and values accepted in "
-                 "snapcraft.yaml go to https://docs.snapcraft.io/the-snapcraft-format/8337.")
+    echo.wrapped("Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
+                 "information about the snapcraft.yaml format.")
 
 
 @lifecyclecli.command()
