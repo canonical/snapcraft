@@ -104,6 +104,9 @@ properties:
         validation-failure:
           "{.instance!r} is not a valid snap name. Snap names cannot have two
           hyphens in a row."
+  title:
+    type: string
+    description: title for the snap
   architectures:
     description: architectures on which to build, and on which the resulting snap runs
     type: array

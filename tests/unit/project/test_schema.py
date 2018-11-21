@@ -689,6 +689,54 @@ class IconTest(ProjectBaseTest):
         )
 
 
+class TitleTest(ProjectBaseTest):
+    def test_title(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            title: a title
+            summary: test
+            description: nothing
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """
+            )
+        )
+
+    def test_only_string(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            title: 1
+            summary: test
+            description: nothing
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """
+            )
+        )
+
+        self.assertThat(
+            str(raised),
+            Contains(
+                "Issues while validating snapcraft.yaml: The 'title' property "
+                "does not match the required schema: 1 is not of type 'string'"
+            ),
+        )
+
+
 class OrganizeTest(ProjectBaseTest):
     def test_yaml_organize_value_none(self):
         raised = self.assertValidationRaises(
