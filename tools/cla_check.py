@@ -18,29 +18,32 @@ except ImportError:
 
 shortlog_email_rx = re.compile("^\s*\d+\s+.*<(\S+)>$", re.M)
 
+
 def get_emails_for_range(r):
     output = check_output(["git", "shortlog", "-se", r])
     return set(m.group(1) for m in shortlog_email_rx.finditer(output))
 
+
 if sys.stdout.isatty():
-    green="\033[32;1m"
-    red="\033[31;1m"
-    yellow="\033[33;1m"
-    reset="\033[0m"
-    clear="\033[0K"
+    green = "\033[32;1m"
+    red = "\033[31;1m"
+    yellow = "\033[33;1m"
+    reset = "\033[0m"
+    clear = "\033[0K"
 else:
-    green=""
-    red=""
-    yellow=""
-    reset=""
-    clear=""
+    green = ""
+    red = ""
+    yellow = ""
+    reset = ""
+    clear = ""
+
 
 def main():
     travis_commit_range = os.getenv("TRAVIS_COMMIT_RANGE", "")
 
     # This is just to have information in case things go wrong
     if clear:
-        print("travis_fold:start:checkout_info\r"+clear, end="")
+        print("travis_fold:start:checkout_info\r" + clear, end="")
     print("{}Debug information{}".format(yellow, reset))
     print("Commit range:", travis_commit_range)
     print("Remotes:")
@@ -51,7 +54,7 @@ def main():
     check_call(["git", "branch", "-v"])
     sys.stdout.flush()
     if clear:
-        print("travis_fold:end:checkout_info\r"+clear)
+        print("travis_fold:end:checkout_info\r" + clear)
 
     if travis_commit_range == "":
         sys.exit("No TRAVIS_COMMIT_RANGE set.")
@@ -71,13 +74,23 @@ def main():
             print("{}✓{} {:<{}} already on master".format(green, reset, email, width))
             continue
         if email.endswith("@canonical.com"):
-            print("{}✓{} {:<{}} @canonical.com account".format(green, reset, email, width))
+            print(
+                "{}✓{} {:<{}} @canonical.com account".format(green, reset, email, width)
+            )
             continue
         if email.endswith("@mozilla.com"):
-            print("{}✓{} {:<{}} @mozilla.com account (mozilla corp has signed the corp CLA)".format(green, reset, email, width))
+            print(
+                "{}✓{} {:<{}} @mozilla.com account (mozilla corp has signed the corp CLA)".format(
+                    green, reset, email, width
+                )
+            )
             continue
         if email.endswith("@users.noreply.github.com"):
-            print("{}‽{} {:<{}} privacy-enabled github web edit email address".format(yellow, reset, email, width))
+            print(
+                "{}‽{} {:<{}} privacy-enabled github web edit email address".format(
+                    yellow, reset, email, width
+                )
+            )
             continue
         if lp is None:
             print("Logging into Launchpad...")
@@ -86,14 +99,24 @@ def main():
         contributor = lp.people.getByEmail(email=email)
         if not contributor:
             failed = True
-            print("{}🛇{} {:<{}} has no Launchpad account".format(red, reset, email, width))
+            print(
+                "{}🛇{} {:<{}} has no Launchpad account".format(red, reset, email, width)
+            )
             continue
 
         if contributor in cla_folks:
-            print("{}✓{} {:<{}} ({}) has signed the CLA".format(green, reset, email, width, contributor))
+            print(
+                "{}✓{} {:<{}} ({}) has signed the CLA".format(
+                    green, reset, email, width, contributor
+                )
+            )
         else:
             failed = True
-            print("{}🛇{} {:<{}} ({}) has NOT signed the CLA".format(red, reset, email, width, contributor))
+            print(
+                "{}🛇{} {:<{}} ({}) has NOT signed the CLA".format(
+                    red, reset, email, width, contributor
+                )
+            )
     if failed:
         sys.exit(1)
 
