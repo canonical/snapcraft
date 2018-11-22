@@ -1,0 +1,20 @@
+summary: "Test that unicode in metadata still looks good once dumped"
+
+systems: [ubuntu-16*]
+
+prepare: |
+  apt-get install diffutils
+  apt-mark auto diffutils
+
+restore: |
+  snapcraft clean
+
+execute: |
+  snapcraft prime
+
+  expected_snap_yaml="$PWD/expected_snap.yaml"
+
+  if ! diff prime/meta/snap.yaml "$expected_snap_yaml"; then
+      echo "The formatting for snap.yaml is incorrect"
+      exit 1
+  fi
