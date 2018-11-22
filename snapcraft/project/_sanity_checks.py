@@ -42,6 +42,11 @@ def conduct_project_sanity_check(project: Project) -> None:
 
     The checks done here are meant to be light, and not rely on the build environment.
     """
+    # The snapcraft.yaml should be valid even without extensions applied
+    # This here check is mostly for backwards compatibility with the
+    # rest of the code base.
+    if project.info is not None:
+        project.info.validate_raw_snapcraft()
 
     snap_dir_path = os.path.join(project._project_dir, "snap")
     if os.path.isdir(snap_dir_path):

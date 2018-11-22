@@ -18,19 +18,37 @@ import abc
 import logging
 import os
 import shutil
+import sys
 from textwrap import dedent
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from xdg import BaseDirectory
 
 from . import errors
 from ._snap import SnapInjector
-from snapcraft.internal import steps
+from snapcraft.internal import common, steps
 
 
 logger = logging.getLogger(__name__)
 
 
+def _get_platform() -> str:
+    return sys.platform
+
+
+def _get_tzdata(timezone_filepath=os.path.join(os.path.sep, "etc", "timezone")) -> str:
+    """Return the host's timezone from timezone_filepath or Etc/UTC on error."""
+    try:
+        with open(timezone_filepath) as timezone_file:
+            timezone = timezone_file.read().strip()
+    except FileNotFoundError:
+        timezone = "Etc/UTC"
+
+    return timezone
+
+
+# cloud-init's timezone keyword is not used as it requires tzdata to be installed
+# and the images used may not have it preinstalled.
 _CLOUD_USER_DATA_TMPL = dedent(
     """\
     #cloud-config
@@ -40,8 +58,10 @@ _CLOUD_USER_DATA_TMPL = dedent(
         mode: growpart
         devices: ["/"]
         ignore_growroot_disabled: false
+    runcmd:
+    - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
     write_files:
-        - path: /etc/skel/.bashrc
+        - path: /root/.bashrc
           permissions: 0644
           content: |
             export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
@@ -52,7 +72,7 @@ _CLOUD_USER_DATA_TMPL = dedent(
           content: |
             #!/bin/bash
             if [[ "$PWD" =~ ^$HOME.* ]]; then
-                path="${PWD/#$HOME/\ ..}"
+                path="${{PWD/#$HOME/\ ..}}"
                 if [[ "$path" == " .." ]]; then
                     ps1=""
                 else
@@ -123,7 +143,7 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: List) -> None:
+    def _run(self, command: Sequence[str]) -> None:
         """Run a command on the instance."""
 
     @abc.abstractmethod
@@ -221,6 +241,10 @@ class Provider(abc.ABC):
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
         )
+
+        # We do not want to inject from the host if not running from the snap.
+        inject_from_host = common.is_snap()
+
         snap_injector = SnapInjector(
             snap_dir=self._SNAPS_MOUNTPOINT,
             registry_filepath=registry_filepath,
@@ -229,17 +253,21 @@ class Provider(abc.ABC):
             snap_dir_mounter=self._mount_snaps_directory,
             snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
+            inject_from_host=inject_from_host,
         )
         # Inject snapcraft
         snap_injector.add(snap_name="core")
         snap_injector.add(snap_name="snapcraft")
 
-        # We always install the base, if it exists on the host, let's inject.
-        snap_injector.add(snap_name=self.project.info.base)
+        # This build can be driven from a non snappy enabled system, so we may
+        # find ourself in a situation where the base is not set like on OSX or
+        # Windows.
+        if self.project.info.base is not None:
+            snap_injector.add(snap_name=self.project.info.base)
 
         snap_injector.apply()
 
-    def _get_cloud_user_data(self) -> str:
+    def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
         # TODO support users for the qemu provider.
         cloud_user_data_filepath = os.path.join(
             self.provider_project_dir, "user-data.yaml"
@@ -247,7 +275,8 @@ class Provider(abc.ABC):
         if os.path.exists(cloud_user_data_filepath):
             return cloud_user_data_filepath
 
+        user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
         with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
-            print(_CLOUD_USER_DATA_TMPL, file=cloud_user_data_file)
+            print(user_data, file=cloud_user_data_file, end="")
 
         return cloud_user_data_filepath

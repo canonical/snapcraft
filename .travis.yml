@@ -1,6 +1,5 @@
 language: bash
-
-services: [docker]
+dist: xenial
 
 env:
   global:
@@ -8,13 +7,6 @@ env:
     - secure: "uWKJdJlHc8tg+98jGpcc/FvsssEbw2FARqtgO0smBp5x8JWCmAt5fAVPB8qRbbirdHS5Yjpk8SSSa3vWVizYeTIOV+Vo3w8/1oqymPnMEEMtcLkyGZP+fNMDgNnX+icOU/bmh8werhOn9+qiZfKmFuXgpjrXzYoWzrhn55EuDN68Yhe6gB1zznHihDtSKjwQrbZFlgNnTh13Wk9lY8y2XYsWZZVfQ25dP4PaQQv647nBhcWPvrB0N/vMmDS/twvUBcbbEjRg5yKtsqzuT2lEqdIpwosp3/gZjWAWK0FjjmnzRcSHbugtaxWHmghHDLHSpP4GF7bzYL01tklFWDSW9DDvVfZ3HgiN058LL1jsk+VjcMCgu7csUWUj2kib3/TjKQy32R1vALpgDOrLHutdVDXoED33qxcyAYLODNRwW9o+QQM2HoZD4PKVDcKW4WOvAKp7Z1NK+ag26WdA/bM7ZgAll40dY9yPtgg0fdMM9N1X9e4v2TJmjnSLXF8v0jXIwp3VL01c/RpsmD7ubTUp0ixSaiKK0cCvxdflsDSUGojckeA4OsGOf9X+anqxmJsiY7vW/TKULMgToKEYDIPB0EfJ0Tf8P/ve4veEZSnhFinrDk46jwSP2m4kpR2FHAMtjCwqWEXZWouIJOOclAk4IqUWGT88Iomdz/LFbQa2rdo="
     - LC_ALL: C.UTF-8
     - LANG: C.UTF-8
-
-matrix:
-  include:
-    - os: osx
-    - os: linux
-      sudo: required
-      dist: trusty
 
 cache:
   directories:
@@ -24,12 +16,20 @@ jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
+      name: static tests
       if: type != cron
+      addons:
+        apt:
+          packages:
+            - libyaml-dev
+            - python3-yaml
+            - python3.5-dev
+        snaps:
+          - name: core
+          - name: core18
+          - name: shellcheck
+            channel: edge
       install:
-        - sudo apt update
-        - sudo apt install -y python3.5-dev snapd shellcheck libyaml-dev
-        # workaround for "cannot locate the core snap: No such file or directory"
-        - sudo snap install core
         - sudo snap install black --devmode --edge
         - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
@@ -38,20 +38,37 @@ jobs:
         - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
     # CLA check, only in pull requests, not coming from the bot.
-    - if: type = pull_request AND sender != snappy-m-o
+    - stage: static
+      name:  CLA check
+      if: type = pull_request AND sender != snappy-m-o
       install:
         - sudo apt update && sudo apt install -y git python-launchpadlib
       script:
         - ./tools/cla_check.py
 
     - stage: unit, snap and osx
+      name: unit tests
       if: type != cron
+      addons:
+        apt:
+          packages:
+            - bzr
+            - git
+            - libapt-pkg-dev
+            - libffi-dev
+            - libnacl-dev
+            - libsodium-dev
+            - libssl-dev
+            - libyaml-dev
+            - mercurial
+            - p7zip-full
+            - python3-yaml
+            - python3.5-dev
+            - rpm2cpio
+            - squashfs-tools
+            - subversion
+            - xdelta3
       install:
-        # Here until we have our snapcraft testing toolkit snap
-        - sudo add-apt-repository -y ppa:chris-lea/libsodium
-        - sudo apt update
-        - sudo apt install -y python3.5-dev git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev squashfs-tools xdelta3 libyaml-dev
-        - sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5 0
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
       script:
@@ -59,23 +76,35 @@ jobs:
       after_success:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: osx
+      if: type != cron
       os: osx
+      addons:
+        homebrew:
+          packages:
+            - coreutils
+            - python
       install:
-        - brew upgrade python
-        # readlink -f doesn't work on osx.
-        - brew upgrade coreutils || brew install coreutils
         - python3 ./tools/brew_install_from_source.py
         - python3 -m pip install -r requirements.txt
         - python3 -m pip install -r requirements-devel.txt
       script:
         - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-    - if: type != cron
+    - stage: unit, snap and osx
+      name: snap
+      if: type != cron
+      addons:
+        snaps:
+          - name: lxd
+            channel: 3.0/stable
+          - name: snapcraft
+            channel: candidate
+            classic: true
+          - name: transfer
+          - name: http
       install:
-        - sudo apt update
-        - sudo apt install -y snapd
-        - sudo snap install lxd --channel 3.0/stable
-        - sudo snap install snapcraft --candidate --classic
+        - sudo apt autoremove --purge --yes lxd lxd-client
         - sudo /snap/bin/lxd waitready
         - sudo /snap/bin/lxd init --auto
         - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
@@ -85,17 +114,18 @@ jobs:
         - sudo cp snapcraft_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
         - sudo cp snapcraft_amd64.snap "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
-        - sudo snap install transfer
         - timeout 180 sudo /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
         - sudo journalctl -u snapd
-        - sudo snap install http
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
+      name: spread
       if: type != cron
       script:
       - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
       - ./runtests.sh spread
-    - if: type != cron
+    - stage: integration
+      name: store
+      if: type != cron
       script: sudo ./tools/travis/run_integration_test.sh tests/integration/store

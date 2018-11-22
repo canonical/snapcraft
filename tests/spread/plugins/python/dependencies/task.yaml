@@ -5,10 +5,12 @@ environment:
   SNAP_DIR/python_packages: ../snaps/pip-python-packages
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
   snapcraft clean
@@ -18,7 +20,6 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft build
 
-  python2="$(ls parts/python2/install/lib | grep python2)"
-  [ -f "parts/python2/install/lib/$python2/site-packages/argparse.py" ]
-  python3="$(ls parts/python3/install/lib | grep python3)"
-  [ -f "parts/python3/install/lib/$python3/site-packages/argparse.py" ]
+  for d in parts/python2/install/lib/*python2* parts/python3/install/lib/*python3*; do
+    test -f "$d/site-packages/argparse.py"
+  done

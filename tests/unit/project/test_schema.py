@@ -14,20 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from textwrap import dedent
 from unittest import mock
 
-import fixtures
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, MatchesRegex
 
-from . import ProjectLoaderBaseTest
-from tests import fixture_setup, unit
-from snapcraft.project import Project
-from snapcraft.internal.errors import PluginError
-from snapcraft.internal.project_loader import load_config, errors
-from snapcraft.internal.project_loader import Validator
+from . import ProjectBaseTest
+from snapcraft.project import errors
+from snapcraft.project._schema import Validator
+from tests import unit
 
 
 class ValidationBaseTest(unit.TestCase):
@@ -83,9 +79,7 @@ class ValidationTest(ValidationBaseTest):
         mock_the_open = mock.mock_open()
         mock_the_open.side_effect = FileNotFoundError()
 
-        with mock.patch(
-            "snapcraft.internal.project_loader._schema.open", mock_the_open, create=True
-        ):
+        with mock.patch("snapcraft.project._schema.open", mock_the_open, create=True):
             raised = self.assertRaises(errors.YamlValidationError, Validator, self.data)
 
         expected_message = "snapcraft validation file is missing from installation path"
@@ -603,9 +597,11 @@ class InvalidArchitecturesTest(ValidationBaseTest):
         )
 
 
-class NameTest(unit.TestCase):
-    def make_snapcraft_project(self, *, name):
-        snapcraft_yaml = dedent(
+class NameTest(ProjectBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.snapcraft_yaml = dedent(
             """\
             name: {}
             base: core18
@@ -619,14 +615,9 @@ class NameTest(unit.TestCase):
                     plugin: nil
         """
         )
-        snapcraft_yaml_file_path = super().make_snapcraft_yaml(snapcraft_yaml)
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-        return load_config(project)
 
     def test_invalid_yaml_invalid_name_as_number(self):
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, name="1"
-        )
+        raised = self.assertValidationRaises(self.snapcraft_yaml.format("1"))
 
         self.assertThat(
             raised.message,
@@ -637,30 +628,7 @@ class NameTest(unit.TestCase):
         )
 
     def test_invalid_yaml_invalid_name_as_list(self):
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, name="[]"
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'name' property does not match the required "
-                "schema: snap names need to be strings."
-            ),
-        )
-
-    def test_invalid_yaml_invalid_name_as_huge_map(self):
-        # making my point about not printing the thing for failed type check
-        name = dedent(
-            """\
-            - a: &a {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {}}}}}}}}}}}}}}
-            - b: &b [*a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a]
-            - c: &c [*b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b]
-            - z: "I could go on but time and memory are both too short" """
-        )  # noqa: E501
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, name=name
-        )
+        raised = self.assertValidationRaises(self.snapcraft_yaml.format("[]"))
 
         self.assertThat(
             raised.message,
@@ -671,10 +639,11 @@ class NameTest(unit.TestCase):
         )
 
 
-class IconTest(ProjectLoaderBaseTest):
+class IconTest(ProjectBaseTest):
     def test_invalid_yaml_invalid_icon_extension(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -688,10 +657,7 @@ class IconTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
             """
-        )
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            )
         )
 
         self.assertThat(
@@ -699,8 +665,9 @@ class IconTest(ProjectLoaderBaseTest):
         )
 
     def test_invalid_yaml_missing_icon(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -714,10 +681,7 @@ class IconTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
             """
-        )
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            )
         )
 
         self.assertThat(
@@ -725,10 +689,11 @@ class IconTest(ProjectLoaderBaseTest):
         )
 
 
-class OrganizeTest(ProjectLoaderBaseTest):
+class OrganizeTest(ProjectBaseTest):
     def test_yaml_organize_value_none(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -742,10 +707,7 @@ class OrganizeTest(ProjectLoaderBaseTest):
                 organize:
                   foo:
             """
-        )
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            )
         )
 
         self.assertThat(
@@ -757,8 +719,9 @@ class OrganizeTest(ProjectLoaderBaseTest):
         )
 
     def test_yaml_organize_value_empty(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -772,10 +735,7 @@ class OrganizeTest(ProjectLoaderBaseTest):
                 organize:
                   foo: ''
             """
-        )
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            )
         )
 
         self.assertThat(
@@ -787,83 +747,11 @@ class OrganizeTest(ProjectLoaderBaseTest):
         )
 
 
-class AliasesTest(ProjectLoaderBaseTest):
-    def make_snapcraft_project(self, apps):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
-        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
-        for app_name, app in apps:
-            snapcraft_yaml.update_app(app_name, app)
-        self.useFixture(snapcraft_yaml)
-
-        project = Project(
-            snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path
-        )
-        return load_config(project)
-
-    def test_aliases(self,):
-        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(fake_logger)
-
-        apps = [("test", dict(command="test", aliases=["test-it", "testing"]))]
-        c = self.make_snapcraft_project(apps)
-
-        self.maxDiff = None
-
-        self.assertTrue(
-            "aliases" in c.data["apps"]["test"],
-            'Expected "aliases" property to be in snapcraft.yaml',
-        )
-        self.assertThat(
-            c.data["apps"]["test"]["aliases"], Equals(["test-it", "testing"])
-        )
-
-        # Verify that aliases are properly deprecated
-        self.assertThat(
-            fake_logger.output,
-            Contains(
-                "Aliases are now handled by the store, and shouldn't be declared "
-                "in the snap."
-            ),
-        )
-        self.assertThat(
-            fake_logger.output,
-            Contains("See http://snapcraft.io/docs/deprecation-notices/dn5"),
-        )
-
-    def test_duplicate_aliases(self):
-        apps = [
-            ("test1", dict(command="test", aliases=["testing"])),
-            ("test2", dict(command="test", aliases=["testing"])),
-        ]
-        raised = self.assertRaises(
-            errors.DuplicateAliasError, self.make_snapcraft_project, apps
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Multiple parts have the same alias defined: {!r}".format("testing")
-            ),
-        )
-
-    def test_invalid_alias(self):
-        apps = [("test", dict(command="test", aliases=[".test"]))]
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, apps
-        )
-        expected = (
-            "The {path!r} property does not match the required schema: "
-            "{alias!r} does not match ".format(
-                path="apps/test/aliases[0]", alias=".test"
-            )
-        )
-        self.assertThat(str(raised), Contains(expected))
-
-
-class VersionTest(ProjectLoaderBaseTest):
+class VersionTest(ProjectBaseTest):
     def test_invalid_yaml_version_too_long(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: 'abcdefghijklmnopqrstuvwxyz1234567' # Max is 32 in the store
@@ -875,10 +763,8 @@ class VersionTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
         """
+            )
         )  # noqa: E501
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
-        )
 
         self.assertThat(
             raised.message,
@@ -890,7 +776,7 @@ class VersionTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidVersionTest(ProjectLoaderBaseTest):
+class ValidVersionTest(ProjectBaseTest):
 
     scenarios = [
         (version, dict(version=version))
@@ -898,55 +784,69 @@ class ValidVersionTest(ProjectLoaderBaseTest):
     ]
 
     def test_valid_version(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, version=self.version)
-        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
-        self.useFixture(snapcraft_yaml)
-        project = Project(
-            snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path
+        self.assertValidationPasses(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: '{}'
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """
+            ).format(self.version)
         )
 
-        # This call will should not fail
-        load_config(project)
 
-
-class InvalidVersionTest(ProjectLoaderBaseTest):
+class InvalidVersionTest(ProjectBaseTest):
 
     scenarios = [
         (str(version), dict(version=version))
         for version in [
-            "*",
-            "",
-            ":v",
-            ".v",
-            "+v",
-            "~v",
-            "_v",
-            "-v",
-            "v:",
-            "v.",
-            "v_",
-            "v-",
-            "underscores_are_bad",
+            "'*'",
+            "''",
+            "':v'",
+            "'.v'",
+            "'+v'",
+            "'~v'",
+            "'_v'",
+            "'-v'",
+            "'v:'",
+            "'v.'",
+            "'v_'",
+            "'v-'",
+            "'underscores_are_bad'",
             0.1,
         ]
     ]
 
     def test_invalid_version(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, version=self.version)
-        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
-        self.useFixture(snapcraft_yaml)
-        project = Project(
-            snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: {}
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """
+            ).format(self.version)
         )
-
-        # This call will should not fail
-        raised = self.assertRaises(errors.YamlValidationError, load_config, project)
 
         self.assertThat(
             raised.message,
             Equals(
                 "The 'version' property does not match the required "
-                "schema: {!r} is not a valid snap version string. Snap versions "
+                "schema: {} is not a valid snap version string. Snap versions "
                 "consist of upper- and lower-case alphanumeric characters, "
                 "as well as periods, colons, plus signs, tildes, and "
                 "hyphens. They cannot begin with a period, colon, plus "
@@ -956,11 +856,12 @@ class InvalidVersionTest(ProjectLoaderBaseTest):
         )
 
 
-class EnvironmentTest(ProjectLoaderBaseTest):
+class EnvironmentTest(ProjectBaseTest):
     def test_valid_environment(self):
-        project_config = self.make_snapcraft_project(
+        snapcraft_yaml = self.assertValidationPasses(
             dedent(
-                """\
+                dedent(
+                    """\
             name: project-name
             base: core18
             version: "1"
@@ -983,21 +884,22 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                 plugin: nil
                 source: .
             """
+                )
             )
         )
 
         self.assertThat(
-            project_config.data["environment"],
-            Equals(dict(GLOBAL="1", OTHER="valid-value")),
+            snapcraft_yaml["environment"], Equals(dict(GLOBAL="1", OTHER="valid-value"))
         )
         self.assertThat(
-            project_config.data["apps"]["app1"]["environment"],
+            snapcraft_yaml["apps"]["app1"]["environment"],
             Equals(dict(LOCALE="C", PLUGIN_PATH="$SNAP_USER_DATA/plugins")),
         )
 
     def test_invalid_environment(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: project-name
             base: core18
             version: "1"
@@ -1014,9 +916,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                 source: .
                 plugin: nil
             """
-        )
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            )
         )
 
         self.assertRegex(
@@ -1026,7 +926,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidAppNamesTest(ProjectLoaderBaseTest):
+class ValidAppNamesTest(ProjectBaseTest):
 
     scenarios = [
         (name, dict(name=name))
@@ -1052,9 +952,10 @@ class ValidAppNamesTest(ProjectLoaderBaseTest):
     ]
 
     def test_valid_app_names(self):
-        project_config = self.make_snapcraft_project(
+        snapcraft_yaml = self.assertValidationPasses(
             dedent(
-                """\
+                dedent(
+                    """\
             name: test
             base: core18
             version: "1"
@@ -1071,13 +972,14 @@ class ValidAppNamesTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
         """
-            ).format(self.name)
+                ).format(self.name)
+            )
         )
 
-        self.assertThat(project_config.data["apps"], Contains(self.name))
+        self.assertThat(snapcraft_yaml["apps"], Contains(self.name))
 
 
-class InvalidAppNamesYamlTest(ProjectLoaderBaseTest):
+class InvalidAppNamesYamlTest(ProjectBaseTest):
 
     scenarios = [
         (name, dict(name=name))
@@ -1104,8 +1006,9 @@ class InvalidAppNamesYamlTest(ProjectLoaderBaseTest):
     ]
 
     def test_invalid_yaml_invalid_app_names(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -1122,10 +1025,7 @@ class InvalidAppNamesYamlTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
         """
-        ).format(self.name)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.name)
         )
 
         self.assertRegex(
@@ -1136,7 +1036,7 @@ class InvalidAppNamesYamlTest(ProjectLoaderBaseTest):
         )
 
 
-class InvalidHookNamesYamlTest(ProjectLoaderBaseTest):
+class InvalidHookNamesYamlTest(ProjectBaseTest):
 
     scenarios = [
         (name, dict(name=name))
@@ -1164,8 +1064,9 @@ class InvalidHookNamesYamlTest(ProjectLoaderBaseTest):
     ]
 
     def test_invalid_yaml_invalid_hook_names(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -1182,10 +1083,7 @@ class InvalidHookNamesYamlTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
         """
-        ).format(self.name)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.name)
         )
 
         self.assertRegex(
@@ -1196,7 +1094,7 @@ class InvalidHookNamesYamlTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidConfinmentTest(ProjectLoaderBaseTest):
+class ValidConfinmentTest(ProjectBaseTest):
 
     scenarios = [
         (confinement, dict(confinement=confinement))
@@ -1204,7 +1102,39 @@ class ValidConfinmentTest(ProjectLoaderBaseTest):
     ]
 
     def test_valid_confinement(self):
-        project_config = self.make_snapcraft_project(
+        snapcraft_yaml = self.assertValidationPasses(
+            (
+                dedent(
+                    """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: nothing
+            confinement: {}
+            grade: stable
+
+            parts:
+              part1:
+                plugin: go
+                stage-packages: [fswebcam]
+        """
+                ).format(self.confinement)
+            )
+        )
+
+        self.assertThat(snapcraft_yaml["confinement"], Equals(self.confinement))
+
+
+class InvalidConfinementTest(ProjectBaseTest):
+
+    scenarios = [
+        (confinement, dict(confinement=confinement))
+        for confinement in ["foo", "strict-", "_devmode"]
+    ]
+
+    def test_invalid_confinement(self):
+        raised = self.assertValidationRaises(
             dedent(
                 """\
             name: test
@@ -1217,42 +1147,9 @@ class ValidConfinmentTest(ProjectLoaderBaseTest):
 
             parts:
               part1:
-                plugin: go
-                stage-packages: [fswebcam]
+                plugin: nil
         """
             ).format(self.confinement)
-        )
-
-        self.assertThat(project_config.data["confinement"], Equals(self.confinement))
-
-
-class InvalidConfinementTest(ProjectLoaderBaseTest):
-
-    scenarios = [
-        (confinement, dict(confinement=confinement))
-        for confinement in ["foo", "strict-", "_devmode"]
-    ]
-
-    def test_invalid_confinement(self):
-        snapcraft_yaml = dedent(
-            """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: {}
-            grade: stable
-
-            parts:
-              part1:
-                plugin: go
-                stage-packages: [fswebcam]
-        """
-        ).format(self.confinement)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
         )
 
         self.assertThat(
@@ -1265,12 +1162,12 @@ class InvalidConfinementTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidGradeTest(ProjectLoaderBaseTest):
+class ValidGradeTest(ProjectBaseTest):
 
     scenarios = [(grade, dict(grade=grade)) for grade in ["stable", "devel"]]
 
     def test_yaml_valid_grade_types(self):
-        project_config = self.make_snapcraft_project(
+        snapcraft_yaml = self.assertValidationPasses(
             dedent(
                 """\
             name: test
@@ -1288,34 +1185,32 @@ class ValidGradeTest(ProjectLoaderBaseTest):
             ).format(self.grade)
         )
 
-        self.assertThat(project_config.data["grade"], Equals(self.grade))
+        self.assertThat(snapcraft_yaml["grade"], Equals(self.grade))
 
 
-class InvalidGradeTest(ProjectLoaderBaseTest):
+class InvalidGradeTest(ProjectBaseTest):
 
     scenarios = [
         (grade, dict(grade=grade)) for grade in ["foo", "unstable-", "_experimental"]
     ]
 
     def test_invalid_yaml_invalid_grade_types(self):
-        snapcraft_yaml = (
-            """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: {}
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: nothing
+                confinement: strict
+                grade: {}
 
-            parts:
-              part1:
-                plugin: nil
-            """
-        ).format(self.grade)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+                parts:
+                  part1:
+                    plugin: nil
+                """
+            ).format(self.grade)
         )
 
         self.assertThat(
@@ -1327,7 +1222,7 @@ class InvalidGradeTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidEpochsTest(ProjectLoaderBaseTest):
+class ValidEpochsTest(ProjectBaseTest):
 
     scenarios = [
         ("int 0", {"yaml": 0, "expected": 0}),
@@ -1344,7 +1239,7 @@ class ValidEpochsTest(ProjectLoaderBaseTest):
     ]
 
     def test_yaml_valid_epochs(self):
-        project_config = self.make_snapcraft_project(
+        snapcraft_yaml = self.assertValidationPasses(
             dedent(
                 """\
             name: test
@@ -1360,10 +1255,10 @@ class ValidEpochsTest(ProjectLoaderBaseTest):
             ).format(self.yaml)
         )
 
-        self.assertThat(project_config.data["epoch"], Equals(self.expected))
+        self.assertThat(snapcraft_yaml["epoch"], Equals(self.expected))
 
 
-class InvalidEpochsTest(ProjectLoaderBaseTest):
+class InvalidEpochsTest(ProjectBaseTest):
 
     scenarios = [
         (epoch, dict(epoch=epoch))
@@ -1385,8 +1280,9 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
     ]
 
     def test_invalid_yaml_invalid_epochs(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -1397,10 +1293,7 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
         """
-        ).format(self.epoch)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.epoch)
         )
 
         self.assertRegex(
@@ -1411,9 +1304,9 @@ class InvalidEpochsTest(ProjectLoaderBaseTest):
         )
 
 
-class LicenseTest(ProjectLoaderBaseTest):
+class LicenseTest(ProjectBaseTest):
     def test_yaml_valid_license_string(self):
-        self.make_snapcraft_project(
+        self.assertValidationPasses(
             dedent(
                 """\
                 name: test
@@ -1430,8 +1323,9 @@ class LicenseTest(ProjectLoaderBaseTest):
         )
 
     def test_invalid_yaml_invalid_license_non_string(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -1442,10 +1336,9 @@ class LicenseTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
             """
+            )
         )
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
-        )
+
         self.assertRegex(
             raised.message,
             "The 'license' property does not match the required schema:.*is "
@@ -1453,11 +1346,11 @@ class LicenseTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidAdaptersTest(ProjectLoaderBaseTest):
+class ValidAdaptersTest(ProjectBaseTest):
     scenarios = [("none", {"yaml": "none"}), ("legacy", {"yaml": "legacy"})]
 
     def test_yaml_valid_adapters(self):
-        self.make_snapcraft_project(
+        self.assertValidationPasses(
             dedent(
                 """\
                 name: test
@@ -1477,7 +1370,7 @@ class ValidAdaptersTest(ProjectLoaderBaseTest):
         )
 
 
-class InvalidAdapterTest(ProjectLoaderBaseTest):
+class InvalidAdapterTest(ProjectBaseTest):
     scenarios = [
         ("NONE", {"yaml": "NONE"}),
         ("none-", {"yaml": "none-"}),
@@ -1487,8 +1380,9 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
     ]
 
     def test_invalid_yaml_invalid_adapters(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test
             base: core18
             version: "1"
@@ -1502,10 +1396,9 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
             """
-        ).format(self.yaml)
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.yaml)
         )
+
         self.assertRegex(
             raised.message,
             "The 'apps/app/adapter' property does not match the required schema:.*is "
@@ -1513,207 +1406,7 @@ class InvalidAdapterTest(ProjectLoaderBaseTest):
         )
 
 
-class ValidArchitecturesTest(ProjectLoaderBaseTest):
-
-    yaml_scenarios = [
-        (
-            "none",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": None,
-            },
-        ),
-        (
-            "single string list",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": "[amd64]",
-            },
-        ),
-        (
-            "multiple string list",
-            {
-                "expected_amd64": ["amd64", "i386"],
-                "expected_i386": ["amd64", "i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": "[amd64, i386]",
-            },
-        ),
-        (
-            "single object list",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": dedent(
-                    """
-                - build-on: [amd64]
-                  run-on: [amd64]
-            """
-                ),
-            },
-        ),
-        (
-            "multiple object list",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf", "arm64"],
-                "yaml": dedent(
-                    """
-                - build-on: [amd64]
-                  run-on: [amd64]
-                - build-on: [i386]
-                  run-on: [i386]
-                - build-on: [armhf]
-                  run-on: [armhf, arm64]
-            """
-                ),
-            },
-        ),
-        (
-            "omit run-on",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": dedent(
-                    """
-                - build-on: [amd64]
-            """
-                ),
-            },
-        ),
-        (
-            "single build-on string, no list",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": dedent(
-                    """
-                - build-on: amd64
-            """
-                ),
-            },
-        ),
-        (
-            "build- and run-on string, no lists",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["amd64"],
-                "expected_armhf": ["armhf"],
-                "yaml": dedent(
-                    """
-                - build-on: i386
-                  run-on: amd64
-            """
-                ),
-            },
-        ),
-        (
-            "build on all",
-            {
-                "expected_amd64": ["amd64"],
-                "expected_i386": ["amd64"],
-                "expected_armhf": ["amd64"],
-                "yaml": dedent(
-                    """
-                - build-on: [all]
-                  run-on: [amd64]
-            """
-                ),
-            },
-        ),
-        (
-            "run on all",
-            {
-                "expected_amd64": ["all"],
-                "expected_i386": ["i386"],
-                "expected_armhf": ["armhf"],
-                "yaml": dedent(
-                    """
-                - build-on: [amd64]
-                  run-on: [all]
-            """
-                ),
-            },
-        ),
-    ]
-
-    arch_scenarios = [
-        ("amd64", {"target_arch": "amd64"}),
-        ("i386", {"target_arch": "i386"}),
-        ("armhf", {"target_arch": "armhf"}),
-    ]
-
-    scenarios = multiply_scenarios(yaml_scenarios, arch_scenarios)
-
-    def test_architectures(self):
-        snippet = ""
-        if self.yaml:
-            snippet = "architectures: {}".format(self.yaml)
-        snapcraft_yaml = dedent(
-            """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: test
-            {}
-            parts:
-              my-part:
-                plugin: nil
-        """
-        ).format(snippet)
-
-        try:
-            project_kwargs = dict(target_deb_arch=self.target_arch)
-            c = self.make_snapcraft_project(snapcraft_yaml, project_kwargs)
-
-            expected = getattr(self, "expected_{}".format(self.target_arch))
-            self.assertThat(c.data["architectures"], Equals(expected))
-        except errors.YamlValidationError as e:
-            self.fail("Expected YAML to be valid, got an error: {}".format(e))
-
-
-class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
-
-    scenarios = [("slots", dict(property="slots")), ("plugs", dict(property="plugs"))]
-
-    def test_loading_properties(self):
-        snapcraft_yaml = dedent(
-            """\
-            name: my-package-1
-            base: core18
-            version: 1.0-snapcraft1~ppa1
-            summary: my summary less that 79 chars
-            description: description which can be pretty long
-            parts:
-                part1:
-                    plugin: nil
-                    {property}: [{property}1]
-        """
-        ).format(property=self.property)
-
-        raised = self.assertRaises(
-            PluginError, self.make_snapcraft_project, snapcraft_yaml
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "properties failed to load for part1: Additional properties are "
-                "not allowed ('{}' was unexpected)".format(self.property)
-            ),
-        )
-
-
-class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
+class InvalidBuildEnvironmentTest(ProjectBaseTest):
 
     scenarios = [
         (
@@ -1747,8 +1440,9 @@ class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
     ]
 
     def test_build_environment(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: my-package-1
             base: core18
             version: 1.0-snapcraft1~ppa1
@@ -1759,16 +1453,13 @@ class InvalidBuildEnvironmentTest(ProjectLoaderBaseTest):
                     plugin: nil
                     build-environment: {}
         """
-        ).format(self.environment)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.environment)
         )
 
         self.assertThat(raised.message, MatchesRegex(self.message))
 
 
-class InvalidCommandChainTest(ProjectLoaderBaseTest):
+class InvalidCommandChainTest(ProjectBaseTest):
 
     scenarios = [
         (
@@ -1802,8 +1493,9 @@ class InvalidCommandChainTest(ProjectLoaderBaseTest):
     ]
 
     def test_command_chain(self):
-        snapcraft_yaml = dedent(
-            """\
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
             name: test-snap
             base: core18
             version: "1.0"
@@ -1819,10 +1511,7 @@ class InvalidCommandChainTest(ProjectLoaderBaseTest):
                 my-part:
                     plugin: nil
         """
-        ).format(self.command_chain)
-
-        raised = self.assertRaises(
-            errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml
+            ).format(self.command_chain)
         )
 
         self.assertThat(raised.message, MatchesRegex(self.message))

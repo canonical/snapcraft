@@ -26,6 +26,7 @@ from snapcraft.internal import log
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
+from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
 from .inspect import inspectcli
@@ -45,6 +46,7 @@ command_groups = [
     containerscli,
     discoverycli,
     helpcli,
+    legacycli,
     lifecyclecli,
     extensioncli,
     versioncli,
@@ -61,19 +63,6 @@ command_groups = [
 @click.option("--debug", "-d", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
-
-    # Do this early, if we are in managed-host and not root yet we want to re-exec with
-    # sudo keeping the current environment settings.
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host" and os.geteuid() != 0:
-        snap_path = os.getenv("SNAP")
-        # Use -E to keep the environment.
-        cmd = ["usr/bin/sudo", "-E"]
-        # Pick the correct interpreter if running from a snap (in managed-host mode, this
-        # is most likely the only scenario).
-        if os.getenv("SNAP_NAME") == "snapcraft":
-            cmd.append(os.path.join(snap_path, "usr", "bin", "python3"))
-        cmd.extend(sys.argv)
-        os.execve("/usr/bin/sudo", cmd, os.environ)
 
     # Debugging snapcraft itself is not tied to debugging a snapcraft project.
     try:

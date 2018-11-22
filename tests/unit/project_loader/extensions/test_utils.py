@@ -18,6 +18,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals, Not
 
+from snapcraft.project import errors as project_errors
 from snapcraft.internal.project_loader import errors
 from snapcraft.internal.project_loader._extensions._extension import Extension
 
@@ -392,7 +393,7 @@ class ExtensionRootMergeTest(ExtensionTestBase):
 class InvalidExtensionTest(ExtensionTestBase):
     def test_invalid_app_extension_format(self):
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            project_errors.YamlValidationError,
             self.make_snapcraft_project,
             textwrap.dedent(
                 """\
@@ -426,7 +427,7 @@ class InvalidExtensionTest(ExtensionTestBase):
 
     def test_duplicate_extensions(self):
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            project_errors.YamlValidationError,
             self.make_snapcraft_project,
             textwrap.dedent(
                 """\
@@ -460,7 +461,7 @@ class InvalidExtensionTest(ExtensionTestBase):
 
     def test_invalid_extension_is_validated(self):
         raised = self.assertRaises(
-            errors.YamlValidationError,
+            project_errors.YamlValidationError,
             self.make_snapcraft_project,
             textwrap.dedent(
                 """\

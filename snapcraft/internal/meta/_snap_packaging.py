@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
+from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
@@ -103,7 +104,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
-    validator = project_loader.Validator(project_config.data)
+    validator = _schema.Validator(project_config.data)
     validator.validate(source="properties")
 
     # Update default values
@@ -531,6 +532,10 @@ class _SnapPackaging:
             self._validate_command_chain(snap_yaml["apps"])
 
         self._process_passthrough_properties(snap_yaml)
+        assumes = _determine_assumes(self._config_data)
+        if assumes:
+            # Sorting for consistent results (order doesn't matter)
+            snap_yaml["assumes"] = sorted(set(snap_yaml.get("assumes", [])) | assumes)
 
         return snap_yaml
 
@@ -722,6 +727,19 @@ class _SnapPackaging:
             raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
         section.update(passthrough)
         return bool(passthrough)
+
+
+def _determine_assumes(yaml_data: Dict[str, Any]) -> Set[str]:
+    # Order doesn't really matter, but we don't want duplicates, so use a set
+    assumes = set()
+
+    # Check to see if any apps use the "full" adapter, which requires command-chain
+    for app in yaml_data.get("apps", dict()).values():
+        adapter = project_loader.Adapter[app["adapter"].upper()]
+        if adapter == project_loader.Adapter.FULL:
+            assumes.add("command-chain")
+
+    return assumes
 
 
 def _find_bin(binary, basedir):

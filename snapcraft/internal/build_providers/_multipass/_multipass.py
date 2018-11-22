@@ -17,7 +17,7 @@
 import logging
 import os
 import shlex
-import sys
+from typing import Dict, Sequence
 
 from .. import errors
 from .._base_provider import Provider
@@ -27,10 +27,6 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
-
-
-def _get_platform() -> str:
-    return sys.platform
 
 
 def _get_stop_time() -> int:
@@ -72,7 +68,8 @@ class Multipass(Provider):
     def _get_provider_name(cls):
         return "multipass"
 
-    def _run(self, command, hide_output: bool = False) -> None:
+    def _run(self, command: Sequence[str], hide_output: bool = False) -> None:
+        command = ["sudo", "-i"] + list(command)
         self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
@@ -117,9 +114,18 @@ class Multipass(Provider):
 
         self._multipass_cmd.start(instance_name=self.instance_name)
 
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
+    def _mount(
+        self,
+        *,
+        mountpoint: str,
+        dev_or_path: str,
+        uid_map: Dict[str, str] = None,
+        gid_map: Dict[str, str] = None
+    ) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
-        self._multipass_cmd.mount(source=dev_or_path, target=target)
+        self._multipass_cmd.mount(
+            source=dev_or_path, target=target, uid_map=uid_map, gid_map=gid_map
+        )
 
     def _umount(self, *, mountpoint: str) -> None:
         mount = "{}:{}".format(self.instance_name, mountpoint)
@@ -176,7 +182,7 @@ class Multipass(Provider):
         # Resolve the home directory
         home_dir = (
             self._multipass_cmd.execute(
-                command=["printenv", "HOME"],
+                command=["sudo", "-i", "printenv", "HOME"],
                 hide_output=True,
                 instance_name=self.instance_name,
             )
@@ -188,7 +194,10 @@ class Multipass(Provider):
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
             self._mount(
-                mountpoint=project_mountpoint, dev_or_path=self.project._project_dir
+                mountpoint=project_mountpoint,
+                dev_or_path=self.project._project_dir,
+                uid_map={str(os.getuid()): "0"},
+                gid_map={str(os.getgid()): "0"},
             )
 
     def provision_project(self, tarball: str) -> None:
@@ -199,7 +208,7 @@ class Multipass(Provider):
 
         # First create a working directory
         self._multipass_cmd.execute(
-            command=["mkdir", self._INSTANCE_PROJECT_DIR],
+            command=["sudo", "-i", "mkdir", self._INSTANCE_PROJECT_DIR],
             instance_name=self.instance_name,
         )
 
@@ -208,7 +217,15 @@ class Multipass(Provider):
         self._multipass_cmd.copy_files(source=tarball, destination=destination)
 
         # Finally extract it into project_dir.
-        extract_cmd = ["tar", "-xvf", tarball, "-C", self._INSTANCE_PROJECT_DIR]
+        extract_cmd = [
+            "sudo",
+            "-i",
+            "tar",
+            "-xvf",
+            tarball,
+            "-C",
+            self._INSTANCE_PROJECT_DIR,
+        ]
         self._multipass_cmd.execute(
             command=extract_cmd, instance_name=self.instance_name
         )
@@ -222,7 +239,7 @@ class Multipass(Provider):
     def build_project(self) -> None:
         # TODO add instance check.
         self._multipass_cmd.execute(
-            command=["snapcraft", "snap", "--output", self.snap_filename],
+            command=["sudo", "-i", "snapcraft", "snap", "--output", self.snap_filename],
             instance_name=self.instance_name,
         )
 
@@ -235,7 +252,9 @@ class Multipass(Provider):
         return self.snap_filename
 
     def shell(self) -> None:
-        self._multipass_cmd.shell(instance_name=self.instance_name)
+        self._multipass_cmd.execute(
+            instance_name=self.instance_name, command=["sudo", "-i", "/bin/bash"]
+        )
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(

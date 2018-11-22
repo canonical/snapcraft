@@ -78,11 +78,12 @@ class PartsConfig:
 
         for part in self.all_parts:
             dep_names = self.after_requests.get(part.name, [])
-            for dep in dep_names:
-                for i in range(len(self.all_parts)):
-                    if dep == self.all_parts[i].name:
-                        part.deps.append(self.all_parts[i])
-                        break
+            for dep_name in dep_names:
+                dep = self.get_part(dep_name)
+                if not dep:
+                    raise errors.SnapcraftAfterPartMissingError(part.name, dep_name)
+
+                part.deps.append(dep)
 
     def _sort_parts(self):
         """Performs an inneficient but easy to follow sorting of parts."""

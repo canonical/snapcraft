@@ -69,6 +69,7 @@ class ExtensionCombinationTest(ProjectLoaderBaseTest):
                 apps:
                     test-app:
                         command: test-command
+                        adapter: full
                         extensions: {extensions}
 
                 parts:

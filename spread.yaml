@@ -34,10 +34,10 @@ backends:
           workers: 3
       - ubuntu-16.04-64:
           workers: 5
-          image: ubuntu-1604-64-nested-vm
+          image: ubuntu-1604-64-virt-enabled
       - ubuntu-18.04-64:
           workers: 8
-          image: ubuntu-1804-64-nested-vm
+          image: ubuntu-1804-64-virt-enabled
   autopkgtest:
     type: adhoc
     allocate: |
@@ -70,22 +70,6 @@ backends:
       - ubuntu-16.04-arm64:
           username: ubuntu
           password: ubuntu
-      # Artful
-      - ubuntu-17.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-s390x:
-          username: ubuntu
-          password: ubuntu
       # Bionic
       - ubuntu-18.04-amd64:
           username: ubuntu
@@ -103,25 +87,6 @@ backends:
           username: ubuntu
           password: ubuntu
       - ubuntu-18.04-arm64:
-          username: ubuntu
-          password: ubuntu
-      # Cosmic
-      - ubuntu-18.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-arm64:
           username: ubuntu
           password: ubuntu
 
@@ -182,7 +147,8 @@ prepare: |
     exit 1
   fi
 
-restore-each: $TOOLS_DIR/restore.sh
+restore-each: |
+  "$TOOLS_DIR"/restore.sh
 
 suites:
  # General, core suite
