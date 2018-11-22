@@ -161,6 +161,10 @@ suites:
    systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Ant plugin
  tests/spread/plugins/ament/:
+  systems:
+   - -ubuntu-16.04-i386
+   - -ubuntu-16.04-ppc64el
+   - -ubuntu-16.04-s390x
    summary: tests of snapcraft's Ament plugin when not using a base
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
@@ -168,6 +172,10 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
  tests/spread/plugins/catkin/:
+   systems:
+   - -ubuntu-18.04-i386
+   - -ubuntu-18.04-ppc64el
+   - -ubuntu-18.04-s390x
    summary: tests of snapcraft's Catkin plugin
    kill-timeout: 180m
    # Keep this 18.04 only for now as it is the only stable base.
@@ -180,7 +188,10 @@ suites:
    systems: [ubuntu-18.04*]
  tests/spread/plugins/dotnet/:
    # Keep this 16.04 as it is the only supported system for this plugin
-   systems: [ubuntu-16.04*]
+   systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
    summary: tests of snapcraft's Dotnet plugin
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
@@ -230,6 +241,13 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
  tests/spread/plugins/rust/:
+   systems:
+   - -ubuntu-16.04-arm64
+   - -ubuntu-18.04-arm64
+   - -ubuntu-16.04-ppc64el
+   - -ubuntu-18.04-ppc64el
+   - -ubuntu-16.04-s390x
+   - -ubuntu-18.04-s390x
    summary: tests of snapcraft's Rust plugin
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
