@@ -107,6 +107,7 @@ properties:
   title:
     description: title for the snap
     type: string
+    # https://forum.snapcraft.io/t/title-length-in-snapcraft-yaml-snap-yaml/8625/10
     maxLength: 40
   architectures:
     description: architectures on which to build, and on which the resulting snap runs
