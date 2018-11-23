@@ -1,6 +1,6 @@
 summary: Cross-compile Autotools snaps
 
-systems: [--ubuntu-18.04-s390x]
+systems: [-ubuntu-18.04-s390x]
 
 environment:
   SNAP_DIR: ../snaps/autotools-hello
