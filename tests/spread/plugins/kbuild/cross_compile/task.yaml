@@ -1,6 +1,6 @@
 summary: Cross-compile a Kbuild snap
 
-systems: [--ubuntu-18.04-s390x]
+systems: [-ubuntu-18.04-s390x]
 
 environment:
   SNAP_DIR: ../snaps/kbuild-hello
