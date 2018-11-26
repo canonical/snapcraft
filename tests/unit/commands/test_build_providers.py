@@ -56,7 +56,9 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
     def test_validation_fails(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, name="name with spaces", base=self.base)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, name="name with spaces", base=self.base
+        )
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
