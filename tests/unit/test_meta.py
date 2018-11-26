@@ -139,6 +139,13 @@ class CreateTestCase(CreateBaseTestCase):
         )
         self.assertThat(y["epoch"], Equals("1*"))
 
+    def test_create_meta_with_title(self):
+        self.config_data["title"] = "The Title"
+
+        y = self.generate_meta_yaml()
+        self.assertThat(y, Contains("title"))
+        self.assertThat(y["title"], Equals("The Title"))
+
     def test_create_meta_with_license(self):
         self.config_data["license"] = "MIT"
 
