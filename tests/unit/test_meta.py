@@ -25,6 +25,7 @@ import fixtures
 import testscenarios
 import testtools
 from testtools.matchers import (
+    Annotate,
     Contains,
     DirExists,
     Equals,
@@ -37,6 +38,7 @@ from testtools.matchers import (
 from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
 from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
+from snapcraft.project import errors as project_errors
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
 from tests import unit, fixture_setup
@@ -136,6 +138,13 @@ class CreateTestCase(CreateBaseTestCase):
             "epoch" in y, 'Expected "epoch" property to be copied into snap.yaml'
         )
         self.assertThat(y["epoch"], Equals("1*"))
+
+    def test_create_meta_with_title(self):
+        self.config_data["title"] = "The Title"
+
+        y = self.generate_meta_yaml()
+        self.assertThat(y, Contains("title"))
+        self.assertThat(y["title"], Equals("The Title"))
 
     def test_create_meta_with_license(self):
         self.config_data["license"] = "MIT"
@@ -576,12 +585,20 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             "foo": {"plugs": ["network"], "passthrough": {"foo": "bar", "spam": "eggs"}}
         }
         self.generate_meta_yaml()
+
+        output_lines = fake_logger.output.splitlines()
         self.assertThat(
-            fake_logger.output,
-            Equals(
+            output_lines,
+            Contains(
                 "The 'passthrough' property is being used to propagate "
                 "experimental properties to snap.yaml that have not been "
-                "validated.\n"
+                "validated."
+            ),
+        )
+        self.assertThat(
+            len(output_lines),
+            Annotate(
+                "There were duplicate lines logged.", Equals(len(set(output_lines)))
             ),
         )
 
@@ -1000,9 +1017,7 @@ class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         ] = "snapcraftctl {} {}".format(self.setter, self.value)
 
         raised = self.assertRaises(
-            project_loader.errors.YamlValidationError,
-            self.generate_meta_yaml,
-            build=True,
+            project_errors.YamlValidationError, self.generate_meta_yaml, build=True
         )
         self.assertThat(
             str(raised),
@@ -1022,9 +1037,7 @@ class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
 
         raised = self.assertRaises(
-            project_loader.errors.YamlValidationError,
-            self.generate_meta_yaml,
-            build=True,
+            project_errors.YamlValidationError, self.generate_meta_yaml, build=True
         )
         self.assertThat(
             str(raised),
@@ -1568,6 +1581,8 @@ class WrapExeTest(BaseWrapTest):
             ),
         )
 
+        self.assertThat(snap_yaml, Not(Contains("assumes")))
+
 
 class FullAdapterTest(unit.TestCase):
     def setUp(self):
@@ -1651,6 +1666,10 @@ class FullAdapterTest(unit.TestCase):
         # The command itself should not be touched/rewritten at all
         self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
 
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
     def test_command_with_spaces(self):
         _create_file(
             os.path.join(self.prime_dir, "bin", "test-command"), executable=True
@@ -1670,6 +1689,10 @@ class FullAdapterTest(unit.TestCase):
             y["apps"]["app"]["command"], Equals("bin/test-command arg1 arg2")
         )
 
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
     def test_command_chain_insertion_is_at_beginning(self):
         _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
         _create_file(os.path.join(self.prime_dir, "existing-chain"), executable=True)
@@ -1683,6 +1706,46 @@ class FullAdapterTest(unit.TestCase):
             y["apps"]["app"]["command-chain"],
             Equals(["snap/command-chain/snapcraft-runner", "existing-chain"]),
         )
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
+
+    def test_command_chain_with_assumes(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+        self.snapcraft_yaml["assumes"] = ["test-feature"]
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain", "test-feature"]))
+
+    def test_command_chain_with_assumes_no_duplicatation(self):
+        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
+        self.snapcraft_yaml["assumes"] = ["command-chain"]
+
+        y = self._get_packager().write_snap_yaml()
+        self.assertThat(y["apps"]["app"], Contains("command-chain"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner"]),
+        )
+
+        # The command itself should not be touched/rewritten at all
+        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
+
+        # The "command-chain" feature of snapd needs to be assumed
+        self.assertThat(y, Contains("assumes"))
+        self.expectThat(y["assumes"], Equals(["command-chain"]))
 
 
 class CommandChainTest(unit.TestCase):
@@ -1699,7 +1762,7 @@ class CommandChainTest(unit.TestCase):
             "apps": {
                 "app": {
                     "command": "test-command",
-                    "adapter": "legacy",
+                    "adapter": "full",
                     "command-chain": ["test-chain"],
                 }
             },
@@ -1742,7 +1805,10 @@ class CommandChainTest(unit.TestCase):
         _create_file(cmd_path, executable=True)
 
         y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"]["command-chain"], Equals(["test-chain"]))
+        self.assertThat(
+            y["apps"]["app"]["command-chain"],
+            Equals(["snap/command-chain/snapcraft-runner", "test-chain"]),
+        )
 
 
 def _create_file(path, *, content="", executable=False):

@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import enum
 import collections
 import contextlib
 import itertools
@@ -30,6 +29,7 @@ from typing import Any, Dict, List, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
+from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
@@ -60,15 +60,9 @@ _OPTIONAL_PACKAGE_KEYS = [
     "license",
     "plugs",
     "slots",
+    "title",
     "type",
 ]
-
-
-@enum.unique
-class Adapter(enum.Enum):
-    NONE = 1
-    LEGACY = 2
-    FULL = 3
 
 
 class OctInt(yaml_utils.SnapcraftYAMLObject):
@@ -111,7 +105,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
-    validator = project_loader.Validator(project_config.data)
+    validator = _schema.Validator(project_config.data)
     validator.validate(source="properties")
 
     # Update default values
@@ -539,6 +533,10 @@ class _SnapPackaging:
             self._validate_command_chain(snap_yaml["apps"])
 
         self._process_passthrough_properties(snap_yaml)
+        assumes = _determine_assumes(self._config_data)
+        if assumes:
+            # Sorting for consistent results (order doesn't matter)
+            snap_yaml["assumes"] = sorted(set(snap_yaml.get("assumes", [])) | assumes)
 
         return snap_yaml
 
@@ -608,10 +606,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == ".desktop":
                 os.remove(os.path.join(gui_dir, f))
         for app_name, app in apps.items():
-            adapter = Adapter[app.pop("adapter").upper()]
-            if adapter == Adapter.LEGACY:
+            adapter = project_loader.Adapter[app.pop("adapter").upper()]
+            if adapter == project_loader.Adapter.LEGACY:
                 self._wrap_app(app_name, app)
-            elif adapter == Adapter.FULL:
+            elif adapter == project_loader.Adapter.FULL:
                 self._add_command_chain_to_app(app_name, app)
             self._generate_desktop_file(app_name, app)
         return apps
@@ -730,6 +728,19 @@ class _SnapPackaging:
             raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
         section.update(passthrough)
         return bool(passthrough)
+
+
+def _determine_assumes(yaml_data: Dict[str, Any]) -> Set[str]:
+    # Order doesn't really matter, but we don't want duplicates, so use a set
+    assumes = set()
+
+    # Check to see if any apps use the "full" adapter, which requires command-chain
+    for app in yaml_data.get("apps", dict()).values():
+        adapter = project_loader.Adapter[app["adapter"].upper()]
+        if adapter == project_loader.Adapter.FULL:
+            assumes.add("command-chain")
+
+    return assumes
 
 
 def _find_bin(binary, basedir):

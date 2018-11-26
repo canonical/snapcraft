@@ -26,12 +26,6 @@ backends:
     systems:
       - ubuntu-16.04
       - ubuntu-18.04
-  linode:
-    key: "$(HOST: echo $SPREAD_LINODE_KEY)"
-    systems:
-      - ubuntu-16.04-64:
-          kernel: GRUB 2
-          workers: 3
   google:
     key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
@@ -40,8 +34,10 @@ backends:
           workers: 3
       - ubuntu-16.04-64:
           workers: 5
+          image: ubuntu-1604-64-virt-enabled
       - ubuntu-18.04-64:
           workers: 8
+          image: ubuntu-1804-64-virt-enabled
   autopkgtest:
     type: adhoc
     allocate: |
@@ -74,22 +70,6 @@ backends:
       - ubuntu-16.04-arm64:
           username: ubuntu
           password: ubuntu
-      # Artful
-      - ubuntu-17.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-s390x:
-          username: ubuntu
-          password: ubuntu
       # Bionic
       - ubuntu-18.04-amd64:
           username: ubuntu
@@ -107,25 +87,6 @@ backends:
           username: ubuntu
           password: ubuntu
       - ubuntu-18.04-arm64:
-          username: ubuntu
-          password: ubuntu
-      # Cosmic
-      - ubuntu-18.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-arm64:
           username: ubuntu
           password: ubuntu
 
@@ -160,6 +121,10 @@ prepare: |
 
   apt-get install -y snapd
 
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+      sudo snap install --classic --beta multipass
+  fi
+
   if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
       apt-get install -y snapcraft
   elif [ "$SNAPCRAFT_PACKAGE_TYPE" = "snap" ]; then
@@ -182,7 +147,8 @@ prepare: |
     exit 1
   fi
 
-restore-each: $TOOLS_DIR/restore.sh
+restore-each: |
+  "$TOOLS_DIR"/restore.sh
 
 suites:
  # General, core suite
@@ -190,6 +156,10 @@ suites:
    summary: tests of snapcraft core functionality
 
  # Plugin-specific suites
+ tests/spread/plugins/ant/:
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   summary: tests of snapcraft's Ant plugin
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    kill-timeout: 360m
@@ -259,6 +229,10 @@ suites:
    kill-timeout: 180m
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
+ tests/spread/plugins/rust/:
+   summary: tests of snapcraft's Rust plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/scons/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
@@ -276,7 +250,7 @@ suites:
 
 # Legacy pending migration away from python runners
  tests/spread/legacy_python/:
-   summary: theses tests are pending a migration away from python runners
+   summary: these tests are pending a migration away from python runners
    kill-timeout: 60m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 100  # Run this test early so we're not waiting for it

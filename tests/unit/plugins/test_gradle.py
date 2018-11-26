@@ -15,34 +15,83 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import gradle
+from snapcraft.project import Project
 from tests import unit
 
 
-class BaseGradlePluginTestCase(unit.TestCase):
+class GradlePluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             gradle_options = []
             gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = "11"
 
         self.options = Options()
-
-        self.project_options = snapcraft.ProjectOptions()
 
         # unset http and https proxies.
         self.useFixture(fixtures.EnvironmentVariable("http_proxy", None))
         self.useFixture(fixtures.EnvironmentVariable("https_proxy", None))
 
+        patcher = mock.patch("snapcraft.internal.common.run")
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
-class GradlePluginTestCase(BaseGradlePluginTestCase):
+        patcher = mock.patch("snapcraft.internal.sources.Zip")
+        self.zip_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def create_assets(self, plugin, use_gradlew=False):
+        os.makedirs(plugin.sourcedir)
+
+        if use_gradlew:
+            open(os.path.join(plugin.sourcedir, "gradlew"), "w").close()
+
+        fake_java_path = os.path.join(
+            plugin.installdir,
+            "usr",
+            "lib",
+            "jvm",
+            "java-11-openjdk-amd64",
+            "jre",
+            "bin",
+            "java",
+        )
+        os.makedirs(os.path.dirname(fake_java_path))
+        open(fake_java_path, "w").close()
+
+        gradle_zip_path = os.path.join(
+            plugin.partdir,
+            "gradle",
+            "apache-gradle-{}-bin.tar.gz".format(plugin.options.gradle_version),
+        )
+        os.makedirs(os.path.dirname(gradle_zip_path))
+        open(gradle_zip_path, "w").close()
+
+
+class GradlePluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = gradle.GradlePlugin.schema()
 
@@ -96,6 +145,21 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
             'but it was "{}"'.format(output_dir["type"]),
         )
 
+    def test_get_pull_properties(self):
+        expected_pull_properties = [
+            "gradle-version",
+            "gradle-version-checksum",
+            "gradle-openjdk-version",
+        ]
+        resulting_pull_properties = gradle.GradlePlugin.get_pull_properties()
+
+        self.assertThat(
+            resulting_pull_properties, HasLength(len(expected_pull_properties))
+        )
+
+        for property in expected_pull_properties:
+            self.assertIn(property, resulting_pull_properties)
+
     def test_get_build_properties(self):
         expected_build_properties = ["gradle-options", "gradle-output-dir"]
         resulting_build_properties = gradle.GradlePlugin.get_build_properties()
@@ -107,103 +171,108 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_gradlew(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
 
-        filename = os.path.join(os.getcwd(), "gradlew")
-        open(filename, "w").close()
+class GradlePluginTest(GradlePluginBaseTest):
+    def test_get_defaul_openjdk(self):
+        self.options.gradle_openjdk_version = ""
 
-        def side(l):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
+        self.assertThat(
+            plugin.build_packages,
+            Equals(["openjdk-11-jdk-headless", "ca-certificates-java"]),
+        )
+
+    def test_get_non_defaul_openjdk(self):
+        self.options.gradle_openjdk_version = "8"
+
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+
+        self.assertThat(plugin.stage_packages, Equals(["openjdk-8-jre-headless"]))
+        self.assertThat(
+            plugin.build_packages,
+            Equals(["openjdk-8-jdk-headless", "ca-certificates-java"]),
+        )
+
+    def test_build_gradlew(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin, use_gradlew=True)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["./gradlew", "jar"])])
+        self.run_mock.assert_called_once_with(
+            ["./gradlew", "jar"], cwd=plugin.builddir, env=None
+        )
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_gradle(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
+    def test_build_gradle(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.jar"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["gradle", "jar"])])
+        self.run_mock.assert_called_once_with(
+            ["gradle", "jar"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_war_gradle(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
+    def test_build_war_gradle(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        def side(l):
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["gradle", "jar"])])
+        self.run_mock.assert_called_once_with(
+            ["gradle", "jar"], cwd=plugin.builddir, env=mock.ANY
+        )
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_war_gradlew(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
+    def test_build_war_gradlew(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        filename = os.path.join(os.getcwd(), "gradlew")
-        open(filename, "w").close()
+        self.create_assets(plugin, use_gradlew=True)
 
-        def side(l):
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls([mock.call(["./gradlew", "jar"])])
-
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_fail_gradlew(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
-
-        filename = os.path.join(os.getcwd(), "gradlew")
-        open(filename, "w").close()
-
-        os.makedirs(plugin.sourcedir)
-        self.assertRaises(RuntimeError, plugin.build)
-
-        run_mock.assert_has_calls([mock.call(["./gradlew", "jar"])])
-
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_fail_gradle(self, run_mock):
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
-
-        os.makedirs(plugin.sourcedir)
-        self.assertRaises(RuntimeError, plugin.build)
-
-        run_mock.assert_has_calls([mock.call(["gradle", "jar"])])
+        self.run_mock.assert_called_once_with(
+            ["./gradlew", "jar"], cwd=plugin.builddir, env=None
+        )
 
 
-class GradleProxyTestCase(BaseGradlePluginTestCase):
+class GradleProxyTestCase(GradlePluginBaseTest):
 
     scenarios = [
         (
@@ -263,47 +332,126 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
         ),
     ]
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_with_http_proxy_gradle(self, run_mock):
-        var, value = self.env_var
-        self.useFixture(fixtures.EnvironmentVariable(var, value))
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
+    def setUp(self):
+        super().setUp()
 
-        def side(l):
+        self.useFixture(fixtures.EnvironmentVariable(*self.env_var))
+
+    def test_build_with_http_proxy_gradle(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin)
+
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls(
-            [mock.call(["gradle"] + self.expected_args + ["jar"])]
+        self.run_mock.assert_called_once_with(
+            ["gradle"] + self.expected_args + ["jar"], cwd=plugin.builddir, env=mock.ANY
         )
 
-    @mock.patch.object(gradle.GradlePlugin, "run")
-    def test_build_with_http_proxy_gradlew(self, run_mock):
-        var, value = self.env_var
-        self.useFixture(fixtures.EnvironmentVariable(var, value))
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project_options)
+    def test_build_with_http_proxy_gradlew(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        filename = os.path.join(os.getcwd(), "gradlew")
-        open(filename, "w").close()
+        self.create_assets(plugin, use_gradlew=True)
 
-        def side(l):
+        def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
             open(
                 os.path.join(plugin.builddir, "build", "libs", "dummy.war"), "w"
             ).close()
 
-        run_mock.side_effect = side
-        os.makedirs(plugin.sourcedir)
+        self.run_mock.side_effect = side
 
         plugin.build()
 
-        run_mock.assert_has_calls(
-            [mock.call(["./gradlew"] + self.expected_args + ["jar"])]
+        self.run_mock.assert_called_once_with(
+            ["./gradlew"] + self.expected_args + ["jar"], cwd=plugin.builddir, env=None
         )
+
+
+class GradlePluginUnsupportedBase(GradlePluginBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            gradle.GradlePlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
+
+
+class UnsupportedJDKVersionErrorTest(GradlePluginBaseTest):
+
+    scenarios = (
+        (
+            "core16",
+            dict(
+                base="core16",
+                version="11",
+                expected_message=(
+                    "The gradle-openjdk-version plugin property was set to '11'.\n"
+                    "Valid values for the 'core16' base are: '8' or '9'."
+                ),
+            ),
+        ),
+        (
+            "core18",
+            dict(
+                base="core18",
+                version="9",
+                expected_message=(
+                    "The gradle-openjdk-version plugin property was set to '9'.\n"
+                    "Valid values for the 'core18' base are: '11' or '8'."
+                ),
+            ),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: {base}
+        """.format(
+                    base=self.base
+                )
+            )
+        )
+
+        self.options.gradle_openjdk_version = self.version
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+    def test_use_invalid_openjdk_version_fails(self):
+        raised = self.assertRaises(
+            gradle.UnsupportedJDKVersionError,
+            gradle.GradlePlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )
+        self.assertThat(str(raised), Equals(self.expected_message))

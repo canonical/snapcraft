@@ -23,9 +23,10 @@ from snapcraft.internal import errors
 _TEMPLATE_YAML = dedent(
     """\
     name: my-snap-name # you probably want to 'snapcraft register <name>'
+    base: core18 # the base snap is the execution environment for this snap
     version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
     summary: Single-line elevator pitch for your amazing snap # 79 char long summary
-    description: |
+    description: >
       This is my-snap's description. You have a paragraph or two to tell the
       most important story about your snap. Keep it under 100 words though,
       we live in tweetspace and your description wants to look good in the snap

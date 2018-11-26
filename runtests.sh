@@ -10,7 +10,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU General Public License for more details.f-1
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -61,7 +61,7 @@ coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
     echo "Running black"
-    black --check .
+    black --check --diff .
 
     echo "Running flake8"
     python3 -m flake8 .
@@ -76,12 +76,15 @@ run_static_tests(){
     # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
     # tons of issues.
     find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
+
+    echo "Running shellcheck inside spread yaml"
+    ./tools/spread-shellcheck.py spread.yaml tests/spread/
 }
 
 run_snapcraft_tests(){
-    if [[ ! -z "$use_run" ]]; then
+    if [[ -n "$use_run" ]]; then
         python3 -m unittest -b -v run "$test_suite"
-    elif [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    elif [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
     else
@@ -109,7 +112,7 @@ fi
 
 parseargs "$@"
 
-if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+if [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
     coverage report
 
     echo
@@ -118,4 +121,4 @@ if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
     echo
 fi
 
-echo -e "\e[1;32mEverything passed\e[0m"
+echo -e '\e[1;32mEverything passed\e[0m'

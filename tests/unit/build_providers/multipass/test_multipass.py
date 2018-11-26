@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from textwrap import dedent
 from unittest import mock
 
@@ -94,6 +95,7 @@ class MultipassTest(BaseProviderBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
     def test_ephemeral_instance_with_contextmanager(self):
@@ -117,15 +119,26 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    instance_name=self.instance_name, command=["mkdir", "~/project"]
-                ),
-                mock.call(
                     instance_name=self.instance_name,
-                    command=["tar", "-xvf", "source.tar", "-C", "~/project"],
+                    command=["sudo", "-i", "mkdir", "~/project"],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
                     command=[
+                        "sudo",
+                        "-i",
+                        "tar",
+                        "-xvf",
+                        "source.tar",
+                        "-C",
+                        "~/project",
+                    ],
+                ),
+                mock.call(
+                    instance_name=self.instance_name,
+                    command=[
+                        "sudo",
+                        "-i",
                         "snapcraft",
                         "snap",
                         "--output",
@@ -134,7 +147,7 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),
@@ -224,11 +237,20 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    instance_name=self.instance_name, command=["mkdir", "~/project"]
+                    instance_name=self.instance_name,
+                    command=["sudo", "-i", "mkdir", "~/project"],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
-                    command=["tar", "-xvf", "source.tar", "-C", "~/project"],
+                    command=[
+                        "sudo",
+                        "-i",
+                        "tar",
+                        "-xvf",
+                        "source.tar",
+                        "-C",
+                        "~/project",
+                    ],
                 ),
             ]
         )
@@ -251,6 +273,8 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_called_once_with(
             instance_name=self.instance_name,
             command=[
+                "sudo",
+                "-i",
                 "snapcraft",
                 "snap",
                 "--output",
@@ -367,13 +391,6 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass._multipass._get_platform",
-            return_value=self.platform,
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch(
             "snapcraft.internal.build_providers._multipass."
             "_multipass.MultipassCommand",
             spec=MultipassCommand,
@@ -384,8 +401,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.project = get_project(base=self.base)
 
         def execute_effect(*, command, instance_name, hide_output):
-            if command == ["printenv", "HOME"]:
-                return "/home/multipass".encode()
+            if command == ["sudo", "-i", "printenv", "HOME"]:
+                return "/root".encode()
             elif hide_output:
                 return None
             else:
@@ -399,7 +416,11 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 provider_name="multipass", exit_code=1, stderr=b"error"
             ),
             _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
         ]
+
+        self.expected_uid_map = {str(os.getuid()): "0"}
+        self.expected_gid_map = {str(os.getgid()): "0"}
 
     def test_lifecycle(self):
         with Multipass(
@@ -421,21 +442,23 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(
                     instance_name=self.instance_name,
                     hide_output=True,
-                    command=["printenv", "HOME"],
+                    command=["sudo", "-i", "printenv", "HOME"],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
                     hide_output=False,
-                    command=["snapcraft", "pull"],
+                    command=["sudo", "-i", "snapcraft", "pull"],
                 ),
             ]
         )
         self.multipass_cmd_mock().mount.assert_called_once_with(
             source=mock.ANY,
-            target="{}:{}".format(self.instance_name, "/home/multipass/project"),
+            target="{}:{}".format(self.instance_name, "/root/project"),
+            uid_map=self.expected_uid_map,
+            gid_map=self.expected_gid_map,
         )
         self.multipass_cmd_mock().umount.assert_not_called()
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(2))
+        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
         self.multipass_cmd_mock().info.assert_has_calls(
             [
                 mock.call(instance_name=self.instance_name, output_format="json"),

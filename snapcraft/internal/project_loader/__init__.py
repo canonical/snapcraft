@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import enum
 from typing import cast, Dict, List, Union
 from typing import TYPE_CHECKING
 
@@ -22,7 +23,6 @@ from ._env import (  # noqa: F401
     snapcraft_global_environment,
     snapcraft_part_environment,
 )
-from ._schema import Validator  # noqa: F401
 from ._parts_config import PartsConfig  # noqa: F401
 from ._extensions import (  # noqa: F401
     apply_extensions,
@@ -32,6 +32,13 @@ from ._extensions import (  # noqa: F401
 
 if TYPE_CHECKING:
     from snapcraft.project import Project  # noqa: F401
+
+
+@enum.unique
+class Adapter(enum.Enum):
+    NONE = 1
+    LEGACY = 2
+    FULL = 3
 
 
 def load_config(project: "Project"):

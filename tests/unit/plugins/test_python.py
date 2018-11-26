@@ -176,7 +176,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             constraints=set(),
             process_dependency_links=False,
             requirements=set(),
-            setup_py_dir=plugin.sourcedir,
+            setup_py_dir=None,
         )
 
         self.mock_pip.return_value.wheel.assert_not_called()
@@ -200,7 +200,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             constraints=set(),
             process_dependency_links=False,
             requirements={requirements_path},
-            setup_py_dir=plugin.sourcedir,
+            setup_py_dir=None,
         )
 
         self.mock_pip.return_value.wheel.assert_not_called()
@@ -224,7 +224,7 @@ class PythonPluginTest(PythonPluginBaseTest):
             constraints={constraints_path},
             process_dependency_links=False,
             requirements=set(),
-            setup_py_dir=plugin.sourcedir,
+            setup_py_dir=None,
         )
 
         self.mock_pip.return_value.wheel.assert_not_called()
@@ -268,22 +268,52 @@ class PythonPluginTest(PythonPluginBaseTest):
 
         # Pip should not attempt to download again in build (only pull)
         pip_download = self.mock_pip.return_value.download
-        pip_download.assert_not_called()
-
-        pip_wheel.assert_called_once_with(
-            ["test", "packages"],
+        pip_download.assert_called_once_with(
+            [],
             constraints={constraints_path},
             process_dependency_links=False,
-            requirements={requirements_path},
+            requirements=set(),
             setup_py_dir=plugin.builddir,
         )
 
+        self.assertThat(pip_wheel.call_count, Equals(2))
+        pip_wheel.assert_has_calls(
+            [
+                mock.call(
+                    ["test", "packages"],
+                    constraints={constraints_path},
+                    process_dependency_links=False,
+                    requirements={requirements_path},
+                    setup_py_dir=None,
+                ),
+                mock.call(
+                    [],
+                    constraints={constraints_path},
+                    process_dependency_links=False,
+                    requirements=set(),
+                    setup_py_dir=plugin.builddir,
+                ),
+            ]
+        )
+
         pip_install = self.mock_pip.return_value.install
-        pip_install.assert_called_once_with(
-            ["foo", "bar"],
-            process_dependency_links=False,
-            upgrade=True,
-            install_deps=False,
+        self.assertThat(pip_wheel.call_count, Equals(2))
+        pip_install.assert_has_calls(
+            [
+                mock.call(
+                    ["foo", "bar"],
+                    process_dependency_links=False,
+                    upgrade=True,
+                    install_deps=False,
+                ),
+                mock.call(
+                    # Our mocking needs to be smarter to reflect this.
+                    ["foo", "bar"],
+                    process_dependency_links=False,
+                    upgrade=True,
+                    install_deps=False,
+                ),
+            ]
         )
 
     def test_pip_with_url(self):
@@ -301,26 +331,62 @@ class PythonPluginTest(PythonPluginBaseTest):
             plugin.build()
 
         pip_download = self.mock_pip.return_value.download
-        pip_download.assert_called_once_with(
-            [],
-            constraints=set(self.options.constraints),
-            process_dependency_links=False,
-            requirements=set(self.options.requirements),
-            setup_py_dir=plugin.sourcedir,
+        self.assertThat(pip_download.call_count, Equals(2))
+        pip_download.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(self.options.constraints),
+                    process_dependency_links=False,
+                    requirements=set(self.options.requirements),
+                    setup_py_dir=None,
+                ),
+                mock.call(
+                    [],
+                    constraints=set(self.options.constraints),
+                    process_dependency_links=False,
+                    requirements=set(),
+                    setup_py_dir=plugin.sourcedir,
+                ),
+            ]
         )
 
         pip_install = self.mock_pip.return_value.install
-        pip_install.assert_called_once_with(
-            [], upgrade=True, process_dependency_links=False, install_deps=False
+        self.assertThat(pip_install.call_count, Equals(2))
+        pip_install.assert_has_calls(
+            [
+                mock.call(
+                    [], upgrade=True, process_dependency_links=False, install_deps=False
+                ),
+                mock.call(
+                    [], upgrade=True, process_dependency_links=False, install_deps=False
+                ),
+            ]
         )
 
         pip_wheel = self.mock_pip.return_value.wheel
-        pip_wheel.assert_called_once_with(
-            [],
-            constraints=set(self.options.constraints),
-            process_dependency_links=False,
-            requirements=set(self.options.requirements),
-            setup_py_dir=plugin.sourcedir,
+        self.assertThat(pip_wheel.call_count, Equals(2))
+        pip_wheel.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(self.options.constraints),
+                    process_dependency_links=False,
+                    requirements=set(self.options.requirements),
+                    setup_py_dir=None,
+                )
+            ]
+        )
+        pip_wheel.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(self.options.constraints),
+                    process_dependency_links=False,
+                    requirements=set(),
+                    setup_py_dir=plugin.sourcedir,
+                )
+            ]
         )
 
     def test_fileset_ignores(self):
@@ -348,26 +414,63 @@ class PythonPluginTest(PythonPluginBaseTest):
         plugin.build()
 
         pip_download = self.mock_pip.return_value.download
-        pip_download.assert_called_once_with(
-            [],
-            constraints=set(),
-            process_dependency_links=True,
-            requirements=set(),
-            setup_py_dir=plugin.sourcedir,
+        self.assertThat(pip_download.call_count, Equals(2))
+        pip_download.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(),
+                    process_dependency_links=True,
+                    requirements=set(),
+                    setup_py_dir=None,
+                ),
+                mock.call(
+                    [],
+                    constraints=set(),
+                    process_dependency_links=True,
+                    requirements=set(),
+                    setup_py_dir=plugin.sourcedir,
+                ),
+            ]
         )
 
         pip_install = self.mock_pip.return_value.install
-        pip_install.assert_called_once_with(
-            [], upgrade=True, process_dependency_links=True, install_deps=False
+        self.assertThat(pip_install.call_count, Equals(2))
+        pip_install.assert_has_calls(
+            [
+                mock.call(
+                    [], upgrade=True, process_dependency_links=True, install_deps=False
+                ),
+                mock.call(
+                    [], upgrade=True, process_dependency_links=True, install_deps=False
+                ),
+            ]
         )
 
         pip_wheel = self.mock_pip.return_value.wheel
-        pip_wheel.assert_called_once_with(
-            [],
-            constraints=set(),
-            process_dependency_links=True,
-            requirements=set(),
-            setup_py_dir=plugin.sourcedir,
+        self.assertThat(pip_wheel.call_count, Equals(2))
+        # Double check to avoid annotating the magic methods.
+        pip_wheel.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(),
+                    process_dependency_links=True,
+                    requirements=set(),
+                    setup_py_dir=None,
+                )
+            ]
+        )
+        pip_wheel.assert_has_calls(
+            [
+                mock.call(
+                    [],
+                    constraints=set(),
+                    process_dependency_links=True,
+                    requirements=set(),
+                    setup_py_dir=plugin.sourcedir,
+                )
+            ]
         )
 
     def test_get_manifest_with_python_packages(self):

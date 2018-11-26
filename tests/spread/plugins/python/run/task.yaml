@@ -4,13 +4,17 @@ environment:
   SNAP_DIR: ../snaps/python-hello
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  #shellcheck source=tests/spread/tools/config.sh
   . "$TOOLS_DIR/config.sh"
   set_outdated_step_action "clean"
 
 restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
+  #shellcheck source=tests/spread/tools/config.sh
   . "$TOOLS_DIR/config.sh"
   clear_config
 

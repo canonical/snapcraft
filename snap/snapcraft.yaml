@@ -15,6 +15,7 @@ apps:
 
 build-packages:
   - build-essential
+  - intltool
   - libapt-pkg-dev
   - libffi-dev
   - libssl-dev

@@ -376,11 +376,7 @@ class Ubuntu(BaseRepo):
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
-        self._apt = _AptCache(
-            project_options.deb_arch,
-            sources_list=sources,
-            use_geoip=project_options.use_geoip,
-        )
+        self._apt = _AptCache(project_options.deb_arch, sources_list=sources)
 
         self._cache = cache.AptStagePackageCache(
             sources_digest=self._apt.sources_digest()

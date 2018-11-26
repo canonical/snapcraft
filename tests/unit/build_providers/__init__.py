@@ -18,7 +18,7 @@ from unittest import mock
 
 from snapcraft.project import Project
 
-from tests import unit
+from tests import fixture_setup, unit
 from snapcraft.internal.build_providers._base_provider import Provider
 
 
@@ -72,7 +72,6 @@ class ProviderImpl(Provider):
 
     def create(self):
         self.create_mock("create")
-        # raise EnvironmentError(self.create_mock.call_args)
 
     def destroy(self):
         self.destroy_mock("destroy")
@@ -102,6 +101,8 @@ class BaseProviderBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
         self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
@@ -119,12 +120,38 @@ class BaseProviderWithBasesBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
         self.instance_name = "snapcraft-project-name"
 
         patcher = mock.patch(
             "snapcraft.internal.build_providers._base_provider.SnapInjector"
         )
         self.snap_injector_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.echoer_mock = mock.Mock()
+
+
+class MacBaseProviderWithBasesBaseTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.instance_name = "snapcraft-project-name"
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._base_provider.SnapInjector"
+        )
+        self.snap_injector_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.project = get_project()
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._base_provider._get_platform",
+            return_value="darwin",
+        )
+        patcher.start()
         self.addCleanup(patcher.stop)
 
         self.echoer_mock = mock.Mock()

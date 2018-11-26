@@ -24,6 +24,7 @@ from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
+from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from tests import unit
 
@@ -315,31 +316,16 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
-            "SnapcraftPartMissingError",
+            "SnapcraftAfterPartMissingError",
             {
-                "exception": errors.SnapcraftPartMissingError,
-                "kwargs": {"part_name": "test-part"},
+                "exception": project_loader_errors.SnapcraftAfterPartMissingError,
+                "kwargs": {"part_name": "test-part1", "after_part_name": "test-part2"},
                 "expected_message": (
                     "Failed to get part information: "
-                    "Cannot find the definition for part 'test-part'. "
-                    "If it is a remote part, run `snapcraft update` "
-                    "to refresh the remote parts cache. "
-                    "If it is a local part, make sure that it is defined in the "
-                    "`snapcraft.yaml`."
-                ),
-            },
-        ),
-        (
-            "PartNotInCacheError",
-            {
-                "exception": errors.PartNotInCacheError,
-                "kwargs": {"part_name": "test-part"},
-                "expected_message": (
-                    "Failed to get remote part information: "
-                    "Cannot find the part name 'test-part' in the cache. "
-                    "If it is an existing remote part, run `snapcraft update` "
-                    "and try again. If it has not been defined, consider going to "
-                    "https://wiki.ubuntu.com/snapcraft/parts to add it."
+                    "Cannot find the definition for part 'test-part2', required by "
+                    "part 'test-part1'.\n"
+                    "Remote parts are not supported with bases, so make sure that this "
+                    "part is defined in the `snapcraft.yaml`."
                 ),
             },
         ),
@@ -641,21 +627,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "'libc6' is required inside the snap for this "
                     "part to work properly.\nAdd it as a `stage-packages` "
                     "entry for this part."
-                ),
-            },
-        ),
-        (
-            "RemotePartsUpdateConnectionError",
-            {
-                "exception": errors.RemotePartsUpdateConnectionError,
-                "kwargs": {
-                    "requests_exception": requests.exceptions.ConnectionError(
-                        "I'm a naughty error"
-                    )
-                },
-                "expected_message": (
-                    "Failed to update cache of remote parts: A Connection error "
-                    "occurred.\nPlease try again."
                 ),
             },
         ),
