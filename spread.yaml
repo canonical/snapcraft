@@ -163,9 +163,10 @@ suites:
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    systems:
-   - -ubuntu-16.04-i386
-   - -ubuntu-16.04-ppc64el
-   - -ubuntu-16.04-s390x
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
+   - ubuntu-16.04
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
