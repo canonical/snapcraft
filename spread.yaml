@@ -175,7 +175,6 @@ suites:
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
-   - ubuntu-16.04*
    - ubuntu-18.04
    - ubuntu-18.04-amd64
    - ubuntu-18.04-arm64
