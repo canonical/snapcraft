@@ -60,7 +60,7 @@ def _execute(  # noqa: C901
         conduct_build_environment_sanity_check(build_environment.provider)
     except MultipassMissingLinuxError as e:
         if click.confirm(str(e)):
-            repo.snaps.install_snaps(['multipass/beta'])
+            repo.snaps.install_snaps(['multipass/latest/beta'])
         else:
             sys.exit(1)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
