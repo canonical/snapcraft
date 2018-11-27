@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-import sys
 import typing
+from time import sleep
 
 import click
 
@@ -83,7 +83,7 @@ def _execute(  # noqa: C901
         if click.confirm(str(e)):
             _install_multipass()
         else:
-            raise SnapcraftEnvironmentError("multipass is required to continue.") from e
+            raise errors.SnapcraftEnvironmentError("multipass is required to continue.") from e
 
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
