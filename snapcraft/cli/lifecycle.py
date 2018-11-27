@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
 import sys
 import typing
 
@@ -41,6 +42,26 @@ if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
 
 
+def _install_multipass():
+    repo.snaps.install_snaps(["multipass/latest/beta"])
+    # wait for multipassd to be available
+    click.echo("Waiting for multipass...")
+    retry_count = 20
+    while retry_count:
+        try:
+            output = subprocess.check_output(["multipass", "version"]).decode()
+        except subprocess.CalledProcessError:
+            output = ""
+        # if multipassd is in the version information, it means the service is up
+        # and we can carry on
+        if "multipassd" in output:
+            break
+        retry_count -= 1
+        sleep(1)
+    # No need to worry about getting to this point by exhausting our retry count,
+    # the rest of the stack will handle the error appropriately.
+
+
 # TODO: when snap is a real step we can simplify the arguments here.
 # fmt: off
 def _execute(  # noqa: C901
@@ -60,9 +81,10 @@ def _execute(  # noqa: C901
         conduct_build_environment_sanity_check(build_environment.provider)
     except MultipassMissingLinuxError as e:
         if click.confirm(str(e)):
-            repo.snaps.install_snaps(['multipass/latest/beta'])
+            _install_multipass()
         else:
-            sys.exit(1)
+            raise SnapcraftEnvironmentError("multipass is required to continue.") from e
+
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     conduct_project_sanity_check(project)
