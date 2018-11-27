@@ -181,8 +181,6 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
@@ -247,11 +245,11 @@ suites:
    summary: tests of snapcraft's Rust plugin
    # Keep this 18.04 only for now as it is the only stable base.
    systems:
-   - -ubuntu-14.04*
-   - -ubuntu-16.04*
-   - -ubuntu-18.04-arm64
-   - -ubuntu-18.04-ppc64el
-   - -ubuntu-18.04-s390x
+   - ubuntu-18.04
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-i386
+   - ubuntu-18.04-arm64
+   - ubuntu-18.04-armhf
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
    # Keep this 18.04 only for now as it is the only stable base.
