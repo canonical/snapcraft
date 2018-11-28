@@ -206,3 +206,25 @@ def _interpret_anyOf(error):
         return ""
 
     return "must be one of {}".format(formatting_utils.humanize_list(usages, "or"))
+
+
+class MultipassMissingNonLinuxError(SanityCheckError):
+    fmt = (
+        "You need multipass installed to build snaps:\n"
+        "https://github.com/CanonicalLtd/multipass/releases"
+    )
+
+
+class MultipassMissingLinuxError(SanityCheckError):
+    fmt = (
+        "You need multipass installed to build snaps which use the base keyword.\n"
+        "Would you like to install it now?"
+    )
+
+
+class SnapMissingLinuxError(SanityCheckError):
+    fmt = (
+        "You need multipass installed to build snaps which use the base keyword.\n"
+        "Enable snap support (https://docs.snapcraft.io/core/install) and run:\n"
+        "snap install multipass --classic --beta"
+    )
