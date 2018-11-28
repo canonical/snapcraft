@@ -37,6 +37,9 @@ sudo apt-get autoremove --purge --yes snapcraft
 export GOPATH=/tmp/go
 /snap/bin/go get -u github.com/snapcore/spread/cmd/spread
 
+# Remove go now that spread is built
+snap remove go
+
 # and now run spread against localhost
 # shellcheck disable=SC1091
 . /etc/os-release
