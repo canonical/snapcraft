@@ -15,5 +15,7 @@ apps:
 
 parts:
   project:
-    plugin: qmake
     source: .
+    plugin: qmake
+    build-packages:
+    - g++
