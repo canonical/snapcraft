@@ -247,7 +247,6 @@ suites:
    - ubuntu-18.04
    - ubuntu-18.04-amd64
    - ubuntu-18.04-i386
-   - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
