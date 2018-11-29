@@ -13,5 +13,7 @@ parts:
   # 2c50c432906f1034fa1efec8f7866315f8c81025
   gotty:
     source: gotty.tar.gz
+    build-packages:
+    - gcc
     plugin: go
     go-importpath: github.com/yudai/gotty
