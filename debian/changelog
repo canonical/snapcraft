@@ -1,3 +1,47 @@
+snapcraft (3.0.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ci: use more travis primitives for osx tests (#2383)
+  * project_loader: do not install base if already installed (#2384)
+  * cli: consolidate re-execution (#2385)
+  * project: early snapcraft.yaml validation (#2388)
+  * build providers: fix osx non base and injection (#2394)
+  * Partial Revert "build providers: fix osx non base and injection" (#2396)
+  * tests: fix maven spread test (#2400)
+  * ci: reduce spread system declarations (#2401)
+  * project_loader: add git to build-packages for version: git (#2403)
+  * ci: update travis.yaml to use xenial and addons (#2392)
+  * packaging: update requests (#2402)
+  * cli: handle yaml errors for cleanbuild (#2404)
+  * multipass: avoid stdin where possible (#2408)
+  * build providers: preset the timezone (#2407)
+  * python plugin: process deps before and separately from setup.py (#2409)
+  * yaml_utils: allow unicode while encoding (#2414)
+  * cli: snapcraft init with a base (#2411)
+  * schema: add support for title (#2412)
+  * tests: use autopkgtest to leverage snap testing (#2380)
+
+  [ Kyle Fazzari ]
+  * tests: missing full adapter in extension test (#2382)
+  * meta: add assumes if using "full" app adapter (#2379)
+  * project_loader: raise error if part in after is undefined (#2386)
+  * spread: change virt-enabled image name (#2387)
+
+  [ Erik Berkun-Drevnig ]
+  * cli: hide progress bar for dumb terminals (#2369)
+
+  [ John R. Lenton ]
+  * tools: broader shellcheck including spread (#2381)
+  * tools: pull in imporved cla_check.py from snapd (#2415)
+
+  [ Anatoli Babenia ]
+  * tests: run black with --diff (#2391)
+
+  [ Evan Dandrea ]
+  * build providers: checks for when multipass is missing (#2354)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 29 Nov 2018 16:22:52 +0000
+
 snapcraft (3.0) xenial; urgency=medium
 
   [ Sergio Schvezov ]
