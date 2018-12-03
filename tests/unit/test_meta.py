@@ -25,6 +25,7 @@ import fixtures
 import testscenarios
 import testtools
 from testtools.matchers import (
+    Annotate,
     Contains,
     DirExists,
     Equals,
@@ -137,6 +138,13 @@ class CreateTestCase(CreateBaseTestCase):
             "epoch" in y, 'Expected "epoch" property to be copied into snap.yaml'
         )
         self.assertThat(y["epoch"], Equals("1*"))
+
+    def test_create_meta_with_title(self):
+        self.config_data["title"] = "The Title"
+
+        y = self.generate_meta_yaml()
+        self.assertThat(y, Contains("title"))
+        self.assertThat(y["title"], Equals("The Title"))
 
     def test_create_meta_with_license(self):
         self.config_data["license"] = "MIT"
@@ -577,12 +585,20 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             "foo": {"plugs": ["network"], "passthrough": {"foo": "bar", "spam": "eggs"}}
         }
         self.generate_meta_yaml()
+
+        output_lines = fake_logger.output.splitlines()
         self.assertThat(
-            fake_logger.output,
-            Equals(
+            output_lines,
+            Contains(
                 "The 'passthrough' property is being used to propagate "
                 "experimental properties to snap.yaml that have not been "
-                "validated.\n"
+                "validated."
+            ),
+        )
+        self.assertThat(
+            len(output_lines),
+            Annotate(
+                "There were duplicate lines logged.", Equals(len(set(output_lines)))
             ),
         )
 

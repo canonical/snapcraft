@@ -14,39 +14,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from textwrap import dedent
 
 import snapcraft.internal.errors
-from testtools.matchers import Equals, FileContains
+from testtools.matchers import Contains, Equals, FileContains
 
 from . import CommandBaseTestCase
 
 
 class InitCommandTestCase(CommandBaseTestCase):
     def test_init_must_write_snapcraft_yaml(self):
-        expected_yaml = """name: my-snap-name # you probably want to 'snapcraft register <name>'
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
-summary: Single-line elevator pitch for your amazing snap # 79 char long summary
-description: >
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+        expected_yaml = dedent(
+            """\
+            name: my-snap-name # you probably want to 'snapcraft register <name>'
+            base: core18 # the base snap is the execution environment for this snap
+            version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+            summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+            description: |
+              This is my-snap's description. You have a paragraph or two to tell the
+              most important story about your snap. Keep it under 100 words though,
+              we live in tweetspace and your description wants to look good in the snap
+              store.
 
-grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+            grade: devel # must be 'stable' to release into candidate/stable channels
+            confinement: devmode # use 'strict' once you have the right plugs and slots
 
-parts:
-  my-part:
-    # See 'snapcraft plugins'
-    plugin: nil\n"""  # noqa, lines too long
+            parts:
+              my-part:
+                # See 'snapcraft plugins'
+                plugin: nil\n"""
+        )
 
         result = self.run_command(["init"])
 
         self.assertThat(
             result.output,
-            Equals(
-                "Created snap/snapcraft.yaml.\nEdit the file to your liking or "
-                "run `snapcraft` to get started\n"
+            Contains(
+                "Created snap/snapcraft.yaml.\n"
+                "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
+                "information about the snapcraft.yaml format."
             ),
         )
 

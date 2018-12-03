@@ -60,6 +60,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     "license",
     "plugs",
     "slots",
+    "title",
     "type",
 ]
 

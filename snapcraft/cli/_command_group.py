@@ -69,4 +69,7 @@ class SnapcraftGroup(click.Group):
         build_environment = env.BuilderEnvironmentConfig()
         if build_environment.is_host:
             commands.pop(commands.index("refresh"))
+
+        # Hide the legacy commands
+        commands.pop(commands.index("cleanbuild"))
         return commands
