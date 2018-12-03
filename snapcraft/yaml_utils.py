@@ -34,7 +34,9 @@ def load(stream: TextIO) -> Any:
 
 def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None) -> str:
     """Safely dump YAML in ordered manner."""
-    return yaml.dump(data, stream, _SafeOrderedDumper, default_flow_style=False)
+    return yaml.dump(
+        data, stream, _SafeOrderedDumper, default_flow_style=False, allow_unicode=True
+    )
 
 
 class _SafeOrderedLoader(CSafeLoader):

@@ -22,7 +22,6 @@ The plugin requires a CMakeLists.txt in the root of the source tree.
 If the part has a list of build-snaps listed, the part will be set up in
 such a way that the paths to those snaps are used as paths for find_package
 and find_library by use of `CMAKE_FIND_ROOT_PATH``.
-
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.

@@ -689,6 +689,88 @@ class IconTest(ProjectBaseTest):
         )
 
 
+class ValidTitleTest(ProjectBaseTest):
+    scenarios = (
+        ("normal", dict(title="a title")),
+        ("normal with caps", dict(title="A Title")),
+        ("upper limit (40)", dict(title="T" * 40)),
+        ("upper limit (40) with emoji", dict(title="💩" * 40)),
+        ("upper limit (40) with unicode (non emoji)", dict(title="’" * 40)),
+    )
+
+    def test_title(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            title: {}
+            summary: test
+            description: nothing
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """
+            ).format(self.title)
+        )
+
+
+class InvalidTitleTest(ProjectBaseTest):
+    scenarios = (
+        ("non string", dict(title=1, error_template="number")),
+        ("over upper limit (40)", dict(title="T" * 41, error_template="length")),
+        (
+            "over upper limit (40) with emoji",
+            dict(title="💩" * 41, error_template="length"),
+        ),
+        (
+            "over upper limit (40) with unicode (non emoji)",
+            dict(title="’" * 41, error_template="length"),
+        ),
+    )
+
+    _EXPECTED_ERROR_TEMPLATE = {
+        "number": (
+            "Issues while validating snapcraft.yaml: The 'title' property "
+            "does not match the required schema: {} is not of type 'string'"
+        ),
+        "length": (
+            "Issues while validating snapcraft.yaml: The 'title' property "
+            "does not match the required schema: {!r} is too long "
+            "(maximum length is 40)"
+        ),
+    }
+
+    def test_invalid(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            title: {}
+            summary: test
+            description: nothing
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """
+            ).format(self.title)
+        )
+
+        self.assertThat(
+            str(raised),
+            Contains(
+                self._EXPECTED_ERROR_TEMPLATE[self.error_template].format(self.title)
+            ),
+        )
+
+
 class OrganizeTest(ProjectBaseTest):
     def test_yaml_organize_value_none(self):
         raised = self.assertValidationRaises(
