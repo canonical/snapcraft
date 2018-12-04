@@ -31,15 +31,7 @@ from typing import Callable, List
 from snapcraft.internal import errors
 
 
-SNAPCRAFT_FILES = [
-    "snapcraft.yaml",
-    ".snapcraft.yaml",
-    ".snapcraft",
-    "parts",
-    "stage",
-    "prime",
-    "snap",
-]
+SNAPCRAFT_FILES = ["parts", "stage", "prime"]
 _DEFAULT_PLUGINDIR = os.path.join(sys.prefix, "share", "snapcraft", "plugins")
 _plugindir = _DEFAULT_PLUGINDIR
 _DEFAULT_SCHEMADIR = os.path.join(sys.prefix, "share", "snapcraft", "schema")
