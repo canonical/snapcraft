@@ -11,7 +11,7 @@ prepare: |
   cd "$SNAP_DIR"
   set_base "snap/snapcraft.yaml"
 
-  apt-get install git diffutils
+  apt-get install --yes git diffutils
   apt-mark auto git diffutils
 
   for python_dir in python2 python3; do

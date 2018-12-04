@@ -12,6 +12,9 @@ execute: |
   # Create a snapcraft.yaml with no base entry
   snapcraft init
 
+  # Remove the base entry
+  sed -i '/base: core18/d' snap/snapcraft.yaml
+
   # Now update
   snapcraft update
   snapcraft define curl > define.txt
