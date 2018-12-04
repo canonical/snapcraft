@@ -259,3 +259,27 @@ class CMakeBuildTest(CMakeBaseTest):
                 ),
             ]
         )
+
+
+class FlagsTest(unit.TestCase):
+    def test_simple_flag(self):
+        flag = cmake._Flag("-DVERBOSE")
+
+        self.assertThat(flag.name, Equals("-DVERBOSE"))
+        self.assertThat(flag.value, Equals(None))
+        self.assertThat(str(flag), Equals("-DVERBOSE"))
+
+    def test_flag(self):
+        flag = cmake._Flag("-DCMAKE_PREFIX_PATH=foo")
+
+        self.assertThat(flag.name, Equals("-DCMAKE_PREFIX_PATH"))
+        self.assertThat(flag.value, Equals("foo"))
+        self.assertThat(str(flag), Equals("-DCMAKE_PREFIX_PATH=foo"))
+
+    def test_flag_value_change(self):
+        flag = cmake._Flag("-DCMAKE_PREFIX_PATH=foo")
+        flag.value = "bar"
+
+        self.assertThat(flag.name, Equals("-DCMAKE_PREFIX_PATH"))
+        self.assertThat(flag.value, Equals("bar"))
+        self.assertThat(str(flag), Equals("-DCMAKE_PREFIX_PATH=bar"))

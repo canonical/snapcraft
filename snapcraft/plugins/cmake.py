@@ -35,12 +35,30 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
+from typing import List
 
 import snapcraft
 from snapcraft.internal import errors
 
 
 logger = logging.getLogger(name=__name__)
+
+
+class _Flag:
+    def __str__(self) -> str:
+        if self.value is None:
+            flag = self.name
+        else:
+            flag = "{}={}".format(self.name, self.value)
+        return flag
+
+    def __init__(self, flag: str) -> None:
+        parts = flag.split("=")
+        self.name = parts[0]
+        try:
+            self.value = parts[1]
+        except IndexError:
+            self.value = None
 
 
 class CMakePlugin(snapcraft.BasePlugin):
@@ -91,26 +109,7 @@ class CMakePlugin(snapcraft.BasePlugin):
             sourcedir = self.sourcedir
 
         env = self._build_environment()
-
-        build_snap_paths = [
-            os.path.join(os.path.sep, "snap", snap_name.split("/")[0], "current")
-            for snap_name in self.options.build_snaps
-        ]
-
-        configflags = []
-        root_path_appended = False
-        for configflag in self.options.configflags:
-            if configflag.startswith("-DCMAKE_FIND_ROOT_PATH="):
-                configflags.append(
-                    "{};{}".format(configflag, ";".join(build_snap_paths))
-                )
-                root_path_appended = True
-            else:
-                configflags.append(configflag)
-        if not root_path_appended and build_snap_paths:
-            configflags.append(
-                "-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths))
-            )
+        configflags = self._get_processed_flags()
 
         self.run(["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + configflags, env=env)
 
@@ -128,6 +127,26 @@ class CMakePlugin(snapcraft.BasePlugin):
         )
 
         self.run(["cmake", "--build", ".", "--target", "install"], env=env)
+
+    def _get_processed_flags(self) -> List[str]:
+        # Return the original if no build_snaps are in options.
+        if not self.options.build_snaps:
+            return self.options.configflags
+
+        build_snap_paths = [
+            os.path.join(os.path.sep, "snap", snap_name.split("/")[0], "current")
+            for snap_name in self.options.build_snaps
+        ]
+
+        flags = [_Flag(f) for f in self.options.configflags]
+        for flag in flags:
+            if flag.name == ("-DCMAKE_FIND_ROOT_PATH"):
+                flag.value = "{};{}".format(flag.value, ";".join(build_snap_paths))
+                break
+        else:
+            flags.append(_Flag("-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths))))
+
+        return [str(f) for f in flags]
 
     def _build_environment(self):
         env = os.environ.copy()
