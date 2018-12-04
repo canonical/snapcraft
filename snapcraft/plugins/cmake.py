@@ -144,7 +144,9 @@ class CMakePlugin(snapcraft.BasePlugin):
                 flag.value = "{};{}".format(flag.value, ";".join(build_snap_paths))
                 break
         else:
-            flags.append(_Flag("-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths))))
+            flags.append(
+                _Flag("-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths)))
+            )
 
         return [str(f) for f in flags]
 
