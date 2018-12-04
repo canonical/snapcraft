@@ -19,6 +19,9 @@
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
+If the part has a list of build-snaps listed, the part will be set up in
+such a way that the paths to those snaps are used as paths for find_package
+and find_library by use of `CMAKE_FIND_ROOT_PATH``.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -32,12 +35,30 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
+from typing import List
 
 import snapcraft
 from snapcraft.internal import errors
 
 
 logger = logging.getLogger(name=__name__)
+
+
+class _Flag:
+    def __str__(self) -> str:
+        if self.value is None:
+            flag = self.name
+        else:
+            flag = "{}={}".format(self.name, self.value)
+        return flag
+
+    def __init__(self, flag: str) -> None:
+        parts = flag.split("=")
+        self.name = parts[0]
+        try:
+            self.value = parts[1]
+        except IndexError:
+            self.value = None
 
 
 class CMakePlugin(snapcraft.BasePlugin):
@@ -88,11 +109,9 @@ class CMakePlugin(snapcraft.BasePlugin):
             sourcedir = self.sourcedir
 
         env = self._build_environment()
+        configflags = self._get_processed_flags()
 
-        self.run(
-            ["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + self.options.configflags,
-            env=env,
-        )
+        self.run(["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + configflags, env=env)
 
         # TODO: there is a better way to specify the job count on newer versions of cmake
         # https://github.com/Kitware/CMake/commit/1ab3881ec9e809ac5f6cad5cd84048310b8683e2
@@ -108,6 +127,28 @@ class CMakePlugin(snapcraft.BasePlugin):
         )
 
         self.run(["cmake", "--build", ".", "--target", "install"], env=env)
+
+    def _get_processed_flags(self) -> List[str]:
+        # Return the original if no build_snaps are in options.
+        if not self.options.build_snaps:
+            return self.options.configflags
+
+        build_snap_paths = [
+            os.path.join(os.path.sep, "snap", snap_name.split("/")[0], "current")
+            for snap_name in self.options.build_snaps
+        ]
+
+        flags = [_Flag(f) for f in self.options.configflags]
+        for flag in flags:
+            if flag.name == ("-DCMAKE_FIND_ROOT_PATH"):
+                flag.value = "{};{}".format(flag.value, ";".join(build_snap_paths))
+                break
+        else:
+            flags.append(
+                _Flag("-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths)))
+            )
+
+        return [str(f) for f in flags]
 
     def _build_environment(self):
         env = os.environ.copy()
