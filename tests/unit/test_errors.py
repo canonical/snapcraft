@@ -901,6 +901,18 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "expected_message": "Failed to get latest step: no steps have run",
             },
         ),
+        (
+            "CleanPermissionsError",
+            {
+                "exception": errors.CleanPermissionError,
+                "kwargs": {"directory": "/home/foo/stage"},
+                "expected_message": (
+                    "Unable to clean '/home/foo/stage'.\n"
+                    "Verify ownership and permissions for the files and directories in '/home/foo/stage'.\n"
+                    "Also ensure that you are running snapcraft as the correct user."
+                ),
+            },
+        ),
     )
 
     def test_error_formatting(self):
