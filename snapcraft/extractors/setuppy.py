@@ -48,7 +48,7 @@ def extract(path: str) -> ExtractedMetadata:
             # but let's be cautios and add the proper guards.
             try:
                 spec.loader.exec_module(setuppy)
-            except SystemExit as e:
+            except SystemExit:
                 raise _errors.SetupPyFileParseError(path=path)
             except ImportError as e:
                 raise _errors.SetupPyImportError(path=path, error=str(e)) from e

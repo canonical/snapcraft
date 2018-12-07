@@ -601,7 +601,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             set --
             {}
             eval "set -- $BACKUP_ARGS"
-        """
+        """  # noqa: W605
         ).format(
             source_script
         )  # noqa

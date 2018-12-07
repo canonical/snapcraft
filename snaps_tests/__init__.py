@@ -160,7 +160,7 @@ class SnapsTestCase(testtools.TestCase):
     def _snap(self, project_dir, timeout):
         command = "{} {}".format(self.snapcraft_command, "snap")
         self._run_command(
-            command, project_dir, expect="Snapped .*\.snap", timeout=timeout
+            command, project_dir, expect=r"Snapped .*\.snap", timeout=timeout
         )
 
     def _run_command(self, command, working_dir, expect=pexpect.EOF, timeout=30):

@@ -1003,8 +1003,8 @@ class EnvironmentTest(ProjectBaseTest):
 
         self.assertRegex(
             raised.message,
-            "The 'environment/INVALID' property does not match the required "
-            "schema: \[1, 2\].*",
+            r"The 'environment/INVALID' property does not match the required "
+            r"schema: \[1, 2\].*",
         )
 
 
@@ -1380,9 +1380,9 @@ class InvalidEpochsTest(ProjectBaseTest):
 
         self.assertRegex(
             raised.message,
-            "The 'epoch' property does not match the required "
-            "schema:.*is not a 'epoch' \(epochs are positive integers "
-            "followed by an optional asterisk\)",
+            r"The 'epoch' property does not match the required "
+            r"schema:.*is not a 'epoch' \(epochs are positive integers "
+            r"followed by an optional asterisk\)",
         )
 
 
@@ -1483,8 +1483,8 @@ class InvalidAdapterTest(ProjectBaseTest):
 
         self.assertRegex(
             raised.message,
-            "The 'apps/app/adapter' property does not match the required schema:.*is "
-            "not one of \['none', 'legacy', 'full'\]",
+            r"The 'apps/app/adapter' property does not match the required schema:.*is "
+            r"not one of \['none', 'legacy', 'full'\]",
         )
 
 

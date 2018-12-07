@@ -83,7 +83,7 @@ classifiers = (
 changelog = "debian/changelog"
 if os.path.exists(changelog):
     head = codecs.open(changelog, encoding="utf-8").readline()
-    match = re.compile(".*\((.*)\).*").match(head)
+    match = re.compile(r".*\((.*)\).*").match(head)
     if match:
         version = match.group(1)
 
