@@ -171,7 +171,7 @@ class SnapPackage:
             snap_install_cmd.append("--classic")
         try:
             check_call(snap_install_cmd)
-        except CalledProcessError as install_error:
+        except CalledProcessError:
             raise errors.SnapInstallError(
                 snap_name=self.name, snap_channel=self.channel
             )
@@ -189,7 +189,7 @@ class SnapPackage:
             snap_refresh_cmd.append("--classic")
         try:
             check_call(snap_refresh_cmd)
-        except CalledProcessError as install_error:
+        except CalledProcessError:
             raise errors.SnapRefreshError(
                 snap_name=self.name, snap_channel=self.channel
             )
@@ -297,6 +297,6 @@ def get_installed_snaps():
         snap_info = requests_unixsocket.get(url)
         snap_info.raise_for_status()
         local_snaps = snap_info.json()["result"]
-    except exceptions.ConnectionError as e:
+    except exceptions.ConnectionError:
         local_snaps = []
     return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]

@@ -231,7 +231,7 @@ class KBuildPlugin(snapcraft.BasePlugin):
         # linux/package/Makefile -> snapcraft -> linux/Makefile
         # fix the problem removing the offending make option (-I...)
         if "MAKEFLAGS" in os.environ:
-            makeflags = re.sub("-I[\S]*", "", os.environ["MAKEFLAGS"])
+            makeflags = re.sub(r"-I[\S]*", "", os.environ["MAKEFLAGS"])
             os.environ["MAKEFLAGS"] = makeflags
         # build the software
         self.run(self.make_cmd + self.make_targets)

@@ -515,8 +515,8 @@ class StoreTestCase(TestCase):
             )
         except pexpect.exceptions.EOF:
             wait_error_regex = (
-                ".*You must wait (\d+) seconds before trying to register your "
-                "next snap.*"
+                r".*You must wait (\d+) seconds before trying to register your "
+                r"next snap.*"
             )
             output = process.before.decode(sys.getfilesystemencoding())
             match = re.search(wait_error_regex, output)
@@ -562,7 +562,7 @@ class StoreTestCase(TestCase):
 
         for enabled, key_name, key_id in expected_keys:
             process.expect(
-                "{} *{} *{}".format("\*" if enabled else "-", key_name, key_id)
+                r"{} *{} *{}".format(r"\*" if enabled else "-", key_name, key_id)
             )
         process.expect(pexpect.EOF)
         return process.wait()
@@ -573,7 +573,7 @@ class StoreTestCase(TestCase):
         for name, visibility, price, notes in expected_snaps:
             # Ignores 'since' to avoid confusion on fake and actual stores.
             process.expect(
-                "{} *[T:\-\d]+Z *{} *{} *{}".format(name, visibility, price, notes)
+                r"{} *[T:\-\d]+Z *{} *{} *{}".format(name, visibility, price, notes)
             )
 
         process.expect(pexpect.EOF)
