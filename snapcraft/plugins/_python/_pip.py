@@ -453,7 +453,7 @@ class Pip:
             # --format requires a newer pip, so fall back to legacy output
             output = self._run_output(command)
             json_output = []  # type: List[Dict[str, str]]
-            version_regex = re.compile("\((.+)\)")
+            version_regex = re.compile(r"\((.+)\)")
             for line in output.splitlines():
                 line = line.split()
                 m = version_regex.search(line[1])

@@ -309,7 +309,7 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
                         ps1="$PWD"
                     fi
                     echo -n $ps1
-        """
+        """  # noqa: W605
                 )
             ),
         )

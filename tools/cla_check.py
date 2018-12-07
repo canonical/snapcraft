@@ -15,7 +15,7 @@ try:
 except ImportError:
     sys.exit("Install launchpadlib: sudo apt install python-launchpadlib")
 
-shortlog_email_rx = re.compile("^\s*\d+\s+.*<(\S+)>$", re.M)
+shortlog_email_rx = re.compile(r"^\s*\d+\s+.*<(\S+)>$", re.M)
 
 
 def get_emails_for_range(r):

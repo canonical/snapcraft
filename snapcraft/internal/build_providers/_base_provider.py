@@ -82,7 +82,7 @@ _CLOUD_USER_DATA_TMPL = dedent(
                 ps1="$PWD"
             fi
             echo -n $ps1
-    """
+    """  # noqa: W605
 )
 
 

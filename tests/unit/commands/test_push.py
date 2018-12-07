@@ -72,8 +72,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*push '.*test-snap.snap' to the store\.\n"
-            "Revision 9 of 'basic' created\.",
+            r".*push '.*test-snap.snap' to the store\.\n"
+            r"Revision 9 of 'basic' created\.",
         )
         mock_upload.assert_called_once_with("basic", self.snap_file)
 

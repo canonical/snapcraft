@@ -109,7 +109,7 @@ class PluginTestCase(unit.TestCase):
             "opt/something",
             "-usr/lib/*.a",
             "usr/bin",
-            "\-everything",
+            r"\-everything",
             r"\\a",
         ]
 

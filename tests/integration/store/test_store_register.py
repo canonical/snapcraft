@@ -133,6 +133,6 @@ class RegisterTestCase(integration.StoreTestCase):
 
         self.assertIsNotNone(error, "An error must be raised.")
         expected = (
-            ".*You must wait \d+ seconds before trying to register your next snap.*"
+            r".*You must wait \d+ seconds before trying to register your next snap.*"
         )
         self.assertThat(str(error), MatchesRegex(expected, flags=re.DOTALL))
