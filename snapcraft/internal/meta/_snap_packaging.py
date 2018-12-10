@@ -319,7 +319,7 @@ class _SnapPackaging:
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
         self._arch_triplet = project_config.project.arch_triplet
-        self._global_state_file = project_config.project._global_state_file
+        self._global_state_file = project_config.project._get_global_state_file_path()
         self._is_host_compatible_with_base = (
             project_config.project.is_host_compatible_with_base
         )

@@ -68,13 +68,13 @@ def execute(
 
     try:
         global_state = states.GlobalState.load(
-            filepath=project_config.project._global_state_file
+            filepath=project_config.project._get_global_state_file_path()
         )
     except FileNotFoundError:
         global_state = states.GlobalState()
     global_state.append_build_packages(installed_packages)
     global_state.append_build_snaps(installed_snaps)
-    global_state.save(filepath=project_config.project._global_state_file)
+    global_state.save(filepath=project_config.project._get_global_state_file_path())
 
     executor = _Executor(project_config)
     executor.run(step, part_names)
