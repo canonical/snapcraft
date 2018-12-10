@@ -375,7 +375,7 @@ class TestStore(fixtures.Fixture):
         elif test_store == "staging":
             self.useFixture(StagingStore())
             self.register_count_limit = 100
-            self.reserved_snap_name = "bash"
+            self.reserved_snap_name = "snapcraft-reserved-snap-name"
         elif test_store == "production":
             # Use the default server URLs
             self.register_count_limit = 10
