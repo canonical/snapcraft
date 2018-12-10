@@ -148,6 +148,18 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
     _remove_directory_if_empty(project_options.parts_dir)
 
 
+def _permission_error_failover(func):
+    def wrapper(*args, **kwargs):
+        try:
+            # directory, step, message, parts, *, remove_dir=True
+            func(*args, **kwargs)
+        except PermissionError:
+            raise errors.CleanPermissionError(directory=args[0])
+
+    return wrapper
+
+
+@_permission_error_failover
 def _cleanup_common(directory, step, message, parts, *, remove_dir=True):
     if os.path.isdir(directory):
         logger.info(message)

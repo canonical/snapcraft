@@ -679,3 +679,14 @@ class InvalidMountinfoFormat(SnapcraftError):
 
     def __init__(self, row):
         super().__init__(row=row)
+
+
+class CleanPermissionError(SnapcraftError):
+    fmt = (
+        "Unable to clean {directory!r}.\n"
+        "Verify ownership and permissions for the files and directories in {directory!r}.\n"
+        "Also ensure that you are running snapcraft as the correct user."
+    )
+
+    def __init__(self, *, directory: str) -> None:
+        super().__init__(directory=directory)
