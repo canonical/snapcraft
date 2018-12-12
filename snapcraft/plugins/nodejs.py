@@ -73,6 +73,15 @@ _YARN_VERSION_URL = (
 )
 
 
+class NodejsPluginMissingPackageJsonError(errors.SnapcraftError):
+
+    fmt = (
+        "Could not find a 'package.json' in the source tree.\n"
+        "Verify that a 'package.json' exists at the root of the source tree\n"
+        "or consider using the 'source-subdir' property if it is located in a subdirectory."
+    )
+
+
 class NodePlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
@@ -246,8 +255,11 @@ class NodePlugin(snapcraft.BasePlugin):
         return env
 
     def _get_package_json(self, rootdir):
-        with open(os.path.join(rootdir, "package.json")) as json_file:
-            return json.load(json_file)
+        try:
+            with open(os.path.join(rootdir, "package.json")) as json_file:
+                return json.load(json_file)
+        except FileNotFoundError as not_found_error:
+            raise NodejsPluginMissingPackageJsonError() from not_found_error
 
     def _get_installed_node_packages(self, cwd):
         # There is no yarn ls

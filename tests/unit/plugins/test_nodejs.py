@@ -77,14 +77,19 @@ class NodePluginBaseTest(unit.TestCase):
 
         self.useFixture(fixture_setup.CleanEnvironment())
 
-    def create_assets(self, plugin, package_name="test-nodejs"):
+    def create_assets(
+        self, plugin, package_name="test-nodejs", skip_package_json=False
+    ):
         for directory in (plugin.sourcedir, plugin.builddir):
             os.makedirs(directory)
-            with open(os.path.join(directory, "package.json"), "w") as json_file:
-                json.dump(
-                    dict(name=package_name, bin=dict(run="index.js"), version="1.0"),
-                    json_file,
-                )
+            if not skip_package_json:
+                with open(os.path.join(directory, "package.json"), "w") as json_file:
+                    json.dump(
+                        dict(
+                            name=package_name, bin=dict(run="index.js"), version="1.0"
+                        ),
+                        json_file,
+                    )
             package_name = package_name.lstrip("@").replace("/", "-")
             packed_tar_file = os.path.join(directory, "{}-1.0.tgz".format(package_name))
             open(os.path.join(directory, "index.js"), "w").close()
@@ -623,3 +628,18 @@ class NodePluginUnsupportedArchTest(NodePluginBaseTest):
         self.assertThat(
             raised.__str__(), Equals("architecture not supported (ppcel64)")
         )
+
+
+class NodePluginMissingFilesTest(NodePluginBaseTest):
+
+    scenarios = [
+        ("npm", dict(package_manager="npm")),
+        ("yarn", dict(package_manager="yarn")),
+    ]
+
+    def test_missing_package_json(self):
+        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin, skip_package_json=True)
+
+        self.assertRaises(nodejs.NodejsPluginMissingPackageJsonError, plugin.pull)
