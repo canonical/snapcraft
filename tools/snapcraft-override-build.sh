@@ -12,9 +12,4 @@ patch -s -b "$PYTHON_PACKAGE_PATH/ctypes/__init__.py" patches/ctypes_init.diff
 mkdir -p patched/ctypes
 [ -f "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" ] && mv "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" patched/ctypes
 
-# Now that everything is built, let's disable user site-packages
-# as stated in PEP-0370
-echo "Compiling pyc files..."
 sed -i "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
-# This is the last step, let's now compile all our pyc files.
-"$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
