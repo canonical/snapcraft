@@ -48,13 +48,16 @@ def _check_multipass_installed():
     if shutil.which("multipass"):
         return
 
-    if sys.platform != "linux":
-        raise errors.MultipassMissingNonLinuxError()
+    if sys.platform == "darwin":
+        raise errors.MultipassMissingInstallableError()
 
-    if not shutil.which("snap"):
+    if sys.platform == "linux" and shutil.which("snap"):
+        raise errors.MultipassMissingInstallableError()
+    elif sys.platform == "linux":
         raise errors.SnapMissingLinuxError()
-    else:
-        raise errors.MultipassMissingLinuxError()
+
+    # Alas, we do not know where we are running from
+    raise errors.MultipassMissingNonInstallableError()
 
 
 def conduct_project_sanity_check(project: Project) -> None:
