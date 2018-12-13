@@ -12,6 +12,7 @@ parts:
   checkbox-ng-local:
     plugin: python
     python-packages:
+      - idna==2.7
       - checkbox-ng
       - requests-oauthlib
     stage-packages:
