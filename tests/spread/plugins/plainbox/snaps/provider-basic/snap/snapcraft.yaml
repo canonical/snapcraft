@@ -18,6 +18,7 @@ parts:
             - zlib1g-dev
             - build-essential
         python-packages:
+            - idna==2.7
             - requests-oauthlib
             - XlsxWriter
             - Jinja2
@@ -27,6 +28,8 @@ parts:
         plugin: python
         source: git://git.launchpad.net/checkbox-support
         source-type: git
+        python-packages:
+            - idna==2.7
     simple-plainbox-provider:
         plugin: plainbox-provider
         source: ./2016.com.example_simple
