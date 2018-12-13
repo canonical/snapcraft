@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
 
 
 def _install_multipass():
-    if sys.platorm == "linux":
+    if sys.platform == "linux":
         repo.snaps.install_snaps(["multipass/latest/beta"])
     elif sys.platform == "darwin":
         try:
