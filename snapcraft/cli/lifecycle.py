@@ -95,7 +95,8 @@ def _execute(  # noqa: C901
     try:
         conduct_build_environment_sanity_check(build_environment.provider)
     except MultipassMissingInstallableError as e:
-        click.echo("You need multipass installed to build snaps.")
+        click.echo("You need multipass installed to build snaps "
+                   "(https://github.com/CanonicalLtd/multipass).")
         if click.confirm("Would you like to install it now?"):
             _install_multipass()
         else:
