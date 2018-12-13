@@ -73,6 +73,13 @@ parts:
     override-build: |
         snapcraftctl build
         ./tools/snapcraft-override-build.sh
+    override-prime: |
+        snapcraftctl prime
+
+        echo "Compiling pyc files..."
+        # This is the last step, let's now compile all our pyc files.
+        "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
+
     after: [snapcraft-libs]
 
   legacy-snapcraft:
