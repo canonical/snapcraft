@@ -18,6 +18,7 @@ parts:
             - zlib1g-dev
             - build-essential
         python-packages:
+            - idna==2.7
             - requests-oauthlib
             - XlsxWriter
             - Jinja2
