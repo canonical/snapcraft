@@ -16,6 +16,7 @@
 
 import subprocess
 import typing
+import sys
 from time import sleep
 
 import click
@@ -36,14 +37,28 @@ from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_build_environment_sanity_check,
 )
-from snapcraft.project.errors import YamlValidationError, MultipassMissingLinuxError
+from snapcraft.project.errors import (
+    YamlValidationError,
+    MultipassMissingInstallableError,
+)
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
 
 
 def _install_multipass():
-    repo.snaps.install_snaps(["multipass/latest/beta"])
+    if sys.platform == "linux":
+        repo.snaps.install_snaps(["multipass/latest/beta"])
+    elif sys.platform == "darwin":
+        try:
+            subprocess.check_call(["brew", "cask", "install", "multipass"])
+        except subprocess.CalledProcessError:
+            raise errors.SnapcraftEnvironmentError(
+                "Failed to install multipass using homebrew.\n"
+                "Verify your homebrew installation and try again.\n"
+                "Alternatively, manually install multipass by running 'brew cask install multipass'."
+            )
+
     # wait for multipassd to be available
     click.echo("Waiting for multipass...")
     retry_count = 20
@@ -79,8 +94,10 @@ def _execute(  # noqa: C901
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     try:
         conduct_build_environment_sanity_check(build_environment.provider)
-    except MultipassMissingLinuxError as e:
-        if click.confirm(str(e)):
+    except MultipassMissingInstallableError as e:
+        click.echo("You need multipass installed to build snaps "
+                   "(https://github.com/CanonicalLtd/multipass).")
+        if click.confirm("Would you like to install it now?"):
             _install_multipass()
         else:
             raise errors.SnapcraftEnvironmentError("multipass is required to continue.") from e

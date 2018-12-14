@@ -208,18 +208,15 @@ def _interpret_anyOf(error):
     return "must be one of {}".format(formatting_utils.humanize_list(usages, "or"))
 
 
-class MultipassMissingNonLinuxError(SanityCheckError):
+class MultipassMissingNonInstallableError(SanityCheckError):
     fmt = (
         "You need multipass installed to build snaps:\n"
         "https://github.com/CanonicalLtd/multipass/releases"
     )
 
 
-class MultipassMissingLinuxError(SanityCheckError):
-    fmt = (
-        "You need multipass installed to build snaps which use the base keyword.\n"
-        "Would you like to install it now?"
-    )
+class MultipassMissingInstallableError(SanityCheckError):
+    fmt = "You need multipass installed to build snaps."
 
 
 class SnapMissingLinuxError(SanityCheckError):
