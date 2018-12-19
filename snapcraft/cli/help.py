@@ -72,6 +72,7 @@ def help_command(ctx, topic, devel):
             )
         )
     elif topic in ctx.parent.command.commands:
+        ctx.info_name = topic
         click.echo(ctx.parent.command.commands[topic].get_help(ctx))
     elif topic == "topics":
         for key in _TOPICS:
