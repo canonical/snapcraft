@@ -26,9 +26,9 @@ from snapcraft.internal.build_providers import errors
 logger = logging.getLogger(__name__)
 
 
-def _run(command: Sequence[str]) -> None:
+def _run(command: Sequence[str], stdin=subprocess.DEVNULL) -> None:
     logger.debug("Running {}".format(" ".join(command)))
-    subprocess.check_call(command)
+    subprocess.check_call(command, stdin=stdin)
 
 
 def _run_output(command: Sequence[str], **kwargs) -> bytes:
@@ -157,12 +157,12 @@ class MultipassCommand:
         :param str instance_name: the name of the instance to execute command.
         """
         cmd = [self.provider_cmd, "exec", instance_name, "--"] + list(command)
-        if hide_output:
-            runnable = _run_output  # type: Callable[[Sequence[Any]], Optional[bytes]]
-        else:
-            runnable = _run
+        output = None
         try:
-            return runnable(cmd)
+            if hide_output:
+                output = _run_output(cmd)
+            else:
+                _run(cmd, stdin=None)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderExecError(
                 provider_name=self.provider_name,
@@ -170,13 +170,15 @@ class MultipassCommand:
                 exit_code=process_error.returncode,
             ) from process_error
 
+        return output
+
     def shell(self, *, instance_name: str) -> None:
         """Passthrough for running multipass shell.
 
         :param str instance_name: the name of the instance to execute command.
         """
         try:
-            _run([self.provider_cmd, "shell", instance_name])
+            _run([self.provider_cmd, "shell", instance_name], stdin=None)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderShellError(
                 provider_name=self.provider_name, exit_code=process_error.returncode

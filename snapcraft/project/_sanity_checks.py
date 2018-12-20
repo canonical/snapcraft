@@ -17,7 +17,9 @@
 import copy
 import logging
 import os
+import sys
 import re
+import shutil
 from typing import Any, Dict
 
 from snapcraft.project import Project
@@ -37,11 +39,37 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
 }
 
 
+def conduct_build_environment_sanity_check(provider: str):
+    if provider == "multipass":
+        _check_multipass_installed()
+
+
+def _check_multipass_installed():
+    if shutil.which("multipass"):
+        return
+
+    if sys.platform == "darwin":
+        raise errors.MultipassMissingInstallableError()
+
+    if sys.platform == "linux" and shutil.which("snap"):
+        raise errors.MultipassMissingInstallableError()
+    elif sys.platform == "linux":
+        raise errors.SnapMissingLinuxError()
+
+    # Alas, we do not know where we are running from
+    raise errors.MultipassMissingNonInstallableError()
+
+
 def conduct_project_sanity_check(project: Project) -> None:
     """Sanity check the project itself before continuing.
 
     The checks done here are meant to be light, and not rely on the build environment.
     """
+    # The snapcraft.yaml should be valid even without extensions applied
+    # This here check is mostly for backwards compatibility with the
+    # rest of the code base.
+    if project.info is not None:
+        project.info.validate_raw_snapcraft()
 
     snap_dir_path = os.path.join(project._project_dir, "snap")
     if os.path.isdir(snap_dir_path):

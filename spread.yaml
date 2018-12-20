@@ -70,22 +70,6 @@ backends:
       - ubuntu-16.04-arm64:
           username: ubuntu
           password: ubuntu
-      # Artful
-      - ubuntu-17.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-17.10-s390x:
-          username: ubuntu
-          password: ubuntu
       # Bionic
       - ubuntu-18.04-amd64:
           username: ubuntu
@@ -103,25 +87,6 @@ backends:
           username: ubuntu
           password: ubuntu
       - ubuntu-18.04-arm64:
-          username: ubuntu
-          password: ubuntu
-      # Cosmic
-      - ubuntu-18.10-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-i386:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-18.10-arm64:
           username: ubuntu
           password: ubuntu
 
@@ -192,11 +157,16 @@ suites:
 
  # Plugin-specific suites
  tests/spread/plugins/ant/:
+   summary: tests of snapcraft's Ant plugin
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
-   summary: tests of snapcraft's Ant plugin
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
+   systems:
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
+   - ubuntu-16.04
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
@@ -204,9 +174,12 @@ suites:
    systems: [ubuntu-18.04*]
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
+   systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-arm64
+   - ubuntu-18.04-armhf
    kill-timeout: 180m
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
@@ -214,9 +187,12 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
  tests/spread/plugins/dotnet/:
-   # Keep this 16.04 as it is the only supported system for this plugin
-   systems: [ubuntu-16.04*]
    summary: tests of snapcraft's Dotnet plugin
+   # Keep this 16.04 as it is the only supported system for this plugin
+   systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
    # Keep this 18.04 only for now as it is the only stable base.
@@ -230,35 +206,37 @@ suites:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
  tests/spread/plugins/make/:
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Make plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/maven/:
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Maven plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/meson/:
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Meson plugin
- tests/spread/plugins/nodejs/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
+ tests/spread/plugins/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
  tests/spread/plugins/plainbox/:
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Plainbox plugin
+   kill-timeout: 20m
+   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/python/:
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
    summary: tests of snapcraft's Python plugin
- tests/spread/plugins/qmake/:
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
+ tests/spread/plugins/qmake/:
    summary: tests of snapcraft's qmake plugin
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
  tests/spread/plugins/ruby/:
    summary: tests of snapcraft's Ruby plugin
    kill-timeout: 180m
@@ -267,11 +245,15 @@ suites:
  tests/spread/plugins/rust/:
    summary: tests of snapcraft's Rust plugin
    # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
+   systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-i386
+   - ubuntu-18.04-armhf
  tests/spread/plugins/scons/:
+   summary: tests of snapcraft's SCons plugin
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
-   summary: tests of snapcraft's SCons plugin
  tests/spread/plugins/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
  tests/spread/plugins/waf/:

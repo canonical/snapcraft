@@ -14,16 +14,57 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest import mock
 from typing import Optional
+from unittest import mock
 
 import fixtures
 from testtools.matchers import Equals
 
 from . import LifecycleCommandsBaseTestCase
-from tests.unit.build_providers import ProviderImpl
+from snapcraft import project
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
+from tests import fixture_setup
+from tests.unit.build_providers import ProviderImpl
+
+
+class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
+        )
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers.get_provider_for",
+            return_value=ProviderImpl,
+        )
+        self.provider = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.useFixture(fixture_setup.FakeMultipass())
+
+    def test_validation_passes(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=self.base)
+        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
+        self.useFixture(snapcraft_yaml)
+
+        result = self.run_command(["pull"])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_validation_fails(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, name="name with spaces", base=self.base
+        )
+        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
+        self.useFixture(snapcraft_yaml)
+
+        self.assertRaises(
+            project.errors.YamlValidationError, self.run_command, ["pull"]
+        )
 
 
 class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
@@ -34,6 +75,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
 
@@ -82,6 +124,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
         pack_project_mock = mock.Mock()

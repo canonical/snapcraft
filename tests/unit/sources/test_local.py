@@ -19,7 +19,7 @@ import os
 import shutil
 
 from unittest import mock
-from testtools.matchers import DirExists, Equals, FileContains, FileExists
+from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
 from snapcraft.internal import common
 from snapcraft.internal import sources
@@ -120,6 +120,7 @@ class TestLocal(unit.TestCase):
         os.makedirs(os.path.join("src", "stage"))
         os.makedirs(os.path.join("src", "prime"))
         os.makedirs(os.path.join("src", ".snapcraft"))
+        os.makedirs(os.path.join("src", "snap"))
 
         # Make the snapcraft.yaml (and hidden one) and a built snap
         open(os.path.join("src", "snapcraft.yaml"), "w").close()
@@ -139,13 +140,15 @@ class TestLocal(unit.TestCase):
         local.pull()
 
         # Verify that the snapcraft-specific stuff got filtered out
-        self.assertFalse(os.path.exists(os.path.join("destination", "parts")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "stage")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "prime")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "snapcraft.yaml")))
-        self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft.yaml")))
-        self.assertFalse(os.path.exists(os.path.join("destination", ".snapcraft")))
-        self.assertFalse(os.path.exists(os.path.join("destination", "foo.snap")))
+        self.assertThat(os.path.join("destination", "parts"), Not(DirExists()))
+        self.assertThat(os.path.join("destination", "stage"), Not(DirExists()))
+        self.assertThat(os.path.join("destination", "prime"), Not(DirExists()))
+
+        self.assertThat(os.path.join("destination", "snap"), DirExists())
+        self.assertThat(os.path.join("destination", ".snapcraft.yaml"), FileExists())
+        self.assertThat(os.path.join("destination", "snapcraft.yaml"), FileExists())
+
+        self.assertThat(os.path.join("destination", "foo.snap"), Not(FileExists()))
 
         # Verify that the real stuff made it in.
         self.assertFalse(os.path.islink("destination"))

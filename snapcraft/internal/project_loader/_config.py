@@ -26,8 +26,7 @@ from typing import Set  # noqa: F401
 from snapcraft import project, formatting_utils
 from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.project._sanity_checks import conduct_environment_sanity_check
-
-from ._schema import Validator
+from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
 from ._env import (
@@ -218,6 +217,10 @@ class Config:
 
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project.additional_build_packages)
+
+        # If version: git is used we want to add "git" to build-packages
+        if self.data.get("version") == "git":
+            self.build_tools.add("git")
 
         # Always add the base for building for non os and base snaps
         if project.info.base is not None and project.info.type not in ("base", "os"):

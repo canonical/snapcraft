@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils
+from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
@@ -59,6 +60,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     "license",
     "plugs",
     "slots",
+    "title",
     "type",
 ]
 
@@ -103,7 +105,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
-    validator = project_loader.Validator(project_config.data)
+    validator = _schema.Validator(project_config.data)
     validator.validate(source="properties")
 
     # Update default values
@@ -317,7 +319,7 @@ class _SnapPackaging:
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
         self._arch_triplet = project_config.project.arch_triplet
-        self._global_state_file = project_config.project._global_state_file
+        self._global_state_file = project_config.project._get_global_state_file_path()
         self._is_host_compatible_with_base = (
             project_config.project.is_host_compatible_with_base
         )

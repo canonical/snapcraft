@@ -391,13 +391,6 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass._multipass._get_platform",
-            return_value=self.platform,
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch(
             "snapcraft.internal.build_providers._multipass."
             "_multipass.MultipassCommand",
             spec=MultipassCommand,
@@ -425,6 +418,9 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             _DEFAULT_INSTANCE_INFO.encode(),
             _DEFAULT_INSTANCE_INFO.encode(),
         ]
+
+        self.expected_uid_map = {str(os.getuid()): "0"}
+        self.expected_gid_map = {str(os.getgid()): "0"}
 
     def test_lifecycle(self):
         with Multipass(
@@ -458,8 +454,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.multipass_cmd_mock().mount.assert_called_once_with(
             source=mock.ANY,
             target="{}:{}".format(self.instance_name, "/root/project"),
-            uid_map={str(os.getuid()): "0"},
-            gid_map={str(os.getgid()): "0"},
+            uid_map=self.expected_uid_map,
+            gid_map=self.expected_gid_map,
         )
         self.multipass_cmd_mock().umount.assert_not_called()
         self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))

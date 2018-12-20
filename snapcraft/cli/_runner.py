@@ -26,6 +26,7 @@ from snapcraft.internal import log
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
+from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
 from .inspect import inspectcli
@@ -45,6 +46,7 @@ command_groups = [
     containerscli,
     discoverycli,
     helpcli,
+    legacycli,
     lifecyclecli,
     extensioncli,
     versioncli,

@@ -376,7 +376,7 @@ def _command_path_in_root(root, command_name: str) -> str:
 def get_linker_version_from_file(linker_file: str) -> str:
     """Returns the version of the linker from linker_file.
 
-    linker_file must be of the format ld-(?P<linker_version>[\d.]+).so$
+    linker_file must be of the format ld-<linker_version>.so
 
     :param str linker_file: a valid file path or basename representing
                             the linker from libc6 or related.

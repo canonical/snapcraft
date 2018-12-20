@@ -8,5 +8,7 @@ confinement: strict
 
 parts:
   my-part:
-    plugin: make
     source: src/
+    plugin: make
+    build-packages:
+    - g++

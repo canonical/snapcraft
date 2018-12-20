@@ -15,6 +15,7 @@ try:
         FakeProjectOptions,
         FakeSnapCommand,
         FakeSnapcraftctl,
+        FakeMultipass,
         SilentSnapProgress,
     )
 except ImportError as import_error:

@@ -25,8 +25,7 @@ from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_environment_sanity_check,
 )
-from snapcraft.internal import project_loader
-from snapcraft.project import errors
+from snapcraft.project import errors, _schema
 
 from tests import unit
 
@@ -151,7 +150,7 @@ class EnvironmentSanityChecksTest(unit.TestCase):
 
         try:
             conduct_environment_sanity_check(
-                project, yaml_data, project_loader.Validator().schema
+                project, yaml_data, _schema.Validator().schema
             )
         except Exception:
             self.fail("No exception was expected")
@@ -166,7 +165,7 @@ class EnvironmentSanityChecksTest(unit.TestCase):
 
         try:
             conduct_environment_sanity_check(
-                project, yaml_data, project_loader.Validator().schema
+                project, yaml_data, _schema.Validator().schema
             )
         except Exception:
             self.fail("No exception was expected")
@@ -182,7 +181,7 @@ class EnvironmentSanityChecksTest(unit.TestCase):
             conduct_environment_sanity_check,
             project,
             yaml_data,
-            project_loader.Validator().schema,
+            _schema.Validator().schema,
         )
 
         self.assertThat(raised.app_name, Equals("test-app"))
@@ -203,7 +202,7 @@ class EnvironmentSanityChecksTest(unit.TestCase):
             conduct_environment_sanity_check,
             project,
             yaml_data,
-            project_loader.Validator().schema,
+            _schema.Validator().schema,
         )
 
         self.assertThat(raised.app_name, Equals("test-app"))

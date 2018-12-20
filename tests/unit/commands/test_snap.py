@@ -16,17 +16,17 @@
 
 import logging
 import os
-import os.path
 import subprocess
 from textwrap import dedent
 from unittest import mock
-import snapcraft.internal.errors
-import snapcraft.internal.project_loader.errors
 
 import fixtures
 from testtools.matchers import Contains, Equals, FileContains, FileExists, Not
-from tests import fixture_setup
+
 from . import CommandBaseTestCase
+from snapcraft.internal import errors
+from snapcraft.project.errors import YamlValidationError
+from tests import fixture_setup
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):
@@ -106,11 +106,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type="bad-type")
 
-        raised = self.assertRaises(
-            snapcraft.internal.project_loader.errors.YamlValidationError,
-            self.run_command,
-            ["snap"],
-        )
+        raised = self.assertRaises(YamlValidationError, self.run_command, ["snap"])
 
         self.assertThat(
             str(raised),
@@ -405,9 +401,7 @@ type: os
             )
         )
 
-        raised = self.assertRaises(
-            snapcraft.internal.errors.PluginError, self.run_command, ["snap"]
-        )
+        raised = self.assertRaises(errors.PluginError, self.run_command, ["snap"])
 
         self.assertThat(raised.message, Equals("unknown plugin: 'does-not-exist'"))
 

@@ -28,7 +28,7 @@ printhelp(){
     echo "    ./runtests.sh static"
     echo "    ./runtests.sh tests/unit [<use-run>]"
     echo "    ./runtests.sh tests/integration[/<test-suite>]"
-    echo "    ./runtests.sh snaps"
+    echo "    ./runtests.sh spread"
     echo ""
     echo "<test-suite> can be one of: $(find tests/integration/ -mindepth 1 -maxdepth 1 -type d ! -name __pycache__ | tr '\n' ' ')"
     echo "<use-run> makes use of run instead of discover to run the tests"
@@ -44,11 +44,6 @@ parseargs(){
     else
         if [ "$test_suite" == "static" ] ; then
             run_static_tests
-        elif [ "$test_suite" == "snaps" ] ; then
-            # shift to remove the test suite name and be able to pass the rest
-            # to the snaps suite.
-            shift
-            run_snaps "$@"
         elif [ "$test_suite" == "spread" ] ; then
             run_spread
         else
@@ -61,7 +56,7 @@ coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
     echo "Running black"
-    black --check .
+    black --check --diff .
 
     echo "Running flake8"
     python3 -m flake8 .
@@ -90,10 +85,6 @@ run_snapcraft_tests(){
     else
         python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi
-}
-
-run_snaps(){
-    python3 -m snaps_tests "$@"
 }
 
 run_spread(){

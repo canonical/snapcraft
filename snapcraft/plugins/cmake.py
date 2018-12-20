@@ -19,9 +19,9 @@
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
-This plugin also supports options from the `make` plugin. Run
-`snapcraft help make` for more details.
-
+If the part has a list of build-snaps listed, the part will be set up in
+such a way that the paths to those snaps are used as paths for find_package
+and find_library by use of `CMAKE_FIND_ROOT_PATH``.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -33,16 +33,47 @@ Additionally, this plugin uses the following plugin-specific keywords:
       configure flags to pass to the build using the common cmake semantics.
 """
 
+import logging
 import os
+from typing import List
 
-import snapcraft.plugins.make
+import snapcraft
+from snapcraft.internal import errors
 
 
-class CMakePlugin(snapcraft.plugins.make.MakePlugin):
+logger = logging.getLogger(name=__name__)
+
+
+class _Flag:
+    def __str__(self) -> str:
+        if self.value is None:
+            flag = self.name
+        else:
+            flag = "{}={}".format(self.name, self.value)
+        return flag
+
+    def __init__(self, flag: str) -> None:
+        parts = flag.split("=")
+        self.name = parts[0]
+        try:
+            self.value = parts[1]
+        except IndexError:
+            self.value = None
+
+
+class CMakePlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
         schema["properties"]["configflags"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+        # For backwards compatibility
+        schema["properties"]["make-parameters"] = {
             "type": "array",
             "minitems": 1,
             "uniqueItems": True,
@@ -64,6 +95,12 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append("cmake")
         self.out_of_source_build = True
 
+        if project.info.base not in ("core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+
+        if options.make_parameters:
+            logger.warning("make-paramaters is deprecated, ignoring.")
+
     def build(self):
         source_subdir = getattr(self.options, "source_subdir", None)
         if source_subdir:
@@ -72,16 +109,50 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
             sourcedir = self.sourcedir
 
         env = self._build_environment()
+        configflags = self._get_processed_flags()
 
+        self.run(["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + configflags, env=env)
+
+        # TODO: there is a better way to specify the job count on newer versions of cmake
+        # https://github.com/Kitware/CMake/commit/1ab3881ec9e809ac5f6cad5cd84048310b8683e2
         self.run(
-            ["cmake", sourcedir, "-DCMAKE_INSTALL_PREFIX="] + self.options.configflags,
+            [
+                "cmake",
+                "--build",
+                ".",
+                "--",
+                "-j{}".format(self.project.parallel_build_count),
+            ],
             env=env,
         )
 
-        self.make(env=env)
+        self.run(["cmake", "--build", ".", "--target", "install"], env=env)
+
+    def _get_processed_flags(self) -> List[str]:
+        # Return the original if no build_snaps are in options.
+        if not self.options.build_snaps:
+            return self.options.configflags
+
+        build_snap_paths = [
+            os.path.join(os.path.sep, "snap", snap_name.split("/")[0], "current")
+            for snap_name in self.options.build_snaps
+        ]
+
+        flags = [_Flag(f) for f in self.options.configflags]
+        for flag in flags:
+            if flag.name == ("-DCMAKE_FIND_ROOT_PATH"):
+                flag.value = "{};{}".format(flag.value, ";".join(build_snap_paths))
+                break
+        else:
+            flags.append(
+                _Flag("-DCMAKE_FIND_ROOT_PATH={}".format(";".join(build_snap_paths)))
+            )
+
+        return [str(f) for f in flags]
 
     def _build_environment(self):
         env = os.environ.copy()
+        env["DESTDIR"] = self.installdir
         env["CMAKE_PREFIX_PATH"] = "$CMAKE_PREFIX_PATH:{}".format(
             self.project.stage_dir
         )
