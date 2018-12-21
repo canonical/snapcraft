@@ -15,28 +15,58 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from io import StringIO
+from textwrap import dedent
+
+import lxml.etree
 
 from ._metadata import ExtractedMetadata
 from snapcraft.extractors import _errors
 
-from xml.etree.ElementTree import ElementTree, ParseError
+
+_xslt = None
+_XSLT = dedent(
+    """\
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:output method="text"/>
+<xsl:output omit-xml-declaration="yes" indent="yes"/>
+<xsl:strip-space  elements="*"/>
+
+<xsl:template match="@* | node()">
+    <xsl:copy>
+        <xsl:apply-templates select="@* | node()[not(@xml:lang)] | node()[@xml:lang = en]" />
+    </xsl:copy>
+</xsl:template>
+
+<xsl:template match="p" xml:space="preserve">
+<xsl:value-of select="." />
+</xsl:template>
+
+<xsl:template match="ul">
+    <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
+- <xsl:value-of select="." />
+    </xsl:for-each>
+</xsl:template>
+
+</xsl:stylesheet>
+"""
+)
 
 
 def extract(path: str) -> ExtractedMetadata:
     if not path.endswith(".metainfo.xml") and not path.endswith(".appdata.xml"):
         raise _errors.UnhandledFileError(path, "appstream")
 
-    try:
-        tree = ElementTree().parse(path)
-    except ParseError as e:
-        raise _errors.AppstreamFileParseError(path) from e
+    dom = _get_transformed_dom(path)
 
-    common_id = _get_value_from_xml_element(tree, "id")
-    summary = _get_value_from_xml_element(tree, "summary")
-    description = _get_value_from_xml_element(tree, "description")
+    common_id = _get_value_from_xml_element(dom, "id")
+    summary = _get_value_from_xml_element(dom, "summary")
+    description = _get_value_from_xml_element(dom, "description")
 
     icon = None
-    node = tree.find("icon")
+    node = dom.find("icon")
     if node is not None and "type" in node.attrib and node.attrib["type"] == "local":
         # TODO Currently we only support local icons.
         # See bug https://bugs.launchpad.net/snapcraft/+bug/1742348
@@ -45,7 +75,7 @@ def extract(path: str) -> ExtractedMetadata:
         icon = node.text.strip()
 
     desktop_file_paths = []
-    nodes = tree.findall("launchable")
+    nodes = dom.findall("launchable")
     for node in nodes:
         if "type" in node.attrib and node.attrib["type"] == "desktop-id":
             desktop_file_id = node.text.strip()
@@ -60,6 +90,28 @@ def extract(path: str) -> ExtractedMetadata:
         icon=icon,
         desktop_file_paths=desktop_file_paths,
     )
+
+
+def _get_transformed_dom(path: str):
+    dom = _get_dom(path)
+    transform = _get_xslt()
+    return transform(dom)
+
+
+def _get_dom(path: str) -> lxml.etree.ElementTree:
+    try:
+        return lxml.etree.parse(path)
+    except lxml.etree.ParseError as e:
+        raise _errors.AppstreamFileParseError(path) from e
+
+
+def _get_xslt():
+    global _xslt
+    if _xslt is not None:
+        return _xslt
+
+    xslt = lxml.etree.parse(StringIO(_XSLT))
+    return lxml.etree.XSLT(xslt)
 
 
 def _get_value_from_xml_element(tree, key) -> str:
