@@ -164,9 +164,10 @@ class Git(Base):
         )
 
     def _clone_new(self):
-        command = [self.command, "clone", "--recursive"]
+        # TODO ENABLE PARALLEL
+        command = [self.command, "clone", "--recurse-submodules"]
         if self.source_tag or self.source_branch:
-            command.extend(["--branch", self.source_tag or self.source_branch])
+            command.extend(["--branch", self.source_tag or self.source_branch, "--single-branch"])
         if self.source_depth:
             command.extend(["--depth", str(self.source_depth)])
         self._run(command + [self.source, self.source_dir], **self._call_kwargs)
