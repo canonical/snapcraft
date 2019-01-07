@@ -6,7 +6,7 @@
 
 # On Fedora $SNAP is under /var and there is some magic to map it to /snap.
 # # We need to handle that case and reset $SNAP
-SNAP="${SNAP//\/var\/lib\/snapd/}"
+SNAP="${SNAP/\/var\/lib\/snapd/}"
 
 needs_update="true"
 
@@ -31,6 +31,18 @@ if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" && -f "$XDG_CONFIG_HOME/user-d
 fi
 
 export DESKTOP_LAUNCHER_NEEDS_UPDATE="$needs_update"
+
+if [ "$SNAP_ARCH" == "amd64" ]; then
+  ARCH="x86_64-linux-gnu"
+elif [ "$SNAP_ARCH" == "armhf" ]; then
+  ARCH="arm-linux-gnueabihf"
+elif [ "$SNAP_ARCH" == "arm64" ]; then
+  ARCH="aarch64-linux-gnu"
+else
+  ARCH="$SNAP_ARCH-linux-gnu"
+fi
+
+export SNAP_LAUNCHER_ARCH_TRIPLET=$ARCH
 
 if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
   export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
@@ -57,7 +69,8 @@ function append_dir() {
 }
 
 function can_open_file() {
-  return "$(head -c0 "$1" &> /dev/null)";
+  head -c0 "$1" &> /dev/null
+  return $?
 }
 
 function update_xdg_dirs_values() {
@@ -70,13 +83,13 @@ function update_xdg_dirs_values() {
     source "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
   fi
 
-  if [ -z "${XDG_SPECIAL_DIRS+x}" ]; then
+  if [ -z ${XDG_SPECIAL_DIRS+x} ]; then
     save_initial_values=true
   fi
 
   for d in $XDG_DIRS; do
     var="XDG_${d}_DIR"
-    value="$(eval echo "\$${var}")"
+    value="$(eval echo \$${var})"
 
     if [ "$save_initial_values" = true ]; then
       XDG_SPECIAL_DIRS+=("$var")
@@ -88,8 +101,8 @@ function update_xdg_dirs_values() {
 }
 
 function is_subpath() {
-  dir=$(realpath "$1")
-  parent=$(realpath "$2")
+  dir="$(realpath "$1")"
+  parent="$(realpath "$2")"
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
@@ -129,7 +142,7 @@ fi
 
 if can_open_file "$REALHOME/.config/user-dirs.dirs" && can_open_file "$REALHOME/.config/user-dirs.locale"; then
   if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ] || [ $needs_xdg_reload = true ]; then
-    sed "/^#/!s#\$HOME#${REALHOME}#g $REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
+    sed "/^#/!s#\$HOME#${REALHOME}#g" "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
     cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
     for f in user-dirs.dirs user-dirs.locale; do
       md5sum < "$REALHOME/.config/$f" > "$XDG_CONFIG_HOME/$f.md5sum"
@@ -164,7 +177,7 @@ fi
 # Create links for user-dirs.dirs
 if [ $needs_xdg_links = true ]; then
   for ((i = 0; i < ${#XDG_SPECIAL_DIRS_PATHS[@]}; i++)); do
-    b=$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME")
+    b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME")"
     if [ -e "$REALHOME/$b" ]; then
       [ -d "$HOME/$b" ] && rmdir "$HOME/$b" 2> /dev/null
       [ ! -e "$HOME/$b" ] && ln -s "$REALHOME/$b" "$HOME/$b"
@@ -325,47 +338,6 @@ if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
     ln -s "$REALHOME/.config/dconf/user" "$DCONF_DEST_USER_DIR"
   fi
 fi
-
-# Gdk-pixbuf loaders
-if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  rm -f "$GDK_PIXBUF_MODULE_FILE"
-  if [ -f "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
-    "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
-  fi
-fi
-
-# Icon themes cache
-if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  rm -rf "$XDG_DATA_HOME/icons"
-  mkdir -p "$XDG_DATA_HOME/icons"
-  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
-    for theme in "${data_dirs_array[$i]}/icons/"*; do
-      if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
-        theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
-        if [ ! -d "$theme_dir" ]; then
-          mkdir -p "$theme_dir"
-          ln -s "$theme"/* "$theme_dir"
-          if [ -f "$SNAP/gnome-platform/usr/sbin/update-icon-caches" ]; then
-            "$SNAP/gnome-platform/usr/sbin/update-icon-caches" "$theme_dir"
-          elif [ -f "$SNAP/gnome-platform/usr/sbin/update-icon-cache.gtk2" ]; then
-            "$SNAP/gnome-platform/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
-          fi
-        fi
-      fi
-    done
-  done
-fi
-
-# GTK theme and behavior modifier
-# Those can impact the theme engine used by Qt as well
-gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
-for f in "${gtk_configs[@]}"; do
-  dest="$XDG_CONFIG_HOME/$f"
-  if [ ! -L "$dest" ]; then
-    mkdir -p "$(dirname "$dest")"
-    ln -s "$REALHOME/.config/$f" "$dest"
-  fi
-done
 
 # create symbolic link to ibus socket path for ibus to look up its socket files
 # (see comments #3 and #6 on https://launchpad.net/bugs/1580463)
