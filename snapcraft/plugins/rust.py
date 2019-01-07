@@ -1,7 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,8 +39,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import collections
 import logging
 import os
-import shutil
 from contextlib import suppress
+from textwrap import dedent
+from typing import List
 
 import snapcraft
 from snapcraft import sources
@@ -55,7 +56,10 @@ class RustPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["properties"]["rust-channel"] = {"type": "string"}
+        schema["properties"]["rust-channel"] = {
+            "type": "string",
+            "enum": ["stable", "beta", "nightly"],
+        }
         schema["properties"]["rust-revision"] = {"type": "string"}
         schema["properties"]["rust-features"] = {
             "type": "array",
@@ -83,85 +87,87 @@ class RustPlugin(snapcraft.BasePlugin):
             raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
 
         self.build_packages.extend(["gcc", "git", "curl", "file"])
-        self._rustpath = os.path.join(self.partdir, "rust")
-        self._rustc = os.path.join(self._rustpath, "bin", "rustc")
-        self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
-        self._cargo = os.path.join(self._rustpath, "bin", "cargo")
-        self._cargo_dir = os.path.join(self.builddir, ".cargo")
-        self._cargo_config = os.path.join(self._cargo_dir, "config")
-        self._rustlib = os.path.join(self._rustpath, "lib")
-        self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
-        self._rustup = os.path.join(self._rustpath, "rustup.sh")
+        self._rust_dir = os.path.expanduser(os.path.join("~", ".cargo"))
+        self._rustup_cmd = os.path.join(self._rust_dir, "bin", "rustup")
+        self._cargo_cmd = os.path.join(self._rust_dir, "bin", "cargo")
+        self._rustc_cmd = os.path.join(self._rust_dir, "bin", "rustc")
+        self._rustdoc_cmd = os.path.join(self._rust_dir, "bin", "rustdoc")
+
         self._manifest = collections.OrderedDict()
 
-    def _test(self):
-        if self.project.is_cross_compiling:
-            logger.warning(
-                "Skipping the test target run as this is a cross compilation."
-            )
-            return
-
-        cmd = [self._cargo, "test", "-j{}".format(self.parallel_build_count)]
-        if self.options.rust_features:
-            cmd.append("--features")
-            cmd.append(" ".join(self.options.rust_features))
-        self.run(cmd, env=self._build_env())
-
-    def build(self):
-        super().build()
-
-        self._write_cross_compile_config()
-
-        self._test()
-
-        cmd = [
-            self._cargo,
-            "install",
-            "-j{}".format(self.parallel_build_count),
-            "--root",
-            self.installdir,
-            "--path",
-            self.builddir,
-        ]
-        if self.project.is_cross_compiling:
-            cmd.extend(["--target", self._target])
-        if self.options.rust_features:
-            cmd.append("--features")
-            cmd.append(" ".join(self.options.rust_features))
-        self.run(cmd, env=self._build_env())
-        self._record_manifest()
-
-    def _write_cross_compile_config(self):
-        if not self.project.is_cross_compiling:
-            return
-
-        if os.path.isfile(self._cargo_config):
-            return
-
-        # Cf. http://doc.crates.io/config.html
-        os.makedirs(self._cargo_dir, exist_ok=True)
-        with open(os.path.join(self._cargo_dir, "config"), "w") as f:
-            f.write(
-                """
-                [target.{}]
-                linker = "{}"
-                """.format(
-                    self._target, "{}-gcc".format(self.project.arch_triplet)
-                )
-            )
-
-    def _record_manifest(self):
-        self._manifest["rustup-version"] = self.run_output([self._rustup, "--version"])
-        self._manifest["rustc-version"] = self.run_output([self._rustc, "--version"])
-        self._manifest["cargo-version"] = self.run_output([self._cargo, "--version"])
-        with suppress(FileNotFoundError, IsADirectoryError):
-            with open(os.path.join(self.builddir, "Cargo.lock")) as lock_file:
-                self._manifest["cargo-lock-contents"] = lock_file.read()
-
-    def get_manifest(self):
-        return self._manifest
-
     def enable_cross_compilation(self):
+        # The logic is applied transparently trough internal
+        # rust tooling.
+        pass
+
+    def pull(self):
+        super().pull()
+        self._fetch_rustup()
+        self._fetch_rust()
+        self._fetch_cargo_deps()
+
+    def _fetch_rustup(self):
+        # if rustup-init has already been done, we can skip this.
+        if os.path.exists(os.path.join(self._rust_dir, "bin", "rustup")):
+            return
+
+        # Download rustup-init.
+        os.makedirs(self._rust_dir, exist_ok=True)
+        sources.Script(_RUSTUP, self._rust_dir).download()
+        rustup_init_cmd = os.path.join(self._rust_dir, "rustup.sh")
+
+        # Basic options:
+        # -y: assume yes
+        # --no-modify-path: do not modify bashrc
+        options = ["-y", "--no-modify-path"]
+
+        # Check if we want to initialize using a specific channel.
+        if self.options.rust_channel:
+            options.extend(["--channel", self.options.rust_channel])
+
+        # Fetch rust
+        self.run([rustup_init_cmd] + options, env=self._build_env())
+
+    def _fetch_rust(self):
+        # Setup the channel in case rustup-init was run before or a revision which cannot be hanndled
+        # from rustup-init
+        # https://rust-lang-nursery.github.io/edition-guide/rust-2018/rustup-for-managing-rust-versions.html
+        toolchain = self._get_toolchain()
+        self.run([self._rustup_cmd, "install", toolchain], env=self._build_env())
+
+        # Add the appropriate target cross compilation target if necessary.
+        # https://github.com/rust-lang/rustup.rs/blob/master/README.md#cross-compilation
+        if self.project.is_cross_compiling:
+            self.run(
+                [
+                    self._rustup_cmd,
+                    "target",
+                    "add",
+                    "--toolchain",
+                    toolchain,
+                    self._get_target(),
+                ],
+                env=self._build_env(),
+            )
+
+    def _fetch_cargo_deps(self):
+        if self.options.source_subdir:
+            sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
+        self.run(
+            [
+                self._cargo_cmd,
+                "+{}".format(self._get_toolchain()),
+                "fetch",
+                "--manifest-path",
+                os.path.join(sourcedir, "Cargo.toml"),
+            ],
+            env=self._build_env(),
+        )
+
+    def _get_target(self) -> str:
         # Cf. rustc --print target-list
         targets = {
             "armhf": "armv7-{}-{}eabihf",
@@ -170,88 +176,130 @@ class RustPlugin(snapcraft.BasePlugin):
             "amd64": "x86_64-{}-{}",
             "ppc64el": "powerpc64le-{}-{}",
         }
-        fmt = targets.get(self.project.deb_arch)
-        if not fmt:
-            raise NotImplementedError(
+        rust_target = targets.get(self.project.deb_arch)
+        if not rust_target:
+            raise errors.SnapcraftEnvironmentError(
                 "{!r} is not supported as a target architecture when "
                 "cross-compiling with the rust plugin".format(self.project.deb_arch)
             )
-        self._target = fmt.format("unknown-linux", "gnu")
+        return rust_target.format("unknown-linux", "gnu")
+
+    def build(self):
+        super().build()
+
+        # Write a minimal config.
+        self._write_cargo_config()
+
+        install_cmd = [
+            self._cargo_cmd,
+            "+{}".format(self._get_toolchain()),
+            "install",
+            "--path",
+            self.builddir,
+            "--root",
+            self.installdir,
+        ]
+
+        # Even though this is mostly harmless when not cross compiling
+        # the flag is in place to avoid a situation where an earlier
+        # version of the toolchain is used.
+        if self.project.is_cross_compiling:
+            install_cmd.extend(["--target", self._get_target()])
+
+        if self.options.rust_features:
+            install_cmd.append("--features")
+            install_cmd.append(" ".join(self.options.rust_features))
+
+        # build and install.
+        self.run(install_cmd, env=self._build_env())
+
+        # Finally, record.
+        self._record_manifest()
 
     def _build_env(self):
         env = os.environ.copy()
-        env.update(
-            {
-                "RUSTC": self._rustc,
-                "RUSTDOC": self._rustdoc,
-                "RUST_PATH": self._rustlib,
-                "RUSTFLAGS": self._rustflags(),
-            }
-        )
+
+        env.update(dict(RUSTUP_HOME=self._rust_dir, CARGO_HOME=self._rust_dir))
+
+        rustflags = self._get_rustflags()
+        if rustflags:
+            string_fmt = " ".join(["{}".format(i) for i in rustflags]).strip()
+            env.update(RUSTFLAGS=string_fmt)
+
         return env
 
-    def _rustflags(self):
+    def _get_toolchain(self) -> str:
+        toolchain = None
+        if self.options.rust_revision:
+            toolchain = self.options.rust_revision
+        elif self.options.rust_channel:
+            toolchain = self.options.rust_channel
+        else:
+            toolchain = "stable"
+
+        return toolchain
+
+    def _write_cargo_config(self) -> None:
+        # python toml's output dumps sections for targets with quotes that
+        # cargo later cannot pickup.
+        config = dict(
+            arch_triplet=self.project.arch_triplet,
+            target=self._get_target(),
+            jobs=self.parallel_build_count,
+            rustc_cmd=self._rustc_cmd,
+            rustdoc_cmd=self._rustdoc_cmd,
+        )
+
+        cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
+        os.makedirs(os.path.dirname(cargo_config_path), exist_ok=True)
+
+        # Cf. http://doc.crates.io/config.html
+        with open(cargo_config_path, "w") as toml_config_file:
+            print(
+                dedent(
+                    """\
+                [build]
+                jobs = {jobs}
+                target = "{target}"
+                rustc = "{rustc_cmd}"
+                rustdoc = "{rustdoc_cmd}"
+
+                [target.{target}]
+                linker = "{arch_triplet}-gcc"
+            """
+                ).format(**config),
+                file=toml_config_file,
+            )
+
+    def _get_rustflags(self) -> List[str]:
         ldflags = shell_utils.getenv("LDFLAGS")
-        rustldflags = ""
+        rustldflags = []
         flags = {flag for flag in ldflags.split(" ") if flag}
         for flag in flags:
-            rustldflags += "-C link-arg={} ".format(flag)
-        return rustldflags.strip()
+            rustldflags.extend(["-C", "link-arg={}".format(flag)])
 
-    def pull(self):
-        super().pull()
-        self._fetch_rust()
-        self._fetch_deps()
-
-    def clean_pull(self):
-        super().clean_pull()
-
-        with suppress(FileNotFoundError):
-            shutil.rmtree(self._rustpath)
-
-    def clean_build(self):
-        super().clean_build()
-
-        with suppress(FileNotFoundError):
-            shutil.rmtree(self._cargo_dir)
-
-    def _fetch_rust(self):
-        options = []
-
-        if self.options.rust_revision:
-            options.append("--revision={}".format(self.options.rust_revision))
-
-        if self.options.rust_channel:
-            if self.options.rust_channel in ["stable", "beta", "nightly"]:
-                options.append("--channel={}".format(self.options.rust_channel))
-            else:
-                raise errors.SnapcraftEnvironmentError(
-                    "{} is not a valid rust channel".format(self.options.rust_channel)
-                )
-        os.makedirs(self._rustpath, exist_ok=True)
-        self._rustup_get.download()
-        cmd = [
-            self._rustup,
-            "--prefix={}".format(self._rustpath),
-            "--disable-sudo",
-            "--save",
-        ] + options
         if self.project.is_cross_compiling:
-            cmd.append("--with-target={}".format(self._target))
-        self.run(cmd)
+            rustldflags.extend(
+                ["-C", "linker={}-gcc".format(self.project.arch_triplet)]
+            )
 
-    def _fetch_deps(self):
-        if self.options.source_subdir:
-            sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
-        else:
-            sourcedir = self.sourcedir
+        return rustldflags
 
-        self.run(
-            [
-                self._cargo,
-                "fetch",
-                "--manifest-path",
-                os.path.join(sourcedir, "Cargo.toml"),
-            ],
-            env=self._build_env(),
+    def _record_manifest(self):
+        toolchain_option = "+{}".format(self._get_toolchain())
+
+        self._manifest["rustup-version"] = self.run_output(
+            [self._rustup_cmd, "--version"], env=self._build_env()
         )
+        self._manifest["rustc-version"] = self.run_output(
+            [self._rustc_cmd, toolchain_option, "--version"], env=self._build_env()
+        )
+        self._manifest["cargo-version"] = self.run_output(
+            [self._cargo_cmd, toolchain_option, "--version"], env=self._build_env()
+        )
+        with suppress(FileNotFoundError, IsADirectoryError):
+            with open(os.path.join(self.builddir, "Cargo.lock")) as lock_file:
+                self._manifest["cargo-lock-contents"] = lock_file.read()
+
+    def get_manifest(self):
+        return self._manifest

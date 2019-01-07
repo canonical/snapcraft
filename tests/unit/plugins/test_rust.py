@@ -20,27 +20,20 @@ import os
 import subprocess
 import textwrap
 
-from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, Not
 from unittest import mock
 
 import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins import rust
-from tests import unit
+from tests import fixture_setup, unit
 
 
-class RustPluginCrossCompileTestCase(unit.TestCase):
-
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf", target="armv7-unknown-linux-gnueabihf")),
-        ("aarch64", dict(deb_arch="arm64", target="aarch64-unknown-linux-gnu")),
-        ("i386", dict(deb_arch="i386", target="i686-unknown-linux-gnu")),
-        ("x86_64", dict(deb_arch="amd64", target="x86_64-unknown-linux-gnu")),
-        ("ppc64le", dict(deb_arch="ppc64el", target="powerpc64le-unknown-linux-gnu")),
-    ]
-
+class RustPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        self.useFixture(fixture_setup.CleanEnvironment())
 
         class Options:
             makefile = None
@@ -51,17 +44,6 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
             source_subdir = ""
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -71,110 +53,20 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
+        original_exists = os.path.exists
+
+        def exists_mock(*args, **kwargs):
+            if args[0].endswith("rustup"):
+                return False
+            else:
+                return original_exists(args[0])
+
+        patcher = mock.patch("os.path.exists", side_effect=exists_mock)
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.dict(os.environ, {})
-        self.env_mock = patcher.start()
-        self.addCleanup(patcher.stop)
 
-    @mock.patch("snapcraft.internal.sources._script.Script.download")
-    def test_cross_compile(self, mock_download):
-        plugin = rust.RustPlugin("test-part", self.options, self.project)
-        os.makedirs(plugin.sourcedir)
-
-        plugin.enable_cross_compilation()
-        self.assertThat(plugin._target, Equals(self.target))
-
-        plugin.pull()
-        mock_download.assert_called_once_with()
-        self.assertThat(self.run_mock.call_count, Equals(2))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        plugin._rustup,
-                        "--prefix={}".format(os.path.join(plugin._rustpath)),
-                        "--disable-sudo",
-                        "--save",
-                        "--with-target={}".format(self.target),
-                    ],
-                    cwd=os.path.join(plugin.partdir, "build"),
-                ),
-                mock.call(
-                    [
-                        plugin._cargo,
-                        "fetch",
-                        "--manifest-path",
-                        os.path.join(plugin.sourcedir, "Cargo.toml"),
-                    ],
-                    cwd=os.path.join(plugin.partdir, "build"),
-                    env=plugin._build_env(),
-                ),
-            ]
-        )
-
-        plugin.build()
-        self.assertThat(os.path.join(plugin._cargo_dir, "config"), FileExists())
-        self.assertThat(self.run_mock.call_count, Equals(3))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        plugin._cargo,
-                        "install",
-                        "-j{}".format(plugin.project.parallel_build_count),
-                        "--root",
-                        plugin.installdir,
-                        "--path",
-                        plugin.builddir,
-                        "--target",
-                        plugin._target,
-                    ],
-                    cwd=os.path.join(plugin.partdir, "build"),
-                    env=plugin._build_env(),
-                )
-            ]
-        )
-
-        plugin.clean_build()
-        self.assertThat(plugin._cargo_dir, Not(DirExists()))
-        plugin.clean_pull()
-        self.assertThat(plugin._rustpath, Not(DirExists()))
-        # Cleaning again shouldn't raise an exception
-        plugin.clean_build()
-        plugin.clean_pull()
-
-
-class RustPluginTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch.dict(os.environ, {})
-        self.env_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        class Options:
-            makefile = None
-            make_parameters = []
-            rust_features = []
-            rust_revision = ""
-            rust_channel = ""
-            source_subdir = ""
-
-        self.options = Options()
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            )
-        )
-
+class RustPluginPropertiesTest(unit.TestCase):
     def test_schema(self):
         schema = rust.RustPlugin.schema()
 
@@ -188,11 +80,11 @@ class RustPluginTestCase(unit.TestCase):
             'Expected "rust-revision to be included in properties',
         )
 
+        # rust-channel
         rust_channel = properties["rust-channel"]
         self.assertTrue(
             "type" in rust_channel, 'Expected "type" to be included in "rust-channel"'
         )
-
         rust_channel_type = rust_channel["type"]
         self.assertThat(
             rust_channel_type,
@@ -200,12 +92,22 @@ class RustPluginTestCase(unit.TestCase):
             'Expected "rust-channel" "type" to be "string", '
             'but it was "{}"'.format(rust_channel_type),
         )
+        self.assertTrue(
+            "enum" in rust_channel, 'Expected "enum" to be included in "rust-channel"'
+        )
+        rust_channel_enum = rust_channel["enum"]
+        self.assertThat(
+            rust_channel_enum,
+            Equals(["stable", "beta", "nightly"]),
+            'Expected "rust-channel" "enum" to be "["stable", "beta", "nightly"]", '
+            'but it was "{}"'.format(rust_channel_enum),
+        )
 
+        # rust-revision
         rust_revision = properties["rust-revision"]
         self.assertTrue(
             "type" in rust_revision, 'Expected "type" to be included in "rust-revision"'
         )
-
         rust_revision_type = rust_revision["type"]
         self.assertThat(
             rust_revision_type,
@@ -214,48 +116,133 @@ class RustPluginTestCase(unit.TestCase):
             'but it was "{}"'.format(rust_revision_type),
         )
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    @mock.patch.object(rust.RustPlugin, "run_output")
-    def test_build_with_conditional_compilation(self, _, run_mock):
+
+class RustPluginCrossCompileTest(RustPluginBaseTest):
+
+    scenarios = [
+        ("armv7l", dict(deb_arch="armhf", target="armv7-unknown-linux-gnueabihf")),
+        ("aarch64", dict(deb_arch="arm64", target="aarch64-unknown-linux-gnu")),
+        ("i386", dict(deb_arch="i386", target="i686-unknown-linux-gnu")),
+        ("x86_64", dict(deb_arch="amd64", target="x86_64-unknown-linux-gnu")),
+        ("ppc64le", dict(deb_arch="ppc64el", target="powerpc64le-unknown-linux-gnu")),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        self.project = snapcraft.project.Project(
+            target_deb_arch=self.deb_arch,
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            ),
+        )
+
+        patcher = mock.patch(
+            "snapcraft.project.Project.is_cross_compiling", return_value=True
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @mock.patch("snapcraft.internal.sources._script.Script.download")
+    def test_cross_compile(self, mock_download):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
-        plugin.options.rust_features = ["conditional-compilation"]
         os.makedirs(plugin.sourcedir)
 
-        plugin.build()
+        plugin.pull()
 
-        self.assertThat(run_mock.call_count, Equals(2))
-        run_mock.assert_has_calls(
+        self.assertThat(self.run_mock.call_count, Equals(4))
+        self.run_mock.assert_has_calls(
             [
                 mock.call(
                     [
-                        plugin._cargo,
-                        "test",
-                        "-j{}".format(plugin.project.parallel_build_count),
-                        "--features",
-                        "conditional-compilation",
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
                     ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "install", "stable"],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
                 mock.call(
                     [
-                        plugin._cargo,
-                        "install",
-                        "-j{}".format(plugin.project.parallel_build_count),
-                        "--root",
-                        plugin.installdir,
-                        "--path",
-                        plugin.builddir,
-                        "--features",
-                        "conditional-compilation",
+                        plugin._rustup_cmd,
+                        "target",
+                        "add",
+                        "--toolchain",
+                        "stable",
+                        self.target,
                     ],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "+stable",
+                        "fetch",
+                        "--manifest-path",
+                        os.path.join(plugin.sourcedir, "Cargo.toml"),
+                    ],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
             ]
         )
 
+        self.run_mock.reset_mock()
+
+        plugin.build()
+
+        self.assertThat(os.path.join(plugin.builddir, ".cargo", "config"), FileExists())
+
+        self.assertThat(self.run_mock.call_count, Equals(1))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "+stable",
+                        "install",
+                        "--path",
+                        plugin.builddir,
+                        "--root",
+                        plugin.installdir,
+                        "--target",
+                        self.target,
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                )
+            ]
+        )
+
+
+class RustPluginTest(RustPluginBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
+                textwrap.dedent(
+                    """\
+                    name: test-snap
+                    base: core16
+                    """
+                )
+            )
+        )
+
     @mock.patch.object(rust.sources, "Script")
-    @mock.patch.object(rust.RustPlugin, "run")
-    def test_pull(self, run_mock, script_mock):
+    def test_pull(self, script_mock):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = []
@@ -263,34 +250,40 @@ class RustPluginTestCase(unit.TestCase):
 
         plugin.pull()
 
-        self.assertThat(run_mock.call_count, Equals(2))
+        self.assertThat(self.run_mock.call_count, Equals(3))
 
-        rustdir = os.path.join(plugin.partdir, "rust")
-        run_mock.assert_has_calls(
+        self.run_mock.assert_has_calls(
             [
                 mock.call(
                     [
-                        os.path.join(rustdir, "rustup.sh"),
-                        "--prefix={}".format(rustdir),
-                        "--disable-sudo",
-                        "--save",
-                    ]
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "install", "stable"],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
                 ),
                 mock.call(
                     [
-                        plugin._cargo,
+                        plugin._cargo_cmd,
+                        "+stable",
                         "fetch",
                         "--manifest-path",
                         os.path.join(plugin.sourcedir, "Cargo.toml"),
                     ],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
             ]
         )
 
     @mock.patch.object(rust.sources, "Script")
-    @mock.patch.object(rust.RustPlugin, "run")
-    def test_pull_with_channel(self, run_mock, script_mock):
+    def test_pull_with_channel(self, script_mock):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = ""
@@ -298,35 +291,42 @@ class RustPluginTestCase(unit.TestCase):
 
         plugin.pull()
 
-        self.assertThat(run_mock.call_count, Equals(2))
+        self.assertThat(self.run_mock.call_count, Equals(3))
 
-        rustdir = os.path.join(plugin.partdir, "rust")
-        run_mock.assert_has_calls(
+        self.run_mock.assert_has_calls(
             [
                 mock.call(
                     [
-                        os.path.join(rustdir, "rustup.sh"),
-                        "--prefix={}".format(rustdir),
-                        "--disable-sudo",
-                        "--save",
-                        "--channel=nightly",
-                    ]
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                        "--channel",
+                        "nightly",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "install", "nightly"],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
                 ),
                 mock.call(
                     [
-                        plugin._cargo,
+                        plugin._cargo_cmd,
+                        "+nightly",
                         "fetch",
                         "--manifest-path",
                         os.path.join(plugin.sourcedir, "Cargo.toml"),
                     ],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
             ]
         )
 
     @mock.patch.object(rust.sources, "Script")
-    @mock.patch.object(rust.RustPlugin, "run")
-    def test_pull_with_revision(self, run_mock, script_mock):
+    def test_pull_with_revision(self, script_mock):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.rust_revision = "1.13.0"
@@ -334,100 +334,129 @@ class RustPluginTestCase(unit.TestCase):
 
         plugin.pull()
 
-        self.assertThat(run_mock.call_count, Equals(2))
+        self.assertThat(self.run_mock.call_count, Equals(3))
 
-        rustdir = os.path.join(plugin.partdir, "rust")
-        run_mock.assert_has_calls(
+        self.run_mock.assert_has_calls(
             [
                 mock.call(
                     [
-                        os.path.join(rustdir, "rustup.sh"),
-                        "--prefix={}".format(rustdir),
-                        "--disable-sudo",
-                        "--save",
-                        "--revision=1.13.0",
-                    ]
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "install", "1.13.0"],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
                 ),
                 mock.call(
                     [
-                        plugin._cargo,
+                        plugin._cargo_cmd,
+                        "+1.13.0",
                         "fetch",
                         "--manifest-path",
                         os.path.join(plugin.sourcedir, "Cargo.toml"),
                     ],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
             ]
         )
 
     @mock.patch.object(rust.sources, "Script")
-    @mock.patch.object(rust.RustPlugin, "run")
-    def test_pull_with_source_and_source_subdir(self, run_mock, script_mock):
+    def test_pull_with_source_and_source_subdir(self, script_mock):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         plugin.options.source_subdir = "test-subdir"
 
         plugin.pull()
 
-        run_mock.assert_has_calls(
+        self.assertThat(self.run_mock.call_count, Equals(3))
+
+        self.run_mock.assert_has_calls(
             [
-                mock.ANY,
                 mock.call(
                     [
-                        plugin._cargo,
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "install", "stable"],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "+stable",
                         "fetch",
                         "--manifest-path",
                         os.path.join(plugin.sourcedir, "test-subdir", "Cargo.toml"),
                     ],
+                    cwd=plugin.builddir,
                     env=plugin._build_env(),
                 ),
             ]
         )
 
     @mock.patch("snapcraft.ProjectOptions.deb_arch", "fantasy-arch")
-    def test_cross_compiling_unsupported_arch_raises_exception(self):
+    def test_unsupported_target_arch_raises_exception(self):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
-        self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
+        self.assertRaises(errors.SnapcraftEnvironmentError, plugin._get_target)
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    @mock.patch.object(rust.RustPlugin, "run_output")
-    def test_build(self, _, run_mock):
+    def test_build(self):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
 
-        self.assertThat(run_mock.call_count, Equals(2))
-        run_mock.assert_has_calls(
+        self.run_mock.assert_called_once_with(
             [
-                mock.call(
-                    [
-                        plugin._cargo,
-                        "test",
-                        "-j{}".format(plugin.project.parallel_build_count),
-                    ],
-                    env=plugin._build_env(),
-                ),
-                mock.call(
-                    [
-                        plugin._cargo,
-                        "install",
-                        "-j{}".format(plugin.project.parallel_build_count),
-                        "--root",
-                        plugin.installdir,
-                        "--path",
-                        plugin.builddir,
-                    ],
-                    env=plugin._build_env(),
-                ),
-            ]
+                plugin._cargo_cmd,
+                "+stable",
+                "install",
+                "--path",
+                plugin.builddir,
+                "--root",
+                plugin.installdir,
+            ],
+            cwd=os.path.join(plugin.partdir, "build"),
+            env=plugin._build_env(),
         )
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    @mock.patch.object(rust.RustPlugin, "run_output")
-    def test_get_manifest_with_cargo_lock_file(self, *_):
+    def test_build_with_conditional_compilation(self):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        plugin.options.rust_features = ["conditional-compilation"]
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.run_mock.assert_called_once_with(
+            [
+                plugin._cargo_cmd,
+                "+stable",
+                "install",
+                "--path",
+                plugin.builddir,
+                "--root",
+                plugin.installdir,
+                "--features",
+                "conditional-compilation",
+            ],
+            cwd=os.path.join(plugin.partdir, "build"),
+            env=plugin._build_env(),
+        )
+
+    def test_get_manifest_with_cargo_lock_file(self):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(plugin.builddir)
@@ -442,9 +471,7 @@ class RustPluginTestCase(unit.TestCase):
             Equals("test cargo lock contents"),
         )
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    @mock.patch.object(rust.RustPlugin, "run_output")
-    def test_get_manifest_with_unexisting_cargo_lock(self, *_):
+    def test_get_manifest_with_unexisting_cargo_lock(self):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
         os.makedirs(plugin.builddir)
@@ -453,8 +480,6 @@ class RustPluginTestCase(unit.TestCase):
 
         self.assertThat(plugin.get_manifest(), Not(Contains("cargo-lock-contents")))
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    @mock.patch.object(rust.RustPlugin, "run_output")
     def test_get_manifest_with_cargo_lock_dir(self, *_):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
@@ -466,8 +491,7 @@ class RustPluginTestCase(unit.TestCase):
 
         self.assertThat(plugin.get_manifest(), Not(Contains("cargo-lock-contents")))
 
-    @mock.patch.object(rust.RustPlugin, "run")
-    def test_get_manifest_with_versions(self, _):
+    def test_get_manifest_with_versions(self):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(plugin.sourcedir)
 
@@ -475,7 +499,7 @@ class RustPluginTestCase(unit.TestCase):
 
         def side_effect(cmd, *args, **kwargs):
             if cmd[-1] == "--version":
-                binary = os.path.basename(cmd[-2])
+                binary = os.path.basename(cmd[0])
                 return "test {} version".format(binary)
             return original_check_output(cmd, *args, **kwargs)
 
@@ -484,7 +508,7 @@ class RustPluginTestCase(unit.TestCase):
             plugin.build()
 
         expected_manifest = collections.OrderedDict()
-        expected_manifest["rustup-version"] = "test rustup.sh version"
+        expected_manifest["rustup-version"] = "test rustup version"
         expected_manifest["rustc-version"] = "test rustc version"
         expected_manifest["cargo-version"] = "test cargo version"
 
