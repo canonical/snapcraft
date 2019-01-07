@@ -101,7 +101,7 @@ class AppstreamTestCase(unit.TestCase):
 
 
 class AppstreamTest(unit.TestCase):
-    def test_appstream(self):
+    def test_appstream_with_ul(self):
         file_name = "snapcraft.appdata.xml"
         content = textwrap.dedent(
             """\
@@ -150,6 +150,59 @@ class AppstreamTest(unit.TestCase):
 
             - Build snaps.
             - Publish snaps to the store."""
+                )
+            ),
+        )
+
+    def test_appstream_with_ol(self):
+        file_name = "snapcraft.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="utf-8"?>
+            <component type="desktop">
+              <id>io.snapcraft.snapcraft</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0</project_license>
+              <name>snapcraft</name>
+              <name xml:lang="es">snapcraft</name>
+              <summary>Create snaps</summary>
+              <summary xml:lang="es">Crea snaps</summary>
+              <description>
+                <p>Command Line Utility to create snaps.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li>Build snaps.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+              </description>
+              <provides>
+                <binary>snapcraft</binary>
+              </provides>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name)
+
+        self.assertThat(metadata.get_summary(), Equals("Create snaps"))
+        self.assertThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+            Command Line Utility to create snaps.
+
+            Features:
+
+            1. Build snaps.
+            2. Publish snaps to the store."""
                 )
             ),
         )

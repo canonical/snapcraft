@@ -50,6 +50,15 @@ _XSLT = dedent(
     </xsl:for-each>
 </xsl:template>
 
+<xsl:template match="ol">
+<xsl:text>&#xA;</xsl:text>
+    <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
+<xsl:number count="li[not(@xml:lang)] | li[@xml:lang = en]" format="1. "/>
+<xsl:value-of select="." />
+<xsl:text>&#xA;</xsl:text>
+    </xsl:for-each>
+</xsl:template>
+
 </xsl:stylesheet>
 """
 )
