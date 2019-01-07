@@ -19,8 +19,7 @@ fi
 # Set $REALHOME to the users real home directory
 REALHOME="$(getent passwd $UID | cut -d ':' -f 6)"
 
-# Set config folder to local path
-export XDG_CONFIG_HOME="$SNAP_USER_DATA/.config"
+# Create config folder
 mkdir -p "$XDG_CONFIG_HOME" && chmod 700 "$XDG_CONFIG_HOME"
 
 # If the user has modified their user-dirs settings, force an update
@@ -33,23 +32,8 @@ fi
 
 export DESKTOP_LAUNCHER_NEEDS_UPDATE="$needs_update"
 
-if [ "$SNAP_ARCH" == "amd64" ]; then
-  ARCH="x86_64-linux-gnu"
-elif [ "$SNAP_ARCH" == "armhf" ]; then
-  ARCH="arm-linux-gnueabihf"
-elif [ "$SNAP_ARCH" == "arm64" ]; then
-  ARCH="aarch64-linux-gnu"
-else
-  ARCH="$SNAP_ARCH-linux-gnu"
-fi
-
-export SNAP_LAUNCHER_ARCH_TRIPLET="$ARCH"
-
-# Don't LD_PRELOAD bindtextdomain for classic snaps
-if ! grep -qs "^\s*confinement:\s*classic\s*" "$SNAP/meta/snap.yaml"; then
-  if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
-    export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
-  fi
+if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
+  export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
 fi
 
 exec "$@"

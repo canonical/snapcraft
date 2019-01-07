@@ -11,11 +11,7 @@ if [ "$DESKTOP_LAUNCHER_WAYLAND_AVAILABLE" = "true" ]; then
   export QT_QPA_PLATFORM=wayland-egl
 fi
 
-export GTK_EXE_PREFIX="$RUNTIME/usr"
-
 # ibus and fcitx integration
-GTK_IM_MODULE_DIR="$XDG_CACHE_HOME/immodules"
-export GTK_IM_MODULE_FILE="$GTK_IM_MODULE_DIR/immodules.cache"
 if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
   rm -rf "$GTK_IM_MODULE_DIR"
   mkdir -p "$GTK_IM_MODULE_DIR"
