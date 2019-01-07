@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict
+# Import types and tell flake8 to ignore the "unused" List.
+from typing import Any, Dict, List  # noqa: F401
 
 from snapcraft.internal import errors
 from ._desktop_common import DesktopCommonExtension
@@ -46,8 +47,8 @@ class GnomeExtension(DesktopCommonExtension):
 
         platform_snap = "gnome-3-26-1604"  # default
         base = yaml_data.get("base")
-        after_dependencies = []
-        dependency_part = {}
+        after_dependencies = []  # type: List[str]
+        dependency_part = {}  # type: Dict[str, Any]
         if base is not None:
             if base == "core16":
                 platform_snap = "gnome-3-26-1604"

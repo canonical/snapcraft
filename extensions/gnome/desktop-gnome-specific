@@ -4,46 +4,7 @@
 # GTK launcher specific part #
 ##############################
 
-# Gdk-pixbuf loaders
-if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  rm -f "$GDK_PIXBUF_MODULE_FILE"
-  if [ -f "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
-    "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
-  fi
-fi
-
-# Icon themes cache
-if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  rm -rf "$XDG_DATA_HOME/icons"
-  mkdir -p "$XDG_DATA_HOME/icons"
-  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
-    for theme in "${data_dirs_array[$i]}/icons/"*; do
-      if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
-        theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
-        if [ ! -d "$theme_dir" ]; then
-          mkdir -p "$theme_dir"
-          ln -s "$theme"/* "$theme_dir"
-          if [ -f "$SNAP/gnome-platform/usr/sbin/update-icon-caches" ]; then
-            "$SNAP/gnome-platform/usr/sbin/update-icon-caches" "$theme_dir"
-          elif [ -f "$SNAP/gnome-platform/usr/sbin/update-icon-cache.gtk2" ]; then
-            "$SNAP/gnome-platform/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
-          fi
-        fi
-      fi
-    done
-  done
-fi
-
-# GTK theme and behavior modifier
-# Those can impact the theme engine used by Qt as well
-gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
-for f in "${gtk_configs[@]}"; do
-  dest="$XDG_CONFIG_HOME/$f"
-  if [ ! -L "$dest" ]; then
-    mkdir -p "$(dirname "$dest")"
-    ln -s "$REALHOME/.config/$f" "$dest"
-  fi
-done
+RUNTIME="$SNAP/gnome-platform"
 
 if [ "$DESKTOP_LAUNCHER_WAYLAND_AVAILABLE" = "true" ]; then
   export GDK_BACKEND="wayland"
@@ -56,12 +17,12 @@ fi
 if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
   rm -rf "$GTK_IM_MODULE_DIR"
   mkdir -p "$GTK_IM_MODULE_DIR"
-  if [ -x "$SNAP/gnome-platform/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" ]; then
-    ln -s "$SNAP/gnome-platform/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules"/*.so "$GTK_IM_MODULE_DIR"
-    "$SNAP/gnome-platform/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
-  elif [ -x "$SNAP/gnome-platform/usr/lib/$ARCH/libgtk2.0-0/gtk-query-immodules-2.0" ]; then
-    ln -s "$SNAP/gnome-platform/usr/lib/$ARCH/gtk-2.0/2.10.0/immodules"/*.so "$GTK_IM_MODULE_DIR"
-    "$SNAP/gnome-platform/usr/lib/$ARCH/libgtk2.0-0/gtk-query-immodules-2.0" > "$GTK_IM_MODULE_FILE"
+  if [ -x "$RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" ]; then
+    ln -s "$RUNTIME/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules"/*.so "$GTK_IM_MODULE_DIR"
+    "$RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
+  elif [ -x "$RUNTIME/usr/lib/$ARCH/libgtk2.0-0/gtk-query-immodules-2.0" ]; then
+    ln -s "$RUNTIME/usr/lib/$ARCH/gtk-2.0/2.10.0/immodules"/*.so "$GTK_IM_MODULE_DIR"
+    "$RUNTIME/usr/lib/$ARCH/libgtk2.0-0/gtk-query-immodules-2.0" > "$GTK_IM_MODULE_FILE"
   fi
 fi
 
