@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Marius Gripsgard <mariogrip@ubuntu.com>"]
 
 [dependencies]
-rustc_version = "= 0.1.2"
-rustc_version_runtime = "0.1.0"
+rustc_version = "= 0.2.3"
+rustc_version_runtime = "0.1.5"

@@ -60,7 +60,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, "bin", "rust-with-revision")
         )
-        self.assertIn("Rust revision: 1.12.0", binary_output)
+        self.assertIn("Rust revision: 1.30.0", binary_output)
 
     def test_stage_rust_plugin_with_conditional_feature(self):
         self.run_snapcraft("stage", "rust-with-conditional")
