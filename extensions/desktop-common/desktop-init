@@ -89,7 +89,7 @@ function update_xdg_dirs_values() {
 
   for d in $XDG_DIRS; do
     var="XDG_${d}_DIR"
-    value="$(eval echo \$${var})"
+    value="$(eval echo \$"${var}")"
 
     if [ "$save_initial_values" = true ]; then
       XDG_SPECIAL_DIRS+=("$var")
@@ -105,6 +105,8 @@ function is_subpath() {
   parent="$(realpath "$2")"
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
+
+RUNTIME="$SNAP/gnome-platform"
 
 # EGL vendor files on glvnd enabled systems
 [ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
@@ -280,25 +282,24 @@ fi
 # needed for gtk and qt icon
 if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
   rm -rf "$XDG_DATA_HOME/mime"
-  if [ ! -f "$SNAP/gnome-platform/usr/share/mime/mime.cache" ]; then
+  if [ ! -f "$RUNTIME/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
-      cp --preserve=timestamps -dR "$SNAP/gnome-platform/usr/share/mime" "$XDG_DATA_HOME"
+      cp --preserve=timestamps -dR "$RUNTIME/usr/share/mime" "$XDG_DATA_HOME"
       update-mime-database "$XDG_DATA_HOME/mime"
     fi
   fi
 fi
 
 # Gio modules and cache (including gsettings module)
-function compile_giomodules {
-  if [ -f "$1/glib-2.0/gio-querymodules" ]; then
+if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
+  usrlib="usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+  if [ -f "$RUNTIME/$usrlib/glib-2.0/gio-querymodules" ]; then
     rm -rf "$GIO_MODULE_DIR"
     mkdir -p "$GIO_MODULE_DIR"
-    ln -s "$1/gio/modules/*.so" "$GIO_MODULE_DIR"
-    "$1/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
+    ln -sf "$RUNTIME/$usrlib/gio/modules/*.so" "$GIO_MODULE_DIR"
+    ln -sf "$SNAP/$usrlib/gio/modules/*.so" "$GIO_MODULE_DIR"
+    "$RUNTIME/$usrlib/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
-}
-if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  compile_giomodules "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
 fi
 
 # Setup compiled gsettings schema
@@ -326,7 +327,7 @@ function compile_schemas {
   fi
 }
 if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
-  compile_schemas "$SNAP/gnome-platform/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
+  compile_schemas "$RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
 fi
 
 # Enable gsettings user changes
@@ -338,6 +339,48 @@ if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
     ln -s "$REALHOME/.config/dconf/user" "$DCONF_DEST_USER_DIR"
   fi
 fi
+
+
+# Gdk-pixbuf loaders
+if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
+  rm -f "$GDK_PIXBUF_MODULE_FILE"
+  if [ -f "$RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
+    "$RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
+  fi
+fi
+
+# Icon themes cache
+if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
+  rm -rf "$XDG_DATA_HOME/icons"
+  mkdir -p "$XDG_DATA_HOME/icons"
+  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
+    for theme in "${data_dirs_array[$i]}/icons/"*; do
+      if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
+        theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
+        if [ ! -d "$theme_dir" ]; then
+          mkdir -p "$theme_dir"
+          ln -s "$theme"/* "$theme_dir"
+          if [ -f "$RUNTIME/usr/sbin/update-icon-caches" ]; then
+            "$RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
+          elif [ -f "$RUNTIME/usr/sbin/update-icon-cache.gtk2" ]; then
+            "$RUNTIME/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
+          fi
+        fi
+      fi
+    done
+  done
+fi
+
+# GTK theme and behavior modifier
+# Those can impact the theme engine used by Qt as well
+gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
+for f in "${gtk_configs[@]}"; do
+  dest="$XDG_CONFIG_HOME/$f"
+  if [ ! -L "$dest" ]; then
+    mkdir -p "$(dirname "$dest")"
+    ln -s "$REALHOME/.config/$f" "$dest"
+  fi
+done
 
 # create symbolic link to ibus socket path for ibus to look up its socket files
 # (see comments #3 and #6 on https://launchpad.net/bugs/1580463)
