@@ -13,6 +13,8 @@ apps:
 
 parts:
   simple-godeps:
+    source: .
+    build-packages:
+    - gcc
     plugin: godeps
     go-importpath: bcrypt
-    source: .

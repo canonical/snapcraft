@@ -16,12 +16,14 @@
 
 import contextlib
 import os
+from textwrap import dedent
 from unittest.mock import call, Mock
 
-from testtools.matchers import Equals, EndsWith, DirExists, Not
+from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import errors
+from snapcraft.internal.build_providers import errors, _base_provider
+from tests import unit
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -261,3 +263,68 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
+
+
+class GetCloudUserDataTest(BaseProviderBaseTest):
+    def test_get(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        os.makedirs(provider.provider_project_dir)
+
+        cloud_data_filepath = provider._get_cloud_user_data(
+            timezone="America/Argentina/Cordoba"
+        )
+        self.assertThat(
+            cloud_data_filepath,
+            FileContains(
+                dedent(
+                    """\
+            #cloud-config
+            manage_etc_hosts: true
+            package_update: false
+            growpart:
+                mode: growpart
+                devices: ["/"]
+                ignore_growroot_disabled: false
+            runcmd:
+            - ["ln", "-s", "../usr/share/zoneinfo/America/Argentina/Cordoba", "/etc/localtime"]
+            write_files:
+                - path: /root/.bashrc
+                  permissions: 0644
+                  content: |
+                    export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
+                    export PS1="\h \$(/bin/_snapcraft_prompt)# "
+                    export PATH=/snap/bin:$PATH
+                - path: /bin/_snapcraft_prompt
+                  permissions: 0755
+                  content: |
+                    #!/bin/bash
+                    if [[ "$PWD" =~ ^$HOME.* ]]; then
+                        path="${PWD/#$HOME/\ ..}"
+                        if [[ "$path" == " .." ]]; then
+                            ps1=""
+                        else
+                            ps1="$path"
+                        fi
+                    else
+                        ps1="$PWD"
+                    fi
+                    echo -n $ps1
+        """  # noqa: W605
+                )
+            ),
+        )
+
+
+class GetTzDataTest(unit.TestCase):
+    def test_path_found(self):
+        with open("timezone", "w") as timezone_file:
+            print("America/Argentina/Cordoba", file=timezone_file)
+
+        self.assertThat(
+            _base_provider._get_tzdata("timezone"), Equals("America/Argentina/Cordoba")
+        )
+
+    def test_path_not_found(self):
+        self.assertThat(
+            _base_provider._get_tzdata("timezone-not-found"), Equals("Etc/UTC")
+        )

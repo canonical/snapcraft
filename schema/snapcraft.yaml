@@ -104,6 +104,11 @@ properties:
         validation-failure:
           "{.instance!r} is not a valid snap name. Snap names cannot have two
           hyphens in a row."
+  title:
+    description: title for the snap
+    type: string
+    # https://forum.snapcraft.io/t/title-length-in-snapcraft-yaml-snap-yaml/8625/10
+    maxLength: 40
   architectures:
     description: architectures on which to build, and on which the resulting snap runs
     type: array

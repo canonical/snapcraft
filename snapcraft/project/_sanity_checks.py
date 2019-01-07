@@ -17,7 +17,9 @@
 import copy
 import logging
 import os
+import sys
 import re
+import shutil
 from typing import Any, Dict
 
 from snapcraft.project import Project
@@ -35,6 +37,27 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^plugins(/.*)?$"),
     re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
 }
+
+
+def conduct_build_environment_sanity_check(provider: str):
+    if provider == "multipass":
+        _check_multipass_installed()
+
+
+def _check_multipass_installed():
+    if shutil.which("multipass"):
+        return
+
+    if sys.platform == "darwin":
+        raise errors.MultipassMissingInstallableError()
+
+    if sys.platform == "linux" and shutil.which("snap"):
+        raise errors.MultipassMissingInstallableError()
+    elif sys.platform == "linux":
+        raise errors.SnapMissingLinuxError()
+
+    # Alas, we do not know where we are running from
+    raise errors.MultipassMissingNonInstallableError()
 
 
 def conduct_project_sanity_check(project: Project) -> None:

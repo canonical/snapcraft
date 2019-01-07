@@ -44,10 +44,10 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.make_snapcraft_yaml("test-part", base=self.base)
+        self.useFixture(fixture_setup.FakeMultipass())
 
     def test_validation_passes(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=self.base)
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
@@ -56,7 +56,9 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
     def test_validation_fails(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, name="name with spaces")
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, name="name with spaces", base=self.base
+        )
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
@@ -73,6 +75,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
 
@@ -121,6 +124,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
         )
+        self.useFixture(fixture_setup.FakeMultipass())
 
         shell_mock = mock.Mock()
         pack_project_mock = mock.Mock()

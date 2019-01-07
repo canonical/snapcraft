@@ -140,7 +140,6 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir, parts
         )
-        _remove_directory(project_options._internal_dir)
 
     if not being_tried:
         _remove_directory_if_empty(project_options.prime_dir)
