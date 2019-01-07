@@ -46,14 +46,14 @@ class GnomeExtension(DesktopCommonExtension):
 
         platform_snap = "gnome-3-26-1604" # default
         base = yaml_data.get("base")
-        after_dependencies = {}
+        after_dependencies = []
         dependency_part = {}
         if base is not None:
             if base == "core16":
                 platform_snap = "gnome-3-26-1604"
-                after_dependencies = {
-                    "after": ["gnome-extension-platform-dependencies"],
-                }
+                after_dependencies = [
+                    "gnome-extension-platform-dependencies",
+                ]
                 dependency_part = {
                     "gnome-extension-platform-dependencies": {
                         "plugin": None,
@@ -162,14 +162,18 @@ class GnomeExtension(DesktopCommonExtension):
             exec_command,
         ]
 
-        self.app_snippet = {**self.app_snippet, "command-chain": command_chain}
+        self.app_snippet = {
+            **self.app_snippet,
+            "command-chain": command_chain,
+            "adapter": "full",
+        }
 
         self.parts = {
             **self.parts,
 
             **dependency_part,
             "gnome-extension": {
-                **after_dependencies,
+                "after": after_dependencies,
                 "plugin": "dump",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
                 "source-type": "local",
