@@ -16,7 +16,6 @@
 
 import os
 from io import StringIO
-from textwrap import dedent
 
 import lxml.etree
 
@@ -25,8 +24,7 @@ from snapcraft.extractors import _errors
 
 
 _xslt = None
-_XSLT = dedent(
-    """\
+_XSLT = """\
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -61,7 +59,6 @@ _XSLT = dedent(
 
 </xsl:stylesheet>
 """
-)
 
 
 def extract(path: str) -> ExtractedMetadata:
