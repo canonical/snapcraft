@@ -23,6 +23,5 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  # Verify that it builds, and then verify that the expected version of rust was used
+  # Verify that it builds
   snapcraft build
-  [[ "$(parts/rust-hello/rust/bin/rustc --version)" =~ 1.12.0 ]]
