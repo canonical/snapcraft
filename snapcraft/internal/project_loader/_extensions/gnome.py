@@ -144,7 +144,7 @@ class GnomeExtension(DesktopCommonExtension):
                 
                 "PATH": ":".join(path),
                 
-                "XCURSOR_PATH": "$SNAP/gnome-platform/usr/share/icons",
+                "XCURSOR_PATH": "$SNAP/data-dir/icons:$SNAP/gnome-platform/usr/share/icons",
                 
                 "XDG_CONFIG_DIRS": ":".join(xdg_config_dirs),
                 "XDG_DATA_DIRS": ":".join(xdg_data_dirs),

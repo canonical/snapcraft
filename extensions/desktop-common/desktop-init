@@ -259,8 +259,8 @@ if [ "$DESKTOP_LAUNCHER_NEEDS_UPDATE" = "true" ]; then
 
   # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
   # GTK 3.20 looks into XDG_DATA_DIR which has connected themes.
-  ln -sf "$SNAP/gnome-platform/themes" "$XDG_DATA_HOME"
-  ln -sfn "$SNAP/gnome-platform/themes" "$SNAP_USER_DATA/.themes"
+  ln -sf "$SNAP/data-dir/themes" "$XDG_DATA_HOME"
+  ln -sfn "$SNAP/data-dir/themes" "$SNAP_USER_DATA/.themes"
 fi
 
 # Build mime.cache

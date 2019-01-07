@@ -84,6 +84,8 @@ class DesktopCommonExtension(Extension):
             
             "PATH": ":".join(self.path),
             
+            "XCURSOR_PATH": "$SNAP/data-dir/icons",
+
             "XDG_CACHE_HOME": self.xdg_cache_home,
             "XDG_CONFIG_DIRS": ":".join(self.xdg_config_dirs),
             "XDG_CONFIG_HOME": self.xdg_config_home,
@@ -98,7 +100,6 @@ class DesktopCommonExtension(Extension):
 
         self.command_chain = [
             "snap/command-chain/desktop-init",
-            "snap/command-chain/desktop-exports",
             "snap/command-chain/desktop-mark-and-exec",
         ]
 
