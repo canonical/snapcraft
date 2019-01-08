@@ -33,9 +33,22 @@ class DesktopCommonExtension(Extension):
 
         super().__init__(yaml_data)
 
+        self.gi_typelib_paths = [
+            "$SNAP/usr/lib/girepository-1.0",
+            "$SNAP/usr/lib/gjs/girepository-1.0",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0",
+            "$GI_TYPELIB_PATH",
+        ]
+
         self.ld_library_paths = [
-            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack",
+            "$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
             "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/blas",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/mesa",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/mesa-egl",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/lapack",
+            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libunity",
             "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
             "$LD_LIBRARY_PATH",
             "/var/lib/snapd/lib/gl",
@@ -83,12 +96,13 @@ class DesktopCommonExtension(Extension):
         self.environment = {
             "FONTCONFIG_FILE": "$SNAP/gnome-platform/etc/fonts/fonts.conf",
             "FONTCONFIG_PATH": "$SNAP/gnome-platform/etc/fonts",
+            "GI_TYPELIB_PATH": ":".join(self.gi_typelib_paths),
             "GST_PLUGIN_PATH": "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0",
             "GST_PLUGIN_SCANNER": "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner",
             "GST_PLUGIN_SYSTEM_PATH": "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0",
             "IBUS_CONFIG_PATH": "{}/ibus".format(self.xdg_config_home),
             "LD_LIBRARY_PATH": ":".join(self.ld_library_paths),
-            "LIBGL_DRIVERS_PATH": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
+            "LIBGL_DRIVERS_PATH": "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
             "PATH": ":".join(self.path),
             "XCURSOR_PATH": "$SNAP/data-dir/icons",
             "XDG_CACHE_HOME": self.xdg_cache_home,

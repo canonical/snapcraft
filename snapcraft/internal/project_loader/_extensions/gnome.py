@@ -67,13 +67,10 @@ class GnomeExtension(DesktopCommonExtension):
                 platform_snap = "gnome-3-28-1804"
 
         gi_typelib_paths = [
-            "$SNAP/usr/lib/gjs/girepository-1.0",
-            "$SNAP/usr/lib/girepository-1.0",
-            "$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0",
+            "$SNAP/gnome-platform/usr/lib/gjs/girepository-1.0",
             "$SNAP/gnome-platform/usr/lib/girepository-1.0",
             "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0",
-            "$GI_TYPELIB_PATH",
-        ]
+        ] + self.gi_typelib_paths
 
         ld_library_paths = [
             "$SNAP/gnome-platform/lib/$SNAPCRAFT_ARCH_TRIPLET",
@@ -105,6 +102,7 @@ class GnomeExtension(DesktopCommonExtension):
             "environment": {
                 **self.environment,
                 "LD_LIBRARY_PATH": ":".join(ld_library_paths),
+                "LIBGL_DRIVERS_PATH": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
                 "GDK_PIXBUF_MODULE_FILE": "{}/gdk-pixbuf-loaders.cache".format(
                     self.xdg_cache_home
                 ),
