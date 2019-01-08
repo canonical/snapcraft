@@ -29,9 +29,11 @@ from snapcraft.internal.errors import (
 logger = logging.getLogger(__name__)
 
 
-def extract_metadata(part_name: str, file_path: str) -> extractors.ExtractedMetadata:
-    if not os.path.exists(file_path):
-        raise MissingMetadataFileError(part_name, file_path)
+def extract_metadata(
+    part_name: str, file_relpath: str, workdir: str
+) -> extractors.ExtractedMetadata:
+    if not os.path.exists(os.path.join(workdir, file_relpath)):
+        raise MissingMetadataFileError(part_name, file_relpath)
 
     # Iterate through each extractor module, calling the 'extract' function
     # from it. If it raises an 'UnhandledFileError' move onto the next.
@@ -45,9 +47,9 @@ def extract_metadata(part_name: str, file_path: str) -> extractors.ExtractedMeta
             try:
                 # mypy is confused since we dynamically loaded the module. It
                 # doesn't think it has an 'extract' function. Ignore.
-                metadata = module.extract(file_path)  # type: ignore
+                metadata = module.extract(file_relpath, workdir=workdir)  # type: ignore
                 if not isinstance(metadata, extractors.ExtractedMetadata):
-                    raise InvalidExtractorValueError(file_path, module_name)
+                    raise InvalidExtractorValueError(file_relpath, module_name)
 
                 return metadata
             except extractors.UnhandledFileError:
@@ -59,4 +61,4 @@ def extract_metadata(part_name: str, file_path: str) -> extractors.ExtractedMeta
                 )
 
     # If we get here, no extractor was able to handle the file
-    raise UnhandledMetadataFileTypeError(file_path)
+    raise UnhandledMetadataFileTypeError(file_relpath)

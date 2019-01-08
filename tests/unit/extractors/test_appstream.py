@@ -97,7 +97,7 @@ class AppstreamTestCase(unit.TestCase):
         kwargs = {self.param_name: self.value}
         expected = ExtractedMetadata(**kwargs)
 
-        self.assertThat(appstream.extract(file_name), Equals(expected))
+        self.assertThat(appstream.extract(file_name, workdir="."), Equals(expected))
 
 
 class AppstreamTest(unit.TestCase):
@@ -136,7 +136,7 @@ class AppstreamTest(unit.TestCase):
         with open(file_name, "w") as f:
             print(content, file=f)
 
-        metadata = appstream.extract(file_name)
+        metadata = appstream.extract(file_name, workdir=".")
 
         self.assertThat(metadata.get_summary(), Equals("Create snaps"))
         self.assertThat(
@@ -189,7 +189,7 @@ class AppstreamTest(unit.TestCase):
         with open(file_name, "w") as f:
             print(content, file=f)
 
-        metadata = appstream.extract(file_name)
+        metadata = appstream.extract(file_name, workdir=".")
 
         self.assertThat(metadata.get_summary(), Equals("Create snaps"))
         self.assertThat(
@@ -211,7 +211,7 @@ class AppstreamTest(unit.TestCase):
 class AppstreamUnhandledFileTestCase(unit.TestCase):
     def test_unhandled_file_test_case(self):
         raised = self.assertRaises(
-            _errors.UnhandledFileError, appstream.extract, "unhandled-file"
+            _errors.UnhandledFileError, appstream.extract, "unhandled-file", workdir="."
         )
 
         self.assertThat(raised.path, Equals("unhandled-file"))
@@ -224,19 +224,30 @@ class AppstreamLaunchableTestCase(unit.TestCase):
         (
             "usr/share",
             {
-                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop"
+                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop",
+                "workdir": ".",
+            },
+        ),
+        (
+            "usr/share in installdir",
+            {
+                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop",
+                "workdir": "install",
             },
         ),
         (
             "usr/local/share",
             {
-                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop"
+                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop",
+                "workdir": ".",
             },
         ),
     )
 
     def test_appstream_with_launchable(self):
-        with open("foo.metainfo.xml", "w") as f:
+        os.makedirs(self.workdir, exist_ok=True)
+        appstream_file = os.path.join(self.workdir, "foo.metainfo.xml")
+        with open(appstream_file, "w") as f:
             f.write(
                 textwrap.dedent(
                     """\
@@ -249,12 +260,15 @@ class AppstreamLaunchableTestCase(unit.TestCase):
                 )
             )
 
-        os.makedirs(os.path.dirname(self.desktop_file_path))
-        open(self.desktop_file_path, "w").close()
+        desktop_file_path = os.path.join(self.workdir, self.desktop_file_path)
+        os.makedirs(os.path.dirname(desktop_file_path))
+        open(desktop_file_path, "w").close()
 
-        expected = ExtractedMetadata(desktop_file_paths=[self.desktop_file_path])
+        extracted = appstream.extract("foo.metainfo.xml", workdir=self.workdir)
 
-        self.assertThat(appstream.extract("foo.metainfo.xml"), Equals(expected))
+        self.assertThat(
+            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
+        )
 
 
 class AppstreamMultipleLaunchableTestCase(unit.TestCase):
@@ -285,11 +299,10 @@ class AppstreamMultipleLaunchableTestCase(unit.TestCase):
         open("usr/local/share/applications/com.example.test/app1.desktop", "w").close()
         open("usr/local/share/applications/com.example.test/app2.desktop", "w").close()
 
-        expected = ExtractedMetadata(
-            desktop_file_paths=[
-                "usr/local/share/applications/com.example.test/app1.desktop",
-                "usr/local/share/applications/com.example.test/app2.desktop",
-            ]
-        )
+        expected = [
+            "usr/local/share/applications/com.example.test/app1.desktop",
+            "usr/local/share/applications/com.example.test/app2.desktop",
+        ]
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
 
-        self.assertThat(appstream.extract("foo.metainfo.xml"), Equals(expected))
+        self.assertThat(extracted.get_desktop_file_paths(), Equals(expected))

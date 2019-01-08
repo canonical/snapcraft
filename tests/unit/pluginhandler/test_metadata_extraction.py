@@ -28,21 +28,21 @@ class MetadataExtractionTestCase(unit.TestCase):
     def test_handled_file(self):
         open("test-metadata-file", "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 summary="test summary", description="test description"
             )
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
 
-        metadata = extract_metadata("test-part", "test-metadata-file")
+        metadata = extract_metadata("test-part", "test-metadata-file", workdir=".")
         self.assertThat(metadata.get_summary(), Equals("test summary"))
         self.assertThat(metadata.get_description(), Equals("test description"))
 
     def test_unhandled_file(self):
         open("unhandled-file", "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             raise extractors.UnhandledFileError(file_path, "fake")
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
@@ -52,6 +52,7 @@ class MetadataExtractionTestCase(unit.TestCase):
             extract_metadata,
             "test-part",
             "unhandled-file",
+            workdir=".",
         )
 
         self.assertThat(raised.path, Equals("unhandled-file"))
@@ -62,7 +63,7 @@ class MetadataExtractionTestCase(unit.TestCase):
 
         open("unhandled-file", "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             raise extractors.UnhandledFileError(file_path, "fake")
 
         self.useFixture(
@@ -74,6 +75,7 @@ class MetadataExtractionTestCase(unit.TestCase):
             extract_metadata,
             "test-part",
             "unhandled-file",
+            workdir=".",
         )
 
         self.assertThat(raised.path, Equals("unhandled-file"))
@@ -85,7 +87,7 @@ class MetadataExtractionTestCase(unit.TestCase):
     def test_extractor_returning_invalid_things(self):
         open("unhandled-file", "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return "I'm not metadata!"
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
@@ -95,6 +97,7 @@ class MetadataExtractionTestCase(unit.TestCase):
             extract_metadata,
             "test-part",
             "unhandled-file",
+            workdir=".",
         )
 
         self.assertThat(raised.path, Equals("unhandled-file"))
@@ -106,6 +109,7 @@ class MetadataExtractionTestCase(unit.TestCase):
             extract_metadata,
             "test-part",
             "non-existent",
+            workdir=".",
         )
 
         self.assertThat(raised.path, Equals("non-existent"))

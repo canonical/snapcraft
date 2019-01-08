@@ -769,7 +769,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 summary="extracted summary", description="extracted description"
             )
@@ -795,7 +795,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         )
 
     def test_metadata_with_unexisting_icon(self):
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 icon="test/extracted/unexistent/icon/path"
             )
@@ -808,7 +808,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
     def test_metadata_satisfies_required_property(self):
         del self.config_data["summary"]
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 summary="extracted summary", description="extracted description"
             )
@@ -826,7 +826,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         del self.config_data["summary"]
         del self.config_data["description"]
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(description="extracted description")
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
@@ -859,7 +859,7 @@ class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCas
         icon_content = "setup icon"
         _create_file(os.path.join(self.directory, self.file_name), content=icon_content)
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 icon="test/extracted/unexistent/icon/path"
             )
@@ -886,7 +886,7 @@ class MetadataFromSourceWithDesktopFileTestCase(CreateMetadataFromSourceBaseTest
             os.path.join(self.directory, "test-app.desktop"), content=desktop_content
         )
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
                 desktop_file_paths=[
                     "usr/share/applications/com.example.test/app.desktop"
@@ -969,7 +969,7 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
             "override-build"
         ] = "snapcraftctl build && snapcraftctl {} {}".format(self.setter, self.value)
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(**{self.keyword: "extracted-value"})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
@@ -986,7 +986,7 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
             "override-pull"
         ] = "snapcraftctl {} {} && snapcraftctl pull".format(self.setter, self.value)
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(**{self.keyword: "extracted-value"})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
@@ -1031,7 +1031,7 @@ class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         with contextlib.suppress(KeyError):
             del self.config_data[self.keyword]
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(**{self.keyword: self.value})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
