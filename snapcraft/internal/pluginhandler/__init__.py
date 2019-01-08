@@ -446,11 +446,14 @@ class PluginHandler:
         # Extract any requested metadata available in the source directory
         metadata = snapcraft.extractors.ExtractedMetadata()
         metadata_files = []
-        for path in self._part_properties.get("parse-info", []):
-            file_path = os.path.join(self.plugin.sourcedir, path)
+        for parse_relpath in self._part_properties.get("parse-info", []):
             with contextlib.suppress(errors.MissingMetadataFileError):
-                metadata.update(extract_metadata(self.name, file_path))
-                metadata_files.append(path)
+                metadata.update(
+                    extract_metadata(self.name, parse_relpath, self.plugin.sourcedir)
+                )
+                metadata_files.append(
+                    os.path.join(self.plugin.sourcedir, parse_relpath)
+                )
 
         self.mark_done(
             steps.PULL,
@@ -574,27 +577,29 @@ class PluginHandler:
         # followed by the install directory (which takes precedence)
         metadata_files = []
         metadata = snapcraft.extractors.ExtractedMetadata()
-        for path in self._part_properties.get("parse-info", []):
-            file_path = os.path.join(self.plugin.builddir, path)
-            found = False
+        for parse_relpath in self._part_properties.get("parse-info", []):
+            found_path = None
             with contextlib.suppress(errors.MissingMetadataFileError):
-                metadata.update(extract_metadata(self.name, file_path))
-                found = True
+                metadata.update(
+                    extract_metadata(self.name, parse_relpath, self.plugin.builddir)
+                )
+                found_path = os.path.join(self.plugin.builddir, parse_relpath)
 
-            file_path = os.path.join(self.plugin.installdir, path)
             with contextlib.suppress(errors.MissingMetadataFileError):
-                metadata.update(extract_metadata(self.name, file_path))
-                found = True
+                metadata.update(
+                    extract_metadata(self.name, parse_relpath, self.plugin.installdir)
+                )
+                found_path = os.path.join(self.plugin.installdir, parse_relpath)
 
-            if found:
-                metadata_files.append(path)
+            if found_path is not None:
+                metadata_files.append(found_path)
             else:
                 # If this metadata file is not found in either build or
                 # install, check the pull state to make sure it was found
                 # there. If not, we need to let the user know.
                 state = self.get_pull_state()
-                if not state or path not in state.extracted_metadata["files"]:
-                    raise errors.MissingMetadataFileError(self.name, path)
+                if not state or parse_relpath not in state.extracted_metadata["files"]:
+                    raise errors.MissingMetadataFileError(self.name, parse_relpath)
 
         self.mark_done(
             steps.BUILD,

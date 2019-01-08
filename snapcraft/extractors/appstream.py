@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017, 2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,7 @@
 
 import os
 from io import StringIO
+from typing import List
 
 import lxml.etree
 
@@ -61,11 +62,11 @@ _XSLT = """\
 """
 
 
-def extract(path: str) -> ExtractedMetadata:
-    if not path.endswith(".metainfo.xml") and not path.endswith(".appdata.xml"):
-        raise _errors.UnhandledFileError(path, "appstream")
+def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
+    if not relpath.endswith(".metainfo.xml") and not relpath.endswith(".appdata.xml"):
+        raise _errors.UnhandledFileError(relpath, "appstream")
 
-    dom = _get_transformed_dom(path)
+    dom = _get_transformed_dom(os.path.join(workdir, relpath))
 
     common_id = _get_value_from_xml_element(dom, "id")
     summary = _get_value_from_xml_element(dom, "summary")
@@ -81,13 +82,11 @@ def extract(path: str) -> ExtractedMetadata:
         icon = node.text.strip()
 
     desktop_file_paths = []
-    nodes = dom.findall("launchable")
-    for node in nodes:
-        if "type" in node.attrib and node.attrib["type"] == "desktop-id":
-            desktop_file_id = node.text.strip()
-            desktop_file_path = _desktop_file_id_to_path(desktop_file_id)
-            if desktop_file_path:
-                desktop_file_paths.append(desktop_file_path)
+    desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
+    for desktop_file_id in desktop_file_ids:
+        desktop_file_path = _desktop_file_id_to_path(desktop_file_id, workdir=workdir)
+        if desktop_file_path:
+            desktop_file_paths.append(desktop_file_path)
 
     return ExtractedMetadata(
         common_id=common_id,
@@ -128,14 +127,25 @@ def _get_value_from_xml_element(tree, key) -> str:
         return None
 
 
-def _desktop_file_id_to_path(desktop_file_id: str) -> str:
+def _get_desktop_file_ids_from_nodes(nodes) -> List[str]:
+    desktop_file_ids = []  # type: List[str]
+    for node in nodes:
+        if "type" in node.attrib and node.attrib["type"] == "desktop-id":
+            desktop_file_ids.append(node.text.strip())
+    return desktop_file_ids
+
+
+def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> str:
     # For details about desktop file ids and their corresponding paths, see
     # https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id  # noqa
     for xdg_data_dir in ("usr/local/share", "usr/share"):
         desktop_file_path = os.path.join(
             xdg_data_dir, "applications", desktop_file_id.replace("-", "/")
         )
-        if os.path.exists(desktop_file_path):
+        # Check if it exists in workdir, but do not add it to the resulting path
+        # as it later needs to exist in the prime directory to effectively be
+        # used.
+        if os.path.exists(os.path.join(workdir, desktop_file_path)):
             return desktop_file_path
     else:
         return None
