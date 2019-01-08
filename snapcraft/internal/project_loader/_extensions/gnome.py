@@ -66,6 +66,17 @@ class GnomeExtension(DesktopCommonExtension):
             elif base == "core18":
                 platform_snap = "gnome-3-28-1804"
 
+        layout = {
+            "layout": {
+                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                }
+            }
+        }
+        # Use passthrough when base: is not specified to work with old style snapcraft
+        if base is None:
+            layout = {"passthrough": {**layout}}
+
         gi_typelib_paths = [
             "$SNAP/gnome-platform/usr/lib/gjs/girepository-1.0",
             "$SNAP/gnome-platform/usr/lib/girepository-1.0",
@@ -89,6 +100,7 @@ class GnomeExtension(DesktopCommonExtension):
 
         self.root_snippet = {
             **self.root_snippet,
+            **layout,
             "plugs": {
                 **self.plugs,
                 platform_snap: {
