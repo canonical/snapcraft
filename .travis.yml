@@ -86,11 +86,12 @@ jobs:
             - coreutils
             - python
       install:
-        - python3 ./tools/brew_install_from_source.py
-        - python3 -m pip install -r requirements.txt
-        - python3 -m pip install -r requirements-devel.txt
+        - echo Temporarily disabled
+        - echo python3 ./tools/brew_install_from_source.py
+        - echo python3 -m pip install -r requirements.txt
+        - echo python3 -m pip install -r requirements-devel.txt
       script:
-        - SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
+        - echo SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
     - stage: unit, snap and osx
       name: snap
       if: type != cron
