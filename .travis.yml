@@ -54,19 +54,6 @@ jobs:
         - coverage xml
         - codecov --token="$CODECOV_TOKEN"
 
-    - stage: osx-integration-store
-      if: type != cron
-      os: osx
-      install:
-        - brew upgrade python
-        # readlink -f doesn't work on osx.
-        - brew upgrade coreutils || brew install coreutils
-        - python3 ./tools/brew_install_from_source.py
-        - python3 -m pip install -r requirements.txt
-        - python3 -m pip install -r requirements-devel.txt
-      script:
-        - SNAPCRAFT_FROM_BREW=1 ./runtests.sh tests.integration.store.test_store_login_logout use-run
-
     - stage: snap
       if: type != cron
       install:
