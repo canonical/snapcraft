@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -265,6 +265,45 @@ class AppstreamLaunchableTestCase(unit.TestCase):
         open(desktop_file_path, "w").close()
 
         extracted = appstream.extract("foo.metainfo.xml", workdir=self.workdir)
+
+        self.assertThat(
+            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
+        )
+
+
+class AppstreamLegacyDesktopTest(unit.TestCase):
+
+    scenarios = (
+        (
+            "usr/share",
+            {
+                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop"
+            },
+        ),
+        (
+            "usr/local/share",
+            {
+                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop"
+            },
+        ),
+    )
+
+    def test_appstream_with_launchable(self):
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                <?xml version="1.0" encoding="UTF-8"?>
+                <component type="desktop">
+                  <id>com.example.test-app.desktop</id>
+                </component>"""
+                )
+            )
+
+        os.makedirs(os.path.dirname(self.desktop_file_path))
+        open(self.desktop_file_path, "w").close()
+
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
 
         self.assertThat(
             extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
