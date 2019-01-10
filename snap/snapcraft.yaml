@@ -21,6 +21,7 @@ build-packages:
   - libssl-dev
   - libsodium-dev
   - liblzma-dev
+  - libxml2-dev
   - libyaml-dev
   - patch
   - sed
