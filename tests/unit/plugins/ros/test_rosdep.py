@@ -37,6 +37,7 @@ class RosdepTestCase(unit.TestCase):
             rosdep_path="rosdep_path",
             ubuntu_distro="xenial",
             ubuntu_sources="sources",
+            ubuntu_keyrings=["keyring"],
             project=self.project,
         )
 
@@ -63,6 +64,7 @@ class RosdepTestCase(unit.TestCase):
                 mock.call(
                     self.rosdep._rosdep_path,
                     sources="sources",
+                    keyrings=["keyring"],
                     project_options=self.project,
                 ),
                 mock.call().get(["python-rosdep"]),

@@ -107,6 +107,7 @@ if sys.platform == "win32":
         "include_files": [
             ("schema", os.path.join("share", "snapcraft", "schema")),
             ("extensions", os.path.join("share", "snapcraft", "extensions")),
+            ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
         ],
     }
 
@@ -144,10 +145,11 @@ else:
         entry_points=dict(console_scripts=["snapcraft = snapcraft.cli.__main__:run"]),
         # snapcraftctl is not in console_scripts because we need a clean environment.
         scripts=["bin/snapcraftctl"],
-        data_files=[
-            ("share/snapcraft/schema", ["schema/" + x for x in os.listdir("schema")])
-        ]
-        + recursive_data_files("extensions", "share/snapcraft"),
+        data_files=(
+            recursive_data_files("schema", "share/snapcraft")
+            + recursive_data_files("keyrings", "share/snapcraft")
+            + recursive_data_files("extensions", "share/snapcraft")
+        ),
         install_requires=["pysha3", "pyxdg", "requests"],
         test_suite="tests.unit",
     )

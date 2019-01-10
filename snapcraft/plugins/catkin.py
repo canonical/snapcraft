@@ -93,6 +93,8 @@ _BASE_TO_UBUNTU_RELEASE_MAP = {"core16": "xenial", "core18": "bionic"}
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
+_ROS_KEYRING_PATH = os.path.join(snapcraft.internal.common.get_keyringsdir(), "ros.gpg")
+
 
 class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
     fmt = (
@@ -260,6 +262,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
             )
         )
 
+    @property
+    def PLUGIN_STAGE_KEYRINGS(self):
+        return [_ROS_KEYRING_PATH]
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
@@ -393,6 +399,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 self._ros_package_path,
                 self._wstool_path,
                 self.PLUGIN_STAGE_SOURCES,
+                self.PLUGIN_STAGE_KEYRINGS,
                 self.project,
             )
             wstool.setup()
@@ -452,6 +459,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 underlay_build_path,
                 self._catkin_path,
                 self.PLUGIN_STAGE_SOURCES,
+                self.PLUGIN_STAGE_KEYRINGS,
                 self.project,
             )
             catkin.setup()
@@ -461,7 +469,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Pull our own compilers so we use ones that match up with the version
         # of ROS we're using.
         compilers = Compilers(
-            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project
+            self._compilers_path,
+            self.PLUGIN_STAGE_SOURCES,
+            self.PLUGIN_STAGE_KEYRINGS,
+            self.project,
         )
         compilers.setup()
 
@@ -472,6 +483,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             rosdep_path=self._rosdep_path,
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.base],
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
+            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,
         )
         rosdep.setup()
@@ -511,6 +523,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             ubuntu = repo.Ubuntu(
                 ubuntudir,
                 sources=self.PLUGIN_STAGE_SOURCES,
+                keyrings=self.PLUGIN_STAGE_KEYRINGS,
                 project_options=self.project,
             )
 
@@ -773,7 +786,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Make sure we're using our own compilers (the one on the system may
         # be the wrong version).
         compilers = Compilers(
-            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project
+            self._compilers_path,
+            self.PLUGIN_STAGE_SOURCES,
+            self.PLUGIN_STAGE_KEYRINGS,
+            self.project,
         )
         build_type = "Release"
         if "debug" in self.options.build_attributes:
@@ -937,9 +953,10 @@ class CatkinPackageNotFoundError(errors.SnapcraftError):
 
 
 class Compilers:
-    def __init__(self, compilers_path, ubuntu_sources, project):
+    def __init__(self, compilers_path, ubuntu_sources, ubuntu_keyrings, project):
         self._compilers_path = compilers_path
         self._ubuntu_sources = ubuntu_sources
+        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
 
         self._compilers_install_path = os.path.join(self._compilers_path, "install")
@@ -956,6 +973,7 @@ class Compilers:
         ubuntu = repo.Ubuntu(
             self._compilers_path,
             sources=self._ubuntu_sources,
+            keyrings=self._ubuntu_keyrings,
             project_options=self._project,
         )
 
@@ -1037,11 +1055,20 @@ class Compilers:
 
 
 class _Catkin:
-    def __init__(self, ros_distro, workspace, catkin_path, ubuntu_sources, project):
+    def __init__(
+        self,
+        ros_distro,
+        workspace,
+        catkin_path,
+        ubuntu_sources,
+        ubuntu_keyrings,
+        project,
+    ):
         self._ros_distro = ros_distro
         self._workspace = workspace
         self._catkin_path = catkin_path
         self._ubuntu_sources = ubuntu_sources
+        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
         self._catkin_install_path = os.path.join(self._catkin_path, "install")
 
@@ -1054,6 +1081,7 @@ class _Catkin:
         ubuntu = repo.Ubuntu(
             self._catkin_path,
             sources=self._ubuntu_sources,
+            keyrings=self._ubuntu_keyrings,
             project_options=self._project,
         )
         logger.info("Fetching catkin...")

@@ -31,7 +31,7 @@ class WstoolTestCase(unit.TestCase):
         super().setUp()
         self.project = snapcraft.ProjectOptions()
         self.wstool = wstool.Wstool(
-            "package_path", "wstool_path", "sources", self.project
+            "package_path", "wstool_path", "sources", ["keyring"], self.project
         )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -57,6 +57,7 @@ class WstoolTestCase(unit.TestCase):
                 mock.call(
                     self.wstool._wstool_path,
                     sources="sources",
+                    keyrings=["keyring"],
                     project_options=self.project,
                 ),
                 mock.call().get(["python-wstool"]),

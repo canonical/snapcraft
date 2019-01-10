@@ -126,7 +126,7 @@ class CatkinPluginBaseTest(unit.TestCase):
         self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(
-        self, rosdistro, package_path, rosdep_path, ubuntu_distro, sources
+        self, rosdistro, package_path, rosdep_path, ubuntu_distro, sources, keyrings
     ):
         self.rosdep_mock.assert_has_calls(
             [
@@ -136,16 +136,17 @@ class CatkinPluginBaseTest(unit.TestCase):
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
                     ubuntu_sources=sources,
+                    ubuntu_keyrings=keyrings,
                     project=self.project,
                 ),
                 mock.call().setup(),
             ]
         )
 
-    def assert_wstool_setup(self, package_path, wstool_path, sources):
+    def assert_wstool_setup(self, package_path, wstool_path, sources, keyrings):
         self.wstool_mock.assert_has_calls(
             [
-                mock.call(package_path, wstool_path, sources, self.project),
+                mock.call(package_path, wstool_path, sources, keyrings, self.project),
                 mock.call().setup(),
             ]
         )
@@ -1021,6 +1022,7 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1063,6 +1065,7 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1111,6 +1114,7 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1144,12 +1148,14 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.assert_wstool_setup(
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "wstool"),
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_has_calls(
@@ -1187,6 +1193,7 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1751,7 +1758,9 @@ class CompilersTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.project = snapcraft.project.Project()
-        self.compilers = catkin.Compilers("compilers_path", "sources", self.project)
+        self.compilers = catkin.Compilers(
+            "compilers_path", "sources", ["keyring"], self.project
+        )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
@@ -1793,6 +1802,7 @@ class CompilersTestCase(unit.TestCase):
                 mock.call(
                     self.compilers._compilers_path,
                     sources="sources",
+                    keyrings=["keyring"],
                     project_options=self.project,
                 ),
                 mock.call().get(["gcc", "g++"]),
@@ -1898,7 +1908,12 @@ class CatkinFindTestCase(unit.TestCase):
 
         self.project = snapcraft.project.Project()
         self.catkin = catkin._Catkin(
-            "kinetic", "workspace_path", "catkin_path", "sources", self.project
+            "kinetic",
+            "workspace_path",
+            "catkin_path",
+            "sources",
+            ["keyring"],
+            self.project,
         )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -1924,6 +1939,7 @@ class CatkinFindTestCase(unit.TestCase):
                 mock.call(
                     self.catkin._catkin_path,
                     sources="sources",
+                    keyrings=["keyring"],
                     project_options=self.project,
                 ),
                 mock.call().get(["ros-kinetic-catkin"]),

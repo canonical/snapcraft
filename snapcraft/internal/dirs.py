@@ -31,6 +31,7 @@ def setup_dirs() -> None:
         common.set_plugindir(os.path.join(topdir, "snapcraft", "plugins"))
         common.set_schemadir(os.path.join(topdir, "schema"))
         common.set_extensionsdir(os.path.join(topdir, "extensions"))
+        common.set_keyringsdir(os.path.join(topdir, "keyrings"))
 
     # The default paths are relative to sys.prefix, which works well for
     # Snapcraft as a deb or in a venv. However, the Python plugin installs
@@ -42,6 +43,7 @@ def setup_dirs() -> None:
         common.set_plugindir(os.path.join(parent_dir, "plugins"))
         common.set_schemadir(os.path.join(parent_dir, "schema"))
         common.set_extensionsdir(os.path.join(parent_dir, "extensions"))
+        common.set_keyringsdir(os.path.join(parent_dir, "keyrings"))
         common.set_legacy_snapcraft_dir(
             os.path.join(os.environ.get("SNAP"), "legacy_snapcraft")
         )
