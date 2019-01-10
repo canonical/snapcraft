@@ -1,0 +1,40 @@
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class Listener(Node):
+    def __init__(self):
+        super().__init__("listener")
+
+        self._subscription = self.create_subscription(String, "chatter", self._callback)
+
+        parameter = self.get_parameter("exit-after-receive")
+        self._exit_after_receive = parameter.value
+        self.should_exit = False
+
+    def _callback(self, message):
+        self.get_logger().info("I heard {!r}".format(message.data))
+        if self._exit_after_receive:
+            self.get_logger().info(
+                "Requested to exit after message received. Exiting now."
+            )
+            self.should_exit = True
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    listener = Listener()
+
+    while rclpy.ok():
+        rclpy.spin_once(listener)
+        if listener.should_exit:
+            break
+
+    listener.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

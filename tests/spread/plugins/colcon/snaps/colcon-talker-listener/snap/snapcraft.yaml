@@ -1,0 +1,25 @@
+name: colcon-talker-listener
+version: "1.0"
+summary: Colcon ROS2 Example
+description: |
+  A ROS2 workspace containing a talker and a listener.
+
+grade: stable
+confinement: strict
+base: core18
+
+apps:
+  colcon-talker-listener:
+    command: opt/ros/crystal/bin/ros2 launch listener_py talk_and_listen.launch.py
+    plugs: [network, network-bind]
+
+  ros2:
+    command: opt/ros/crystal/bin/ros2
+    plugs: [network, network-bind]
+
+parts:
+  colcon-part:
+    plugin: colcon
+    source: .
+    build-packages: [make, gcc, g++]
+    stage-packages: [ros-crystal-ros2pkg, ros-crystal-ros2run, ros-crystal-ros2launch]

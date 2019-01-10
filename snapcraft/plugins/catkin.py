@@ -375,6 +375,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # environment is actually generated. In order to inject real shell code
         # we have to hack it in by appending it on the end of an item already
         # in the environment. FIXME: There should be a better way to do this.
+        # LP: #1792034
         env[-1] = env[-1] + "\n\n" + script
 
         return env

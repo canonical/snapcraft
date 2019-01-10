@@ -41,6 +41,7 @@ class ListPluginsTestCase(integration.TestCase):
             "qmake",
             "scons",
             "catkin",
+            "colcon",
             "dotnet",
             "godeps",
             "kernel",
