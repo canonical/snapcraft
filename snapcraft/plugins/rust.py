@@ -48,7 +48,7 @@ from snapcraft import sources
 from snapcraft import shell_utils
 from snapcraft.internal import errors
 
-_RUSTUP = "https://static.rust-lang.org/rustup.sh"
+_RUSTUP = "https://rustup.rs/"
 logger = logging.getLogger(__name__)
 
 
@@ -113,8 +113,8 @@ class RustPlugin(snapcraft.BasePlugin):
 
         # Download rustup-init.
         os.makedirs(self._rust_dir, exist_ok=True)
-        sources.Script(_RUSTUP, self._rust_dir).download()
         rustup_init_cmd = os.path.join(self._rust_dir, "rustup.sh")
+        sources.Script(_RUSTUP, self._rust_dir).download(filepath=rustup_init_cmd)
 
         # Basic options:
         # -y: assume yes
