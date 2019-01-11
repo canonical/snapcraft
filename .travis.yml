@@ -59,6 +59,8 @@ jobs:
             - libnacl-dev
             - libsodium-dev
             - libssl-dev
+            - libxml2-dev
+            - libxslt-dev
             - libyaml-dev
             - mercurial
             - p7zip-full

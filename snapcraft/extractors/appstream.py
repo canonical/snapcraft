@@ -41,16 +41,19 @@ _XSLT = """\
 
 <xsl:template match="p" xml:space="preserve">
 <xsl:value-of select="." />
+<xsl:text>&#xA;</xsl:text>
+<xsl:text>&#xA;</xsl:text>
 </xsl:template>
 
 <xsl:template match="ul">
     <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
-- <xsl:value-of select="." />
+<xsl:text>- </xsl:text>
+<xsl:value-of select="." />
+<xsl:text>&#xA;</xsl:text>
     </xsl:for-each>
 </xsl:template>
 
 <xsl:template match="ol">
-<xsl:text>&#xA;</xsl:text>
     <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
 <xsl:number count="li[not(@xml:lang)] | li[@xml:lang = en]" format="1. "/>
 <xsl:value-of select="." />

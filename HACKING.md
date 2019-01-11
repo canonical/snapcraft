@@ -21,7 +21,7 @@ If the pull request gets updated after you've already done this, you can update 
 
 First install a few dependencies:
 
-    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools patchelf execstack rpm2cpio p7zip-full libyaml-dev
+    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools patchelf execstack rpm2cpio p7zip-full libyaml-dev libxml2-dev libxslt-dev
 
 Create and activate a new virtual environment:
 
