@@ -51,7 +51,7 @@ class DesktopCommonExtension(Extension):
             },
         }
 
-        self.environment = {}
+        self.environment = {}  # type: Dict[str, str]
 
         self.root_snippet = {
             "assumes": ["command-chain"],

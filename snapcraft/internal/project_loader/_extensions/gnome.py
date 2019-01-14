@@ -72,10 +72,11 @@ class GnomeExtension(DesktopCommonExtension):
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                 }
             }
-        }
+        }  # type: Dict[str, Any]
+
         # Use passthrough when base: is not specified to work with old style snapcraft
         if base is None:
-            layout = {"passthrough": {**layout}}
+            layout = {"passthrough": layout}
 
         self.root_snippet = {
             **self.root_snippet,
