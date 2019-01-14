@@ -57,7 +57,7 @@ class GnomeExtension(DesktopCommonExtension):
                     "gnome-extension-platform-dependencies": {
                         "plugin": None,
                         "override-pull": """
-                            add-apt-repository ppa:
+                            add-apt-repository ppa:ubuntu-desktop/gnome-3-26
                             apt-get update
                             apt-get upgrade -yqq
                             """,
