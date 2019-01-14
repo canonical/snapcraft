@@ -55,7 +55,7 @@ class GnomeExtension(DesktopCommonExtension):
                 after_dependencies = ["gnome-extension-platform-dependencies"]
                 dependency_part = {
                     "gnome-extension-platform-dependencies": {
-                        "plugin": None,
+                        "plugin": "nil",
                         "override-pull": """
                             add-apt-repository ppa:ubuntu-desktop/gnome-3-26
                             apt-get update
