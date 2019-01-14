@@ -77,27 +77,6 @@ class GnomeExtension(DesktopCommonExtension):
         if base is None:
             layout = {"passthrough": {**layout}}
 
-        gi_typelib_paths = [
-            "$SNAP/gnome-platform/usr/lib/gjs/girepository-1.0",
-            "$SNAP/gnome-platform/usr/lib/girepository-1.0",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/girepository-1.0",
-        ] + self.gi_typelib_paths
-
-        ld_library_paths = [
-            "$SNAP/gnome-platform/lib/$SNAPCRAFT_ARCH_TRIPLET",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/mesa",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/mesa-egl",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libunity",
-            "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio",
-        ] + self.ld_library_paths
-
-        path = self.path + ["$SNAP/gnome-platform/usr/bin"]
-
-        xdg_config_dirs = ["$SNAP/gnome-platform/etc/xdg"] + self.xdg_config_dirs
-        xdg_data_dirs = ["$SNAP/gnome-platform/usr/share"] + self.xdg_data_dirs
-
         self.root_snippet = {
             **self.root_snippet,
             **layout,
@@ -113,29 +92,7 @@ class GnomeExtension(DesktopCommonExtension):
             },
             "environment": {
                 **self.environment,
-                "LD_LIBRARY_PATH": ":".join(ld_library_paths),
-                "LIBGL_DRIVERS_PATH": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/dri",
-                "GDK_PIXBUF_MODULE_FILE": "{}/gdk-pixbuf-loaders.cache".format(
-                    self.xdg_cache_home
-                ),
-                "GDK_PIXBUF_MODULEDIR": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders",
-                "GI_TYPELIB_PATH": ":".join(gi_typelib_paths),
-                "GIO_MODULE_DIR": "{}/gio-modules".format(self.xdg_cache_home),
-                "GS_SCHEMA_DIR": "{}/glib-2.0/schemas".format(self.xdg_data_home),
-                "GST_PLUGIN_SCANNER": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner",
-                "GST_PLUGIN_SYSTEM_PATH": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gstreamer-1.0",
-                "GTK_EXE_PREFIX": "$SNAP/gnome-platform/usr",
-                "GTK_IM_MODULE_DIR": "{}/immodules".format(self.xdg_cache_home),
-                "GTK_IM_MODULE_FILE": "{}/immodules/immodules.cache".format(
-                    self.xdg_cache_home
-                ),
-                "LOCPATH": "$SNAP/gnome-platform/usr/lib/locale",
-                "PATH": ":".join(path),
-                "XCURSOR_PATH": "$SNAP/data-dir/icons:$SNAP/gnome-platform/usr/share/icons",
-                "XDG_CONFIG_DIRS": ":".join(xdg_config_dirs),
-                "XDG_DATA_DIRS": ":".join(xdg_data_dirs),
-                "XKB_CONFIG_ROOT": "$SNAP/gnome-platform/usr/share/X11/xkb",
-                "XLOCALEDIR": "$SNAP/gnome-platform/usr/share/X11/locale",
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
             },
         }
 
