@@ -962,7 +962,7 @@ class StateTestCase(StateBaseTestCase):
         # Create metadata file
         open("metadata-file", "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return snapcraft.extractors.ExtractedMetadata(
                 common_id="test_common_id",
                 summary="test summary",
@@ -1019,7 +1019,10 @@ class StateTestCase(StateBaseTestCase):
             Equals(["usr/share/applications/com.example.test/app.desktop"]),
         )
         files = state.extracted_metadata["files"]
-        self.assertThat(files, Equals(["metadata-file"]))
+        self.assertThat(
+            files,
+            Equals([os.path.join(self.handler.plugin.sourcedir, "metadata-file")]),
+        )
 
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state_with_scriptlet_metadata(self, repo_mock):
@@ -1137,7 +1140,7 @@ class StateTestCase(StateBaseTestCase):
         # Create metadata file
         open(os.path.join(self.handler.plugin.sourcedir, "metadata-file"), "w").close()
 
-        def _fake_extractor(file_path):
+        def _fake_extractor(file_path, workdir):
             return snapcraft.extractors.ExtractedMetadata(
                 common_id="test_common_id",
                 summary="test summary",
@@ -1188,7 +1191,9 @@ class StateTestCase(StateBaseTestCase):
             Equals(["usr/share/applications/com.example.test/app.desktop"]),
         )
         files = state.extracted_metadata["files"]
-        self.assertThat(files, Equals(["metadata-file"]))
+        self.assertThat(
+            files, Equals([os.path.join(self.handler.plugin.builddir, "metadata-file")])
+        )
 
     def test_build_state_with_scriptlet_metadata(self):
         self.handler = self.load_part(

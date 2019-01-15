@@ -27,11 +27,13 @@ from snapcraft.extractors import _errors
 logger = logging.getLogger(__name__)
 
 
-def extract(path: str) -> ExtractedMetadata:
-    if os.path.basename(path) != "setup.py":
-        raise _errors.UnhandledFileError(path, "setup.py")
+def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
+    if os.path.basename(relpath) != "setup.py":
+        raise _errors.UnhandledFileError(relpath, "setup.py")
 
-    spec = importlib.util.spec_from_file_location("setuppy", path)
+    spec = importlib.util.spec_from_file_location(
+        "setuppy", os.path.join(workdir, relpath)
+    )
     setuppy = importlib.util.module_from_spec(spec)
 
     params = dict()  # type: Dict[str, str]
@@ -49,9 +51,9 @@ def extract(path: str) -> ExtractedMetadata:
             try:
                 spec.loader.exec_module(setuppy)
             except SystemExit:
-                raise _errors.SetupPyFileParseError(path=path)
+                raise _errors.SetupPyFileParseError(path=relpath)
             except ImportError as e:
-                raise _errors.SetupPyImportError(path=path, error=str(e)) from e
+                raise _errors.SetupPyImportError(path=relpath, error=str(e)) from e
 
     version = params.get("version")
     description = params.get("description")

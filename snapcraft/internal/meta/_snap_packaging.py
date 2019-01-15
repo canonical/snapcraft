@@ -101,7 +101,9 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     """
 
     # Update config_data using metadata extracted from the project
-    _update_yaml_with_extracted_metadata(project_config.data, project_config.parts)
+    _update_yaml_with_extracted_metadata(
+        project_config.data, project_config.parts, project_config.project.prime_dir
+    )
 
     # Now that we've updated config_data with random stuff extracted from
     # parts, re-validate it to ensure the it still conforms with the schema.
@@ -125,7 +127,9 @@ def create_snap_packaging(project_config: _config.Config) -> str:
 
 
 def _update_yaml_with_extracted_metadata(
-    config_data: Dict[str, Any], parts_config: project_loader.PartsConfig
+    config_data: Dict[str, Any],
+    parts_config: project_loader.PartsConfig,
+    prime_dir: str,
 ) -> None:
     if "adopt-info" in config_data:
         part_name = config_data["adopt-info"]
@@ -161,13 +165,15 @@ def _update_yaml_with_extracted_metadata(
             if "parse-info" not in config_data["parts"][part_name]:
                 raise meta_errors.AdoptedPartNotParsingInfo(part_name)
 
-        _adopt_info(config_data, metadata)
+        _adopt_info(config_data, metadata, prime_dir)
 
 
 def _adopt_info(
-    config_data: Dict[str, Any], extracted_metadata: _metadata.ExtractedMetadata
+    config_data: Dict[str, Any],
+    extracted_metadata: _metadata.ExtractedMetadata,
+    prime_dir: str,
 ):
-    ignored_keys = _adopt_keys(config_data, extracted_metadata)
+    ignored_keys = _adopt_keys(config_data, extracted_metadata, prime_dir)
     if ignored_keys:
         logger.warning(
             "The {keys} {plural_property} {plural_is} specified in adopted "
@@ -183,7 +189,9 @@ def _adopt_info(
 
 
 def _adopt_keys(
-    config_data: Dict[str, Any], extracted_metadata: _metadata.ExtractedMetadata
+    config_data: Dict[str, Any],
+    extracted_metadata: _metadata.ExtractedMetadata,
+    prime_dir: str,
 ) -> Set[str]:
     ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
@@ -208,7 +216,9 @@ def _adopt_keys(
             config_data, str(metadata_dict["common_id"])
         )
         if app_name and not _desktop_file_exists(app_name):
-            for desktop_file_path in metadata_dict["desktop_file_paths"]:
+            for desktop_file_path in [
+                os.path.join(prime_dir, d) for d in metadata_dict["desktop_file_paths"]
+            ]:
                 if os.path.exists(desktop_file_path):
                     config_data["apps"][app_name]["desktop"] = desktop_file_path
                     break

@@ -92,7 +92,7 @@ class SetupPyTestCase(unit.TestCase):
 
     def test_info_extraction(self):
         expected = ExtractedMetadata(**self.params)
-        actual = setuppy.extract("setup.py")
+        actual = setuppy.extract("setup.py", workdir=".")
         self.assertThat(str(actual), Equals(str(expected)))
         self.assertThat(actual, Equals(expected))
 
@@ -100,7 +100,7 @@ class SetupPyTestCase(unit.TestCase):
 class SetupPyErrorsTestCase(unit.TestCase):
     def test_unhandled_file_test_case(self):
         raised = self.assertRaises(
-            _errors.UnhandledFileError, setuppy.extract, "unhandled-file"
+            _errors.UnhandledFileError, setuppy.extract, "unhandled-file", workdir="."
         )
 
         self.assertThat(raised.path, Equals("unhandled-file"))
@@ -110,7 +110,9 @@ class SetupPyErrorsTestCase(unit.TestCase):
         with open("setup.py", "w") as setup_file:
             print("import bad_module", file=setup_file)
 
-        self.assertRaises(_errors.SetupPyImportError, setuppy.extract, "setup.py")
+        self.assertRaises(
+            _errors.SetupPyImportError, setuppy.extract, "setup.py", workdir="."
+        )
 
     def test_unsupported_setup(self):
         with open("setup.py", "w") as setup_file:
@@ -127,4 +129,6 @@ class SetupPyErrorsTestCase(unit.TestCase):
                 file=setup_file,
             )
 
-        self.assertRaises(_errors.SetupPyFileParseError, setuppy.extract, "setup.py")
+        self.assertRaises(
+            _errors.SetupPyFileParseError, setuppy.extract, "setup.py", workdir="."
+        )
