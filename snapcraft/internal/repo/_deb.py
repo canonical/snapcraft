@@ -63,9 +63,9 @@ class _AptCache:
         self._sources_list = sources_list
         self._use_geoip = use_geoip
 
-        self._keyrings = list()
-        if keyrings:
-            self._keyrings = keyrings
+        if not keyrings:
+            keyrings = list()
+        self._keyrings = keyrings
 
     def _setup_apt(self, cache_dir):
         # Do not install recommends
