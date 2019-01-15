@@ -18,7 +18,7 @@ import os
 import logging
 import subprocess
 import sys
-from typing import List
+from typing import List, Sequence
 
 import snapcraft
 from snapcraft.internal import errors, repo
@@ -59,7 +59,7 @@ class Wstool:
         ros_package_path: str,
         wstool_path: str,
         ubuntu_sources: str,
-        ubuntu_keyrings: List[str],
+        ubuntu_keyrings: Sequence[str],
         project: snapcraft.ProjectOptions,
     ) -> None:
         """Create new Wstool
