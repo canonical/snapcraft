@@ -4,7 +4,7 @@
 # GTK launcher specific part #
 ##############################
 
-if [ "$DESKTOP_LAUNCHER_WAYLAND_AVAILABLE" = "true" ]; then
+if [ "$SNAP_DESKTOP_WAYLAND_AVAILABLE" = "true" ]; then
   export GDK_BACKEND="wayland"
   export CLUTTER_BACKEND="wayland"
   # Does not hurt to specify this as well, just in case
