@@ -112,7 +112,7 @@ export GST_PLUGIN_SCANNER="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRI
 prepend_dir XDG_CONFIG_DIRS "$SNAP/etc/xdg"
 
 # Define snaps' own data dir
-[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir XDG_DATA_DIRS "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/share"
+[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir XDG_DATA_DIRS "$SNAP_DESKTOP_RUNTIME/usr/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/usr/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/data-dir"
@@ -145,7 +145,7 @@ if [ -n "$XDG_RUNTIME_DIR" ]; then
 fi
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
-append_dir LOCPATH "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/locale"
+append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
 
 # If any, keep track of where XDG dirs were so we can potentially migrate the content later
 update_xdg_dirs_values
@@ -261,8 +261,8 @@ if [ -n "$XDG_RUNTIME_DIR" ]; then
 fi
 
 # GI repository
-[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
-[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/girepository-1.0"
+[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
+[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/gjs/girepository-1.0"
@@ -271,8 +271,8 @@ prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/gjs/girepository-1.0"
 IFS=':' read -r -a data_dirs_array <<< "$XDG_DATA_DIRS"
 
 # Font Config and themes
-export FONTCONFIG_PATH="$SNAP_DESKTOP_WAYLAND_AVAILABLE/etc/fonts"
-export FONTCONFIG_FILE="$SNAP_DESKTOP_WAYLAND_AVAILABLE/etc/fonts/fonts.conf"
+export FONTCONFIG_PATH="$SNAP_DESKTOP_RUNTIME/etc/fonts"
+export FONTCONFIG_FILE="$SNAP_DESKTOP_RUNTIME/etc/fonts/fonts.conf"
 
 function make_user_fontconfig {
   echo "<fontconfig>"
@@ -317,9 +317,9 @@ fi
 # needed for gtk and qt icon
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   rm -rf "$XDG_DATA_HOME/mime"
-  if [ ! -f "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/share/mime/mime.cache" ]; then
+  if [ ! -f "$SNAP_DESKTOP_RUNTIME/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
-      cp --preserve=timestamps -dR "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/share/mime" "$XDG_DATA_HOME"
+      cp --preserve=timestamps -dR "$SNAP_DESKTOP_RUNTIME/usr/share/mime" "$XDG_DATA_HOME"
       update-mime-database "$XDG_DATA_HOME/mime"
     fi
   fi
@@ -328,12 +328,12 @@ fi
 # Gio modules and cache (including gsettings module)
 export GIO_MODULE_DIR="$XDG_CACHE_HOME/gio-modules"
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
-  if [ -f "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" ]; then
+  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" ]; then
     rm -rf "$GIO_MODULE_DIR"
     mkdir -p "$GIO_MODULE_DIR"
-    ln -sf "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
+    ln -sf "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
     ln -sf "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
-    "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
+    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
 fi
 
@@ -363,7 +363,7 @@ function compile_schemas {
   fi
 }
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
-  compile_schemas "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
+  compile_schemas "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
 fi
 
 # Enable gsettings user changes
@@ -384,8 +384,8 @@ append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa"
 # Gdk-pixbuf loaders
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
-  if [ -f "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
-    "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
+  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
+    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
   fi
 fi
 
@@ -400,10 +400,10 @@ if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
         if [ ! -d "$theme_dir" ]; then
           mkdir -p "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
-          if [ -f "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/sbin/update-icon-caches" ]; then
-            "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/sbin/update-icon-caches" "$theme_dir"
-          elif [ -f "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/sbin/update-icon-cache.gtk2" ]; then
-            "$SNAP_DESKTOP_WAYLAND_AVAILABLE/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
+          if [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" ]; then
+            "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
+          elif [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-cache.gtk2" ]; then
+            "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
           fi
         fi
       fi
