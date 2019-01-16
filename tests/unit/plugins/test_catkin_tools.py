@@ -56,7 +56,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTestCase):
 
         self.project = snapcraft.ProjectOptions()
         self.compilers = catkin_tools.Compilers(
-            "compilers_path", "sources", self.project
+            "compilers_path", "sources", ["keyring"], self.project
         )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")

@@ -102,6 +102,7 @@ if sys.platform == "win32":
             ("libraries", os.path.join("share", "snapcraft", "libraries")),
             ("schema", os.path.join("share", "snapcraft", "schema")),
             ("extensions", os.path.join("share", "snapcraft", "extensions")),
+            ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
         ],
     }
 
@@ -150,6 +151,10 @@ else:
             (
                 "share/snapcraft/libraries",
                 ["libraries/" + x for x in os.listdir("libraries")],
+            ),
+            (
+                "share/snapcraft/keyrings",
+                ["keyrings/" + x for x in os.listdir("keyrings")],
             ),
             (
                 "share/snapcraft/extensions",

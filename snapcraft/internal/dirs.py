@@ -51,3 +51,4 @@ def setup_dirs() -> None:
         common.set_schemadir(os.path.join(parent_dir, "schema"))
         common.set_librariesdir(os.path.join(parent_dir, "libraries"))
         common.set_extensionsdir(os.path.join(parent_dir, "extensions"))
+        common.set_keyringsdir(os.path.join(parent_dir, "keyrings"))

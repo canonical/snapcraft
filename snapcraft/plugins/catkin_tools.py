@@ -89,7 +89,10 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
 
         # Add any cmake-args requested from the plugin options.
         compilers = Compilers(
-            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project
+            self._compilers_path,
+            self.PLUGIN_STAGE_SOURCES,
+            self.PLUGIN_STAGE_KEYRINGS,
+            self.project,
         )
 
         catkincmd.append("--cmake-args")
@@ -130,7 +133,10 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
             catkincmd.extend(self.catkin_packages)
 
         compilers = Compilers(
-            self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project
+            self._compilers_path,
+            self.PLUGIN_STAGE_SOURCES,
+            self.PLUGIN_STAGE_KEYRINGS,
+            self.project,
         )
 
         # This command must run in bash due to a bug in Catkin that causes it

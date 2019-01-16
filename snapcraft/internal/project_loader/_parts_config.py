@@ -211,8 +211,12 @@ class PartsConfig:
         )
 
         sources = getattr(plugin, "PLUGIN_STAGE_SOURCES", None)
+        keyrings = getattr(plugin, "PLUGIN_STAGE_KEYRINGS", None)
         stage_packages_repo = repo.Repo(
-            plugin.osrepodir, sources=sources, project_options=self._project
+            plugin.osrepodir,
+            sources=sources,
+            keyrings=keyrings,
+            project_options=self._project,
         )
 
         grammar_processor = grammar_processing.PartGrammarProcessor(

@@ -18,7 +18,7 @@ import os
 import logging
 import subprocess
 import sys
-from typing import List
+from typing import List, Sequence
 
 import snapcraft
 from snapcraft.internal import errors, repo
@@ -59,6 +59,7 @@ class Wstool:
         ros_package_path: str,
         wstool_path: str,
         ubuntu_sources: str,
+        ubuntu_keyrings: Sequence[str],
         project: snapcraft.ProjectOptions,
     ) -> None:
         """Create new Wstool
@@ -74,6 +75,7 @@ class Wstool:
         """
         self._ros_package_path = ros_package_path
         self._ubuntu_sources = ubuntu_sources
+        self._ubuntu_keyrings = ubuntu_keyrings
         self._wstool_path = wstool_path
         self._wstool_install_path = os.path.join(wstool_path, "install")
         self._project = project
@@ -89,6 +91,7 @@ class Wstool:
         ubuntu = repo.Ubuntu(
             self._wstool_path,
             sources=self._ubuntu_sources,
+            keyrings=self._ubuntu_keyrings,
             project_options=self._project,
         )
         logger.info("Fetching wstool...")
