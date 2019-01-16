@@ -35,6 +35,8 @@ class Script(FileBase):
         )
 
     def download(self, filepath: str = None) -> str:
-        super().download(filepath=filepath)
+        filepath = super().download(filepath=filepath)
         st = os.stat(self.file)
         os.chmod(self.file, st.st_mode | stat.S_IEXEC)
+
+        return filepath
