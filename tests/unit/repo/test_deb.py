@@ -97,6 +97,18 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
+        fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
+        os.mkdir(fake_trusted_parts_path)
+        open(os.path.join(fake_trusted_parts_path, "trusted-part.gpg"), "w").close()
+
+        def _fake_find_file(key: str):
+            if key == "Dir::Etc::TrustedParts":
+                return fake_trusted_parts_path
+            else:
+                return DEFAULT
+
+        mock_apt_pkg.config.find_file.side_effect = _fake_find_file
+
         project_options = snapcraft.ProjectOptions(use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(["fake-package"])
@@ -104,10 +116,71 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_apt_pkg.assert_has_calls(
             [
                 call.config.set("Apt::Install-Recommends", "False"),
+                call.config.set("Acquire::AllowInsecureRepositories", "False"),
                 call.config.find_file("Dir::Etc::Trusted"),
                 call.config.set("Dir::Etc::Trusted", ANY),
                 call.config.find_file("Dir::Etc::TrustedParts"),
                 call.config.set("Dir::Etc::TrustedParts", ANY),
+                call.config.clear("APT::Update::Post-Invoke-Success"),
+            ]
+        )
+
+        self.mock_cache.assert_has_calls(
+            [
+                call(memonly=True, rootdir=ANY),
+                call().update(fetch_progress=ANY, sources_list=ANY),
+                call().open(),
+            ]
+        )
+
+        # __getitem__ is tricky
+        self.assertThat(
+            self.mock_cache.return_value.__getitem__.call_args_list,
+            Contains(call("fake-package")),
+        )
+
+        # Verify that the package was actually fetched and copied into the
+        # requested location.
+        self.assertThat(
+            os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
+        )
+
+        # Verify that TrustedParts were properly setup
+        trusted_parts_dir = os.path.join(
+            ubuntu._cache.base_dir,
+            os.path.join(self.path, "fake-trusted-parts").lstrip("/"),
+        )
+        self.assertThat(os.listdir(trusted_parts_dir), Equals(["trusted-part.gpg"]))
+
+    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
+    @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
+    def test_get_package_trusted_parts_already_imported(
+        self, mock_apt_pkg, mock_fetch_binary
+    ):
+        fake_package_path = os.path.join(self.path, "fake-package.deb")
+        open(fake_package_path, "w").close()
+        mock_fetch_binary.return_value = fake_package_path
+        self.mock_cache().is_virtual_package.return_value = False
+
+        def _fake_find_file(key: str):
+            if key == "Dir::Etc::TrustedParts":
+                return os.path.join(ubuntu._cache.base_dir, "trusted")
+            else:
+                return DEFAULT
+
+        mock_apt_pkg.config.find_file.side_effect = _fake_find_file
+
+        project_options = snapcraft.ProjectOptions()
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu.get(["fake-package"])
+
+        mock_apt_pkg.assert_has_calls(
+            [
+                call.config.set("Apt::Install-Recommends", "False"),
+                call.config.set("Acquire::AllowInsecureRepositories", "False"),
+                call.config.find_file("Dir::Etc::Trusted"),
+                call.config.set("Dir::Etc::Trusted", ANY),
+                call.config.find_file("Dir::Etc::TrustedParts"),
                 call.config.clear("APT::Update::Post-Invoke-Success"),
             ]
         )
@@ -140,6 +213,18 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
+        fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
+        os.mkdir(fake_trusted_parts_path)
+        open(os.path.join(fake_trusted_parts_path, "trusted-part.gpg"), "w").close()
+
+        def _fake_find_file(key: str):
+            if key == "Dir::Etc::TrustedParts":
+                return fake_trusted_parts_path
+            else:
+                return DEFAULT
+
+        mock_apt_pkg.config.find_file.side_effect = _fake_find_file
+
         project_options = snapcraft.ProjectOptions(use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(["fake-package:arch"])
@@ -147,6 +232,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_apt_pkg.assert_has_calls(
             [
                 call.config.set("Apt::Install-Recommends", "False"),
+                call.config.set("Acquire::AllowInsecureRepositories", "False"),
                 call.config.find_file("Dir::Etc::Trusted"),
                 call.config.set("Dir::Etc::Trusted", ANY),
                 call.config.find_file("Dir::Etc::TrustedParts"),

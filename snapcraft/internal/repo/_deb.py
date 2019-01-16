@@ -58,14 +58,21 @@ _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+
 
 
 class _AptCache:
-    def __init__(self, deb_arch, *, sources_list=None, use_geoip=False):
+    def __init__(self, deb_arch, *, sources_list=None, keyrings=None, use_geoip=False):
         self._deb_arch = deb_arch
         self._sources_list = sources_list
         self._use_geoip = use_geoip
 
+        if not keyrings:
+            keyrings = list()
+        self._keyrings = keyrings
+
     def _setup_apt(self, cache_dir):
         # Do not install recommends
         apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
+
+        # Ensure repos are provided by trusted third-parties
+        apt.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
 
         # Methods and solvers dir for when in the SNAP
         if common.is_snap():
@@ -85,9 +92,39 @@ class _AptCache:
             apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
 
         # Make sure we always use the system GPG configuration, even with
-        # apt.Cache(rootdir).
-        for key in "Dir::Etc::Trusted", "Dir::Etc::TrustedParts":
-            apt.apt_pkg.config.set(key, apt.apt_pkg.config.find_file(key))
+        # apt.Cache(rootdir). However, we also want to be able to add keys to it
+        # without root, so symlink back to the system's, but maintain our own.
+        # We'll leave Trusted alone and just fiddle with TrustedParts (Trusted is the
+        # one modified by apt-key, so add-apt-repository should still work).
+        apt.apt_pkg.config.set(
+            "Dir::Etc::Trusted", apt.apt_pkg.config.find_file("Dir::Etc::Trusted")
+        )
+        apt_config_path = os.path.join(cache_dir, "etc", "apt", "apt.conf")
+        trusted_parts_path = apt.apt_pkg.config.find_file("Dir::Etc::TrustedParts")
+        if not trusted_parts_path.startswith(cache_dir):
+            cached_trusted_parts = os.path.join(
+                cache_dir, trusted_parts_path.lstrip("/")
+            )
+            with contextlib.suppress(FileNotFoundError):
+                shutil.rmtree(cached_trusted_parts)
+            os.makedirs(cached_trusted_parts)
+            for trusted_part in os.scandir(trusted_parts_path):
+                os.symlink(
+                    os.path.join(trusted_parts_path, trusted_part.name),
+                    os.path.join(cached_trusted_parts, trusted_part.name),
+                )
+
+            apt.apt_pkg.config.set("Dir::Etc::TrustedParts", cached_trusted_parts)
+
+            # The above config is all that is needed on bionic, but xenial
+            # requires this configuration file
+            os.makedirs(os.path.dirname(apt_config_path), exist_ok=True)
+            with open(apt_config_path, "w") as f:
+                f.write("Dir::Etc::TrustedParts {};\n".format(cached_trusted_parts))
+
+            # Now copy in any requested keyrings
+            for keyring in self._keyrings:
+                shutil.copy2(keyring, cached_trusted_parts)
 
         # Clear up apt's Post-Invoke-Success as we are not running
         # on the system.
@@ -117,7 +154,17 @@ class _AptCache:
         else:
             logger.warning("Cannot find 'dpkg' command needed to support multiarch")
 
-        return self._create_cache(cache_dir, sources_list_file)
+        old_apt_config = os.environ.get("APT_CONFIG")
+        try:
+            # Only xenial needs this. If snapcraft changes to core18, this
+            # variable is unnecessary.
+            os.environ["APT_CONFIG"] = apt_config_path
+            return self._create_cache(cache_dir, sources_list_file)
+        finally:
+            if old_apt_config is None:
+                del os.environ["APT_CONFIG"]
+            else:
+                os.environ["APT_CONFIG"] = old_apt_config
 
     def _create_cache(self, cache_dir: str, sources_list_file: str) -> apt.Cache:
         apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
@@ -379,7 +426,9 @@ class Ubuntu(BaseRepo):
                     )
         return installed_packages
 
-    def __init__(self, rootdir, sources=None, project_options=None) -> None:
+    def __init__(
+        self, rootdir, sources=None, keyrings=None, project_options=None
+    ) -> None:
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, "download")
 
@@ -390,6 +439,7 @@ class Ubuntu(BaseRepo):
             project_options.deb_arch,
             sources_list=sources,
             use_geoip=project_options.use_geoip,
+            keyrings=keyrings,
         )
 
         self._cache = cache.AptStagePackageCache(

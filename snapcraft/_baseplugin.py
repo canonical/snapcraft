@@ -76,6 +76,11 @@ class BasePlugin:
         return getattr(self, "_PLUGIN_STAGE_SOURCES", [])
 
     @property
+    def PLUGIN_STAGE_KEYRINGS(self):
+        """Define additional keyrings to trust for stage-packages."""
+        return getattr(self, "_PLUGIN_STAGE_KEYRINGS", [])
+
+    @property
     def stage_packages(self):
         return self._stage_packages
 

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import apt
 import contextlib
 import logging
 import os
@@ -127,10 +128,24 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.set_schemadir, common.get_schemadir())
         self.addCleanup(common.set_librariesdir, common.get_librariesdir())
         self.addCleanup(common.set_extensionsdir, common.get_extensionsdir())
+        self.addCleanup(common.set_keyringsdir, common.get_keyringsdir())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(get_snapcraft_path(), "schema"))
         self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(self.fake_logger)
+
+        # Some tests will change the apt Dir::Etc::Trusted and
+        # Dir::Etc::TrustedParts directories. Make sure they're properly reset.
+        self.addCleanup(
+            apt.apt_pkg.config.set,
+            "Dir::Etc::Trusted",
+            apt.apt_pkg.config.find_file("Dir::Etc::Trusted"),
+        )
+        self.addCleanup(
+            apt.apt_pkg.config.set,
+            "Dir::Etc::TrustedParts",
+            apt.apt_pkg.config.find_file("Dir::Etc::TrustedParts"),
+        )
 
         patcher = mock.patch("multiprocessing.cpu_count")
         self.cpu_count = patcher.start()

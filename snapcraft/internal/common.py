@@ -48,6 +48,8 @@ _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, "share", "snapcraft", "librarie
 _librariesdir = _DEFAULT_LIBRARIESDIR
 _DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensions")
 _extensionsdir = _DEFAULT_EXTENSIONSDIR
+_DEFAULT_KEYRINGSDIR = os.path.join(sys.prefix, "share", "snapcraft", "keyrings")
+_keyringsdir = _DEFAULT_KEYRINGSDIR
 _DOCKERENV_FILE = "/.dockerenv"
 
 MAX_CHARACTERS_WRAP = 120
@@ -184,6 +186,15 @@ def set_extensionsdir(extensionsdir):
 
 def get_extensionsdir():
     return _extensionsdir
+
+
+def set_keyringsdir(keyringsdir):
+    global _keyringsdir
+    _keyringsdir = keyringsdir
+
+
+def get_keyringsdir():
+    return _keyringsdir
 
 
 def get_arch_triplet():
