@@ -466,9 +466,9 @@ class _SnapPackaging:
                     source = os.path.join(src_dir, asset)
                     destination = os.path.join(dst_dir, asset)
 
-                    # First, verify that the hook is actually executable
+                    # First, ensure that the hook is executable
                     if origin == "hooks":
-                        _validate_hook(source)
+                        _prepare_hook(source)
 
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(destination)
@@ -484,11 +484,8 @@ class _SnapPackaging:
             os.makedirs(hooks_dir, exist_ok=True)
             for hook_name in os.listdir(snap_hooks_dir):
                 file_path = os.path.join(snap_hooks_dir, hook_name)
-                # First, verify that the hook is actually executable
-                if not os.stat(file_path).st_mode & stat.S_IEXEC:
-                    raise meta_errors.CommandError(
-                        "hook {!r} is not executable".format(hook_name)
-                    )
+                # Make sure the hook is executable
+                _prepare_hook(file_path)
 
                 hook_exec = os.path.join("$SNAP", "snap", "hooks", hook_name)
                 hook_path = os.path.join(hooks_dir, hook_name)
@@ -762,10 +759,10 @@ def _find_bin(binary, basedir):
         raise meta_errors.CommandError(binary)
 
 
-def _validate_hook(hook_path):
+def _prepare_hook(hook_path):
+    # Ensure hook is executable
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
-        asset = os.path.basename(hook_path)
-        raise meta_errors.CommandError("hook {!r} is not executable".format(asset))
+        os.chmod(hook_path, 0o755)
 
 
 def _verify_app_paths(basedir, apps):
