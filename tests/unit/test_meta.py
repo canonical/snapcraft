@@ -1057,6 +1057,17 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         )
 
     def test_snap_hooks_not_executable_chmods(self):
+        real_chmod = os.chmod
+
+        def chmod_noop(name, *args, **kwargs):
+            # Simulate a source filesystem that doesn't allow changing permissions
+            if name.startswith("snap"):
+                pass
+            else:
+                real_chmod(name, *args, **kwargs)
+
+        self.useFixture(fixtures.MonkeyPatch("os.chmod", chmod_noop))
+
         # Setup a snap directory containing a few things.
         _create_file(os.path.join(self.snap_dir, "snapcraft.yaml"))
         _create_file(os.path.join(self.snap_dir, "hooks", "test-hook"))

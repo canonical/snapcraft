@@ -401,14 +401,14 @@ class _SnapPackaging:
                     source = os.path.join(src_dir, asset)
                     destination = os.path.join(dst_dir, asset)
 
-                    # First, ensure that the hook is executable
-                    if origin == "hooks":
-                        _prepare_hook(source)
-
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(destination)
 
                     file_utils.link_or_copy(source, destination)
+
+                    # Ensure that the hook is executable
+                    if origin == "hooks":
+                        _prepare_hook(destination)
 
         self._record_manifest_and_source_snapcraft_yaml()
 
