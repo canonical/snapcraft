@@ -108,6 +108,22 @@ class BaseProviderTest(BaseProviderBaseTest):
         # TODO add robustness to start. (LP: #1792242)
         self.assertThat(provider.provider_project_dir, Not(DirExists()))
 
+    def test_clean_part(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.clean(part_names=("part1",))
+
+        provider.run_mock.assert_called_once_with(["snapcraft", "clean", "part1"])
+
+    def test_clean_multiple_parts(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.clean(part_names=("part1", "part2"))
+
+        provider.run_mock.assert_called_once_with(
+            ["snapcraft", "clean", "part1", "part2"]
+        )
+
 
 class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
     def test_setup_snapcraft(self):

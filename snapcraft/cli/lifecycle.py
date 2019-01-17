@@ -273,20 +273,13 @@ def pack(directory, output, **kwargs):
 
 @lifecyclecli.command()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-@click.option(
-    "--step",
-    "-s",
-    "step_name",
-    type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
-    help="only clean the specified step and those that depend on it.",
-)
-def clean(parts, step_name):
-    """Remove content - cleans downloads, builds or install artifacts.
+def clean(parts):
+    """Remove a part's assets.
 
     \b
     Examples:
         snapcraft clean
-        snapcraft clean my-part --step build
+        snapcraft clean my-part
     """
     build_environment = env.BuilderEnvironmentConfig()
     try:
@@ -300,27 +293,19 @@ def clean(parts, step_name):
             skip_snapcraft_yaml=True
         )
 
-    step = None
-    if step_name:
-        if step_name == "strip":
-            echo.warning(
-                "DEPRECATED: Use `prime` instead of `strip` as the step to clean"
-            )
-            step_name = "prime"
-        step = steps.get_step_by_name(step_name)
-
-    if build_environment.is_host:
-        lifecycle.clean(project, parts, step)
+    if build_environment.is_managed_host or build_environment.is_host:
+        lifecycle.clean(project, parts)
     else:
-        # TODO support for steps.
-        if parts or step_name:
-            raise errors.SnapcraftEnvironmentError(
-                "Build providers are still not feature complete, specifying parts or a step name "
-                "is not yet supported.")
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        build_provider_class(project=project, echoer=echo).clean_project()
+        build_provider = build_provider_class(project=project, echoer=echo)
+        if parts:
+            echo.info("Launching a VM.")
+            with build_provider_class(project=project, echoer=echo) as instance:
+                instance.clean(part_names=parts)
+        else:
+            build_provider.clean_project()
 
 
 if __name__ == "__main__":
