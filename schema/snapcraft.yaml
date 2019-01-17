@@ -239,6 +239,8 @@ properties:
           stop-command: [daemon]
           post-stop-command: [daemon]
           reload-command: [daemon]
+          before: [daemon]
+          after: [daemon]
         additionalProperties: false
         properties:
           common-id:
@@ -271,6 +273,20 @@ properties:
               - forking
               - oneshot
               - notify
+          after:
+            type: array
+            description: List of applications that are ordered to be started after the current one
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+          before:
+            type: array
+            description: List of applications that are ordered to be started before the current one
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
           refresh-mode:
               type: string
               description: controls if the app should be restarted at all

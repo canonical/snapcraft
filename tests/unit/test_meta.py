@@ -526,6 +526,28 @@ class RefreshModeTestCase(CreateBaseTestCase):
         self.assertThat(y["apps"]["app1"]["refresh-mode"], Equals(self.mode))
 
 
+class BeforeAndAfterTest(CreateBaseTestCase):
+    def test_before_valid(self):
+        self.config_data["apps"] = {
+            "app-before": {"command": "sh", "daemon": "simple"},
+            "app": {"command": "sh", "daemon": "simple", "before": ["app-before"]},
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y["apps"]["app"]["before"], Equals(["app-before"]))
+
+    def test_after_valid(self):
+        self.config_data["apps"] = {
+            "app-after": {"command": "sh", "daemon": "simple"},
+            "app": {"command": "sh", "daemon": "simple", "after": ["app-after"]},
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y["apps"]["app"]["after"], Equals(["app-after"]))
+
+
 class PassthroughBaseTestCase(CreateBaseTestCase):
     def setUp(self):
         super().setUp()
