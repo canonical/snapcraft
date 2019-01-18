@@ -27,10 +27,6 @@ if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" && -f "$XDG_CONFIG_HOME/user-d
   fi
 fi
 
-# Create config folder
-mkdir -p "$XDG_CONFIG_HOME" && chmod 700 "$XDG_CONFIG_HOME"
-
-
 if [ "$SNAP_ARCH" == "amd64" ]; then
   ARCH="x86_64-linux-gnu"
 elif [ "$SNAP_ARCH" == "armhf" ]; then

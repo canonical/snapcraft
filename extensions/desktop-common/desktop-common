@@ -382,6 +382,8 @@ append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_LAUNCHER_ARCH_TRIPLET"
 append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa"
 
 # Gdk-pixbuf loaders
+export GDK_PIXBUF_MODULE_FILE=$XDG_CACHE_HOME/gdk-pixbuf-loaders.cache
+export GDK_PIXBUF_MODULEDIR=$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
   if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
