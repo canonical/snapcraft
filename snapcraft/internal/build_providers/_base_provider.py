@@ -256,7 +256,7 @@ class Provider(abc.ABC):
             inject_from_host=inject_from_host,
         )
         # Inject snapcraft
-        snap_injector.add(snap_name="core")
+        snap_injector.add(snap_name="core18")
         snap_injector.add(snap_name="snapcraft")
 
         # This build can be driven from a non snappy enabled system, so we may

@@ -5,6 +5,7 @@ description: |
     a single toolset, but instead is a collection of tools that enable the
     natural workflow of an upstream to be extended with a simple release step
     into Snappy.
+base: core18
 adopt-info: snapcraft
 confinement: classic
 
@@ -44,7 +45,7 @@ parts:
         - execstack
         - gpgv
         - libffi6
-        - libsodium18
+        - libsodium23
         - libxml2
         - libxslt1.1
         - patchelf
@@ -55,7 +56,7 @@ parts:
 
       echo "Create libsodium symlink..."
       TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-      LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.18")"
+      LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.23")"
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
@@ -63,7 +64,8 @@ parts:
   snapcraft:
     source: .
     plugin: python
-    requirements: requirements.txt
+    requirements: 
+    - requirements.txt
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
@@ -76,7 +78,20 @@ parts:
         snapcraftctl set-grade "$grade"
     override-build: |
         snapcraftctl build
-        ./tools/snapcraft-override-build.sh
+
+        # Restore patched files
+        PYTHON_PACKAGE_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/"
+        [ -f "patched/ctypes/__init__.py.orig" ] && mv "patched/ctypes/__init__.py.orig" "$PYTHON_PACKAGE_PATH/ctypes/__init__.py"
+
+        # Apply patches
+        echo "Patching ctypes..."
+        patch -s -b "$PYTHON_PACKAGE_PATH/ctypes/__init__.py" patches/ctypes_init.diff
+
+        # Save patches to allow rebuilding
+        mkdir -p patched/ctypes
+        [ -f "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" ] && mv "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" patched/ctypes
+
+        sed -i "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
     override-prime: |
         snapcraftctl prime
 
@@ -91,12 +106,26 @@ parts:
     source: https://github.com/snapcore/snapcraft.git
     source-branch: legacy
     source-depth: 1
-    requirements: requirements.txt
+    requirements:
+    - requirements.txt
     override-build: |
         snapcraftctl build
-        ./tools/snapcraft-override-build.sh
 
-        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/sitecustomize.py
+        # Restore patched files
+        PYTHON_PACKAGE_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/"
+        [ -f "patched/ctypes/__init__.py.orig" ] && mv "patched/ctypes/__init__.py.orig" "$PYTHON_PACKAGE_PATH/ctypes/__init__.py"
+
+        # Apply patches
+        echo "Patching ctypes..."
+        patch -s -b "$PYTHON_PACKAGE_PATH/ctypes/__init__.py" patches/ctypes_init.diff
+
+        # Save patches to allow rebuilding
+        mkdir -p patched/ctypes
+        [ -f "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" ] && mv "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" patched/ctypes
+
+        sed -i "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+
+        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
     organize:
         '*': legacy_snapcraft/
     after: [snapcraft-libs]
