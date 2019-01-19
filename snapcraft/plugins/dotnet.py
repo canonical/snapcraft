@@ -125,6 +125,23 @@ class DotNetPlugin(snapcraft.BasePlugin):
                     "libgcc1",
                 ]
             )
+        elif base == "core18":
+            self.stage_packages.extend(
+                [
+                    "libcurl4",
+                    "libcurl3-gnutls",
+                    "libicu60",
+                    "liblttng-ust0",
+                    "libunwind8",
+                    "lldb",
+                    "libssl1.0.0",
+                    "libgssapi-krb5-2",
+                    "libc6",
+                    "zlib1g",
+                    "libgcc1",
+                    "libtinfo5",
+                ]
+            )
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
