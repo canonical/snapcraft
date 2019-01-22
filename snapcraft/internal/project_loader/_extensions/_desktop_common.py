@@ -72,5 +72,9 @@ class DesktopCommonExtension(Extension):
                 "plugin": "dump",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
                 "organize": {"desktop-*": "snap/command-chain/"},
-            }
+            },
+            "desktop-common-bindtextdomain": {
+                "plugin": "make",
+                "source": "$SNAPCRAFT_EXTENSIONS_DIR/bindtextdomain",
+            },
         }
