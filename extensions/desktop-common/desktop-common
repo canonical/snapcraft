@@ -56,15 +56,11 @@ function is_subpath() {
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
-WITH_RUNTIME=no
-if [ -z "$SNAP_DESKTOP_RUNTIME" ]; then
-  SNAP_DESKTOP_RUNTIME="$SNAP"
-else
+if [ "$WITH_SNAP_DESKTOP_RUNTIME" = "yes" ]; then
   # add general paths not added by snapcraft due to runtime snap
   append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
   append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
   append_dir PATH "$SNAP_DESKTOP_RUNTIME/usr/bin"
-  WITH_RUNTIME=yes
 fi
 
 # XKB config
@@ -76,6 +72,7 @@ export XLOCALEDIR="$SNAP_DESKTOP_RUNTIME/usr/share/X11/locale"
 
 # Set XCursors path
 export XCURSOR_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/icons"
+prepend_dir XCURSOR_PATH $SNAP/data-dir/icons
 
 # Mesa Libs for OpenGL support
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa"
@@ -84,6 +81,7 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TR
 # Tell libGL where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
+export LIBVA_DRIVERS_PATH=$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri
 
 # Workaround in snapd for proprietary nVidia drivers mounts the drivers in
 # /var/lib/snapd/lib/gl that needs to be in LD_LIBRARY_PATH
@@ -261,8 +259,8 @@ if [ -n "$XDG_RUNTIME_DIR" ]; then
 fi
 
 # GI repository
-[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
-[ "$WITH_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
+[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
+[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/gjs/girepository-1.0"
