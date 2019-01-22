@@ -9,8 +9,9 @@ if [ "$SNAP_DESKTOP_WAYLAND_AVAILABLE" = "true" ]; then
   export CLUTTER_BACKEND="wayland"
   # Does not hurt to specify this as well, just in case
   export QT_QPA_PLATFORM=wayland-egl
-  export GTK_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gtk-3.0"
 fi
+
+export GTK_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gtk-3.0"
 
 # ibus and fcitx integration
 GTK_IM_MODULE_DIR=$XDG_CACHE_HOME/immodules
