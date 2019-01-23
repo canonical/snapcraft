@@ -17,10 +17,10 @@
 
 import os
 
+import json
 import jsonschema
 
 from . import errors
-from snapcraft import yaml_utils
 from snapcraft.internal import common
 
 
@@ -52,11 +52,11 @@ class Validator:
 
     def _load_schema(self):
         schema_file = os.path.abspath(
-            os.path.join(common.get_schemadir(), "snapcraft.yaml")
+            os.path.join(common.get_schemadir(), "snapcraft.json")
         )
         try:
             with open(schema_file) as fp:
-                self._schema = yaml_utils.load(fp)
+                self._schema = json.load(fp)
         except FileNotFoundError:
             raise errors.YamlValidationError(
                 "snapcraft validation file is missing from installation path"
