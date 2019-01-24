@@ -186,6 +186,9 @@ class Provider(abc.ABC):
     def execute_step(self, step: steps.Step) -> None:
         self._run(command=["snapcraft", step.name])
 
+    def clean(self, part_names: Sequence[str]) -> None:
+        self._run(command=["snapcraft", "clean"] + list(part_names))
+
     def pack_project(self, *, output: Optional[str] = None) -> None:
         command = ["snapcraft", "snap"]
         if output:

@@ -218,3 +218,47 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock.assert_called_once_with(None)
         self.execute_step_mock.assert_not_called()
         self.shell_mock.assert_not_called()
+
+
+class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
+    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
+        )
+        self.useFixture(fixture_setup.FakeMultipass())
+
+        clean_mock = mock.Mock()
+
+        class Provider(ProviderImpl):
+            def execute_step(self, step: steps.Step) -> None:
+                raise ProviderExecError(
+                    provider_name="fake", command=["snapcraft", "pull"], exit_code=1
+                )
+
+            def clean(self, part_names):
+                clean_mock(part_names=part_names)
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+        )
+        self.provider = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.clean_mock = clean_mock
+
+        self.make_snapcraft_yaml("pull", base=self.base)
+
+    def test_clean_a_single_part(self):
+        result = self.run_command(["clean", "part1"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.clean_mock.assert_called_once_with(part_names=("part1",))
+
+    def test_clean_multiple_parts(self):
+        result = self.run_command(["clean", "part1", "part2", "part3"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.clean_mock.assert_called_once_with(part_names=("part1", "part2", "part3"))
