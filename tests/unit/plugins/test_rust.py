@@ -221,6 +221,9 @@ class RustPluginTest(RustPluginBaseTest):
 
         self.project = snapcraft.ProjectOptions()
 
+        if self.project.deb_arch == "s390x":
+            self.skipTest("architecture is not supported by rust")
+
     @mock.patch.object(rust.sources, "Script")
     def test_pull(self, script_mock):
         plugin = rust.RustPlugin("test-part", self.options, self.project)
