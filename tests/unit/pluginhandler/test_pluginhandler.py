@@ -1807,6 +1807,25 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.next_step(), Equals(steps.PRIME))
         self.assertFalse(os.path.exists(bindir))
 
+    def test_clean_prime_state_inconsistent_files(self):
+        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
+        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
+        bindir = os.path.join(self.prime_dir, "bin")
+        os.makedirs(bindir)
+        open(os.path.join(bindir, "1"), "w").close()
+
+        self.handler.mark_done(steps.STAGE)
+
+        self.handler.mark_done(
+            steps.PRIME, states.PrimeState({"bin/1", "bin/2"}, {"bin", "foo"})
+        )
+
+        self.handler.clean_prime({})
+
+        self.assertThat(self.handler.latest_step(), Equals(steps.STAGE))
+        self.assertThat(self.handler.next_step(), Equals(steps.PRIME))
+        self.assertFalse(os.path.exists(bindir))
+
     def test_clean_prime_state_multiple_parts(self):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
