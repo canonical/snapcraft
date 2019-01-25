@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.internal.project_loader.grammar_processing import (
-    _global_grammar_processor as processor
+    _global_grammar_processor as processor,
 )
 
 import doctest
