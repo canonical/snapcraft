@@ -3,6 +3,12 @@ summary: Build a rust snap using a specific version of rust
 environment:
   SNAP_DIR: ../snaps/rust-hello
 
+systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-armhf
+
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
