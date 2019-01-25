@@ -44,6 +44,7 @@ char *bindtextdomain(const char *domainname, const char *dirname)
 
         char * paths[] = {
                 "gnome-platform/usr/share/locale",
+                "gnome-platform/usr/share/locale-langpack",
                 "usr/share/locale",
                 "usr/share/locale-langpack",
                 NULL
