@@ -1810,15 +1810,17 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_prime_state_inconsistent_files(self):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-        bindir = os.path.join(self.prime_dir, "bin")
-        os.makedirs(bindir)
-        open(os.path.join(bindir, "1"), "w").close()
 
         self.handler.mark_done(steps.STAGE)
 
         self.handler.mark_done(
-            steps.PRIME, states.PrimeState({"bin/1", "bin/2"}, {"bin", "foo"})
+            steps.PRIME, states.PrimeState({"bin/1", "bin/2"}, {"bin", "not-there"})
         )
+
+        # Only create a subset of the files and directories that were marked as primed
+        bindir = os.path.join(self.prime_dir, "bin")
+        os.makedirs(bindir)
+        open(os.path.join(bindir, "1"), "w").close()
 
         self.handler.clean_prime({})
 
