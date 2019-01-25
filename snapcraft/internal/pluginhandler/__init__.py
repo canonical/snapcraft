@@ -1134,8 +1134,8 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
             os.remove(os.path.join(directory, snap_file))
         except FileNotFoundError:
             logger.warning(
-                "File {name!r} not found. Did you remove it in a different "
-                "part?".format(name=snap_file)
+                "Attempted to remove file {name!r}, but it didn't exist. "
+                "Skipping...".format(name=snap_file)
             )
 
     # snap_dirs may not be ordered so that subdirectories come before
@@ -1150,8 +1150,8 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
                 os.rmdir(migrated_directory)
         except FileNotFoundError:
             logger.warning(
-                "Directory {name!r} not found. Did you remove it in a "
-                "different part?".format(name=snap_dir)
+                "Attempted to remove directory {name!r}, but it didn't exist. "
+                "Skipping...".format(name=snap_dir)
             )
 
 
