@@ -1,7 +1,7 @@
-summary: Build and run a gradle snap
+summary: Build and run a gradlew snap
 
 environment:
-  SNAP_DIR: ../snaps/gradle-hello
+  SNAP_DIR: ../snaps/gradlew-hello
   OPENJDK_VERSION/CURRENT: "CURRENT"
   OPENJDK_VERSION/LATEST: "LATEST"  
 
