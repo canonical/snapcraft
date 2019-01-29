@@ -256,7 +256,6 @@ class MavenPlugin(snapcraft.BasePlugin):
                 "lib",
                 "jvm",
                 "java-{}-openjdk-*".format(self._java_version),
-                "jre",
                 "bin",
                 "java",
             )

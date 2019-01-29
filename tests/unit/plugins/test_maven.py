@@ -200,7 +200,6 @@ class MavenPluginTest(unit.TestCase):
             "lib",
             "jvm",
             "java-{}-openjdk-amd64".format(self.expected_java_version),
-            "jre",
             "bin",
             "java",
         )

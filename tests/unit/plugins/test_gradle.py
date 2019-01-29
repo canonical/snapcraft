@@ -55,7 +55,6 @@ class GradlePluginBaseTest(unit.TestCase):
             "lib",
             "jvm",
             "java-{}-openjdk-amd64".format(java_version),
-            "jre",
             "bin",
             "java",
         )
