@@ -205,7 +205,8 @@ suites:
    systems: [ubuntu-18.04*]
  tests/spread/plugins/gradle/:
    summary: tests of snapcraft's Gradle plugin
-   kill-timeout: 30m
+   priority: 50  # Run this test early so we're not waiting for it
+   kill-timeout: 40m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    # Keep this 18.04 only for now as it is the only stable base.
    systems: [ubuntu-18.04*]
