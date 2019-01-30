@@ -299,19 +299,10 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
-    def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
-        # TODO support users for the qemu provider.
-        cloud_user_data_filepath = os.path.join(
-            self.provider_project_dir, "user-data.yaml"
-        )
-        if os.path.exists(cloud_user_data_filepath):
-            return cloud_user_data_filepath
-
+    def _write_cloud_user_data_file(self, data_file: str, timezone=_get_tzdata()) -> None:
         user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
-        with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
-            print(user_data, file=cloud_user_data_file, end="")
-
-        return cloud_user_data_filepath
+        with open(data_file, "w") as open_data_file:
+            print(user_data, file=open_data_file, end="")
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info

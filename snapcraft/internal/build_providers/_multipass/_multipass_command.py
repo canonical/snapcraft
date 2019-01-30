@@ -227,15 +227,33 @@ class MultipassCommand:
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
-    def copy_files(self, *, source: str, destination: str) -> None:
-        """Passthrough for running multipass copy-files.
+    def pull_file(self, *, instance: str, source: str, destination: str) -> None:
+        """Pull file from multipass instance. Avoids multipass opening file directly
+        which it may not be permitted to by snap confinement.
 
-        :param str source: the source file to copy, using syntax expected
-                           by multipass.
-        :param str destination: the destination of the copied file, using
-                                syntax expected by multipass.
+        :param str instance: the multipass instance containing the file to pull
+        :param str source: the in-instance path to the source file to pull
+        :param str destination: the destination of the pulled file on the host
         """
-        cmd = [self.provider_cmd, "copy-files", source, destination]
+        vm_cmd = "echo '" + source + "'"
+        cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd, ">", destination]
+        try:
+            _run(cmd)
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderFileCopyError(
+                provider_name=self.provider_name, exit_code=process_error.returncode
+            ) from process_error
+
+    def push_file(self, *, source: str, instance: str, destination: str) -> None:
+        """Push file to multipass instance. Avoids multipass opening file directly
+        which it may not be permitted to by snap confinement.
+
+        :param str source: the local path to the source file to pull
+        :param str instance: the multipass instance to push the file to
+        :param str destination: the destination of the pushed file on the instance
+        """
+        vm_cmd = "cat > '" + destination + "'"
+        cmd = ["cat", source, "|", self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd] #FIXME - not Windows compatible!
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:

@@ -18,7 +18,10 @@ import logging
 import os
 import sys
 import shlex
+import subprocess
+import sys
 from typing import Dict, Sequence
+from pathlib import Path
 
 from .. import errors
 from .._base_provider import Provider
@@ -84,8 +87,46 @@ class Multipass(Provider):
 
         return image
 
+    def _is_multipass_confined(self) -> bool:
+        if sys.platform != "linux":
+            return False;
+
+        # Get the exit code of echo "ls $HOME/.local/share/snapcraft" | snap run --shell multipass;
+        # If zero, multipass *not* confined. If 2, multipass *is* confined. If 1, multipass is not
+        # installed as a snap. If 127, snap not installed.
+        subcommand = "echo 'ls " + self.provider_project_dir + "' | snap run --shell multipass"
+        command = ["bash", "-c", subcommand]
+        logger.debug("Running {}".format(" ".join(command)))
+        if subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 2:
+            return True;
+
+        return False;
+
+    def _prepare_cloud_user_data(self) -> str:
+        # If Multipass Snap confined, place cloud-init file in location both snapcraft
+        # (classicly confined) and multipass can access. For Multipass, the host directory
+        # $HOME/snap/multipass/current corresponds to its confined $HOME
+        if self._is_multipass_confined():
+            base_dir = os.path.join(
+                Path.home(), "snap", "multipass", "current", ".local", "share", "multipass"
+            )
+        else:
+            # If Multipass is not confined, then can use usual
+            base_dir = self.provider_project_dir
+
+        # ensure it exists
+        os.makedirs(base_dir, exist_ok=True)
+
+        cloud_user_data_filepath = os.path.join(base_dir, "user-data.yaml")
+
+        if os.path.exists(cloud_user_data_filepath):
+            return cloud_user_data_filepath
+
+        self._write_cloud_user_data_file(data_file=cloud_user_data_filepath)
+        return cloud_user_data_filepath
+
     def _launch(self) -> None:
-        cloud_user_data_filepath = self._get_cloud_user_data()
+        cloud_user_data_filepath = self._prepare_cloud_user_data()
         image = self._get_disk_image()
 
         cpus = _MachineSetting(envvar="SNAPCRAFT_BUILD_ENVIRONMENT_CPU", default="2")
@@ -143,8 +184,8 @@ class Multipass(Provider):
         self._umount(mountpoint=self._SNAPS_MOUNTPOINT)
 
     def _push_file(self, *, source: str, destination: str) -> None:
-        destination = "{}:{}".format(self.instance_name, destination)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        self._multipass_cmd.push_file(
+            source=source, instance=self.instance_name, destination=destination)
 
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
@@ -215,8 +256,8 @@ class Multipass(Provider):
         )
 
         # Then copy the tarball over
-        destination = "{}:{}".format(self.instance_name, tarball)
-        self._multipass_cmd.copy_files(source=tarball, destination=destination)
+        self._multipass_cmd.push_file(
+            source=tarball, instance=self.instance_name, destination=destination)
 
         # Finally extract it into project_dir.
         extract_cmd = [
@@ -247,10 +288,11 @@ class Multipass(Provider):
 
     def retrieve_snap(self) -> str:
         # TODO add instance check.
-        source = "{}:{}/{}".format(
-            self.instance_name, self._INSTANCE_PROJECT_DIR, self.snap_filename
+        source = "{}/{}".format(
+            self._INSTANCE_PROJECT_DIR, self.snap_filename
         )
-        self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
+        self._multipass_cmd.pull_file(
+            instance=self.instance_name, source=source, destination=self.snap_filename)
         return self.snap_filename
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
