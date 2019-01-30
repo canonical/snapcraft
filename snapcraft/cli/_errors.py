@@ -17,6 +17,8 @@
 import distutils.util
 import os
 import sys
+import shutil
+import logging
 import tempfile
 import traceback
 from textwrap import dedent
@@ -28,6 +30,7 @@ from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
+from snapcraft.internal.build_providers.errors import ProviderExecError
 
 # raven is not available on 16.04
 try:
@@ -66,6 +69,11 @@ _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
 
+TRACEBACK_FILEPATH = ".snapcraft_provider_traceback"
+
+
+logger = logging.getLogger(__name__)
+
 
 def exception_handler(  # noqa: C901
     exception_type, exception, exception_traceback, *, debug=False
@@ -86,16 +94,18 @@ def exception_handler(  # noqa: C901
         - a snapcraft handled error occurs, debug=False so only the
           exception message is shown
     """
-    # TODO pickle the traceback if on a manged host so the actual host can deal with it.
     exc_info = (exception_type, exception, exception_traceback)
     exit_code = 1
-    is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
+    is_snapcraft_error = (
+        issubclass(exception_type, errors.SnapcraftError)
+        and exception_type is not ProviderExecError
+    )
     is_snapcraft_reportable_error = issubclass(
         exception_type, errors.SnapcraftReportableError
     )
     is_raven_setup = RavenClient is not None
     is_snapcraft_managed_host = (
-        distutils.util.strtobool(os.getenv("SNAPCRAFT_MANAGED_HOST", "n")) == 1
+        os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host"
     )
     is_connected_to_tty = sys.stdout.isatty()
     ask_to_report = False
@@ -115,29 +125,46 @@ def exception_handler(  # noqa: C901
         exit_code = -1
 
     if ask_to_report:
-        if not is_raven_setup or is_snapcraft_managed_host:
+        if not is_raven_setup:
             click.echo(_MSG_TRACEBACK_PRINT)
             traceback.print_exception(*exc_info, file=sys.stdout)
             click.echo(_MSG_MANUALLY_REPORT)
         else:
-            if is_connected_to_tty:
-                click.echo(_MSG_TRACEBACK_FILE)
+            if is_snapcraft_managed_host:
+                # On managed host, prepare our traceback data to be retrieved.
+                traceback.print_exception(
+                    exc_info[0],
+                    exc_info[1],
+                    exc_info[2],
+                    file=open(TRACEBACK_FILEPATH, "w"),
+                )
             else:
-                click.echo(_MSG_TRACEBACK_PRINT)
-                traceback.print_exception(*exc_info, file=sys.stdout)
-            trace_filepath = _handle_trace_output(exc_info)
-            if _is_send_to_sentry(trace_filepath):
-                try:
-                    _submit_trace(exc_info)
-                except Exception as exc:
-                    # we really cannot do much more from this exit handler.
-                    echo.error(
-                        "Encountered an issue while trying to submit the report: {}".format(
-                            str(exc)
-                        )
-                    )
+                # On outer host, check if we have traceback from managed host
+                # and retrieve it.
+                if os.path.isfile(TRACEBACK_FILEPATH):
+                    trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
+                    shutil.move(TRACEBACK_FILEPATH, trace_filepath)
                 else:
-                    click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+                    trace_filepath = _handle_trace_output(exc_info)
+
+                if is_connected_to_tty:
+                    click.echo(_MSG_TRACEBACK_FILE)
+                else:
+                    click.echo(_MSG_TRACEBACK_PRINT)
+                    print(open(trace_filepath, "r").read())
+
+                if _is_send_to_sentry(trace_filepath):
+                    try:
+                        _submit_trace(exc_info)
+                    except Exception as exc:
+                        # we really cannot do much more from this exit handler.
+                        echo.error(
+                            "Encountered an issue while trying to submit the report: {}".format(
+                                str(exc)
+                            )
+                        )
+                    else:
+                        click.echo(_MSG_SEND_TO_SENTRY_THANKS)
 
     sys.exit(exit_code)
 

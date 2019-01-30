@@ -50,6 +50,10 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.exit_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("builtins.print")
+        self.print_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch("snapcraft.cli._errors.echo.error")
         self.error_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -201,15 +205,13 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
         if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
-            )
+            # we don't have actual error content to be printed
+            self.print_mock.assert_called_once_with("")
 
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+        self.print_exception_mock.assert_called_once_with(
+            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
+        )
 
 
 class SendToSentryIsNoTest(SendToSentryBaseTest):
@@ -239,15 +241,13 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
         if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
-            )
+            # we don't have actual error content to be printed
+            self.print_mock.assert_called_once_with("")
 
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+        self.print_exception_mock.assert_called_once_with(
+            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
+        )
 
 
 class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
@@ -300,15 +300,13 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         self.error_mock.assert_not_called()
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
         if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
-            )
+            # we don't have actual error content to be printed
+            self.print_mock.assert_called_once_with("")
 
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+        self.print_exception_mock.assert_called_once_with(
+            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
+        )
 
 
 class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):

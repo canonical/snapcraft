@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+import logging
 import typing
 import sys
+import os
 from time import sleep
 
 import click
@@ -41,6 +43,11 @@ from snapcraft.project.errors import (
     YamlValidationError,
     MultipassMissingInstallableError,
 )
+from ._errors import TRACEBACK_FILEPATH
+
+
+logger = logging.getLogger(__name__)
+
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
@@ -90,6 +97,7 @@ def _execute(  # noqa: C901
     **kwargs
 ) -> "Project":
     # fmt: on
+    _clean_provider_error()
     provider = "host" if destructive_mode else None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     try:
@@ -137,6 +145,7 @@ def _execute(  # noqa: C901
                 else:
                     instance.execute_step(step)
             except Exception:
+                _retrieve_provider_error(instance)
                 if project.debug:
                     instance.shell()
                 else:
@@ -153,6 +162,18 @@ def _pack(directory: str, *, output: str) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
 
+def _clean_provider_error() -> None:
+    if os.path.isfile(TRACEBACK_FILEPATH):
+        try:
+            os.remove(TRACEBACK_FILEPATH)
+        except Exception as e:
+            logger.debug("can't remove error file: {}", str(e))
+
+def _retrieve_provider_error(instance) -> None:
+    try:
+        instance.retrieve_file(TRACEBACK_FILEPATH, delete=True)
+    except Exception as e:
+        logger.debug("can't retrieve error file: {}", str(e))
 
 @click.group()
 @add_build_options()

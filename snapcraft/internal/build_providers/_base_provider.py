@@ -216,6 +216,18 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
+    def retrieve_file(self, name: str, delete: bool = False) -> bool:
+        """
+        Provider steps needed to retrieve a file from the instance, optionally
+        deleting the file after a successful retrieval.
+
+        :param delete: whether the file should be deleted.
+        :type delete: bool
+        :returns: whether the file was successfully retrieved and deleted.
+        :rtype: bool
+        """
+
+    @abc.abstractmethod
     def shell(self) -> None:
         """Provider steps to provide a shell into the instance."""
 
