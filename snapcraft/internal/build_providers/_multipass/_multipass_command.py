@@ -236,9 +236,14 @@ class MultipassCommand:
         :param str destination: the destination of the pulled file on the host
         """
         vm_cmd = "echo '" + source + "'"
-        cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd, ">", destination]
+        cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd]
         try:
-            _run(cmd)
+            with open(destination, "wb") as pipe_out:
+                subprocess.Popen(cmd, stdout=pipe_out)
+        except OSError as file_error:
+            raise errors.ProviderFileCopyError(
+                provider_name=self.provider_name, exit_code=file_error.errno
+            ) from file_error
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderFileCopyError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
@@ -253,9 +258,15 @@ class MultipassCommand:
         :param str destination: the destination of the pushed file on the instance
         """
         vm_cmd = "cat > '" + destination + "'"
-        cmd = ["cat", source, "|", self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd] #FIXME - not Windows compatible!
+        cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd]
+
         try:
-            _run(cmd)
+            with open(source, "rb") as pipe_in:
+                subprocess.Popen(cmd, stdin=pipe_in)
+        except OSError as file_error:
+            raise errors.ProviderFileCopyError(
+                provider_name=self.provider_name, exit_code=file_error.errno
+            ) from file_error
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderFileCopyError(
                 provider_name=self.provider_name, exit_code=process_error.returncode
