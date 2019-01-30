@@ -36,7 +36,7 @@ backends:
           workers: 5
           image: ubuntu-1604-64-virt-enabled
       - ubuntu-18.04-64:
-          workers: 8
+          workers: 10
           image: ubuntu-1804-64-virt-enabled
   autopkgtest:
     type: adhoc
