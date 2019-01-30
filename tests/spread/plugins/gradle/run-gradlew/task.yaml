@@ -1,5 +1,7 @@
 summary: Build and run a gradlew snap
 
+manual: true
+
 environment:
   SNAP_DIR: ../snaps/gradlew-hello
   OPENJDK_VERSION/CURRENT: "CURRENT"
