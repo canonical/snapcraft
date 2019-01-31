@@ -156,20 +156,16 @@ class MultipassTest(BaseProviderBaseTest):
             ]
         )
 
-        self.multipass_cmd_mock().copy_files.assert_has_calls(
-            [
-                mock.call(
-                    destination="{}:source.tar".format(self.instance_name),
-                    source="source.tar",
-                ),
-                mock.call(
-                    destination="project-name_{}.snap".format(self.project.deb_arch),
-                    source="{}:~/project/project-name_{}.snap".format(
-                        self.instance_name, self.project.deb_arch
-                    ),
-                ),
-            ]
+        self.multipass_cmd_mock().push_file.assert_called_once_with(
+            source="source.tar", instance=self.instance_name, destination="source.tar"
         )
+
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            instance=self.instance_name,
+            source="~/project/project-name_{}.snap".format(self.project.deb_arch),
+            destination="project-name_{}.snap".format(self.project.deb_arch),
+        )
+
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name, time=10
         )
@@ -255,10 +251,11 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="{}:source.tar".format(self.instance_name), source="source.tar"
+        self.multipass_cmd_mock().push_file.assert_called_once_with(
+            source="source.tar", instance=self.instance_name, destination="source.tar"
         )
 
+        self.multipass_cmd_mock().pull_file.assert_not_called()
         self.multipass_cmd_mock().launch.assert_not_called()
         self.multipass_cmd_mock().info.assert_not_called()
         self.multipass_cmd_mock().stop.assert_not_called()
@@ -283,7 +280,8 @@ class MultipassTest(BaseProviderBaseTest):
             ],
         )
 
-        self.multipass_cmd_mock().copy_files.assert_not_called()
+        self.multipass_cmd_mock().pull_file.assert_not_called()
+        self.multipass_cmd_mock().push_file.assert_not_called()
         self.multipass_cmd_mock().launch.assert_not_called()
         self.multipass_cmd_mock().info.assert_not_called()
         self.multipass_cmd_mock().stop.assert_not_called()
@@ -296,13 +294,13 @@ class MultipassTest(BaseProviderBaseTest):
         # calling this on an instance that does not exist.
         multipass.retrieve_snap()
 
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            instance=self.instance_name,
+            source="~/project/project-name_{}.snap".format(self.project.deb_arch),
             destination="project-name_{}.snap".format(self.project.deb_arch),
-            source="{}:~/project/project-name_{}.snap".format(
-                self.instance_name, self.project.deb_arch
-            ),
         )
 
+        self.multipass_cmd_mock().push_file.assert_not_called()
         self.multipass_cmd_mock().execute.assert_not_called()
         self.multipass_cmd_mock().launch.assert_not_called()
         self.multipass_cmd_mock().info.assert_not_called()
@@ -515,7 +513,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(instance_name=self.instance_name, output_format="json"),
             ]
         )
-        self.multipass_cmd_mock().copy_files.assert_not_called()
+        self.multipass_cmd_mock().pull_file.assert_not_called()
+        self.multipass_cmd_mock().push_file.assert_not_called()
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name, time=10
         )

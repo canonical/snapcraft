@@ -66,6 +66,12 @@ class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
         self.popen_mock().returncode = 0
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._multipass._multipass_command.open"
+        )
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.multipass_command = MultipassCommand()
         self.instance_name = "stub-instance"
 
@@ -363,31 +369,145 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
 
 
 class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
-    def test_copy_files(self):
+    def test_push_file(self):
         source = "source-file"
-        destination = "{}/destination-file".format(self.instance_name)
-        self.multipass_command.copy_files(source=source, destination=destination)
+        destination = "destination-file"
 
-        self.check_call_mock.assert_called_once_with(
-            ["multipass", "copy-files", source, destination], stdin=subprocess.DEVNULL
+        self.multipass_command.push_file(
+            source=source, instance=self.instance_name, destination=destination
         )
+
+        # method under test scopes open() with context manager, making necessary to test for __enter__()
+        self.open_mock.assert_called_once_with(source, "rb")
+
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "multipass",
+                        "exec",
+                        self.instance_name,
+                        "--",
+                        "bash",
+                        "-c",
+                        "cat > '{}'".format(destination),
+                    ],
+                    stdin=self.open_mock().__enter__(),
+                )
+            ]
+        )
+
         self.check_output_mock.assert_not_called()
 
-    def test_copy_files_fails(self):
+    def test_pull_file(self):
+        source = "source-file"
+        destination = "destination-file"
+
+        self.multipass_command.pull_file(
+            instance=self.instance_name, source=source, destination=destination
+        )
+
+        # method under test scopes open() with context manager, making necessary to test for __enter__()
+        self.open_mock.assert_called_once_with(destination, "wb")
+
+        self.popen_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "multipass",
+                        "exec",
+                        self.instance_name,
+                        "--",
+                        "bash",
+                        "-c",
+                        "echo '{}'".format(source),
+                    ],
+                    stdout=self.open_mock().__enter__(),
+                )
+            ]
+        )
+
+        self.check_output_mock.assert_not_called()
+
+    def test_pull_file_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.
         source = "source-file"
         destination = "destination-file"
-        cmd = ["multipass", "copy-files", source, destination]
-        self.check_call_mock.side_effect = subprocess.CalledProcessError(1, cmd)
+        cmd = [
+            "multipass",
+            "exec",
+            self.instance_name,
+            "--",
+            "bash",
+            "-c",
+            "echo '{}'".format(source),
+        ]
+        self.popen_mock.side_effect = subprocess.CalledProcessError(1, cmd)
 
         self.assertRaises(
             errors.ProviderFileCopyError,
-            self.multipass_command.copy_files,
+            self.multipass_command.pull_file,
+            instance=self.instance_name,
             source=source,
             destination=destination,
         )
-        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
+        self.check_output_mock.assert_not_called()
+
+    def test_pull_file_cannot_be_written_to(self):
+        # if file to be created cannot be written to, should throw error
+        source = "source-file"
+        destination = "destination-file-not-readable"
+        self.open_mock.side_effect = OSError()
+
+        self.assertRaises(
+            errors.ProviderFileCopyError,
+            self.multipass_command.pull_file,
+            instance=self.instance_name,
+            source=source,
+            destination=destination,
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_push_file_fails(self):
+        # multipass can fail due to several reasons and will display the error
+        # right above this exception message.
+        source = "source-file"
+        destination = "destination-file"
+        cmd = [
+            "multipass",
+            "exec",
+            self.instance_name,
+            "--",
+            "bash",
+            "-c",
+            "cat > '{}'".format(destination),
+        ]
+        self.popen_mock.side_effect = subprocess.CalledProcessError(1, cmd)
+
+        self.assertRaises(
+            errors.ProviderFileCopyError,
+            self.multipass_command.push_file,
+            source=source,
+            instance=self.instance_name,
+            destination=destination,
+        )
+        self.check_output_mock.assert_not_called()
+
+    def test_push_file_missing_fails(self):
+        # if file to be pushed is missing, should throw error
+        source = "source-file-missing"
+        destination = "destination-file"
+        self.open_mock.side_effect = OSError()
+
+        self.assertRaises(
+            errors.ProviderFileCopyError,
+            self.multipass_command.push_file,
+            source=source,
+            instance=self.instance_name,
+            destination=destination,
+        )
+        self.check_call_mock.assert_not_called()  # bails before running multipass command
         self.check_output_mock.assert_not_called()
 
 

@@ -257,7 +257,7 @@ class Multipass(Provider):
 
         # Then copy the tarball over
         self._multipass_cmd.push_file(
-            source=tarball, instance=self.instance_name, destination=destination)
+            source=tarball, instance=self.instance_name, destination=tarball)
 
         # Finally extract it into project_dir.
         extract_cmd = [
