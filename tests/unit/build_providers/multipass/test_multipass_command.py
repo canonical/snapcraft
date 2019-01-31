@@ -397,8 +397,6 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             ]
         )
 
-        self.check_output_mock.assert_not_called()
-
     def test_pull_file(self):
         source = "source-file"
         destination = "destination-file"
@@ -427,8 +425,6 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             ]
         )
 
-        self.check_output_mock.assert_not_called()
-
     def test_pull_file_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.
@@ -452,7 +448,6 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             source=source,
             destination=destination,
         )
-        self.check_output_mock.assert_not_called()
 
     def test_pull_file_cannot_be_written_to(self):
         # if file to be created cannot be written to, should throw error
@@ -467,7 +462,6 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             source=source,
             destination=destination,
         )
-        self.check_output_mock.assert_not_called()
 
     def test_push_file_fails(self):
         # multipass can fail due to several reasons and will display the error
@@ -492,7 +486,6 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             instance=self.instance_name,
             destination=destination,
         )
-        self.check_output_mock.assert_not_called()
 
     def test_push_file_missing_fails(self):
         # if file to be pushed is missing, should throw error
@@ -507,8 +500,7 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
             instance=self.instance_name,
             destination=destination,
         )
-        self.check_call_mock.assert_not_called()  # bails before running multipass command
-        self.check_output_mock.assert_not_called()
+        self.popen_mock.assert_not_called()  # bails before running multipass command
 
 
 class MultipassCommandInfoTest(MultipassCommandPassthroughBaseTest):
