@@ -66,6 +66,7 @@ class Rosdep:
         rosdep_path,
         ubuntu_distro,
         ubuntu_sources,
+        ubuntu_keyrings,
         project
     ):
         self._ros_distro = ros_distro
@@ -73,6 +74,7 @@ class Rosdep:
         self._rosdep_path = rosdep_path
         self._ubuntu_distro = ubuntu_distro
         self._ubuntu_sources = ubuntu_sources
+        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
 
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
@@ -95,6 +97,7 @@ class Rosdep:
         ubuntu = repo.Ubuntu(
             self._rosdep_path,
             sources=self._ubuntu_sources,
+            keyrings=self._ubuntu_keyrings,
             project_options=self._project,
         )
 

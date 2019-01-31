@@ -2,11 +2,15 @@ summary: Build and run a basic maven snap
 
 environment:
   SNAP_DIR: ../snaps/maven-hello
+  OPENJDK_VERSION/CURRENT: "CURRENT"
+  OPENJDK_VERSION/LATEST: "LATEST"  
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  # shellcheck disable=SC2153
+  set_openjdk_version "$SNAP_DIR/snap/snapcraft.yaml" maven "$OPENJDK_VERSION"
 
 restore: |
   cd "$SNAP_DIR"

@@ -157,18 +157,6 @@ class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-    def test_cleaning_with_strip_does_prime_and_warns(self):
-        self.make_snapcraft_yaml(n=3)
-
-        result = self.run_command(["clean", "--step=strip"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains("DEPRECATED: Use `prime` instead of `strip` as the step to clean"),
-        )
-        self.assertThat(self.prime_dir, Not(DirExists()))
-
 
 class CleanCommandReverseDependenciesTestCase(CommandBaseTestCase):
     def setUp(self):
