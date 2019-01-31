@@ -16,6 +16,7 @@
 
 import logging
 import os
+import sys
 import shlex
 from typing import Dict, Sequence
 
@@ -69,7 +70,8 @@ class Multipass(Provider):
         return "multipass"
 
     def _run(self, command: Sequence[str], hide_output: bool = False) -> None:
-        command = ["sudo", "-i"] + list(command)
+        has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
+        command = ["sudo", "-i", "env", has_tty] + list(command)
         self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
