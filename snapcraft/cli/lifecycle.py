@@ -43,7 +43,7 @@ from snapcraft.project.errors import (
     YamlValidationError,
     MultipassMissingInstallableError,
 )
-from ._errors import TRACEBACK_FILEPATH
+from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
 
 logger = logging.getLogger(__name__)
@@ -164,16 +164,16 @@ def _pack(directory: str, *, output: str) -> None:
 
 
 def _clean_provider_error() -> None:
-    if os.path.isfile(TRACEBACK_FILEPATH):
+    if os.path.isfile(TRACEBACK_HOST):
         try:
-            os.remove(TRACEBACK_FILEPATH)
+            os.remove(TRACEBACK_HOST)
         except Exception as e:
             logger.debug("can't remove error file: {}", str(e))
 
 
 def _retrieve_provider_error(instance) -> None:
     try:
-        instance.retrieve_file(TRACEBACK_FILEPATH, delete=True)
+        instance.pull_file(TRACEBACK_MANAGED, TRACEBACK_HOST, delete=True)
     except Exception as e:
         logger.debug("can't retrieve error file: {}", str(e))
 

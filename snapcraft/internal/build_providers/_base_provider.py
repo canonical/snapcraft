@@ -216,15 +216,17 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def retrieve_file(self, name: str, delete: bool = False) -> bool:
+    def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
         """
         Provider steps needed to retrieve a file from the instance, optionally
-        deleting the file after a successful retrieval.
+        deleting the source file after a successful retrieval.
 
+        :param name: the remote filename.
+        :type name: str
+        :param destination: the local filename.
+        :type destination: str
         :param delete: whether the file should be deleted.
         :type delete: bool
-        :returns: whether the file was successfully retrieved and deleted.
-        :rtype: bool
         """
 
     @abc.abstractmethod

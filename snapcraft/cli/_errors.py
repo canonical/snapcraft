@@ -71,7 +71,8 @@ _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
 
-TRACEBACK_FILEPATH = ".snapcraft_provider_traceback"
+TRACEBACK_MANAGED = "/tmp/snapcraft_provider_traceback"
+TRACEBACK_HOST = TRACEBACK_MANAGED + ".{}".format(os.getpid())
 
 
 logger = logging.getLogger(__name__)
@@ -106,14 +107,14 @@ def exception_handler(  # noqa: C901
         exception_type, errors.SnapcraftReportableError
     )
     is_raven_setup = RavenClient is not None
-    is_snapcraft_host = (
-        exc_info is not None and not os.path.isfile(TRACEBACK_FILEPATH)
-    )
+    is_snapcraft_host = exc_info is not None and not os.path.isfile(TRACEBACK_HOST)
     is_snapcraft_managed_host = (
         os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host"
     )
     is_connected_to_tty = (
-        sys.stdout.isatty() if is_snapcraft_host else (
+        sys.stdout.isatty()
+        if is_snapcraft_host
+        else (
             # used by inner instance, variable set by outer instance
             distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n"))
             == 1
@@ -148,7 +149,7 @@ def exception_handler(  # noqa: C901
                         exc_info[0],
                         exc_info[1],
                         exc_info[2],
-                        file=open(TRACEBACK_FILEPATH, "w"),
+                        file=open(TRACEBACK_MANAGED, "w"),
                     )
 
                 # Print traceback if not on terminal
@@ -178,9 +179,9 @@ def exception_handler(  # noqa: C901
         else:
             # On outer host, check if we have traceback from managed host
             # and retrieve it.
-            if os.path.isfile(TRACEBACK_FILEPATH):
+            if os.path.isfile(TRACEBACK_HOST):
                 trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
-                shutil.move(TRACEBACK_FILEPATH, trace_filepath)
+                shutil.move(TRACEBACK_HOST, trace_filepath)
             else:
                 trace_filepath = _handle_trace_output(exc_info)
             click.echo(_MSG_TRACEBACK_LOCATION.format(trace_filepath))

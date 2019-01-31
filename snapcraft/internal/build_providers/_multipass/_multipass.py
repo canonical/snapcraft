@@ -253,7 +253,7 @@ class Multipass(Provider):
         self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
         return self.snap_filename
 
-    def retrieve_file(self, name: str, delete: bool = False):
+    def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
         # TODO add instance check.
 
         # check if file exists in instance
@@ -262,11 +262,11 @@ class Multipass(Provider):
         )
 
         # copy file from instance
-        source = "{}:{}/{}".format(self.instance_name, self._INSTANCE_PROJECT_DIR, name)
-        self._multipass_cmd.copy_files(source=source, destination=name)
+        source = "{}:{}".format(self.instance_name, name)
+        self._multipass_cmd.copy_files(source=source, destination=destination)
         if delete:
             self._multipass_cmd.execute(
-                instance_name=self.instance_name, command=["rm", "-f", name]
+                instance_name=self.instance_name, command=["sudo", "-i", "rm", name]
             )
 
     def shell(self) -> None:

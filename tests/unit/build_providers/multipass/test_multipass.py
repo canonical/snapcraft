@@ -105,7 +105,7 @@ class MultipassTest(BaseProviderBaseTest):
             instance.provision_project("source.tar")
             instance.build_project()
             instance.retrieve_snap()
-            instance.retrieve_file("data", delete=True)
+            instance.pull_file("src", "dest", delete=True)
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
@@ -309,42 +309,40 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
 
-    def test_retrieve_file(self):
+    def test_pull_file(self):
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
 
-        multipass.retrieve_file("data.txt")
+        multipass.pull_file("src.txt", "dest.txt")
 
         self.multipass_cmd_mock().execute.assert_called_once_with(
-            command=["test", "-f", "data.txt"], instance_name="snapcraft-project-name"
+            command=["test", "-f", "src.txt"], instance_name="snapcraft-project-name"
         )
 
         self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="data.txt",
-            source="{}:~/project/data.txt".format(self.instance_name),
+            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
         )
 
         self.multipass_cmd_mock().info.assert_not_called()
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
 
-    def test_retrieve_and_delete_file(self):
+    def test_pull_and_delete_file(self):
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
 
-        multipass.retrieve_file("data.txt", delete=True)
+        multipass.pull_file("src.txt", "dest.txt", delete=True)
 
         self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="data.txt",
-            source="{}:~/project/data.txt".format(self.instance_name),
+            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
         )
 
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    command=["test", "-f", "data.txt"],
+                    command=["test", "-f", "src.txt"],
                     instance_name="snapcraft-project-name",
                 ),
                 mock.call(
-                    command=["rm", "-f", "data.txt"],
+                    command=["sudo", "-i", "rm", "src.txt"],
                     instance_name="snapcraft-project-name",
                 ),
             ]
@@ -492,7 +490,14 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(
                     instance_name=self.instance_name,
                     hide_output=False,
-                    command=["sudo", "-i", "snapcraft", "pull"],
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "pull",
+                    ],
                 ),
             ]
         )

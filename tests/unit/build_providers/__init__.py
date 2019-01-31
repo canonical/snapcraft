@@ -85,7 +85,7 @@ class ProviderImpl(Provider):
     def retrieve_snap(self):
         raise NotImplementedError("test stub not implemented")
 
-    def retrieve_file(self, name: str, delete: bool = False):
+    def pull_file(self, name: str, destination: str, delete: bool = False):
         raise NotImplementedError("test stub not implemented")
 
     def shell(self):
