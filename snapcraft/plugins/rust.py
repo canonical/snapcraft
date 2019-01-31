@@ -48,7 +48,7 @@ from snapcraft import sources
 from snapcraft import shell_utils
 from snapcraft.internal import errors
 
-_RUSTUP = "https://rustup.rs/"
+_RUSTUP = "https://sh.rustup.rs/"
 logger = logging.getLogger(__name__)
 
 
