@@ -162,6 +162,7 @@ def _pack(directory: str, *, output: str) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
 
+
 def _clean_provider_error() -> None:
     if os.path.isfile(TRACEBACK_FILEPATH):
         try:
@@ -169,11 +170,13 @@ def _clean_provider_error() -> None:
         except Exception as e:
             logger.debug("can't remove error file: {}", str(e))
 
+
 def _retrieve_provider_error(instance) -> None:
     try:
         instance.retrieve_file(TRACEBACK_FILEPATH, delete=True)
     except Exception as e:
         logger.debug("can't retrieve error file: {}", str(e))
+
 
 @click.group()
 @add_build_options()
