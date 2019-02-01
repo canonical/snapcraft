@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import List  # noqa: F401
 from typing import Sequence
 
 from snapcraft import config
@@ -64,7 +65,20 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
-    installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
+    if common.is_docker_instance():
+        installed_snaps = []  # type: List[str]
+        logger.warning(
+            (
+                "The following snaps are required but not installed as snapcraft "
+                "is running inside docker: {}.\n"
+                "Please ensure the environment is properly setup before continuing.\n"
+                "Ignore this message if the appropriate measures have already been taken".format(
+                    ", ".join(project_config.build_snaps)
+                )
+            )
+        )
+    else:
+        installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
 
     try:
         global_state = states.GlobalState.load(

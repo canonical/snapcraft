@@ -24,7 +24,7 @@ import jsonschema
 from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
-from snapcraft.internal import deprecations, repo, states, steps
+from snapcraft.internal import common, deprecations, repo, states, steps
 from snapcraft.project._sanity_checks import conduct_environment_sanity_check
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
@@ -225,7 +225,11 @@ class Config:
         # Always add the base for building for non os and base snaps
         if project.info.base is not None and project.info.type not in ("base", "os"):
             # If the base is already installed by other means, skip its installation.
-            if not repo.snaps.SnapPackage.is_snap_installed(project.info.base):
+            # But, we should always add it when in a docker environment so
+            # the creator of said docker image is aware that it is required.
+            if common.is_docker_instance() or not repo.snaps.SnapPackage.is_snap_installed(
+                project.info.base
+            ):
                 self.build_snaps.add(project.info.base)
         elif project.info.type not in ("base", "os"):
             # This exception is here to help with porting issues with bases. In normal
