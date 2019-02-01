@@ -29,7 +29,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - catkin-packages:
       (list of strings)
-      List of catkin packages to build.
+      List of catkin packages to build. If not specified, all packages in the
+      workspace will be built. If set to an empty list ([]), no packages will
+      be built.
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
