@@ -137,21 +137,21 @@
                 },
                 {
                     "pattern": "^[a-z0-9-]*[a-z][a-z0-9-]*$",
-                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names can only use ASCII\nlowercase letters, numbers, and hyphens, and must have at least one\nletter.\n"
+                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names can only use ASCII lowercase letters, numbers, and hyphens, and must have at least one letter."
                 },
                 {
                     "pattern": "^[^-]",
-                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot start with\na hyphen.\n"
+                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot start with a hyphen."
                 },
                 {
                     "pattern": "[^-]$",
-                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot end with a\nhyphen.\n"
+                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot end with a hyphen."
                 },
                 {
                     "not": {
                         "pattern": "--"
                     },
-                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot have two\nhyphens in a row.\n"
+                    "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot have two hyphens in a row."
                 }
             ]
         },
@@ -210,7 +210,7 @@
         "version": {
             "type": "string",
             "description": "package version",
-            "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of\nupper- and lower-case alphanumeric characters, as well as periods,\ncolons, plus signs, tildes, and hyphens. They cannot begin with a period,\ncolon, plus sign, tilde, or hyphen. They cannot end with a period, colon,\nor hyphen.\n",
+            "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of upper- and lower-case alphanumeric characters, as well as periods, colons, plus signs, tildes, and hyphens. They cannot begin with a period, colon, plus sign, tilde, or hyphen. They cannot end with a period, colon, or hyphen.",
             "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$",
             "maxLength": 32
         },
@@ -322,7 +322,7 @@
         "apps": {
             "type": "object",
             "additionalProperties": false,
-            "validation-failure": "{!r} is not a valid app name. App names consist of upper- and\nlower-case alphanumeric characters and hyphens. They cannot start\nor end with a hyphen.\n",
+            "validation-failure": "{!r} is not a valid app name. App names consist of upper- and lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
             "patternProperties": {
                 "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$": {
                     "type": "object",
@@ -500,13 +500,13 @@
                             "items": {
                                 "type": "string",
                                 "pattern": "^[A-Za-z0-9/._#:$-]*$",
-                                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries\nmust be strings, and can only use ASCII alphanumeric characters and the\nfollowing special characters: / . _ # : $ -\n"
+                                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
                             }
                         },
                         "sockets": {
                             "type": "object",
                             "additionalProperties": false,
-                            "validation-failure": "{!r} is not a valid socket name. Socket names consist of\nlower-case alphanumeric characters and hyphens.\n",
+                            "validation-failure": "{!r} is not a valid socket name. Socket names consist of lower-case alphanumeric characters and hyphens.",
                             "patternProperties": {
                                 "^[a-z][a-z0-9_-]*$": {
                                     "type": "object",
@@ -548,7 +548,7 @@
         "hooks": {
             "type": "object",
             "additionalProperties": false,
-            "validation-failure": "{!r} is not a valid hook name. Hook names consist of lower-case\nalphanumeric characters and hyphens. They cannot start or end with a\nhyphen.\n",
+            "validation-failure": "{!r} is not a valid hook name. Hook names consist of lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
             "patternProperties": {
                 "^[a-z](?:-?[a-z0-9])*$": {
                     "type": "object",
@@ -574,7 +574,7 @@
             "type": "object",
             "minProperties": 1,
             "additionalProperties": false,
-            "validation-failure": "{!r} is not a valid part name. Part names consist of lower-case\nalphanumeric characters, hyphens and plus signs. As a\nspecial case, 'plugins' is also not a valid part name.\n",
+            "validation-failure": "{!r} is not a valid part name. Part names consist of lower-case alphanumeric characters, hyphens and plus signs. As a special case, 'plugins' is also not a valid part name.",
             "patternProperties": {
                 "^(?!plugins$)[a-z0-9][a-z0-9+-]*$": {
                     "type": [
