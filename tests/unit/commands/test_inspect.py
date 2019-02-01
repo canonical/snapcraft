@@ -308,22 +308,22 @@ class InspectLifecycleStatusTest(CommandBaseTestCase):
             ),
         )
 
-        self.run_command(["clean", "part1", "--step=prime"])
+        self.run_command(["clean", "part1"])
         result = json.loads(self.run_command(["inspect", "--json"]).output)
         self.expectThat(
             result,
             Equals(
                 {
                     "part1": {
-                        "pull": "complete",
-                        "build": "complete",
-                        "stage": "complete",
+                        "pull": None,
+                        "build": None,
+                        "stage": None,
                         "prime": None,
                     },
                     "part2": {
                         "pull": "outdated (source changed)",
-                        "build": "complete",
-                        "stage": "complete",
+                        "build": "dirty ('part1' changed)",
+                        "stage": "dirty ('part1' changed)",
                         "prime": "dirty ('part1' changed)",
                     },
                 }

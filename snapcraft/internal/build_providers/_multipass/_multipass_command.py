@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import signal
 import shutil
 import subprocess
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
@@ -36,14 +35,6 @@ def _run_output(command: Sequence[str], **kwargs) -> bytes:
     return subprocess.check_output(command, **kwargs)
 
 
-def _ignore_signal(sig, stack):
-    # We only do this for SIGUSR1 as it is the one we mostly
-    # care about.
-    if sig == signal.SIGUSR1:
-        sig = "SIGUSR1"
-    logger.debug("Ignoring {!r}: {!r}".format(sig, dir(stack)))
-
-
 class MultipassCommand:
     """An object representation of common multipass cli commands."""
 
@@ -59,8 +50,6 @@ class MultipassCommand:
         if not shutil.which(provider_cmd):
             raise errors.ProviderCommandNotFound(command=provider_cmd)
         self.provider_cmd = provider_cmd
-        # Workaround for https://github.com/CanonicalLtd/multipass/issues/221
-        signal.signal(signal.SIGUSR1, _ignore_signal)
 
     def launch(
         self,

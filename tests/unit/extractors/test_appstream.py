@@ -23,7 +23,7 @@ import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.extractors import _errors
-from tests import unit
+from tests import unit, skip
 
 
 class AppstreamTestCase(unit.TestCase):
@@ -101,6 +101,9 @@ class AppstreamTestCase(unit.TestCase):
 
 
 class AppstreamTest(unit.TestCase):
+    @skip.skip_unless_codename(
+        "xenial", "this test relies on libxslt from xenial to work"
+    )
     def test_appstream_with_ul(self):
         file_name = "snapcraft.appdata.xml"
         content = textwrap.dedent(
@@ -154,6 +157,9 @@ class AppstreamTest(unit.TestCase):
             ),
         )
 
+    @skip.skip_unless_codename(
+        "xenial", "this test relies on libxslt from xenial to work"
+    )
     def test_appstream_with_ol(self):
         file_name = "snapcraft.appdata.xml"
         content = textwrap.dedent(

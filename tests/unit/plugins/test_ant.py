@@ -82,6 +82,33 @@ class AntPluginPropertiesTest(unit.TestCase):
 
 
 class AntPluginBaseTest(unit.TestCase):
+    scenarios = (
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version default ",
+            dict(base="core16", java_version="", expected_java_version="9"),
+        ),
+        (
+            "core18 java version 8 ",
+            dict(base="core18", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core18 java version 11",
+            dict(base="core18", java_version="11", expected_java_version="11"),
+        ),
+        (
+            "core18 java version default",
+            dict(base="core18", java_version="", expected_java_version="11"),
+        ),
+    )
+
     def setUp(self):
         super().setUp()
 
@@ -89,9 +116,9 @@ class AntPluginBaseTest(unit.TestCase):
             dedent(
                 """\
             name: test-snap
-            base: core18
+            base: {base}
         """
-            )
+            ).format(base=self.base)
         )
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
@@ -101,7 +128,7 @@ class AntPluginBaseTest(unit.TestCase):
             ant_build_targets = None
             ant_version = ant._DEFAULT_ANT_VERSION
             ant_version_checksum = ant._DEFAULT_ANT_CHECKSUM
-            ant_openjdk_version = "11"
+            ant_openjdk_version = self.java_version
 
         self.options = Options()
 
@@ -121,8 +148,7 @@ class AntPluginBaseTest(unit.TestCase):
             "usr",
             "lib",
             "jvm",
-            "java-11-openjdk-amd64",
-            "jre",
+            "java-{}-openjdk-amd64".format(self.expected_java_version),
             "bin",
             "java",
         )
@@ -137,23 +163,17 @@ class AntPluginBaseTest(unit.TestCase):
         os.makedirs(os.path.dirname(ant_tar_path))
         tarfile.TarFile(ant_tar_path, "w").close()
 
-
-class AntPluginTest(AntPluginBaseTest):
-    def test_get_defaul_openjdk(self):
-        self.options.ant_openjdk_version = ""
-
+    def test_stage_and_build_packages(self):
         plugin = ant.AntPlugin("test-part", self.options, self.project)
 
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
-        self.assertThat(plugin.build_packages, Equals(["openjdk-11-jdk-headless"]))
-
-    def test_get_non_defaul_openjdk(self):
-        self.options.ant_openjdk_version = "8"
-
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-8-jre-headless"]))
-        self.assertThat(plugin.build_packages, Equals(["openjdk-8-jdk-headless"]))
+        self.assertThat(
+            plugin.stage_packages,
+            Equals(["openjdk-{}-jre-headless".format(self.expected_java_version)]),
+        )
+        self.assertThat(
+            plugin.build_packages,
+            Equals(["openjdk-{}-jdk-headless".format(self.expected_java_version)]),
+        )
 
     def test_build(self):
         plugin = ant.AntPlugin("test-part", self.options, self.project)
@@ -225,7 +245,7 @@ class AntPluginTest(AntPluginBaseTest):
         )
 
 
-class AntPluginUnsupportedBase(AntPluginBaseTest):
+class AntPluginUnsupportedBase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -240,6 +260,15 @@ class AntPluginUnsupportedBase(AntPluginBaseTest):
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
+        class Options:
+            ant_properties = {}
+            ant_build_targets = None
+            ant_version = ant._DEFAULT_ANT_VERSION
+            ant_version_checksum = ant._DEFAULT_ANT_CHECKSUM
+            ant_openjdk_version = ""
+
+        self.options = Options()
+
     def test_unsupported_base_raises(self):
         self.assertRaises(
             errors.PluginBaseError,
@@ -250,7 +279,7 @@ class AntPluginUnsupportedBase(AntPluginBaseTest):
         )
 
 
-class UnsupportedJDKVersionErrorTest(AntPluginBaseTest):
+class UnsupportedJDKVersionErrorTest(unit.TestCase):
 
     scenarios = (
         (
@@ -291,9 +320,16 @@ class UnsupportedJDKVersionErrorTest(AntPluginBaseTest):
             )
         )
 
-        self.options.ant_openjdk_version = self.version
-
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            ant_properties = {}
+            ant_build_targets = None
+            ant_version = ant._DEFAULT_ANT_VERSION
+            ant_version_checksum = ant._DEFAULT_ANT_CHECKSUM
+            ant_openjdk_version = self.version
+
+        self.options = Options()
 
     def test_use_invalid_openjdk_version_fails(self):
         raised = self.assertRaises(

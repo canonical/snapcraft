@@ -21,7 +21,14 @@ import textwrap
 from unittest import mock
 
 import fixtures
-from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
+from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
+    FileContains,
+    FileExists,
+    Not,
+)
 
 import snapcraft
 from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
@@ -74,13 +81,7 @@ class ExecutionTestCase(LifecycleTestBase):
 
         self.assertThat(
             self.fake_logger.output,
-            Equals(
-                "'part2' has dependencies that need to be staged: part1\n"
-                "Pulling part1 \n"
-                "Building part1 \n"
-                "Staging part1 \n"
-                "Pulling part2 \n"
-            ),
+            Contains("'part2' has dependencies that need to be staged: part1"),
         )
 
     @mock.patch("snapcraft.repo.snaps.install_snaps")
@@ -109,7 +110,8 @@ class ExecutionTestCase(LifecycleTestBase):
         ):
             lifecycle.execute(steps.PULL, project_config, part_names=["part2"])
 
-        self.assertThat(self.fake_logger.output, Equals("Pulling part2 \n"))
+        self.assertThat(self.fake_logger.output, Contains("Pulling part2"))
+        self.assertThat(self.fake_logger.output, Not(Contains("Pulling part1")))
 
     def test_os_type_returned_by_lifecycle(self):
         project_config = self.make_snapcraft_project(
@@ -340,7 +342,7 @@ class ExecutionTestCase(LifecycleTestBase):
         )
 
         self.assertThat(
-            self.fake_logger.output, Equals("Setting target machine to 'armhf'\n")
+            self.fake_logger.output, Contains("Setting target machine to 'armhf'")
         )
 
         self.assertThat(raised.step, Equals(steps.PULL))

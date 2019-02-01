@@ -20,6 +20,7 @@ import logging
 import os
 import textwrap
 from unittest.mock import patch
+import stat
 
 import fixtures
 import testscenarios
@@ -1132,17 +1133,30 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
             FileContains("from snap"),
         )
 
-    def test_snap_hooks_not_executable_raises(self):
+    def test_snap_hooks_not_executable_chmods(self):
+        real_chmod = os.chmod
+
+        def chmod_noop(name, *args, **kwargs):
+            # Simulate a source filesystem that doesn't allow changing permissions
+            if name.startswith("snap"):
+                pass
+            else:
+                real_chmod(name, *args, **kwargs)
+
+        self.useFixture(fixtures.MonkeyPatch("os.chmod", chmod_noop))
+
         # Setup a snap directory containing a few things.
         _create_file(os.path.join(self.snap_dir, "snapcraft.yaml"))
         _create_file(os.path.join(self.snap_dir, "hooks", "test-hook"))
 
-        # Now write the snap directory. This process should fail as the hook
-        # isn't executable.
-        with testtools.ExpectedException(
-            meta_errors.CommandError, "hook 'test-hook' is not executable"
-        ):
-            self.generate_meta_yaml()
+        # Now write the snap directory.
+        self.generate_meta_yaml()
+
+        # Ensure the file is executable
+        self.assertThat(os.path.join(self.hooks_dir, "test-hook"), FileExists())
+        self.assertTrue(
+            os.stat(os.path.join(self.hooks_dir, "test-hook")).st_mode & stat.S_IEXEC
+        )
 
 
 class GenerateHookWrappersTestCase(CreateBaseTestCase):
@@ -1171,18 +1185,20 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
                 ),
             )
 
-    def test_generate_hook_wrappers_not_executable_raises(self):
+    def test_generate_hook_wrappers_not_executable_chmods(self):
         # Set up the prime directory to contain a hook in snap/hooks that is
         # not executable.
         snap_hooks_dir = os.path.join(self.prime_dir, "snap", "hooks")
         _create_file(os.path.join(snap_hooks_dir, "test-hook"))
 
-        # Now attempt to generate hook wrappers. This should fail, as the hook
-        # itself is not executable.
-        with testtools.ExpectedException(
-            meta_errors.CommandError, "hook 'test-hook' is not executable"
-        ):
-            self.generate_meta_yaml()
+        # Now generate hook wrappers.
+        self.generate_meta_yaml()
+
+        # Ensure the file is executable
+        self.assertThat(os.path.join(self.hooks_dir, "test-hook"), FileExists())
+        self.assertTrue(
+            os.stat(os.path.join(self.hooks_dir, "test-hook")).st_mode & stat.S_IEXEC
+        )
 
 
 class CreateWithConfinementTestCase(CreateBaseTestCase):

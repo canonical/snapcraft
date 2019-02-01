@@ -1,13 +1,16 @@
-summary: Build and run a gradle maven snap
+summary: Build and run a gradle snap
 
 environment:
-  SNAP_DIR/gradle: ../snaps/gradle-hello
-  SNAP_DIR/gradlew: ../snaps/gradlew-hello
+  SNAP_DIR: ../snaps/gradle-hello
+  OPENJDK_VERSION/CURRENT: "CURRENT"
+  OPENJDK_VERSION/LATEST: "LATEST"  
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  # shellcheck disable=SC2153
+  set_openjdk_version "$SNAP_DIR/snap/snapcraft.yaml" gradle "$OPENJDK_VERSION"
 
 restore: |
   cd "$SNAP_DIR"
@@ -21,5 +24,5 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   snapcraft
-  sudo snap install maven-hello_*.snap --dangerous
+  sudo snap install gradle-hello_*.snap --dangerous
   [ "$(gradle-hello)" = "Hello Gradle" ]
