@@ -70,7 +70,7 @@ _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
 
-TRACEBACK_MANAGED = "/tmp/snapcraft_provider_traceback"
+TRACEBACK_MANAGED = os.path.join(tempfile.gettempdir(), "snapcraft_provider_traceback")
 TRACEBACK_HOST = TRACEBACK_MANAGED + ".{}".format(os.getpid())
 
 
