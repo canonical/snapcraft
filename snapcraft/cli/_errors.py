@@ -27,7 +27,6 @@ from typing import Dict  # noqa: F401
 import click
 
 from . import echo
-from . import env
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
@@ -112,13 +111,10 @@ def exception_handler(  # noqa: C901
         os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host"
     )
     is_connected_to_tty = (
-        sys.stdout.isatty()
-        if is_snapcraft_host
-        else (
-            # used by inner instance, variable set by outer instance
-            distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n"))
-            == 1
-        )
+        # used by inner instance, variable set by outer instance
+        (distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1)
+        if is_snapcraft_managed_host
+        else sys.stdout.isatty()
     )
     ask_to_report = False
 
