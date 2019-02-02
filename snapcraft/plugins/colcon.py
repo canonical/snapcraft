@@ -24,8 +24,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - colcon-packages:
       (list of strings)
-      List of colcon packages to build (if unspecified, will build all packages in the
-      workspace).
+      List of colcon packages to build. If not specified, all packages in the
+      workspace will be built. If set to an empty list ([]), no packages will
+      be built.
     - colcon-source-space:
       (string)
       The source space containing colcon packages (defaults to 'src').
@@ -452,10 +453,10 @@ class ColconPlugin(snapcraft.BasePlugin):
     def build(self):
         """Build Colcon packages.
 
-        This function runs some pre-build steps to prepare the sources for
-        building in the Snapcraft environment, builds the packages via
-        colcon_make_isolated, and finally runs some post-build clean steps
-        to prepare the newly-minted install to be packaged as a .snap.
+        This function runs some pre-build steps to prepare the sources for building in
+        the Snapcraft environment, builds the packages with colcon, and finally runs
+        some post-build clean steps to prepare the newly-minted install to be packaged
+        as a .snap.
         """
 
         super().build()
