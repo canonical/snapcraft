@@ -21,12 +21,14 @@ import shutil
 import sys
 from textwrap import dedent
 from typing import Optional, Sequence
+from typing import Any, Dict
 
 from xdg import BaseDirectory
 
 from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
+from snapcraft import yaml_utils
 
 
 logger = logging.getLogger(__name__)
@@ -220,6 +222,10 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
+        # Check provider base and clean project if base has changed.
+        if os.path.exists(self.provider_project_dir):
+            self._verify_base_change()
+
         try:
             # An ProviderStartError exception here means we need to create
             self._start()
@@ -240,7 +246,16 @@ class Provider(abc.ABC):
             # what is on the host
             self._setup_snapcraft()
 
+    def _verify_base_change(self) -> None:
+        info = self._load_info()
+        print(info, file=open("/tmp/lala", "w"))
+        provider_base = info["base"] if "base" in info else None
+        if self._base_has_changed(self.project.info.base, provider_base):
+            self.clean_project()
+
     def _setup_snapcraft(self) -> None:
+        self._save_info(base=self.project.info.base)
+
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
         )
@@ -283,3 +298,30 @@ class Provider(abc.ABC):
             print(user_data, file=cloud_user_data_file, end="")
 
         return cloud_user_data_filepath
+
+    def _base_has_changed(self, base: str, provider_base: str) -> bool:
+        # Make it backwards compatible with instances without project info
+        if base == "core18" and provider_base is None:
+            return False
+        elif base != provider_base:
+            return True
+
+        return False
+
+    def _load_info(self) -> Dict[str, Any]:
+        filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
+        if not os.path.exists(filepath):
+            return dict()
+
+        with open(filepath) as info_file:
+            return yaml_utils.load(info_file)
+
+    def _save_info(self, **data: Dict[str, Any]) -> None:
+        filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
+
+        dirpath = os.path.dirname(filepath)
+        if dirpath:
+            os.makedirs(dirpath, exist_ok=True)
+
+        with open(filepath, "w") as info_file:
+            yaml_utils.dump(data, stream=info_file)
