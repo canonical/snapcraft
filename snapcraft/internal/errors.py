@@ -667,3 +667,13 @@ class InvalidMountinfoFormat(SnapcraftError):
 
     def __init__(self, row):
         super().__init__(row=row)
+
+
+class CrossCompilationNotSupported(SnapcraftError):
+    fmt = (
+        "The plugin used by {part_name!r} does not support cross-compiling "
+        "to a different target architecture."
+    )
+
+    def __init__(self, *, part_name: str) -> None:
+        super().__init__(part_name=part_name)

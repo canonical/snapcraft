@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,10 +39,7 @@ from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_build_environment_sanity_check,
 )
-from snapcraft.project.errors import (
-    YamlValidationError,
-    MultipassMissingInstallableError,
-)
+from snapcraft.project.errors import MultipassMissingInstallableError
 from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
 
@@ -306,16 +303,7 @@ def clean(parts):
         snapcraft clean my-part
     """
     build_environment = env.BuilderEnvironmentConfig()
-    try:
-        project = get_project(
-            is_managed_host=build_environment.is_managed_host
-        )
-    except YamlValidationError:
-        # We need to be able to clean invalid projects too.
-        project = get_project(
-            is_managed_host=build_environment.is_managed_host,
-            skip_snapcraft_yaml=True
-        )
+    project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if build_environment.is_managed_host or build_environment.is_host:
         lifecycle.clean(project, parts)
