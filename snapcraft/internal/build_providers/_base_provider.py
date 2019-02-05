@@ -248,7 +248,6 @@ class Provider(abc.ABC):
 
     def _verify_base_change(self) -> None:
         info = self._load_info()
-        print(info, file=open("/tmp/lala", "w"))
         provider_base = info["base"] if "base" in info else None
         if self._base_has_changed(self.project.info.base, provider_base):
             self.clean_project()
