@@ -242,7 +242,9 @@ def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
             return False
 
         if response in _VIEW_VALUES:
-            traceback.print_exception(*exc_info, file=sys.stdout)
+            traceback.print_exception(
+                exc_info[0], exc_info[1], exc_info[2], file=sys.stdout
+            )
         elif response in _YES_VALUES:
             return True
         elif response in _NO_VALUES:
@@ -253,7 +255,9 @@ def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
                     "Not saving choice to always send data to Sentry as "
                     "the configuration file is corrupted.\n"
                     "Please edit and fix or alternatively remove the "
-                    "configuration file {!r} from disk.".format(config_errors.config_file)
+                    "configuration file {!r} from disk.".format(
+                        config_errors.config_file
+                    )
                 )  # type: ignore
             else:
                 click.echo("Saving choice to always send data to Sentry")
