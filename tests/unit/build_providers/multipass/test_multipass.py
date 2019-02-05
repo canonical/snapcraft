@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
+import subprocess
 from textwrap import dedent
 from unittest import mock
+from xdg import BaseDirectory
 
 import fixtures
 from testtools.matchers import Equals
@@ -519,3 +522,82 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
+
+
+class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
+
+    scenarios = (
+        (
+            "linux-multipass-confined",
+            dict(platform="linux", returncode=2, expected_confined=True),
+        ),
+        (
+            "linux-multipass-unconfined",
+            dict(platform="linux", returncode=0, expected_confined=False),
+        ),
+        (
+            "darwin",
+            dict(platform="darwin", expected_confined=False),
+        ),
+        (
+            "windows",
+            dict(platform="win32", expected_confined=False),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers._multipass."
+            "_multipass.MultipassCommand",
+            spec=MultipassCommand,
+        )
+        self.multipass_cmd_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # default data returned for info so launch is triggered
+        self.multipass_cmd_mock().info.side_effect = [
+            errors.ProviderInfoError(
+                provider_name="multipass", exit_code=1, stderr=b"error"
+            ),
+            _DEFAULT_INSTANCE_INFO.encode(),
+            _DEFAULT_INSTANCE_INFO.encode(),
+        ]
+
+        patcher = mock.patch("subprocess.run")
+        self.popen_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+    def test_confinement_check(self):
+        if hasattr(self, "returncode"):
+            self.popen_mock().returncode = self.returncode
+
+        with mock.patch("sys.platform", self.platform):
+            with Multipass(
+                project=self.project, echoer=self.echoer_mock
+            ) as instance:
+                self.assertEqual(instance._is_multipass_confined(), self.expected_confined)
+
+        if hasattr(self, "returncode"):
+            self.popen_mock.assert_has_calls(
+                [
+                    mock.call(
+                        [
+                            "snap",
+                            "run",
+                            "--shell",
+                            "multipass",
+                        ],
+                        input="ls '{}'\n".format(BaseDirectory.save_data_path("snapcraft")),
+                        encoding="utf-8",
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                ]
+            )
+        else:
+            self.popen_mock.assert_not_called()
+
+

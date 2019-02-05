@@ -22,6 +22,7 @@ import subprocess
 import sys
 from typing import Dict, Sequence
 from pathlib import Path
+from xdg import BaseDirectory
 
 from .. import errors
 from .._base_provider import Provider
@@ -89,18 +90,33 @@ class Multipass(Provider):
 
     def _is_multipass_confined(self) -> bool:
         if sys.platform != "linux":
-            return False;
+            return False
 
         # Get the exit code of echo "ls $HOME/.local/share/snapcraft" | snap run --shell multipass;
-        # If zero, multipass *not* confined. If 2, multipass *is* confined. If 1, multipass is not
-        # installed as a snap. If 127, snap not installed.
-        subcommand = "echo 'ls " + self.provider_project_dir + "' | snap run --shell multipass"
-        command = ["bash", "-c", subcommand]
-        logger.debug("Running {}".format(" ".join(command)))
-        if subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 2:
-            return True;
+        # If 2, multipass *is* confined. Failure or other return codes indicate that either
+        # multipass or snap are not installed (we should not reach here then), or snapped multipass
+        # is installed but not confined.
+        in_snap_cmd = "ls '{}'\n".format(BaseDirectory.save_data_path("snapcraft"))
+        command = ["snap", "run", "--shell", "multipass"]
+        logger.debug('Running echo "{}" | {}'.format(in_snap_cmd, " ".join(command)))
+        try:
+            if (
+                subprocess.run(
+                    command,
+                    input=in_snap_cmd,
+                    encoding="utf-8",
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                ).returncode
+                == 2
+            ):
+                logger.debug("Multipass confined")
+                return True
+        except Exception:
+            pass
 
-        return False;
+        logger.debug("Multipass not confined")
+        return False
 
     def _prepare_cloud_user_data(self) -> str:
         # If Multipass Snap confined, place cloud-init file in location both snapcraft
@@ -108,7 +124,13 @@ class Multipass(Provider):
         # $HOME/snap/multipass/current corresponds to its confined $HOME
         if self._is_multipass_confined():
             base_dir = os.path.join(
-                Path.home(), "snap", "multipass", "current", ".local", "share", "multipass"
+                Path.home(),
+                "snap",
+                "multipass",
+                "current",
+                ".local",
+                "share",
+                "multipass",
             )
         else:
             # If Multipass is not confined, then can use usual
@@ -185,7 +207,8 @@ class Multipass(Provider):
 
     def _push_file(self, *, source: str, destination: str) -> None:
         self._multipass_cmd.push_file(
-            source=source, instance=self.instance_name, destination=destination)
+            source=source, instance=self.instance_name, destination=destination
+        )
 
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
@@ -257,7 +280,8 @@ class Multipass(Provider):
 
         # Then copy the tarball over
         self._multipass_cmd.push_file(
-            source=tarball, instance=self.instance_name, destination=tarball)
+            source=tarball, instance=self.instance_name, destination=tarball
+        )
 
         # Finally extract it into project_dir.
         extract_cmd = [
@@ -288,11 +312,10 @@ class Multipass(Provider):
 
     def retrieve_snap(self) -> str:
         # TODO add instance check.
-        source = "{}/{}".format(
-            self._INSTANCE_PROJECT_DIR, self.snap_filename
-        )
+        source = "{}/{}".format(self._INSTANCE_PROJECT_DIR, self.snap_filename)
         self._multipass_cmd.pull_file(
-            instance=self.instance_name, source=source, destination=self.snap_filename)
+            instance=self.instance_name, source=source, destination=self.snap_filename
+        )
         return self.snap_filename
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:

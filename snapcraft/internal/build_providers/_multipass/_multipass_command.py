@@ -235,7 +235,7 @@ class MultipassCommand:
         :param str source: the in-instance path to the source file to pull
         :param str destination: the destination of the pulled file on the host
         """
-        vm_cmd = "echo '" + source + "'"
+        vm_cmd = "echo '{}'".format(source)
         cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd]
         try:
             with open(destination, "wb") as pipe_out:
@@ -257,7 +257,7 @@ class MultipassCommand:
         :param str instance: the multipass instance to push the file to
         :param str destination: the destination of the pushed file on the instance
         """
-        vm_cmd = "cat > '" + destination + "'"
+        vm_cmd = "cat > '{}'".format(destination)
         cmd = [self.provider_cmd, "exec", instance, "--", "bash", "-c", vm_cmd]
 
         try:
