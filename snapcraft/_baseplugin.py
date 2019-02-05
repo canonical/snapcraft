@@ -164,10 +164,7 @@ class BasePlugin:
 
     def enable_cross_compilation(self):
         """Enable cross compilation for the plugin."""
-        raise NotImplementedError(
-            "The plugin used by {!r} does not support cross-compiling "
-            "to a different target architecture".format(self.name)
-        )
+        raise errors.CrossCompilationNotSupported(part_name=self.name)
 
     @property
     def parallel_build_count(self):

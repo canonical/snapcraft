@@ -19,6 +19,7 @@ import unittest.mock
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.internal import errors
 from tests import unit
 
 
@@ -26,6 +27,13 @@ class TestBasePlugin(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.project_options = snapcraft.ProjectOptions()
+
+    def test_cross_compilation_raises(self):
+        options = unit.MockOptions(disable_parallel=True)
+        plugin = snapcraft.BasePlugin("test_plugin", options, self.project_options)
+        self.assertRaises(
+            errors.CrossCompilationNotSupported, plugin.enable_cross_compilation
+        )
 
     def test_parallel_build_count_returns_1_when_disabled(self):
         options = unit.MockOptions(disable_parallel=True)
