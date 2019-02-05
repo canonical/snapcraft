@@ -224,7 +224,7 @@ class Provider(abc.ABC):
     def launch_instance(self) -> None:
         # Check provider base and clean project if base has changed.
         if os.path.exists(self.provider_project_dir):
-            self._verify_base_change()
+            self._ensure_base()
 
         try:
             # An ProviderStartError exception here means we need to create
@@ -246,10 +246,15 @@ class Provider(abc.ABC):
             # what is on the host
             self._setup_snapcraft()
 
-    def _verify_base_change(self) -> None:
+    def _ensure_base(self) -> None:
         info = self._load_info()
         provider_base = info["base"] if "base" in info else None
         if self._base_has_changed(self.project.info.base, provider_base):
+            logger.warning(
+                "Project base changed from {!r} to {!r}, cleaning build instance.".format(
+                    provider_base, self.project.info.base
+                )
+            )
             self.clean_project()
 
     def _setup_snapcraft(self) -> None:

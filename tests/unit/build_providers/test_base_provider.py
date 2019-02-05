@@ -96,7 +96,7 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         self.assertThat(provider.provider_project_dir, DirExists())
 
-    def test_verify_base_change_same_base(self):
+    def test_ensure_base_same_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.project.info.base = "core16"
 
@@ -108,10 +108,10 @@ class BaseProviderTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        provider._verify_base_change()
+        provider._ensure_base()
         provider.clean_project_mock.assert_not_called()
 
-    def test_verify_base_change_new_base(self):
+    def test_ensure_base_new_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.project.info.base = "core16"
 
@@ -123,10 +123,10 @@ class BaseProviderTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        provider._verify_base_change()
+        provider._ensure_base()
         provider.clean_project_mock.assert_called_once_with()
 
-    def test_verify_base_change_no_base_clean(self):
+    def test_ensure_base_no_base_clean(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.project.info.base = "core16"
 
@@ -139,10 +139,10 @@ class BaseProviderTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        provider._verify_base_change()
+        provider._ensure_base()
         provider.clean_project_mock.assert_called_once_with()
 
-    def test_verify_base_change_no_base_keep(self):
+    def test_ensure_base_no_base_keep(self):
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.project.info.base = "core18"
@@ -156,7 +156,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        provider._verify_base_change()
+        provider._ensure_base()
         provider.clean_project_mock.assert_not_called()
 
     def test_start_instance(self):
