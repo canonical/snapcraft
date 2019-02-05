@@ -159,7 +159,7 @@ class InvalidYamlTest(unit.TestCase):
         self.assertThat(
             raised.message,
             Equals(
-                "found a tab character that violate intendation on line 5, column 1"
+                "found a tab character that violate indentation on line 5, column 1"
             ),
         )
 
