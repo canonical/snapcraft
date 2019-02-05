@@ -49,7 +49,7 @@ _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     """\
     We would appreciate it if you anonymously reported this issue.
     No other data than the traceback and the version of snapcraft in use will be sent.
-    Would you like to send this error data? (Yes/No/Always)"""
+    Would you like to send this error data? (Yes/No/Always/View)"""
 )
 _MSG_SEND_TO_SENTRY_THANKS = "Thank you, sent."
 _MSG_SILENT_REPORT = (
@@ -69,6 +69,7 @@ _MSG_MANUALLY_REPORT = dedent(
 _YES_VALUES = ["yes", "y"]
 _NO_VALUES = ["no", "n"]
 _ALWAYS_VALUES = ["always", "a"]
+_VIEW_VALUES = ["view", "v"]
 
 TRACEBACK_MANAGED = os.path.join(tempfile.gettempdir(), "snapcraft_provider_traceback")
 TRACEBACK_HOST = TRACEBACK_MANAGED + ".{}".format(os.getpid())
@@ -156,7 +157,7 @@ def exception_handler(  # noqa: C901
                     traceback.print_exception(*exc_info, file=sys.stdout)
 
                 # Also ask the user to send traceback data to sentry.
-                if _is_send_to_sentry():
+                if _is_send_to_sentry(exc_info):
                     try:
                         _submit_trace(exc_info)
                     except Exception as exc:
@@ -196,7 +197,7 @@ def _handle_trace_output(exc_info) -> str:
     return trace_filepath
 
 
-def _is_send_to_sentry() -> bool:  # noqa: C901
+def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
     # Check to see if error reporting has been disabled
     if (
         distutils.util.strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
@@ -227,38 +228,42 @@ def _is_send_to_sentry() -> bool:  # noqa: C901
     # Either ALWAYS has not been selected in a previous run or the
     # configuration for where that value is stored cannot be read, so
     # resort to prompting.
-    try:
-        response = _prompt_sentry()
-    except click.exceptions.Abort:
-        # This was most likely triggered by a KeyboardInterrupt so
-        # adding a new line makes things look nice.
-        print()
-        return False
-    if response in _YES_VALUES:
-        return True
-    elif response in _NO_VALUES:
-        return False
-    elif response in _ALWAYS_VALUES:
-        if config_errors is not None:
-            echo.warning(
-                "Not saving choice to always send data to Sentry as "
-                "the configuration file is corrupted.\n"
-                "Please edit and fix or alternatively remove the "
-                "configuration file {!r} from disk.".format(config_errors.config_file)
-            )  # type: ignore
+    while True:
+        try:
+            response = _prompt_sentry()
+        except click.exceptions.Abort:
+            # This was most likely triggered by a KeyboardInterrupt so
+            # adding a new line makes things look nice.
+            print()
+            return False
+
+        if response in _VIEW_VALUES:
+            traceback.print_exception(*exc_info, file=sys.stdout)
+        elif response in _YES_VALUES:
+            return True
+        elif response in _NO_VALUES:
+            return False
+        elif response in _ALWAYS_VALUES:
+            if config_errors is not None:
+                echo.warning(
+                    "Not saving choice to always send data to Sentry as "
+                    "the configuration file is corrupted.\n"
+                    "Please edit and fix or alternatively remove the "
+                    "configuration file {!r} from disk.".format(config_errors.config_file)
+                )  # type: ignore
+            else:
+                click.echo("Saving choice to always send data to Sentry")
+                with _CLIConfig() as cli_config:
+                    cli_config.set_sentry_send_always(True)
+            return True
         else:
-            click.echo("Saving choice to always send data to Sentry")
-            with _CLIConfig() as cli_config:
-                cli_config.set_sentry_send_always(True)
-        return True
-    else:
-        echo.warning("Could not determine choice, assuming no.")
-        return False
+            echo.warning("Could not determine choice, assuming no.")
+            return False
 
 
 def _prompt_sentry():
     msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT
-    all_valid = _YES_VALUES + _NO_VALUES + _ALWAYS_VALUES
+    all_valid = _YES_VALUES + _NO_VALUES + _ALWAYS_VALUES + _VIEW_VALUES
 
     def validate(value):
         if value.lower() in all_valid:
