@@ -606,6 +606,7 @@ class NameTest(ProjectBaseTest):
         self.snapcraft_yaml = dedent(
             """\
             name: {}
+            version: "1"
             base: core18
             summary: test
             description: nothing
