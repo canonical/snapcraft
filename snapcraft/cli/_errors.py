@@ -99,6 +99,8 @@ def exception_handler(  # noqa: C901
     """
     exc_info = (exception_type, exception, exception_traceback)
     exit_code = 1
+    # When inner instance crashes let it send its trace information. We filter
+    # out ProviderExecError to prevent sending another trace dump outside.
     is_snapcraft_error = (
         issubclass(exception_type, errors.SnapcraftError)
         and exception_type is not ProviderExecError
@@ -107,7 +109,9 @@ def exception_handler(  # noqa: C901
         exception_type, errors.SnapcraftReportableError
     )
     is_raven_setup = RavenClient is not None
-    is_snapcraft_host = exc_info is not None and not os.path.isfile(TRACEBACK_HOST)
+    # We're building directly on host (i.e. no inner instances have sent
+    # trace information to sentry), or crash is our own.
+    is_snapcraft_host = not os.path.isfile(TRACEBACK_HOST)
     is_snapcraft_managed_host = (
         os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host"
     )
