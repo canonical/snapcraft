@@ -1,7 +1,9 @@
-summary: Build and run a basic ant snap
+summary: Build and run a gradlew snap
+
+manual: true
 
 environment:
-  SNAP_DIR: ../snaps/ant-hello
+  SNAP_DIR: ../snaps/gradlew-hello
   OPENJDK_VERSION/CURRENT: "CURRENT"
   OPENJDK_VERSION/LATEST: "LATEST"  
 
@@ -10,7 +12,7 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
   # shellcheck disable=SC2153
-  set_openjdk_version "$SNAP_DIR/snap/snapcraft.yaml" ant "$OPENJDK_VERSION"
+  set_openjdk_version "$SNAP_DIR/snap/snapcraft.yaml" gradle "$OPENJDK_VERSION"
 
 restore: |
   cd "$SNAP_DIR"
@@ -24,5 +26,5 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   snapcraft
-  sudo snap install ant-hello_*.snap --dangerous
-  [ "$(ant-hello)" = "Hello World" ]
+  sudo snap install gradle-hello_*.snap --dangerous
+  [ "$(gradle-hello)" = "Hello Gradle" ]

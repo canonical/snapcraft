@@ -160,17 +160,17 @@ class GradlePlugin(snapcraft.BasePlugin):
             valid_versions = ["8", "11"]
 
         version = self.options.gradle_openjdk_version
-        if version and version not in valid_versions:
+        if not version:
+            version = valid_versions[-1]
+        elif version not in valid_versions:
             raise UnsupportedJDKVersionError(
                 version=version, base=base, valid_versions=valid_versions
             )
-        elif not version:
-            # Get the latest version from the slice
-            version = valid_versions[-1]
 
         self.stage_packages.append("openjdk-{}-jre-headless".format(version))
         self.build_packages.append("openjdk-{}-jdk-headless".format(version))
         self.build_packages.append("ca-certificates-java")
+        self._java_version = version
 
     def _using_gradlew(self) -> bool:
         return os.path.isfile(os.path.join(self.sourcedir, "gradlew"))
@@ -234,7 +234,7 @@ class GradlePlugin(snapcraft.BasePlugin):
         self._create_symlinks()
 
     def _create_symlinks(self):
-        if self.project.info.base not in ("core18", "core19"):
+        if self.project.info.base not in ("core18", "core16"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.base
             )
@@ -246,8 +246,7 @@ class GradlePlugin(snapcraft.BasePlugin):
                 "usr",
                 "lib",
                 "jvm",
-                "java-{}-openjdk-*".format(self.options.gradle_openjdk_version),
-                "jre",
+                "java-{}-openjdk-*".format(self._java_version),
                 "bin",
                 "java",
             )

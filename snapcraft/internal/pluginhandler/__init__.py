@@ -1130,7 +1130,13 @@ def _organize_filesets(part_name, fileset, base_dir, overwrite):
 
 def _clean_migrated_files(snap_files, snap_dirs, directory):
     for snap_file in snap_files:
-        os.remove(os.path.join(directory, snap_file))
+        try:
+            os.remove(os.path.join(directory, snap_file))
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove file {name!r}, but it didn't exist. "
+                "Skipping...".format(name=snap_file)
+            )
 
     # snap_dirs may not be ordered so that subdirectories come before
     # parents, and we want to be able to remove directories if possible, so
@@ -1139,8 +1145,14 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
 
     for snap_dir in snap_dirs:
         migrated_directory = os.path.join(directory, snap_dir)
-        if not os.listdir(migrated_directory):
-            os.rmdir(migrated_directory)
+        try:
+            if not os.listdir(migrated_directory):
+                os.rmdir(migrated_directory)
+        except FileNotFoundError:
+            logger.warning(
+                "Attempted to remove directory {name!r}, but it didn't exist. "
+                "Skipping...".format(name=snap_dir)
+            )
 
 
 def _get_file_list(stage_set):
