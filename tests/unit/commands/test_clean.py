@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,7 @@ from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
 import snapcraft
 from snapcraft.internal import errors, steps
+from snapcraft.project import errors as project_errors
 from . import CommandBaseTestCase
 
 
@@ -306,3 +307,34 @@ class CleanCommandReverseDependenciesTestCase(CommandBaseTestCase):
         )
         self.assert_clean(["main", "dependent"])
         self.assert_not_clean(["nested-dependent"])
+
+
+class CleanCommandSnapcraftYamlTest(CommandBaseTestCase):
+    def test_clean_with_only_name_defined(self):
+        self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: clean-test
+        """
+            )
+        )
+
+        result = self.run_command(["clean"])
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_clean_with_missing_required_name_defined(self):
+        self.make_snapcraft_yaml(
+            dedent(
+                """\
+            base: core16
+        """
+            )
+        )
+        self.assertRaises(
+            project_errors.YamlValidationError, self.run_command, ["clean"]
+        )
+
+    def test_clean_with_no_snapcraft_yaml(self):
+        self.assertRaises(
+            project_errors.MissingSnapcraftYamlError, self.run_command, ["clean"]
+        )
