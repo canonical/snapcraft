@@ -124,7 +124,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         self.addCleanup(patcher.stop)
 
         provider._verify_base_change()
-        provider.clean_project_mock.assert_called_once()
+        provider.clean_project_mock.assert_called_once_with()
 
     def test_verify_base_change_no_base_clean(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -140,7 +140,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         self.addCleanup(patcher.stop)
 
         provider._verify_base_change()
-        provider.clean_project_mock.assert_called_once()
+        provider.clean_project_mock.assert_called_once_with()
 
     def test_verify_base_change_no_base_keep(self):
 

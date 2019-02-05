@@ -85,7 +85,7 @@ class ProviderImpl(Provider):
         self.mount_project_mock("mount-project")
 
     def clean_project(self):
-        self.clean_project_mock("clean-project")
+        self.clean_project_mock()
 
     def provision_project(self):
         raise NotImplementedError("test stub not implemented")
