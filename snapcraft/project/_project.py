@@ -35,10 +35,11 @@ class Project(ProjectOptions):
     ) -> None:
 
         project_dir = os.getcwd()
-        if is_managed_host:
-            work_dir = os.path.expanduser("~")
-        else:
-            work_dir = project_dir
+        if not work_dir:
+            if is_managed_host:
+                work_dir = os.path.expanduser("~")
+            else:
+                work_dir = project_dir
 
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.

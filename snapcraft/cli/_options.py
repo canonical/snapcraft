@@ -32,6 +32,7 @@ _BUILD_OPTION_NAMES = [
     "--shell",
     "--shell-after",
     "--destructive-mode",
+    "--work-dir",
 ]
 
 _BUILD_OPTIONS = [
@@ -42,6 +43,7 @@ _BUILD_OPTIONS = [
     dict(
         is_flag=True, help="Forces snapcraft to try and use the current host to build."
     ),
+    dict(metavar="<path>", help="Alternative build directory"),
 ]
 
 
@@ -76,5 +78,6 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
         target_deb_arch=kwargs.pop("target_arch"),
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         is_managed_host=is_managed_host,
+        work_dir=kwargs.pop("work_dir"),
     )
     return project
