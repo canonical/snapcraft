@@ -154,16 +154,16 @@ class AntPlugin(snapcraft.BasePlugin):
             valid_versions = ["8", "11"]
 
         version = self.options.ant_openjdk_version
-        if version and version not in valid_versions:
+        if not version:
+            version = valid_versions[-1]
+        elif version not in valid_versions:
             raise UnsupportedJDKVersionError(
                 version=version, base=base, valid_versions=valid_versions
             )
-        elif not version:
-            # Get the latest version from the slice
-            version = valid_versions[-1]
 
         self.stage_packages.append("openjdk-{}-jre-headless".format(version))
         self.build_packages.append("openjdk-{}-jdk-headless".format(version))
+        self._java_version = version
 
     def _setup_ant(self):
         self._ant_tar_handle = None
@@ -206,7 +206,7 @@ class AntPlugin(snapcraft.BasePlugin):
         self._create_symlinks()
 
     def _create_symlinks(self):
-        if self.project.info.base not in ("core18", "core19"):
+        if self.project.info.base not in ("core18", "core16"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.base
             )
@@ -218,8 +218,7 @@ class AntPlugin(snapcraft.BasePlugin):
                 "usr",
                 "lib",
                 "jvm",
-                "java-{}-openjdk-*".format(self.options.ant_openjdk_version),
-                "jre",
+                "java-{}-openjdk-*".format(self._java_version),
                 "bin",
                 "java",
             )

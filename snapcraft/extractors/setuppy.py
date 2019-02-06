@@ -47,7 +47,7 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
             setuptools_mock.side_effect = _fake_setup
             distutils_mock.side_effect = _fake_setup
             # This would really fail during the use of the plugin
-            # but let's be cautios and add the proper guards.
+            # but let's be cautious and add the proper guards.
             try:
                 spec.loader.exec_module(setuppy)
             except SystemExit:

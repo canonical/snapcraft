@@ -680,6 +680,17 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
+            "CrossCompilationNotSupported",
+            {
+                "exception": errors.CrossCompilationNotSupported,
+                "kwargs": {"part_name": "my-part"},
+                "expected_message": (
+                    "The plugin used by 'my-part' does not support "
+                    "cross-compiling to a different target architecture."
+                ),
+            },
+        ),
+        (
             "CacheUpdateFailedError",
             {
                 "exception": repo_errors.CacheUpdateFailedError,

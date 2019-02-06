@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -59,17 +59,12 @@ def add_build_options(hidden=False):
     return _add_build_options
 
 
-def get_project(
-    *, is_managed_host: bool = False, skip_snapcraft_yaml: bool = False, **kwargs
-):
+def get_project(*, is_managed_host: bool = False, **kwargs):
     # We need to do this here until we can get_snapcraft_yaml as part of Project.
     if is_managed_host:
         os.chdir(os.path.expanduser(os.path.join("~", "project")))
 
-    if skip_snapcraft_yaml:
-        snapcraft_yaml_file_path = None
-    else:
-        snapcraft_yaml_file_path = get_snapcraft_yaml()
+    snapcraft_yaml_file_path = get_snapcraft_yaml()
 
     ctx = click.get_current_context()
     for key, value in ctx.parent.params.items():
