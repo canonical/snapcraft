@@ -31,9 +31,6 @@ from snapcraft.internal import common, steps
 from snapcraft import yaml_utils
 
 
-logger = logging.getLogger(__name__)
-
-
 def _get_platform() -> str:
     return sys.platform
 
@@ -250,7 +247,7 @@ class Provider(abc.ABC):
         info = self._load_info()
         provider_base = info["base"] if "base" in info else None
         if self._base_has_changed(self.project.info.base, provider_base):
-            logger.warning(
+            self.echoer.warning(
                 "Project base changed from {!r} to {!r}, cleaning build instance.".format(
                     provider_base, self.project.info.base
                 )
