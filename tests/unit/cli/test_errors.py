@@ -50,6 +50,10 @@ class ErrorsBaseTestCase(unit.TestCase):
         self.exit_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("builtins.print")
+        self.print_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch("snapcraft.cli._errors.echo.error")
         self.error_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -204,6 +208,7 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
         expected_calls = [
             mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
         ]
+
         if not self.tty:
             expected_calls.append(
                 mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
@@ -242,6 +247,7 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         expected_calls = [
             mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
         ]
+
         if not self.tty:
             expected_calls.append(
                 mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
@@ -303,6 +309,7 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         expected_calls = [
             mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
         ]
+
         if not self.tty:
             expected_calls.append(
                 mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
