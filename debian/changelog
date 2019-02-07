@@ -1,3 +1,28 @@
+snapcraft (3.1.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ant, maven and gradle plugins: use correct defaults for jre (#2453)
+    (LP: #1813637, #1813636)
+  * rust plugin: new link for rustup (#2438) (LP: #1662960)
+  * baseplugin: add a proper exception for cross-compilation support (#2454)
+    (LP: #1808454)
+  * clean: error out on invalid or missing yaml (#2458) (LP: #1777501)
+  * lifecyle: avoid installation of snaps in docker (#2457) (LP: #1814148)
+  * ci: use non virt-enabled gce instances for 16.04 (#2461)
+
+  [ Buo-ren Lin ]
+  * extractors: fix typo in code comment (#2452)
+
+  [ Claudio Matsuoka ]
+  * pluginhandler: handle removal of inconsistent files (#2450) (LP: #1813033)
+  * cli: retrieve error data from provider (#2455) (LP: #1793082)
+  * build providers: recreate instance if base changed (#2460) (LP: #1794506)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: describe how to build all packages (#2459)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 06 Feb 2019 15:49:45 +0000
+
 snapcraft (3.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
