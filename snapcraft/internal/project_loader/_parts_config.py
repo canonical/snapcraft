@@ -26,6 +26,7 @@ from ._env import (
     env_for_classic,
     build_env,
     build_env_for_stage,
+    hardened_flags,
     runtime_env,
     snapcraft_global_environment,
     snapcraft_part_environment,
@@ -244,6 +245,7 @@ class PartsConfig:
         stagedir = self._project.stage_dir
 
         if root_part:
+            env += hardened_flags()
             # this has to come before any {}/usr/bin
             env += part.env(part.plugin.installdir)
             env += runtime_env(part.plugin.installdir, self._project.arch_triplet)

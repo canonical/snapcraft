@@ -18,6 +18,16 @@ from snapcraft.internal import common, elf, pluginhandler
 
 from typing import Dict, List
 
+_HARDENED_FLAGS = [
+    "-Wformat",
+    "-Wformat-security",
+    "-fstack-protector-strong",
+    "-D_FORTIFY_SOURCE=2",
+    "-Wl,-z,relro",
+    "-pie",
+    "-Wl,-z,now",
+]
+
 
 def env_for_classic(base: str, arch_triplet: str) -> List[str]:
     """Set the required environment variables for a classic confined build."""
@@ -91,6 +101,18 @@ def build_env(root: str, snap_name: str, arch_triplet: str) -> List[str]:
         env.append(
             formatting_utils.format_path_variable(
                 "PKG_CONFIG_PATH", paths, prepend="", separator=":"
+            )
+        )
+
+    return env
+
+
+def hardened_flags() -> List[str]:
+    env = []  # type: List[str]
+    for envvar in ["CFLAGS", "CXXFLAGS"]:
+        env.append(
+            formatting_utils.format_path_variable(
+                envvar, _HARDENED_FLAGS, prepend="", separator=" "
             )
         )
 

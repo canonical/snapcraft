@@ -237,6 +237,14 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             Equals(
                 [
                     (
+                        'CFLAGS="$CFLAGS -Wformat -Wformat-security -fstack-protector-strong '
+                        '-D_FORTIFY_SOURCE=2 -Wl,-z,relro -pie -Wl,-z,now"'
+                    ),
+                    (
+                        'CXXFLAGS="$CXXFLAGS -Wformat -Wformat-security -fstack-protector-strong '
+                        '-D_FORTIFY_SOURCE=2 -Wl,-z,relro -pie -Wl,-z,now"'
+                    ),
+                    (
                         'PATH="{0}/parts/main/install/usr/sbin:'
                         "{0}/parts/main/install/usr/bin:"
                         "{0}/parts/main/install/sbin:"
@@ -442,7 +450,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                 output = subprocess.check_output(["/bin/sh", f.name], env=shell_env)
             return output.decode(sys.getfilesystemencoding()).strip()
 
-        expected_cflags = (
+        expected_preprocessor_flags = (
             "-I/user-provided "
             "-I{parts_dir}/part2/install/include -I{stage_dir}/include "
             "-I{stage_dir}/usr/include "
@@ -453,9 +461,23 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                 arch_triplet=project_config.project.arch_triplet,
             )
         )
-        self.assertThat(get_envvar("CFLAGS"), Equals(expected_cflags))
-        self.assertThat(get_envvar("CXXFLAGS"), Equals(expected_cflags))
-        self.assertThat(get_envvar("CPPFLAGS"), Equals(expected_cflags))
+
+        expected_compiler_flags = (
+            "-I/user-provided "
+            "-Wformat -Wformat-security -fstack-protector-strong "
+            "-D_FORTIFY_SOURCE=2 -Wl,-z,relro -pie -Wl,-z,now "
+            "-I{parts_dir}/part2/install/include -I{stage_dir}/include "
+            "-I{stage_dir}/usr/include "
+            "-I{stage_dir}/include/{arch_triplet} "
+            "-I{stage_dir}/usr/include/{arch_triplet}".format(
+                parts_dir=self.parts_dir,
+                stage_dir=self.stage_dir,
+                arch_triplet=project_config.project.arch_triplet,
+            )
+        )
+        self.assertThat(get_envvar("CFLAGS"), Equals(expected_compiler_flags))
+        self.assertThat(get_envvar("CXXFLAGS"), Equals(expected_compiler_flags))
+        self.assertThat(get_envvar("CPPFLAGS"), Equals(expected_preprocessor_flags))
 
         self.assertThat(
             get_envvar("LDFLAGS"),
@@ -569,4 +591,41 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         )
         self.assertThat(
             project_config.parts.build_env_for_part(part2), Contains('BAZ="QUX"')
+        )
+
+    def test_hardened_flags(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            parts:
+              main:
+                plugin: nil
+        """
+        )
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+        part = project_config.parts.get_part("main")
+        environment = project_config.parts.build_env_for_part(part, root_part=True)
+        environment.sort()
+        self.assertThat(
+            # First 3 elements should be our hardenned flags
+            environment[:2],
+            Equals(
+                [
+                    (
+                        'CFLAGS="$CFLAGS -Wformat -Wformat-security -fstack-protector-strong '
+                        '-D_FORTIFY_SOURCE=2 -Wl,-z,relro -pie -Wl,-z,now"'
+                    ),
+                    (
+                        'CXXFLAGS="$CXXFLAGS -Wformat -Wformat-security -fstack-protector-strong '
+                        '-D_FORTIFY_SOURCE=2 -Wl,-z,relro -pie -Wl,-z,now"'
+                    ),
+                ]
+            ),
         )
