@@ -16,6 +16,7 @@
 
 import logging
 import os
+import sys
 import shlex
 from typing import Dict, Sequence
 
@@ -69,7 +70,8 @@ class Multipass(Provider):
         return "multipass"
 
     def _run(self, command: Sequence[str], hide_output: bool = False) -> None:
-        command = ["sudo", "-i"] + list(command)
+        has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
+        command = ["sudo", "-i", "env", has_tty] + list(command)
         self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
@@ -250,6 +252,22 @@ class Multipass(Provider):
         )
         self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
         return self.snap_filename
+
+    def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
+        # TODO add instance check.
+
+        # check if file exists in instance
+        self._multipass_cmd.execute(
+            command=["test", "-f", name], instance_name=self.instance_name
+        )
+
+        # copy file from instance
+        source = "{}:{}".format(self.instance_name, name)
+        self._multipass_cmd.copy_files(source=source, destination=destination)
+        if delete:
+            self._multipass_cmd.execute(
+                instance_name=self.instance_name, command=["sudo", "-i", "rm", name]
+            )
 
     def shell(self) -> None:
         self._multipass_cmd.execute(
