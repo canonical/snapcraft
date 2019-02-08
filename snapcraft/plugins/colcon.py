@@ -26,14 +26,14 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       List of colcon packages to build. If not specified, all packages in the
       workspace will be built. If set to an empty list ([]), no packages will
-      be built.
+      be built, which could be useful if you only want ROS debs in the snap.
     - colcon-source-space:
       (string)
       The source space containing colcon packages (defaults to 'src').
     - colcon-rosdistro:
       (string)
       The ROS distro to use. Available options are bouncy and crystal (defaults to
-      crystal).
+      crystal), both of which are only compatible with core18 as the base.
     - colcon-cmake-args:
       (list of strings)
       Arguments to pass to cmake projects. Note that any arguments here which match
