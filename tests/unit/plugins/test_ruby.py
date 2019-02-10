@@ -51,7 +51,11 @@ class RubyPluginTestCase(unit.TestCase):
     def test_schema(self):
         schema = ruby.RubyPlugin.schema()
         expected_use_bundler = {"type": "boolean", "default": False}
-        expected_ruby_version = {"type": "string", "default": "2.4.2"}
+        expected_ruby_version = {
+            "type": "string",
+            "default": "2.4.2",
+            "pattern": r"^\d+\.\d+(\.\d+)?$",
+        }
         expected_gems = {
             "type": "array",
             "minitems": 1,
@@ -174,7 +178,7 @@ class RubyPluginTestCase(unit.TestCase):
 
         self.assertThat(
             plugin._ruby_tar.source,
-            Equals("https://cache.ruby-lang.org/pub/ruby/ruby-2.4.2.tar.gz"),
+            Equals("https://cache.ruby-lang.org/pub/ruby/2.4/ruby-2.4.2.tar.gz"),
         )
         self.assertThat(
             plugin._ruby_tar.source_dir,
