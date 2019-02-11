@@ -50,7 +50,11 @@ class RubyPlugin(BasePlugin):
         schema = super().schema()
 
         schema["properties"]["use-bundler"] = {"type": "boolean", "default": False}
-        schema["properties"]["ruby-version"] = {"type": "string", "default": "2.4.2"}
+        schema["properties"]["ruby-version"] = {
+            "type": "string",
+            "default": "2.4.2",
+            "pattern": r"^\d+\.\d+(\.\d+)?$",
+        }
         schema["properties"]["gems"] = {
             "type": "array",
             "minitems": 1,
@@ -77,8 +81,10 @@ class RubyPlugin(BasePlugin):
 
         self._ruby_version = options.ruby_version
         self._ruby_part_dir = os.path.join(self.partdir, "ruby")
-        self._ruby_download_url = "https://cache.ruby-lang.org/pub/ruby/ruby-{}.tar.gz".format(
-            self._ruby_version
+        feature_pattern = re.compile(r"^(\d+\.\d+)\..*$")
+        feature_version = feature_pattern.sub(r"\1", self._ruby_version)
+        self._ruby_download_url = "https://cache.ruby-lang.org/pub/ruby/{}/ruby-{}.tar.gz".format(
+            feature_version, self._ruby_version
         )
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []
