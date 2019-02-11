@@ -182,6 +182,15 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
+ tests/spread/plugins/colcon/:
+   summary: tests of snapcraft's Colcon plugin
+   systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-arm64
+   - ubuntu-18.04-armhf
+   kill-timeout: 180m
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
