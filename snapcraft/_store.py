@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -534,7 +534,9 @@ def push(snap_filename, release_channels=None):
     snap_name = snap_yaml["name"]
     store = storeapi.StoreClient()
 
-    logger.info("Preparing to push {!r} to the store.".format(snap_filename))
+    logger.debug(
+        "Run push precheck and verify cached data for {!r}.".format(snap_filename)
+    )
     with _requires_login():
         store.push_precheck(snap_name)
 
@@ -587,7 +589,7 @@ def _push_snap(snap_name, snap_filename):
 def _push_delta(snap_name, snap_filename, source_snap):
     store = storeapi.StoreClient()
     delta_format = "xdelta3"
-    logger.info("Found cached source snap {}.".format(source_snap))
+    logger.debug("Found cached source snap {}.".format(source_snap))
     target_snap = os.path.join(os.getcwd(), snap_filename)
 
     try:
@@ -605,7 +607,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
     }
 
     try:
-        logger.info("Pushing delta {}.".format(delta_filename))
+        logger.debug("Pushing delta {!r}.".format(delta_filename))
         with _requires_login():
             delta_tracker = store.upload(
                 snap_name,
