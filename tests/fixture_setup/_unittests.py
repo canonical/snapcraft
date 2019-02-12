@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -297,7 +297,11 @@ class FakeSnapCommand(fixtures.Fixture):
             return side_effect(original_check_call, cmd, *args, **kwargs)
 
         def side_effect_check_output(cmd, *args, **kwargs):
-            return side_effect(original_check_output, cmd, *args, **kwargs)
+            if self._is_snap_command(cmd):
+                self.calls.append(cmd)
+                return self._fake_snap_command(cmd, *args, **kwargs)
+            else:
+                return side_effect(original_check_output, cmd, *args, **kwargs)
 
         def side_effect(original, cmd, *args, **kwargs):
             if self._is_snap_command(cmd):
@@ -306,19 +310,16 @@ class FakeSnapCommand(fixtures.Fixture):
             else:
                 return original(cmd, *args, **kwargs)
 
-        check_call_patcher = mock.patch(
-            "snapcraft.internal.repo.snaps.check_call",
-            side_effect=side_effect_check_call,
+        self.useFixture(
+            fixtures.MonkeyPatch(
+                "snapcraft.internal.repo.snaps.check_call", side_effect_check_call
+            )
         )
-        self.mock_call = check_call_patcher.start()
-        self.addCleanup(check_call_patcher.stop)
-
-        check_output_patcher = mock.patch(
-            "snapcraft.internal.repo.snaps.check_output",
-            side_effect=side_effect_check_output,
+        self.useFixture(
+            fixtures.MonkeyPatch(
+                "snapcraft.internal.repo.snaps.check_output", side_effect_check_output
+            )
         )
-        self.mock_call = check_output_patcher.start()
-        self.addCleanup(check_output_patcher.stop)
 
     def login(self, email):
         self._email = email
@@ -335,7 +336,7 @@ class FakeSnapCommand(fixtures.Fixture):
             return ""
 
     def _is_snap_command(self, cmd):
-        return self._get_snap_cmd(cmd) in ["install", "refresh", "whoami"]
+        return self._get_snap_cmd(cmd) in ["install", "refresh", "whoami", "download"]
 
     def _fake_snap_command(self, cmd, *args, **kwargs):
         cmd = self._get_snap_cmd(cmd)
@@ -345,6 +346,8 @@ class FakeSnapCommand(fixtures.Fixture):
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
         elif cmd == "whoami":
             return "email: {}".format(self._email).encode()
+        elif cmd == "download":
+            return "Downloaded  ".encode()
 
 
 class FakeAptCache(fixtures.Fixture):
