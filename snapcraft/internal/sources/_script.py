@@ -34,7 +34,9 @@ class Script(FileBase):
             source, source_dir, source_tag, source_commit, source_branch, source_depth
         )
 
-    def download(self):
-        super().download()
+    def download(self, filepath: str = None) -> str:
+        filepath = super().download(filepath=filepath)
         st = os.stat(self.file)
         os.chmod(self.file, st.st_mode | stat.S_IEXEC)
+
+        return filepath

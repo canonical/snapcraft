@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+import logging
 import typing
 import sys
+import os
 from time import sleep
 
 import click
@@ -37,10 +39,12 @@ from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_build_environment_sanity_check,
 )
-from snapcraft.project.errors import (
-    YamlValidationError,
-    MultipassMissingInstallableError,
-)
+from snapcraft.project.errors import MultipassMissingInstallableError
+from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
+
+
+logger = logging.getLogger(__name__)
+
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
@@ -90,6 +94,7 @@ def _execute(  # noqa: C901
     **kwargs
 ) -> "Project":
     # fmt: on
+    _clean_provider_error()
     provider = "host" if destructive_mode else None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     try:
@@ -137,6 +142,7 @@ def _execute(  # noqa: C901
                 else:
                     instance.execute_step(step)
             except Exception:
+                _retrieve_provider_error(instance)
                 if project.debug:
                     instance.shell()
                 else:
@@ -152,6 +158,21 @@ def _execute(  # noqa: C901
 def _pack(directory: str, *, output: str) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
+
+
+def _clean_provider_error() -> None:
+    if os.path.isfile(TRACEBACK_HOST):
+        try:
+            os.remove(TRACEBACK_HOST)
+        except Exception as e:
+            logger.debug("can't remove error file: {}", str(e))
+
+
+def _retrieve_provider_error(instance) -> None:
+    try:
+        instance.pull_file(TRACEBACK_MANAGED, TRACEBACK_HOST, delete=True)
+    except Exception as e:
+        logger.debug("can't retrieve error file: {}", str(e))
 
 
 @click.group()
@@ -273,54 +294,30 @@ def pack(directory, output, **kwargs):
 
 @lifecyclecli.command()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-@click.option(
-    "--step",
-    "-s",
-    "step_name",
-    type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
-    help="only clean the specified step and those that depend on it.",
-)
-def clean(parts, step_name):
-    """Remove content - cleans downloads, builds or install artifacts.
+def clean(parts):
+    """Remove a part's assets.
 
     \b
     Examples:
         snapcraft clean
-        snapcraft clean my-part --step build
+        snapcraft clean my-part
     """
     build_environment = env.BuilderEnvironmentConfig()
-    try:
-        project = get_project(
-            is_managed_host=build_environment.is_managed_host
-        )
-    except YamlValidationError:
-        # We need to be able to clean invalid projects too.
-        project = get_project(
-            is_managed_host=build_environment.is_managed_host,
-            skip_snapcraft_yaml=True
-        )
+    project = get_project(is_managed_host=build_environment.is_managed_host)
 
-    step = None
-    if step_name:
-        if step_name == "strip":
-            echo.warning(
-                "DEPRECATED: Use `prime` instead of `strip` as the step to clean"
-            )
-            step_name = "prime"
-        step = steps.get_step_by_name(step_name)
-
-    if build_environment.is_host:
-        lifecycle.clean(project, parts, step)
+    if build_environment.is_managed_host or build_environment.is_host:
+        lifecycle.clean(project, parts)
     else:
-        # TODO support for steps.
-        if parts or step_name:
-            raise errors.SnapcraftEnvironmentError(
-                "Build providers are still not feature complete, specifying parts or a step name "
-                "is not yet supported.")
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        build_provider_class(project=project, echoer=echo).clean_project()
+        build_provider = build_provider_class(project=project, echoer=echo)
+        if parts:
+            echo.info("Launching a VM.")
+            with build_provider_class(project=project, echoer=echo) as instance:
+                instance.clean(part_names=parts)
+        else:
+            build_provider.clean_project()
 
 
 if __name__ == "__main__":

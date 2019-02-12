@@ -132,6 +132,34 @@ class MavenPluginPropertiesTest(unit.TestCase):
 
 
 class MavenPluginTest(unit.TestCase):
+
+    scenarios = (
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version default ",
+            dict(base="core16", java_version="", expected_java_version="9"),
+        ),
+        (
+            "core18 java version 8 ",
+            dict(base="core18", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core18 java version 11",
+            dict(base="core18", java_version="11", expected_java_version="11"),
+        ),
+        (
+            "core18 java version default",
+            dict(base="core18", java_version="", expected_java_version="11"),
+        ),
+    )
+
     def setUp(self):
         super().setUp()
 
@@ -139,9 +167,9 @@ class MavenPluginTest(unit.TestCase):
             dedent(
                 """\
             name: maven-snap
-            base: core18
+            base: {base}
         """
-            )
+            ).format(base=self.base)
         )
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
@@ -151,7 +179,7 @@ class MavenPluginTest(unit.TestCase):
             maven_targets = [""]
             maven_version = maven._DEFAULT_MAVEN_VERSION
             maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
-            maven_openjdk_version = "11"
+            maven_openjdk_version = self.java_version
 
         self.options = Options()
 
@@ -171,8 +199,7 @@ class MavenPluginTest(unit.TestCase):
             "usr",
             "lib",
             "jvm",
-            "java-11-openjdk-amd64",
-            "jre",
+            "java-{}-openjdk-amd64".format(self.expected_java_version),
             "bin",
             "java",
         )
@@ -215,21 +242,17 @@ class MavenPluginTest(unit.TestCase):
             Equals(self._canonicalize_settings(expected)),
         )
 
-    def test_get_defaul_openjdk(self):
-        self.options.maven_openjdk_version = ""
-
+    def test_stage_and_build_packages(self):
         plugin = maven.MavenPlugin("test-part", self.options, self.project)
 
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
-        self.assertThat(plugin.build_packages, Equals(["openjdk-11-jdk-headless"]))
-
-    def test_get_non_defaul_openjdk(self):
-        self.options.maven_openjdk_version = "8"
-
-        plugin = maven.MavenPlugin("test-part", self.options, self.project)
-
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-8-jre-headless"]))
-        self.assertThat(plugin.build_packages, Equals(["openjdk-8-jdk-headless"]))
+        self.assertThat(
+            plugin.stage_packages,
+            Equals(["openjdk-{}-jre-headless".format(self.expected_java_version)]),
+        )
+        self.assertThat(
+            plugin.build_packages,
+            Equals(["openjdk-{}-jdk-headless".format(self.expected_java_version)]),
+        )
 
     def test_build(self):
         env_vars = (("http_proxy", None), ("https_proxy", None))

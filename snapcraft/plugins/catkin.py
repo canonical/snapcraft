@@ -29,7 +29,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - catkin-packages:
       (list of strings)
-      List of catkin packages to build.
+      List of catkin packages to build. If not specified, all packages in the
+      workspace will be built. If set to an empty list ([]), no packages will
+      be built.
     - source-space:
       (string)
       The source space containing Catkin packages. By default this is 'src'.
@@ -375,6 +377,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # environment is actually generated. In order to inject real shell code
         # we have to hack it in by appending it on the end of an item already
         # in the environment. FIXME: There should be a better way to do this.
+        # LP: #1792034
         env[-1] = env[-1] + "\n\n" + script
 
         return env

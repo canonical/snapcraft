@@ -17,7 +17,7 @@
 import contextlib
 import os
 from textwrap import dedent
-from unittest.mock import call, Mock
+from unittest.mock import call, patch, Mock
 
 from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
@@ -91,9 +91,73 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_any_call()
         provider.start_mock.assert_any_call()
+        provider.save_info_mock.assert_called_once_with({"base": "core16"})
         provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
 
         self.assertThat(provider.provider_project_dir, DirExists())
+
+    def test_ensure_base_same_base(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project.info.base = "core16"
+
+        # Provider and project have the same base
+        patcher = patch(
+            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+            return_value={"base": "core16"},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        provider._ensure_base()
+        provider.clean_project_mock.assert_not_called()
+
+    def test_ensure_base_new_base(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project.info.base = "core16"
+
+        # Provider and project have different bases
+        patcher = patch(
+            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+            return_value={"base": "core18"},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        provider._ensure_base()
+        provider.clean_project_mock.assert_called_once_with()
+
+    def test_ensure_base_no_base_clean(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project.info.base = "core16"
+
+        # Provider has no base, project has base that's not core18
+        # (assume provider has core18 for backward compatibility)
+        patcher = patch(
+            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+            return_value={},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        provider._ensure_base()
+        provider.clean_project_mock.assert_called_once_with()
+
+    def test_ensure_base_no_base_keep(self):
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project.info.base = "core18"
+
+        # Provider has no base, project has base core18
+        # (assume provider has core18 for backward compatibility)
+        patcher = patch(
+            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+            return_value={},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        provider._ensure_base()
+        provider.clean_project_mock.assert_not_called()
 
     def test_start_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -107,6 +171,22 @@ class BaseProviderTest(BaseProviderBaseTest):
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)
         self.assertThat(provider.provider_project_dir, Not(DirExists()))
+
+    def test_clean_part(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.clean(part_names=("part1",))
+
+        provider.run_mock.assert_called_once_with(["snapcraft", "clean", "part1"])
+
+    def test_clean_multiple_parts(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider.clean(part_names=("part1", "part2"))
+
+        provider.run_mock.assert_called_once_with(
+            ["snapcraft", "clean", "part1", "part2"]
+        )
 
 
 class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):

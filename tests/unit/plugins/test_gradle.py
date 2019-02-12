@@ -31,26 +31,6 @@ class GradlePluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: gradle-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
-
-        class Options:
-            gradle_options = []
-            gradle_output_dir = "build/libs"
-            gradle_version = gradle._DEFAULT_GRADLE_VERSION
-            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
-            gradle_openjdk_version = "11"
-
-        self.options = Options()
-
         # unset http and https proxies.
         self.useFixture(fixtures.EnvironmentVariable("http_proxy", None))
         self.useFixture(fixtures.EnvironmentVariable("https_proxy", None))
@@ -63,7 +43,7 @@ class GradlePluginBaseTest(unit.TestCase):
         self.zip_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def create_assets(self, plugin, use_gradlew=False):
+    def create_assets(self, plugin, java_version, use_gradlew=False):
         os.makedirs(plugin.sourcedir)
 
         if use_gradlew:
@@ -74,8 +54,7 @@ class GradlePluginBaseTest(unit.TestCase):
             "usr",
             "lib",
             "jvm",
-            "java-11-openjdk-amd64",
-            "jre",
+            "java-{}-openjdk-amd64".format(java_version),
             "bin",
             "java",
         )
@@ -173,32 +152,79 @@ class GradlePluginPropertiesTest(unit.TestCase):
 
 
 class GradlePluginTest(GradlePluginBaseTest):
-    def test_get_defaul_openjdk(self):
-        self.options.gradle_openjdk_version = ""
+    scenarios = (
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version 8 ",
+            dict(base="core16", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core16 java version default ",
+            dict(base="core16", java_version="", expected_java_version="9"),
+        ),
+        (
+            "core18 java version 8 ",
+            dict(base="core18", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core18 java version 11",
+            dict(base="core18", java_version="11", expected_java_version="11"),
+        ),
+        (
+            "core18 java version default",
+            dict(base="core18", java_version="", expected_java_version="11"),
+        ),
+    )
 
-        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+    def setUp(self):
+        super().setUp()
 
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-11-jre-headless"]))
-        self.assertThat(
-            plugin.build_packages,
-            Equals(["openjdk-11-jdk-headless", "ca-certificates-java"]),
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: {base}
+        """
+            ).format(base=self.base)
         )
 
-    def test_get_non_defaul_openjdk(self):
-        self.options.gradle_openjdk_version = "8"
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
+        class Options:
+            gradle_options = []
+            gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = self.java_version
+
+        self.options = Options()
+
+    def test_stage_and_build_packages(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.assertThat(plugin.stage_packages, Equals(["openjdk-8-jre-headless"]))
+        self.assertThat(
+            plugin.stage_packages,
+            Equals(["openjdk-{}-jre-headless".format(self.expected_java_version)]),
+        )
         self.assertThat(
             plugin.build_packages,
-            Equals(["openjdk-8-jdk-headless", "ca-certificates-java"]),
+            Equals(
+                [
+                    "openjdk-{}-jdk-headless".format(self.expected_java_version),
+                    "ca-certificates-java",
+                ]
+            ),
         )
 
     def test_build_gradlew(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin, use_gradlew=True)
+        self.create_assets(
+            plugin, java_version=self.expected_java_version, use_gradlew=True
+        )
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -217,7 +243,7 @@ class GradlePluginTest(GradlePluginBaseTest):
     def test_build_gradle(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin)
+        self.create_assets(plugin, java_version=self.expected_java_version)
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -236,7 +262,7 @@ class GradlePluginTest(GradlePluginBaseTest):
     def test_build_war_gradle(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin)
+        self.create_assets(plugin, java_version=self.expected_java_version)
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -255,7 +281,9 @@ class GradlePluginTest(GradlePluginBaseTest):
     def test_build_war_gradlew(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin, use_gradlew=True)
+        self.create_assets(
+            plugin, java_version=self.expected_java_version, use_gradlew=True
+        )
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -337,10 +365,30 @@ class GradleProxyTestCase(GradlePluginBaseTest):
 
         self.useFixture(fixtures.EnvironmentVariable(*self.env_var))
 
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            gradle_options = []
+            gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = "11"
+
+        self.options = Options()
+
     def test_build_with_http_proxy_gradle(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin)
+        self.create_assets(plugin, java_version="11")
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -359,7 +407,7 @@ class GradleProxyTestCase(GradlePluginBaseTest):
     def test_build_with_http_proxy_gradlew(self):
         plugin = gradle.GradlePlugin("test-part", self.options, self.project)
 
-        self.create_assets(plugin, use_gradlew=True)
+        self.create_assets(plugin, java_version="11", use_gradlew=True)
 
         def side(l, **kwargs):
             os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
@@ -376,7 +424,7 @@ class GradleProxyTestCase(GradlePluginBaseTest):
         )
 
 
-class GradlePluginUnsupportedBase(GradlePluginBaseTest):
+class GradlePluginUnsupportedBase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -391,6 +439,15 @@ class GradlePluginUnsupportedBase(GradlePluginBaseTest):
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
+        class Options:
+            gradle_options = []
+            gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = ""
+
+        self.options = Options()
+
     def test_unsupported_base_raises(self):
         self.assertRaises(
             errors.PluginBaseError,
@@ -401,7 +458,7 @@ class GradlePluginUnsupportedBase(GradlePluginBaseTest):
         )
 
 
-class UnsupportedJDKVersionErrorTest(GradlePluginBaseTest):
+class UnsupportedJDKVersionErrorTest(unit.TestCase):
 
     scenarios = (
         (
@@ -442,9 +499,16 @@ class UnsupportedJDKVersionErrorTest(GradlePluginBaseTest):
             )
         )
 
-        self.options.gradle_openjdk_version = self.version
-
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            gradle_options = []
+            gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = self.version
+
+        self.options = Options()
 
     def test_use_invalid_openjdk_version_fails(self):
         raised = self.assertRaises(

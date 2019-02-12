@@ -163,8 +163,8 @@ class DaemonDependencyTest(ValidationBaseTest):
             "post-stop-command",
             dict(option="post-stop-command", value="binary1 --post-stop"),
         ),
-        ("before", dict(option="before", value="service2")),
-        ("after", dict(option="after", value="service2")),
+        ("before", dict(option="before", value=["service2"])),
+        ("after", dict(option="after", value=["service2"])),
     ]
 
     def test_daemon_dependency(self):
@@ -606,6 +606,7 @@ class NameTest(ProjectBaseTest):
         self.snapcraft_yaml = dedent(
             """\
             name: {}
+            version: "1"
             base: core18
             summary: test
             description: nothing

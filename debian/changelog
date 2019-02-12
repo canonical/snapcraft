@@ -1,3 +1,76 @@
+snapcraft (3.1.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ant, maven and gradle plugins: use correct defaults for jre (#2453)
+    (LP: #1813637, #1813636)
+  * rust plugin: new link for rustup (#2438) (LP: #1662960)
+  * baseplugin: add a proper exception for cross-compilation support (#2454)
+    (LP: #1808454)
+  * clean: error out on invalid or missing yaml (#2458) (LP: #1777501)
+  * lifecyle: avoid installation of snaps in docker (#2457) (LP: #1814148)
+  * ci: use non virt-enabled gce instances for 16.04 (#2461)
+
+  [ Buo-ren Lin ]
+  * extractors: fix typo in code comment (#2452)
+
+  [ Claudio Matsuoka ]
+  * pluginhandler: handle removal of inconsistent files (#2450) (LP: #1813033)
+  * cli: retrieve error data from provider (#2455) (LP: #1793082)
+  * build providers: recreate instance if base changed (#2460) (LP: #1794506)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: describe how to build all packages (#2459)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 06 Feb 2019 15:49:45 +0000
+
+snapcraft (3.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * cmake plugin: use native primitives (#2397) (LP: #1802314)
+  * cmake plugin: use build snaps to search paths (#2399) (LP: #1802314)
+  * static: update to the latest flake8 (#2420) (LP: #1807409)
+  * project: state file path change (#2419) (LP: #1806746)
+  * nodejs plugin: fail gracefully when a package.json is missing (#2424)
+    (LP: #1807971)
+  * tests: use fixed version for idna in plainbox (#2426)
+  * tests: remove obsolete snap and external tests (#2421)
+  * snap: re-add pyc files for snapcraft (#2425) (LP: #1808199)
+  * tests: increase test timeout for plainbox (#2428)
+  * lifecycle: query for multipass install on darwin (#2427) (LP: #1807737)
+  * extractors: better appstream support for descriptions (#2430) (LP: #1778545)
+  * tests: re-enable spread tests on gce
+  * rust plugin: refactor to use the latest rustup (LP: #1809259)
+  * tests: temporarily disable osx tests
+  * snap: add build-package for xml
+  * appstream extractor: properly find desktop files (LP: #1805431)
+  * appstream extractor: support legacy launchables (LP: #1778546)
+  * snap: add xslt dependencies for lxml
+  * schema: allow before and after (#2443) (LP: #1808148)
+  * build providers: remove SIGUSR1 signal ignore workaround for multipass (#2447)
+  * cli: enable cleaning of parts (#2442) (LP: #1779136)
+  * tests: appstream unit tests are xenial specific
+  * tests: skip rust unit tests on s390x
+  * tests: use more fine grained assertions in lifecycle tests
+  * tests: remove rust revision testing for i386
+
+  [ Johan Dahlin ]
+  * tests: do not use `bash` as a reserved package name on staging (#2423)
+
+  [ Ricardo N Feliciano ]
+  * cli: fix usage string in help command (#2429) (LP: #1745040)
+
+  [ Anatoli Babenia ]
+  * repo: document package purpose (#2390)
+
+  [ Kyle Fazzari ]
+  * repo,baseplugin: support trusting repo keys (#2437) (LP: #1811304)
+
+  [ Michał Sawicz ]
+  * meta: make hooks executable instead of complaining they are not (#2440)
+    (LP: #1812003)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 24 Jan 2019 10:27:23 +0000
+
 snapcraft (3.0.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]

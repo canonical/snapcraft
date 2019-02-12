@@ -123,8 +123,11 @@ class FileBase(Base):
         # can actually have meaning when using these sources.
         self.provision(self.source_dir, src=source_file, clean_target=False)
 
-    def download(self):
-        self.file = os.path.join(self.source_dir, os.path.basename(self.source))
+    def download(self, filepath: str = None) -> str:
+        if filepath is None:
+            self.file = os.path.join(self.source_dir, os.path.basename(self.source))
+        else:
+            self.file = filepath
 
         # First check if we already have the source file cached.
         file_cache = FileCache()
