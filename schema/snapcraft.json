@@ -659,6 +659,11 @@
                             },
                             "default": []
                         },
+                        "stage-snaps": {
+                            "$comment": "For some reason 'default' doesn't work if in the ref",
+                            "$ref": "#/definitions/grammar-array",
+                            "default": []
+                        },
                         "stage-packages": {
                             "$comment": "For some reason 'default' doesn't work if in the ref",
                             "$ref": "#/definitions/grammar-array",

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -57,6 +57,17 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "Failed to pull source: "
                     "cannot specify both 'bar' and 'foo' for a test source.\n"
                     "See `snapcraft help sources` for more information."
+                ),
+            },
+        ),
+        (
+            "InvalidSnapError",
+            {
+                "exception": errors.InvalidSnapError,
+                "kwargs": {},
+                "expected_message": (
+                    "The snap file does not contain valid data. "
+                    "Ensure the source lists a proper snap file"
                 ),
             },
         ),

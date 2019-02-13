@@ -93,6 +93,7 @@ if sys.platform == "linux":
     from ._7z import SevenZip  # noqa
     from ._deb import Deb  # noqa
     from ._rpm import Rpm  # noqa
+    from ._snap import Snap  # noqa: F401
 
     _source_handler = {
         "bzr": Bazaar,
@@ -107,6 +108,7 @@ if sys.platform == "linux":
         "local": Local,
         "deb": Deb,
         "rpm": Rpm,
+        "snap": Snap,
         "": Local,
     }
 
@@ -167,7 +169,7 @@ _tar_type_regex = re.compile(r".*\.((tar(\.(xz|gz|bz2))?)|tgz)$")
 
 
 def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
-    for extension in ["zip", "deb", "rpm", "7z"]:
+    for extension in ["zip", "deb", "rpm", "7z", "snap"]:
         if source.endswith(".{}".format(extension)):
             return extension
     source_type = ""
