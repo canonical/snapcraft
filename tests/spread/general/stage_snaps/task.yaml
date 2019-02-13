@@ -23,12 +23,12 @@ execute: |
 
   snapcraft stage
 
-  if [ ! -f stage/meta.hello ]; then
+  if [ ! -f stage/meta.hello/snap.yaml ]; then
       echo "Missing expected stage-snaps payload from hello"
       exit 1
   fi
 
-  if grep black snap/snapcraft.yaml && [ ! -f stage/meta.black ]; then
+  if grep black snap/snapcraft.yaml && [ ! -f stage/meta.black/snap.yaml ]; then
       echo "Missing expected stage-snaps payload from black"
       exit 1
   fi
