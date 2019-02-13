@@ -535,14 +535,8 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
             "linux-multipass-unconfined",
             dict(platform="linux", returncode=0, expected_confined=False),
         ),
-        (
-            "darwin",
-            dict(platform="darwin", expected_confined=False),
-        ),
-        (
-            "windows",
-            dict(platform="win32", expected_confined=False),
-        ),
+        ("darwin", dict(platform="darwin", expected_confined=False)),
+        ("windows", dict(platform="win32", expected_confined=False)),
     )
 
     def setUp(self):
@@ -569,28 +563,24 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
         self.popen_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-
     def test_confinement_check(self):
         if hasattr(self, "returncode"):
             self.popen_mock().returncode = self.returncode
 
         with mock.patch("sys.platform", self.platform):
-            with Multipass(
-                project=self.project, echoer=self.echoer_mock
-            ) as instance:
-                self.assertEqual(instance._is_multipass_confined(), self.expected_confined)
+            with Multipass(project=self.project, echoer=self.echoer_mock) as instance:
+                self.assertEqual(
+                    instance._is_multipass_confined(), self.expected_confined
+                )
 
         if hasattr(self, "returncode"):
             self.popen_mock.assert_has_calls(
                 [
                     mock.call(
-                        [
-                            "snap",
-                            "run",
-                            "--shell",
-                            "multipass",
-                        ],
-                        input="ls '{}'\n".format(BaseDirectory.save_data_path("snapcraft")),
+                        ["snap", "run", "--shell", "multipass"],
+                        input="ls '{}'\n".format(
+                            BaseDirectory.save_data_path("snapcraft")
+                        ),
                         encoding="utf-8",
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -599,5 +589,3 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
             )
         else:
             self.popen_mock.assert_not_called()
-
-

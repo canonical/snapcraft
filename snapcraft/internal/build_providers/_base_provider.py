@@ -299,7 +299,9 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
-    def _write_cloud_user_data_file(self, data_file: str, timezone=_get_tzdata()) -> None:
+    def _write_cloud_user_data_file(
+        self, data_file: str, timezone=_get_tzdata()
+    ) -> None:
         # TODO support users for the qemu provider.
         user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
         with open(data_file, "w") as open_data_file:

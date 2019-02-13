@@ -492,7 +492,7 @@ class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
         source = "source-file-missing"
         destination = "destination-file"
         self.open_mock.side_effect = OSError()
-        self.popen_mock.reset_mock() # reset to check popen never called 
+        self.popen_mock.reset_mock()  # reset to check popen never called
 
         self.assertRaises(
             errors.ProviderFileCopyError,
