@@ -90,9 +90,8 @@ class InvalidDebError(SnapcraftSourceError):
 class InvalidSnapError(SnapcraftSourceError):
 
     fmt = (
-        "The snap file used does not contain valid data. "
-        "Ensure a proper snap file is passed for .snap files "
-        "as sources."
+        "The snap file does not contain valid data. "
+        "Ensure the source lists a proper snap file"
     )
 
 
