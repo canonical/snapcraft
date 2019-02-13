@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import logging
+import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 from typing import Sequence
@@ -158,6 +160,20 @@ class SnapPackage:
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
 
+    def download(self, *, directory: str = None):
+        """Downloads a given snap."""
+        # We use the `snap download` command here on recommendation
+        # of the snapd team.
+        snap_download_cmd = ["snap", "download", self.name]
+        if self._original_channel:
+            snap_download_cmd.extend(["--channel", self._original_channel])
+        try:
+            check_output(snap_download_cmd, cwd=directory)
+        except CalledProcessError:
+            raise errors.SnapDownloadError(
+                snap_name=self.name, snap_channel=self.channel
+            )
+
     def install(self):
         """Installs the snap onto the system."""
         snap_install_cmd = []
@@ -193,6 +209,27 @@ class SnapPackage:
             raise errors.SnapRefreshError(
                 snap_name=self.name, snap_channel=self.channel
             )
+
+
+def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
+    """
+    Download snaps of the format <snap-name>/<channel> into directory.
+
+    The target directory is created if it does not exist.
+    """
+    # TODO manifest.yaml with snap revision from future machine output
+    # for `snap download`.
+    os.makedirs(directory, exist_ok=True)
+    for snap in snaps_list:
+        snap_pkg = SnapPackage(snap)
+        if not snap_pkg.is_valid():
+            raise errors.SnapUnavailableError(
+                snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
+            )
+
+        # TODO: use dependency injected echoer
+        logger.info("Downloading snap {!r}".format(snap_pkg.name))
+        snap_pkg.download(directory=directory)
 
 
 def install_snaps(snaps_list):

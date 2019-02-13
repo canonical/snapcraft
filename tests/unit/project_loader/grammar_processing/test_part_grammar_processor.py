@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017, 2018 Canonical Ltd
+# Copyright (C) 2017, 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -226,13 +226,13 @@ class PartGrammarSourceTestCase(unit.TestCase):
         self.assertThat(plugin.properties, Equals(self.properties))
 
 
-class PartGrammarBuildSnapsTestCase(unit.TestCase):
+class PartGrammarBuildAndStageSnapsTestCase(unit.TestCase):
 
     source_scenarios = [
         (
             "empty",
             {
-                "build_snaps": "",
+                "snaps": "",
                 "expected_amd64": set(),
                 "expected_i386": set(),
                 "expected_armhf": set(),
@@ -241,7 +241,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "single item",
             {
-                "build_snaps": ["foo"],
+                "snaps": ["foo"],
                 "expected_amd64": {"foo"},
                 "expected_i386": {"foo"},
                 "expected_armhf": {"foo"},
@@ -250,7 +250,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "on amd64",
             {
-                "build_snaps": [{"on amd64": ["foo"]}],
+                "snaps": [{"on amd64": ["foo"]}],
                 "expected_amd64": {"foo"},
                 "expected_i386": set(),
                 "expected_armhf": {"foo"},  # 'on' cares about host, not target
@@ -259,7 +259,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "try",
             {
-                "build_snaps": [{"try": ["hello"]}],
+                "snaps": [{"try": ["hello"]}],
                 "expected_amd64": {"hello"},
                 "expected_i386": {"hello"},
                 "expected_armhf": {"hello"},
@@ -268,7 +268,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "try optional",
             {
-                "build_snaps": [{"try": ["-invalid-"]}],
+                "snaps": [{"try": ["-invalid-"]}],
                 "expected_amd64": set(),
                 "expected_i386": set(),
                 "expected_armhf": set(),
@@ -277,7 +277,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "to armhf",
             {
-                "build_snaps": [{"to armhf": ["foo"]}],
+                "snaps": [{"to armhf": ["foo"]}],
                 "expected_amd64": set(),
                 "expected_i386": set(),
                 "expected_armhf": {"foo"},
@@ -286,7 +286,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         (
             "on amd64 to armhf",
             {
-                "build_snaps": [{"on amd64 to armhf": "foo"}],
+                "snaps": [{"on amd64 to armhf": "foo"}],
                 "expected_amd64": set(),
                 "expected_i386": set(),
                 "expected_armhf": {"foo"},
@@ -317,17 +317,18 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
 
         repo = mock.Mock()
         plugin = mock.Mock()
-        plugin.build_snaps = self.build_snaps
+        plugin.build_snaps = self.snaps
+        plugin.stage_snaps = self.snaps
         expected = getattr(self, "expected_{}".format(self.target_arch))
-        self.assertThat(
-            PartGrammarProcessor(
-                plugin=plugin,
-                properties={},
-                project=project.Project(target_deb_arch=self.target_arch),
-                repo=repo,
-            ).get_build_snaps(),
-            Equals(expected),
+        processor = PartGrammarProcessor(
+            plugin=plugin,
+            properties={},
+            project=project.Project(target_deb_arch=self.target_arch),
+            repo=repo,
         )
+
+        self.assertThat(processor.get_build_snaps(), Equals(expected))
+        self.assertThat(processor.get_stage_snaps(), Equals(expected))
 
 
 class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):

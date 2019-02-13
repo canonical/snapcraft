@@ -85,6 +85,7 @@ class PartGrammarProcessor:
         self._repo = repo
 
         self.__build_snaps = set()  # type: Set[str]
+        self.__stage_snaps = set()  # type: Set[str]
         self.__build_packages = set()  # type: Set[str]
         self.__stage_packages = set()  # type: Set[str]
 
@@ -118,6 +119,17 @@ class PartGrammarProcessor:
             self.__build_snaps = processor.process()
 
         return self.__build_snaps
+
+    def get_stage_snaps(self) -> Set[str]:
+        if not self.__stage_snaps:
+            processor = grammar.GrammarProcessor(
+                getattr(self._plugin, "stage_snaps", []),
+                self._project,
+                repo.snaps.SnapPackage.is_valid_snap,
+            )
+            self.__stage_snaps = processor.process()
+
+        return self.__stage_snaps
 
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:

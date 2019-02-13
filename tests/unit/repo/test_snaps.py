@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -373,6 +373,90 @@ class SnapPackageLifecycleTest(unit.TestCase):
                     ],
                 ]
             ),
+        )
+
+    def test_download(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/stable": {"confinement": "strict"}}}}
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        snap_pkg.download()
+        self.assertThat(
+            self.fake_snap_command.calls, Equals([["snap", "download", "fake-snap"]])
+        )
+
+    def test_download_channel(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
+        snap_pkg.download()
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals([["snap", "download", "fake-snap", "--channel", "strict/stable"]]),
+        )
+
+    def test_download_classic(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap")
+        snap_pkg.download()
+        self.assertThat(
+            self.fake_snap_command.calls, Equals([["snap", "download", "fake-snap"]])
+        )
+
+    def test_download_snaps(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
+            {
+                "other-fake-snap": {
+                    "channels": {"latest/stable": {"confinement": "strict"}}
+                }
+            },
+        ]
+
+        snaps.download_snaps(
+            snaps_list=["fake-snap", "other-fake-snap/latest/stable"],
+            directory="fakedir",
+        )
+        self.assertThat(
+            self.fake_snap_command.calls,
+            Equals(
+                [
+                    ["snap", "download", "fake-snap"],
+                    [
+                        "snap",
+                        "download",
+                        "other-fake-snap",
+                        "--channel",
+                        "latest/stable",
+                    ],
+                ]
+            ),
+        )
+
+    def test_download_snaps_with_invalid(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}},
+            {
+                "other-fake-snap": {
+                    "channels": {"latest/stable": {"confinement": "strict"}}
+                }
+            },
+        ]
+
+        self.assertRaises(
+            errors.SnapUnavailableError,
+            snaps.download_snaps,
+            snaps_list=["fake-snap", "other-invalid"],
+            directory="fakedir",
+        )
+        self.assertThat(
+            self.fake_snap_command.calls, Equals([["snap", "download", "fake-snap"]])
         )
 
     def test_refresh_to_classic(self):
