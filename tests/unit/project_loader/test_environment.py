@@ -22,7 +22,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, Not
 
 import snapcraft
 from snapcraft.internal import common
@@ -531,7 +531,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         environment = project_config.parts.build_env_for_part(part)
         self.assertThat(environment, Contains('FOO="BAR"'))
 
-    def test_build_environment_with_dependencies(self):
+    def test_build_environment_with_dependencies_does_not_leak(self):
         self.useFixture(FakeOsRelease())
 
         snapcraft_yaml = dedent(
@@ -565,7 +565,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             project_config.parts.build_env_for_part(part1), Contains('FOO="BAR"')
         )
         self.assertThat(
-            project_config.parts.build_env_for_part(part2), Contains('FOO="BAR"')
+            project_config.parts.build_env_for_part(part2), Not(Contains('FOO="BAR"'))
         )
         self.assertThat(
             project_config.parts.build_env_for_part(part2), Contains('BAZ="QUX"')
