@@ -44,7 +44,7 @@ snap remove go
 # shellcheck disable=SC1091
 . /etc/os-release
 export SNAPCRAFT_PACKAGE_TYPE="snap"
-export SNAPCRAFT_CHANNEL="latest/edge"
+export SNAPCRAFT_CHANNEL="latest/beta"
 /tmp/go/bin/spread -v "autopkgtest:${ID}-${VERSION_ID}-$(dpkg --print-architecture):tests/spread/plugins/"
 
 # store journal info for inspection
