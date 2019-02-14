@@ -119,8 +119,8 @@ class Multipass(Provider):
         return False
 
     def _prepare_cloud_user_data(self) -> str:
-        # If Multipass Snap confined, place cloud-init file in location both snapcraft
-        # (classicly confined) and multipass can access. For Multipass, the host directory
+        # If the Multipass Snap is confined, place cloud-init file in location both snapcraft
+        # (classicly confined) and Multipass can access. For Multipass, the host directory
         # $HOME/snap/multipass/current corresponds to its confined $HOME
         if self._is_multipass_confined():
             base_dir = os.path.join(
