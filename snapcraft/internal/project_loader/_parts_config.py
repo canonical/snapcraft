@@ -265,6 +265,10 @@ class PartsConfig:
 
             global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)
+            # Finally, add the declared environment from the part.
+            # This is done only for the "root" part.
+            env += part.build_environment
+
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))
         else:
@@ -274,8 +278,6 @@ class PartsConfig:
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
-
-        env += part.build_environment
 
         # LP: #1767625
         # Remove duplicates from using the same plugin in dependent parts.
