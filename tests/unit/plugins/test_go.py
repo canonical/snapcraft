@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import jsonschema
 from textwrap import dedent
 from unittest import mock
 
@@ -607,6 +608,36 @@ class GoPluginTest(GoPluginBaseTest):
             cwd=plugin._gopath_src,
             env=mock.ANY,
         )
+
+
+class GoPluginSchemaValidationTest(unit.TestCase):
+    def test_sources_validation_neither(self):
+        schema = self._get_schema()
+        properties = {}
+        self.assertRaises(
+            jsonschema.ValidationError, jsonschema.validate, properties, schema
+        )
+
+    def test_sources_validation_source(self):
+        schema = self._get_schema()
+        properties = {"source": ""}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_packages(self):
+        schema = self._get_schema()
+        properties = {"go-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_both(self):
+        schema = self._get_schema()
+        properties = {"source": "foo", "go-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def _get_schema(self):
+        schema = go.GoPlugin.schema()
+        # source definition comes from the main schema
+        schema["properties"]["source"] = {"type": "string"}
+        return schema
 
 
 class GoPluginToolSetupTest(GoPluginBaseTest):

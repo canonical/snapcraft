@@ -83,6 +83,7 @@ class GoPlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        schema["anyOf"] = [{"required": ["source"]}, {"required": ["go-packages"]}]
 
         return schema
 
