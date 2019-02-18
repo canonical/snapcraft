@@ -338,3 +338,38 @@ class TestLocalUpdate(unit.TestCase):
 
         local.update()
         self.assertThat(os.path.join(destination, "dir", "file2"), FileExists())
+
+    def test_snap_directory_modification_ignored(self):
+        source = "source"
+        source_dir = os.path.join(source, "snap")
+        destination = "destination"
+        os.makedirs(source_dir)
+        os.mkdir(destination)
+
+        with open(os.path.join(source_dir, "file1"), "w") as f:
+            f.write("1")
+
+        # Now make a reference file with a timestamp later than the file was
+        # created. We'll ensure this by setting it ourselves
+        shutil.copy2(os.path.join(source_dir, "file1"), "reference")
+        access_time = os.stat("reference").st_atime
+        modify_time = os.stat("reference").st_mtime
+        os.utime("reference", (access_time, modify_time + 1))
+
+        local = sources.Local(source, destination)
+        local.pull()
+        self.assertFalse(
+            local.check("reference"), "Expected no updates to be available"
+        )
+        self.assertThat(os.path.join(destination, "snap", "file1"), FileExists())
+
+        # Now add a new file to the directory, and make sure it has a timestamp
+        # later than our reference (this whole test happens too fast)
+        with open(os.path.join(source_dir, "file2"), "w") as f:
+            f.write("2")
+
+        access_time = os.stat("reference").st_atime
+        modify_time = os.stat("reference").st_mtime
+        os.utime(os.path.join(source_dir, "file2"), (access_time, modify_time + 1))
+
+        self.assertFalse(local.check("reference"), "Expected no update to be available")

@@ -50,7 +50,7 @@ class Local(Base):
         self._updated_directories = set()
 
         for (root, directories, files) in os.walk(self.source_abspath, topdown=True):
-            ignored = set(self._ignore(root, directories + files))
+            ignored = set(self._ignore(root, directories + files, check=True))
             if ignored:
                 # Prune our search appropriately given an ignore list, i.e.
                 # don't walk into directories that are ignored.
@@ -96,9 +96,13 @@ class Local(Base):
             )
 
 
-def _ignore(source, current_directory, directory, files):
+def _ignore(source, current_directory, directory, files, check=False):
     if directory == source or directory == current_directory:
         ignored = copy.copy(common.SNAPCRAFT_FILES)
+        if check:
+            # TODO: We hardcode the snap directory here, but we really need
+            # to ignore the directory where snapcraft.yaml is hosted.
+            ignored.append("snap")
         snaps = glob.glob(os.path.join(directory, "*.snap"))
         if snaps:
             snaps = [os.path.basename(s) for s in snaps]
