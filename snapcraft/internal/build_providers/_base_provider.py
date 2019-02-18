@@ -177,10 +177,6 @@ class Provider(abc.ABC):
         """Provider steps needed to make the project available to the instance.
         """
 
-    @abc.abstractmethod
-    def provision_project(self, tarball: str) -> None:
-        """Provider steps needed to copy project assests to the instance."""
-
     def execute_step(self, step: steps.Step) -> None:
         self._run(command=["snapcraft", step.name])
 
@@ -199,19 +195,6 @@ class Provider(abc.ABC):
             return True
         except FileNotFoundError:
             return False
-
-    @abc.abstractmethod
-    def build_project(self) -> None:
-        """Provider steps needed build the project on the instance."""
-
-    @abc.abstractmethod
-    def retrieve_snap(self) -> str:
-        """
-        Provider steps needed to retrieve the built snap from the instance.
-
-        :returns: the filename of the retrieved snap.
-        :rtype: str
-        """
 
     @abc.abstractmethod
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
