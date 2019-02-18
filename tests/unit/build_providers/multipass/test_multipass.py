@@ -105,10 +105,8 @@ class MultipassTest(BaseProviderBaseTest):
         with Multipass(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=True
         ) as instance:
-            instance.provision_project("source.tar")
-            instance.build_project()
-            instance.retrieve_snap()
-            instance.pull_file("src", "dest", delete=True)
+            instance.execute_step(steps.PULL)
+            instance.execute_step(steps.BUILD)
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
             instance_name=self.instance_name,
@@ -124,29 +122,38 @@ class MultipassTest(BaseProviderBaseTest):
             [
                 mock.call(
                     instance_name=self.instance_name,
-                    command=["sudo", "-i", "mkdir", "~/project"],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
+                    hide_output=False,
                     command=[
                         "sudo",
                         "-i",
-                        "tar",
-                        "-xvf",
-                        "source.tar",
-                        "-C",
-                        "~/project",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "refresh",
                     ],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
+                    hide_output=False,
                     command=[
                         "sudo",
                         "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
                         "snapcraft",
-                        "snap",
-                        "--output",
-                        "project-name_{}.snap".format(self.project.deb_arch),
+                        "pull",
+                    ],
+                ),
+                mock.call(
+                    instance_name=self.instance_name,
+                    hide_output=False,
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "build",
                     ],
                 ),
             ]
@@ -158,9 +165,46 @@ class MultipassTest(BaseProviderBaseTest):
                 mock.call(instance_name=self.instance_name, output_format="json"),
             ]
         )
-
-        self.multipass_cmd_mock().push_file.assert_called_once_with(
-            source="source.tar", instance=self.instance_name, destination="source.tar"
+        self.assertThat(self.multipass_cmd_mock().execute.call_count, Equals(3))
+        self.multipass_cmd_mock().execute.assert_has_calls(
+            [
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "refresh",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "pull",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "build",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+            ]
         )
 
         self.multipass_cmd_mock().pull_file.assert_called_once_with(
@@ -226,89 +270,6 @@ class MultipassTest(BaseProviderBaseTest):
             image="snapcraft:core16",
             cloud_init=mock.ANY,
         )
-
-    def test_provision_project(self):
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
-
-        # In the real world, MultipassCommand would return an error when
-        # calling this on an instance that does not exist.
-        multipass.provision_project("source.tar")
-
-        self.multipass_cmd_mock().execute.assert_has_calls(
-            [
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=["sudo", "-i", "mkdir", "~/project"],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    command=[
-                        "sudo",
-                        "-i",
-                        "tar",
-                        "-xvf",
-                        "source.tar",
-                        "-C",
-                        "~/project",
-                    ],
-                ),
-            ]
-        )
-        self.multipass_cmd_mock().push_file.assert_called_once_with(
-            source="source.tar", instance=self.instance_name, destination="source.tar"
-        )
-
-        self.multipass_cmd_mock().pull_file.assert_not_called()
-        self.multipass_cmd_mock().launch.assert_not_called()
-        self.multipass_cmd_mock().info.assert_not_called()
-        self.multipass_cmd_mock().stop.assert_not_called()
-        self.multipass_cmd_mock().delete.assert_not_called()
-
-    def test_build_project(self):
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
-
-        # In the real world, MultipassCommand would return an error when
-        # calling this on an instance that does not exist.
-        multipass.build_project()
-
-        self.multipass_cmd_mock().execute.assert_called_once_with(
-            instance_name=self.instance_name,
-            command=[
-                "sudo",
-                "-i",
-                "snapcraft",
-                "snap",
-                "--output",
-                "project-name_{}.snap".format(self.project.deb_arch),
-            ],
-        )
-
-        self.multipass_cmd_mock().pull_file.assert_not_called()
-        self.multipass_cmd_mock().push_file.assert_not_called()
-        self.multipass_cmd_mock().launch.assert_not_called()
-        self.multipass_cmd_mock().info.assert_not_called()
-        self.multipass_cmd_mock().stop.assert_not_called()
-        self.multipass_cmd_mock().delete.assert_not_called()
-
-    def test_retrieve_snap(self):
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
-
-        # In the real world, MultipassCommand would return an error when
-        # calling this on an instance that does not exist.
-        multipass.retrieve_snap()
-
-        self.multipass_cmd_mock().pull_file.assert_called_once_with(
-            instance=self.instance_name,
-            source="~/project/project-name_{}.snap".format(self.project.deb_arch),
-            destination="project-name_{}.snap".format(self.project.deb_arch),
-        )
-
-        self.multipass_cmd_mock().push_file.assert_not_called()
-        self.multipass_cmd_mock().execute.assert_not_called()
-        self.multipass_cmd_mock().launch.assert_not_called()
-        self.multipass_cmd_mock().info.assert_not_called()
-        self.multipass_cmd_mock().stop.assert_not_called()
-        self.multipass_cmd_mock().delete.assert_not_called()
 
     def test_pull_file(self):
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
