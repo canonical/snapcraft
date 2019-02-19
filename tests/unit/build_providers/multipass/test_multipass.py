@@ -483,20 +483,49 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
     scenarios = (
         (
             "linux-multipass-confined",
-            dict(platform="Linux", confinement="strict", expected_confined=True),
+            dict(
+                platform="Linux",
+                uname_release="4.15.0-45-generic",
+                confinement="strict",
+                expected_confined=True,
+            ),
         ),
         (
             "linux-multipass-unconfined",
-            dict(platform="Linux", confinement="devmode", expected_confined=False),
-        ),
-        (
-            "windows-wsl",
             dict(
-                platform="Linux", uname="4.40-17134-Microsoft", expected_confined=False
+                platform="Linux",
+                uname_release="4.15.0-45-generic",
+                confinement="devmode",
+                expected_confined=False,
             ),
         ),
-        ("darwin", dict(platform="Darwin", expected_confined=False)),
-        ("windows", dict(platform="Win32", expected_confined=False)),
+        (
+            "darwin",
+            dict(
+                platform="Darwin",
+                uname_release="18.2.0",
+                confinement="",
+                expected_confined=False,
+            ),
+        ),
+        (
+            "windows",
+            dict(
+                platform="Win32",
+                uname_release="Microsoft",
+                confinement="",
+                expected_confined=False,
+            ),
+        ),
+        (
+            "windows-wsl",  # snaps currently do not run on WSL
+            dict(
+                platform="Linux",
+                uname_release="4.40-17134-Microsoft",
+                confinement="",
+                expected_confined=False,
+            ),
+        ),
     )
 
     def setUp(self):
@@ -510,7 +539,7 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
         self.multipass_cmd_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        # default data returned for info so launch is triggered
+        # default data returned for instance info so launch will trigger
         self.multipass_cmd_mock().info.side_effect = [
             errors.ProviderInfoError(
                 provider_name="multipass", exit_code=1, stderr=b"error"
@@ -519,22 +548,16 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
             _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
-    def test_confinement_check(self):
         self.fake_snapd.find_result = [{"multipass": {}}]
 
-        snap_info = '{{ "confinement": "{}" }}'.format(
-            self.confinement if hasattr(self, "confinement") else "None"
-        )
+    def test_confinement_check(self):
+        snap_info = '{{ "confinement": "{}" }}'.format(self.confinement)
 
+        # sufficient data structure to mock platform.uname()
         uname_result = collections.namedtuple("uname_result", "system release")
+        uname_output = uname_result(system=self.platform, release=self.uname_release)
 
-        with mock.patch(
-            "platform.uname",
-            lambda: uname_result(
-                system=self.platform,
-                release=self.uname if hasattr(self, "uname") else "None",
-            ),
-        ):
+        with mock.patch("platform.uname", lambda: uname_output):
             with mock.patch(
                 "snapcraft.internal.repo.snaps.SnapPackage.get_local_snap_info",
                 lambda _: json.loads(snap_info),
