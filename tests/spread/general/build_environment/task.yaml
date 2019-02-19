@@ -18,10 +18,9 @@ execute: |
   # Verify that part1 had FOO defined as expected
   echo "$output" | MATCH "part1: BAR"
 
-  # Verify that part2 had FOO defined as expected, including taking its dependency into
-  # account.
-  echo "$output" | MATCH "part2: BAR BAZ QUX"
+  # Verify that part2 had FOO defined as expected, but not its dependencies.
+  echo "$output" | MATCH "part2:  BAZ QUX"
 
-  # Finally, install it and ensure FOO didn't make it into the final app
+  # Finally, install it and ensure FOO didn't make it into the final app.
   sudo snap install build-environment-test_*.snap --dangerous
   [ "$(build-environment-test)" = "" ]
