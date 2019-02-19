@@ -14,12 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
+import json
 import os
-import sys
-import subprocess
 from textwrap import dedent
 from unittest import mock
-from xdg import BaseDirectory
 
 import fixtures
 from testtools.matchers import Equals
@@ -33,6 +32,7 @@ from snapcraft.internal import steps
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
+from snapcraft.internal.repo.snaps import SnapPackage
 
 
 _DEFAULT_INSTANCE_INFO = dedent(
@@ -206,13 +206,6 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
-
-        self.multipass_cmd_mock().pull_file.assert_called_once_with(
-            instance=self.instance_name,
-            source="~/project/project-name_{}.snap".format(self.project.deb_arch),
-            destination="project-name_{}.snap".format(self.project.deb_arch),
-        )
-
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name, time=10
         )
@@ -280,8 +273,8 @@ class MultipassTest(BaseProviderBaseTest):
             command=["test", "-f", "src.txt"], instance_name="snapcraft-project-name"
         )
 
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            destination="dest.txt", instance=self.instance_name, source="src.txt"
         )
 
         self.multipass_cmd_mock().info.assert_not_called()
@@ -293,8 +286,8 @@ class MultipassTest(BaseProviderBaseTest):
 
         multipass.pull_file("src.txt", "dest.txt", delete=True)
 
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            destination="dest.txt", instance=self.instance_name, source="src.txt"
         )
 
         self.multipass_cmd_mock().execute.assert_has_calls(
@@ -490,14 +483,20 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
     scenarios = (
         (
             "linux-multipass-confined",
-            dict(platform="linux", returncode=2, expected_confined=True),
+            dict(platform="Linux", confinement="strict", expected_confined=True),
         ),
         (
             "linux-multipass-unconfined",
-            dict(platform="linux", returncode=0, expected_confined=False),
+            dict(platform="Linux", confinement="devmode", expected_confined=False),
         ),
-        ("darwin", dict(platform="darwin", expected_confined=False)),
-        ("windows", dict(platform="win32", expected_confined=False)),
+        (
+            "windows-wsl",
+            dict(
+                platform="Linux", uname="4.40-17134-Microsoft", expected_confined=False
+            ),
+        ),
+        ("darwin", dict(platform="Darwin", expected_confined=False)),
+        ("windows", dict(platform="Win32", expected_confined=False)),
     )
 
     def setUp(self):
@@ -520,33 +519,29 @@ class MultipassPlatformBehaviourTest(BaseProviderBaseTest):
             _DEFAULT_INSTANCE_INFO.encode(),
         ]
 
-        patcher = mock.patch("subprocess.run")
-        self.popen_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
     def test_confinement_check(self):
-        if hasattr(self, "returncode"):
-            self.popen_mock().returncode = self.returncode
+        self.fake_snapd.find_result = [{"multipass": {}}]
 
-        with mock.patch("sys.platform", self.platform):
-            with Multipass(project=self.project, echoer=self.echoer_mock) as instance:
-                self.assertEqual(
-                    instance._is_multipass_confined(), self.expected_confined
-                )
+        snap_info = '{{ "confinement": "{}" }}'.format(
+            self.confinement if hasattr(self, "confinement") else "None"
+        )
 
-        if hasattr(self, "returncode"):
-            self.popen_mock.assert_has_calls(
-                [
-                    mock.call(
-                        ["snap", "run", "--shell", "multipass"],
-                        input="ls '{}'\n".format(
-                            BaseDirectory.save_data_path("snapcraft")
-                        ),
-                        encoding="utf-8",
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
+        uname_result = collections.namedtuple("uname_result", "system release")
+
+        with mock.patch(
+            "platform.uname",
+            lambda: uname_result(
+                system=self.platform,
+                release=self.uname if hasattr(self, "uname") else "None",
+            ),
+        ):
+            with mock.patch(
+                "snapcraft.internal.repo.snaps.SnapPackage.get_local_snap_info",
+                lambda _: json.loads(snap_info),
+            ):
+                with Multipass(
+                    project=self.project, echoer=self.echoer_mock
+                ) as instance:
+                    self.assertEqual(
+                        instance._is_multipass_confined(), self.expected_confined
                     )
-                ]
-            )
-        else:
-            self.popen_mock.assert_not_called()

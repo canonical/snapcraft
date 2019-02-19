@@ -19,13 +19,14 @@ import os
 import sys
 from typing import Dict, Sequence
 from pathlib import Path
-from xdg import BaseDirectory
+from platform import system, uname
 
 from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.repo.snaps import SnapPackage
 
 
 logger = logging.getLogger(__name__)
@@ -86,31 +87,21 @@ class Multipass(Provider):
         return image
 
     def _is_multipass_confined(self) -> bool:
-        if sys.platform != "linux":
+        # Confined Multipass, aka snapped-Multipass with strict confinement, only available on Linux
+        if system() != "Linux":
             return False
 
-        # Get the exit code of echo "ls $HOME/.local/share/snapcraft" | snap run --shell multipass;
-        # If 2, multipass *is* confined. Failure or other return codes indicate that either
-        # multipass or snap are not installed (we should not reach here then), or snapped multipass
-        # is installed but not confined.
-        in_snap_cmd = "ls '{}'\n".format(BaseDirectory.save_data_path("snapcraft"))
-        command = ["snap", "run", "--shell", "multipass"]
-        logger.debug('Running echo "{}" | {}'.format(in_snap_cmd, " ".join(command)))
-        try:
-            if (
-                subprocess.run(
-                    command,
-                    input=in_snap_cmd,
-                    encoding="utf-8",
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                ).returncode
-                == 2
-            ):
-                logger.debug("Multipass confined")
-                return True
-        except Exception:
-            pass
+        # WSL identifies as Linux, but the Multipass snap won't be usable there
+        if "Microsoft" in uname().release:
+            return False
+
+        multipass_snap = SnapPackage("multipass")
+        if (
+            multipass_snap.installed
+            and multipass_snap.get_local_snap_info().get("confinement") == "strict"
+        ):
+            logger.debug("Multipass confined")
+            return True
 
         logger.debug("Multipass not confined")
         return False
@@ -278,8 +269,9 @@ class Multipass(Provider):
         )
 
         # copy file from instance
-        source = "{}:{}".format(self.instance_name, name)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        self._multipass_cmd.pull_file(
+            instance=self.instance_name, source=name, destination=destination
+        )
         if delete:
             self._multipass_cmd.execute(
                 instance_name=self.instance_name, command=["sudo", "-i", "rm", name]
