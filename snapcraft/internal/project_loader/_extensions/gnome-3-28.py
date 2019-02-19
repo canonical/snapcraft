@@ -25,14 +25,14 @@ class GnomeExtensionClassicConfinementError(errors.SnapcraftError):
     fmt = "The gnome extension doesn't support classic confinement."
 
 
-class GnomeExtension(DesktopCommonExtension):
+class Gnome_3_28Extension(DesktopCommonExtension):
     """The Gnome extension.
     This extension is to be used by applications that require GTK+.
     Examples might include productivity applications or utilities.
     Note that this extension does not support classically-confined snaps at this time.
     """
 
-    supported_bases = ("core16", "core18")
+    supported_bases = ("core18")
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new GnomeExtension.
@@ -45,25 +45,12 @@ class GnomeExtension(DesktopCommonExtension):
         if yaml_data.get("confinement") == "classic":
             raise GnomeExtensionClassicConfinementError()
 
-        platform_snap = "gnome-3-26-1604"  # default
+        platform_snap = ""
         base = yaml_data.get("base")
         after_dependencies = []  # type: List[str]
         dependency_part = {}  # type: Dict[str, Any]
         if base is not None:
-            if base == "core16":
-                platform_snap = "gnome-3-26-1604"
-                after_dependencies = ["gnome-extension-platform-dependencies"]
-                dependency_part = {
-                    "gnome-extension-platform-dependencies": {
-                        "plugin": "nil",
-                        "override-pull": """
-                            add-apt-repository ppa:ubuntu-desktop/gnome-3-26
-                            apt-get update
-                            apt-get upgrade -yqq
-                            """,
-                    }
-                }
-            elif base == "core18":
+            if base == "core18":
                 platform_snap = "gnome-3-28-1804"
 
         layout = {
@@ -76,10 +63,6 @@ class GnomeExtension(DesktopCommonExtension):
                 },
             }
         }  # type: Dict[str, Any]
-
-        # Use passthrough when base: is not specified to work with old style snapcraft
-        if base is None:
-            layout = {"passthrough": layout}
 
         self.root_snippet = {
             **self.root_snippet,

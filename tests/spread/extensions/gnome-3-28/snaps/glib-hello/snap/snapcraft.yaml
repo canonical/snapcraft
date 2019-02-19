@@ -11,7 +11,7 @@ apps:
   glib-hello:
     command: bin/hello
     adapter: full
-    extensions: [gnome]
+    extensions: [gnome-3-28]
 
 parts:
   project:

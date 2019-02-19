@@ -95,7 +95,8 @@ def find_extension(extension_name: str) -> Type[Extension]:
 
     # This may throw an AttributeError, but that would be programmer error of whoever
     # is hacking on extensions.
-    extension_class_name = "{}Extension".format(extension_name.capitalize())
+    extension_class_name = "{}Extension".format(
+        extension_name.capitalize().replace('-', '_'))
     return getattr(extension_module, extension_class_name)
 
 
