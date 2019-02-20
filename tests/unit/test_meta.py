@@ -1081,6 +1081,29 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
             os.stat(os.path.join(self.hooks_dir, "test-hook")).st_mode & stat.S_IEXEC
         )
 
+    def test_snap_hooks_not_does_not_fail_on_symlink(self):
+        # Setup a snap directory containing a few things.
+        _create_file(os.path.join(self.snap_dir, "snapcraft.yaml"))
+        _create_file(os.path.join(self.snap_dir, "hooks", "test-hook"))
+        # Create a working symlink
+        os.symlink(
+            "test-hook", os.path.join(self.snap_dir, "hooks", "test-hook-symlink")
+        )
+
+        # Now write the snap directory.
+        self.generate_meta_yaml()
+
+        # Ensure the file is executable
+        self.assertThat(os.path.join(self.hooks_dir, "test-hook"), FileExists())
+        test_hook_stat = os.stat(
+            os.path.join(self.hooks_dir, "test-hook"), follow_symlinks=False
+        )
+        test_hook_symlink_stat = os.stat(
+            os.path.join(self.hooks_dir, "test-hook-symlink"), follow_symlinks=False
+        )
+
+        self.assertThat(test_hook_symlink_stat.st_ino, Equals(test_hook_stat.st_ino))
+
 
 class GenerateHookWrappersTestCase(CreateBaseTestCase):
     def test_generate_hook_wrappers(self):
