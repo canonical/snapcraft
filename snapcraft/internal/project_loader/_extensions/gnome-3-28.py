@@ -32,7 +32,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
     Note that this extension does not support classically-confined snaps at this time.
     """
 
-    supported_bases = ("core18")
+    supported_bases = "core18"
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new GnomeExtension.
