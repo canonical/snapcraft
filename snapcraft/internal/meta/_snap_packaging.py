@@ -469,7 +469,7 @@ class _SnapPackaging:
                     with contextlib.suppress(FileNotFoundError):
                         os.remove(destination)
 
-                    file_utils.link_or_copy(source, destination)
+                    file_utils.link_or_copy(source, destination, follow_symlinks=True)
 
                     # Ensure that the hook is executable
                     if origin == "hooks":

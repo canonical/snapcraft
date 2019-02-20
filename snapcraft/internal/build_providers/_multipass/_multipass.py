@@ -17,7 +17,6 @@
 import logging
 import os
 import sys
-import shlex
 from typing import Dict, Sequence
 
 from .. import errors
@@ -202,56 +201,11 @@ class Multipass(Provider):
                 gid_map={str(os.getgid()): "0"},
             )
 
-    def provision_project(self, tarball: str) -> None:
-        """Provision the multipass instance with the project to work with."""
-        # TODO add instance check.
-        # Step 0, sanitize the input
-        tarball = shlex.quote(tarball)
-
-        # First create a working directory
-        self._multipass_cmd.execute(
-            command=["sudo", "-i", "mkdir", self._INSTANCE_PROJECT_DIR],
-            instance_name=self.instance_name,
-        )
-
-        # Then copy the tarball over
-        destination = "{}:{}".format(self.instance_name, tarball)
-        self._multipass_cmd.copy_files(source=tarball, destination=destination)
-
-        # Finally extract it into project_dir.
-        extract_cmd = [
-            "sudo",
-            "-i",
-            "tar",
-            "-xvf",
-            tarball,
-            "-C",
-            self._INSTANCE_PROJECT_DIR,
-        ]
-        self._multipass_cmd.execute(
-            command=extract_cmd, instance_name=self.instance_name
-        )
-
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()
         if was_cleaned:
             self._multipass_cmd.delete(instance_name=self.instance_name, purge=True)
         return was_cleaned
-
-    def build_project(self) -> None:
-        # TODO add instance check.
-        self._multipass_cmd.execute(
-            command=["sudo", "-i", "snapcraft", "snap", "--output", self.snap_filename],
-            instance_name=self.instance_name,
-        )
-
-    def retrieve_snap(self) -> str:
-        # TODO add instance check.
-        source = "{}:{}/{}".format(
-            self.instance_name, self._INSTANCE_PROJECT_DIR, self.snap_filename
-        )
-        self._multipass_cmd.copy_files(source=source, destination=self.snap_filename)
-        return self.snap_filename
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
         # TODO add instance check.
