@@ -345,7 +345,10 @@ class TestLocalUpdateSnapcraftYaml(unit.TestCase):
     scenarios = [
         ("snapcraft.yaml", dict(snapcraft_file="snapcraft.yaml")),
         (".snapcraft.yaml", dict(snapcraft_file=".snapcraft.yaml")),
-        ("snap/snapcraft.yaml", dict(snapcraft_file=os.path.join("snap", "snapcraft.yaml"))),
+        (
+            "snap/snapcraft.yaml",
+            dict(snapcraft_file=os.path.join("snap", "snapcraft.yaml")),
+        ),
         ("snap/<content>", dict(snapcraft_file=os.path.join("snap", "test-file"))),
     ]
 
