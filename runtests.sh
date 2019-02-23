@@ -79,9 +79,9 @@ run_static_tests(){
 }
 
 run_snapcraft_tests(){
-    if [[ ! -z "$use_run" ]]; then
+    if [[ -n "$use_run" ]]; then
         python3 -m unittest -b -v run "$test_suite"
-    elif [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    elif [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
     else
@@ -109,7 +109,7 @@ fi
 
 parseargs "$@"
 
-if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+if [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
     coverage report
 
     echo
