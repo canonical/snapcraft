@@ -32,7 +32,7 @@ def recursive_data_files(directory, install_directory):
 # Common distribution data
 name = "snapcraft"
 version = "devel"
-description = "Easily craft snaps from multiple sources"
+description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
 packages = [

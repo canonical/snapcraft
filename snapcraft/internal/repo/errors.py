@@ -141,6 +141,14 @@ class SnapInstallError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
+class SnapDownloadError(RepoError):
+
+    fmt = "Error while downloading snap {snap_name!r} from channel {snap_channel!r}"
+
+    def __init__(self, *, snap_name, snap_channel):
+        super().__init__(snap_name=snap_name, snap_channel=snap_channel)
+
+
 class SnapGetAssertionError(RepoError):
 
     fmt = (

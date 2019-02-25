@@ -43,6 +43,8 @@ jobs:
       if: type = pull_request AND sender != snappy-m-o
       install:
         - sudo apt update && sudo apt install -y git python-launchpadlib
+      git:
+        depth: false
       script:
         - ./tools/cla_check.py
 
@@ -99,23 +101,16 @@ jobs:
       if: type != cron
       addons:
         snaps:
-          - name: lxd
-            channel: 3.0/stable
           - name: snapcraft
-            channel: candidate
+            channel: edge
             classic: true
           - name: transfer
           - name: http
       install:
-        - sudo apt autoremove --purge --yes lxd lxd-client
-        - sudo /snap/bin/lxd waitready
-        - sudo /snap/bin/lxd init --auto
-        - mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+        - sudo apt update
       script:
-        - export PATH=/snap/bin:$PATH
-        - sudo snapcraft cleanbuild
-        - sudo cp snapcraft_amd64.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - sudo cp snapcraft_amd64.snap "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo snapcraft snap --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 sudo /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:

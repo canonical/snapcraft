@@ -23,7 +23,6 @@ from typing import Set  # noqa: F401
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
 from ._env import (
-    env_for_classic,
     build_env,
     build_env_for_stage,
     runtime_env,
@@ -256,15 +255,13 @@ class PartsConfig:
             env += build_env_for_stage(
                 stagedir, self._project.info.name, self._project.arch_triplet
             )
-            # Only set the paths to the base snap if we are building on the
-            # same host. Failing to do so will cause Segmentation Faults.
-            if self._project.info.confinement == "classic":
-                env += env_for_classic(
-                    self._project.info.base, self._project.arch_triplet
-                )
 
             global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)
+            # Finally, add the declared environment from the part.
+            # This is done only for the "root" part.
+            env += part.build_environment
+
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))
         else:
@@ -274,8 +271,6 @@ class PartsConfig:
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
-
-        env += part.build_environment
 
         # LP: #1767625
         # Remove duplicates from using the same plugin in dependent parts.

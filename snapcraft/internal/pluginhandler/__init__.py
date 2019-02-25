@@ -382,6 +382,28 @@ class PluginHandler:
         if os.path.isdir(self.plugin.statedir) and not os.listdir(self.plugin.statedir):
             os.rmdir(self.plugin.statedir)
 
+    def _fetch_stage_snaps(self):
+        stage_snaps = self._grammar_processor.get_stage_snaps()
+        if stage_snaps:
+            repo.snaps.download_snaps(
+                snaps_list=stage_snaps, directory=self.plugin.snapsdir
+            )
+
+    def _unpack_stage_snaps(self):
+        stage_snaps = self._grammar_processor.get_stage_snaps()
+        if not stage_snaps:
+            return
+
+        logger.debug("Unpacking stage-snaps to {!r}".format(self.plugin.stage_snaps))
+        snap_files = iglob(os.path.join(self.plugin.snapsdir, "*.snap"))
+        snap_sources = (
+            sources.Snap(source=s, source_dir=self.plugin.snapsdir) for s in snap_files
+        )
+        for snap_source in snap_sources:
+            snap_source.provision(
+                self.plugin.installdir, clean_target=False, keep_snap=True
+            )
+
     def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
@@ -402,7 +424,9 @@ class PluginHandler:
     def prepare_pull(self, force=False):
         self.makedirs()
         self._fetch_stage_packages()
+        self._fetch_stage_snaps()
         self._unpack_stage_packages()
+        self._unpack_stage_snaps()
 
     def pull(self, force=False):
         # Ensure any previously-failed pull is cleared out before we try again
@@ -478,6 +502,10 @@ class PluginHandler:
         # Remove ubuntu cache (where stage packages are fetched)
         if os.path.exists(self.plugin.osrepodir):
             shutil.rmtree(self.plugin.osrepodir)
+
+        # Remove snaps dir (where stage snaps are fetched)
+        if os.path.exists(self.plugin.snapsdir):
+            shutil.rmtree(self.plugin.snapsdir)
 
         if os.path.exists(self.plugin.sourcedir):
             if os.path.islink(self.plugin.sourcedir):

@@ -1,0 +1,25 @@
+summary: Build and run a classic confined basic Autotools snap
+
+environment:
+  SNAP_DIR: ../snaps/autotools-hello
+
+prepare: |
+  cd "$SNAP_DIR"
+  # Change the confinement to classic
+  sed -i -e "s/confinement: strict/confinement: classic/" snap/snapcraft.yaml
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  git checkout snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+
+  # Ensure that what we built has confinement set to classic
+  MATCH -v "confinement: classic" < prime/meta/snap.yaml
+
+  sudo snap install autotools-hello_*.snap --dangerous --classic
+  [ "$(autotools-hello)" = "Hello, world!" ]
