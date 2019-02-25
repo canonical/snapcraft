@@ -474,10 +474,18 @@ class ColconPluginTest(ColconPluginTestBase):
         underlay_setup = os.path.join(plugin.options.colcon_rosdistro, "setup.sh")
         overlay_setup = os.path.join("snap", "setup.sh")
 
-        # Verify that LD_LIBRARY_PATH was set before any setup.sh is sourced. Also
-        # verify that the underlay setup is sourced before the overlay.
-        ld_library_path_index = [
-            i for i, line in enumerate(environment) if "LD_LIBRARY_PATH" in line
+        # Verify that the python executables and root are set before any setup.sh is
+        # sourced. Also verify that the underlay setup is sourced before the overlay.
+        ament_python_index = [
+            i for i, line in enumerate(environment) if "AMENT_PYTHON_EXECUTABLE" in line
+        ][0]
+        colcon_python_index = [
+            i
+            for i, line in enumerate(environment)
+            if "COLCON_PYTHON_EXECUTABLE" in line
+        ][0]
+        root_index = [
+            i for i, line in enumerate(environment) if "SNAP_COLCON_ROOT" in line
         ][0]
         underlay_source_setup_index = [
             i for i, line in enumerate(environment) if underlay_setup in line
@@ -485,7 +493,9 @@ class ColconPluginTest(ColconPluginTestBase):
         overlay_source_setup_index = [
             i for i, line in enumerate(environment) if overlay_setup in line
         ][0]
-        self.assertThat(ld_library_path_index, LessThan(underlay_source_setup_index))
+        self.assertThat(ament_python_index, LessThan(underlay_source_setup_index))
+        self.assertThat(colcon_python_index, LessThan(underlay_source_setup_index))
+        self.assertThat(root_index, LessThan(underlay_source_setup_index))
         self.assertThat(
             underlay_source_setup_index, LessThan(overlay_source_setup_index)
         )
@@ -505,12 +515,10 @@ class ColconPluginTest(ColconPluginTestBase):
         lines_of_interest = [
             "set --",
             'if [ -f "{}" ]; then'.format(underlay_setup),
-            'AMENT_CURRENT_PREFIX="{}" . "{}"'.format(underlay, underlay_setup),
+            '. "{}"'.format(underlay_setup),
             "fi",
             'if [ -f "{}" ]; then'.format(overlay_setup),
-            'COLCON_CURRENT_PREFIX="{}" COLCON_PYTHON_EXECUTABLE="{}" . "{}"'.format(
-                overlay, python_path, overlay_setup
-            ),
+            '. "{}"'.format(overlay_setup),
             "fi",
             'eval "set -- $BACKUP_ARGS"',
         ]
@@ -593,16 +601,12 @@ class PrepareBuildTest(ColconPluginTestBase):
             {
                 "path": "setup.sh",
                 "contents": ": ${AMENT_CURRENT_PREFIX:=/opt/ros/crystal}",
-                "expected": ': ${{AMENT_CURRENT_PREFIX:="{}/opt/ros/crystal"}}'.format(
-                    self.plugin.installdir
-                ),
+                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP_COLCON_ROOT/opt/ros/crystal"}',
             },
             {
                 "path": "test/local_setup.sh",
-                "contents": ": ${AMENT_CURRENT_PREFIX:=/foo/bar}",
-                "expected": ': ${{AMENT_CURRENT_PREFIX:="{}/foo/bar"}}'.format(
-                    self.plugin.installdir
-                ),
+                "contents": ': ${AMENT_CURRENT_PREFIX:="/foo/bar"}',
+                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP_COLCON_ROOT/foo/bar"}',
             },
             {
                 "path": "test/no-change.sh",
@@ -696,14 +700,14 @@ class FinishBuildTest(ColconPluginTestBase):
             {
                 "path": "setup.sh",
                 "contents": ": ${AMENT_CURRENT_PREFIX:=/opt/ros/crystal}",
-                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP/opt/ros/crystal"}',
+                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP_COLCON_ROOT/opt/ros/crystal"}',
             },
             {
                 "path": "test/local_setup.sh",
                 "contents": ': ${{AMENT_CURRENT_PREFIX:="{}/foo/bar"}}'.format(
                     self.plugin.installdir
                 ),
-                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP/foo/bar"}',
+                "expected": ': ${AMENT_CURRENT_PREFIX:="$SNAP_COLCON_ROOT/foo/bar"}',
             },
             {
                 "path": "test/no-change.sh",
@@ -731,20 +735,37 @@ class FinishBuildTest(ColconPluginTestBase):
         files = [
             {
                 "path": "setup.sh",
-                "contents": "_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX=/foo/bar",
-                "expected": '_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX="$SNAP/foo/bar"',
+                "contents": "_colcon_prefix_sh_COLCON_CURRENT_PREFIX=/foo/bar",
+                "expected": '_colcon_prefix_sh_COLCON_CURRENT_PREFIX="$SNAP_COLCON_ROOT/foo/bar"',
             },
             {
                 "path": "test/local_setup.sh",
-                "contents": '_colcon_prefix_sh_COLCON_CURRENT_PREFIX="{}/baz"'.format(
+                "contents": '_colcon_package_sh_COLCON_CURRENT_PREFIX="{}/baz"'.format(
                     self.plugin.installdir
                 ),
-                "expected": '_colcon_prefix_sh_COLCON_CURRENT_PREFIX="$SNAP/baz"',
+                "expected": '_colcon_package_sh_COLCON_CURRENT_PREFIX="$SNAP_COLCON_ROOT/baz"',
             },
             {
-                "path": "test/no-change.sh",
+                "path": "test/another_local_setup.sh",
+                "contents": 'COLCON_CURRENT_PREFIX="{}/qux"'.format(
+                    self.plugin.installdir
+                ),
+                "expected": 'COLCON_CURRENT_PREFIX="$SNAP_COLCON_ROOT/qux"',
+            },
+            {
+                "path": "test/no-change1.sh",
                 "contents": "_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX=$NOT_A_PATH",
                 "expected": "_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX=$NOT_A_PATH",
+            },
+            {
+                "path": "test/no-change2.sh",
+                "contents": "_colcon_package_bash_COLCON_CURRENT_PREFIX=/foo/bar",
+                "expected": "_colcon_package_bash_COLCON_CURRENT_PREFIX=/foo/bar",
+            },
+            {
+                "path": "test/no-change3.sh",
+                "contents": "COLCON_CURRENT_PREFIX=/foo/bar",
+                "expected": "COLCON_CURRENT_PREFIX=/foo/bar",
             },
         ]
 
@@ -768,14 +789,14 @@ class FinishBuildTest(ColconPluginTestBase):
             {
                 "path": "setup.sh",
                 "contents": "_colcon_python_executable=/usr/bin/python3",
-                "expected": '_colcon_python_executable="$SNAP/usr/bin/python3"',
+                "expected": '_colcon_python_executable="$SNAP_COLCON_ROOT/usr/bin/python3"',
             },
             {
                 "path": "test/local_setup.sh",
                 "contents": '_colcon_python_executable="{}/baz/python3"'.format(
                     self.plugin.installdir
                 ),
-                "expected": '_colcon_python_executable="$SNAP/baz/python3"',
+                "expected": '_colcon_python_executable="$SNAP_COLCON_ROOT/baz/python3"',
             },
             {
                 "path": "test/no-change.sh",
