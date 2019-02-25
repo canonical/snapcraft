@@ -62,7 +62,7 @@ import textwrap
 import snapcraft
 from snapcraft.plugins import _ros
 from snapcraft.plugins import _python
-from snapcraft import common, file_utils, formatting_utils, repo
+from snapcraft import file_utils, repo
 from snapcraft.internal import errors, mangling
 
 logger = logging.getLogger(__name__)

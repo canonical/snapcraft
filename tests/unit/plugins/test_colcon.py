@@ -509,7 +509,6 @@ class ColconPluginTest(ColconPluginTestBase):
         underlay_setup = os.path.join(underlay, "setup.sh")
         overlay = os.path.join("test-root", "opt", "ros", "snap")
         overlay_setup = os.path.join(overlay, "setup.sh")
-        python_path = os.path.join("test-root", "usr", "bin", "python3")
 
         # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
         lines_of_interest = [
