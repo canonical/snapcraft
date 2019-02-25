@@ -120,7 +120,6 @@ class DotNetPlugin(snapcraft.BasePlugin):
                     "lldb",
                     "libssl1.0.0",
                     "libgssapi-krb5-2",
-                    "libc6",
                     "zlib1g",
                     "libgcc1",
                 ]
