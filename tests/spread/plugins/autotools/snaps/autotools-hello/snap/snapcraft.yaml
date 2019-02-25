@@ -11,7 +11,7 @@ confinement: strict
 
 apps:
   autotools-hello:
-    command: hello
+    command: bin/hello
 
 build-packages: [gcc]
 
