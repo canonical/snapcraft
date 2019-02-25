@@ -1,5 +1,4 @@
 name: exit1
-base: core18
 version: '0.1'
 summary: Single-line elevator pitch for your amazing snap
 description: |
