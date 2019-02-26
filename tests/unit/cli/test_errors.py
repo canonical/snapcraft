@@ -182,7 +182,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         )
         self._raise_other_error()
         self.move_mock.assert_not_called()
-        self.assertTrue(self.traceback_mock.call_count == 2)
+        self.assertThat(self.traceback_mock.call_count, Equals(2))
 
     def _raise_exec_error(self):
         self.call_handler(
