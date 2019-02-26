@@ -161,7 +161,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
         self._raise_exec_error()
-        self.assertTrue(self.move_mock.call_count == 1)
+        self.assertThat(self.move_mock.call_count, Equals(1))
         self.traceback_mock.assert_not_called()
 
     @mock.patch("os.path.isfile", return_value=False)
