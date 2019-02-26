@@ -161,7 +161,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
         self._raise_exec_error()
-        self.move_mock.assert_called_once()
+        self.assertTrue(self.move_mock.call_count == 1)
         self.traceback_mock.assert_not_called()
 
     @mock.patch("os.path.isfile", return_value=False)
@@ -172,7 +172,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         )
         self._raise_other_error()
         self.move_mock.assert_not_called()
-        self.traceback_mock.assert_called_once()
+        self.assertTrue(self.traceback_mock.call_count == 1)
 
     @mock.patch("os.path.isfile", return_value=False)
     def test_provider_error_inner(self, isfile_function):
