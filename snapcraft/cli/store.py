@@ -100,7 +100,7 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
 @click.option("--private", is_flag=True, help="Register the snap as a private one")
-@click.option("--store-id", metavar="<store>", help="Store ID to register with")
+@click.option("--store", metavar="<store>", help="Store to register with")
 def register(snap_name, private, store_id):
     """Register <snap-name> with the store.
 
