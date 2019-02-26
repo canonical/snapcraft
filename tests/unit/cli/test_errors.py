@@ -23,7 +23,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains, MatchesRegex, Equals
+from testtools.matchers import FileContains, MatchesRegex, Equals, GreaterThan
 from testscenarios import multiply_scenarios
 
 import snapcraft.internal.errors
@@ -182,7 +182,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         )
         self._raise_other_error()
         self.move_mock.assert_not_called()
-        self.assertThat(self.traceback_mock.call_count, Equals(2))
+        self.assertThat(self.traceback_mock.call_count, GreaterThan(0))
 
     def _raise_exec_error(self):
         self.call_handler(
