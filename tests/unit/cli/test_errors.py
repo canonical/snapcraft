@@ -175,11 +175,13 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         self.assertThat(self.traceback_mock.call_count, Equals(1))
 
     @mock.patch("os.path.isfile", return_value=False)
-    def test_provider_error_inner(self, isfile_function):
+    @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    def test_provider_error_inner(self, isfile_function, raven_client_mock):
         # Error raised inside the build provider
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
         )
+        snapcraft.cli._errors.RavenClient = "something"
         self._raise_other_error()
         self.move_mock.assert_not_called()
         self.assertThat(self.traceback_mock.call_count, Equals(2))
