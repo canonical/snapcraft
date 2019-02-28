@@ -25,5 +25,6 @@ execute: |
   # Ensure that snapcraft uses build VMs
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  snapcraft
-  [ $? -eq 2 ]
+  err=0
+  snapcraft || err=$?
+  [ $err -eq 2 ]
