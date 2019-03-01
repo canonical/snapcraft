@@ -323,7 +323,7 @@ def list_registered():
 @click.option(
     "--expires",
     metavar="<expiration date>",
-    help="Date/time (in ISO 8601) when this exported login expires",
+    help="Date/time (in ISO 8601) when this exported login expires. Defaults to 1 year from now.",
 )
 def export_login(login_file: str, snaps: str, channels: str, acls: str, expires: str):
     """Save login configuration for a store account in FILE.
