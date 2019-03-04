@@ -15,11 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import requests
 from unittest import mock
 
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 
-from snapcraft.internal.sources import _base
+from snapcraft.internal.sources import _base, errors
 from tests import unit
 
 
@@ -66,6 +67,16 @@ class TestFileBase(unit.TestCase):
                 os.path.join(file_src.source_dir, os.path.basename(file_src.source))
             ),
         )
+
+    @mock.patch("snapcraft.internal.common.get_url_scheme", return_value=False)
+    @mock.patch("requests.get", side_effect=requests.exceptions.ConnectionError("foo"))
+    def test_download_error(self, mock_get, mock_gus):
+        base = self.get_mock_file_base("", "")
+        base.source_checksum = False
+
+        raised = self.assertRaises(errors.SnapcraftRequestError, base.download, None)
+
+        self.assertThat(str(raised), Contains("Network request error"))
 
     @mock.patch("snapcraft.internal.sources._base.download_requests_stream")
     @mock.patch("snapcraft.internal.sources._base.requests")
