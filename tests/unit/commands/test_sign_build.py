@@ -21,7 +21,7 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import storeapi
+from snapcraft import storeapi, internal
 import tests
 from . import CommandBaseTestCase
 
@@ -79,6 +79,21 @@ class SignBuildTestCase(CommandBaseTestCase):
             result.output, Contains('Path "nonexisting.snap" does not exist')
         )
         self.assertThat(mock_check_output.call_count, Equals(0))
+
+    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    def test_sign_build_invalid_snap(self, mock_installed):
+        mock_installed.return_value = True
+        snap_path = os.path.join(
+            os.path.dirname(tests.__file__), "data", "invalid.snap"
+        )
+
+        raised = self.assertRaises(
+            internal.errors.SnapDataExtractionError,
+            self.run_command,
+            ["sign-build", snap_path],
+        )
+
+        self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")

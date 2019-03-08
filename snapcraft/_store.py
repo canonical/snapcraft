@@ -35,6 +35,7 @@ from tabulate import tabulate
 from snapcraft.file_utils import calculate_sha3_384, get_tool_path
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
+from snapcraft.internal.errors import SnapDataExtractionError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
@@ -48,16 +49,19 @@ logger = logging.getLogger(__name__)
 def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_tool_path("unsquashfs")
-        output = subprocess.check_output(
-            [
-                unsquashfs_path,
-                "-d",
-                os.path.join(temp_dir, "squashfs-root"),
-                snap_path,
-                "-e",
-                os.path.join("meta", "snap.yaml"),
-            ]
-        )
+        try:
+            output = subprocess.check_output(
+                [
+                    unsquashfs_path,
+                    "-d",
+                    os.path.join(temp_dir, "squashfs-root"),
+                    snap_path,
+                    "-e",
+                    os.path.join("meta", "snap.yaml"),
+                ]
+            )
+        except subprocess.CalledProcessError:
+            raise SnapDataExtractionError(os.path.basename(snap_path))
         logger.debug(output)
         with open(
             os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
@@ -71,16 +75,19 @@ def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_tool_path("unsquashfs")
-        output = subprocess.check_output(
-            [
-                unsquashfs_path,
-                "-d",
-                os.path.join(temp_dir, "squashfs-root"),
-                snap_path,
-                "-e",
-                "meta/gui",
-            ]
-        )
+        try:
+            output = subprocess.check_output(
+                [
+                    unsquashfs_path,
+                    "-d",
+                    os.path.join(temp_dir, "squashfs-root"),
+                    snap_path,
+                    "-e",
+                    "meta/gui",
+                ]
+            )
+        except subprocess.CalledProcessError:
+            raise SnapDataExtractionError(os.path.basename(snap_path))
         logger.debug("Output extracting icon from snap: %s", output)
         for extension in ("png", "svg"):
             icon_name = "icon.{}".format(extension)
