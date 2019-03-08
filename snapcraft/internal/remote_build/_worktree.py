@@ -45,7 +45,6 @@ class Worktree:
             ".svn",
             "*.snap",
             "parts",
-            "build",
             "stage",
             "prime",
             "*.pyc",
@@ -81,16 +80,17 @@ class Worktree:
                 continue
             dirnames = [d for d in dirnames if d != ".git"]
 
-            for f in filenames:
-                dest = os.path.join(dirpath, f)
-                src = os.path.join(self._srcpath(dirpath), f)
+            for name in filenames:
+                dest = os.path.join(dirpath, name)
+                src = os.path.join(self._srcpath(dirpath), name)
                 if not os.path.exists(src):
                     logger.debug("Remove file: {}".format(dest))
                     self._unlink(dest)
-            for d in dirnames:
-                dest = os.path.join(dirpath, d)
-                src = os.path.join(self._srcpath(dirpath), d)
-                if not os.path.exists(src):
+
+            for name in dirnames:
+                dest = os.path.join(dirpath, name)
+                src = os.path.join(self._srcpath(dirpath), name)
+                if not os.path.exists(src) and os.path.exists(dest):
                     logger.debug("Remove directory: {}".format(dest))
                     os.rmdir(dest)
 
@@ -109,7 +109,7 @@ class Worktree:
         ignored = set()
         for pattern in self._ignore:
             ignored.update(set(fnmatch.filter(contents, pattern)))
-        return ignored
+        return list(ignored)
 
     def _link_and_add(self, source: str, destination: str) -> None:
         link_or_copy(source, destination)

@@ -47,12 +47,12 @@ class Repo:
     def add_remote(self, provider: str, user: str, build_id: str) -> str:
         url = None
         if provider == "launchpad":
-            # FIXME: this will use https
+            # TODO: change this after launchpad infrastructure is ready
             url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}".format(
                 user=user, id=build_id
             )
         else:
-            raise RemoteBuilderNotSupportedError(provider)
+            raise RemoteBuilderNotSupportedError(provider=provider)
 
         for remote in self._repo.remotes:
             if remote.name == provider:

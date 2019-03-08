@@ -19,7 +19,7 @@ import os
 import uuid
 
 from snapcraft.internal.remote_build import Worktree, LaunchpadClient, errors
-from typing import Any, Dict
+from typing import Any, Dict, List
 from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
@@ -66,7 +66,7 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
     """Dispatch a snap for remote build.
 
     Command remote-build sends the current project to be built remotely. After the build
-    is complete, packages for each architecure are retrieved and will be available in
+    is complete, packages for each architecture are retrieved and will be available in
     the local filesystem.
 
     If not specified in the snapcraft.yaml file, the list of architectures to build
@@ -108,7 +108,7 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
         remote_info["provider"] = provider
         _save_info(remote_dir, **remote_info)
 
-    # FIXME
+    # TODO: change login strategy after launchpad infrastructure is ready
     lp = LaunchpadClient(project, build_id)
     lp.login(user)
 
@@ -137,12 +137,7 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
             archs = arch.split(",") if arch else []
 
         # Sanity check for build architectures
-        unsupported_archs = []
-        for item in archs:
-            if item not in _SUPPORTED_ARCHS:
-                unsupported_archs.append(item)
-        if unsupported_archs:
-            raise errors.UnsupportedArchitectureError(archs=unsupported_archs)
+        _check_supported_archs(archs)
 
         # Send local data to the remote repository
         work_dir = os.path.join(remote_dir, build_id)
@@ -170,6 +165,15 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
 
     lp.monitor_build()
     echo.info("Build complete.")
+
+
+def _check_supported_archs(archs: List[str]) -> None:
+    unsupported_archs = []
+    for item in archs:
+        if item not in _SUPPORTED_ARCHS:
+            unsupported_archs.append(item)
+    if unsupported_archs:
+        raise errors.UnsupportedArchitectureError(archs=unsupported_archs)
 
 
 def _list_architectures(project):

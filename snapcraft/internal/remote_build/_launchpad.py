@@ -18,7 +18,8 @@ import logging
 import os
 import shutil
 import time
-import urllib
+import urllib.request
+import urllib.error
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
@@ -42,13 +43,15 @@ logger = logging.getLogger(__name__)
 
 
 class LaunchpadClient:
+    """Launchpad remote builder operations."""
+
     def __init__(self, project, build_id: str) -> None:
         self._id = build_id
         self._core_channel = "stable"
         self._snapcraft_channel = "edge"
         self._name = project.info.name
         self._version = project.info.version
-        self._waiting = []
+        self._waiting = []  # type: List[str]
         self._data_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"), "launchpad"
         )
@@ -59,7 +62,7 @@ class LaunchpadClient:
 
     def login(self, user: str) -> None:
         if user:
-            self._save_info(user=user)
+            self._save_info(user=user)  # type: ignore
         else:
             info = self._load_info()
             user = info["user"] if "user" in info else None
@@ -84,7 +87,8 @@ class LaunchpadClient:
 
     def create_snap(self, repository: str, archs: List[str]) -> None:
         logger.debug("Create snap for {}".format(self._id))
-        url = repository.replace("git+ssh://", "https://")  # FIXME
+        # TODO: remove this after launchpad infrastructure is ready
+        url = repository.replace("git+ssh://", "https://")
         snap = {
             "name": self._id,
             "owner": "/~" + self.user,
@@ -95,7 +99,6 @@ class LaunchpadClient:
             "auto_build_pocket": "Updates",
         }
 
-        # This shouldn't be necessary, but apparently LP needs this
         if archs:
             snap["processors"] = ["/+processors/" + arch for arch in archs]
 
@@ -203,7 +206,7 @@ class LaunchpadClient:
     def _download_file(self, url: str, name: str) -> None:
         logger.debug("Download snap from {!r}".format(url))
         with urllib.request.urlopen(url) as response, open(name, "wb") as snapfile:
-            shutil.copyfileobj(response, snapfile)
+            shutil.copyfileobj(response, snapfile)  # type: ignore
 
     def _load_info(self) -> Dict[str, Any]:
         filepath = os.path.join(self._data_dir, "config.yaml")
