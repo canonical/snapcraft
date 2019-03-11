@@ -60,7 +60,7 @@ class SconsPlugin(snapcraft.BasePlugin):
         self._setup_base_tools(project.info.base)
 
     def _setup_base_tools(self, base):
-        if base in ("core16", "core18"):
+        if base in ("core", "core16", "core18"):
             self.build_packages.append("scons")
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)

@@ -153,12 +153,12 @@ class MavenPlugin(snapcraft.BasePlugin):
         self._setup_base_tools(project.info.base)
 
     def _setup_base_tools(self, base):
-        if base not in ("core16", "core18"):
+        if base not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.base
             )
 
-        if base == "core16":
+        if base in ("core", "core16"):
             valid_versions = ["8", "9"]
         elif base == "core18":
             valid_versions = ["8", "11"]
@@ -243,7 +243,7 @@ class MavenPlugin(snapcraft.BasePlugin):
         self._create_symlinks()
 
     def _create_symlinks(self):
-        if self.project.info.base not in ("core18", "core16"):
+        if self.project.info.base not in ("core18", "core16", "core"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.base
             )
