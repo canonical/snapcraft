@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -887,7 +887,7 @@ class ValidVersionTest(ProjectBaseTest):
         )
 
 
-class InvalidVersionTest(ProjectBaseTest):
+class InvalidVersionGenericTest(ProjectBaseTest):
 
     scenarios = [
         (str(version), dict(version=version))
@@ -905,7 +905,6 @@ class InvalidVersionTest(ProjectBaseTest):
             "'v_'",
             "'v-'",
             "'underscores_are_bad'",
-            0.1,
         ]
     ]
 
@@ -937,6 +936,54 @@ class InvalidVersionTest(ProjectBaseTest):
                 "hyphens. They cannot begin with a period, colon, plus "
                 "sign, tilde, or hyphen. They cannot end with a period, "
                 "colon, or hyphen.".format(self.version)
+            ),
+        )
+
+
+class InvalidVersionSpecificTest(ProjectBaseTest):
+
+    def test_invalid_type(self):
+        raised = self.assertValidationRaises(dedent("""
+            name: test
+            base: core18
+            version: 0.1
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """))
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'version' property does not match the required "
+                "schema: snap versions need to be strings."
+            ),
+        )
+
+    def test_too_long(self):
+        raised = self.assertValidationRaises(dedent("""
+            name: test
+            base: core18
+            version: this.is.a.really.too.long.version
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """))
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'version' property does not match the required "
+                "schema: 'this.is.a.really.too.long.version' is too long "
+                "(maximum length is 32)"
             ),
         )
 
