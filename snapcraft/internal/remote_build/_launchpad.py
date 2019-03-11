@@ -187,7 +187,7 @@ class LaunchpadClient:
             self._download_file("{}/+files/{}".format(web_link, snap_name), snap_name)
             logger.info("Snapped {}".format(snap_name))
         except urllib.error.HTTPError as e:
-            logger.error("Snap download error ({}): {}".format(arch, e))
+            logger.error("Snap download error: {}: {}".format(e, snap_name))
         finally:
             self._waiting.remove(arch)
 

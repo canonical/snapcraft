@@ -34,7 +34,7 @@ class Worktree:
     is maintained under revision control.
     """
 
-    def __init__(self, src: str, dest: str) -> None:
+    def __init__(self, name: str, src: str, dest: str) -> None:
         self._srcroot = src
         self._destroot = dest
         self._ignore = [
@@ -43,13 +43,11 @@ class Worktree:
             ".gitmodules",
             ".bzr",
             ".svn",
-            "*.snap",
+            name + "_*.snap",
             "buildlog_*.txt*",
             "parts",
             "stage",
             "prime",
-            "*.pyc",
-            "*.o",
         ]
         if not os.path.isdir(src):
             raise RuntimeError

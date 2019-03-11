@@ -17,6 +17,7 @@
 import git
 
 from git.exc import InvalidGitRepositoryError
+from typing import List
 from .errors import RemoteBuilderNotSupportedError
 
 import snapcraft
@@ -75,6 +76,13 @@ class Repo:
     @property
     def is_dirty(self) -> bool:
         return self._repo.is_dirty()
+
+    @property
+    def uncommited_files(self) -> List[str]:
+        files = []
+        for item in self._repo.index.diff(None):
+            files.append(item.a_path)
+        return files
 
     @property
     def branch_name(self) -> str:

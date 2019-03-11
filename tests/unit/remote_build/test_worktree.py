@@ -55,7 +55,7 @@ class WorktreeTestCase(unit.TestCase):
         self._source.create_dir("empty_dir")
 
         self._dest = self.useFixture(TestDir())
-        self._wt = Worktree(self._source.path, self._dest.path)
+        self._wt = Worktree("test", self._source.path, self._dest.path)
         self._wt.sync()
 
     def test_worktree_creation(self):
@@ -96,10 +96,9 @@ class WorktreeTestCase(unit.TestCase):
 
     def test_worktree_ignored_files(self):
         for name in [
-            "control",
             ".gitignore",
-            "file.o",
-            "file.pyc",
+            "test_0.1_amd64.snap",
+            "other_0.1_amd64.snap",
             "buildlog_i386.txt.gz",
             "buildlog_amd64.txt",
         ]:
@@ -107,11 +106,10 @@ class WorktreeTestCase(unit.TestCase):
         for dirname in [".svn", ".bzr", "parts", "stage", "prime"]:
             self._source.create_dir(dirname)
         self._wt.sync()
-        self.assertTrue(self._dest.exists("control"))
+        self.assertTrue(self._dest.exists("other_0.1_amd64.snap"))
         for name in [
             ".gitignore",
-            "file.o",
-            "file.pyc",
+            "test_0.1_amd64.snap",
             "buildlog_i386.txt.gz",
             "buildlog_amd64.txt",
             ".svn",

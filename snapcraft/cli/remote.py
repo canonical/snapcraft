@@ -19,7 +19,7 @@ import os
 import uuid
 
 from snapcraft.internal.remote_build import Worktree, LaunchpadClient, Repo, errors
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
@@ -155,7 +155,9 @@ def remote_build(
         if git:
             url, branch = _send_current_tree(provider, lp.user, build_id + "-git")
         else:
-            url = _copy_and_send_tree(provider, lp.user, remote_dir, build_id)
+            url = _copy_and_send_tree(
+                provider, lp.user, remote_dir, build_id, project.info.name
+            )
 
         # Create build recipe
         lp.delete_snap()
@@ -179,22 +181,23 @@ def remote_build(
     lp.delete_snap()
 
 
-
-
-def _send_current_tree(provider: str, user: str, build_id: str) -> str:
+def _send_current_tree(provider: str, user: str, build_id: str) -> Tuple[str, str]:
     if not os.path.exists(".git"):
         raise errors.NotGitRepositoryError
     repo = Repo(".")
     branch = repo.branch_name
+    if repo.is_dirty:
+       echo.warning("The following files have uncommitted changes that won't be used:")
+       echo.warning("\n".join(repo.uncommited_files))
     url = repo.push_remote(provider, user, branch, build_id)
     return url, branch
 
 
 def _copy_and_send_tree(
-    provider: str, user: str, remote_dir: str, build_id: str
+    provider: str, user: str, remote_dir: str, build_id: str, name: str
 ) -> str:
     work_dir = os.path.join(remote_dir, build_id)
-    wt = Worktree(".", work_dir)
+    wt = Worktree(name, ".", work_dir)
     url = wt.add_remote(provider, user, build_id)
     wt.sync()
     wt.push()
