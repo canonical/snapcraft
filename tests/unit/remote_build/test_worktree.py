@@ -90,6 +90,7 @@ class WorktreeTestCase(unit.TestCase):
         self.assertFalse(self._dest.exists("dir"))
 
     def test_git_repository_creation(self):
+        self.assertTrue(self._dest.exists(".git"))
         repo = git.Repo(self._dest.path)
         self.assertThat(len(repo.head.object.hexsha), Equals(40))
 

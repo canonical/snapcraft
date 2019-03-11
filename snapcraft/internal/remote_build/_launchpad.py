@@ -85,7 +85,7 @@ class LaunchpadClient:
         except restfulclient.errors.NotFound:
             return None
 
-    def create_snap(self, repository: str, archs: List[str]) -> None:
+    def create_snap(self, repository: str, branch: str, archs: List[str]) -> None:
         logger.debug("Create snap for {}".format(self._id))
         # TODO: remove this after launchpad infrastructure is ready
         url = repository.replace("git+ssh://", "https://")
@@ -93,7 +93,7 @@ class LaunchpadClient:
             "name": self._id,
             "owner": "/~" + self.user,
             "git_repository_url": url,
-            "git_path": "HEAD",
+            "git_path": branch,
             "auto_build": False,
             "auto_build_archive": "/ubuntu/+archive/primary",
             "auto_build_pocket": "Updates",
@@ -104,8 +104,10 @@ class LaunchpadClient:
 
         self._lp.snaps.new(**snap)
 
-    def delete_snap(self, snap) -> None:
-        snap.lp_delete()
+    def delete_snap(self) -> None:
+        snap = self.get_snap()
+        if snap is not None:
+            snap.lp_delete()
 
     def start_build(self) -> int:
         owner = self._lp.people[self.user]
@@ -132,7 +134,7 @@ class LaunchpadClient:
                 break
             time.sleep(5)
         if not ready:
-            self.delete_snap(snap)
+            self.delete_snap()
             raise RemoteBuilderNotReadyError()
 
         self._waiting = [build["arch_tag"] for build in builds.entries]

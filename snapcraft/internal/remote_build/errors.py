@@ -40,6 +40,11 @@ class NoLaunchpadUsernameError(RemoteBuildBaseError):
     fmt = "Please set your Launchpad username using the '--user' option."
 
 
+class NotGitRepositoryError(RemoteBuildBaseError):
+
+    fmt = "Current directory is not a git repository."
+
+
 class RemoteBuilderNotSupportedError(RemoteBuildBaseError):
 
     fmt = (

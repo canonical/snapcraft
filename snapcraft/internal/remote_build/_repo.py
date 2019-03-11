@@ -44,13 +44,17 @@ class Repo:
                 "snapcraft commit\n\nversion: {}".format(snapcraft.__version__)
             )
 
-    def add_remote(self, provider: str, user: str, build_id: str) -> str:
-        url = None
+    def push_remote(self, provider: str, user: str, branch: str, build_id: str) -> str:
         if provider == "launchpad":
-            # TODO: change this after launchpad infrastructure is ready
-            url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}".format(
-                user=user, id=build_id
-            )
+            url = self._remote_url(user, build_id)
+            self._repo.git.push(url, branch)
+        else:
+            raise RemoteBuilderNotSupportedError(provider=provider)
+        return url
+
+    def add_remote(self, provider: str, user: str, build_id: str) -> str:
+        if provider == "launchpad":
+            url = self._remote_url(user, build_id)
         else:
             raise RemoteBuilderNotSupportedError(provider=provider)
 
@@ -67,3 +71,19 @@ class Repo:
 
     def reset(self) -> None:
         self._repo.git.reset("--hard")
+
+    @property
+    def is_dirty(self) -> bool:
+        return self._repo.is_dirty()
+
+    @property
+    def branch_name(self) -> str:
+        return self._repo.active_branch.name
+
+    @staticmethod
+    def _remote_url(user: str, build_id: str) -> str:
+        # TODO: change this after launchpad infrastructure is ready
+        url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}/".format(
+            user=user, id=build_id
+        )
+        return url

@@ -18,7 +18,7 @@ import click
 import os
 import uuid
 
-from snapcraft.internal.remote_build import Worktree, LaunchpadClient, errors
+from snapcraft.internal.remote_build import Worktree, LaunchpadClient, Repo, errors
 from typing import Any, Dict, List
 from xdg import BaseDirectory
 from . import echo
@@ -60,14 +60,22 @@ def remotecli():
     help="Set architectures to build.",
 )
 @click.option(
+    "--git", is_flag=True, required=False, help="Build a local git repository."
+)
+@click.option(
     "--user", metavar="<username>", nargs=1, required=False, help="Launchpad username."
 )
-def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -> None:
+def remote_build(
+    recover: int, status: int, user: str, arch: str, git: bool, echoer=echo
+) -> None:
     """Dispatch a snap for remote build.
 
     Command remote-build sends the current project to be built remotely. After the build
     is complete, packages for each architecture are retrieved and will be available in
     the local filesystem.
+
+    If the local files are under git revision control, use option --git to build the
+    current branch of this repository.
 
     If not specified in the snapcraft.yaml file, the list of architectures to build
     can be set using the --arch option. If both are specified, the architectures listed
@@ -139,23 +147,26 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
         # Sanity check for build architectures
         _check_supported_archs(archs)
 
-        # Send local data to the remote repository
-        work_dir = os.path.join(remote_dir, build_id)
-        wt = Worktree(".", work_dir)
-        url = wt.add_remote(provider, lp.user, build_id)
-        wt.sync()
-        echo.info("Sending data to remote builder...")
-        wt.push()
+        # The default branch to build
+        branch = "master"
 
-        snap = lp.get_snap()
-        if snap is not None:
-            lp.delete_snap(snap)
-        lp.create_snap(url, archs)
+        # Send local data to the remote repository
+        echo.info("Sending data to remote builder...")
+        if git:
+            url, branch = _send_current_tree(provider, lp.user, build_id + "-git")
+        else:
+            url = _copy_and_send_tree(provider, lp.user, remote_dir, build_id)
+
+        # Create build recipe
+        lp.delete_snap()
+        lp.create_snap(url, branch, archs)
 
         targets = " for {}".format(", ".join(archs)) if archs else ""
         echo.info(
             "Building package{}. This may take some time to finish.".format(targets)
         )
+
+        # Start building
         req_number = lp.start_build()
         echo.info(
             "If interrupted, resume with: 'snapcraft remote-build --recover {}'".format(
@@ -165,7 +176,29 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
 
     lp.monitor_build()
     echo.info("Build complete.")
-    lp.delete_snap(snap)
+    lp.delete_snap()
+
+
+
+
+def _send_current_tree(provider: str, user: str, build_id: str) -> str:
+    if not os.path.exists(".git"):
+        raise errors.NotGitRepositoryError
+    repo = Repo(".")
+    branch = repo.branch_name
+    url = repo.push_remote(provider, user, branch, build_id)
+    return url, branch
+
+
+def _copy_and_send_tree(
+    provider: str, user: str, remote_dir: str, build_id: str
+) -> str:
+    work_dir = os.path.join(remote_dir, build_id)
+    wt = Worktree(".", work_dir)
+    url = wt.add_remote(provider, user, build_id)
+    wt.sync()
+    wt.push()
+    return url
 
 
 def _check_supported_archs(archs: List[str]) -> None:

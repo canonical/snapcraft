@@ -16,3 +16,4 @@
 
 from ._worktree import Worktree  # noqa: F401
 from ._launchpad import LaunchpadClient  # noqa: F401
+from ._repo import Repo  # noqa: F401
