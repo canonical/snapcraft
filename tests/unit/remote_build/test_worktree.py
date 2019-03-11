@@ -94,7 +94,14 @@ class WorktreeTestCase(unit.TestCase):
         self.assertThat(len(repo.head.object.hexsha), Equals(40))
 
     def test_worktree_ignored_files(self):
-        for name in ["control", ".gitignore", "file.o", "file.pyc"]:
+        for name in [
+            "control",
+            ".gitignore",
+            "file.o",
+            "file.pyc",
+            "buildlog_i386.txt.gz",
+            "buildlog_amd64.txt",
+        ]:
             self._source.create_file(name)
         for dirname in [".svn", ".bzr", "parts", "stage", "prime"]:
             self._source.create_dir(dirname)
@@ -104,6 +111,8 @@ class WorktreeTestCase(unit.TestCase):
             ".gitignore",
             "file.o",
             "file.pyc",
+            "buildlog_i386.txt.gz",
+            "buildlog_amd64.txt",
             ".svn",
             ".bzr",
             "parts",

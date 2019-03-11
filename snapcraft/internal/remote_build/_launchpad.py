@@ -23,7 +23,7 @@ import urllib.error
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 from xdg import BaseDirectory
 from snapcraft import yaml_utils
@@ -107,7 +107,7 @@ class LaunchpadClient:
     def delete_snap(self, snap) -> None:
         snap.lp_delete()
 
-    def start_build(self) -> Tuple[int, str]:
+    def start_build(self) -> int:
         owner = self._lp.people[self.user]
         dist = self._lp.distributions["ubuntu"]
         snap = self._lp.snaps.getByName(name=self._id, owner=owner)

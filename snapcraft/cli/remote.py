@@ -165,6 +165,7 @@ def remote_build(recover: int, status: int, user: str, arch: str, echoer=echo) -
 
     lp.monitor_build()
     echo.info("Build complete.")
+    lp.delete_snap(snap)
 
 
 def _check_supported_archs(archs: List[str]) -> None:

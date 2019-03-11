@@ -44,6 +44,7 @@ class Worktree:
             ".bzr",
             ".svn",
             "*.snap",
+            "buildlog_*.txt*",
             "parts",
             "stage",
             "prime",
