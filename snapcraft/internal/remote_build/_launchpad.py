@@ -132,6 +132,7 @@ class LaunchpadClient:
                 break
             time.sleep(5)
         if not ready:
+            self.delete_snap(snap)
             raise RemoteBuilderNotReadyError()
 
         self._waiting = [build["arch_tag"] for build in builds.entries]
