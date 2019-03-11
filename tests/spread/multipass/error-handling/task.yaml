@@ -1,4 +1,4 @@
-summary: Build a basic snap using multipass and ensure that it runs
+summary: A faulty snap to test error handling
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
 
@@ -25,6 +25,12 @@ execute: |
   # Ensure that snapcraft uses build VMs
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
+  # Building this snap returns an error inside the provider. This error must
+  # be handled by the outer environment and return code 2 instead of raising
+  # an exception (and return 1).
   err=0
   snapcraft || err=$?
-  [ $err -eq 2 ]
+  if [ $err -ne 2 ]; then
+    echo "Error handling legit error in build provider"
+    exit 1
+  fi
