@@ -44,6 +44,9 @@ set_openjdk_version()
 
 restore_yaml()
 {
+    apt-get install --yes git
+    apt-mark auto git
+
     snapcraft_yaml_path="$1"
 
     # Restoration only really works for git committed snapcraft.yaml's

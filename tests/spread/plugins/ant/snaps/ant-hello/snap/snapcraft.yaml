@@ -1,4 +1,3 @@
-base: core18
 name: ant-hello
 version: "1.0"
 summary: test the ant plugin
