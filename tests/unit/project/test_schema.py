@@ -941,9 +941,10 @@ class InvalidVersionGenericTest(ProjectBaseTest):
 
 
 class InvalidVersionSpecificTest(ProjectBaseTest):
-
     def test_invalid_type(self):
-        raised = self.assertValidationRaises(dedent("""
+        raised = self.assertValidationRaises(
+            dedent(
+                """
             name: test
             base: core18
             version: 0.1
@@ -954,7 +955,9 @@ class InvalidVersionSpecificTest(ProjectBaseTest):
             parts:
               part1:
                 plugin: nil
-        """))
+        """
+            )
+        )
 
         self.assertThat(
             raised.message,
@@ -965,7 +968,9 @@ class InvalidVersionSpecificTest(ProjectBaseTest):
         )
 
     def test_too_long(self):
-        raised = self.assertValidationRaises(dedent("""
+        raised = self.assertValidationRaises(
+            dedent(
+                """
             name: test
             base: core18
             version: this.is.a.really.too.long.version
@@ -976,7 +981,9 @@ class InvalidVersionSpecificTest(ProjectBaseTest):
             parts:
               part1:
                 plugin: nil
-        """))
+        """
+            )
+        )
 
         self.assertThat(
             raised.message,
