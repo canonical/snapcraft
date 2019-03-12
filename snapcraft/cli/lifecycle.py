@@ -82,7 +82,6 @@ def _install_multipass():
 
 
 # TODO: when snap is a real step we can simplify the arguments here.
-# fmt: off
 def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
@@ -93,21 +92,32 @@ def _execute(  # noqa: C901
     destructive_mode: bool = False,
     **kwargs
 ) -> "Project":
-    # fmt: on
     _clean_provider_error()
     provider = "host" if destructive_mode else None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     try:
         conduct_build_environment_sanity_check(build_environment.provider)
     except MultipassMissingInstallableError as e:
-        click.echo("You need multipass installed to build snaps "
-                   "(https://github.com/CanonicalLtd/multipass).")
+        click.echo(
+            "You need multipass installed to build snaps "
+            "(https://github.com/CanonicalLtd/multipass)."
+        )
         if click.confirm("Would you like to install it now?"):
             _install_multipass()
         else:
-            raise errors.SnapcraftEnvironmentError("multipass is required to continue.") from e
+            raise errors.SnapcraftEnvironmentError(
+                "multipass is required to continue."
+            ) from e
 
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
+
+    echo.wrapped(
+        "Using {!r}: Project assets will be "
+        "searched for from the {!r} directory.".format(
+            project.info.snapcraft_yaml_file_path,
+            os.path.relpath(project._get_snapcraft_assets_dir(), project._project_dir),
+        )
+    )
 
     conduct_project_sanity_check(project)
 
@@ -146,8 +156,10 @@ def _execute(  # noqa: C901
                 if project.debug:
                     instance.shell()
                 else:
-                    echo.warning("Run the same command again with --debug to shell into the environment "
-                                 "if you wish to introspect this failure.")
+                    echo.warning(
+                        "Run the same command again with --debug to shell into the environment "
+                        "if you wish to introspect this failure."
+                    )
                     raise
             else:
                 if shell or shell_after:
@@ -187,8 +199,10 @@ def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
     echo.info("Created {}.".format(snapcraft_yaml_path))
-    echo.wrapped("Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-                 "information about the snapcraft.yaml format.")
+    echo.wrapped(
+        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
+        "information about the snapcraft.yaml format."
+    )
 
 
 @lifecyclecli.command()
