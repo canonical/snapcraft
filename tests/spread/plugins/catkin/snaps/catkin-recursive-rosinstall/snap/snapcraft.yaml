@@ -11,5 +11,7 @@ parts:
   catkin-part:
     plugin: catkin
     source: .
+    build-packages:
+    - git
     rosinstall-files: [root.rosinstall]
     recursive-rosinstall: true

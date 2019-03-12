@@ -16,5 +16,6 @@ parts:
     source: .
     build-packages:
     - gcc
+    - git
     plugin: godeps
     go-importpath: bcrypt

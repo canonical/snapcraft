@@ -135,6 +135,18 @@ class MavenPluginTest(unit.TestCase):
 
     scenarios = (
         (
+            "core java version 8 ",
+            dict(base="core", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core java version 8 ",
+            dict(base="core", java_version="8", expected_java_version="8"),
+        ),
+        (
+            "core java version default ",
+            dict(base="core", java_version="", expected_java_version="9"),
+        ),
+        (
             "core16 java version 8 ",
             dict(base="core16", java_version="8", expected_java_version="8"),
         ),
@@ -632,6 +644,17 @@ class MavenPluginUnsupportedBase(unit.TestCase):
 class UnsupportedJDKVersionErrorTest(unit.TestCase):
 
     scenarios = (
+        (
+            "core",
+            dict(
+                base="core",
+                version="11",
+                expected_message=(
+                    "The maven-openjdk-version plugin property was set to '11'.\n"
+                    "Valid values for the 'core' base are: '8' or '9'."
+                ),
+            ),
+        ),
         (
             "core16",
             dict(
