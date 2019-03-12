@@ -15,4 +15,3 @@ parts:
   ant:
     source: .
     plugin: ant
-    ant-openjdk-version: "8"

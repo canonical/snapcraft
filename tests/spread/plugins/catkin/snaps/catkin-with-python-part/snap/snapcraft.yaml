@@ -18,6 +18,8 @@ parts:
   catkin-part:
     plugin: catkin
     source: .
+    build-packages:
+    - git
     rosinstall-files: [ros_tutorials.rosinstall]
     catkin-packages:
       - roscpp_tutorials

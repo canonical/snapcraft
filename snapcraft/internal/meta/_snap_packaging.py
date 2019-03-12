@@ -50,7 +50,6 @@ _MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
 _OPTIONAL_PACKAGE_KEYS = [
     "architectures",
     "assumes",
-    "base",
     "confinement",
     "environment",
     "epoch",
@@ -535,6 +534,11 @@ class _SnapPackaging:
 
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
+
+        # If the base is core in snapcraft.yaml we do not set it in
+        # snap.yaml LP: #1819290
+        if "base" in self._config_data and self._config_data["base"] != "core":
+            snap_yaml["base"] = self._config_data["base"]
 
         # Reparse the version, the order should stick.
         snap_yaml["version"] = _version.get_version(
