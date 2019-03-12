@@ -34,23 +34,13 @@ class Worktree:
     is maintained under revision control.
     """
 
-    def __init__(self, name: str, src: str, dest: str) -> None:
-        self._srcroot = src
-        self._destroot = dest
-        self._ignore = [
-            ".git",
-            ".gitignore",
-            ".gitmodules",
-            ".bzr",
-            ".svn",
-            name + "_*.snap",
-            "buildlog_*.txt*",
-            "parts",
-            "stage",
-            "prime",
-        ]
+    def __init__(self, src: str, dest: str, ignore: List[str] = []) -> None:
         if not os.path.isdir(src):
             raise RuntimeError
+        self._srcroot = src
+        self._destroot = dest
+        self._ignore = [".git", ".gitignore", ".gitmodules", ".bzr", ".svn"]
+        self._ignore.extend(ignore)
         Path(dest).mkdir(parents=True, exist_ok=True)
         self._repo = Repo(dest)
         self._repo.reset()
@@ -75,7 +65,7 @@ class Worktree:
 
         # now remove files that exist only in destination
         for dirpath, dirnames, filenames in os.walk(self._destroot, topdown=False):
-            if _is_subtree(dirpath, git_dir):
+            if dirpath.startswith(git_dir):
                 continue
             dirnames = [d for d in dirnames if d != ".git"]
 
@@ -121,8 +111,3 @@ class Worktree:
     def _srcpath(self, path: str) -> str:
         rel = os.path.relpath(path, self._destroot)
         return os.path.join(self._srcroot, rel)
-
-
-def _is_subtree(dirname: str, root: str) -> bool:
-    rel = os.path.relpath(dirname, root)
-    return not (rel.startswith(".." + os.sep) or rel == "..")

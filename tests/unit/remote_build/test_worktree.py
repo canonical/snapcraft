@@ -55,7 +55,11 @@ class WorktreeTestCase(unit.TestCase):
         self._source.create_dir("empty_dir")
 
         self._dest = self.useFixture(TestDir())
-        self._wt = Worktree("test", self._source.path, self._dest.path)
+        self._wt = Worktree(
+            self._source.path,
+            self._dest.path,
+            ignore=["test_*.snap", "buildlog_*.txt*", "parts", "stage", "prime"],
+        )
         self._wt.sync()
 
     def test_worktree_creation(self):

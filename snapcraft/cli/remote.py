@@ -135,17 +135,7 @@ def remote_build(
     else:
         # If build architectures not set in snapcraft.yaml, let the user override
         # Launchpad defaults using --arch.
-        arch_from_yaml = _list_architectures(project)
-        if arch_from_yaml:
-            if arch:
-                echo.warning(
-                    "Architecture list already set in snapcraft.yaml, ignoring --arch option."
-                )
-            archs = arch_from_yaml
-        elif arch == "all":
-            archs = _SUPPORTED_ARCHS
-        else:
-            archs = arch.split(",") if arch else []
+        archs = _list_architectures(project, arch)
 
         # Sanity check for build architectures
         _check_supported_archs(archs)
@@ -197,7 +187,9 @@ def _send_current_tree(provider: str, user: str, build_id: str) -> Tuple[str, st
     repo = Repo(".")
     branch = repo.branch_name
     if repo.is_dirty:
-        echo.warning("The following files have uncommitted changes that will not be used:")
+        echo.warning(
+            "The following files have uncommitted changes that will not be used:"
+        )
         echo.warning("\n".join(repo.uncommited_files))
     url = repo.push_remote(provider, user, branch, build_id)
     return url, branch
@@ -211,7 +203,11 @@ def _copy_and_send_tree(
             "Git repository found, use option --git to build the current branch."
         )
     work_dir = os.path.join(remote_dir, build_id)
-    wt = Worktree(name, ".", work_dir)
+    wt = Worktree(
+        ".",
+        work_dir,
+        ignore=[name + "_*.snap", "buildlog_*.txt*", "parts", "stage", "prime"],
+    )
     url = wt.add_remote(provider, user, build_id)
     wt.sync()
     wt.push()
@@ -227,7 +223,23 @@ def _check_supported_archs(archs: List[str]) -> None:
         raise errors.UnsupportedArchitectureError(archs=unsupported_archs)
 
 
-def _list_architectures(project):
+def _list_architectures(project, arch: str) -> List[str]:
+    arch_from_yaml = _project_architectures(project)
+    if arch_from_yaml:
+        if arch:
+            echo.warning(
+                "Architecture list already set in snapcraft.yaml, ignoring --arch option."
+            )
+        archs = arch_from_yaml
+    elif arch == "all":
+        archs = _SUPPORTED_ARCHS
+    else:
+        archs = arch.split(",") if arch else []
+
+    return archs
+
+
+def _project_architectures(project) -> List[str]:
     archs = []
     if project.info.architectures:
         for item in project.info.architectures:
