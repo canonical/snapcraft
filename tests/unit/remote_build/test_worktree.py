@@ -14,33 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
 import git
-import os
 
 from snapcraft.internal.remote_build import Worktree
 from testtools.matchers import Equals, NotEquals
 from tests import unit
-
-
-class TestDir(fixtures.Fixture):
-    def _setUp(self):
-        self.path = self.useFixture(fixtures.TempDir()).path
-
-    def create_file(self, *name: str) -> None:
-        open(os.path.join(self.path, *name), "wb").close()
-
-    def create_dir(self, *name: str) -> None:
-        os.mkdir(os.path.join(self.path, *name))
-
-    def unlink(self, *name) -> None:
-        os.unlink(os.path.join(self.path, *name))
-
-    def rmdir(self, *name: str) -> None:
-        os.rmdir(os.path.join(self.path, *name))
-
-    def exists(self, *parts) -> bool:
-        return os.path.exists(os.path.join(self.path, *parts))
+from . import TestDir
 
 
 class WorktreeTestCase(unit.TestCase):
