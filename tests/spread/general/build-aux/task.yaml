@@ -1,0 +1,42 @@
+summary: Use build-aux for snapcraft assets
+
+# We currently only have core18 on a stable channel
+systems: [ubuntu-18*]
+
+environment:
+  SNAPCRAFT_BUILD_INFO: on
+
+prepare: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+  mkdir snap/hooks
+  touch snap/hooks/install
+  mkdir snap/gui
+  touch snap/gui/icon.png
+
+  mkdir build-aux
+  mv snap build-aux
+
+restore: |
+  rm -rf test-snap
+
+execute: |
+  cd test-snap
+
+  snapcraft prime
+
+  if [ ! -f prime/meta/gui/icon.png ]; then
+      echo "Missing expected snap icon"
+      exit 1
+  fi
+
+  if [ ! -f prime/meta/hooks/install ]; then
+      echo "Missing expected snap install hook"
+      exit 1
+  fi
+
+  if [ ! -f prime/snap/snapcraft.yaml ]; then
+      echo "Missing snapcraft.yaml in snap dir"
+      exit 1
+  fi
