@@ -144,7 +144,11 @@ class PythonPlugin(snapcraft.BasePlugin):
         elif self.options.python_version == "python3":
             python_base = "python3"
 
-        stage_packages = [python_base]
+        if self.project.info.base in ("core", "core16", "core18"):
+            stage_packages = [python_base]
+        else:
+            stage_packages = []
+
         if self.project.info.base == "core18" and python_base == "python3":
             stage_packages.append("{}-distutils".format(python_base))
 
@@ -195,7 +199,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def _setup_base_tools(self, base):
         # NOTE: stage-packages are lazily loaded.
-        if base in ("core16", "core18"):
+        if base in ("core", "core16", "core18"):
             if self.options.python_version == "python3":
                 self.build_packages.extend(
                     [

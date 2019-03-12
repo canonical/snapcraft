@@ -19,8 +19,8 @@ description: |
   Programming mode supports conversion between common bases (binary, octal,
   decimal, and hexadecimal), boolean algebra, one’s and two’s complementation,
   character to character code conversion, and more.
+base: core18
 architectures:
 - amd64
-base: core18
 confinement: devmode
 grade: devel

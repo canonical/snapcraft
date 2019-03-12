@@ -609,6 +609,8 @@ class PythonCore18Test(PythonPluginBaseTest):
 
 
 class PythonCore16Test(PythonPluginBaseTest):
+    scenarios = (("core", dict(base="core")), ("core16", dict(base="core16")))
+
     def setUp(self):
         super().setUp()
 
@@ -616,9 +618,9 @@ class PythonCore16Test(PythonPluginBaseTest):
             dedent(
                 """\
             name: python-snap
-            base: core16
+            base: {base}
         """
-            )
+            ).format(base=self.base)
         )
 
         self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)

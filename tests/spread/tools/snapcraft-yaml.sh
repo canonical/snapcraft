@@ -7,7 +7,8 @@ set_base()
     if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
         base="core18"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
-        base="core16"
+        # Use core instead of core16 (LP: #1819290)
+        base="core"
     else
         echo "Test not supported for $SPREAD_SYSTEM"
         exit 1
@@ -43,6 +44,9 @@ set_openjdk_version()
 
 restore_yaml()
 {
+    apt-get install --yes git
+    apt-mark auto git
+
     snapcraft_yaml_path="$1"
 
     # Restoration only really works for git committed snapcraft.yaml's
