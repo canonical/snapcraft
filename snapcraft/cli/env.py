@@ -50,7 +50,7 @@ class BuilderEnvironmentConfig:
         else:
             build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
 
-        valid_providers = ["host", "multipass", "managed-host"]
+        valid_providers = ["host", "multipass", "managed-host", "lxd"]
         if build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
                 "The snapcraft build environment must be one of: {}.".format(
@@ -61,4 +61,5 @@ class BuilderEnvironmentConfig:
         self.provider = build_provider
         self.is_host = build_provider == "host"
         self.is_multipass = build_provider == "multipass"
+        self.is_multipass = build_provider == "lxd"
         self.is_managed_host = build_provider == "managed-host"

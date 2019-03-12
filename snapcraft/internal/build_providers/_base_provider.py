@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -145,7 +145,7 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: Sequence[str]) -> None:
+    def _run(self, command: Sequence[str]) -> Optional[bytes]:
         """Run a command on the instance."""
 
     @abc.abstractmethod
@@ -159,14 +159,6 @@ class Provider(abc.ABC):
     @abc.abstractmethod
     def _push_file(self, *, source: str, destination: str) -> None:
         """Push a file into the instance."""
-
-    @abc.abstractmethod
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
-        """Mount a path from the host inside the instance."""
-
-    @abc.abstractmethod
-    def _umount(self, *, mountpoint: str) -> None:
-        """Unmount the mountpoint from the instance."""
 
     @abc.abstractmethod
     def _mount_snaps_directory(self) -> None:
@@ -292,15 +284,18 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
+    def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
+        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+
     def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
-        # TODO support users for the qemu provider.
         cloud_user_data_filepath = os.path.join(
             self.provider_project_dir, "user-data.yaml"
         )
         if os.path.exists(cloud_user_data_filepath):
             return cloud_user_data_filepath
 
-        user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+        user_data = self._get_cloud_user_data_string(timezone=timezone)
+
         with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
             print(user_data, file=cloud_user_data_file, end="")
 

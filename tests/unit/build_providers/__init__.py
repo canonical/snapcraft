@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
 from unittest import mock
 
 from snapcraft.project import Project
@@ -39,7 +40,7 @@ class ProviderImpl(Provider):
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
 
-    def _run(self, command, hide_output=False):
+    def _run(self, command, hide_output=False) -> Optional[bytes]:
         self.run_mock(command)
 
     def _launch(self) -> None:

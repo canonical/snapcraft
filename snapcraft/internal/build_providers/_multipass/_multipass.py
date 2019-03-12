@@ -17,7 +17,7 @@
 import logging
 import os
 import sys
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 
 from .. import errors
 from .._base_provider import Provider
@@ -72,10 +72,12 @@ class Multipass(Provider):
     def _get_provider_name(cls):
         return "multipass"
 
-    def _run(self, command: Sequence[str], hide_output: bool = False) -> None:
+    def _run(
+        self, command: Sequence[str], hide_output: bool = False
+    ) -> Optional[bytes]:
         has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
         command = ["sudo", "-i", "env", has_tty] + list(command)
-        self._multipass_cmd.execute(
+        return self._multipass_cmd.execute(
             instance_name=self.instance_name, command=command, hide_output=hide_output
         )
 

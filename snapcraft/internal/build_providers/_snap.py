@@ -246,7 +246,7 @@ class SnapInjector:
         snap_dir: str,
         registry_filepath: str,
         snap_arch: str,
-        runner: Callable[..., None],
+        runner: Callable[..., Optional[bytes]],
         snap_dir_mounter: Callable[[], None],
         snap_dir_unmounter: Callable[[], None],
         file_pusher: Callable[..., None],
