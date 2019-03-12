@@ -24,6 +24,7 @@ from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
 from snapcraft import yaml_utils
+from snapcraft.internal.sources import Git
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 
@@ -75,7 +76,8 @@ def remote_build(
     the local filesystem.
 
     If the local files are under git revision control, use option --git to build the
-    current branch of this repository.
+    current branch of this repository. Be aware, however, that untracked files and
+    uncommitted changes will not be used.
 
     If not specified in the snapcraft.yaml file, the list of architectures to build
     can be set using the --arch option. If both are specified, the architectures listed
@@ -90,12 +92,13 @@ def remote_build(
     Examples:
         snapcraft remote-build
         snapcraft remote-build --arch=all
-        snapcraft remote-build --arch=arm64,armhf
+        snapcraft remote-build --git --arch=arm64,armhf
         snapcraft remote-build --recover 47860738
         snapcraft remote-build --status 47860738
     """
 
     project = get_project()
+    version = project.info.version
 
     remote_dir = os.path.join(
         BaseDirectory.save_data_path("snapcraft"),
@@ -150,6 +153,13 @@ def remote_build(
         # The default branch to build
         branch = "master"
 
+        # Special handling for "git" version
+        if version == "git":
+            if git:
+                version = Git.generate_version().replace("-dirty", "")
+            else:
+                raise errors.InvalidVersionGitError
+
         # Send local data to the remote repository
         echo.info("Sending data to remote builder...")
         if git:
@@ -176,7 +186,7 @@ def remote_build(
             )
         )
 
-    lp.monitor_build()
+    lp.monitor_build(version)
     echo.info("Build complete.")
     lp.delete_snap()
 
@@ -187,8 +197,8 @@ def _send_current_tree(provider: str, user: str, build_id: str) -> Tuple[str, st
     repo = Repo(".")
     branch = repo.branch_name
     if repo.is_dirty:
-       echo.warning("The following files have uncommitted changes that won't be used:")
-       echo.warning("\n".join(repo.uncommited_files))
+        echo.warning("The following files have uncommitted changes that will not be used:")
+        echo.warning("\n".join(repo.uncommited_files))
     url = repo.push_remote(provider, user, branch, build_id)
     return url, branch
 
@@ -196,6 +206,10 @@ def _send_current_tree(provider: str, user: str, build_id: str) -> Tuple[str, st
 def _copy_and_send_tree(
     provider: str, user: str, remote_dir: str, build_id: str, name: str
 ) -> str:
+    if os.path.exists(".git"):
+        echo.warning(
+            "Git repository found, use option --git to build the current branch."
+        )
     work_dir = os.path.join(remote_dir, build_id)
     wt = Worktree(name, ".", work_dir)
     url = wt.add_remote(provider, user, build_id)

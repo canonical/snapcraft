@@ -49,6 +49,7 @@ class Repo:
         if provider == "launchpad":
             url = self._remote_url(user, build_id)
             self._repo.git.push(url, branch)
+            self._repo.git.push(url, "--tags")
         else:
             raise RemoteBuilderNotSupportedError(provider=provider)
         return url

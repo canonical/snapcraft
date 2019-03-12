@@ -50,7 +50,6 @@ class LaunchpadClient:
         self._core_channel = "stable"
         self._snapcraft_channel = "edge"
         self._name = project.info.name
-        self._version = project.info.version
         self._waiting = []  # type: List[str]
         self._data_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"), "launchpad"
@@ -157,7 +156,7 @@ class LaunchpadClient:
         self._waiting = [build["arch_tag"] for build in builds.entries]
         self._builds_collection_link = request.builds_collection_link
 
-    def monitor_build(self) -> None:
+    def monitor_build(self, version: str) -> None:
         logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
         while len(self._waiting):
             time.sleep(_LP_POLL_INTERVAL)
@@ -170,7 +169,7 @@ class LaunchpadClient:
                 logger.debug("{} state: {}".format(arch, build_state))
                 if arch in self._waiting:
                     if build_state == _LP_SUCCESS_STATUS:
-                        self._process_build(arch, web_link)
+                        self._process_build(arch, web_link, version)
                     elif build_state == _LP_FAIL_STATUS:
                         self._process_fail(arch, web_link)
 
@@ -181,8 +180,8 @@ class LaunchpadClient:
             build_state = build["buildstate"]
             logger.info("{}: {}".format(arch, build_state))
 
-    def _process_build(self, arch: str, web_link: str) -> None:
-        snap_name = "{}_{}_{}.snap".format(self._name, self._version, arch)
+    def _process_build(self, arch: str, web_link: str, version: str) -> None:
+        snap_name = "{}_{}_{}.snap".format(self._name, version, arch)
         try:
             self._download_file("{}/+files/{}".format(web_link, snap_name), snap_name)
             logger.info("Snapped {}".format(snap_name))
