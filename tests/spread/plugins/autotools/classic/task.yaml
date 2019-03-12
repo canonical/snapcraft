@@ -12,6 +12,9 @@ restore: |
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
+
+  apt-get install --yes git
+  apt-mark auto git
   git checkout snap/snapcraft.yaml
 
 execute: |
