@@ -78,13 +78,8 @@ class LaunchpadClient:
             version="devel",
         )
 
-    def get_snap(self):
-        try:
-            return self._lp.snaps.getByName(name=self._id, owner="/~" + self.user)
-        except restfulclient.errors.NotFound:
-            return None
-
     def create_snap(self, repository: str, branch: str, archs: List[str]) -> None:
+        """Create a snap recipe."""
         logger.debug("Create snap for {}".format(self._id))
         # TODO: remove this after launchpad infrastructure is ready
         url = repository.replace("git+ssh://", "https://")
@@ -104,11 +99,15 @@ class LaunchpadClient:
         self._lp.snaps.new(**snap)
 
     def delete_snap(self) -> None:
-        snap = self.get_snap()
-        if snap is not None:
+        """Remove a snap recipe and all associated files."""
+        try:
+            snap = self._lp.snaps.getByName(name=self._id, owner="/~" + self.user)
             snap.lp_delete()
+        except restfulclient.errors.NotFound:
+            pass
 
     def start_build(self) -> int:
+        """Initiate a new snap build."""
         owner = self._lp.people[self.user]
         dist = self._lp.distributions["ubuntu"]
         snap = self._lp.snaps.getByName(name=self._id, owner=owner)
@@ -142,6 +141,7 @@ class LaunchpadClient:
         return build_number
 
     def recover_build(self, req_number: int) -> None:
+        """Prepare internal state to monitor an existing build."""
         url = "https://api.launchpad.net/devel/~{}/+snap/{}/+build-request/{}".format(
             self.user, self._id, req_number
         )
@@ -157,6 +157,7 @@ class LaunchpadClient:
         self._builds_collection_link = request.builds_collection_link
 
     def monitor_build(self, version: str) -> None:
+        """Check build progress, and download artifacts when ready."""
         logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
         while len(self._waiting):
             time.sleep(_LP_POLL_INTERVAL)
