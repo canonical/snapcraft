@@ -22,6 +22,11 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]] && [[ "$openjdk_version" = "LATEST" ]]; then
+      echo "this test does not work on 16.04 with openjdk 9"
+      exit 0
+  fi
+
   cd "$SNAP_DIR"
   snapcraft
   sudo snap install gradle-hello_*.snap --dangerous
