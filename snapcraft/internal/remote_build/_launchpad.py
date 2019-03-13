@@ -54,9 +54,11 @@ class LaunchpadClient:
         self._data_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"), "launchpad"
         )
+        self._cache_dir = os.path.join(
+            BaseDirectory.save_cache_path("snapcraft"), "launchpad"
+        )
 
         os.makedirs(self._data_dir, mode=0o700, exist_ok=True)
-        self._cache_dir = os.path.join(self._data_dir, "cache")
         self._credentials = os.path.join(self._data_dir, "credentials")
 
     def login(self, user: str) -> None:
