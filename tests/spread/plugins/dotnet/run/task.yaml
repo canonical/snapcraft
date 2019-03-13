@@ -3,9 +3,6 @@ summary: Build and run a basic dotnet snap
 environment:
   SNAP_DIR: ../snaps/dotnet-hello
 
-# This plugin does not support core18 and core16 is stable yet
-manual: true
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

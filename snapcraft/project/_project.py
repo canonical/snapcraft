@@ -53,6 +53,14 @@ class Project(ProjectOptions):
 
         super().__init__(target_deb_arch, debug, work_dir=work_dir)
 
+    def _get_snapcraft_assets_dir(self) -> str:
+        if self.info.snapcraft_yaml_file_path.endswith(
+            os.path.join("build-aux", "snap", "snapcraft.yaml")
+        ):
+            return os.path.join(self._project_dir, "build-aux", "snap")
+        else:
+            return os.path.join(self._project_dir, "snap")
+
     def _get_global_state_file_path(self) -> str:
         if self._is_managed_host:
             state_file_path = os.path.join(self._work_dir, "state")

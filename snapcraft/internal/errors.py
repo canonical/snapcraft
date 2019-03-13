@@ -677,3 +677,10 @@ class CrossCompilationNotSupported(SnapcraftError):
 
     def __init__(self, *, part_name: str) -> None:
         super().__init__(part_name=part_name)
+
+
+class SnapDataExtractionError(SnapcraftError):
+    fmt = "Cannot read data from snap {snap!r}. The file may be corrupted."
+
+    def __init__(self, snap):
+        super().__init__(snap=snap)

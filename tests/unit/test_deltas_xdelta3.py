@@ -164,7 +164,7 @@ class XDelta3TestCase(unit.TestCase):
         self.assertThat(
             self.fake_logger.output,
             m.Contains(
-                "Generating xdelta3 delta for {}".format(
+                "Generating delta for {!r}".format(
                     os.path.basename(base_delta.target_path)
                 )
             ),

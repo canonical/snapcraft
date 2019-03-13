@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,7 +25,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-from typing import List, Set
+from typing import List, Optional, Sequence, Set
 
 import snapcraft
 from snapcraft import file_utils
@@ -37,26 +37,32 @@ logger = logging.getLogger(__name__)
 
 
 def _process_common_args(
-    *,
-    packages: List[str],
-    constraints: Set[str],
-    requirements: Set[str],
-    process_dependency_links: bool
+    *, constraints: Optional[Set[str]] = None, process_dependency_links: bool = False
 ) -> List[str]:
     args = []
     if constraints:
         for constraint in constraints:
             args.extend(["--constraint", constraint])
 
+    if process_dependency_links:
+        args.append("--process-dependency-links")
+
+    return args
+
+
+def _process_package_args(
+    *, packages: Sequence[str], requirements: Sequence[str], setup_py_dir: str
+) -> List[str]:
+    args = []
     if requirements:
         for requirement in requirements:
             args.extend(["--requirement", requirement])
 
-    if process_dependency_links:
-        args.append("--process-dependency-links")
-
     if packages:
         args.extend(packages)
+
+    if setup_py_dir:
+        args.append(".")
 
     return args
 
@@ -231,10 +237,10 @@ class Pip:
         self,
         packages,
         *,
-        setup_py_dir=None,
-        constraints=None,
-        requirements=None,
-        process_dependency_links=False
+        setup_py_dir: Optional[str] = None,
+        constraints: Optional[Set[str]] = None,
+        requirements: Optional[Sequence[str]] = None,
+        process_dependency_links: bool = False
     ):
         """Download packages into cache, but do not install them.
 
@@ -246,26 +252,25 @@ class Pip:
         :param boolean process_dependency_links: Enable the processing of
                                                  dependency links.
         """
-        args = _process_common_args(
-            process_dependency_links=process_dependency_links,
-            packages=packages,
-            constraints=constraints,
-            requirements=requirements,
+        package_args = _process_package_args(
+            packages=packages, requirements=requirements, setup_py_dir=setup_py_dir
         )
 
-        cwd = None
-        if setup_py_dir:
-            args.append(".")
-            cwd = setup_py_dir
-
-        if not args:
+        if not package_args:
             return  # No operation was requested
+
+        args = _process_common_args(
+            process_dependency_links=process_dependency_links, constraints=constraints
+        )
 
         # Using pip with a few special parameters:
         #
         # --disable-pip-version-check: Don't whine if pip is out-of-date with
         #                              the version on pypi.
         # --dest: Download packages into the directory we've set aside for it.
+        #
+        # For cwd, setup_py_dir will be the actual directory we need to be in
+        # or None.
         self._run(
             [
                 "download",
@@ -273,21 +278,22 @@ class Pip:
                 "--dest",
                 self._python_package_dir,
             ]
-            + args,
-            cwd=cwd,
+            + args
+            + package_args,
+            cwd=setup_py_dir,
         )
 
     def install(
         self,
         packages,
         *,
-        setup_py_dir=None,
-        constraints=None,
-        requirements=None,
-        process_dependency_links=False,
-        upgrade=False,
-        install_deps=True,
-        ignore_installed=False
+        setup_py_dir: Optional[str] = None,
+        constraints: Optional[Set[str]] = None,
+        requirements: Optional[Sequence[str]] = None,
+        process_dependency_links: bool = False,
+        upgrade: bool = False,
+        install_deps: bool = True,
+        ignore_installed: bool = False
     ):
         """Install packages from cache.
 
@@ -305,11 +311,15 @@ class Pip:
         :param boolean ignore_installed: Reinstall packages if they're already
                                          installed
         """
+        package_args = _process_package_args(
+            packages=packages, requirements=requirements, setup_py_dir=setup_py_dir
+        )
+
+        if not package_args:
+            return  # No operation was requested
+
         args = _process_common_args(
-            process_dependency_links=process_dependency_links,
-            packages=packages,
-            constraints=constraints,
-            requirements=requirements,
+            process_dependency_links=process_dependency_links, constraints=constraints
         )
 
         if upgrade:
@@ -320,14 +330,6 @@ class Pip:
 
         if ignore_installed:
             args.append("--ignore-installed")
-
-        cwd = None
-        if setup_py_dir:
-            args.append(".")
-            cwd = setup_py_dir
-
-        if not args:
-            return  # No operation was requested
 
         # Using pip with a few special parameters:
         #
@@ -340,6 +342,9 @@ class Pip:
         #             downloaded (i.e. by using `self.download()`)
         # --find-links: Provide the directory into which the packages should
         #               have already been fetched
+        #
+        # For cwd, setup_py_dir will be the actual directory we need to be in
+        # or None.
         self._run(
             [
                 "install",
@@ -349,8 +354,9 @@ class Pip:
                 "--find-links",
                 self._python_package_dir,
             ]
-            + args,
-            cwd=cwd,
+            + args
+            + package_args,
+            cwd=setup_py_dir,
         )
 
         # Installing with --user results in a directory with 700 permissions.
@@ -364,10 +370,10 @@ class Pip:
         self,
         packages,
         *,
-        setup_py_dir=None,
-        constraints=None,
-        requirements=None,
-        process_dependency_links=False
+        setup_py_dir: Optional[str] = None,
+        constraints: Optional[Set[str]] = None,
+        requirements: Optional[Sequence[str]] = None,
+        process_dependency_links: bool = False
     ):
         """Build wheels of packages in the cache.
 
@@ -384,22 +390,18 @@ class Pip:
         :return: List of paths to each wheel that was built.
         :rtype: list
         """
-        args = _process_common_args(
-            process_dependency_links=process_dependency_links,
-            packages=packages,
-            constraints=constraints,
-            requirements=requirements,
+        package_args = _process_package_args(
+            packages=packages, requirements=requirements, setup_py_dir=setup_py_dir
         )
 
-        cwd = None
-        if setup_py_dir:
-            args.append(".")
-            cwd = setup_py_dir
-
-        if not args:
+        if not package_args:
             return []  # No operation was requested
 
-        wheels = []
+        args = _process_common_args(
+            process_dependency_links=process_dependency_links, constraints=constraints
+        )
+
+        wheels = []  # type: List[str]
         with tempfile.TemporaryDirectory() as temp_dir:
 
             # Using pip with a few special parameters:
@@ -421,8 +423,9 @@ class Pip:
                     "--wheel-dir",
                     temp_dir,
                 ]
-                + args,
-                cwd=cwd,
+                + args
+                + package_args,
+                cwd=setup_py_dir,
             )
             wheels = os.listdir(temp_dir)
             for wheel in wheels:

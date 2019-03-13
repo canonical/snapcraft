@@ -27,6 +27,10 @@ class GetSnapcraftYamlTest(unit.TestCase):
     scenarios = [
         ("snapcraft.yaml", dict(file_path="snapcraft.yaml")),
         ("snap/snapcraft.yaml", dict(file_path=os.path.join("snap", "snapcraft.yaml"))),
+        (
+            "build-aux",
+            dict(file_path=os.path.join("build-aux", "snap", "snapcraft.yaml")),
+        ),
         (".snapcraft.yaml", dict(file_path=".snapcraft.yaml")),
     ]
 
@@ -62,6 +66,13 @@ class GetSnapcraftYamlDuplicateErrorsTest(unit.TestCase):
             ".snapcraft.yaml and snap/snapcraft.yaml",
             dict(
                 file_path1=".snapcraft.yaml",
+                file_path2=os.path.join("snap", "snapcraft.yaml"),
+            ),
+        ),
+        (
+            "build-aux and snap",
+            dict(
+                file_path1=os.path.join("build-aux", "snap", "snapcraft.yaml"),
                 file_path2=os.path.join("snap", "snapcraft.yaml"),
             ),
         ),

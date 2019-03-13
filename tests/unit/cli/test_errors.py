@@ -23,10 +23,11 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains, MatchesRegex
+from testtools.matchers import FileContains, MatchesRegex, Equals
 from testscenarios import multiply_scenarios
 
 import snapcraft.internal.errors
+from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import exception_handler
 from tests import unit
 
@@ -129,6 +130,69 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         self.print_exception_mock.assert_called_once_with(
             TestSnapcraftError, mock.ANY, mock.ANY
         )
+
+
+class ProviderErrorTest(ErrorsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch("shutil.move")
+        self.move_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("traceback.print_exception")
+        self.traceback_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @mock.patch("os.path.isfile", return_value=False)
+    def test_provider_error_legit(self, isfile_function):
+        # Provider exception was raised in host environment, no crash file
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self._raise_exec_error()
+        self.move_mock.assert_not_called()
+        self.traceback_mock.assert_not_called()
+
+    @mock.patch("os.path.isfile", return_value=True)
+    def test_provider_error_outer(self, isfile_function):
+        # Provider exception was raised in host environment with crash file
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self._raise_exec_error()
+        self.assertThat(self.move_mock.call_count, Equals(1))
+        self.traceback_mock.assert_not_called()
+
+    @mock.patch("os.path.isfile", return_value=False)
+    def test_provider_error_host(self, isfile_function):
+        # Some other error raised in the host environment
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self._raise_other_error()
+        self.move_mock.assert_not_called()
+        self.assertThat(self.traceback_mock.call_count, Equals(1))
+
+    @mock.patch("os.path.isfile", return_value=False)
+    @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    def test_provider_error_inner(self, isfile_function, raven_client_mock):
+        # Error raised inside the build provider
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
+        )
+        snapcraft.cli._errors.RavenClient = "something"
+        self._raise_other_error()
+        self.move_mock.assert_not_called()
+        self.assertThat(self.traceback_mock.call_count, Equals(2))
+
+    def _raise_exec_error(self):
+        self.call_handler(
+            ProviderExecError(provider_name="foo", command="bar", exit_code=2), False
+        )
+
+    def _raise_other_error(self):
+        self.call_handler(KeyError, True)
 
 
 class SendToSentryBaseTest(ErrorsBaseTestCase):

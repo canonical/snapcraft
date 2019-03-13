@@ -338,3 +338,52 @@ class TestLocalUpdate(unit.TestCase):
 
         local.update()
         self.assertThat(os.path.join(destination, "dir", "file2"), FileExists())
+
+
+class TestLocalUpdateSnapcraftYaml(unit.TestCase):
+
+    scenarios = [
+        ("snapcraft.yaml", dict(snapcraft_file="snapcraft.yaml")),
+        (".snapcraft.yaml", dict(snapcraft_file=".snapcraft.yaml")),
+        (
+            "snap/snapcraft.yaml",
+            dict(snapcraft_file=os.path.join("snap", "snapcraft.yaml")),
+        ),
+        ("snap/<content>", dict(snapcraft_file=os.path.join("snap", "test-file"))),
+    ]
+
+    def test_snapcraft_yaml_modification_ignored(self):
+        source = "source"
+        destination = "destination"
+        snapcraft_source_path = os.path.join(source, self.snapcraft_file)
+        snapcraft_destination_path = os.path.join(destination, self.snapcraft_file)
+        os.makedirs(os.path.dirname(snapcraft_source_path))
+        os.mkdir(destination)
+
+        with open(snapcraft_source_path, "w") as f:
+            f.write("1")
+
+        # Now make a reference file with a timestamp later than the file was
+        # created. We'll ensure this by setting it ourselves
+        shutil.copy2(snapcraft_source_path, "reference")
+        access_time = os.stat("reference").st_atime
+        modify_time = os.stat("reference").st_mtime
+        os.utime("reference", (access_time, modify_time + 1))
+
+        local = sources.Local(source, destination)
+        local.pull()
+        self.assertFalse(
+            local.check("reference"), "Expected no updates to be available"
+        )
+        self.assertThat(snapcraft_destination_path, FileExists())
+
+        # Now add a new file to the directory, and make sure it has a timestamp
+        # later than our reference (this whole test happens too fast)
+        with open(snapcraft_source_path, "w") as f:
+            f.write("2")
+
+        access_time = os.stat("reference").st_atime
+        modify_time = os.stat("reference").st_mtime
+        os.utime(snapcraft_source_path, (access_time, modify_time + 1))
+
+        self.assertFalse(local.check("reference"), "Expected no update to be available")

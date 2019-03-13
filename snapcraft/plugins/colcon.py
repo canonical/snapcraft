@@ -62,7 +62,7 @@ import textwrap
 import snapcraft
 from snapcraft.plugins import _ros
 from snapcraft.plugins import _python
-from snapcraft import common, file_utils, formatting_utils, repo
+from snapcraft import file_utils, repo
 from snapcraft.internal import errors, mangling
 
 logger = logging.getLogger(__name__)
@@ -294,17 +294,13 @@ class ColconPlugin(snapcraft.BasePlugin):
         """Runtime environment for ROS binaries and services."""
 
         env = [
-            # The Snapcraft Core will ensure that we get a good LD_LIBRARY_PATH
-            # overall, but it defines it after this function runs. Some ROS
-            # tools will cause binaries to be run when we source the setup.sh,
-            # below, so we need to have a sensible LD_LIBRARY_PATH before then.
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{}"'.format(
-                formatting_utils.combine_paths(
-                    common.get_library_paths(root, self.project.arch_triplet),
-                    prepend="",
-                    separator=":",
-                )
-            )
+            'AMENT_PYTHON_EXECUTABLE="{}"'.format(
+                os.path.join(root, "usr", "bin", "python3")
+            ),
+            'COLCON_PYTHON_EXECUTABLE="{}"'.format(
+                os.path.join(root, "usr", "bin", "python3")
+            ),
+            'SNAP_COLCON_ROOT="{}"'.format(root),
         ]
 
         # Each of these lines is prepended with an `export` when the environment is
@@ -408,20 +404,17 @@ class ColconPlugin(snapcraft.BasePlugin):
             """
             # First, source the upstream ROS underlay
             if [ -f "{underlay_setup}" ]; then
-                AMENT_CURRENT_PREFIX="{underlay}" . "{underlay_setup}"
+                . "{underlay_setup}"
             fi
 
             # Then source the overlay
             if [ -f "{overlay_setup}" ]; then
-                COLCON_CURRENT_PREFIX="{overlay}" COLCON_PYTHON_EXECUTABLE="{python_path}" . "{overlay_setup}"
+                . "{overlay_setup}"
             fi
         """
         ).format(
-            underlay=underlaydir,
             underlay_setup=os.path.join(underlaydir, "setup.sh"),
-            overlay=overlaydir,
             overlay_setup=os.path.join(overlaydir, "setup.sh"),
-            python_path=os.path.join(root, "usr", "bin", "python3"),
         )
 
         # We need to source ROS's setup.sh at this point. However, it accepts
@@ -476,7 +469,7 @@ class ColconPlugin(snapcraft.BasePlugin):
         mangling.rewrite_python_shebangs(self.installdir)
 
         # Rewrite the prefixes to point to the in-part rosdir instead of the system
-        self._fix_prefixes(self.installdir)
+        self._fix_prefixes()
 
         # Each Colcon package distributes .cmake files so they can be found via
         # find_package(). However, the Ubuntu packages pulled down as
@@ -525,7 +518,7 @@ class ColconPlugin(snapcraft.BasePlugin):
         self._rewrite_cmake_paths(_new_path)
 
         # Rewrite prefixes for both the underlay and overlay.
-        self._fix_prefixes("$SNAP")
+        self._fix_prefixes()
 
         # If pip dependencies were installed, generate a sitecustomize that
         # allows access to them.
@@ -534,16 +527,17 @@ class ColconPlugin(snapcraft.BasePlugin):
                 "3", stage_dir=self.project.stage_dir, install_dir=self.installdir
             )
 
-    def _fix_prefixes(self, new_prefix):
+    def _fix_prefixes(self):
         installdir_pattern = re.compile(r"^{}".format(self.installdir))
+        new_prefix = "$SNAP_COLCON_ROOT"
 
         def _rewrite_prefix(match):
             # Group 1 is the variable definition, group 2 is the path, which we may need
             # to modify.
             path = match.group(3).strip(" \n\t'\"")
 
-            # Bail early if this isn't even a path
-            if os.path.sep not in path:
+            # Bail early if this isn't even a path, or if it's already been rewritten
+            if os.path.sep not in path or new_prefix in path:
                 return match.group()
 
             # If the path doesn't start with the installdir, then it needs to point to
@@ -556,8 +550,7 @@ class ColconPlugin(snapcraft.BasePlugin):
                 '\\1\\2"{}"\\4'.format(installdir_pattern.sub(new_prefix, path))
             )
 
-        # Set the AMENT_CURRENT_PREFIX throughout to the in-snap, run-time prefix
-        # instead of the build-time prefix.
+        # Set the AMENT_CURRENT_PREFIX throughout to the in-snap prefix
         snapcraft.file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
@@ -565,12 +558,41 @@ class ColconPlugin(snapcraft.BasePlugin):
             _rewrite_prefix,
         )
 
-        # Set any *_COLCON_CURRENT_PREFIX throughout to the in-snap, run-time prefix
-        # instead of the build-time prefix.
+        # Set the COLCON_CURRENT_PREFIX (if it's in the installdir) to the in-snap
+        # prefix
         snapcraft.file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
-            re.compile(r"()(_COLCON_CURRENT_PREFIX=)(.*)()"),
+            re.compile(
+                r"()(COLCON_CURRENT_PREFIX=)(['\"].*{}.*)()".format(self.installdir)
+            ),
+            _rewrite_prefix,
+        )
+
+        # Set the _colcon_prefix_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
+        # prefix
+        snapcraft.file_utils.replace_in_file(
+            self.installdir,
+            re.compile(r""),
+            re.compile(r"()(_colcon_prefix_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
+            _rewrite_prefix,
+        )
+
+        # Set the _colcon_package_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
+        # prefix
+        snapcraft.file_utils.replace_in_file(
+            self.installdir,
+            re.compile(r""),
+            re.compile(r"()(_colcon_package_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
+            _rewrite_prefix,
+        )
+
+        # Set the _colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
+        # prefix
+        snapcraft.file_utils.replace_in_file(
+            self.installdir,
+            re.compile(r""),
+            re.compile(r"()(_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
             _rewrite_prefix,
         )
 

@@ -149,7 +149,7 @@ def push(snap_file, release):
         snapcraft push my-snap_0.2_amd64.snap --release edge
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo("Pushing {}".format(os.path.basename(snap_file)))
+    click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
     channel_list = []
     if release:
         channel_list = release.split(",")
@@ -183,7 +183,7 @@ def push_metadata(snap_file, force):
         snapcraft push-metadata my-snap_0.1_amd64.snap
         snapcraft push-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo("Pushing metadata from {}".format(os.path.basename(snap_file)))
+    click.echo("Pushing metadata from {!r}".format(os.path.basename(snap_file)))
     snapcraft.push_metadata(snap_file, force)
 
 

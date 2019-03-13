@@ -65,12 +65,16 @@ class CreateBaseTestCase(unit.TestCase):
         # Ensure the ensure snapcraft.yaml method has something to copy.
         _create_file(self.snapcraft_yaml_file_path)
 
-    def generate_meta_yaml(self, *, build=False, actual_prime_dir=None):
+    def generate_meta_yaml(
+        self, *, build=False, actual_prime_dir=None, snapcraft_yaml_file_path=None
+    ):
+        if snapcraft_yaml_file_path is None:
+            snapcraft_yaml_file_path = self.snapcraft_yaml_file_path
         os.makedirs("snap", exist_ok=True)
-        with open(self.snapcraft_yaml_file_path, "w") as f:
+        with open(snapcraft_yaml_file_path, "w") as f:
             f.write(yaml_utils.dump(self.config_data))
 
-        self.project = Project(snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         if actual_prime_dir is not None:
             self.project._prime_dir = actual_prime_dir
 
@@ -111,6 +115,13 @@ class CreateTestCase(CreateBaseTestCase):
         }
 
         self.assertThat(y, Equals(expected))
+
+    def test_create_meta_with_core_as_base(self):
+        self.config_data["base"] = "core"
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y, Not(Contains("base")))
 
     def test_create_meta_default_architecture(self):
         del self.config_data["architectures"]
@@ -445,46 +456,6 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(snap_yaml, Not(FileContains("desktop: app2.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: app3.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: my-package.desktop")))
-
-    def test_create_meta_with_hook(self):
-        hooksdir = os.path.join(self.snap_dir, "hooks")
-        os.makedirs(hooksdir)
-        _create_file(os.path.join(hooksdir, "foo"), executable=True)
-        _create_file(os.path.join(hooksdir, "bar"), executable=True)
-        self.config_data["hooks"] = {"foo": {"plugs": ["plug"]}, "bar": {}}
-
-        y = self.generate_meta_yaml()
-
-        self.assertThat(
-            y, Contains("hooks"), "Expected generated YAML to contain 'hooks'"
-        )
-
-        for hook in ("foo", "bar"):
-            generated_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
-            self.assertThat(
-                generated_hook_path,
-                FileExists(),
-                "The {!r} hook was not setup correctly".format(hook),
-            )
-
-            self.assertThat(
-                y["hooks"],
-                Contains(hook),
-                "Expected generated hooks to contain {!r}".format(hook),
-            )
-
-        self.assertThat(
-            y["hooks"]["foo"],
-            Contains("plugs"),
-            "Expected generated 'foo' hook to contain 'plugs'",
-        )
-        self.assertThat(y["hooks"]["foo"]["plugs"], HasLength(1))
-        self.assertThat(y["hooks"]["foo"]["plugs"][0], Equals("plug"))
-        self.assertThat(
-            y["hooks"]["bar"],
-            Not(Contains("plugs")),
-            "Expected generated 'bar' hook to not contain 'plugs'",
-        )
 
 
 class StopModeTestCase(CreateBaseTestCase):
@@ -864,12 +835,80 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         self.assertThat(raised.keys, Equals("'summary'"))
 
 
+class CreateWithAssetsTestCase(CreateBaseTestCase):
+    scenarios = (
+        ("snap", dict(snapcraft_assets_dir="snap")),
+        ("build-aux", dict(snapcraft_assets_dir=os.path.join("build-aux", "snap"))),
+    )
+
+    def test_create_meta_with_hook(self):
+        hooksdir = os.path.join(self.snapcraft_assets_dir, "hooks")
+        os.makedirs(hooksdir)
+        _create_file(os.path.join(hooksdir, "foo"), executable=True)
+        _create_file(os.path.join(hooksdir, "bar"), executable=True)
+        self.config_data["hooks"] = {"foo": {"plugs": ["plug"]}, "bar": {}}
+
+        y = self.generate_meta_yaml(
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            )
+        )
+
+        self.assertThat(
+            y, Contains("hooks"), "Expected generated YAML to contain 'hooks'"
+        )
+
+        for hook in ("foo", "bar"):
+            generated_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
+            self.assertThat(
+                generated_hook_path,
+                FileExists(),
+                "The {!r} hook was not setup correctly".format(hook),
+            )
+
+            self.assertThat(
+                y["hooks"],
+                Contains(hook),
+                "Expected generated hooks to contain {!r}".format(hook),
+            )
+
+        self.assertThat(
+            y["hooks"]["foo"],
+            Contains("plugs"),
+            "Expected generated 'foo' hook to contain 'plugs'",
+        )
+        self.assertThat(y["hooks"]["foo"]["plugs"], HasLength(1))
+        self.assertThat(y["hooks"]["foo"]["plugs"][0], Equals("plug"))
+        self.assertThat(
+            y["hooks"]["bar"],
+            Not(Contains("plugs")),
+            "Expected generated 'bar' hook to not contain 'plugs'",
+        )
+
+
 class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCase):
 
     scenarios = testscenarios.multiply_scenarios(
         (
-            ("setup/gui", dict(directory=os.path.join("setup", "gui"))),
-            ("snap/gui", dict(directory=os.path.join("snap", "gui"))),
+            (
+                "setup/gui",
+                dict(
+                    snapcraft_assets_dir="snap", directory=os.path.join("setup", "gui")
+                ),
+            ),
+            (
+                "snap/gui",
+                dict(
+                    snapcraft_assets_dir="snap", directory=os.path.join("snap", "gui")
+                ),
+            ),
+            (
+                "build-aux/snap/gui",
+                dict(
+                    snapcraft_assets_dir=os.path.join("build-aux", "snap"),
+                    directory=os.path.join("build-aux", "snap", "gui"),
+                ),
+            ),
         ),
         (
             ("icon.png", dict(file_name="icon.png")),
@@ -889,7 +928,12 @@ class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCas
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
 
-        self.generate_meta_yaml(build=True)
+        self.generate_meta_yaml(
+            build=True,
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            ),
+        )
 
         expected_icon = os.path.join(self.meta_dir, "gui", self.file_name)
         self.assertThat(expected_icon, FileContains(icon_content))
@@ -898,8 +942,21 @@ class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCas
 class MetadataFromSourceWithDesktopFileTestCase(CreateMetadataFromSourceBaseTestCase):
 
     scenarios = (
-        ("setup/gui", dict(directory=os.path.join("setup", "gui"))),
-        ("snap/gui", dict(directory=os.path.join("snap", "gui"))),
+        (
+            "setup/gui",
+            dict(snapcraft_assets_dir="snap", directory=os.path.join("setup", "gui")),
+        ),
+        (
+            "snap/gui",
+            dict(snapcraft_assets_dir="snap", directory=os.path.join("snap", "gui")),
+        ),
+        (
+            "build-aux/snap/gui",
+            dict(
+                snapcraft_assets_dir=os.path.join("build-aux", "snap"),
+                directory=os.path.join("build-aux", "snap", "gui"),
+            ),
+        ),
     )
 
     def test_metadata_doesnt_overwrite_desktop_file(self):
@@ -918,7 +975,12 @@ class MetadataFromSourceWithDesktopFileTestCase(CreateMetadataFromSourceBaseTest
 
         self.useFixture(fixture_setup.FakeMetadataExtractor("fake", _fake_extractor))
 
-        self.generate_meta_yaml(build=True)
+        self.generate_meta_yaml(
+            build=True,
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            ),
+        )
 
         expected_desktop = os.path.join(self.meta_dir, "gui", "test-app.desktop")
         self.assertThat(expected_desktop, FileContains(desktop_content))

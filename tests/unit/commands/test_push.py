@@ -19,7 +19,7 @@ from unittest import mock
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
-from snapcraft import file_utils, storeapi
+from snapcraft import file_utils, storeapi, internal
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
     StorePushError,
@@ -71,9 +71,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertRegexpMatches(
-            self.fake_logger.output,
-            r".*push '.*test-snap.snap' to the store\.\n"
-            r"Revision 9 of 'basic' created\.",
+            self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
         mock_upload.assert_called_once_with("basic", self.snap_file)
 
@@ -89,6 +87,19 @@ class PushCommandTestCase(PushCommandBaseTestCase):
     def test_push_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push", "test-unexisting-snap"])
         self.assertThat(result.exit_code, Equals(2))
+
+    def test_push_invalid_snap_must_raise_exception(self):
+        snap_path = os.path.join(
+            os.path.dirname(tests.__file__), "data", "invalid.snap"
+        )
+
+        raised = self.assertRaises(
+            internal.errors.SnapDataExtractionError,
+            self.run_command,
+            ["push", snap_path],
+        )
+
+        self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
     def test_push_unregistered_snap_must_raise_exception(self):
         class MockResponse:

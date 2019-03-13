@@ -50,7 +50,6 @@ _MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
 _OPTIONAL_PACKAGE_KEYS = [
     "architectures",
     "assumes",
-    "base",
     "confinement",
     "environment",
     "epoch",
@@ -436,7 +435,9 @@ class _SnapPackaging:
     def write_snap_directory(self) -> None:
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
-        for root, directories, files in os.walk("snap"):
+        for root, directories, files in os.walk(
+            self._project_config.project._get_snapcraft_assets_dir()
+        ):
             with contextlib.suppress(ValueError):
                 directories.remove(".snapcraft")
             with contextlib.suppress(ValueError):
@@ -444,13 +445,21 @@ class _SnapPackaging:
                 files.remove("snapcraft.yaml")
 
             for directory in directories:
-                source = os.path.join(root, directory)
-                destination = os.path.join(self._prime_dir, source)
+                source = os.path.relpath(
+                    os.path.join(root, directory),
+                    self._project_config.project._work_dir,
+                )
+                # Also build-aux from destination
+                destination = os.path.join(self._prime_dir, source.lstrip("build-aux/"))
                 file_utils.create_similar_directory(source, destination)
 
             for file_path in files:
-                source = os.path.join(root, file_path)
-                destination = os.path.join(self._prime_dir, source)
+                source = os.path.relpath(
+                    os.path.join(root, file_path),
+                    self._project_config.project._work_dir,
+                )
+                # Also build-aux from destination
+                destination = os.path.join(self._prime_dir, source.lstrip("build-aux/"))
                 with contextlib.suppress(FileNotFoundError):
                     os.remove(destination)
                 file_utils.link_or_copy(source, destination)
@@ -458,7 +467,9 @@ class _SnapPackaging:
         # Now copy the assets contained within the snap directory directly into
         # meta.
         for origin in ["gui", "hooks"]:
-            src_dir = os.path.join("snap", origin)
+            src_dir = os.path.join(
+                self._project_config.project._get_snapcraft_assets_dir(), origin
+            )
             dst_dir = os.path.join(self.meta_dir, origin)
             if os.path.isdir(src_dir):
                 os.makedirs(dst_dir, exist_ok=True)
@@ -523,6 +534,11 @@ class _SnapPackaging:
 
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
+
+        # If the base is core in snapcraft.yaml we do not set it in
+        # snap.yaml LP: #1819290
+        if "base" in self._config_data and self._config_data["base"] != "core":
+            snap_yaml["base"] = self._config_data["base"]
 
         # Reparse the version, the order should stick.
         snap_yaml["version"] = _version.get_version(
