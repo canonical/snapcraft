@@ -190,7 +190,7 @@ def _send_current_tree(provider: str, user: str, build_id: str) -> Tuple[str, st
         echo.warning(
             "The following files have uncommitted changes that will not be used:"
         )
-        echo.warning("\n".join(repo.uncommited_files))
+        echo.warning("\n".join(repo.uncommitted_files))
     url = repo.push_remote(provider, user, branch, build_id)
     return url, branch
 

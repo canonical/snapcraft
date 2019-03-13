@@ -79,7 +79,7 @@ class Repo:
         return self._repo.is_dirty()
 
     @property
-    def uncommited_files(self) -> List[str]:
+    def uncommitted_files(self) -> List[str]:
         files = []
         for item in self._repo.index.diff(None):
             files.append(item.a_path)
