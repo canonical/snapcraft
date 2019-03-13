@@ -502,10 +502,12 @@ class StoreTestCase(TestCase):
         expected = r".*Credentials cleared.\n.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
-    def register(self, snap_name, private=False, wait=True):
+    def register(self, snap_name, private=False, store=None, wait=True):
         command = ["register", snap_name]
         if private:
             command.append("--private")
+        if store:
+            command.extend(["--store", store])
         process = self.spawn_snapcraft(command)
         process.expect(r".*\[y/N\]: ")
         process.sendline("y")
@@ -579,7 +581,7 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         return process.wait()
 
-    def get_unique_name(self, prefix=""):
+    def get_unique_name(self, name_prefix="test-snapcraft", prefix=""):
         """Return a unique snap name.
 
         It uses a UUIDv4 to create unique names and limits its full size
@@ -590,7 +592,7 @@ class StoreTestCase(TestCase):
         # Do not change the test-snapcraft- prefix. Ensure that you
         # notify the store team if you need to use a different value when
         # working with the production store.
-        return "test-snapcraft-{}{}".format(prefix, unique_id)[:40]
+        return "{}-{}{}".format(name_prefix, prefix, unique_id)[:40]
 
     def get_unique_version(self):
         """Return a unique snap version.
