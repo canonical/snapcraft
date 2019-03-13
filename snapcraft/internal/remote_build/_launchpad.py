@@ -108,7 +108,7 @@ class LaunchpadClient:
         except restfulclient.errors.NotFound:
             pass
 
-    def start_build(self) -> int:
+    def start_build(self, timeout: int = 5, attempts: int = 5) -> int:
         """Initiate a new snap build."""
         owner = self._lp.people[self.user]
         dist = self._lp.distributions["ubuntu"]
@@ -123,17 +123,15 @@ class LaunchpadClient:
         request_url = urlparse(request.self_link)
         build_number = os.path.split(request_url.path)[-1]
 
-        ready = False
-        for i in range(0, 5):
+        for i in range(0, attempts):
             builds = self._lp.load(request.builds_collection_link)
             logger.debug(
                 "Builds collection entries: {} ({})".format(len(builds.entries), i)
             )
             if builds.entries:
-                ready = True
                 break
-            time.sleep(5)
-        if not ready:
+            time.sleep(timeout)
+        else:
             self.delete_snap()
             raise RemoteBuilderNotReadyError()
 
@@ -158,12 +156,14 @@ class LaunchpadClient:
         self._waiting = [build["arch_tag"] for build in builds.entries]
         self._builds_collection_link = request.builds_collection_link
 
-    def monitor_build(self, version: str) -> None:
+    def monitor_build(self, version: str, interval: int = _LP_POLL_INTERVAL) -> None:
         """Check build progress, and download artifacts when ready."""
         logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
         while len(self._waiting):
-            time.sleep(_LP_POLL_INTERVAL)
+            time.sleep(interval)
             builds = self._lp.load(self._builds_collection_link)
+            if not builds.entries:
+                break
 
             for build in builds.entries:
                 arch = build["arch_tag"]
