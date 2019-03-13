@@ -58,12 +58,12 @@ class RegisterTestCase(CommandBaseTestCase):
             "test-snap", is_private=False, series="16", store_id=None
         )
 
-    def test_register_name_to_brand_successfully(self):
+    def test_register_name_to_specific_store_successfully(self):
         with mock.patch.object(
             storeapi._sca_client.SCAClient, "register"
         ) as mock_register:
             result = self.run_command(
-                ["register", "test-snap", "--store-id", "my-brand"], input="y\n"
+                ["register", "test-snap", "--store", "my-brand"], input="y\n"
             )
 
         self.assertThat(result.exit_code, Equals(0))
