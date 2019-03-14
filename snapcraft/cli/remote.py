@@ -19,11 +19,11 @@ import os
 import uuid
 
 from snapcraft.internal.remote_build import Worktree, LaunchpadClient, Repo, errors
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
-from snapcraft import yaml_utils
+from snapcraft import InfoFile
 from snapcraft.internal.sources import Git
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
@@ -107,7 +107,8 @@ def remote_build(
         "remote-build",
     )
 
-    remote_info = _load_info(remote_dir)
+    remote_info = InfoFile(os.path.join(remote_dir, "remote.yaml"))
+    remote_info.load()
     provider = "launchpad"
     if "id" in remote_info:
         build_id = remote_info["id"]
@@ -117,7 +118,7 @@ def remote_build(
         build_id = "snapcraft-{}".format(uuid.uuid4().hex)
         remote_info["id"] = build_id
         remote_info["provider"] = provider
-        _save_info(remote_dir, **remote_info)
+        remote_info.save()
 
     # TODO: change login strategy after launchpad infrastructure is ready
     lp = LaunchpadClient(project, build_id)
@@ -251,23 +252,3 @@ def _project_architectures(project) -> List[str]:
                 else:
                     archs.append(new_arch)
     return archs
-
-
-def _load_info(path: str) -> Dict[str, Any]:
-    filepath = os.path.join(path, "remote.yaml")
-    if not os.path.exists(filepath):
-        return dict()
-
-    with open(filepath) as info_file:
-        return yaml_utils.load(info_file)
-
-
-def _save_info(path: str, **data: Dict[str, Any]) -> None:
-    filepath = os.path.join(path, "remote.yaml")
-
-    dirpath = os.path.dirname(filepath)
-    if dirpath:
-        os.makedirs(dirpath, exist_ok=True)
-
-    with open(filepath, "w") as info_file:
-        yaml_utils.dump(data, stream=info_file)

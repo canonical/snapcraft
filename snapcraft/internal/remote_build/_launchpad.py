@@ -23,10 +23,10 @@ import urllib.error
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List
+from typing import List
 from urllib.parse import urlparse
 from xdg import BaseDirectory
-from snapcraft import yaml_utils
+from snapcraft import InfoFile
 from .errors import (
     NoLaunchpadUsernameError,
     RemoteBuilderNotReadyError,
@@ -62,10 +62,11 @@ class LaunchpadClient:
         self._credentials = os.path.join(self._data_dir, "credentials")
 
     def login(self, user: str) -> None:
+        info = InfoFile(os.path.join(self._data_dir, "config.yaml"))
         if user:
-            self._save_info(user=user)  # type: ignore
+            info.save(user=user)  # type: ignore
         else:
-            info = self._load_info()
+            info.load()
             user = info["user"] if "user" in info else None
 
         if not user:
@@ -212,18 +213,3 @@ class LaunchpadClient:
         logger.debug("Download snap from {!r}".format(url))
         with urllib.request.urlopen(url) as response, open(name, "wb") as snapfile:
             shutil.copyfileobj(response, snapfile)  # type: ignore
-
-    def _load_info(self) -> Dict[str, Any]:
-        filepath = os.path.join(self._data_dir, "config.yaml")
-        if not os.path.exists(filepath):
-            return dict()
-        with open(filepath) as info_file:
-            return yaml_utils.load(info_file)
-
-    def _save_info(self, **data: Dict[str, Any]) -> None:
-        filepath = os.path.join(self._data_dir, "config.yaml")
-        dirpath = os.path.dirname(filepath)
-        if dirpath:
-            os.makedirs(dirpath, exist_ok=True)
-        with open(filepath, "w") as info_file:
-            yaml_utils.dump(data, stream=info_file)
