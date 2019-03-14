@@ -34,7 +34,7 @@ class RegisterTestCase(integration.StoreTestCase):
 
     def test_successful_registration_with_store(self):
         self.login()
-        snap_name = self.get_unique_name(name_prefix="snapcraft-test")
+        snap_name = self.get_unique_name(name_prefix="test-snapcraft-in-store")
         self.register(snap_name, store="snapcraft-test")
 
     def test_failed_registration_already_registered(self):
@@ -97,7 +97,7 @@ class RegisterTestCase(integration.StoreTestCase):
 
     def test_registration_of_reserved_name_with_store(self):
         self.login()
-        snap_name = self.get_unique_name(name_prefix="not-snapcraft-test")
+        snap_name = self.get_unique_name(name_prefix="not-test-snapcraft-in-store")
         # The snap name is already registered.
         error = self.assertRaises(
             integration.RegisterError, self.register, snap_name, store="snapcraft-test"

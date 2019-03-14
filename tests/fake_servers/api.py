@@ -646,7 +646,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         snap_name = request.json_body["snap_name"]
         store = request.json_body.get("store")
 
-        if store == "snapcraft-test" and not snap_name.startswith("snapcraft-test-"):
+        if store == "snapcraft-test" and not snap_name.startswith(
+            "test-snapcraft-in-store"
+        ):
             return self._register_name_409_error("reserved_name")
         elif snap_name == "test-snap-name-already-registered":
             return self._register_name_409_error("already_registered")
