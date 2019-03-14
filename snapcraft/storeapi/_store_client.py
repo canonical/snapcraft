@@ -139,9 +139,13 @@ class StoreClient:
     def register_key(self, account_key_request):
         return self._refresh_if_necessary(self.sca.register_key, account_key_request)
 
-    def register(self, snap_name, is_private=False):
+    def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
         return self._refresh_if_necessary(
-            self.sca.register, snap_name, is_private, constants.DEFAULT_SERIES
+            self.sca.register,
+            snap_name,
+            is_private=is_private,
+            store_id=store_id,
+            series=constants.DEFAULT_SERIES,
         )
 
     def push_precheck(self, snap_name):

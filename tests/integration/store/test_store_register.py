@@ -32,6 +32,11 @@ class RegisterTestCase(integration.StoreTestCase):
         snap_name = self.get_unique_name()
         self.register(snap_name, private=True)
 
+    def test_successful_registration_with_store(self):
+        self.login()
+        snap_name = self.get_unique_name(name_prefix="test-snapcraft-in-store")
+        self.register(snap_name, store="snapcraft-test")
+
     def test_failed_registration_already_registered(self):
         self.login()
         # The snap name is already registered.
@@ -87,6 +92,24 @@ class RegisterTestCase(integration.StoreTestCase):
                 "then please claim the name at".format(
                     self.test_store.reserved_snap_name
                 )
+            ),
+        )
+
+    def test_registration_of_reserved_name_with_store(self):
+        self.login()
+        snap_name = self.get_unique_name(name_prefix="not-test-snapcraft-in-store")
+        # The snap name is already registered.
+        error = self.assertRaises(
+            integration.RegisterError, self.register, snap_name, store="snapcraft-test"
+        )
+        self.assertThat(
+            str(error), Contains("The name {0!r} is reserved".format(snap_name))
+        )
+        self.assertThat(
+            str(error),
+            Contains(
+                "If you are the publisher most users expect for {0!r} "
+                "then please claim the name at".format(snap_name)
             ),
         )
 
