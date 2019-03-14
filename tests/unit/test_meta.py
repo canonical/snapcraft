@@ -859,13 +859,17 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
         )
 
         for hook in ("foo", "bar"):
-            generated_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
-            self.assertThat(
-                generated_hook_path,
-                FileExists(),
-                "The {!r} hook was not setup correctly".format(hook),
-            )
+            meta_dir_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
+            snap_dir_hook_path = os.path.join(self.prime_dir, "snap", "hooks", hook)
 
+            for hook_location in (meta_dir_hook_path, snap_dir_hook_path):
+                self.assertThat(
+                    hook_location,
+                    FileExists(),
+                    "The {!r} hook was not setup correctly".format(hook),
+                )
+
+        for hook in ("foo", "bar"):
             self.assertThat(
                 y["hooks"],
                 Contains(hook),
@@ -883,6 +887,53 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
             y["hooks"]["bar"],
             Not(Contains("plugs")),
             "Expected generated 'bar' hook to not contain 'plugs'",
+        )
+
+    def test_subdir_with_local_in_snap_copied(self):
+        project_random_dir = os.path.join(self.snapcraft_assets_dir, "random")
+        random_file = "file"
+        random_subdir_file = os.path.join("dir", "file")
+        random_subsubdir_file = os.path.join("dir", "local", "file")
+
+        os.makedirs(os.path.join(project_random_dir, "dir", "subdir"))
+        _create_file(os.path.join(project_random_dir, random_file))
+        _create_file(os.path.join(project_random_dir, random_subdir_file))
+        _create_file(os.path.join(project_random_dir, random_subsubdir_file))
+
+        self.generate_meta_yaml(
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            )
+        )
+
+        prime_random_dir = os.path.join(self.prime_dir, "snap", "random")
+        self.assertThat(os.path.join(prime_random_dir, random_file), FileExists())
+        self.assertThat(
+            os.path.join(prime_random_dir, random_subdir_file), FileExists()
+        )
+        self.assertThat(
+            os.path.join(prime_random_dir, random_subsubdir_file), FileExists()
+        )
+
+    def test_local_is_not_copied_to_snap(self):
+        project_local_dir = os.path.join(self.snapcraft_assets_dir, "local")
+        local_file = "file"
+        local_subdir_file = os.path.join("dir", "file")
+
+        os.makedirs(os.path.join(project_local_dir, "dir"))
+        _create_file(os.path.join(project_local_dir, local_file))
+        _create_file(os.path.join(project_local_dir, local_subdir_file))
+
+        self.generate_meta_yaml(
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            )
+        )
+
+        prime_local_dir = os.path.join(self.prime_dir, "snap", "local")
+        self.assertThat(os.path.join(prime_local_dir, local_file), Not(FileExists()))
+        self.assertThat(
+            os.path.join(prime_local_dir, local_subdir_file), Not(FileExists())
         )
 
 
