@@ -32,6 +32,15 @@ class DictAttr:
         return self._data[attr]
 
 
+class BuildImpl:
+    def __init__(self):
+        self.getFileUrls_mock = mock.Mock()
+
+    def getFileUrls(self, *args, **kw):
+        self.getFileUrls_mock(*args, **kw)
+        return ["url_for/snap_file"]
+
+
 class SnapImpl:
     def __init__(self):
         self.requestBuilds_mock = mock.Mock()
@@ -40,7 +49,7 @@ class SnapImpl:
     def requestBuilds(self, *args, **kw):
         self.requestBuilds_mock(*args, **kw)
         request = {
-            "self_link": "http://self_link/1234",
+            "self_link": "http://request_self_link/1234",
             "builds_collection_link": "http://builds_collection_link",
         }
         return DictAttr(request)
@@ -77,22 +86,26 @@ class LaunchpadImpl:
         self.load_mock(url, *args, **kw)
         if "/+build-request/" in url:
             request = {
-                "self_link": "http://self_link/1234",
+                "self_link": "http://request_self_link/1234",
                 "builds_collection_link": "http://builds_collection_link",
             }
             return DictAttr(request)
+        elif "http://build_self_link_1" in url:
+            return BuildImpl()
         else:
             builds = {
                 "entries": [
                     {
                         "arch_tag": "i386",
                         "buildstate": "Successfully built",
-                        "web_link": "http://web_link_1",
+                        "self_link": "http://build_self_link_1",
+                        "build_log_url": "url_for/build_log_file_1",
                     },
                     {
                         "arch_tag": "amd64",
                         "buildstate": "Failed to build",
-                        "web_link": "http://web_link_2",
+                        "self_link": "http://build_self_link_2",
+                        "build_log_url": "url_for/build_log_file_2",
                     },
                 ]
             }
@@ -180,16 +193,11 @@ class LaunchpadTestCase(unit.TestCase):
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
         lpc.start_build()
-        lpc.monitor_build("xxx", interval=0)
+        lpc.monitor_build(interval=0)
         mock_download.assert_has_calls(
             [
-                mock.call(
-                    "http://web_link_1/+files/test_xxx_i386.snap", "test_xxx_i386.snap"
-                ),
-                mock.call(
-                    "http://web_link_2/+files/buildlog_snap_ubuntu_xenial_amd64_id_BUILDING.txt.gz",
-                    "buildlog_amd64.txt.gz",
-                ),
+                mock.call("url_for/snap_file", "snap_file"),
+                mock.call("url_for/build_log_file_2", "buildlog_amd64.txt.gz"),
             ]
         )
 

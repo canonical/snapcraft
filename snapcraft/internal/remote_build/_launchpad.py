@@ -24,7 +24,6 @@ import urllib.error
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
 from typing import List
-from urllib.parse import urlparse
 from xdg import BaseDirectory
 from snapcraft import InfoFile
 from .errors import (
@@ -114,18 +113,17 @@ class LaunchpadClient:
         owner = self._lp.people[self.user]
         dist = self._lp.distributions["ubuntu"]
         snap = self._lp.snaps.getByName(name=self._id, owner=owner)
-        request = snap.requestBuilds(
+        snap_build_request = snap.requestBuilds(
             archive=dist.main_archive,
             channels={"core": self._core_channel, "snapcraft": self._snapcraft_channel},
             pocket="Updates",
         )
-        logger.debug("Request URL: {}".format(request))
+        logger.debug("Request URL: {}".format(snap_build_request))
 
-        request_url = urlparse(request.self_link)
-        build_number = os.path.split(request_url.path)[-1]
+        build_number = snap_build_request.self_link.rsplit("/", 1)[-1]
 
         for i in range(0, attempts):
-            builds = self._lp.load(request.builds_collection_link)
+            builds = self._lp.load(snap_build_request.builds_collection_link)
             logger.debug(
                 "Builds collection entries: {} ({})".format(len(builds.entries), i)
             )
@@ -137,7 +135,7 @@ class LaunchpadClient:
             raise RemoteBuilderNotReadyError()
 
         self._waiting = [build["arch_tag"] for build in builds.entries]
-        self._builds_collection_link = request.builds_collection_link
+        self._builds_collection_link = snap_build_request.builds_collection_link
 
         return build_number
 
@@ -157,7 +155,7 @@ class LaunchpadClient:
         self._waiting = [build["arch_tag"] for build in builds.entries]
         self._builds_collection_link = request.builds_collection_link
 
-    def monitor_build(self, version: str, interval: int = _LP_POLL_INTERVAL) -> None:
+    def monitor_build(self, interval: int = _LP_POLL_INTERVAL) -> None:
         """Check build progress, and download artifacts when ready."""
         logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
         while len(self._waiting):
@@ -168,14 +166,13 @@ class LaunchpadClient:
 
             for build in builds.entries:
                 arch = build["arch_tag"]
-                web_link = build["web_link"]
                 build_state = build["buildstate"]
                 logger.debug("{} state: {}".format(arch, build_state))
                 if arch in self._waiting:
                     if build_state == _LP_SUCCESS_STATUS:
-                        self._process_build(arch, web_link, version)
+                        self._process_build(build)
                     elif build_state == _LP_FAIL_STATUS:
-                        self._process_fail(arch, web_link)
+                        self._process_fail(build)
 
     def show_build_status(self) -> None:
         builds = self._lp.load(self._builds_collection_link)
@@ -184,23 +181,27 @@ class LaunchpadClient:
             build_state = build["buildstate"]
             logger.info("{}: {}".format(arch, build_state))
 
-    def _process_build(self, arch: str, web_link: str, version: str) -> None:
-        snap_name = "{}_{}_{}.snap".format(self._name, version, arch)
+    def _process_build(self, build) -> None:
+        arch = build["arch_tag"]
+        snap_build = self._lp.load(build["self_link"])
+        urls = snap_build.getFileUrls()
+        logger.debug("Success urls: {}".format(urls))
+        snap_name = urls[0].rsplit("/", 1)[-1]
         try:
-            self._download_file("{}/+files/{}".format(web_link, snap_name), snap_name)
+            self._download_file(urls[0], snap_name)
             logger.info("Snapped {}".format(snap_name))
         except urllib.error.HTTPError as e:
             logger.error("Snap download error: {}: {}".format(e, snap_name))
         finally:
             self._waiting.remove(arch)
 
-    def _process_fail(self, arch: str, web_link: str) -> None:
-        log_name = "buildlog_snap_ubuntu_xenial_{}_{}_BUILDING.txt.gz".format(
-            arch, self._id
-        )
+    def _process_fail(self, build) -> None:
+        arch = build["arch_tag"]
+        url = build["build_log_url"]
+        logger.debug("Fail log url: {}".format(url))
         fail_log = "buildlog_{}.txt.gz".format(arch)
         try:
-            self._download_file("{}/+files/{}".format(web_link, log_name), fail_log)
+            self._download_file(url, fail_log)
             logger.error(
                 "Build failed for arch {}. Log file is {!r}.".format(arch, fail_log)
             )

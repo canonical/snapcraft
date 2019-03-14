@@ -116,7 +116,9 @@ class RepoTestCase(unit.TestCase):
             [
                 mock.call(self._dir.path),
                 mock.call().git.push(
-                    "git+ssh://user@git.launchpad.net/~user/+git/id/", "branch"
+                    "git+ssh://user@git.launchpad.net/~user/+git/id/",
+                    "branch",
+                    force=True,
                 ),
                 mock.call().git.push(
                     "git+ssh://user@git.launchpad.net/~user/+git/id/", "--tags"

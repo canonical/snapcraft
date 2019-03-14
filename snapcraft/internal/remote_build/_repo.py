@@ -46,9 +46,11 @@ class Repo:
             )
 
     def push_remote(self, provider: str, user: str, branch: str, build_id: str) -> str:
+        """Push without adding a remote to the local repository."""
+
         if provider == "launchpad":
             url = self._remote_url(user, build_id)
-            self._repo.git.push(url, branch)
+            self._repo.git.push(url, branch, force=True)
             self._repo.git.push(url, "--tags")
         else:
             raise RemoteBuilderNotSupportedError(provider=provider)

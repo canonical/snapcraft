@@ -24,7 +24,6 @@ from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
 from snapcraft import InfoFile
-from snapcraft.internal.sources import Git
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 
@@ -98,7 +97,6 @@ def remote_build(
     """
 
     project = get_project()
-    version = project.info.version
 
     remote_dir = os.path.join(
         BaseDirectory.save_data_path("snapcraft"),
@@ -144,13 +142,6 @@ def remote_build(
         # The default branch to build
         branch = "master"
 
-        # Special handling for "git" version
-        if version == "git":
-            if git:
-                version = Git.generate_version().replace("-dirty", "")
-            else:
-                raise errors.InvalidVersionGitError
-
         # Send local data to the remote repository
         echo.info("Sending data to remote builder...")
         if git:
@@ -177,7 +168,7 @@ def remote_build(
             )
         )
 
-    lp.monitor_build(version)
+    lp.monitor_build()
     echo.info("Build complete.")
     lp.delete_snap()
 
