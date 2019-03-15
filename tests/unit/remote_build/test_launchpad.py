@@ -202,6 +202,25 @@ class LaunchpadTestCase(unit.TestCase):
         )
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
+    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch(
+        "tests.unit.remote_build.test_launchpad.BuildImpl.getFileUrls", return_value=[]
+    )
+    @mock.patch("logging.Logger.error")
+    def test_monitor_build_error(self, mock_log, mock_urls, mock_download, mock_lp):
+        lpc = LaunchpadClient(self._project, "id")
+        lpc.user = "user"
+        lpc._lp = LaunchpadImpl()
+        lpc.start_build()
+        lpc.monitor_build(interval=0)
+        mock_download.assert_has_calls(
+            [mock.call("url_for/build_log_file_2", "buildlog_amd64.txt.gz")]
+        )
+        mock_log.assert_called_with(
+            "Build failed for arch amd64. Log file is 'buildlog_amd64.txt.gz'."
+        )
+
+    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("logging.Logger.info")
     def test_show_build_status(self, mock_info, mock_lp):
         lpc = LaunchpadClient(self._project, "id")

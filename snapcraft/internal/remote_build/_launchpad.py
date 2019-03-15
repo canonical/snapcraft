@@ -186,6 +186,11 @@ class LaunchpadClient:
         snap_build = self._lp.load(build["self_link"])
         urls = snap_build.getFileUrls()
         logger.debug("Success urls: {}".format(urls))
+        if not urls:
+            logger.error("Snap file not available for arch {}.".format(arch))
+            self._waiting.remove(arch)
+            return
+
         snap_name = urls[0].rsplit("/", 1)[-1]
         try:
             self._download_file(urls[0], snap_name)
