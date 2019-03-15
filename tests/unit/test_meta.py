@@ -889,32 +889,6 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'",
         )
 
-    def test_subdir_with_local_in_snap_copied(self):
-        project_random_dir = os.path.join(self.snapcraft_assets_dir, "random")
-        random_file = "file"
-        random_subdir_file = os.path.join("dir", "file")
-        random_subsubdir_file = os.path.join("dir", "local", "file")
-
-        os.makedirs(os.path.join(project_random_dir, "dir", "subdir"))
-        _create_file(os.path.join(project_random_dir, random_file))
-        _create_file(os.path.join(project_random_dir, random_subdir_file))
-        _create_file(os.path.join(project_random_dir, random_subsubdir_file))
-
-        self.generate_meta_yaml(
-            snapcraft_yaml_file_path=os.path.join(
-                self.snapcraft_assets_dir, "snapcraft.yaml"
-            )
-        )
-
-        prime_random_dir = os.path.join(self.prime_dir, "snap", "random")
-        self.assertThat(os.path.join(prime_random_dir, random_file), FileExists())
-        self.assertThat(
-            os.path.join(prime_random_dir, random_subdir_file), FileExists()
-        )
-        self.assertThat(
-            os.path.join(prime_random_dir, random_subsubdir_file), FileExists()
-        )
-
     def test_local_is_not_copied_to_snap(self):
         project_local_dir = os.path.join(self.snapcraft_assets_dir, "local")
         local_file = "file"

@@ -433,40 +433,15 @@ class _SnapPackaging:
                 yaml_utils.dump(annotated_snapcraft, stream=manifest_file)
 
     def write_snap_directory(self) -> None:
-        assets_dir = self._project_config.project._get_snapcraft_assets_dir()
-        # First migrate the snap directory. It will overwrite any conflicting
-        # files.
-        for root, directories, files in os.walk(assets_dir):
-            if root == assets_dir:
-                with contextlib.suppress(ValueError):
-                    directories.remove(".snapcraft")
-                with contextlib.suppress(ValueError):
-                    # The objective of local inside the snap dir is to
-                    # use it as an additional source so there is little
-                    # sense in copying it in here.
-                    directories.remove("local")
-                with contextlib.suppress(ValueError):
-                    # The snapcraft.yaml is migrated later
-                    files.remove("snapcraft.yaml")
+        snap_assets_dir = self._project_config.project._get_snapcraft_assets_dir()
+        prime_snap_dir = os.path.join(self._prime_dir, "snap")
 
-            for directory in directories:
-                source = os.path.join(root, directory)
-                destination = os.path.join(self._prime_dir, "snap", directory)
-                file_utils.create_similar_directory(source, destination)
+        snap_dir_iter = itertools.product([prime_snap_dir], ["hooks"])
+        meta_dir_iter = itertools.product([self._meta_dir], ["hooks", "gui"])
 
-            for file_path in files:
-                source = os.path.join(root, file_path)
-                subtree = os.path.relpath(root, assets_dir)
-                destination = os.path.join(self._prime_dir, "snap", subtree, file_path)
-                with contextlib.suppress(FileNotFoundError):
-                    os.remove(destination)
-                file_utils.link_or_copy(source, destination)
-
-        # Now copy the assets contained within the snap directory directly into
-        # meta.
-        for origin in ["gui", "hooks"]:
-            src_dir = os.path.join(assets_dir, origin)
-            dst_dir = os.path.join(self.meta_dir, origin)
+        for origin in itertools.chain(snap_dir_iter, meta_dir_iter):
+            src_dir = os.path.join(snap_assets_dir, origin[1])
+            dst_dir = os.path.join(origin[0], origin[1])
             if os.path.isdir(src_dir):
                 os.makedirs(dst_dir, exist_ok=True)
                 for asset in os.listdir(src_dir):
@@ -478,8 +453,10 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination, follow_symlinks=True)
 
-                    # Ensure that the hook is executable
-                    if origin == "hooks":
+                    # Ensure that the hook is executable in meta/hooks, this is a moot
+                    # point considering the prior link_or_copy call, but is technically
+                    # correct and allows for this operation to take place only once.
+                    if origin[0] == self._meta_dir and origin[1] == "hooks":
                         _prepare_hook(destination)
 
         self._record_manifest_and_source_snapcraft_yaml()
