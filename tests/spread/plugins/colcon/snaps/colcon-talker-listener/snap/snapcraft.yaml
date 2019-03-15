@@ -6,7 +6,6 @@ description: |
 
 grade: stable
 confinement: strict
-base: core18
 
 apps:
   colcon-talker-listener:

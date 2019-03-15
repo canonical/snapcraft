@@ -1,3 +1,35 @@
+snapcraft (3.2) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * many: support for stage-snaps (#2468) (LP: #1805214)
+  * project loader: do not leak a part's build-environment (#2472)
+    (LP: #1815658)
+  * build providers: remove dead code (#2474)
+  * tests: disable spread colcon tests (#2476)
+  * ci: shallow clones for CLA checks on travis (#2477)
+  * meta: handle symlinked hooks (#2478)
+  * Update setup.py
+  * Update PULL_REQUEST_TEMPLATE.md
+  * project loader: remove special LD_LIBRARY_FLAGS handling for classic (#2485)
+    (LP: #1817300)
+  * sources: avoid marking changes to the snap directory as dirty (#2475)
+    (LP: #1806746, #1816397)
+
+  [ Claudio Matsuoka ]
+  * cli: clean up snapcraft push output (#2469) (LP: #1804439)
+  * cli: handle legitimate provider exec errors (#2483)
+
+  [ Daniel Llewellyn ]
+  * schema: convert yaml jsonschema document to a json equivalent (#2448)
+
+  [ Kyle Fazzari ]
+  * tests: make before/after items an array in schema test (#2465)
+  * ruby plugin: support new download URL (#2466) (LP: #1815336)
+  * colcon plugin: new plugin (#2456) (LP: #1805213)
+  * colcon plugin: support build-time chaining (#2486) (LP: #1816565)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Tue, 26 Feb 2019 18:25:49 +0000
+
 snapcraft (3.1.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]

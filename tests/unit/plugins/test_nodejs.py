@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2017-2018 Canonical Ltd
+# Copyright (C) 2015, 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -78,7 +78,11 @@ class NodePluginBaseTest(unit.TestCase):
         self.useFixture(fixture_setup.CleanEnvironment())
 
     def create_assets(
-        self, plugin, package_name="test-nodejs", skip_package_json=False
+        self,
+        plugin,
+        package_name="test-nodejs",
+        single_bin=False,
+        skip_package_json=False,
     ):
         for directory in (plugin.sourcedir, plugin.builddir):
             os.makedirs(directory)
@@ -553,6 +557,54 @@ class NodePluginYarnLockManifestTest(NodePluginBaseTest):
         expected_manifest["node-packages"] = []
 
         self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+
+class NodeBinTest(unit.TestCase):
+    scenarios = [
+        (
+            "dict",
+            dict(
+                package_json=dict(
+                    name="package-foo",
+                    bin=dict(run1="bin0/run1bin", run2="bin1/run2bin"),
+                ),
+                expected_bins=["run1", "run2"],
+            ),
+        ),
+        (
+            "single",
+            dict(
+                package_json=dict(name="package-foo", bin="bin0/run1bin"),
+                expected_bins=["package-foo"],
+            ),
+        ),
+        (
+            "single, scoped package",
+            dict(
+                package_json=dict(name="@org/package-foo", bin="bin1/run1bin"),
+                expected_bins=["package-foo"],
+            ),
+        ),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        if type(self.package_json["bin"]) == dict:
+            binaries = self.package_json["bin"].values()
+        else:
+            binaries = [self.package_json["bin"]]
+
+        for binary in binaries:
+            os.makedirs(os.path.dirname(binary), exist_ok=True)
+            open(binary, "w").close()
+
+    def test_bins(self):
+        nodejs._create_bins(self.package_json, ".")
+        binary_paths = (os.path.join("bin", b) for b in self.expected_bins)
+
+        for binary in binary_paths:
+            self.assertThat(binary, FileExists())
 
 
 class NodeReleaseTest(unit.TestCase):

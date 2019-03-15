@@ -49,7 +49,7 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         self._setup_base_tools(project.info.base)
 
     def _setup_base_tools(self, base):
-        if base in ("core16", "core18"):
+        if base in ("core", "core16", "core18"):
             self.stage_packages.extend(
                 ["python3-pip", "python3-wheel", "python3-setuptools"]
             )

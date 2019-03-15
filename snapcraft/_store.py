@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,6 +35,7 @@ from tabulate import tabulate
 from snapcraft.file_utils import calculate_sha3_384, get_tool_path
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
+from snapcraft.internal.errors import SnapDataExtractionError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
@@ -48,16 +49,19 @@ logger = logging.getLogger(__name__)
 def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_tool_path("unsquashfs")
-        output = subprocess.check_output(
-            [
-                unsquashfs_path,
-                "-d",
-                os.path.join(temp_dir, "squashfs-root"),
-                snap_path,
-                "-e",
-                os.path.join("meta", "snap.yaml"),
-            ]
-        )
+        try:
+            output = subprocess.check_output(
+                [
+                    unsquashfs_path,
+                    "-d",
+                    os.path.join(temp_dir, "squashfs-root"),
+                    snap_path,
+                    "-e",
+                    os.path.join("meta", "snap.yaml"),
+                ]
+            )
+        except subprocess.CalledProcessError:
+            raise SnapDataExtractionError(os.path.basename(snap_path))
         logger.debug(output)
         with open(
             os.path.join(temp_dir, "squashfs-root", "meta", "snap.yaml")
@@ -71,16 +75,19 @@ def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
         unsquashfs_path = get_tool_path("unsquashfs")
-        output = subprocess.check_output(
-            [
-                unsquashfs_path,
-                "-d",
-                os.path.join(temp_dir, "squashfs-root"),
-                snap_path,
-                "-e",
-                "meta/gui",
-            ]
-        )
+        try:
+            output = subprocess.check_output(
+                [
+                    unsquashfs_path,
+                    "-d",
+                    os.path.join(temp_dir, "squashfs-root"),
+                    snap_path,
+                    "-e",
+                    "meta/gui",
+                ]
+            )
+        except subprocess.CalledProcessError:
+            raise SnapDataExtractionError(os.path.basename(snap_path))
         logger.debug("Output extracting icon from snap: %s", output)
         for extension in ("png", "svg"):
             icon_name = "icon.{}".format(extension)
@@ -413,11 +420,11 @@ def register_key(name):
     )
 
 
-def register(snap_name, is_private=False):
+def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:
     logger.info("Registering {}.".format(snap_name))
     store = storeapi.StoreClient()
     with _requires_login():
-        store.register(snap_name, is_private)
+        store.register(snap_name, is_private=is_private, store_id=store_id)
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
@@ -534,7 +541,9 @@ def push(snap_filename, release_channels=None):
     snap_name = snap_yaml["name"]
     store = storeapi.StoreClient()
 
-    logger.info("Preparing to push {!r} to the store.".format(snap_filename))
+    logger.debug(
+        "Run push precheck and verify cached data for {!r}.".format(snap_filename)
+    )
     with _requires_login():
         store.push_precheck(snap_name)
 
@@ -587,7 +596,7 @@ def _push_snap(snap_name, snap_filename):
 def _push_delta(snap_name, snap_filename, source_snap):
     store = storeapi.StoreClient()
     delta_format = "xdelta3"
-    logger.info("Found cached source snap {}.".format(source_snap))
+    logger.debug("Found cached source snap {}.".format(source_snap))
     target_snap = os.path.join(os.getcwd(), snap_filename)
 
     try:
@@ -605,7 +614,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
     }
 
     try:
-        logger.info("Pushing delta {}.".format(delta_filename))
+        logger.debug("Pushing delta {!r}.".format(delta_filename))
         with _requires_login():
             delta_tracker = store.upload(
                 snap_name,

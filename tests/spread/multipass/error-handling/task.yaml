@@ -1,12 +1,9 @@
-summary: Build a basic snap using multipass and ensure that it runs
+summary: A faulty snap to test error handling
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
-manual: true
-# Keep this 18.04 only for now as it is the only stable base.
-systems: [ubuntu-18.04-64]
 
 environment:
-  SNAP_DIR: snaps/make-hello
+  SNAP_DIR: snaps/exit1
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -28,6 +25,12 @@ execute: |
   # Ensure that snapcraft uses build VMs
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  snapcraft
-  sudo snap install make-hello_*.snap --dangerous
-  [ "$(make-hello)" = "hello world" ]
+  # Building this snap returns an error inside the provider. This error must
+  # be handled by the outer environment and return code 2 instead of raising
+  # an exception (and return 1).
+  err=0
+  snapcraft || err=$?
+  if [ $err -ne 2 ]; then
+    echo "Error handling legit error in build provider"
+    exit 1
+  fi

@@ -30,8 +30,6 @@ backends:
     key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
     systems:
-      - ubuntu-14.04-64:
-          workers: 3
       - ubuntu-16.04-64:
           workers: 5
           image: ubuntu-1604-64
@@ -155,11 +153,15 @@ suites:
  tests/spread/general/:
    summary: tests of snapcraft core functionality
 
+ tests/spread/multipass/:
+   summary: tests of snapcraft using multipass
+   # Keep this 18.04 only for now as it is the only stable base.
+   systems: [ubuntu-18.04*]
+   manual: true
+
  # Plugin-specific suites
  tests/spread/plugins/ant/:
    summary: tests of snapcraft's Ant plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    systems:
@@ -171,11 +173,14 @@ suites:
    kill-timeout: 360m
  tests/spread/plugins/autotools/:
    summary: tests of snapcraft's Autotools plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
@@ -195,8 +200,6 @@ suites:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
    # Keep this 16.04 as it is the only supported system for this plugin
@@ -206,60 +209,36 @@ suites:
    - ubuntu-16.04-amd64
  tests/spread/plugins/go/:
    summary: tests of snapcraft's Go plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/godeps/:
    summary: tests of snapcraft's Godeps plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/gradle/:
    summary: tests of snapcraft's Gradle plugin
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/make/:
    summary: tests of snapcraft's Make plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/maven/:
    summary: tests of snapcraft's Maven plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/meson/:
    summary: tests of snapcraft's Meson plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/nil/:
    summary: tests of snapcraft's Nil plugin
  tests/spread/plugins/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/python/:
    summary: tests of snapcraft's Python plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/qmake/:
    summary: tests of snapcraft's qmake plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/ruby/:
    summary: tests of snapcraft's Ruby plugin
    kill-timeout: 180m
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/rust/:
    summary: tests of snapcraft's Rust plugin
    # Keep this 18.04 only for now as it is the only stable base.
@@ -269,16 +248,17 @@ suites:
    - ubuntu-18.04-amd64
    - ubuntu-18.04-i386
    - ubuntu-18.04-armhf
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-i386
+   - ubuntu-16.04-armhf
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
  tests/spread/plugins/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
-   # Keep this 18.04 only for now as it is the only stable base.
-   systems: [ubuntu-18.04*]
 
 # Extensions tests
  tests/spread/extensions/gnome-3-28/:

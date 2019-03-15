@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -290,28 +290,34 @@ class NodePlugin(snapcraft.BasePlugin):
 
 
 def _create_bins(package_json, directory):
-    binaries = package_json.get("bin")
-    if not binaries:
+    bin_entry = package_json.get("bin")
+    if not bin_entry:
         return
 
     bin_dir = os.path.join(directory, "bin")
     os.makedirs(bin_dir, exist_ok=True)
 
-    if type(binaries) == dict:
-        for bin_name, bin_path in binaries.items():
-            target = os.path.join(bin_dir, bin_name)
-            # The binary might be already created from upstream sources.
-            if os.path.exists(os.path.join(target)):
-                continue
-            source = os.path.join("..", bin_path)
-            os.symlink(source, target)
-            # Make it executable
-            os.chmod(os.path.realpath(target), 0o755)
+    if type(bin_entry) == dict:
+        binaries = bin_entry
+    elif type(bin_entry) == str:
+        # Support for scoped names of the form of @org/name
+        name = package_json["name"]
+        binaries = {name[name.find("/") + 1 :]: bin_entry}
     else:
         raise errors.SnapcraftEnvironmentError(
             "The plugin is not prepared to handle bin entries of "
-            "type {!r}".format(type(binaries))
+            "type {!r}".format(type(bin_entry))
         )
+
+    for bin_name, bin_path in binaries.items():
+        target = os.path.join(bin_dir, bin_name)
+        # The binary might be already created from upstream sources.
+        if os.path.exists(os.path.join(target)):
+            continue
+        source = os.path.join("..", bin_path)
+        os.symlink(source, target)
+        # Make it executable
+        os.chmod(os.path.realpath(target), 0o755)
 
 
 def _get_nodejs_base(node_engine, machine):

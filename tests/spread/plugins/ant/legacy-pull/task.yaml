@@ -6,7 +6,7 @@ summary: |
 systems: [ubuntu-16*]
 
 environment:
-  SNAP_DIR: ../snaps/ant-hello
+  SNAP_DIR: ../snaps/legacy-ant-hello
 
 restore: |
   cd "$SNAP_DIR"

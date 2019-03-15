@@ -22,6 +22,7 @@ from . import errors
 def get_snapcraft_yaml(base_dir=None):
     possible_yamls = [
         os.path.join("snap", "snapcraft.yaml"),
+        os.path.join("build-aux", "snap", "snapcraft.yaml"),
         "snapcraft.yaml",
         ".snapcraft.yaml",
     ]

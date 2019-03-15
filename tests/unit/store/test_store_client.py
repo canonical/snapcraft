@@ -590,6 +590,11 @@ class RegisterTestCase(StoreTestCase):
         # No exception will be raised if this is successful
         self.client.register("test-good-snap-name")
 
+    def test_register_name_successfully_to_store_id(self):
+        self.client.login("dummy", "test correct password")
+        # No exception will be raised if this is successful
+        self.client.register("test-good-snap-name", store_id="my-brand")
+
     def test_register_private_name_successfully(self):
         self.client.login("dummy", "test correct password")
         # No exception will be raised if this is successful

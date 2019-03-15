@@ -48,7 +48,7 @@ def upload_files(binary_filename, updown_client):
         # Create a progress bar that looks like: Uploading foo [==  ] 50%
         progress_bar = ProgressBar(
             widgets=[
-                "Pushing {} ".format(os.path.basename(binary_filename)),
+                "Pushing {!r} ".format(os.path.basename(binary_filename)),
                 Bar(marker="=", left="[", right="]"),
                 " ",
                 Percentage(),

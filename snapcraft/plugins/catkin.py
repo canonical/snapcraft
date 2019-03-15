@@ -18,6 +18,7 @@
 
 The rosdistro used depends upon the base of the snap:
 
+  - core: Uses Kinetic
   - core16: Uses Kinetic
   - core18: Uses Melodic
 
@@ -88,10 +89,10 @@ from snapcraft.internal import errors, mangling
 logger = logging.getLogger(__name__)
 
 # Map bases to ROS releases
-_BASE_TO_ROS_RELEASE_MAP = {"core16": "kinetic", "core18": "melodic"}
+_BASE_TO_ROS_RELEASE_MAP = {"core": "kinetic", "core16": "kinetic", "core18": "melodic"}
 
 # Map bases to Ubuntu releases
-_BASE_TO_UBUNTU_RELEASE_MAP = {"core16": "xenial", "core18": "bionic"}
+_BASE_TO_UBUNTU_RELEASE_MAP = {"core": "xenial", "core16": "xenial", "core18": "bionic"}
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
@@ -271,7 +272,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project.info.base not in ("core16", "core18"):
+        if project.info.base not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
 
         self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[project.info.base]

@@ -113,3 +113,8 @@ class SnapcraftPullError(SnapcraftSourceError):
         else:
             string_command = command
         super().__init__(command=string_command, exit_code=exit_code)
+
+
+class SnapcraftRequestError(SnapcraftSourceError):
+
+    fmt = "Network request error: {message}"

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -368,7 +368,7 @@ class PipCommandBaseTestCase(PipBaseTestCase):
         self.mock_run.reset_mock()
 
 
-class PipDownloadTestCase(PipCommandBaseTestCase):
+class PipDownloadTest(PipCommandBaseTestCase):
 
     scenarios = [
         (
@@ -392,22 +392,23 @@ class PipDownloadTestCase(PipCommandBaseTestCase):
         (
             "single constraint",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint"]},
-                "expected_args": ["--constraint", "constraint"],
+                "expected_args": ["--constraint", "constraint", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
             "multiple constraints",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint1", "constraint2"]},
                 "expected_args": [
                     "--constraint",
                     "constraint1",
                     "--constraint",
                     "constraint2",
+                    "foo",
                 ],
                 "expected_kwargs": {"cwd": None},
             },
@@ -438,9 +439,9 @@ class PipDownloadTestCase(PipCommandBaseTestCase):
         (
             "process dependency links",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"process_dependency_links": True},
-                "expected_args": ["--process-dependency-links"],
+                "expected_args": ["--process-dependency-links", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -460,16 +461,16 @@ class PipDownloadTestCase(PipCommandBaseTestCase):
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 
-    def test_without_packages_or_kwargs_should_noop(self):
+    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
         self.pip.download([])
         self.mock_run.assert_not_called()
 
-    def test_with_packages_and_kwargs(self):
+    def test_with_packages_or_setup_py_or_requirements(self):
         self.pip.download(self.packages, **self.kwargs)
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
 
-class PipInstallTestCase(PipCommandBaseTestCase):
+class PipInstallTest(PipCommandBaseTestCase):
 
     scenarios = [
         (
@@ -493,22 +494,23 @@ class PipInstallTestCase(PipCommandBaseTestCase):
         (
             "single constraint",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint"]},
-                "expected_args": ["--constraint", "constraint"],
+                "expected_args": ["--constraint", "constraint", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
             "multiple constraints",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint1", "constraint2"]},
                 "expected_args": [
                     "--constraint",
                     "constraint1",
                     "--constraint",
                     "constraint2",
+                    "foo",
                 ],
                 "expected_kwargs": {"cwd": None},
             },
@@ -539,36 +541,36 @@ class PipInstallTestCase(PipCommandBaseTestCase):
         (
             "process dependency links",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"process_dependency_links": True},
-                "expected_args": ["--process-dependency-links"],
+                "expected_args": ["--process-dependency-links", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
             "upgrade",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"upgrade": True},
-                "expected_args": ["--upgrade"],
+                "expected_args": ["--upgrade", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
-            "install_deps",
+            "no install_deps",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"install_deps": False},
-                "expected_args": ["--no-deps"],
+                "expected_args": ["--no-deps", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
             "ignore_installed",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"ignore_installed": True},
-                "expected_args": ["--ignore-installed"],
+                "expected_args": ["--ignore-installed", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -595,11 +597,11 @@ class PipInstallTestCase(PipCommandBaseTestCase):
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 
-    def test_without_packages_or_kwargs_should_noop(self):
+    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
         self.pip.install([])
         self.mock_run.assert_not_called()
 
-    def test_with_packages_and_kwargs(self):
+    def test_with_packages_or_setup_py_or_requirements(self):
         self.pip.install(self.packages, **self.kwargs)
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
@@ -724,7 +726,7 @@ class PipInstallFixupPermissionsTestCase(PipCommandBaseTestCase):
         self.assertFalse(mock_chmod.called)
 
 
-class PipWheelTestCase(PipCommandBaseTestCase):
+class PipWheelTest(PipCommandBaseTestCase):
 
     scenarios = [
         (
@@ -748,22 +750,23 @@ class PipWheelTestCase(PipCommandBaseTestCase):
         (
             "single constraint",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint"]},
-                "expected_args": ["--constraint", "constraint"],
+                "expected_args": ["--constraint", "constraint", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
         (
             "multiple constraints",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint1", "constraint2"]},
                 "expected_args": [
                     "--constraint",
                     "constraint1",
                     "--constraint",
                     "constraint2",
+                    "foo",
                 ],
                 "expected_kwargs": {"cwd": None},
             },
@@ -794,9 +797,9 @@ class PipWheelTestCase(PipCommandBaseTestCase):
         (
             "process dependency links",
             {
-                "packages": [],
+                "packages": ["foo"],
                 "kwargs": {"process_dependency_links": True},
-                "expected_args": ["--process-dependency-links"],
+                "expected_args": ["--process-dependency-links", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -823,11 +826,11 @@ class PipWheelTestCase(PipCommandBaseTestCase):
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 
-    def test_without_packages_or_kwargs_should_noop(self):
+    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
         self.pip.wheel([])
         self.mock_run.assert_not_called()
 
-    def test_with_packages_and_kwargs(self):
+    def test_with_packages_or_setup_py_or_requirements(self):
         self.pip.wheel(self.packages, **self.kwargs)
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 

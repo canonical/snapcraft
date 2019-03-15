@@ -109,7 +109,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")
 
     def _setup_base_tools(self, base):
-        if base == "core16":
+        if base in ("core", "core16"):
             self.stage_packages.extend(
                 [
                     "libcurl3",
@@ -120,7 +120,6 @@ class DotNetPlugin(snapcraft.BasePlugin):
                     "lldb",
                     "libssl1.0.0",
                     "libgssapi-krb5-2",
-                    "libc6",
                     "zlib1g",
                     "libgcc1",
                 ]

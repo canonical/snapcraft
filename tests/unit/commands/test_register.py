@@ -54,7 +54,31 @@ class RegisterTestCase(CommandBaseTestCase):
             result.output,
             Not(Contains("Congratulations! You're now the publisher for 'test-snap'.")),
         )
-        mock_register.assert_called_once_with("test-snap", False, "16")
+        mock_register.assert_called_once_with(
+            "test-snap", is_private=False, series="16", store_id=None
+        )
+
+    def test_register_name_to_specific_store_successfully(self):
+        with mock.patch.object(
+            storeapi._sca_client.SCAClient, "register"
+        ) as mock_register:
+            result = self.run_command(
+                ["register", "test-snap", "--store", "my-brand"], input="y\n"
+            )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains("Registering test-snap"))
+        self.assertThat(
+            result.output,
+            Contains("Congrats! You are now the publisher of 'test-snap'."),
+        )
+        self.assertThat(
+            result.output,
+            Not(Contains("Congratulations! You're now the publisher for 'test-snap'.")),
+        )
+        mock_register.assert_called_once_with(
+            "test-snap", is_private=False, series="16", store_id="my-brand"
+        )
 
     def test_register_private_name_successfully(self):
         with mock.patch.object(
@@ -78,7 +102,9 @@ class RegisterTestCase(CommandBaseTestCase):
             result.output,
             Not(Contains("Congratulations! You're now the publisher for 'test-snap'.")),
         )
-        mock_register.assert_called_once_with("test-snap", True, "16")
+        mock_register.assert_called_once_with(
+            "test-snap", is_private=True, series="16", store_id=None
+        )
 
     def test_registration_failed(self):
         response = mock.Mock()

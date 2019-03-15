@@ -91,9 +91,13 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.StoreKeyRegistrationError(response)
 
-    def register(self, snap_name, is_private, series):
+    def register(
+        self, snap_name: str, *, is_private: bool, series: str, store_id: str
+    ) -> None:
         auth = _macaroon_auth(self.conf)
         data = dict(snap_name=snap_name, is_private=is_private, series=series)
+        if store_id is not None:
+            data["store"] = store_id
         response = self.post(
             "register-name/",
             data=json.dumps(data),

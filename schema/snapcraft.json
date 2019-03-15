@@ -210,11 +210,18 @@
             }
         },
         "version": {
-            "type": "string",
             "description": "package version",
-            "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of upper- and lower-case alphanumeric characters, as well as periods, colons, plus signs, tildes, and hyphens. They cannot begin with a period, colon, plus sign, tilde, or hyphen. They cannot end with a period, colon, or hyphen.",
-            "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$",
-            "maxLength": 32
+            "allOf": [
+                {
+                    "type": "string",
+                    "validation-failure": "snap versions need to be strings."
+                },
+                {
+                    "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$",
+                    "maxLength": 32,
+                    "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of upper- and lower-case alphanumeric characters, as well as periods, colons, plus signs, tildes, and hyphens. They cannot begin with a period, colon, plus sign, tilde, or hyphen. They cannot end with a period, colon, or hyphen."
+                }
+            ]
         },
         "version-script": {
             "type": "string",

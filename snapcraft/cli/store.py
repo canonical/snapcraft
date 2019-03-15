@@ -100,7 +100,8 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
 @click.option("--private", is_flag=True, help="Register the snap as a private one")
-def register(snap_name, private):
+@click.option("--store", metavar="<store>", help="Store to register with")
+def register(snap_name, private, store):
     """Register <snap-name> with the store.
 
     You can use this command to register an available <snap-name> and become
@@ -113,7 +114,7 @@ def register(snap_name, private):
     if private:
         click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
     if click.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
-        snapcraft.register(snap_name, private)
+        snapcraft.register(snap_name, is_private=private, store_id=store)
         click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
     else:
         click.echo(_MESSAGE_REGISTER_NO.format(snap_name))
@@ -149,7 +150,7 @@ def push(snap_file, release):
         snapcraft push my-snap_0.2_amd64.snap --release edge
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo("Pushing {}".format(os.path.basename(snap_file)))
+    click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
     channel_list = []
     if release:
         channel_list = release.split(",")
@@ -183,7 +184,7 @@ def push_metadata(snap_file, force):
         snapcraft push-metadata my-snap_0.1_amd64.snap
         snapcraft push-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo("Pushing metadata from {}".format(os.path.basename(snap_file)))
+    click.echo("Pushing metadata from {!r}".format(os.path.basename(snap_file)))
     snapcraft.push_metadata(snap_file, force)
 
 

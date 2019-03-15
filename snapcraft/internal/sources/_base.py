@@ -144,8 +144,11 @@ class FileBase(Base):
         if snapcraft.internal.common.get_url_scheme(self.source) == "ftp":
             download_urllib_source(self.source, self.file)
         else:
-            request = requests.get(self.source, stream=True, allow_redirects=True)
-            request.raise_for_status()
+            try:
+                request = requests.get(self.source, stream=True, allow_redirects=True)
+                request.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                raise errors.SnapcraftRequestError(message=e)
 
             download_requests_stream(request, self.file)
 
