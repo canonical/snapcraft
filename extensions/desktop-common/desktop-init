@@ -33,6 +33,8 @@ elif [ "$SNAP_ARCH" == "armhf" ]; then
   ARCH="arm-linux-gnueabihf"
 elif [ "$SNAP_ARCH" == "arm64" ]; then
   ARCH="aarch64-linux-gnu"
+elif [ "$SNAP_ARCH" == "ppc64el" ]; then
+  ARCH="powerpc64le-linux-gnu"
 else
   ARCH="$SNAP_ARCH-linux-gnu"
 fi
