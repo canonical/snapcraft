@@ -29,7 +29,7 @@ from testscenarios import multiply_scenarios
 import snapcraft.internal.errors
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import exception_handler
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
@@ -46,6 +46,8 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
 class ErrorsBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         patcher = mock.patch("sys.exit")
         self.exit_mock = patcher.start()
