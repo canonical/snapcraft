@@ -31,6 +31,7 @@ from snapcraft.internal import (
     build_providers,
     deprecations,
     lifecycle,
+    pluginhandler,
     project_loader,
     steps,
     repo,
@@ -40,6 +41,7 @@ from snapcraft.project._sanity_checks import (
     conduct_build_environment_sanity_check,
 )
 from snapcraft.project.errors import MultipassMissingInstallableError
+from snapcraft.project._schema import Validator
 from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
 
@@ -127,6 +129,10 @@ def _execute(  # noqa: C901
         if pack_project:
             _pack(project.prime_dir, output=output)
     else:
+        # load project and validate schema before invoking a provider
+        if project.info.base is not None:
+            _validate_project_schema(project)
+
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
@@ -165,6 +171,24 @@ def _execute(  # noqa: C901
                 if shell or shell_after:
                     instance.shell()
     return project
+
+
+def _validate_project_schema(project):
+    data = project.info.get_raw_snapcraft()
+    validator = Validator(data)
+    validator.validate()
+    parts = data.get("parts", {})
+    for part_name in parts:
+        properties = parts[part_name]
+        plugin_name = properties.get("plugin")
+        pluginhandler.load_plugin(
+            plugin_name=plugin_name,
+            part_name=part_name,
+            properties=properties,
+            project_options=project,
+            part_schema=validator.part_schema,
+            definitions_schema=validator.definitions_schema,
+        )
 
 
 def _pack(directory: str, *, output: str) -> None:
