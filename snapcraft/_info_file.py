@@ -16,7 +16,7 @@
 
 import os
 
-from typing import Any, Dict
+from typing import Any
 from snapcraft import yaml_utils
 
 
@@ -32,7 +32,7 @@ class InfoFile(dict):
                 self.clear()
                 self.update(yaml_utils.load(info_file))
 
-    def save(self, **data: Dict[str, Any]) -> None:
+    def save(self, **data: Any) -> None:
         dirpath = os.path.dirname(self._path)
         if dirpath:
             os.makedirs(dirpath, exist_ok=True)

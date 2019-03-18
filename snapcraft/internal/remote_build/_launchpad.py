@@ -23,9 +23,10 @@ import urllib.error
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import List
+from typing import Any, Dict, List
 from xdg import BaseDirectory
 from snapcraft import InfoFile
+from snapcraft.project import Project
 from .errors import (
     NoLaunchpadUsernameError,
     RemoteBuilderNotReadyError,
@@ -44,7 +45,7 @@ logger = logging.getLogger(__name__)
 class LaunchpadClient:
     """Launchpad remote builder operations."""
 
-    def __init__(self, project, build_id: str) -> None:
+    def __init__(self, project: Project, build_id: str) -> None:
         self._id = build_id
         self._core_channel = "stable"
         self._snapcraft_channel = "edge"
@@ -63,7 +64,7 @@ class LaunchpadClient:
     def login(self, user: str) -> None:
         info = InfoFile(os.path.join(self._data_dir, "config.yaml"))
         if user:
-            info.save(user=user)  # type: ignore
+            info.save(user=user)
         else:
             info.load()
             user = info["user"] if "user" in info else None
@@ -177,11 +178,12 @@ class LaunchpadClient:
     def show_build_status(self) -> None:
         builds = self._lp.load(self._builds_collection_link)
         for build in builds.entries:
+            print(type(build))
             arch = build["arch_tag"]
             build_state = build["buildstate"]
             logger.info("{}: {}".format(arch, build_state))
 
-    def _process_build(self, build) -> None:
+    def _process_build(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
         snap_build = self._lp.load(build["self_link"])
         urls = snap_build.getFileUrls()
@@ -200,7 +202,7 @@ class LaunchpadClient:
         finally:
             self._waiting.remove(arch)
 
-    def _process_fail(self, build) -> None:
+    def _process_fail(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
         url = build["build_log_url"]
         logger.debug("Fail log url: {}".format(url))
