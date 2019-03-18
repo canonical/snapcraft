@@ -100,8 +100,9 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         super().setUp()
 
     @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    @mock.patch("snapcraft.internal.common.is_snap", return_value=False)
     def test_handler_no_raven_traceback_non_snapcraft_exceptions_debug(
-        self, raven_client_mock
+        self, is_snap_mock, raven_client_mock
     ):
         snapcraft.cli._errors.RavenClient = None
         try:

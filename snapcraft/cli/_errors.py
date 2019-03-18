@@ -30,7 +30,6 @@ from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
-from snapcraft.internal.common import is_snap
 from snapcraft.internal.build_providers.errors import ProviderExecError
 
 # raven is not available on 16.04
@@ -114,7 +113,7 @@ def exception_handler(  # noqa: C901
     is_snapcraft_reportable_error = issubclass(
         exception_type, errors.SnapcraftReportableError
     )
-    is_raven_setup = RavenClient is not None if is_snap() else False
+    is_raven_setup = snapcraft.internal.common.is_snap()
     is_connected_to_tty = (
         # used by inner instance, variable set by outer instance
         (distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1)
