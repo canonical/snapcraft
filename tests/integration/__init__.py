@@ -534,7 +534,7 @@ class StoreTestCase(TestCase):
                 time.sleep(int(match.group(1)))
                 # This could get stuck for ever if the user is registering
                 # other snaps in parallel.
-                self.register(snap_name, private, wait)
+                self.register(snap_name, private=private, store=store, wait=wait)
             else:
                 raise RegisterError(output)
 
