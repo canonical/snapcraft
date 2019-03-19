@@ -463,9 +463,14 @@ class StoreTestCase(TestCase):
         process.expect_exact("Password: ")
         process.sendline(password)
         if expect_success:
-            process.expect_exact(
-                "We strongly recommend enabling multi-factor authentication:"
-            )
+            try:
+                process.expect_exact(
+                    "We strongly recommend enabling multi-factor authentication:"
+                )
+            except pexpect.exceptions.EOF:
+                self.fail(
+                    "Login failed. Login error: {}".format(process.before.decode())
+                )
 
     def export_login(
         self,
@@ -492,10 +497,13 @@ class StoreTestCase(TestCase):
         process = self.spawn_snapcraft(["login"])
         self._conduct_login(process, email, password, expect_success)
 
-        if expect_success:
-            process.expect_exact("Login successful.")
-        else:
-            process.expect("Authentication error: Failed to get unbound discharge.")
+        try:
+            if expect_success:
+                process.expect_exact("Login successful.")
+            else:
+                process.expect("Authentication error: Failed to get unbound discharge.")
+        except pexpect.exceptions.EOF:
+            self.fail("Login failed. Login error: {}".format(process.before.decode()))
 
     def logout(self):
         output = self.run_snapcraft("logout")
