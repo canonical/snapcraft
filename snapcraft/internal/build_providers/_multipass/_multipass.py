@@ -65,6 +65,10 @@ class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
     @classmethod
+    def _get_is_snap_injection_capable(cls) -> bool:
+        return True
+
+    @classmethod
     def _get_provider_name(cls):
         return "multipass"
 
