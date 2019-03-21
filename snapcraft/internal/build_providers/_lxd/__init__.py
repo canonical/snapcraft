@@ -15,4 +15,3 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._lxd import LXD  # noqa: F401
-from ._lxd_driver import LXDDriver  # noqa: F401
