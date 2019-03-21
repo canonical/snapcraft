@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -48,41 +48,248 @@ class ErrorFormattingTest(unit.TestCase):
             ),
         ),
         (
-            "ProviderLaunchError",
+            "ProviderLaunchError (exit code)",
             dict(
                 exception=errors.ProviderLaunchError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
-                    "An error occurred when trying to launch the instance "
-                    "with 'multipass': returned exit code 1.\n"
-                    "Ensure that 'multipass' is setup correctly and try "
-                    "again."
+                    "An error occurred with the instance when trying to launch with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
                 ),
             ),
         ),
         (
-            "ProviderStopError",
+            "ProviderLaunchError (error message)",
+            dict(
+                exception=errors.ProviderLaunchError,
+                kwargs=dict(
+                    provider_name="multipass", error_message="failed to launch"
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to launch with "
+                    "'multipass': failed to launch.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderLaunchError (exit code and error message)",
+            dict(
+                exception=errors.ProviderLaunchError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to launch",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to launch with "
+                    "'multipass': returned exit code 1: failed to launch.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderStopError (exit code)",
             dict(
                 exception=errors.ProviderStopError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
-                    "An error occurred when trying to stop the instance "
-                    "with 'multipass': returned exit code 1.\n"
-                    "Ensure that 'multipass' is setup correctly and try "
-                    "again."
+                    "An error occurred with the instance when trying to stop with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
                 ),
             ),
         ),
         (
-            "ProviderDeleteError",
+            "ProviderStopError (error message)",
+            dict(
+                exception=errors.ProviderStopError,
+                kwargs=dict(provider_name="multipass", error_message="failed to stop"),
+                expected_message=(
+                    "An error occurred with the instance when trying to stop with "
+                    "'multipass': failed to stop.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderStopError (exit code and error message)",
+            dict(
+                exception=errors.ProviderStopError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to stop",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to stop with "
+                    "'multipass': returned exit code 1: failed to stop.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderDeleteError (exit code)",
             dict(
                 exception=errors.ProviderDeleteError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
-                    "An error occurred when trying to delete the instance "
-                    "with 'multipass': returned exit code 1.\n"
-                    "Ensure that 'multipass' is setup correctly and try "
-                    "again."
+                    "An error occurred with the instance when trying to delete with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderDeleteError (error message)",
+            dict(
+                exception=errors.ProviderDeleteError,
+                kwargs=dict(
+                    provider_name="multipass", error_message="failed to delete"
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to delete with "
+                    "'multipass': failed to delete.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderDeleteError (exit code and error message)",
+            dict(
+                exception=errors.ProviderDeleteError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to delete",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to delete with "
+                    "'multipass': returned exit code 1: failed to delete.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderShellError (exit code)",
+            dict(
+                exception=errors.ProviderShellError,
+                kwargs=dict(provider_name="multipass", exit_code=1),
+                expected_message=(
+                    "An error occurred with the instance when trying to shell with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderShellError (error message)",
+            dict(
+                exception=errors.ProviderShellError,
+                kwargs=dict(provider_name="multipass", error_message="failed to shell"),
+                expected_message=(
+                    "An error occurred with the instance when trying to shell with "
+                    "'multipass': failed to shell.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderShellError (exit code and error message)",
+            dict(
+                exception=errors.ProviderShellError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to shell",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to shell with "
+                    "'multipass': returned exit code 1: failed to shell.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderMountError (exit code)",
+            dict(
+                exception=errors.ProviderMountError,
+                kwargs=dict(provider_name="multipass", exit_code=1),
+                expected_message=(
+                    "An error occurred with the instance when trying to mount with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderMountError (error message)",
+            dict(
+                exception=errors.ProviderMountError,
+                kwargs=dict(provider_name="multipass", error_message="failed to mount"),
+                expected_message=(
+                    "An error occurred with the instance when trying to mount with "
+                    "'multipass': failed to mount.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderMountError (exit code and error message)",
+            dict(
+                exception=errors.ProviderMountError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to mount",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to mount with "
+                    "'multipass': returned exit code 1: failed to mount.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderFileCopyError (exit code)",
+            dict(
+                exception=errors.ProviderFileCopyError,
+                kwargs=dict(provider_name="multipass", exit_code=1),
+                expected_message=(
+                    "An error occurred with the instance when trying to copy files with "
+                    "'multipass': returned exit code 1.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderFileCopyError (error message)",
+            dict(
+                exception=errors.ProviderFileCopyError,
+                kwargs=dict(
+                    provider_name="multipass", error_message="failed to copy files"
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to copy files with "
+                    "'multipass': failed to copy files.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
+                ),
+            ),
+        ),
+        (
+            "ProviderFileCopyError (exit code and error message)",
+            dict(
+                exception=errors.ProviderFileCopyError,
+                kwargs=dict(
+                    provider_name="multipass",
+                    exit_code=1,
+                    error_message="failed to copy files",
+                ),
+                expected_message=(
+                    "An error occurred with the instance when trying to copy files with "
+                    "'multipass': returned exit code 1: failed to copy files.\n"
+                    "Ensure that 'multipass' is setup correctly and try again."
                 ),
             ),
         ),
@@ -99,39 +306,6 @@ class ErrorFormattingTest(unit.TestCase):
                     "An error occurred when trying to execute "
                     "'snap install snapcraft --classic' with 'multipass': "
                     "returned exit code 1."
-                ),
-            ),
-        ),
-        (
-            "ProviderShellError",
-            dict(
-                exception=errors.ProviderShellError,
-                kwargs=dict(provider_name="multipass", exit_code=1),
-                expected_message=(
-                    "An error occurred when trying to provide a shell with "
-                    "'multipass': returned exit code 1."
-                ),
-            ),
-        ),
-        (
-            "ProviderMountError",
-            dict(
-                exception=errors.ProviderMountError,
-                kwargs=dict(provider_name="multipass", exit_code=1),
-                expected_message=(
-                    "An error occurred when trying to mount using 'multipass': "
-                    "returned exit code 1."
-                ),
-            ),
-        ),
-        (
-            "ProviderFileCopyError",
-            dict(
-                exception=errors.ProviderFileCopyError,
-                kwargs=dict(provider_name="multipass", exit_code=1),
-                expected_message=(
-                    "An error occurred when trying to copy files using "
-                    "'multipass': returned exit code 1."
                 ),
             ),
         ),
@@ -185,10 +359,10 @@ class ErrorFormattingTest(unit.TestCase):
             "ProviderCommunicationError",
             dict(
                 exception=errors.ProviderCommunicationError,
-                kwargs=dict(protocol="telnet", port=7232, error="unknown host"),
+                kwargs=dict(provider_name="multipass"),
                 expected_message=(
                     "An error occurred when trying to communicate with the "
-                    "instance using 'telnet' over port 7232: unknown host."
+                    "'multipass' provider."
                 ),
             ),
         ),
