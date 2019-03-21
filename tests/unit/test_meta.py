@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -1462,8 +1462,9 @@ class BaseWrapTest(unit.TestCase):
             yaml_utils.dump(self.snapcraft_yaml, stream=snapcraft_file)
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        self.packager = _snap_packaging._SnapPackaging(config)
+        self.packager = _snap_packaging._SnapPackaging(config, metadata)
         self.packager._is_host_compatible_with_base = True
 
 
@@ -1559,7 +1560,8 @@ class WrapExeTest(BaseWrapTest):
 
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
-        packager = _snap_packaging._SnapPackaging(config)
+        metadata = extractors.ExtractedMetadata()
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         packager.write_snap_yaml()
@@ -1753,8 +1755,9 @@ class FullAdapterTest(unit.TestCase):
 
         project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config)
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         return packager
@@ -1926,8 +1929,9 @@ class CommandChainTest(unit.TestCase):
 
         project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config)
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         return packager

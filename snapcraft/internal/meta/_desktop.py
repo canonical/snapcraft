@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,7 @@ import configparser
 import logging
 import os
 
+from snapcraft.extractors import _metadata
 from snapcraft.internal import errors
 
 
@@ -38,9 +39,9 @@ class DesktopFile:
                 filename, "does not exist (defined in the app {!r})".format(name)
             )
 
-    def parse_and_reformat(self):
+    def parse_and_reformat(self, extracted_metadata: _metadata.ExtractedMetadata):
         self._parser = configparser.ConfigParser(interpolation=None)
-        self._parser.optionxform = str
+        self._parser.optionxform = str  # type: ignore
         self._parser.read(self._path, encoding="utf-8")
         section = "Desktop Entry"
         if section not in self._parser.sections():
@@ -56,7 +57,15 @@ class DesktopFile:
             exec_value = "{}.{} %U".format(self._snap_name, self._name)
         self._parser[section]["Exec"] = exec_value
         if "Icon" in self._parser[section]:
-            icon = self._parser[section]["Icon"]
+            # Extracted metadata (e.g. from the AppStream) can override the
+            # icon location.
+            if extracted_metadata:
+                metadata_dict = extracted_metadata.to_dict()
+                if "icon" in metadata_dict:
+                    icon = "/" + str(metadata_dict["icon"])
+            else:
+                icon = self._parser[section]["Icon"]
+
             if icon.startswith("/"):
                 icon = icon.lstrip("/")
                 if os.path.exists(os.path.join(self._prime_dir, icon)):

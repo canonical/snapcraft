@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_metadata(
-    part_name: str, file_relpath: str, workdir: str
+    part_name: str, file_relpath: str, workdir: str, primedir: str = None
 ) -> extractors.ExtractedMetadata:
     if not os.path.exists(os.path.join(workdir, file_relpath)):
         raise MissingMetadataFileError(part_name, file_relpath)

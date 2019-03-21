@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,7 +28,7 @@ import subprocess
 from typing import Any, Dict, List, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
-from snapcraft import shell_utils
+from snapcraft import shell_utils, extractors
 from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
@@ -100,7 +100,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     """
 
     # Update config_data using metadata extracted from the project
-    _update_yaml_with_extracted_metadata(
+    extracted_metadata = _update_yaml_with_extracted_metadata(
         project_config.data, project_config.parts, project_config.project.prime_dir
     )
 
@@ -116,7 +116,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     # use it to generate the snap.yaml.
     _ensure_required_keywords(project_config.data)
 
-    packaging = _SnapPackaging(project_config)
+    packaging = _SnapPackaging(project_config, extracted_metadata)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -129,7 +129,7 @@ def _update_yaml_with_extracted_metadata(
     config_data: Dict[str, Any],
     parts_config: project_loader.PartsConfig,
     prime_dir: str,
-) -> None:
+) -> extractors.ExtractedMetadata:
     if "adopt-info" in config_data:
         part_name = config_data["adopt-info"]
         part = parts_config.get_part(part_name)
@@ -165,6 +165,9 @@ def _update_yaml_with_extracted_metadata(
                 raise meta_errors.AdoptedPartNotParsingInfo(part_name)
 
         _adopt_info(config_data, metadata, prime_dir)
+        return metadata
+
+    return None
 
 
 def _adopt_info(
@@ -203,6 +206,9 @@ def _adopt_keys(
     for key, value in overrides:
         if key not in config_data:
             if key == "icon":
+                # Extracted appstream icon paths will be relative to the runtime tree,
+                # so rebase it on the snap source root.
+                value = os.path.join(prime_dir, str(value))
                 if _icon_file_exists() or not os.path.exists(str(value)):
                     # Do not overwrite the icon file.
                     continue
@@ -322,8 +328,13 @@ class _SnapPackaging:
     def meta_dir(self) -> str:
         return self._meta_dir
 
-    def __init__(self, project_config: _config.Config) -> None:
+    def __init__(
+        self,
+        project_config: _config.Config,
+        extracted_metadata: _metadata.ExtractedMetadata,
+    ) -> None:
         self._project_config = project_config
+        self._extracted_metadata = extracted_metadata
         self._snapcraft_yaml_path = project_config.project.info.snapcraft_yaml_file_path
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
@@ -663,7 +674,7 @@ class _SnapPackaging:
                 snap_name=self._config_data["name"],
                 prime_dir=self._prime_dir,
             )
-            desktop_file.parse_and_reformat()
+            desktop_file.parse_and_reformat(self._extracted_metadata)
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, "gui"))
 
     def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
