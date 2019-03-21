@@ -14,15 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from textwrap import dedent
 from unittest.mock import call, patch, ANY
 
 import fixtures
-from testtools.matchers import FileContains
+from testtools.matchers import Contains, Equals, FileContains, Not
 
 from . import ProviderImpl, get_project
-from snapcraft.internal.build_providers._snap import SnapInjector, repo
+from snapcraft.internal.build_providers._snap import (
+    SnapInjector,
+    repo,
+    _get_snap_channel,
+)
 from tests import fixture_setup, unit
 
 
@@ -91,20 +96,12 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "ack", ANY]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "ack", ANY]),
+                call(["snap", "install", "/var/cache/snapcraft/snaps/core_123.snap"]),
                 call(
                     [
-                        "sudo",
-                        "snap",
-                        "install",
-                        "/var/cache/snapcraft/snaps/core_123.snap",
-                    ]
-                ),
-                call(
-                    [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -156,12 +153,11 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -232,20 +228,12 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "ack", ANY]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "ack", ANY]),
+                call(["snap", "install", "/var/cache/snapcraft/snaps/core_123.snap"]),
                 call(
                     [
-                        "sudo",
-                        "snap",
-                        "install",
-                        "/var/cache/snapcraft/snaps/core_123.snap",
-                    ]
-                ),
-                call(
-                    [
-                        "sudo",
                         "snap",
                         "install",
                         "--dangerous",
@@ -297,12 +285,11 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -354,12 +341,11 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -405,12 +391,11 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -438,12 +423,11 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -541,12 +525,11 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "refresh", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "refresh", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "refresh",
                         "--classic",
@@ -582,12 +565,11 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["sudo", "snap", "set", "core", ANY]),
-                call(["sudo", "snap", "watch", "--last=auto-refresh"]),
-                call(["sudo", "snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "set", "core", ANY]),
+                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "install", "--channel", "latest/stable", "core"]),
                 call(
                     [
-                        "sudo",
                         "snap",
                         "install",
                         "--classic",
@@ -611,6 +593,70 @@ class SnapInjectionTest(unit.TestCase):
                     snapcraft:
                     - revision: '25'
                     """
+                )
+            ),
+        )
+
+
+class GetChannelTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
+    def test_default_channel_for_snapcraft(self):
+        self.assertThat(_get_snap_channel("snapcraft"), Equals("latest/stable"))
+        self.assertThat(
+            self.fake_logger.output,
+            Not(
+                Contains(
+                    "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+                    "snapcraft from"
+                )
+            ),
+        )
+
+    def test_channel_for_snapcraft_from_env(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/edge"
+            )
+        )
+        self.assertThat(_get_snap_channel("snapcraft"), Equals("latest/edge"))
+        self.assertThat(
+            self.fake_logger.output,
+            Contains(
+                "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+                "snapcraft from latest/edge"
+            ),
+        )
+
+    def test_default_channel_for_other_snap(self):
+        self.assertThat(_get_snap_channel("core"), Equals("latest/stable"))
+        self.assertThat(
+            self.fake_logger.output,
+            Not(
+                Contains(
+                    "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+                    "snapcraft from"
+                )
+            ),
+        )
+
+    def test_channel_for_other_snap_not_affected_by_env(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/edge"
+            )
+        )
+        self.assertThat(_get_snap_channel("core"), Equals("latest/stable"))
+        self.assertThat(
+            self.fake_logger.output,
+            Not(
+                Contains(
+                    "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
+                    "snapcraft from"
                 )
             ),
         )

@@ -63,7 +63,12 @@ class ProviderImpl(Provider):
     def _push_file(self, *, source: str, destination: str) -> None:
         self.push_file_mock(source=source, destination=destination)
 
-    def _get_provider_name(self) -> str:
+    @classmethod
+    def _get_is_snap_injection_capable(cls) -> bool:
+        return True
+
+    @classmethod
+    def _get_provider_name(cls) -> str:
         return "stub-provider"
 
     def _umount(self):
