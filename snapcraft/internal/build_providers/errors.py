@@ -36,17 +36,19 @@ class ProviderNotSupportedError(ProviderBaseError):
         super().__init__(provider=provider)
 
 
-class ProviderCommandNotFound(ProviderBaseError):
+class ProviderNotFound(ProviderBaseError):
 
-    fmt = (
-        "{command!r} command not found: this command is necessary to build in "
-        "this environment.\n"
-        "Install {command!r} or if already installed, ensure it is "
-        "on the system PATH, and try again."
-    )
+    fmt = "You need {provider!r} setup to build snaps: {error_message}."
 
-    def __init__(self, *, command: str) -> None:
-        super().__init__(command=command)
+    def __init__(
+        self, *, provider: str, prompt_installable: bool, error_message: str
+    ) -> None:
+        super().__init__(
+            provider=provider,
+            prompt_installable=prompt_installable,
+            error_message=error_message,
+        )
+        self.prompt_installable = prompt_installable
 
 
 class _GenericProviderError(ProviderBaseError):
