@@ -128,6 +128,10 @@ class Provider(abc.ABC):
     def _get_provider_name(cls) -> str:
         """Return the provider name."""
 
+    @abc.abstractclassmethod
+    def _get_is_snap_injection_capable(cls) -> bool:
+        """Return whether the provider can install snaps from the host."""
+
     @abc.abstractmethod
     def create(self) -> None:
         """Provider steps needed to create a fully functioning environment."""
@@ -257,8 +261,14 @@ class Provider(abc.ABC):
             self.provider_project_dir, "snap-registry.yaml"
         )
 
-        # We do not want to inject from the host if not running from the snap.
-        inject_from_host = common.is_snap()
+        # We do not want to inject from the host if not running from the snap
+        # or if the provider cannot handle snap mounts.
+        # This latter problem should go away when API for retrieving snaps
+        # through snapd is generally available.
+        if self._get_is_snap_injection_capable():
+            inject_from_host = common.is_snap()
+        else:
+            inject_from_host = False
 
         snap_injector = SnapInjector(
             snap_dir=self._SNAPS_MOUNTPOINT,

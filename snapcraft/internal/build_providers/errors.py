@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from typing import Sequence  # noqa: F401
 
 from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
@@ -51,49 +51,123 @@ class ProviderCommandNotFound(ProviderBaseError):
 
 class _GenericProviderError(ProviderBaseError):
 
-    fmt = (
-        "An error occurred when trying to {action} the instance with "
+    _FMT_ERROR_MESSAGE_AND_EXIT_CODE = (
+        "An error occurred with the instance when trying to {action} with "
+        "{provider_name!r}: returned exit code {exit_code!r}: {error_message}.\n"
+        "Ensure that {provider_name!r} is setup correctly and try again."
+    )
+
+    _FMT_ERROR_MESSAGE = (
+        "An error occurred with the instance when trying to {action} with "
+        "{provider_name!r}: {error_message}.\n"
+        "Ensure that {provider_name!r} is setup correctly and try again."
+    )
+
+    _FMT_EXIT_CODE = (
+        "An error occurred with the instance when trying to {action} with "
         "{provider_name!r}: returned exit code {exit_code!r}.\n"
         "Ensure that {provider_name!r} is setup correctly and try again."
     )
+
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        action: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
+        if exit_code is not None and error_message is not None:
+            fmt = self._FMT_ERROR_MESSAGE_AND_EXIT_CODE
+        elif error_message:
+            fmt = self._FMT_ERROR_MESSAGE
+        elif exit_code:
+            fmt = self._FMT_EXIT_CODE
+        else:
+            raise RuntimeError("error_message nor exit_code are set")
+
+        self.fmt = fmt
+
+        super().__init__(
+            provider_name=provider_name,
+            action=action,
+            error_message=error_message,
+            exit_code=exit_code,
+        )
 
 
 class ProviderCommunicationError(ProviderBaseError):
 
     fmt = (
-        "An error occurred when trying to communicate with the instance "
-        "using {protocol!r} over port {port}: {error}."
+        "An error occurred when trying to communicate with the "
+        "{provider_name!r} provider."
     )
 
-    def __init__(self, *, protocol: str, port: int, error: str) -> None:
-        super().__init__(protocol=protocol, port=port, error=error)
+    def __init__(self, *, provider_name: str) -> None:
+        super().__init__(provider_name=provider_name)
 
 
 class ProviderLaunchError(_GenericProviderError):
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
         super().__init__(
-            action="launch", provider_name=provider_name, exit_code=exit_code
+            action="launch",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
         )
 
 
 class ProviderStartError(_GenericProviderError):
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
         super().__init__(
-            action="start", provider_name=provider_name, exit_code=exit_code
+            action="start",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
         )
 
 
 class ProviderStopError(_GenericProviderError):
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
         super().__init__(
-            action="stop", provider_name=provider_name, exit_code=exit_code
+            action="stop",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
         )
 
 
 class ProviderDeleteError(_GenericProviderError):
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
         super().__init__(
-            action="delete", provider_name=provider_name, exit_code=exit_code
+            action="delete",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
         )
 
 
@@ -116,48 +190,68 @@ class ProviderExecError(ProviderBaseError):
         )
 
 
-class ProviderShellError(ProviderBaseError):
-
-    fmt = (
-        "An error occurred when trying to provide a shell with "
-        "{provider_name!r}: returned exit code {exit_code!r}."
-    )
-
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
-
-
-class ProviderMountError(ProviderBaseError):
-
-    fmt = (
-        "An error occurred when trying to mount using {provider_name!r}: "
-        "returned exit code {exit_code!r}."
-    )
-
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
+class ProviderShellError(_GenericProviderError):
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
+        super().__init__(
+            action="shell",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
+        )
 
 
-class ProviderUnMountError(ProviderBaseError):
+class ProviderMountError(_GenericProviderError):
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
+        super().__init__(
+            action="mount",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
+        )
 
-    fmt = (
-        "An error occurred when trying to unmount using {provider_name!r}: "
-        "returned exit code {exit_code!r}."
-    )
 
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
+class ProviderUnMountError(_GenericProviderError):
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
+        super().__init__(
+            action="unmount",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
+        )
 
 
-class ProviderFileCopyError(ProviderBaseError):
-
-    fmt = (
-        "An error occurred when trying to copy files using {provider_name!r}: "
-        "returned exit code {exit_code!r}."
-    )
-
-    def __init__(self, *, provider_name: str, exit_code: int) -> None:
-        super().__init__(provider_name=provider_name, exit_code=exit_code)
+class ProviderFileCopyError(_GenericProviderError):
+    def __init__(
+        self,
+        *,
+        provider_name: str,
+        error_message: Optional[str] = None,
+        exit_code: Optional[int] = None
+    ) -> None:
+        super().__init__(
+            action="copy files",
+            provider_name=provider_name,
+            error_message=error_message,
+            exit_code=exit_code,
+        )
 
 
 class ProviderInfoError(ProviderBaseError):
