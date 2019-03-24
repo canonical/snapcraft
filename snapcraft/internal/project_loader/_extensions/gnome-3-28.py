@@ -41,8 +41,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
 
         platform_snap = ""
         base = yaml_data.get("base")
-        after_dependencies = []  # type: List[str]
-        dependency_part = {}  # type: Dict[str, Any]
+
         if base == "core18":
             platform_snap = "gnome-3-28-1804"
         else:
@@ -92,9 +91,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
 
         self.parts = {
             **self.parts,
-            **dependency_part,
             "gnome-extension": {
-                "after": after_dependencies,
                 "plugin": "dump",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
                 "source-type": "local",
