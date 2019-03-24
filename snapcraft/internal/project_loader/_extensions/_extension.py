@@ -26,6 +26,9 @@ class Extension:
 
     :cvar supported_bases: Class variable, tuple of base names supported by the
                            extension.
+    :cvar supports_classic: Class variable, boolean of whether classic confinement is
+                            supported by this extension. Default is True meaning classic
+                            confinement is supported.
     :ivar root_snippet: Instance variable, dict of properties to apply to root of the
                         snapcraft.yaml.
     :ivar app_snippet: Instance variable, dict of properties to apply to apps using this
@@ -36,6 +39,7 @@ class Extension:
     """
 
     supported_bases = None  # type: Tuple[str, ...]
+    supports_classic = True
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new Extension.

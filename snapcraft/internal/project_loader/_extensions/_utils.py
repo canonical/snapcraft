@@ -128,6 +128,12 @@ def _load_extension(
     if base not in extension_class.supported_bases:
         raise errors.ExtensionUnsupportedBaseError(extension_name, base)
 
+    # Does this project use classic confinement?
+    if yaml_data.get("confinement") == "classic":
+        # Check whether extension supports classic confinement
+        if not extension_class.supports_classic:
+            raise errors.ExtensionUnsupportedClassicError(extension_name)
+
     # Hand the extension a copy of the yaml data so the only way they can modify it is
     # by going through the extension API.
     return extension_class(copy.deepcopy(yaml_data))

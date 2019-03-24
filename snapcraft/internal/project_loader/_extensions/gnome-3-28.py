@@ -17,12 +17,8 @@
 # Import types and tell flake8 to ignore the "unused" List.
 from typing import Any, Dict, List  # noqa: F401
 
-from snapcraft.internal import errors
 from ._desktop_common import DesktopCommonExtension
-
-
-class GnomeExtensionClassicConfinementError(errors.SnapcraftError):
-    fmt = "The gnome extension doesn't support classic confinement."
+from .. import errors
 
 
 class Gnome_3_28Extension(DesktopCommonExtension):
@@ -33,6 +29,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
     """
 
     supported_bases = ("core18",)
+    supports_classic = False
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new GnomeExtension.
@@ -42,9 +39,6 @@ class Gnome_3_28Extension(DesktopCommonExtension):
 
         super().__init__(yaml_data)
 
-        if yaml_data.get("confinement") == "classic":
-            raise GnomeExtensionClassicConfinementError()
-
         platform_snap = ""
         base = yaml_data.get("base")
         after_dependencies = []  # type: List[str]
@@ -52,6 +46,8 @@ class Gnome_3_28Extension(DesktopCommonExtension):
         if base is not None:
             if base == "core18":
                 platform_snap = "gnome-3-28-1804"
+            else:
+                raise errors.ExtensionUnsupportedBaseError("gnome", base)
 
         layout = {
             "layout": {

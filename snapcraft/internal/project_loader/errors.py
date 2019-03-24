@@ -84,6 +84,17 @@ class ExtensionUnsupportedBaseError(ProjectLoaderError):
         super().__init__(extension_name=extension_name, base=base)
 
 
+class ExtensionUnsupportedClassicError(ProjectLoaderError):
+    fmt = (
+        "Failed to load extension {extension_name!r}: "
+        "this extensino does not support classic confinement.\n"
+        "Either use a different extension or use strict confinement - devmode is also supported for testing."
+    )
+
+    def __init__(self, extension_name: str) -> None:
+        super().__init__(extension_name=extension_name)
+
+
 class ExtensionMissingDocumentationError(ProjectLoaderError):
     fmt = (
         "The {extension_name!r} extension appears to be missing documentation.\n"
