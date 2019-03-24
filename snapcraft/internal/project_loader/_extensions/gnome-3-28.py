@@ -43,11 +43,10 @@ class Gnome_3_28Extension(DesktopCommonExtension):
         base = yaml_data.get("base")
         after_dependencies = []  # type: List[str]
         dependency_part = {}  # type: Dict[str, Any]
-        if base is not None:
-            if base == "core18":
-                platform_snap = "gnome-3-28-1804"
-            else:
-                raise errors.ExtensionUnsupportedBaseError("gnome", base)
+        if base == "core18":
+            platform_snap = "gnome-3-28-1804"
+        else:
+            raise errors.ExtensionUnsupportedBaseError("gnome", base)
 
         layout = {
             "layout": {
