@@ -58,8 +58,8 @@ function is_subpath() {
 
 if [ "$WITH_SNAP_DESKTOP_RUNTIME" = "yes" ]; then
   # add general paths not added by snapcraft due to runtime snap
-  append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
-  append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+  append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$SNAP_DESKTOP_ARCH_TRIPLET"
+  append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET"
   append_dir PATH "$SNAP_DESKTOP_RUNTIME/usr/bin"
 fi
 
@@ -75,11 +75,11 @@ export XCURSOR_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/icons"
 prepend_dir XCURSOR_PATH $SNAP/data-dir/icons
 
 # Mesa Libs for OpenGL support
-append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa"
-append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa-egl"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/mesa"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/mesa-egl"
 
 # Tell libGL where to find the drivers
-export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/dri"
+export LIBGL_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
 export LIBVA_DRIVERS_PATH=$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri
 
@@ -90,27 +90,27 @@ export LIBVA_DRIVERS_PATH=$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri
 append_dir LD_LIBRARY_PATH /var/lib/snapd/lib/gl
 
 # Unity7 export (workaround for https://launchpad.net/bugs/1638405)
-append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/libunity"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/libunity"
 
 # Pulseaudio export
-append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/pulseaudio"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/pulseaudio"
 
 # EGL vendor files on glvnd enabled systems
 [ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
     append_dir __EGL_VENDOR_LIBRARY_DIRS /var/lib/snapd/lib/glvnd/egl_vendor.d
 
 # Tell GStreamer where to find its plugins
-export GST_PLUGIN_PATH="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
-export GST_PLUGIN_SYSTEM_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+export GST_PLUGIN_PATH="$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0"
+export GST_PLUGIN_SYSTEM_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0"
 # gst plugin scanner doesn't install in the correct path: https://github.com/ubuntu/snapcraft-desktop-helpers/issues/43
-export GST_PLUGIN_SCANNER="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export GST_PLUGIN_SCANNER="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
 
 # XDG Config
-[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir XDG_CONFIG_DIRS "$SNAP_DESKTOP_RUNTIME/etc/xdg"
+[ -n "$SNAP_DESKTOP_RUNTIME" ] && prepend_dir XDG_CONFIG_DIRS "$SNAP_DESKTOP_RUNTIME/etc/xdg"
 prepend_dir XDG_CONFIG_DIRS "$SNAP/etc/xdg"
 
 # Define snaps' own data dir
-[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir XDG_DATA_DIRS "$SNAP_DESKTOP_RUNTIME/usr/share"
+[ -n "$SNAP_DESKTOP_RUNTIME" ] && prepend_dir XDG_DATA_DIRS "$SNAP_DESKTOP_RUNTIME/usr/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/usr/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/data-dir"
@@ -259,9 +259,9 @@ if [ -n "$XDG_RUNTIME_DIR" ]; then
 fi
 
 # GI repository
-[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
-[ "$WITH_SNAP_DESKTOP_RUNTIME" = yes ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
-prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/girepository-1.0"
+[ -n "$SNAP_DESKTOP_RUNTIME" ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/girepository-1.0"
+[ -n "$SNAP_DESKTOP_RUNTIME" ] && prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
+prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/gjs/girepository-1.0"
 
@@ -326,12 +326,12 @@ fi
 # Gio modules and cache (including gsettings module)
 export GIO_MODULE_DIR="$XDG_CACHE_HOME/gio-modules"
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
-  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" ]; then
+  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/gio-querymodules" ]; then
     rm -rf "$GIO_MODULE_DIR"
     mkdir -p "$GIO_MODULE_DIR"
-    ln -sf "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
-    ln -sf "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
-    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
+    ln -sf "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
+    ln -sf "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
+    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
 fi
 
@@ -361,7 +361,7 @@ function compile_schemas {
   fi
 }
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
-  compile_schemas "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
+  compile_schemas "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
 fi
 
 # Enable gsettings user changes
@@ -376,16 +376,16 @@ fi
 
 # Testability support
 append_dir LD_LIBRARY_PATH "$SNAP/testability"
-append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_LAUNCHER_ARCH_TRIPLET"
-append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_LAUNCHER_ARCH_TRIPLET/mesa"
+append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_DESKTOP_ARCH_TRIPLET"
+append_dir LD_LIBRARY_PATH "$SNAP/testability/$SNAP_DESKTOP_ARCH_TRIPLET/mesa"
 
 # Gdk-pixbuf loaders
 export GDK_PIXBUF_MODULE_FILE=$XDG_CACHE_HOME/gdk-pixbuf-loaders.cache
-export GDK_PIXBUF_MODULEDIR=$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders
+export GDK_PIXBUF_MODULEDIR=$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
-  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
-    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
+  if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
+    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
   fi
 fi
 
