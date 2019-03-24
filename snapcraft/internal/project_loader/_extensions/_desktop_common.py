@@ -62,7 +62,6 @@ class DesktopCommonExtension(Extension):
         self.command_chain = [
             "snap/command-chain/desktop-init",
             "snap/command-chain/desktop-common",
-            "snap/command-chain/desktop-mark-and-exec",
         ]
 
         self.app_snippet = {"command-chain": self.command_chain}
