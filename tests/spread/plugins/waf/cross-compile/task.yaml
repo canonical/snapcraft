@@ -1,6 +1,8 @@
 summary: Cross-compile waf snaps
 
-systems: [-ubuntu-18.04-s390x]
+systems: 
+  - ubuntu-16.04-amd64
+  - ubuntu-18.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/waf-hello

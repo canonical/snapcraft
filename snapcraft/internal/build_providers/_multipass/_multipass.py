@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -188,13 +188,7 @@ class Multipass(Provider):
     def mount_project(self) -> None:
         # Resolve the home directory
         home_dir = (
-            self._multipass_cmd.execute(
-                command=["sudo", "-i", "printenv", "HOME"],
-                hide_output=True,
-                instance_name=self.instance_name,
-            )
-            .decode()
-            .strip()
+            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
         )
         project_mountpoint = os.path.join(home_dir, "project")
 
@@ -217,22 +211,16 @@ class Multipass(Provider):
         # TODO add instance check.
 
         # check if file exists in instance
-        self._multipass_cmd.execute(
-            command=["test", "-f", name], instance_name=self.instance_name
-        )
+        self._run(command=["test", "-f", name])
 
         # copy file from instance
         source = "{}:{}".format(self.instance_name, name)
         self._multipass_cmd.copy_files(source=source, destination=destination)
         if delete:
-            self._multipass_cmd.execute(
-                instance_name=self.instance_name, command=["sudo", "-i", "rm", name]
-            )
+            self._run(command=["rm", name])
 
     def shell(self) -> None:
-        self._multipass_cmd.execute(
-            instance_name=self.instance_name, command=["sudo", "-i", "/bin/bash"]
-        )
+        self._run(command=["/bin/bash"])
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(
