@@ -44,7 +44,7 @@ class ErrorFormattingTest(unit.TestCase):
                     error_message="not installed",
                 ),
                 expected_message=(
-                    "You need 'multipass' setup to build snaps: not installed."
+                    "You need 'multipass' set-up to build snaps: not installed."
                 ),
             ),
         ),

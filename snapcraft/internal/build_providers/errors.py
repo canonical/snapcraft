@@ -38,7 +38,7 @@ class ProviderNotSupportedError(ProviderBaseError):
 
 class ProviderNotFound(ProviderBaseError):
 
-    fmt = "You need {provider!r} setup to build snaps: {error_message}."
+    fmt = "You need {provider!r} set-up to build snaps: {error_message}."
 
     def __init__(
         self, *, provider: str, prompt_installable: bool, error_message: str
