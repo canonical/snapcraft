@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -246,7 +246,7 @@ class SnapInjector:
         snap_dir: str,
         registry_filepath: str,
         snap_arch: str,
-        runner: Callable[..., None],
+        runner: Callable[..., Optional[bytes]],
         snap_dir_mounter: Callable[[], None],
         snap_dir_unmounter: Callable[[], None],
         file_pusher: Callable[..., None],
