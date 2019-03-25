@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -267,7 +267,17 @@ class MultipassTest(BaseProviderBaseTest):
         multipass.pull_file("src.txt", "dest.txt")
 
         self.multipass_cmd_mock().execute.assert_called_once_with(
-            command=["test", "-f", "src.txt"], instance_name="snapcraft-project-name"
+            command=[
+                "sudo",
+                "-i",
+                "env",
+                "SNAPCRAFT_HAS_TTY=False",
+                "test",
+                "-f",
+                "src.txt",
+            ],
+            hide_output=False,
+            instance_name="snapcraft-project-name",
         )
 
         self.multipass_cmd_mock().copy_files.assert_called_once_with(
@@ -290,11 +300,28 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    command=["test", "-f", "src.txt"],
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "test",
+                        "-f",
+                        "src.txt",
+                    ],
+                    hide_output=False,
                     instance_name="snapcraft-project-name",
                 ),
                 mock.call(
-                    command=["sudo", "-i", "rm", "src.txt"],
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "rm",
+                        "src.txt",
+                    ],
+                    hide_output=False,
                     instance_name="snapcraft-project-name",
                 ),
             ]
@@ -396,7 +423,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.project = get_project(base=self.base)
 
         def execute_effect(*, command, instance_name, hide_output):
-            if command == ["sudo", "-i", "printenv", "HOME"]:
+            if command[-2] == "printenv" and command[-1] == "HOME":
                 return "/root".encode()
             elif hide_output:
                 return None
@@ -437,7 +464,14 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(
                     instance_name=self.instance_name,
                     hide_output=True,
-                    command=["sudo", "-i", "printenv", "HOME"],
+                    command=[
+                        "sudo",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "printenv",
+                        "HOME",
+                    ],
                 ),
                 mock.call(
                     instance_name=self.instance_name,
