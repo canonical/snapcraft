@@ -87,7 +87,7 @@ class ExtensionUnsupportedBaseError(ProjectLoaderError):
 class ExtensionUnsupportedClassicError(ProjectLoaderError):
     fmt = (
         "Failed to load extension {extension_name!r}: "
-        "this extensino does not support classic confinement.\n"
+        "this extension does not support classic confinement.\n"
         "Either use a different extension or use strict confinement - devmode is also supported for testing."
     )
 
