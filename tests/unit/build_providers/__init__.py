@@ -65,6 +65,14 @@ class ProviderImpl(Provider):
         self.push_file_mock(source=source, destination=destination)
 
     @classmethod
+    def ensure_provider(cls) -> None:
+        """Fake provider check."""
+
+    @classmethod
+    def setup_provider(cls) -> None:
+        """Fake provider setup."""
+
+    @classmethod
     def _get_is_snap_injection_capable(cls) -> bool:
         return True
 

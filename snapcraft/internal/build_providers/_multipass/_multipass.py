@@ -65,6 +65,14 @@ class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
     @classmethod
+    def ensure_provider(cls):
+        MultipassCommand.ensure_multipass(platform=sys.platform)
+
+    @classmethod
+    def setup_provider(cls, *, echoer) -> None:
+        MultipassCommand.setup_multipass(echoer=echoer, platform=sys.platform)
+
+    @classmethod
     def _get_is_snap_injection_capable(cls) -> bool:
         return True
 
@@ -153,7 +161,7 @@ class Multipass(Provider):
 
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
-        self._multipass_cmd = MultipassCommand()
+        self._multipass_cmd = MultipassCommand(platform=sys.platform)
         self._instance_info = None  # type: InstanceInfo
 
     def create(self) -> None:
