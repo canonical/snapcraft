@@ -25,6 +25,8 @@ import pylxd
 from .._base_provider import Provider
 from .._base_provider import errors
 from ._images import get_image_source
+from snapcraft.internal import repo
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,48 @@ class LXD(Provider):
     """A LXD provider for snapcraft to execute its lifecycle."""
 
     _PROJECT_DEVICE_NAME = "snapcraft-project"
+
+    @classmethod
+    def ensure_provider(cls):
+        try:
+            if repo.snaps.SnapPackage.is_snap_installed("lxd"):
+                return
+        except repo.errors.SnapdConnectionError as snapd_error:
+            if sys.platform == "linux":
+                error_message = "snap support is required to continue: {}".format(
+                    snapd_error
+                )
+            else:
+                error_message = "LXD is not supported on this platform"
+            raise errors.ProviderNotFound(
+                provider=cls._get_provider_name(),
+                prompt_installable=False,
+                error_message=error_message,
+            ) from snapd_error
+
+        # At this point, we know that if we are on linux that we have
+        # snap support.
+        raise errors.ProviderNotFound(
+            provider=cls._get_provider_name(),
+            prompt_installable=True,
+            error_message="The LXD snap is required to continue",
+        )
+
+    @classmethod
+    def setup_provider(cls, *, echoer) -> None:
+        repo.snaps.install_snaps(["lxd/latest/stable"])
+
+        try:
+            subprocess.check_output(["lxd", "waitready", "--timeout=30"])
+        except subprocess.CalledProcessError as call_error:
+            raise SnapcraftEnvironmentError(
+                "Timeout reached waiting for LXD to start."
+            ) from call_error
+
+        try:
+            subprocess.check_output(["lxd", "init", "--auto"])
+        except subprocess.CalledProcessError as call_error:
+            raise SnapcraftEnvironmentError("Failed to initialize LXD.") from call_error
 
     @classmethod
     def _get_provider_name(cls):
