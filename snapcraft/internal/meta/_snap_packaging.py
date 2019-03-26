@@ -25,7 +25,7 @@ import shlex
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List, Set  # noqa
+from typing import Any, Dict, List, Optional, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils, extractors
@@ -129,45 +129,46 @@ def _update_yaml_with_extracted_metadata(
     config_data: Dict[str, Any],
     parts_config: project_loader.PartsConfig,
     prime_dir: str,
-) -> extractors.ExtractedMetadata:
-    if "adopt-info" in config_data:
-        part_name = config_data["adopt-info"]
-        part = parts_config.get_part(part_name)
-        if not part:
-            raise meta_errors.AdoptedPartMissingError(part_name)
+) -> Optional[extractors.ExtractedMetadata]:
+    if "adopt-info" not in config_data:
+        return None
 
-        pull_state = part.get_pull_state()
-        build_state = part.get_build_state()
-        stage_state = part.get_stage_state()
-        prime_state = part.get_prime_state()
+    part_name = config_data["adopt-info"]
+    part = parts_config.get_part(part_name)
+    if not part:
+        raise meta_errors.AdoptedPartMissingError(part_name)
 
-        # Get the metadata from the pull step first.
-        metadata = pull_state.extracted_metadata["metadata"]
+    pull_state = part.get_pull_state()
+    build_state = part.get_build_state()
+    stage_state = part.get_stage_state()
+    prime_state = part.get_prime_state()
 
-        # Now update it using the metadata from the build step (i.e. the data
-        # from the build step takes precedence over the pull step).
-        metadata.update(build_state.extracted_metadata["metadata"])
+    # Get the metadata from the pull step first.
+    metadata = pull_state.extracted_metadata["metadata"]
 
-        # Now make sure any scriptlet data are taken into account. Later steps
-        # take precedence, and scriptlet data (even in earlier steps) take
-        # precedence over extracted data.
-        metadata.update(pull_state.scriptlet_metadata)
-        metadata.update(build_state.scriptlet_metadata)
-        metadata.update(stage_state.scriptlet_metadata)
-        metadata.update(prime_state.scriptlet_metadata)
+    # Now update it using the metadata from the build step (i.e. the data
+    # from the build step takes precedence over the pull step).
+    metadata.update(build_state.extracted_metadata["metadata"])
 
-        if not metadata:
-            # If we didn't end up with any metadata, let's ensure this part was
-            # actually supposed to parse info. If not, let's try to be very
-            # clear about what's happening, here. We do this after checking for
-            # metadata because metadata could be supplied by scriptlets, too.
-            if "parse-info" not in config_data["parts"][part_name]:
-                raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+    # Now make sure any scriptlet data are taken into account. Later steps
+    # take precedence, and scriptlet data (even in earlier steps) take
+    # precedence over extracted data.
+    metadata.update(pull_state.scriptlet_metadata)
+    metadata.update(build_state.scriptlet_metadata)
+    metadata.update(stage_state.scriptlet_metadata)
+    metadata.update(prime_state.scriptlet_metadata)
 
-        _adopt_info(config_data, metadata, prime_dir)
-        return metadata
+    if not metadata:
+        # If we didn't end up with any metadata, let's ensure this part was
+        # actually supposed to parse info. If not, let's try to be very
+        # clear about what's happening, here. We do this after checking for
+        # metadata because metadata could be supplied by scriptlets, too.
+        if "parse-info" not in config_data["parts"][part_name]:
+            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
 
-    return None
+    _adopt_info(config_data, metadata, prime_dir)
+
+    return metadata
 
 
 def _adopt_info(

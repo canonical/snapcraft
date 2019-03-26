@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_metadata(
-    part_name: str, file_relpath: str, workdir: str, primedir: str = None
+    part_name: str, file_relpath: str, workdir: str
 ) -> extractors.ExtractedMetadata:
     if not os.path.exists(os.path.join(workdir, file_relpath)):
         raise MissingMetadataFileError(part_name, file_relpath)

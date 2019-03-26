@@ -57,14 +57,14 @@ class DesktopFile:
             exec_value = "{}.{} %U".format(self._snap_name, self._name)
         self._parser[section]["Exec"] = exec_value
         if "Icon" in self._parser[section]:
+            icon = self._parser[section]["Icon"]
+
             # Extracted metadata (e.g. from the AppStream) can override the
             # icon location.
             if extracted_metadata:
-                metadata_dict = extracted_metadata.to_dict()
-                if "icon" in metadata_dict:
-                    icon = "/" + str(metadata_dict["icon"])
-            else:
-                icon = self._parser[section]["Icon"]
+                metadata_icon = extracted_metadata.get_icon()
+                if metadata_icon is not None:
+                    icon = "/" + metadata_icon
 
             if icon.startswith("/"):
                 icon = icon.lstrip("/")

@@ -17,7 +17,7 @@
 import operator
 import os
 from io import StringIO
-from typing import List
+from typing import List, Optional
 
 import lxml.etree
 
@@ -77,21 +77,6 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
     summary = _get_value_from_xml_element(dom, "summary")
     description = _get_value_from_xml_element(dom, "description")
 
-    node = dom.find("icon")
-    icon = node.text.strip() if node is not None else None
-
-    if node is not None and "type" in node.attrib:
-        node_type = node.attrib["type"]
-    else:
-        node_type = None
-
-    if node_type == "remote":
-        # TODO Currently we only support local and stock icons.
-        # See bug https://bugs.launchpad.net/snapcraft/+bug/1742348
-        # for supporting remote icons.
-        # --elopio -20180109
-        icon = None
-
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
     # if there are no launchables, use the appstream id to take into
@@ -104,10 +89,7 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
         if desktop_file_path:
             desktop_file_paths.append(desktop_file_path)
 
-    if node_type == "stock":
-        icon = _get_icon_from_theme(workdir, "hicolor", icon)
-    else:
-        icon = _extract_icon(workdir, icon, desktop_file_paths)
+    icon = _extract_icon(dom, workdir, desktop_file_paths)
 
     return ExtractedMetadata(
         common_id=common_id,
@@ -140,7 +122,7 @@ def _get_xslt():
     return lxml.etree.XSLT(xslt)
 
 
-def _get_value_from_xml_element(tree, key) -> str:
+def _get_value_from_xml_element(tree, key) -> Optional[str]:
     node = tree.find(key)
     if node is not None:
         return node.text.strip()
@@ -156,7 +138,7 @@ def _get_desktop_file_ids_from_nodes(nodes) -> List[str]:
     return desktop_file_ids
 
 
-def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> str:
+def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> Optional[str]:
     # For details about desktop file ids and their corresponding paths, see
     # https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id  # noqa
     for xdg_data_dir in ("usr/local/share", "usr/share"):
@@ -172,18 +154,37 @@ def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> str:
         return None
 
 
-def _extract_icon(workdir: str, icon_path: str, desktop_file_paths: List[str]) -> str:
+def _extract_icon(dom, workdir: str, desktop_file_paths: List[str]) -> Optional[str]:
+    icon_node = dom.find("icon")
+    if icon_node is not None and "type" in icon_node.attrib:
+        icon_node_type = icon_node.attrib["type"]
+    else:
+        icon_node_type = None
+
+    icon = icon_node.text.strip() if icon_node is not None else None
+
+    if icon_node_type == "remote":
+        # TODO Currently we only support local and stock icons.
+        # See bug https://bugs.launchpad.net/snapcraft/+bug/1742348
+        # for supporting remote icons.
+        # --elopio -20180109
+        return None
+    elif icon_node_type == "stock":
+        return _get_icon_from_theme(workdir, "hicolor", icon)
+
     # If an icon path is specified and the icon file exists, we'll use that, otherwise
     # we'll fall back to what's listed in the desktop file.
-    if icon_path is None:
+    if icon is None:
         return _get_icon_from_desktop_file(workdir, desktop_file_paths)
-    elif os.path.exists(os.path.join(workdir, icon_path.lstrip("/"))):
-        return icon_path
+    elif os.path.exists(os.path.join(workdir, icon.lstrip("/"))):
+        return icon
     else:
         return _get_icon_from_desktop_file(workdir, desktop_file_paths)
 
 
-def _get_icon_from_desktop_file(workdir: str, desktop_file_paths: List[str]) -> str:
+def _get_icon_from_desktop_file(
+    workdir: str, desktop_file_paths: List[str]
+) -> Optional[str]:
     # Icons in the desktop file can be either a full path to the icon file, or a name
     # to be searched in the standard locations. If the path is specified, use that,
     # otherwise look for the icon in the hicolor theme (also covers icon type="stock").
@@ -203,7 +204,7 @@ def _get_icon_from_desktop_file(workdir: str, desktop_file_paths: List[str]) -> 
     return None
 
 
-def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> str:
+def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     # Icon themes can carry icons in different pre-rendered sizes or scalable. Scalable
     # implementation is optional, so we'll try the largest pixmap and then scalable if
     # no other sizes are available.
