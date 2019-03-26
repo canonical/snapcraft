@@ -177,11 +177,8 @@ def _extract_icon(workdir: str, icon_path: str, desktop_file_paths: List[str]) -
     # we'll fall back to what's listed in the desktop file.
     if icon_path is None:
         return _get_icon_from_desktop_file(workdir, desktop_file_paths)
-    elif os.path.isabs(icon_path):
-        if os.path.exists(os.path.join(workdir, icon_path.lstrip("/"))):
-            return icon_path
-        else:
-            return _get_icon_from_desktop_file(workdir, desktop_file_paths)
+    elif os.path.exists(os.path.join(workdir, icon_path.lstrip("/"))):
+        return icon_path
     else:
         return _get_icon_from_desktop_file(workdir, desktop_file_paths)
 
