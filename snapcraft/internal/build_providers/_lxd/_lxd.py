@@ -121,7 +121,6 @@ class LXD(Provider):
             raise errors.ProviderLaunchError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-        container.config["raw.idmap"] = "both {!s} 0".format(os.getuid())
         container.config["user.user-data"] = self._get_cloud_user_data_string()
         # This is setup by cloud init, but set it here to be on the safer side.
         container.config["environment.SNAPCRAFT_BUILD_ENVIRONMENT"] = "managed-host"
@@ -140,6 +139,11 @@ class LXD(Provider):
         self._container.sync()
         self._container.config["environment.SNAPCRAFT_HAS_TTY"] = str(
             sys.stdout.isatty()
+        )
+        # map to the owner of the directory we are eventually going to write the
+        # snap to.
+        self._container.config["raw.idmap"] = "both {!s} 0".format(
+            os.stat(self.project._project_dir).st_uid
         )
         self._container.save(wait=True)
 
