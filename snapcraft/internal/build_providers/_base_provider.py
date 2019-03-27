@@ -124,10 +124,22 @@ class Provider(abc.ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.destroy()
 
+    @classmethod
+    @abc.abstractclassmethod
+    def ensure_provider(cls) -> None:
+        """Necessary steps to ensure the provider is correctly setup."""
+
+    @classmethod
+    @abc.abstractclassmethod
+    def setup_provider(cls, *, echoer) -> None:
+        """Necessary steps to install the provider on the host."""
+
+    @classmethod
     @abc.abstractclassmethod
     def _get_provider_name(cls) -> str:
         """Return the provider name."""
 
+    @classmethod
     @abc.abstractclassmethod
     def _get_is_snap_injection_capable(cls) -> bool:
         """Return whether the provider can install snaps from the host."""

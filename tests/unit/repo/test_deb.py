@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -151,6 +151,18 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.path, "fake-trusted-parts").lstrip("/"),
         )
         self.assertThat(os.listdir(trusted_parts_dir), Equals(["trusted-part.gpg"]))
+
+    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
+    @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
+    def test_get_package_fetch_error(self, mock_apt_pkg, mock_fetch_binary):
+        mock_fetch_binary.side_effect = apt.package.FetchError("foo")
+        self.mock_cache().is_virtual_package.return_value = False
+        project_options = snapcraft.ProjectOptions()
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        raised = self.assertRaises(
+            errors.PackageFetchError, ubuntu.get, ["fake-package"]
+        )
+        self.assertThat(str(raised), Equals("Package fetch error: foo"))
 
     @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")

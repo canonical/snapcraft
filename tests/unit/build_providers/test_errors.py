@@ -35,15 +35,16 @@ class ErrorFormattingTest(unit.TestCase):
             ),
         ),
         (
-            "ProviderCommandNotFound",
+            "ProviderNotFound",
             dict(
-                exception=errors.ProviderCommandNotFound,
-                kwargs=dict(command="multipass"),
+                exception=errors.ProviderNotFound,
+                kwargs=dict(
+                    provider="multipass",
+                    prompt_installable=False,
+                    error_message="not installed",
+                ),
                 expected_message=(
-                    "'multipass' command not found: this command is necessary to "
-                    "build in this environment.\n"
-                    "Install 'multipass' or if already installed, ensure it is "
-                    "on the system PATH, and try again."
+                    "You need 'multipass' set-up to build snaps: not installed."
                 ),
             ),
         ),

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -500,10 +500,13 @@ class Ubuntu(BaseRepo):
         pkg_list = []
         for package in apt_cache.get_changes():
             pkg_list.append(str(package.candidate))
-            source = self._apt.fetch_binary(
-                package_candidate=package.candidate,
-                destination=self._cache.packages_dir,
-            )
+            try:
+                source = self._apt.fetch_binary(
+                    package_candidate=package.candidate,
+                    destination=self._cache.packages_dir,
+                )
+            except apt.package.FetchError as e:
+                raise errors.PackageFetchError(str(e))
             destination = os.path.join(self._downloaddir, os.path.basename(source))
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
