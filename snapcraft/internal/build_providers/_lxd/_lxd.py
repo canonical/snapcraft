@@ -18,6 +18,7 @@ import logging
 import os
 import subprocess
 import sys
+import urllib.parse
 from typing import Optional, Sequence
 
 import pylxd
@@ -36,6 +37,11 @@ class LXD(Provider):
     """A LXD provider for snapcraft to execute its lifecycle."""
 
     _PROJECT_DEVICE_NAME = "snapcraft-project"
+    # Given that we are running snapcraft from the snapcraft snap, which has
+    # classic confinement and require using the lxd snap, the lxd and lxc
+    # binaries should be found in /snap/bin
+    _LXD_BIN = os.path.join(os.path.sep, "snap", "bin", "lxd")
+    _LXC_BIN = os.path.join(os.path.sep, "snap", "bin", "lxc")
 
     @classmethod
     def ensure_provider(cls):
@@ -68,14 +74,14 @@ class LXD(Provider):
         repo.snaps.install_snaps(["lxd/latest/stable"])
 
         try:
-            subprocess.check_output(["lxd", "waitready", "--timeout=30"])
+            subprocess.check_output([cls._LXD_BIN, "waitready", "--timeout=30"])
         except subprocess.CalledProcessError as call_error:
             raise SnapcraftEnvironmentError(
                 "Timeout reached waiting for LXD to start."
             ) from call_error
 
         try:
-            subprocess.check_output(["lxd", "init", "--auto"])
+            subprocess.check_output([cls._LXD_BIN, "init", "--auto"])
         except subprocess.CalledProcessError as call_error:
             raise SnapcraftEnvironmentError("Failed to initialize LXD.") from call_error
 
@@ -87,13 +93,17 @@ class LXD(Provider):
     def _get_is_snap_injection_capable(cls) -> bool:
         return False
 
+    @classmethod
+    def _set_lxd_dir(cls):
+        os.environ["LXD_DIR"]
+
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
         logger.debug("Running {}".format(" ".join(command)))
-        cmd = ["lxc", "exec", self.instance_name, "--"] + list(command)
+        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"] + list(command)
         try:
             if hide_output:
                 output = subprocess.check_output(cmd)
@@ -201,7 +211,10 @@ class LXD(Provider):
             "The command line interface, container names or lifecycle handling may "
             "change in upcoming releases."
         )
-        self._lxd_client = pylxd.Client()
+        # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
+        lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
+        endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
+        self._lxd_client = pylxd.Client(endpoint=endpoint)
         self._container = None  # type: Optional[pylxd.models.container.Container]
 
     def create(self) -> None:
