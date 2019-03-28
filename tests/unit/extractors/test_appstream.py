@@ -26,6 +26,17 @@ from snapcraft.extractors import _errors
 from tests import unit, skip
 
 
+def _create_desktop_file(desktop_file_path, icon: str = None) -> None:
+    dir_name = os.path.dirname(desktop_file_path)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    f = open(desktop_file_path, "w")
+    print("[Desktop Entry]", file=f)
+    if icon:
+        print("Icon={}".format(icon), file=f)
+    f.close()
+
+
 class AppstreamTestCase(unit.TestCase):
 
     scenarios = testscenarios.multiply_scenarios(
@@ -35,8 +46,9 @@ class AppstreamTestCase(unit.TestCase):
                 {
                     "key": "summary",
                     "attributes": {},
-                    "value": "test-summary",
                     "param_name": "summary",
+                    "value": "test-summary",
+                    "expect": "test-summary",
                 },
             ),
             (
@@ -44,17 +56,29 @@ class AppstreamTestCase(unit.TestCase):
                 {
                     "key": "description",
                     "attributes": {},
-                    "value": "test-description",
                     "param_name": "description",
+                    "value": "test-description",
+                    "expect": "test-description",
                 },
             ),
             (
-                "local icon",
+                "local icon with non-existing file",
                 {
                     "key": "icon",
                     "attributes": {"type": "local"},
                     "param_name": "icon",
                     "value": "/test/path",
+                    "expect": None,
+                },
+            ),
+            (
+                "local icon with existing file",
+                {
+                    "key": "icon",
+                    "attributes": {"type": "local"},
+                    "param_name": "icon",
+                    "value": "/icon.png",
+                    "expect": "/icon.png",
                 },
             ),
             (
@@ -64,6 +88,7 @@ class AppstreamTestCase(unit.TestCase):
                     "attributes": {},
                     "param_name": "common_id",
                     "value": "test-id",
+                    "expect": "test-id",
                 },
             ),
         ],
@@ -94,10 +119,124 @@ class AppstreamTestCase(unit.TestCase):
                 )
             )
 
-        kwargs = {self.param_name: self.value}
+        open("icon.png", "w").close()
+        kwargs = {self.param_name: self.expect}
         expected = ExtractedMetadata(**kwargs)
 
         self.assertThat(appstream.extract(file_name, workdir="."), Equals(expected))
+
+
+# See LP #1814898 for a description of possible fallbacks
+class AppstreamIconsTestCase(unit.TestCase):
+    def _create_appstream_file(self, icon: str = None, icon_type: str = "local"):
+        with open("foo.appdata.xml", "w") as f:
+            if icon:
+                f.write(
+                    textwrap.dedent(
+                        """\
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <component>
+                      <launchable type="desktop-id">my.app.desktop</launchable>
+                      <icon type="{}">{}</icon>
+                    </component>""".format(
+                            icon_type, icon
+                        )
+                    )
+                )
+            else:
+                f.write(
+                    textwrap.dedent(
+                        """\
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <component>
+                      <launchable type="desktop-id">my.app.desktop</launchable>
+                    </component>"""
+                    )
+                )
+
+    def _create_icon_file(self, theme: str, size: str, filename: str) -> None:
+        dir_name = os.path.join("usr", "share", "icons", theme, size, "apps")
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        open(os.path.join(dir_name, filename), "w").close()
+
+    def _expect_icon(self, icon):
+        expected = ExtractedMetadata(icon=icon)
+        actual = appstream.extract("foo.appdata.xml", workdir=".")
+        self.assertThat(actual.get_icon(), Equals(expected.get_icon()))
+
+    def test_appstream_stock_icon_exists_png(self):
+        self._create_appstream_file(icon="icon", icon_type="stock")
+        self._create_icon_file("hicolor", "48x48", "icon.png")
+        self._create_icon_file("hicolor", "64x64", "icon.png")
+        self._expect_icon("usr/share/icons/hicolor/64x64/apps/icon.png")
+
+    def test_appstream_stock_icon_not_exist(self):
+        self._create_appstream_file(icon="missing", icon_type="stock")
+        self._expect_icon(None)
+
+    def test_appstream_no_icon_no_fallback(self):
+        self._create_appstream_file()
+        self._expect_icon(None)
+
+    def test_appstream_local_icon_exists(self):
+        self._create_appstream_file(icon="/icon.png")
+        open("icon.png", "w").close()
+        self._expect_icon("/icon.png")
+
+    def test_appstream_local_icon_not_exist_no_fallback(self):
+        self._create_appstream_file(icon="/missing.png")
+        self._expect_icon(None)
+
+    def test_appstream_local_icon_not_absolute_no_fallback(self):
+        self._create_appstream_file(icon="foo")
+        self._expect_icon(None)
+
+    def test_appstream_no_icon_desktop_fallback_no_icon(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop")
+        self._expect_icon(None)
+
+    def test_appstream_no_icon_desktop_fallback_icon_not_exist(self):
+        self._create_appstream_file()
+        _create_desktop_file(
+            "usr/share/applications/my.app.desktop", icon="/missing.png"
+        )
+        self._expect_icon("/missing.png")
+
+    def test_appstream_no_icon_desktop_fallback_icon_exists(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop", icon="/icon.png")
+        open("myicon.png", "w").close()
+        self._expect_icon("/icon.png")
+
+    def test_appstream_no_icon_theme_fallback_png(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop", icon="icon")
+        self._create_icon_file("hicolor", "scalable", "icon.svg")
+        self._create_icon_file("hicolor", "48x48", "icon.png")
+        self._create_icon_file("hicolor", "64x64", "icon.png")
+        self._expect_icon("usr/share/icons/hicolor/64x64/apps/icon.png")
+
+    def test_appstream_no_icon_theme_fallback_xpm(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop", icon="icon")
+        self._create_icon_file("hicolor", "scalable", "icon.svg")
+        self._create_icon_file("hicolor", "48x48", "icon.png")
+        self._create_icon_file("hicolor", "64x64", "icon.xpm")
+        self._expect_icon("usr/share/icons/hicolor/64x64/apps/icon.xpm")
+
+    def test_appstream_no_icon_theme_fallback_svg(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop", icon="icon")
+        self._create_icon_file("hicolor", "scalable", "icon.svg")
+        self._expect_icon("usr/share/icons/hicolor/scalable/apps/icon.svg")
+
+    def test_appstream_no_icon_theme_fallback_svgz(self):
+        self._create_appstream_file()
+        _create_desktop_file("usr/share/applications/my.app.desktop", icon="icon")
+        self._create_icon_file("hicolor", "scalable", "icon.svgz")
+        self._expect_icon("usr/share/icons/hicolor/scalable/apps/icon.svgz")
 
 
 class AppstreamTest(unit.TestCase):
@@ -267,8 +406,7 @@ class AppstreamLaunchableTestCase(unit.TestCase):
             )
 
         desktop_file_path = os.path.join(self.workdir, self.desktop_file_path)
-        os.makedirs(os.path.dirname(desktop_file_path))
-        open(desktop_file_path, "w").close()
+        _create_desktop_file(desktop_file_path)
 
         extracted = appstream.extract("foo.metainfo.xml", workdir=self.workdir)
 
@@ -306,8 +444,7 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
                 )
             )
 
-        os.makedirs(os.path.dirname(self.desktop_file_path))
-        open(self.desktop_file_path, "w").close()
+        _create_desktop_file(self.desktop_file_path)
 
         extracted = appstream.extract("foo.metainfo.xml", workdir=".")
 
@@ -340,9 +477,12 @@ class AppstreamMultipleLaunchableTestCase(unit.TestCase):
                 )
             )
 
-        os.makedirs("usr/local/share/applications/com.example.test/")
-        open("usr/local/share/applications/com.example.test/app1.desktop", "w").close()
-        open("usr/local/share/applications/com.example.test/app2.desktop", "w").close()
+        _create_desktop_file(
+            "usr/local/share/applications/com.example.test/app1.desktop"
+        )
+        _create_desktop_file(
+            "usr/local/share/applications/com.example.test/app2.desktop"
+        )
 
         expected = [
             "usr/local/share/applications/com.example.test/app1.desktop",
