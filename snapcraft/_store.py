@@ -420,11 +420,11 @@ def register_key(name):
     )
 
 
-def register(snap_name, is_private=False):
+def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:
     logger.info("Registering {}.".format(snap_name))
     store = storeapi.StoreClient()
     with _requires_login():
-        store.register(snap_name, is_private)
+        store.register(snap_name, is_private=is_private, store_id=store_id)
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):

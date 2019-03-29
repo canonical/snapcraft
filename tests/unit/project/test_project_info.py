@@ -44,6 +44,22 @@ class ProjectInfoTest(unit.TestCase):
         self.assertThat(info.description, Equals("baz"))
         self.assertThat(info.confinement, Equals("strict"))
 
+    def test_empty_yaml(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml("")
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            ProjectInfo,
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "'name' is a required property in {!r}".format(snapcraft_yaml_file_path)
+            ),
+        )
+
     def test_minimal_load_with_name_only(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(

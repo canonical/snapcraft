@@ -463,9 +463,14 @@ class StoreTestCase(TestCase):
         process.expect_exact("Password: ")
         process.sendline(password)
         if expect_success:
-            process.expect_exact(
-                "We strongly recommend enabling multi-factor authentication:"
-            )
+            try:
+                process.expect_exact(
+                    "We strongly recommend enabling multi-factor authentication:"
+                )
+            except pexpect.exceptions.EOF:
+                self.fail(
+                    "Login failed. Login error: {}".format(process.before.decode())
+                )
 
     def export_login(
         self,
@@ -492,20 +497,25 @@ class StoreTestCase(TestCase):
         process = self.spawn_snapcraft(["login"])
         self._conduct_login(process, email, password, expect_success)
 
-        if expect_success:
-            process.expect_exact("Login successful.")
-        else:
-            process.expect("Authentication error: Failed to get unbound discharge.")
+        try:
+            if expect_success:
+                process.expect_exact("Login successful.")
+            else:
+                process.expect("Authentication error: Failed to get unbound discharge.")
+        except pexpect.exceptions.EOF:
+            self.fail("Login failed. Login error: {}".format(process.before.decode()))
 
     def logout(self):
         output = self.run_snapcraft("logout")
         expected = r".*Credentials cleared.\n.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
-    def register(self, snap_name, private=False, wait=True):
+    def register(self, snap_name, private=False, store=None, wait=True):
         command = ["register", snap_name]
         if private:
             command.append("--private")
+        if store:
+            command.extend(["--store", store])
         process = self.spawn_snapcraft(command)
         process.expect(r".*\[y/N\]: ")
         process.sendline("y")
@@ -524,7 +534,7 @@ class StoreTestCase(TestCase):
                 time.sleep(int(match.group(1)))
                 # This could get stuck for ever if the user is registering
                 # other snaps in parallel.
-                self.register(snap_name, private, wait)
+                self.register(snap_name, private=private, store=store, wait=wait)
             else:
                 raise RegisterError(output)
 
@@ -579,7 +589,7 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         return process.wait()
 
-    def get_unique_name(self, prefix=""):
+    def get_unique_name(self, name_prefix="test-snapcraft", prefix=""):
         """Return a unique snap name.
 
         It uses a UUIDv4 to create unique names and limits its full size
@@ -590,7 +600,7 @@ class StoreTestCase(TestCase):
         # Do not change the test-snapcraft- prefix. Ensure that you
         # notify the store team if you need to use a different value when
         # working with the production store.
-        return "test-snapcraft-{}{}".format(prefix, unique_id)[:40]
+        return "{}-{}{}".format(name_prefix, prefix, unique_id)[:40]
 
     def get_unique_version(self):
         """Return a unique snap version.

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,10 +25,10 @@ import shlex
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List, Set  # noqa
+from typing import Any, Dict, List, Optional, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
-from snapcraft import shell_utils
+from snapcraft import shell_utils, extractors
 from snapcraft.project import _schema
 from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
@@ -100,7 +100,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     """
 
     # Update config_data using metadata extracted from the project
-    _update_yaml_with_extracted_metadata(
+    extracted_metadata = _update_yaml_with_extracted_metadata(
         project_config.data, project_config.parts, project_config.project.prime_dir
     )
 
@@ -116,7 +116,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     # use it to generate the snap.yaml.
     _ensure_required_keywords(project_config.data)
 
-    packaging = _SnapPackaging(project_config)
+    packaging = _SnapPackaging(project_config, extracted_metadata)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -129,42 +129,46 @@ def _update_yaml_with_extracted_metadata(
     config_data: Dict[str, Any],
     parts_config: project_loader.PartsConfig,
     prime_dir: str,
-) -> None:
-    if "adopt-info" in config_data:
-        part_name = config_data["adopt-info"]
-        part = parts_config.get_part(part_name)
-        if not part:
-            raise meta_errors.AdoptedPartMissingError(part_name)
+) -> Optional[extractors.ExtractedMetadata]:
+    if "adopt-info" not in config_data:
+        return None
 
-        pull_state = part.get_pull_state()
-        build_state = part.get_build_state()
-        stage_state = part.get_stage_state()
-        prime_state = part.get_prime_state()
+    part_name = config_data["adopt-info"]
+    part = parts_config.get_part(part_name)
+    if not part:
+        raise meta_errors.AdoptedPartMissingError(part_name)
 
-        # Get the metadata from the pull step first.
-        metadata = pull_state.extracted_metadata["metadata"]
+    pull_state = part.get_pull_state()
+    build_state = part.get_build_state()
+    stage_state = part.get_stage_state()
+    prime_state = part.get_prime_state()
 
-        # Now update it using the metadata from the build step (i.e. the data
-        # from the build step takes precedence over the pull step).
-        metadata.update(build_state.extracted_metadata["metadata"])
+    # Get the metadata from the pull step first.
+    metadata = pull_state.extracted_metadata["metadata"]
 
-        # Now make sure any scriptlet data are taken into account. Later steps
-        # take precedence, and scriptlet data (even in earlier steps) take
-        # precedence over extracted data.
-        metadata.update(pull_state.scriptlet_metadata)
-        metadata.update(build_state.scriptlet_metadata)
-        metadata.update(stage_state.scriptlet_metadata)
-        metadata.update(prime_state.scriptlet_metadata)
+    # Now update it using the metadata from the build step (i.e. the data
+    # from the build step takes precedence over the pull step).
+    metadata.update(build_state.extracted_metadata["metadata"])
 
-        if not metadata:
-            # If we didn't end up with any metadata, let's ensure this part was
-            # actually supposed to parse info. If not, let's try to be very
-            # clear about what's happening, here. We do this after checking for
-            # metadata because metadata could be supplied by scriptlets, too.
-            if "parse-info" not in config_data["parts"][part_name]:
-                raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+    # Now make sure any scriptlet data are taken into account. Later steps
+    # take precedence, and scriptlet data (even in earlier steps) take
+    # precedence over extracted data.
+    metadata.update(pull_state.scriptlet_metadata)
+    metadata.update(build_state.scriptlet_metadata)
+    metadata.update(stage_state.scriptlet_metadata)
+    metadata.update(prime_state.scriptlet_metadata)
 
-        _adopt_info(config_data, metadata, prime_dir)
+    if not metadata:
+        # If we didn't end up with any metadata, let's ensure this part was
+        # actually supposed to parse info. If not, let's try to be very
+        # clear about what's happening, here. We do this after checking for
+        # metadata because metadata could be supplied by scriptlets, too.
+        if "parse-info" not in config_data["parts"][part_name]:
+            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+
+    _adopt_info(config_data, metadata, prime_dir)
+
+    return metadata
 
 
 def _adopt_info(
@@ -203,6 +207,9 @@ def _adopt_keys(
     for key, value in overrides:
         if key not in config_data:
             if key == "icon":
+                # Extracted appstream icon paths will be relative to the runtime tree,
+                # so rebase it on the snap source root.
+                value = os.path.join(prime_dir, str(value))
                 if _icon_file_exists() or not os.path.exists(str(value)):
                     # Do not overwrite the icon file.
                     continue
@@ -322,8 +329,13 @@ class _SnapPackaging:
     def meta_dir(self) -> str:
         return self._meta_dir
 
-    def __init__(self, project_config: _config.Config) -> None:
+    def __init__(
+        self,
+        project_config: _config.Config,
+        extracted_metadata: _metadata.ExtractedMetadata,
+    ) -> None:
         self._project_config = project_config
+        self._extracted_metadata = extracted_metadata
         self._snapcraft_yaml_path = project_config.project.info.snapcraft_yaml_file_path
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
@@ -433,44 +445,15 @@ class _SnapPackaging:
                 yaml_utils.dump(annotated_snapcraft, stream=manifest_file)
 
     def write_snap_directory(self) -> None:
-        # First migrate the snap directory. It will overwrite any conflicting
-        # files.
-        for root, directories, files in os.walk(
-            self._project_config.project._get_snapcraft_assets_dir()
-        ):
-            with contextlib.suppress(ValueError):
-                directories.remove(".snapcraft")
-            with contextlib.suppress(ValueError):
-                # The snapcraft.yaml is migrated later
-                files.remove("snapcraft.yaml")
+        snap_assets_dir = self._project_config.project._get_snapcraft_assets_dir()
+        prime_snap_dir = os.path.join(self._prime_dir, "snap")
 
-            for directory in directories:
-                source = os.path.relpath(
-                    os.path.join(root, directory),
-                    self._project_config.project._work_dir,
-                )
-                # Also build-aux from destination
-                destination = os.path.join(self._prime_dir, source.lstrip("build-aux/"))
-                file_utils.create_similar_directory(source, destination)
+        snap_dir_iter = itertools.product([prime_snap_dir], ["hooks"])
+        meta_dir_iter = itertools.product([self._meta_dir], ["hooks", "gui"])
 
-            for file_path in files:
-                source = os.path.relpath(
-                    os.path.join(root, file_path),
-                    self._project_config.project._work_dir,
-                )
-                # Also build-aux from destination
-                destination = os.path.join(self._prime_dir, source.lstrip("build-aux/"))
-                with contextlib.suppress(FileNotFoundError):
-                    os.remove(destination)
-                file_utils.link_or_copy(source, destination)
-
-        # Now copy the assets contained within the snap directory directly into
-        # meta.
-        for origin in ["gui", "hooks"]:
-            src_dir = os.path.join(
-                self._project_config.project._get_snapcraft_assets_dir(), origin
-            )
-            dst_dir = os.path.join(self.meta_dir, origin)
+        for origin in itertools.chain(snap_dir_iter, meta_dir_iter):
+            src_dir = os.path.join(snap_assets_dir, origin[1])
+            dst_dir = os.path.join(origin[0], origin[1])
             if os.path.isdir(src_dir):
                 os.makedirs(dst_dir, exist_ok=True)
                 for asset in os.listdir(src_dir):
@@ -482,8 +465,10 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination, follow_symlinks=True)
 
-                    # Ensure that the hook is executable
-                    if origin == "hooks":
+                    # Ensure that the hook is executable in meta/hooks, this is a moot
+                    # point considering the prior link_or_copy call, but is technically
+                    # correct and allows for this operation to take place only once.
+                    if origin[0] == self._meta_dir and origin[1] == "hooks":
                         _prepare_hook(destination)
 
         self._record_manifest_and_source_snapcraft_yaml()
@@ -690,7 +675,7 @@ class _SnapPackaging:
                 snap_name=self._config_data["name"],
                 prime_dir=self._prime_dir,
             )
-            desktop_file.parse_and_reformat()
+            desktop_file.parse_and_reformat(self._extracted_metadata)
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, "gui"))
 
     def _render_socket_modes(self, apps: Dict[str, Any]) -> None:

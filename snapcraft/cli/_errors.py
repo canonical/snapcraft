@@ -113,7 +113,7 @@ def exception_handler(  # noqa: C901
     is_snapcraft_reportable_error = issubclass(
         exception_type, errors.SnapcraftReportableError
     )
-    is_raven_setup = RavenClient is not None
+    is_raven_setup = snapcraft.internal.common.is_snap()
     is_connected_to_tty = (
         # used by inner instance, variable set by outer instance
         (distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1)
