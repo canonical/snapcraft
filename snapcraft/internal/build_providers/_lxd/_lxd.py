@@ -54,7 +54,7 @@ class LXD(Provider):
             try:
                 if not repo.snaps.SnapPackage.is_snap_installed("lxd"):
                     error_message = (
-                        "The LXD snap is required to continue: snap install lxd."
+                        "The LXD snap is required to continue: snap install lxd"
                     )
                     prompt_installable = True
             except repo.errors.SnapdConnectionError:
@@ -309,6 +309,6 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(),
                 error_message=(
                     "Container is not running, the current state is: {!r]. "
-                    "Ensure it has not been modified by external factors and try again."
+                    "Ensure it has not been modified by external factors and try again"
                 ).format(self._container.status),
             )
