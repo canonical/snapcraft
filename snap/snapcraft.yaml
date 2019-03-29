@@ -34,6 +34,18 @@ parts:
     stage:
       - snapcraft-completion
 
+  patchelf:
+    plugin: autotools
+    source: https://github.com/NixOS/patchelf
+    source-type: git
+    source-tag: '0.10'
+    build-packages:
+      - g++
+      - make
+    override-build: |
+      snapcraftctl build
+      make check
+
   snapcraft-libs:
     plugin: nil
     stage-packages:
@@ -47,7 +59,6 @@ parts:
         - libsodium18
         - libxml2
         - libxslt1.1
-        - patchelf
         - squashfs-tools
         - xdelta3
     override-build: |
