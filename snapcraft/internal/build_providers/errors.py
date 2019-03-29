@@ -49,6 +49,7 @@ class ProviderNotFound(ProviderBaseError):
             error_message=error_message,
         )
         self.prompt_installable = prompt_installable
+        self.provider = provider
 
 
 class _GenericProviderError(ProviderBaseError):

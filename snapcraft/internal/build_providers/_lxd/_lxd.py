@@ -50,8 +50,9 @@ class LXD(Provider):
                 return
         except repo.errors.SnapdConnectionError as snapd_error:
             if sys.platform == "linux":
-                error_message = "snap support is required to continue: {}".format(
-                    snapd_error
+                error_message = (
+                    "snap support is required to continue: "
+                    "https://docs.snapcraft.io/installing-snapd/6735"
                 )
             else:
                 error_message = "LXD is not supported on this platform"
@@ -66,7 +67,7 @@ class LXD(Provider):
         raise errors.ProviderNotFound(
             provider=cls._get_provider_name(),
             prompt_installable=True,
-            error_message="The LXD snap is required to continue",
+            error_message="The LXD snap is required to continue: snap install lxd.",
         )
 
     @classmethod
@@ -83,7 +84,10 @@ class LXD(Provider):
         try:
             subprocess.check_output([cls._LXD_BIN, "init", "--auto"])
         except subprocess.CalledProcessError as call_error:
-            raise SnapcraftEnvironmentError("Failed to initialize LXD.") from call_error
+            raise SnapcraftEnvironmentError(
+                "Failed to initialize LXD. "
+                "Try manually initializing before trying again: lxd init --auto."
+            ) from call_error
 
     @classmethod
     def _get_provider_name(cls):
@@ -207,7 +211,7 @@ class LXD(Provider):
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
         self.echoer.warning(
-            "The LXD provider is offered as a technology preview for early adopters. "
+            "The LXD provider is offered as a technology preview for early adopters.\n"
             "The command line interface, container names or lifecycle handling may "
             "change in upcoming releases."
         )
@@ -284,7 +288,8 @@ class LXD(Provider):
         if self._container.status.lower() != "running":
             raise errors.ProviderFileCopyError(
                 provider_name=self._get_provider_name(),
-                error_message="container is not running, it is current state is: {!r].".format(
-                    self._container.status
-                ),
+                error_message=(
+                    "Container is not running, the current state is: {!r]. "
+                    "Ensure it has not been modified by external factors and try again."
+                ).format(self._container.status),
             )

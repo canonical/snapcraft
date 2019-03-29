@@ -90,8 +90,10 @@ def _execute(  # noqa: C901
             build_provider_class.ensure_provider()
         except build_providers.errors.ProviderNotFound as provider_error:
             if provider_error.prompt_installable:
-                click.echo(str(provider_error))
-                if click.confirm("Would you like to install it now?"):
+                if click.confirm(
+                    "Support for {!r} needs to be setup. "
+                    "Would you like to do that it now?".format(provider_error.provider)
+                ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
                     raise provider_error
