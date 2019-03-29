@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,7 @@ import configparser
 import logging
 import os
 
+from snapcraft.extractors import _metadata
 from snapcraft.internal import errors
 
 
@@ -38,9 +39,10 @@ class DesktopFile:
                 filename, "does not exist (defined in the app {!r})".format(name)
             )
 
-    def parse_and_reformat(self):
+    def parse_and_reformat(self, extracted_metadata: _metadata.ExtractedMetadata):
         self._parser = configparser.ConfigParser(interpolation=None)
-        self._parser.optionxform = str
+        # mypy type checking ignored, see https://github.com/python/mypy/issues/506
+        self._parser.optionxform = str  # type: ignore
         self._parser.read(self._path, encoding="utf-8")
         section = "Desktop Entry"
         if section not in self._parser.sections():
@@ -57,15 +59,22 @@ class DesktopFile:
         self._parser[section]["Exec"] = exec_value
         if "Icon" in self._parser[section]:
             icon = self._parser[section]["Icon"]
-            if icon.startswith("/"):
-                icon = icon.lstrip("/")
-                if os.path.exists(os.path.join(self._prime_dir, icon)):
-                    self._parser[section]["Icon"] = "${{SNAP}}/{}".format(icon)
-                else:
-                    logger.warning(
-                        "Icon {} specified in desktop file {} not found "
-                        "in prime directory".format(icon, self._filename)
-                    )
+
+            # Extracted metadata (e.g. from the AppStream) can override the
+            # icon location.
+            if extracted_metadata:
+                metadata_icon = extracted_metadata.get_icon()
+                if metadata_icon is not None:
+                    icon = metadata_icon
+
+            icon = icon.lstrip("/")
+            if os.path.exists(os.path.join(self._prime_dir, icon)):
+                self._parser[section]["Icon"] = "${{SNAP}}/{}".format(icon)
+            else:
+                logger.warning(
+                    "Icon {} specified in desktop file {} not found "
+                    "in prime directory".format(icon, self._filename)
+                )
 
     def write(self, *, gui_dir: str) -> None:
         # Rename the desktop file to match the app name. This will help
