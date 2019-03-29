@@ -116,16 +116,13 @@ class LXD(Provider):
     def _get_is_snap_injection_capable(cls) -> bool:
         return False
 
-    @classmethod
-    def _set_lxd_dir(cls):
-        os.environ["LXD_DIR"]
-
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
         logger.debug("Running {}".format(" ".join(command)))
+        # TODO: use pylxd
         cmd = [self._LXC_BIN, "exec", self.instance_name, "--"] + list(command)
         try:
             if hide_output:
@@ -200,7 +197,6 @@ class LXD(Provider):
             try:
                 self._container.stop(wait=True)
             except pylxd.exceptions.LXDAPIException as lxd_api_error:
-                print(self._container.status)
                 raise errors.ProviderStopError(
                     provider_name=self._get_provider_name(), error_message=lxd_api_error
                 ) from lxd_api_error
@@ -219,13 +215,15 @@ class LXD(Provider):
         self._ensure_container_running()
 
         # TODO: better handling of larger files.
-        with open(source, "wb") as source_data:
-            try:
-                self._container.files.put(destination, source_data.read())
-            except pylxd.exceptions.LXDAPIException as lxd_api_error:
-                raise errors.ProviderFileCopyError(
-                    provider_name=self._get_provider_name(), error_message=lxd_api_error
-                )
+        with open(source) as source_data:
+            source_contents = source_data.read()
+
+        try:
+            self._container.files.put(destination, source_contents.encode())
+        except pylxd.exceptions.LXDAPIException as lxd_api_error:
+            raise errors.ProviderFileCopyError(
+                provider_name=self._get_provider_name(), error_message=lxd_api_error
+            )
 
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
         super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
