@@ -20,8 +20,11 @@ from unittest import mock
 
 from testtools.matchers import Equals, FileContains, FileExists
 
-from tests.unit.build_providers import BaseProviderBaseTest
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._lxd import LXD
+from snapcraft.internal.repo.errors import SnapdConnectionError
+from tests.unit.build_providers import BaseProviderBaseTest
 
 
 class FakeContainer:
@@ -313,4 +316,124 @@ class LXDLaunchedTest(LXDBaseTest):
                 "ls",
                 "/root/project",
             ]
+        )
+
+
+class EnsureLXDTest(LXDBaseTest):
+    def test_linux(self):
+        self.fake_snapd.snaps_result = [
+            dict(name="lxd", channel="stable", revision="10")
+        ]
+
+        # Thou shall not fail
+        with mock.patch(
+            "snapcraft.internal.repo.Repo.is_package_installed", return_value=False
+        ):
+            LXD.ensure_provider()
+
+    def test_linux_with_snap_and_deb_installed(self):
+        self.fake_snapd.snaps_result = [
+            dict(name="lxd", channel="stable", revision="10")
+        ]
+
+        # Thou shall not fail
+        with mock.patch(
+            "snapcraft.internal.repo.Repo.is_package_installed", return_value=True
+        ):
+            raised = self.assertRaises(SnapcraftEnvironmentError, LXD.ensure_provider)
+
+        self.assertThat(
+            str(raised),
+            Equals(
+                "The 'LXD' provider does not support having the 'lxd' "
+                "or 'lxd-client' deb packages installed. Please remove them and try again."
+            ),
+        )
+
+    def test_lxd_snap_not_installed(self):
+        raised = self.assertRaises(errors.ProviderNotFound, LXD.ensure_provider)
+
+        self.assertThat(raised.prompt_installable, Equals(True))
+        self.assertThat(
+            raised.error_message,
+            Equals("The LXD snap is required to continue: snap install lxd"),
+        )
+
+    def test_snap_support_missing(self):
+        with mock.patch(
+            "snapcraft.internal.repo.snaps.SnapPackage.is_snap_installed",
+            side_effect=SnapdConnectionError(snap_name="lxd", url="fake"),
+        ):
+            raised = self.assertRaises(errors.ProviderNotFound, LXD.ensure_provider)
+
+        self.assertThat(raised.prompt_installable, Equals(False))
+        self.assertThat(
+            raised.error_message,
+            Equals(
+                "snap support is required to continue: "
+                "https://docs.snapcraft.io/installing-snapd/6735"
+            ),
+        )
+
+    def test_non_linux(self):
+        with mock.patch("sys.platform", return_value="darwin"):
+            raised = self.assertRaises(errors.ProviderNotFound, LXD.ensure_provider)
+
+        self.assertThat(raised.prompt_installable, Equals(False))
+        self.assertThat(
+            raised.error_message, Equals("LXD is not supported on this platform")
+        )
+
+
+class SetupLXDTest(LXDBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_snapd.snaps_result = [
+            dict(name="lxd", channel="stable", revision="10")
+        ]
+        self.fake_snapd.find_result = [
+            dict(lxd=dict(channels={"latest/stable": dict(confinement="strict")}))
+        ]
+
+    def test_install(self):
+        LXD.setup_provider(echoer=self.echoer_mock)
+
+        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.check_output_mock.assert_has_calls(
+            [
+                mock.call(["/snap/bin/lxd", "waitready", "--timeout=30"]),
+                mock.call(["/snap/bin/lxd", "init", "--auto"]),
+            ]
+        )
+
+    def test_lxd_wait_fails(self):
+        self.check_output_mock.side_effect = subprocess.CalledProcessError(
+            cmd=["wait-fake"], returncode=1
+        )
+
+        raised = self.assertRaises(
+            SnapcraftEnvironmentError, LXD.setup_provider, echoer=self.echoer_mock
+        )
+
+        self.assertThat(
+            str(raised), Equals("Timeout reached waiting for LXD to start.")
+        )
+
+    def test_lxd_init_fails(self):
+        self.check_output_mock.side_effect = [
+            b"",
+            subprocess.CalledProcessError(cmd=["init-fake"], returncode=1),
+        ]
+
+        raised = self.assertRaises(
+            SnapcraftEnvironmentError, LXD.setup_provider, echoer=self.echoer_mock
+        )
+
+        self.assertThat(
+            str(raised),
+            Equals(
+                "Failed to initialize LXD. "
+                "Try manually initializing before trying again: lxd init --auto."
+            ),
         )
