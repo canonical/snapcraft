@@ -45,30 +45,49 @@ class LXD(Provider):
 
     @classmethod
     def ensure_provider(cls):
-        try:
-            if repo.snaps.SnapPackage.is_snap_installed("lxd"):
-                return
-        except repo.errors.SnapdConnectionError as snapd_error:
-            if sys.platform == "linux":
+        error_message = None  # type: Optional[str]
+        prompt_installable = False
+
+        if sys.platform != "linux":
+            error_message = "LXD is not supported on this platform"
+        else:
+            try:
+                if not repo.snaps.SnapPackage.is_snap_installed("lxd"):
+                    error_message = (
+                        "The LXD snap is required to continue: snap install lxd."
+                    )
+                    prompt_installable = True
+            except repo.errors.SnapdConnectionError:
                 error_message = (
                     "snap support is required to continue: "
                     "https://docs.snapcraft.io/installing-snapd/6735"
                 )
-            else:
-                error_message = "LXD is not supported on this platform"
+
+        if error_message is not None:
             raise errors.ProviderNotFound(
                 provider=cls._get_provider_name(),
-                prompt_installable=False,
+                prompt_installable=prompt_installable,
                 error_message=error_message,
-            ) from snapd_error
+            )
 
-        # At this point, we know that if we are on linux that we have
-        # snap support.
-        raise errors.ProviderNotFound(
-            provider=cls._get_provider_name(),
-            prompt_installable=True,
-            error_message="The LXD snap is required to continue: snap install lxd.",
-        )
+        # If we reach this point, it means the lxd snap is properly setup.
+        # Now is the time for additional sanity checks to ensure the provider
+        # will work.
+        try:
+            # TODO: add support for more distributions. Maybe refactor a bit so that Repo behaves
+            # similar to a build provider.
+            if repo.Repo.is_package_installed("lxd") or repo.Repo.is_package_installed(
+                "lxd-client"
+            ):
+                raise SnapcraftEnvironmentError(
+                    (
+                        "The {!r} provider does not support having the 'lxd' or "
+                        "'lxd-client' deb packages installed. Please remove them "
+                        "and try again."
+                    ).format(cls._get_provider_name())
+                )
+        except repo.errors.NoNativeBackendError:
+            pass
 
     @classmethod
     def setup_provider(cls, *, echoer) -> None:
