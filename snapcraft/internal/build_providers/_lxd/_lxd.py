@@ -82,8 +82,8 @@ class LXD(Provider):
                 raise SnapcraftEnvironmentError(
                     (
                         "The {!r} provider does not support having the 'lxd' or "
-                        "'lxd-client' deb packages installed. Please remove them "
-                        "and try again."
+                        "'lxd-client' deb packages installed. To completely migrate "
+                        "to the LXD snap run 'lxd.migrate' and try again."
                     ).format(cls._get_provider_name())
                 )
         except repo.errors.NoNativeBackendError:
