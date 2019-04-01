@@ -21,7 +21,12 @@ import os
 import click
 
 from . import echo
-from ._options import add_build_options, get_build_environment, get_project
+from ._options import (
+    add_build_options,
+    get_build_environment,
+    get_project,
+    HiddenOption,
+)
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -48,6 +53,7 @@ def _execute(  # noqa: C901
     output: str = None,
     shell: bool = False,
     shell_after: bool = False,
+    setup_prime_try: bool = False,
     **kwargs
 ) -> "Project":
     # Cleanup any previous errors.
@@ -107,6 +113,9 @@ def _execute(  # noqa: C901
                         instance.execute_step(previous_step)
                 elif pack_project:
                     instance.pack_project(output=output)
+                elif setup_prime_try:
+                    instance.expose_prime()
+                    instance.execute_step(step)
                 else:
                     instance.execute_step(step)
             except Exception:
@@ -224,6 +233,23 @@ def prime(parts, **kwargs):
     _execute(steps.PRIME, parts, **kwargs)
 
 
+@lifecyclecli.command("try")
+@add_build_options()
+def try_command(**kwargs):
+    """Try a snap on the host, priming if necessary.
+
+    This feature only works on snap enabled systems.
+
+    \b
+    Examples:
+        snapcraft try
+
+    """
+    project = _execute(steps.PRIME, [], setup_prime_try=True, **kwargs)
+    # project.prime_dir here points to the on-host prime directory.
+    echo.info("You can now run `snap try {}`.".format(project.prime_dir))
+
+
 @lifecyclecli.command()
 @add_build_options()
 @click.argument("directory", required=False)
@@ -272,7 +298,8 @@ def pack(directory, output, **kwargs):
     required=False,
     help="Forces snapcraft to use LXD for this clean command.",
 )
-def clean(parts, use_lxd):
+@click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
+def clean(parts, use_lxd, unprime):
     """Remove a part's assets.
 
     \b
@@ -283,8 +310,12 @@ def clean(parts, use_lxd):
     build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
+    if unprime and not build_environment.is_managed_host:
+        raise click.BadOptionUsage("--unprime is not a valid option.")
+
     if build_environment.is_managed_host or build_environment.is_host:
-        lifecycle.clean(project, parts)
+        step = steps.PRIME if unprime else None
+        lifecycle.clean(project, parts, step)
     else:
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
@@ -294,6 +325,8 @@ def clean(parts, use_lxd):
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
+            # Clear the prime directory on the host
+            lifecycle.clean(project, parts, steps.PRIME)
 
 
 if __name__ == "__main__":

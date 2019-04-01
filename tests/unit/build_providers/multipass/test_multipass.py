@@ -506,3 +506,16 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
+
+    def test_mount_prime_directory(self):
+        with Multipass(
+            project=self.project, echoer=self.echoer_mock, is_ephemeral=False
+        ) as instance:
+            instance._mount_prime_directory()
+
+        self.multipass_cmd_mock().mount.assert_called_once_with(
+            source=mock.ANY,
+            target="{}:{}".format(self.instance_name, "/root/prime"),
+            uid_map=self.expected_uid_map,
+            gid_map=self.expected_gid_map,
+        )
