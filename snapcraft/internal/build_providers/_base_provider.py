@@ -173,14 +173,6 @@ class Provider(abc.ABC):
         """Push a file into the instance."""
 
     @abc.abstractmethod
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
-        """Mount a path from the host inside the instance."""
-
-    @abc.abstractmethod
-    def _umount(self, *, mountpoint: str) -> None:
-        """Unmount the mountpoint from the instance."""
-
-    @abc.abstractmethod
     def _mount_snaps_directory(self) -> None:
         """Mount the host directory with snaps into the provider."""
 
@@ -304,15 +296,18 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
+    def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
+        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+
     def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
-        # TODO support users for the qemu provider.
         cloud_user_data_filepath = os.path.join(
             self.provider_project_dir, "user-data.yaml"
         )
         if os.path.exists(cloud_user_data_filepath):
             return cloud_user_data_filepath
 
-        user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+        user_data = self._get_cloud_user_data_string(timezone=timezone)
+
         with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
             print(user_data, file=cloud_user_data_file, end="")
 

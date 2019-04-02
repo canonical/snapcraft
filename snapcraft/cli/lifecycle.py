@@ -50,10 +50,20 @@ def _execute(  # noqa: C901
     shell: bool = False,
     shell_after: bool = False,
     destructive_mode: bool = False,
+    use_lxd: bool = False,
     **kwargs
 ) -> "Project":
     _clean_provider_error()
-    provider = "host" if destructive_mode else None
+    if destructive_mode and use_lxd:
+        raise click.BadOptionUsage(
+            "--use-lxd and --destructive-mode cannot be used together."
+        )
+    elif use_lxd:
+        provider = "lxd"
+    elif destructive_mode:
+        provider = "host"
+    else:
+        provider = None
     build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
@@ -80,8 +90,10 @@ def _execute(  # noqa: C901
             build_provider_class.ensure_provider()
         except build_providers.errors.ProviderNotFound as provider_error:
             if provider_error.prompt_installable:
-                click.echo(str(provider_error))
-                if click.confirm("Would you like to install it now?"):
+                if click.confirm(
+                    "Support for {!r} needs to be set up. "
+                    "Would you like to do that it now?".format(provider_error.provider)
+                ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
                     raise provider_error
@@ -266,7 +278,13 @@ def pack(directory, output, **kwargs):
 
 @lifecyclecli.command()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def clean(parts):
+@click.option(
+    "--use-lxd",
+    is_flag=True,
+    required=False,
+    help="Forces snapcraft to use LXD for this clean command.",
+)
+def clean(parts, use_lxd):
     """Remove a part's assets.
 
     \b
@@ -274,7 +292,12 @@ def clean(parts):
         snapcraft clean
         snapcraft clean my-part
     """
-    build_environment = env.BuilderEnvironmentConfig()
+    if use_lxd:
+        provider = "lxd"
+    else:
+        provider = None
+
+    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if build_environment.is_managed_host or build_environment.is_host:

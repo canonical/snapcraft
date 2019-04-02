@@ -32,6 +32,7 @@ _BUILD_OPTION_NAMES = [
     "--shell",
     "--shell-after",
     "--destructive-mode",
+    "--use-lxd",
 ]
 
 _BUILD_OPTIONS = [
@@ -42,6 +43,7 @@ _BUILD_OPTIONS = [
     dict(
         is_flag=True, help="Forces snapcraft to try and use the current host to build."
     ),
+    dict(is_flag=True, help="Forces snapcraft to use LXD to build."),
 ]
 
 
