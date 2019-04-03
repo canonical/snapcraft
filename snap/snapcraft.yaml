@@ -1,4 +1,5 @@
 name: snapcraft
+base: core
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -63,7 +64,8 @@ parts:
   snapcraft:
     source: .
     plugin: python
-    requirements: requirements.txt
+    requirements:
+        - requirements.txt
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
@@ -91,7 +93,8 @@ parts:
     source: https://github.com/snapcore/snapcraft.git
     source-branch: legacy
     source-depth: 1
-    requirements: requirements.txt
+    requirements:
+        - requirements.txt
     override-build: |
         snapcraftctl build
         ./tools/snapcraft-override-build.sh
