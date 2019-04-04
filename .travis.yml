@@ -113,10 +113,10 @@ jobs:
         - sudo lxd init --auto
       script:
         - sudo snapcraft snap --use-lxd
+        - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
-        - sudo cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - sudo cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - timeout 180 sudo /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
+        - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
         - sudo journalctl -u snapd
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
