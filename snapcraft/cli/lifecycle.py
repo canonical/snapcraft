@@ -21,8 +21,7 @@ import os
 import click
 
 from . import echo
-from . import env
-from ._options import add_build_options, get_project
+from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -49,22 +48,12 @@ def _execute(  # noqa: C901
     output: str = None,
     shell: bool = False,
     shell_after: bool = False,
-    destructive_mode: bool = False,
-    use_lxd: bool = False,
     **kwargs
 ) -> "Project":
+    # Cleanup any previous errors.
     _clean_provider_error()
-    if destructive_mode and use_lxd:
-        raise click.BadOptionUsage(
-            "--use-lxd and --destructive-mode cannot be used together."
-        )
-    elif use_lxd:
-        provider = "lxd"
-    elif destructive_mode:
-        provider = "host"
-    else:
-        provider = None
-    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
+
+    build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     echo.wrapped(
@@ -291,12 +280,7 @@ def clean(parts, use_lxd):
         snapcraft clean
         snapcraft clean my-part
     """
-    if use_lxd:
-        provider = "lxd"
-    else:
-        provider = None
-
-    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
+    build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if build_environment.is_managed_host or build_environment.is_host:
