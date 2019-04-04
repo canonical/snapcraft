@@ -65,6 +65,10 @@ class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
     @classmethod
+    def get_instance_type_friendly_name(cls) -> str:
+        return "VM"
+
+    @classmethod
     def ensure_provider(cls):
         MultipassCommand.ensure_multipass(platform=sys.platform)
 

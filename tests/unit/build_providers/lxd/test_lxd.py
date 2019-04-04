@@ -24,6 +24,7 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
 from snapcraft.internal.build_providers._lxd import LXD
 from snapcraft.internal.repo.errors import SnapdConnectionError
+from tests import unit
 from tests.unit.build_providers import BaseProviderBaseTest
 
 
@@ -317,6 +318,11 @@ class LXDLaunchedTest(LXDBaseTest):
                 "/root/project",
             ]
         )
+
+
+class GetFriendlyNameLXDTest(unit.TestCase):
+    def test_name(self):
+        self.assertThat(LXD.get_instance_type_friendly_name(), Equals("container"))
 
 
 class EnsureLXDTest(LXDBaseTest):

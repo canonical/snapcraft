@@ -126,6 +126,16 @@ class Provider(abc.ABC):
 
     @classmethod
     @abc.abstractclassmethod
+    def get_instance_type_friendly_name(cls) -> str:
+        """Return a friendly name for the instance type.
+
+        Examples of this could be:
+        - VM
+        - container
+        """
+
+    @classmethod
+    @abc.abstractclassmethod
     def ensure_provider(cls) -> None:
         """Necessary steps to ensure the provider is correctly setup."""
 

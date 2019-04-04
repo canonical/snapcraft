@@ -100,7 +100,11 @@ def _execute(  # noqa: C901
             else:
                 raise provider_error
 
-        echo.info("Launching a VM.")
+        echo.info(
+            "Launching a {}.".format(
+                build_provider_class.get_instance_type_friendly_name()
+            )
+        )
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
@@ -306,13 +310,16 @@ def clean(parts, use_lxd):
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        build_provider = build_provider_class(project=project, echoer=echo)
         if parts:
-            echo.info("Launching a VM.")
+            echo.info(
+                "Launching a {}.".format(
+                    build_provider_class.get_instance_type_friendly_name()
+                )
+            )
             with build_provider_class(project=project, echoer=echo) as instance:
                 instance.clean(part_names=parts)
         else:
-            build_provider.clean_project()
+            build_provider_class(project=project, echoer=echo).clean_project()
 
 
 if __name__ == "__main__":
