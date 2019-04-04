@@ -108,7 +108,7 @@ jobs:
           - name: http
           - name: lxd
       before_script:
-        - sudo lxd.migrate
+        - sudo lxd.migrate -yes
       script:
         - sudo snapcraft snap --use-lxd --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
