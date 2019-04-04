@@ -54,7 +54,7 @@ from glob import iglob
 
 import snapcraft
 from snapcraft import common
-from snapcraft.internal import errors
+from snapcraft.internal import elf, errors
 
 
 logger = logging.getLogger(__name__)
@@ -103,6 +103,7 @@ class GoPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
 
         self._setup_base_tools(options.go_channel, project.info.base)
+        self._is_classic = project.info.confinement == "classic"
 
         self._gopath = os.path.join(self.partdir, "go")
         self._gopath_src = os.path.join(self._gopath, "src")
@@ -177,6 +178,16 @@ class GoPlugin(snapcraft.BasePlugin):
         for package in packages:
             binary = os.path.join(self._gopath_bin, self._binary_name(package))
             self._run(["go", "build", "-o", binary] + tags + [package])
+            # Relink with system linker if executable is dynamic in order to be
+            # able to set rpath later on. This workaround can be removed after
+            # https://github.com/NixOS/patchelf/issues/146 is fixed.
+            if self._is_classic:
+                if elf.ElfFile(path=binary).is_dynamic_executable():
+                    self._run(
+                        ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
+                        + tags
+                        + [package]
+                    )
 
         install_bin_path = os.path.join(self.installdir, "bin")
         os.makedirs(install_bin_path, exist_ok=True)

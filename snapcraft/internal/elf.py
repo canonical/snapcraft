@@ -25,6 +25,7 @@ from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
 from pkg_resources import parse_version
+from elftools.common.exceptions import ELFError
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, repo
@@ -375,6 +376,16 @@ class ElfFile:
             if os.path.exists(l.path) and not l.in_base_snap:
                 library_paths.add(l.path)
         return library_paths
+
+    def is_dynamic_executable(self):
+        # This way of answering the question is perhaps a bit OTT. But it works.
+        try:
+            ef = elftools.elf.elffile.ELFFile(open(self.path, "rb"))
+        except ELFError as e:
+            logger.debug("ELFFile({}) failed: {}".format(self.path, e))
+            return False
+        else:
+            return "PT_DYNAMIC" in [s.header.p_type for s in ef.iter_segments()]
 
 
 class Patcher:
