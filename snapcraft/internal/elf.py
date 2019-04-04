@@ -438,41 +438,6 @@ class Patcher:
         self._run_patchelf(patchelf_args=patchelf_args, elf_file_path=elf_file.path)
 
     def _run_patchelf(self, *, patchelf_args: List[str], elf_file_path: str) -> None:
-        try:
-            return self._do_run_patchelf(
-                patchelf_args=patchelf_args, elf_file_path=elf_file_path
-            )
-        except errors.PatcherError as patch_error:
-            # This is needed for patchelf to properly work with
-            # go binaries (LP: #1736861).
-            # We do this here instead of the go plugin for two reasons, the
-            # first being that we do not want to blindly remove the section,
-            # only doing it when necessary, and the second, this logic
-            # should eventually be removed once patchelf catches up.
-            try:
-                logger.warning(
-                    "Failed to update {!r}. Retrying after stripping "
-                    "the .note.go.buildid from the elf file.".format(elf_file_path)
-                )
-                subprocess.check_call(
-                    [
-                        self._strip_cmd,
-                        "--remove-section",
-                        ".note.go.buildid",
-                        elf_file_path,
-                    ]
-                )
-            except subprocess.CalledProcessError:
-                logger.warning(
-                    "Could not properly strip .note.go.buildid "
-                    "from {!r}.".format(elf_file_path)
-                )
-                raise patch_error
-            return self._do_run_patchelf(
-                patchelf_args=patchelf_args, elf_file_path=elf_file_path
-            )
-
-    def _do_run_patchelf(self, *, patchelf_args: List[str], elf_file_path: str) -> None:
         # Run patchelf on a copy of the primed file and replace it
         # after it is successful. This allows us to break the potential
         # hard link created when migrating the file across the steps of
@@ -487,24 +452,9 @@ class Patcher:
             # bundled with snapcraft which means its lack of existence is a
             # "packager" error.
             except subprocess.CalledProcessError as call_error:
-                patchelf_version = (
-                    subprocess.check_output([self._patchelf_cmd, "--version"])
-                    .decode()
-                    .strip()
+                raise errors.PatcherGenericError(
+                    elf_file=elf_file_path, process_exception=call_error
                 )
-                # 0.10 is the version where patching certain binaries will
-                # work (currently known affected packages are mostly built
-                # with go).
-                if parse_version(patchelf_version) < parse_version("0.10"):
-                    raise errors.PatcherNewerPatchelfError(
-                        elf_file=elf_file_path,
-                        process_exception=call_error,
-                        patchelf_version=patchelf_version,
-                    )
-                else:
-                    raise errors.PatcherGenericError(
-                        elf_file=elf_file_path, process_exception=call_error
-                    )
 
             # We unlink to break the potential hard link
             os.unlink(elf_file_path)
