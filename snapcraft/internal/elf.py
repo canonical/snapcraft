@@ -377,7 +377,7 @@ class ElfFile:
                 library_paths.add(l.path)
         return library_paths
 
-    def is_dynamic_executable(self):
+    def is_dynamic_executable(self) -> bool:
         # This way of answering the question is perhaps a bit OTT. But it works.
         try:
             ef = elftools.elf.elffile.ELFFile(open(self.path, "rb"))
