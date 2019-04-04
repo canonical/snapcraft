@@ -18,6 +18,7 @@ import os
 
 import click
 
+from . import env
 from snapcraft.project import Project, get_snapcraft_yaml
 
 
@@ -59,6 +60,23 @@ def add_build_options(hidden=False):
         return func
 
     return _add_build_options
+
+
+def get_build_environment(**kwargs):
+    force_use_lxd = kwargs.get("use_lxd")
+    force_destructive_mode = kwargs.get("destructive_mode")
+
+    if force_destructive_mode and force_use_lxd:
+        raise click.BadOptionUsage(
+            "--use-lxd and --destructive-mode cannot be used together."
+        )
+    elif force_use_lxd:
+        provider = "lxd"
+    elif force_destructive_mode:
+        provider = "host"
+    else:
+        provider = None
+    return env.BuilderEnvironmentConfig(force_provider=provider)
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
