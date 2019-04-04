@@ -44,10 +44,6 @@ class LXD(Provider):
     _LXC_BIN = os.path.join(os.path.sep, "snap", "bin", "lxc")
 
     @classmethod
-    def get_instance_type_friendly_name(cls) -> str:
-        return "container"
-
-    @classmethod
     def ensure_provider(cls):
         error_message = None  # type: Optional[str]
         prompt_installable = False
@@ -244,6 +240,7 @@ class LXD(Provider):
 
     def create(self) -> None:
         """Create the LXD instance and setup the build environment."""
+        self.echoer.info("Launching a container.")
         self.launch_instance()
 
     def destroy(self) -> None:

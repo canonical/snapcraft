@@ -65,10 +65,6 @@ class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
     @classmethod
-    def get_instance_type_friendly_name(cls) -> str:
-        return "VM"
-
-    @classmethod
     def ensure_provider(cls):
         MultipassCommand.ensure_multipass(platform=sys.platform)
 
@@ -170,6 +166,7 @@ class Multipass(Provider):
 
     def create(self) -> None:
         """Create the multipass instance and setup the build environment."""
+        self.echoer.info("Launching a VM.")
         self.launch_instance()
         self._instance_info = self._get_instance_info()
 

@@ -21,7 +21,6 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Equals
 
-from tests import unit
 from tests.unit.build_providers import (
     BaseProviderBaseTest,
     BaseProviderWithBasesBaseTest,
@@ -507,8 +506,3 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
-
-
-class GetFriendlyNameLXDTest(unit.TestCase):
-    def test_name(self):
-        self.assertThat(Multipass.get_instance_type_friendly_name(), Equals("VM"))

@@ -100,11 +100,6 @@ def _execute(  # noqa: C901
             else:
                 raise provider_error
 
-        echo.info(
-            "Launching a {}.".format(
-                build_provider_class.get_instance_type_friendly_name()
-            )
-        )
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
@@ -311,11 +306,6 @@ def clean(parts, use_lxd):
             build_environment.provider
         )
         if parts:
-            echo.info(
-                "Launching a {}.".format(
-                    build_provider_class.get_instance_type_friendly_name()
-                )
-            )
             with build_provider_class(project=project, echoer=echo) as instance:
                 instance.clean(part_names=parts)
         else:
