@@ -65,6 +65,10 @@ class ProviderImpl(Provider):
         self.push_file_mock(source=source, destination=destination)
 
     @classmethod
+    def get_instance_type_friendly_name(cls) -> str:
+        return "fake-instance"
+
+    @classmethod
     def ensure_provider(cls) -> None:
         """Fake provider check."""
 

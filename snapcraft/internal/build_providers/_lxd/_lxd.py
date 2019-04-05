@@ -240,6 +240,7 @@ class LXD(Provider):
 
     def create(self) -> None:
         """Create the LXD instance and setup the build environment."""
+        self.echoer.info("Launching a container.")
         self.launch_instance()
 
     def destroy(self) -> None:
