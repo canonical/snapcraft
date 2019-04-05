@@ -16,7 +16,7 @@ prepare: |
 
 restore: |
   cd "$SNAP_DIR"
-  snapcraft clean
+  snapcraft clean --use-lxd
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -25,9 +25,6 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-
-  # Ensure that snapcraft uses build VMs
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft --use-lxd
   sudo snap install make-hello_*.snap --dangerous

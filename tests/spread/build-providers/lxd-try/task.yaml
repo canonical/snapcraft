@@ -1,4 +1,8 @@
 summary: Try a basic snap using LXD and ensure that it runs
+# TODO remove once either this version of snapcraft reaches stable
+#      or the new snap download is implemented using snapd's API
+#      introduced in 2.38
+manual: true
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
 
@@ -16,7 +20,7 @@ prepare: |
 
 restore: |
   cd "$SNAP_DIR"
-  snapcraft clean
+  snapcraft clean --use-lxd
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -25,9 +29,6 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-
-  # Ensure that snapcraft uses build VMs
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft try --use-lxd
   snap try prime
