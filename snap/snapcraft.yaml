@@ -36,7 +36,7 @@ parts:
 
   patchelf:
     plugin: autotools
-    source: https://github.com/NixOS/patchelf
+    source: https://github.com/snapcore/patchelf
     source-type: git
     source-tag: '0.10'
     build-packages:

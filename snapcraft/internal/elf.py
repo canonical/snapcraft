@@ -381,8 +381,8 @@ class ElfFile:
         # This way of answering the question is perhaps a bit OTT. But it works.
         try:
             ef = elftools.elf.elffile.ELFFile(open(self.path, "rb"))
-        except ELFError as e:
-            logger.debug("ELFFile({}) failed: {}".format(self.path, e))
+        except ELFError as elf_error:
+            logger.debug("ELFFile({}) failed: {}".format(self.path, elf_error))
             return False
         else:
             return "PT_DYNAMIC" in [s.header.p_type for s in ef.iter_segments()]
