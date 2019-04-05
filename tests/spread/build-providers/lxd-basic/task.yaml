@@ -1,4 +1,4 @@
-summary: Build a basic snap using multipass and ensure that it runs
+summary: Build a basic snap using LXD and ensure that it runs
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
 
@@ -9,6 +9,10 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  snap install lxd
+  lxd waitready --timeout=30
+  lxd init --auto
 
 restore: |
   cd "$SNAP_DIR"
@@ -25,6 +29,6 @@ execute: |
   # Ensure that snapcraft uses build VMs
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  snapcraft
+  snapcraft --use-lxd
   sudo snap install make-hello_*.snap --dangerous
   [ "$(make-hello)" = "hello world" ]

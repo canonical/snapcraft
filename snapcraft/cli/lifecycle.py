@@ -21,8 +21,7 @@ import os
 import click
 
 from . import echo
-from . import env
-from ._options import add_build_options, get_project
+from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -49,12 +48,12 @@ def _execute(  # noqa: C901
     output: str = None,
     shell: bool = False,
     shell_after: bool = False,
-    destructive_mode: bool = False,
     **kwargs
 ) -> "Project":
+    # Cleanup any previous errors.
     _clean_provider_error()
-    provider = "host" if destructive_mode else None
-    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
+
+    build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     echo.wrapped(
@@ -80,15 +79,16 @@ def _execute(  # noqa: C901
             build_provider_class.ensure_provider()
         except build_providers.errors.ProviderNotFound as provider_error:
             if provider_error.prompt_installable:
-                click.echo(str(provider_error))
-                if click.confirm("Would you like to install it now?"):
+                if click.confirm(
+                    "Support for {!r} needs to be set up. "
+                    "Would you like to do that it now?".format(provider_error.provider)
+                ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
                     raise provider_error
             else:
                 raise provider_error
 
-        echo.info("Launching a VM.")
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
@@ -266,7 +266,13 @@ def pack(directory, output, **kwargs):
 
 @lifecyclecli.command()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def clean(parts):
+@click.option(
+    "--use-lxd",
+    is_flag=True,
+    required=False,
+    help="Forces snapcraft to use LXD for this clean command.",
+)
+def clean(parts, use_lxd):
     """Remove a part's assets.
 
     \b
@@ -274,7 +280,7 @@ def clean(parts):
         snapcraft clean
         snapcraft clean my-part
     """
-    build_environment = env.BuilderEnvironmentConfig()
+    build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if build_environment.is_managed_host or build_environment.is_host:
@@ -283,13 +289,11 @@ def clean(parts):
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        build_provider = build_provider_class(project=project, echoer=echo)
         if parts:
-            echo.info("Launching a VM.")
             with build_provider_class(project=project, echoer=echo) as instance:
                 instance.clean(part_names=parts)
         else:
-            build_provider.clean_project()
+            build_provider_class(project=project, echoer=echo).clean_project()
 
 
 if __name__ == "__main__":
