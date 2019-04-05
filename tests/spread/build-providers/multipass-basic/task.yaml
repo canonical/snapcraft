@@ -4,7 +4,7 @@ priority: 90  # Run this test relatively early since fetching images can take ti
 manual: true
 
 environment:
-  SNAP_DIR: snaps/make-hello
+  SNAP_DIR: ../snaps/make-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

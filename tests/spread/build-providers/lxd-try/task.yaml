@@ -7,7 +7,7 @@ warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
 
 environment:
-  SNAP_DIR: snaps/make-hello
+  SNAP_DIR: ../snaps/make-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
