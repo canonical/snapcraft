@@ -30,7 +30,7 @@ execute: |
   fi
 
   # Ensure binaries are properly patched
-  patchelf --print-rpath prime/bin/go-cgo | MATCH "/snap/core[0-9]*/current"
+  /snap/snapcraft/current/bin/patchelf --print-rpath prime/bin/go-cgo | MATCH "/snap/core[0-9]*/current"
 
   # Run generated binary
   prime/bin/go-cgo | MATCH "more or less"
