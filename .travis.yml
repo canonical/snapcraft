@@ -18,7 +18,6 @@ jobs:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       name: static tests
-      if: type != cron
       addons:
         apt:
           packages:
@@ -50,7 +49,6 @@ jobs:
 
     - stage: unit, snap and osx
       name: unit tests
-      if: type != cron
       addons:
         apt:
           packages:
@@ -82,7 +80,6 @@ jobs:
         - codecov --token="$CODECOV_TOKEN"
     - stage: unit, snap and osx
       name: osx
-      if: type != cron
       os: osx
       addons:
         homebrew:
@@ -98,7 +95,6 @@ jobs:
         - echo SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
     - stage: unit, snap and osx
       name: snap
-      if: type != cron
       addons:
         snaps:
           - name: snapcraft
@@ -123,11 +119,11 @@ jobs:
 
     - stage: integration
       name: spread
-      if: type != cron
+      if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
       script:
-      - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-      - ./runtests.sh spread
+        - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+        - ./runtests.sh spread
     - stage: integration
       name: store
-      if: type != cron
-      script: sudo ./tools/travis/run_integration_test.sh tests/integration/store
+      script: 
+        - sudo ./tools/travis/run_integration_test.sh tests/integration/store
