@@ -5,8 +5,9 @@ env:
   global:
     # SPREAD_GOOGLE_KEY
     - secure: "uWKJdJlHc8tg+98jGpcc/FvsssEbw2FARqtgO0smBp5x8JWCmAt5fAVPB8qRbbirdHS5Yjpk8SSSa3vWVizYeTIOV+Vo3w8/1oqymPnMEEMtcLkyGZP+fNMDgNnX+icOU/bmh8werhOn9+qiZfKmFuXgpjrXzYoWzrhn55EuDN68Yhe6gB1zznHihDtSKjwQrbZFlgNnTh13Wk9lY8y2XYsWZZVfQ25dP4PaQQv647nBhcWPvrB0N/vMmDS/twvUBcbbEjRg5yKtsqzuT2lEqdIpwosp3/gZjWAWK0FjjmnzRcSHbugtaxWHmghHDLHSpP4GF7bzYL01tklFWDSW9DDvVfZ3HgiN058LL1jsk+VjcMCgu7csUWUj2kib3/TjKQy32R1vALpgDOrLHutdVDXoED33qxcyAYLODNRwW9o+QQM2HoZD4PKVDcKW4WOvAKp7Z1NK+ag26WdA/bM7ZgAll40dY9yPtgg0fdMM9N1X9e4v2TJmjnSLXF8v0jXIwp3VL01c/RpsmD7ubTUp0ixSaiKK0cCvxdflsDSUGojckeA4OsGOf9X+anqxmJsiY7vW/TKULMgToKEYDIPB0EfJ0Tf8P/ve4veEZSnhFinrDk46jwSP2m4kpR2FHAMtjCwqWEXZWouIJOOclAk4IqUWGT88Iomdz/LFbQa2rdo="
-    - LC_ALL: C.UTF-8
-    - LANG: C.UTF-8
+    - LC_ALL: "C.UTF-8"
+    - LANG: "C.UTF-8"
+    - PATH: "/snap/bin:$PATH"
 
 cache:
   directories:
@@ -35,7 +36,6 @@ jobs:
         - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
         - pip3 install --user -r requirements-devel.txt
       script:
-        - export PATH="/snap/bin:$PATH"
         - ./runtests.sh static
     # CLA check, only in pull requests, not coming from the bot.
     - stage: static
@@ -106,13 +106,17 @@ jobs:
             classic: true
           - name: transfer
           - name: http
-      install:
-        - sudo apt update
+          - name: lxd
+      before_script:
+        - sudo apt autoremove --purge lxd lxd-client
+        - sudo lxd waitready
+        - sudo lxd init --auto
       script:
-        - sudo snapcraft snap --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - sudo cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo snapcraft snap --use-lxd
+        - cp *.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
-        - timeout 180 sudo /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
+        - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
         - sudo journalctl -u snapd
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
