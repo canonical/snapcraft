@@ -113,7 +113,7 @@ jobs:
         - sudo lxd init --auto
       script:
         - sudo snapcraft snap --use-lxd
-        - cp "snapcraft_*.snap" "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp *.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
         - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
