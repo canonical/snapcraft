@@ -182,7 +182,7 @@ class GoPlugin(snapcraft.BasePlugin):
             # able to set rpath later on. This workaround can be removed after
             # https://github.com/NixOS/patchelf/issues/146 is fixed.
             if self._is_classic:
-                if elf.ElfFile(path=binary).is_dynamic_executable():
+                if elf.ElfFile(path=binary).is_dynamic:
                     self._run(
                         ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
                         + tags

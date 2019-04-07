@@ -241,9 +241,7 @@ class GoPluginPropertiesTest(unit.TestCase):
 class MockElfFile:
     def __init__(self, *, path: str) -> None:
         self.path = path
-
-    def is_dynamic_executable(self) -> bool:
-        return True
+        self.is_dynamic = True
 
 
 class GoPluginTest(GoPluginBaseTest):

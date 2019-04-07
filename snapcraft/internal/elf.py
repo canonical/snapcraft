@@ -25,7 +25,6 @@ from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
 from pkg_resources import parse_version
-from elftools.common.exceptions import ELFError
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, repo
@@ -47,7 +46,7 @@ class NeededLibrary:
 
 ElfArchitectureTuple = Tuple[str, str, str]
 ElfDataTuple = Tuple[
-    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool
+    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool, bool
 ]  # noqa: E501
 SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 
@@ -222,6 +221,7 @@ class ElfFile:
         self.soname = elf_data[2]
         self.needed = elf_data[3]
         self.execstack_set = elf_data[4]
+        self.is_dynamic = elf_data[5]
 
     def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
         arch = None  # type: ElfArchitectureTuple
@@ -256,10 +256,9 @@ class ElfFile:
                 interp = interp_section.data().rstrip(b"\x00").decode("ascii")
 
             dynamic_section = elf.get_section_by_name(_DYNAMIC)
-            if (
-                dynamic_section is not None
-                and dynamic_section.header.sh_type != "SHT_NOBITS"
-            ):
+            is_dynamic = dynamic_section is not None
+
+            if is_dynamic and dynamic_section.header.sh_type != "SHT_NOBITS":
                 for tag in dynamic_section.iter_tags("DT_NEEDED"):
                     needed = _ensure_str(tag.needed)
                     libs[needed] = NeededLibrary(name=needed)
@@ -291,7 +290,7 @@ class ElfFile:
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
 
-        return arch, interp, soname, libs, execstack_set
+        return arch, interp, soname, libs, execstack_set, is_dynamic
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determines if linker will work given the required glibc version."""
@@ -376,16 +375,6 @@ class ElfFile:
             if os.path.exists(l.path) and not l.in_base_snap:
                 library_paths.add(l.path)
         return library_paths
-
-    def is_dynamic_executable(self) -> bool:
-        # This way of answering the question is perhaps a bit OTT. But it works.
-        try:
-            ef = elftools.elf.elffile.ELFFile(open(self.path, "rb"))
-        except ELFError as elf_error:
-            logger.debug("ELFFile({}) failed: {}".format(self.path, elf_error))
-            return False
-        else:
-            return "PT_DYNAMIC" in [s.header.p_type for s in ef.iter_segments()]
 
 
 class Patcher:
