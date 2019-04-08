@@ -181,13 +181,12 @@ class GoPlugin(snapcraft.BasePlugin):
             # Relink with system linker if executable is dynamic in order to be
             # able to set rpath later on. This workaround can be removed after
             # https://github.com/NixOS/patchelf/issues/146 is fixed.
-            if self._is_classic:
-                if elf.ElfFile(path=binary).is_dynamic:
-                    self._run(
-                        ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
-                        + tags
-                        + [package]
-                    )
+            if self._is_classic and elf.ElfFile(path=binary).is_dynamic:
+                self._run(
+                    ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
+                    + tags
+                    + [package]
+                )
 
         install_bin_path = os.path.join(self.installdir, "bin")
         os.makedirs(install_bin_path, exist_ok=True)
