@@ -1,0 +1,13 @@
+name: catkin-stage-snaps
+version: "1.0"
+summary: ROS stage-snaps test
+description: Verify that ROS stage-snaps are checked for dependencies.
+confinement: strict
+base: core18
+
+parts:
+  catkin-part:
+    plugin: catkin
+    source: .
+    include-roscore: false
+    stage-snaps: [fake-ros-package-kyrofa/latest/edge]

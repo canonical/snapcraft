@@ -442,6 +442,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # dependency has been staged.
         catkin = None
         underlay_build_path = None
+        dependency_workspaces = [self.rosdir]
         if self.options.underlay:
             underlay_build_path = self.options.underlay["build-path"]
         if underlay_build_path:
@@ -457,18 +458,19 @@ class CatkinPlugin(snapcraft.BasePlugin):
                     "setup.sh".format(underlay_build_path)
                 )
 
-            # Use catkin_find to discover dependencies already in the underlay
-            catkin = _Catkin(
-                self._rosdistro,
-                underlay_build_path,
-                self._catkin_path,
-                self.PLUGIN_STAGE_SOURCES,
-                self.PLUGIN_STAGE_KEYRINGS,
-                self.project,
-            )
-            catkin.setup()
-
+            dependency_workspaces.append(underlay_build_path)
             self._generate_snapcraft_setup_sh(self.installdir, underlay_build_path)
+
+        # Use catkin_find to discover dependencies already in the underlay
+        catkin = _Catkin(
+            self._rosdistro,
+            dependency_workspaces,
+            self._catkin_path,
+            self.PLUGIN_STAGE_SOURCES,
+            self.PLUGIN_STAGE_KEYRINGS,
+            self.project,
+        )
+        catkin.setup()
 
         # Pull our own compilers so we use ones that match up with the version
         # of ROS we're using.
@@ -676,6 +678,15 @@ class CatkinPlugin(snapcraft.BasePlugin):
             return path
 
         self._rewrite_cmake_paths(_new_path)
+
+        # Also rewrite any occurrence of $SNAPCRAFT_STAGE to be our install
+        # directory (this may be the case if stage-snaps were used).
+        file_utils.replace_in_file(
+            self.rosdir,
+            re.compile(r".*Config.cmake$"),
+            re.compile(r"\$ENV{SNAPCRAFT_STAGE}"),
+            self.installdir,
+        )
 
     def _rewrite_cmake_paths(self, new_path_callable):
         def _rewrite_paths(match):
@@ -1062,14 +1073,14 @@ class _Catkin:
     def __init__(
         self,
         ros_distro,
-        workspace,
+        workspaces,
         catkin_path,
         ubuntu_sources,
         ubuntu_keyrings,
         project,
     ):
         self._ros_distro = ros_distro
-        self._workspace = workspace
+        self._workspaces = workspaces
         self._catkin_path = catkin_path
         self._ubuntu_sources = ubuntu_sources
         self._ubuntu_keyrings = ubuntu_keyrings
@@ -1095,10 +1106,15 @@ class _Catkin:
         ubuntu.unpack(self._catkin_install_path)
 
     def find(self, package_name):
-        try:
-            return self._run(["--first-only", package_name]).strip()
-        except subprocess.CalledProcessError:
-            raise CatkinPackageNotFoundError(package_name)
+        with contextlib.suppress(subprocess.CalledProcessError):
+            path = self._run(["--first-only", package_name]).strip()
+
+            # Not a valid find if the package resolves into our own catkin
+            # workspace. That won't be transitioned into the snap.
+            if not path.startswith(self._catkin_install_path):
+                return path
+
+        raise CatkinPackageNotFoundError(package_name)
 
     def _run(self, arguments):
         with tempfile.NamedTemporaryFile(mode="w+") as f:
@@ -1136,11 +1152,13 @@ class _Catkin:
                     ros_path, os.path.join(ros_path, "setup.sh")
                 )
             )
-            lines.append(
-                "_CATKIN_SETUP_DIR={} source {} --extend".format(
-                    self._workspace, os.path.join(self._workspace, "setup.sh")
+
+            for workspace in self._workspaces:
+                lines.append(
+                    "_CATKIN_SETUP_DIR={} source {} --extend".format(
+                        workspace, os.path.join(workspace, "setup.sh")
+                    )
                 )
-            )
 
             lines.append('exec "$@"')
             f.write("\n".join(lines))
