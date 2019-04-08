@@ -36,6 +36,7 @@ class ProviderImpl(Provider):
         self.create_mock = mock.Mock()
         self.destroy_mock = mock.Mock()
         self.mount_project_mock = mock.Mock()
+        self.mount_prime_mock = mock.Mock()
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
@@ -101,6 +102,9 @@ class ProviderImpl(Provider):
 
     def mount_project(self):
         self.mount_project_mock("mount-project")
+
+    def _mount_prime_directory(self):
+        self.mount_prime_mock("mount-prime")
 
     def clean_project(self):
         self.clean_project_mock()

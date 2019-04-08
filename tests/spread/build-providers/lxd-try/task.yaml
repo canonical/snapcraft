@@ -1,4 +1,8 @@
-summary: Build a basic snap using LXD and ensure that it runs
+summary: Try a basic snap using LXD and ensure that it runs
+# TODO remove once either this version of snapcraft reaches stable
+#      or the new snap download is implemented using snapd's API
+#      introduced in 2.38
+manual: true
 warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 90  # Run this test relatively early since fetching images can take time
 
@@ -26,6 +30,21 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft --use-lxd
-  sudo snap install make-hello_*.snap --dangerous
+  snapcraft try --use-lxd
+  snap try prime
   [ "$(make-hello)" = "hello world" ]
+
+  # snapcraft clean when trying keeps the dir
+  snapcraft clean --use-lxd
+  if [ ! -d prime ]; then
+      echo "The prime directory should not have been removed while trying"
+      exit 1
+  fi
+
+  # Remove the snap try and clean again
+  snap remove make-hello
+  snapcraft clean --use-lxd
+  if [ -d prime ]; then
+      echo "The prime directory should have been removed"
+      exit 1
+  fi
