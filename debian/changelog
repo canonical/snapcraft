@@ -1,3 +1,33 @@
+snapcraft (3.4) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * build providers: modify the _run signature (#2511) (LP: #1821401)
+  * build providers: support for provider setup (#2515) (LP: #1821586)
+  * readme: add snap store badge (#2516)
+  * build providers: initial support for LXD (#2509) (LP: #1805221)
+  * cli: cleanup environment detection (#2521)
+  * build providers: add API for friendly instance type names (#2522)
+  * snap: set core as a base (#2520)
+  * ci: improve travis integration conditionals (#2523)
+  * cli: snapcraft try (#2524) (LP: #1805212)
+  * build providers: idempotent destroy for LXD (#2529)
+
+  [ Claudio Matsuoka ]
+  * repo: handle deb package fetch error (#2513)
+  * project: ensure yaml load returns a dictionary (#2517)
+  * many: better handling of appstream icons (#2512) (LP: #1814898)
+  * go plugin, elf: use patchelf 0.10 and relink dynamic go binaries (#2519)
+    (LP: #1805205)
+  * snap: use snapcraft's 0.10 patchelf branch (#2528)
+
+  [ adanhawth ]
+  * schema: add more detail wrt numeric version errors (#2506)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: check stage-snaps for ROS dependencies (#2525)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Mon, 08 Apr 2019 20:40:27 +0000
+
 snapcraft (3.3) xenial; urgency=medium
 
   [ Sergio Schvezov ]
