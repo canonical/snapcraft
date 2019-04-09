@@ -193,6 +193,11 @@ class LXD(Provider):
         self._run(command=["cloud-init", "status", "--wait"])
 
     def _stop(self):
+        # If _container is still None here it means creation/starting was not
+        # successful.
+        if self._container is None:
+            return
+
         self._container.sync()
 
         if self._container.status.lower() != "stopped":
