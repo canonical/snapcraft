@@ -10,4 +10,4 @@ parts:
     plugin: catkin
     source: .
     include-roscore: false
-    stage-snaps: [fake-ros-package-kyrofa/latest/edge]
+    stage-snaps: [test-snapcraft-fake-ros-package-core18/latest/edge]

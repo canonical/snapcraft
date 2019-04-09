@@ -1,4 +1,4 @@
-name: fake-ros-package-kyrofa
+name: test-snapcraft-fake-ros-package-core18
 base: core18
 version: '0.1'
 summary: Bare-bones ROS dependency for snapcraft CLI test
