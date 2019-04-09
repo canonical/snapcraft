@@ -221,6 +221,11 @@ class LXDInitTest(LXDBaseTest):
         container.delete_mock.assert_called_once_with(wait=True)
         self.assertThat(instance.clean_project(), Equals(True))
 
+    def test_destroy_when_not_created(self):
+        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        # This call should not fail
+        instance.destroy()
+
 
 class LXDLaunchedTest(LXDBaseTest):
     def setUp(self):
