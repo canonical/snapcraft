@@ -79,6 +79,7 @@ import re
 import shutil
 import subprocess
 import textwrap
+from typing import List
 
 import snapcraft
 from snapcraft.plugins import _ros
@@ -1072,13 +1073,13 @@ class Compilers:
 class _Catkin:
     def __init__(
         self,
-        ros_distro,
-        workspaces,
-        catkin_path,
-        ubuntu_sources,
-        ubuntu_keyrings,
-        project,
-    ):
+        ros_distro: str,
+        workspaces: List[str],
+        catkin_path: str,
+        ubuntu_sources: str,
+        ubuntu_keyrings: str,
+        project: snapcraft.project.Project,
+    ) -> None:
         self._ros_distro = ros_distro
         self._workspaces = workspaces
         self._catkin_path = catkin_path
