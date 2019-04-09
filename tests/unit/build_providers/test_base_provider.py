@@ -96,6 +96,12 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         self.assertThat(provider.provider_project_dir, DirExists())
 
+    def test_expose_prime(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.expose_prime()
+
+        provider.mount_prime_mock.assert_called_once_with("mount-prime")
+
     def test_ensure_base_same_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.project.info.base = "core16"

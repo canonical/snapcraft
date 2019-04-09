@@ -185,6 +185,20 @@ class Provider(abc.ABC):
         """Provider steps needed to make the project available to the instance.
         """
 
+    @abc.abstractmethod
+    def _mount_prime_directory(self) -> bool:
+        """Mount the host prime directory into the provider.
+
+        :returns: True if the prime directory was already mounted.
+        """
+
+    def expose_prime(self) -> None:
+        """Provider steps needed to expose the prime directory to the host.
+        """
+        os.makedirs(self.project.prime_dir, exist_ok=True)
+        if not self._mount_prime_directory():
+            self._run(command=["snapcraft", "clean", "--unprime"])
+
     def execute_step(self, step: steps.Step) -> None:
         self._run(command=["snapcraft", step.name])
 

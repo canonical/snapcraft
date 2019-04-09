@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import subprocess
 from typing import Any, Dict
 from unittest import mock
@@ -294,6 +295,29 @@ class LXDLaunchedTest(LXDBaseTest):
                 {
                     "snapcraft-project": dict(
                         path="/root/project", source=self.path, type="disk"
+                    )
+                }
+            ),
+        )
+        self.assertThat(self.fake_container.sync_mock.call_count, Equals(2))
+        self.fake_container.save_mock.assert_called_once_with(wait=True)
+        self.check_output_mock.assert_called_once_with(
+            ["/snap/bin/lxc", "exec", self.instance_name, "--", "printenv", "HOME"]
+        )
+
+    def test_mount_prime_directory(self):
+        self.check_output_mock.return_value = b"/root"
+
+        self.instance._mount_prime_directory()
+
+        self.assertThat(
+            self.fake_container.devices,
+            Equals(
+                {
+                    "snapcraft-project-prime": dict(
+                        path="/root/prime",
+                        source=os.path.join(self.path, "prime"),
+                        type="disk",
                     )
                 }
             ),
