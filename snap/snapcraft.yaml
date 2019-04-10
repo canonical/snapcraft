@@ -37,9 +37,9 @@ parts:
 
   patchelf:
     plugin: autotools
-    source: https://github.com/snapcore/patchelf
+    source: https://github.com/sergiusens/patchelf
     source-type: git
-    source-branch: '0.10+snapcraft'
+    source-branch: '0.10-startoffset-patch'
     build-packages:
       - g++
       - make
