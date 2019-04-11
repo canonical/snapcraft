@@ -20,7 +20,12 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 # This test is written specifically for core18
-systems: [ubuntu-18*]
+systems:
+  - ubuntu-18.04
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
+  - ubuntu-18.04-arm64
+  - ubuntu-18.04-armhf
 
 execute: |
   cd "$SNAP_DIR"
