@@ -193,14 +193,18 @@ class LaunchpadClient:
             self._waiting.remove(arch)
             return
 
-        snap_name = urls[0].rsplit("/", 1)[-1]
-        try:
-            self._download_file(urls[0], snap_name)
-            logger.info("Snapped {}".format(snap_name))
-        except urllib.error.HTTPError as e:
-            logger.error("Snap download error: {}: {}".format(e, snap_name))
-        finally:
-            self._waiting.remove(arch)
+        for url in urls:
+            snap_name = url.rsplit("/", 1)[-1]
+            # Sanity check
+            if not snap_name.endswith("_{}.snap".format(arch)):
+                continue
+            try:
+                self._download_file(url, snap_name)
+                logger.info("Snapped {}".format(snap_name))
+            except urllib.error.HTTPError as e:
+                logger.error("Snap download error: {}: {}".format(e, snap_name))
+
+        self._waiting.remove(arch)
 
     def _process_fail(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
