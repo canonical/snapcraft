@@ -17,7 +17,7 @@
 from tests import unit
 from textwrap import dedent
 
-from testtools.matchers import Equals, Is
+from testtools.matchers import Equals, Is, MatchesRegex
 
 from snapcraft.project._project_info import ProjectInfo
 from snapcraft.project import errors
@@ -172,12 +172,11 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
-        self.assertThat(
-            raised.message,
-            Equals(
-                "found a tab character that violate indentation on line 5, column 1"
-            ),
-        )
+        # libyaml had a spelling mistake indentation/intendation
+        self.assertThat(raised.message, MatchesRegex(
+            "found a tab character that violate (indentation|intendation)"
+            " on line 5, column 1"
+        ))
 
     def test_invalid_yaml_invalid_unicode_chars(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
