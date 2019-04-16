@@ -1,0 +1,21 @@
+name: qt5-hello
+version: "1.0"
+summary: Test the kf5-neon extension
+description: It simply prints a hello world
+
+grade: devel
+confinement: strict
+base: core18
+
+apps:
+  qt5-hello:
+    command: bin/hello
+    extensions: [kf5-neon]
+    plugs:
+    - kde-frameworks-5-plug
+
+parts:
+  hello:
+    build-snaps: [kde-frameworks-5-core18-sdk]
+    plugin: cmake
+    source: .
