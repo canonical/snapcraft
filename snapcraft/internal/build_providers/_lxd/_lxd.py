@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import urllib.parse
+import warnings
 from typing import Optional, Sequence
 
 import pylxd
@@ -31,6 +32,9 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
+# Filter out attribute setting warnings for properties that exist in LXD operations
+# but are unhandled in pylxd.
+warnings.filterwarnings("ignore", module="pylxd.models.operation")
 
 
 class LXD(Provider):
