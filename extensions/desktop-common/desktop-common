@@ -43,10 +43,14 @@ function update_xdg_dirs_values() {
 
     if [ "$save_initial_values" = true ]; then
       XDG_SPECIAL_DIRS+=("$var")
-      XDG_SPECIAL_DIRS_INITIAL_PATHS+=("$value")
+      if [ -n "$value" ]; then
+        XDG_SPECIAL_DIRS_INITIAL_PATHS+=("$value")
+      fi
     fi
 
-    XDG_SPECIAL_DIRS_PATHS+=("$value")
+    if [ -n "$value" ]; then
+      XDG_SPECIAL_DIRS_PATHS+=("$value")
+    fi
   done
 }
 
