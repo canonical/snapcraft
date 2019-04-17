@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -859,13 +859,17 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
         )
 
         for hook in ("foo", "bar"):
-            generated_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
-            self.assertThat(
-                generated_hook_path,
-                FileExists(),
-                "The {!r} hook was not setup correctly".format(hook),
-            )
+            meta_dir_hook_path = os.path.join(self.prime_dir, "meta", "hooks", hook)
+            snap_dir_hook_path = os.path.join(self.prime_dir, "snap", "hooks", hook)
 
+            for hook_location in (meta_dir_hook_path, snap_dir_hook_path):
+                self.assertThat(
+                    hook_location,
+                    FileExists(),
+                    "The {!r} hook was not setup correctly".format(hook),
+                )
+
+        for hook in ("foo", "bar"):
             self.assertThat(
                 y["hooks"],
                 Contains(hook),
@@ -883,6 +887,27 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
             y["hooks"]["bar"],
             Not(Contains("plugs")),
             "Expected generated 'bar' hook to not contain 'plugs'",
+        )
+
+    def test_local_is_not_copied_to_snap(self):
+        project_local_dir = os.path.join(self.snapcraft_assets_dir, "local")
+        local_file = "file"
+        local_subdir_file = os.path.join("dir", "file")
+
+        os.makedirs(os.path.join(project_local_dir, "dir"))
+        _create_file(os.path.join(project_local_dir, local_file))
+        _create_file(os.path.join(project_local_dir, local_subdir_file))
+
+        self.generate_meta_yaml(
+            snapcraft_yaml_file_path=os.path.join(
+                self.snapcraft_assets_dir, "snapcraft.yaml"
+            )
+        )
+
+        prime_local_dir = os.path.join(self.prime_dir, "snap", "local")
+        self.assertThat(os.path.join(prime_local_dir, local_file), Not(FileExists()))
+        self.assertThat(
+            os.path.join(prime_local_dir, local_subdir_file), Not(FileExists())
         )
 
 
@@ -1437,8 +1462,9 @@ class BaseWrapTest(unit.TestCase):
             yaml_utils.dump(self.snapcraft_yaml, stream=snapcraft_file)
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        self.packager = _snap_packaging._SnapPackaging(config)
+        self.packager = _snap_packaging._SnapPackaging(config, metadata)
         self.packager._is_host_compatible_with_base = True
 
 
@@ -1534,7 +1560,8 @@ class WrapExeTest(BaseWrapTest):
 
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         config = project_loader.load_config(project)
-        packager = _snap_packaging._SnapPackaging(config)
+        metadata = extractors.ExtractedMetadata()
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         packager.write_snap_yaml()
@@ -1728,8 +1755,9 @@ class FullAdapterTest(unit.TestCase):
 
         project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config)
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         return packager
@@ -1901,8 +1929,9 @@ class CommandChainTest(unit.TestCase):
 
         project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
         config = project_loader.load_config(project)
+        metadata = extractors.ExtractedMetadata()
         # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config)
+        packager = _snap_packaging._SnapPackaging(config, metadata)
         packager._is_host_compatible_with_base = True
 
         return packager

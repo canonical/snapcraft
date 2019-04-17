@@ -101,6 +101,13 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
 
+    def test_unprime_fails(self):
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(["clean", "--unprime"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
 
 class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
     def test_local_plugin_not_removed(self):

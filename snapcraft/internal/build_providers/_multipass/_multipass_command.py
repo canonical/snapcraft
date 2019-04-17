@@ -17,8 +17,11 @@
 import logging
 import shutil
 import subprocess
+from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
 
+from snapcraft.internal import repo
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import errors
 
 
@@ -39,17 +42,68 @@ class MultipassCommand:
     """An object representation of common multipass cli commands."""
 
     provider_name = "multipass"
+    provider_cmd = "multipass"
 
-    def __init__(self) -> None:
+    @classmethod
+    def ensure_multipass(cls, platform: str) -> None:
+        if shutil.which(cls.provider_cmd):
+            return
+
+        if platform == "darwin":
+            prompt_installable = True
+        elif platform == "linux" and shutil.which("snap"):
+            prompt_installable = True
+        else:
+            prompt_installable = False
+
+        raise errors.ProviderNotFound(
+            provider=cls.provider_name,
+            prompt_installable=prompt_installable,
+            error_message="https://github.com/CanonicalLtd/multipass/releases",
+        )
+
+    @classmethod
+    def setup_multipass(cls, *, echoer, platform: str) -> None:
+        if platform == "linux":
+            repo.snaps.install_snaps(["multipass/latest/beta"])
+        elif platform == "darwin":
+            try:
+                subprocess.check_call(["brew", "cask", "install", "multipass"])
+            except subprocess.CalledProcessError:
+                raise SnapcraftEnvironmentError(
+                    "Failed to install multipass using homebrew.\n"
+                    "Verify your homebrew installation and try again.\n"
+                    "Alternatively, manually install multipass by running 'brew cask install multipass'."
+                )
+        else:
+            raise EnvironmentError(
+                "Setting up multipass for {!r} is not supported.".format(platform)
+            )
+
+        # wait for multipassd to be available
+        echoer.wrapped("Waiting for multipass...")
+        retry_count = 20
+        while retry_count:
+            try:
+                output = subprocess.check_output(["multipass", "version"]).decode()
+            except subprocess.CalledProcessError:
+                output = ""
+            # if multipassd is in the version information, it means the service is up
+            # and we can carry on
+            if "multipassd" in output:
+                break
+            retry_count -= 1
+            sleep(1)
+        # No need to worry about getting to this point by exhausting our retry count,
+        # the rest of the stack will handle the error appropriately.
+
+    def __init__(self, *, platform: str) -> None:
         """Initialize a MultipassCommand instance.
 
         :raises errors.ProviderCommandNotFound:
             if the multipass command is not found.
         """
-        provider_cmd = "multipass"
-        if not shutil.which(provider_cmd):
-            raise errors.ProviderCommandNotFound(command=provider_cmd)
-        self.provider_cmd = provider_cmd
+        self.ensure_multipass(platform=platform)
 
     def launch(
         self,

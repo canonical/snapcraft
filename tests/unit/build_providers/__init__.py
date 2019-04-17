@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
 from unittest import mock
 
 from snapcraft.project import Project
@@ -35,11 +36,12 @@ class ProviderImpl(Provider):
         self.create_mock = mock.Mock()
         self.destroy_mock = mock.Mock()
         self.mount_project_mock = mock.Mock()
+        self.mount_prime_mock = mock.Mock()
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
 
-    def _run(self, command, hide_output=False):
+    def _run(self, command, hide_output=False) -> Optional[bytes]:
         self.run_mock(command)
 
     def _launch(self) -> None:
@@ -63,7 +65,24 @@ class ProviderImpl(Provider):
     def _push_file(self, *, source: str, destination: str) -> None:
         self.push_file_mock(source=source, destination=destination)
 
-    def _get_provider_name(self) -> str:
+    @classmethod
+    def get_instance_type_friendly_name(cls) -> str:
+        return "fake-instance"
+
+    @classmethod
+    def ensure_provider(cls) -> None:
+        """Fake provider check."""
+
+    @classmethod
+    def setup_provider(cls) -> None:
+        """Fake provider setup."""
+
+    @classmethod
+    def _get_is_snap_injection_capable(cls) -> bool:
+        return True
+
+    @classmethod
+    def _get_provider_name(cls) -> str:
         return "stub-provider"
 
     def _umount(self):
@@ -83,6 +102,9 @@ class ProviderImpl(Provider):
 
     def mount_project(self):
         self.mount_project_mock("mount-project")
+
+    def _mount_prime_directory(self):
+        self.mount_prime_mock("mount-prime")
 
     def clean_project(self):
         self.clean_project_mock()

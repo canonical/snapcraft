@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -69,6 +69,14 @@ class BuildPackagesNotInstalledError(RepoError):
 
     def __init__(self, *, packages: List[str]) -> None:
         super().__init__(packages=" ".join(packages))
+
+
+class PackageFetchError(RepoError):
+
+    fmt = "Package fetch error: {message}"
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message=message)
 
 
 class PackageBrokenError(RepoError):

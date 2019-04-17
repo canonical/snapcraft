@@ -55,7 +55,7 @@ class TestCase(testtools.TestCase):
         package_type = os.getenv("SNAPCRAFT_PACKAGE_TYPE")
         if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
-            self.patchelf_command = "/snap/snapcraft/current/usr/bin/patchelf"
+            self.patchelf_command = "/snap/snapcraft/current/bin/patchelf"
             self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
         elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
@@ -463,9 +463,14 @@ class StoreTestCase(TestCase):
         process.expect_exact("Password: ")
         process.sendline(password)
         if expect_success:
-            process.expect_exact(
-                "We strongly recommend enabling multi-factor authentication:"
-            )
+            try:
+                process.expect_exact(
+                    "We strongly recommend enabling multi-factor authentication:"
+                )
+            except pexpect.exceptions.EOF:
+                self.fail(
+                    "Login failed. Login error: {}".format(process.before.decode())
+                )
 
     def export_login(
         self,
@@ -492,10 +497,13 @@ class StoreTestCase(TestCase):
         process = self.spawn_snapcraft(["login"])
         self._conduct_login(process, email, password, expect_success)
 
-        if expect_success:
-            process.expect_exact("Login successful.")
-        else:
-            process.expect("Authentication error: Failed to get unbound discharge.")
+        try:
+            if expect_success:
+                process.expect_exact("Login successful.")
+            else:
+                process.expect("Authentication error: Failed to get unbound discharge.")
+        except pexpect.exceptions.EOF:
+            self.fail("Login failed. Login error: {}".format(process.before.decode()))
 
     def logout(self):
         output = self.run_snapcraft("logout")
@@ -526,7 +534,7 @@ class StoreTestCase(TestCase):
                 time.sleep(int(match.group(1)))
                 # This could get stuck for ever if the user is registering
                 # other snaps in parallel.
-                self.register(snap_name, private, wait)
+                self.register(snap_name, private=private, store=store, wait=wait)
             else:
                 raise RegisterError(output)
 

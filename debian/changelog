@@ -1,3 +1,64 @@
+snapcraft (3.4) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * build providers: modify the _run signature (#2511) (LP: #1821401)
+  * build providers: support for provider setup (#2515) (LP: #1821586)
+  * readme: add snap store badge (#2516)
+  * build providers: initial support for LXD (#2509) (LP: #1805221)
+  * cli: cleanup environment detection (#2521)
+  * build providers: add API for friendly instance type names (#2522)
+  * snap: set core as a base (#2520)
+  * ci: improve travis integration conditionals (#2523)
+  * cli: snapcraft try (#2524) (LP: #1805212)
+  * build providers: idempotent destroy for LXD (#2529)
+  * tests: add missing pylxd Build-Depends
+  * tests: restrict catking stage-snap tests arches
+
+  [ Claudio Matsuoka ]
+  * repo: handle deb package fetch error (#2513)
+  * project: ensure yaml load returns a dictionary (#2517)
+  * many: better handling of appstream icons (#2512) (LP: #1814898)
+  * go plugin, elf: use patchelf 0.10 and relink dynamic go binaries (#2519)
+    (LP: #1805205)
+  * snap: use snapcraft's 0.10 patchelf branch (#2528)
+  * snap: revert to patchelf 0.9 with local patches (#2531)
+
+  [ adanhawth ]
+  * schema: add more detail wrt numeric version errors (#2506)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: check stage-snaps for ROS dependencies (#2525)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Mon, 08 Apr 2019 20:40:27 +0000
+
+snapcraft (3.3) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * many: support for "base: core" in snapcraft.yaml (#2499) (LP: #1819290)
+  * python plugin: graceful ret when no packages set (#2498) (LP: #1794216)
+  * many: support the use of build-aux/snap (#2496) (LP: #1805219)
+  * nodejs pluging: support for type str bin entries (#2501) (LP: #1817553)
+  * store: support registering to a specific store (#2479) (LP: #1820107)
+  * meta: fix management of snap/local (#2502)
+  * tests: improve login pexpect errors
+  * tests: correctly retry registers
+  * build providers: enhance provider errors (#2508) (LP: #1821217)
+  * build providers: improve handling in snap logic (#2507) (LP: #1820864)
+  * tests: filter per arch and fix snap build deps
+
+  [ Claudio Matsuoka ]
+  * sources: handle network request errors (#2494)
+  * store: handle invalid snap file errors (#2492)
+  * tests: fix multipass error handling spread test (#2491)
+  * plugins: improve python and go schema validation (#2473) (LP: #1806055)
+  * cli: disable raven if not running from package (#2503)
+
+  [ Facundo Batista ]
+  * schema: better 'version' error messages: wrong type and incorrect length (#2497)
+    (LP: #1815812)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 21 Mar 2019 20:34:19 +0000
+
 snapcraft (3.2) xenial; urgency=medium
 
   [ Sergio Schvezov ]

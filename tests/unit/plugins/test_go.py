@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import jsonschema
 from textwrap import dedent
 from unittest import mock
 
@@ -235,6 +236,12 @@ class GoPluginPropertiesTest(unit.TestCase):
 
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
+
+
+class MockElfFile:
+    def __init__(self, *, path: str) -> None:
+        self.path = path
+        self.is_dynamic = True
 
 
 class GoPluginTest(GoPluginBaseTest):
@@ -607,6 +614,91 @@ class GoPluginTest(GoPluginBaseTest):
             cwd=plugin._gopath_src,
             env=mock.ANY,
         )
+
+    @mock.patch("snapcraft.internal.elf.ElfFile")
+    def test_build_classic_dynamic_relink(self, mock_elffile):
+        class Options:
+            source = ""
+            go_channel = "latest/stable"
+            go_packages = ["github.com/gotools/vet"]
+            go_importpath = ""
+            go_buildtags = ""
+
+        mock_elffile.return_value = MockElfFile(path="foo")
+        self.project.info.confinement = "classic"
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        os.makedirs(plugin._gopath_bin)
+        os.makedirs(plugin.builddir)
+        # fake some binaries
+        binary = os.path.join(plugin._gopath_bin, "vet")
+        open(binary, "w").close()
+
+        self.run_mock.reset_mock()
+        plugin.build()
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["go", "build", "-o", binary, plugin.options.go_packages[0]],
+                    cwd=plugin._gopath_src,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    [
+                        "go",
+                        "build",
+                        "-ldflags",
+                        "-linkmode=external",
+                        "-o",
+                        binary,
+                        plugin.options.go_packages[0],
+                    ],
+                    cwd=plugin._gopath_src,
+                    env=mock.ANY,
+                ),
+            ]
+        )
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
+        self.assertTrue(os.path.exists(vet_binary))
+
+
+class GoPluginSchemaValidationTest(unit.TestCase):
+    def test_sources_validation_neither(self):
+        schema = self._get_schema()
+        properties = {}
+        self.assertRaises(
+            jsonschema.ValidationError, jsonschema.validate, properties, schema
+        )
+
+    def test_sources_validation_source(self):
+        schema = self._get_schema()
+        properties = {"source": ""}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_packages(self):
+        schema = self._get_schema()
+        properties = {"go-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_both(self):
+        schema = self._get_schema()
+        properties = {"source": "foo", "go-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def _get_schema(self):
+        schema = go.GoPlugin.schema()
+        # source definition comes from the main schema
+        schema["properties"]["source"] = {"type": "string"}
+        return schema
 
 
 class GoPluginToolSetupTest(GoPluginBaseTest):

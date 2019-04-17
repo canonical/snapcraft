@@ -45,7 +45,97 @@ class MultipassCommandGeneralTest(MultipassCommandBaseTest):
     def test_multipass_command_missing_raises(self):
         self.which_mock.return_value = []
 
-        self.assertRaises(errors.ProviderCommandNotFound, MultipassCommand)
+        self.assertRaises(errors.ProviderNotFound, MultipassCommand, platform="linux")
+
+    def test_ensure_multipass_on_command_found(self):
+        self.which_mock.return_value = ["multipass"]
+
+        MultipassCommand.ensure_multipass(platform="linux")
+
+
+class MultipassCommandEnsureMultipassErrorsTest(MultipassCommandBaseTest):
+    scenarios = (
+        ("linux", dict(platform="linux", prompt_installable=True, snap_which=True)),
+        ("linux not snap", dict(platform="linux", prompt_installable=False)),
+        ("darwin", dict(platform="darwin", prompt_installable=True)),
+        ("unknown", dict(platform="unknown", prompt_installable=False)),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        def which_effect(command: str):
+            if command != "snap":
+                return
+
+            try:
+                if self.snap_which:
+                    return ["snap"]
+            except AttributeError:
+                return []
+
+        self.which_mock.side_effect = which_effect
+
+    def test_ensure_multipass_raises(self):
+        raised = self.assertRaises(
+            errors.ProviderNotFound,
+            MultipassCommand.ensure_multipass,
+            platform=self.platform,
+        )
+        self.assertThat(raised.prompt_installable, Equals(self.prompt_installable))
+
+
+class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch("time.sleep")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        def check_output_effect(*args, **kwargs):
+            if args[0] == ["multipass", "version"]:
+                return b"multipassd"
+
+        patcher = mock.patch("subprocess.check_call")
+        self.check_call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("subprocess.check_output")
+        self.check_output_mock = patcher.start()
+        self.check_output_mock.side_effect = check_output_effect
+        self.addCleanup(patcher.stop)
+
+        self.echoer_mock = mock.Mock()
+
+    def test_linux(self):
+        self.fake_snapd.snaps_result = [
+            dict(name="multipass", channel="beta", revision="10")
+        ]
+        self.fake_snapd.find_result = [
+            dict(multipass=dict(channels={"latest/beta": dict(confinement="classic")}))
+        ]
+        MultipassCommand.setup_multipass(platform="linux", echoer=self.echoer_mock)
+
+        self.echoer_mock.wrapped.assert_called_once_with("Waiting for multipass...")
+
+    def test_darwin(self):
+        MultipassCommand.setup_multipass(platform="darwin", echoer=self.echoer_mock)
+
+        self.check_call_mock.assert_called_once_with(
+            ["brew", "cask", "install", "multipass"]
+        )
+        self.echoer_mock.wrapped.assert_called_once_with("Waiting for multipass...")
+
+    def test_unkown_platform_raises(self):
+        self.assertRaises(
+            EnvironmentError,
+            MultipassCommand.setup_multipass,
+            platform="unknown",
+            echoer=self.echoer_mock,
+        )
+
+        self.echoer_mock.wrapped.assert_not_called()
 
 
 class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
@@ -66,7 +156,7 @@ class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
         self.popen_mock().returncode = 0
         self.addCleanup(patcher.stop)
 
-        self.multipass_command = MultipassCommand()
+        self.multipass_command = MultipassCommand(platform="linux")
         self.instance_name = "stub-instance"
 
 

@@ -14,32 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 import logging
 import typing
-import sys
 import os
-from time import sleep
 
 import click
 
 from . import echo
-from . import env
-from ._options import add_build_options, get_project
+from ._options import (
+    add_build_options,
+    get_build_environment,
+    get_project,
+    HiddenOption,
+)
 from snapcraft.internal import (
-    errors,
     build_providers,
     deprecations,
     lifecycle,
     project_loader,
     steps,
-    repo,
 )
-from snapcraft.project._sanity_checks import (
-    conduct_project_sanity_check,
-    conduct_build_environment_sanity_check,
-)
-from snapcraft.project.errors import MultipassMissingInstallableError
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
 
@@ -50,37 +45,6 @@ if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
 
 
-def _install_multipass():
-    if sys.platform == "linux":
-        repo.snaps.install_snaps(["multipass/latest/beta"])
-    elif sys.platform == "darwin":
-        try:
-            subprocess.check_call(["brew", "cask", "install", "multipass"])
-        except subprocess.CalledProcessError:
-            raise errors.SnapcraftEnvironmentError(
-                "Failed to install multipass using homebrew.\n"
-                "Verify your homebrew installation and try again.\n"
-                "Alternatively, manually install multipass by running 'brew cask install multipass'."
-            )
-
-    # wait for multipassd to be available
-    click.echo("Waiting for multipass...")
-    retry_count = 20
-    while retry_count:
-        try:
-            output = subprocess.check_output(["multipass", "version"]).decode()
-        except subprocess.CalledProcessError:
-            output = ""
-        # if multipassd is in the version information, it means the service is up
-        # and we can carry on
-        if "multipassd" in output:
-            break
-        retry_count -= 1
-        sleep(1)
-    # No need to worry about getting to this point by exhausting our retry count,
-    # the rest of the stack will handle the error appropriately.
-
-
 # TODO: when snap is a real step we can simplify the arguments here.
 def _execute(  # noqa: C901
     step: steps.Step,
@@ -89,26 +53,13 @@ def _execute(  # noqa: C901
     output: str = None,
     shell: bool = False,
     shell_after: bool = False,
-    destructive_mode: bool = False,
+    setup_prime_try: bool = False,
     **kwargs
 ) -> "Project":
+    # Cleanup any previous errors.
     _clean_provider_error()
-    provider = "host" if destructive_mode else None
-    build_environment = env.BuilderEnvironmentConfig(force_provider=provider)
-    try:
-        conduct_build_environment_sanity_check(build_environment.provider)
-    except MultipassMissingInstallableError as e:
-        click.echo(
-            "You need multipass installed to build snaps "
-            "(https://github.com/CanonicalLtd/multipass)."
-        )
-        if click.confirm("Would you like to install it now?"):
-            _install_multipass()
-        else:
-            raise errors.SnapcraftEnvironmentError(
-                "multipass is required to continue."
-            ) from e
 
+    build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
     echo.wrapped(
@@ -130,7 +81,20 @@ def _execute(  # noqa: C901
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        echo.info("Launching a VM.")
+        try:
+            build_provider_class.ensure_provider()
+        except build_providers.errors.ProviderNotFound as provider_error:
+            if provider_error.prompt_installable:
+                if click.confirm(
+                    "Support for {!r} needs to be set up. "
+                    "Would you like to do that it now?".format(provider_error.provider)
+                ):
+                    build_provider_class.setup_provider(echoer=echo)
+                else:
+                    raise provider_error
+            else:
+                raise provider_error
+
         with build_provider_class(project=project, echoer=echo) as instance:
             instance.mount_project()
             try:
@@ -149,6 +113,9 @@ def _execute(  # noqa: C901
                         instance.execute_step(previous_step)
                 elif pack_project:
                     instance.pack_project(output=output)
+                elif setup_prime_try:
+                    instance.expose_prime()
+                    instance.execute_step(step)
                 else:
                     instance.execute_step(step)
             except Exception:
@@ -266,6 +233,23 @@ def prime(parts, **kwargs):
     _execute(steps.PRIME, parts, **kwargs)
 
 
+@lifecyclecli.command("try")
+@add_build_options()
+def try_command(**kwargs):
+    """Try a snap on the host, priming if necessary.
+
+    This feature only works on snap enabled systems.
+
+    \b
+    Examples:
+        snapcraft try
+
+    """
+    project = _execute(steps.PRIME, [], setup_prime_try=True, **kwargs)
+    # project.prime_dir here points to the on-host prime directory.
+    echo.info("You can now run `snap try {}`.".format(project.prime_dir))
+
+
 @lifecyclecli.command()
 @add_build_options()
 @click.argument("directory", required=False)
@@ -308,7 +292,14 @@ def pack(directory, output, **kwargs):
 
 @lifecyclecli.command()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-def clean(parts):
+@click.option(
+    "--use-lxd",
+    is_flag=True,
+    required=False,
+    help="Forces snapcraft to use LXD for this clean command.",
+)
+@click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
+def clean(parts, use_lxd, unprime):
     """Remove a part's assets.
 
     \b
@@ -316,22 +307,26 @@ def clean(parts):
         snapcraft clean
         snapcraft clean my-part
     """
-    build_environment = env.BuilderEnvironmentConfig()
+    build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
+    if unprime and not build_environment.is_managed_host:
+        raise click.BadOptionUsage("--unprime is not a valid option.")
+
     if build_environment.is_managed_host or build_environment.is_host:
-        lifecycle.clean(project, parts)
+        step = steps.PRIME if unprime else None
+        lifecycle.clean(project, parts, step)
     else:
         build_provider_class = build_providers.get_provider_for(
             build_environment.provider
         )
-        build_provider = build_provider_class(project=project, echoer=echo)
         if parts:
-            echo.info("Launching a VM.")
             with build_provider_class(project=project, echoer=echo) as instance:
                 instance.clean(part_names=parts)
         else:
-            build_provider.clean_project()
+            build_provider_class(project=project, echoer=echo).clean_project()
+            # Clear the prime directory on the host
+            lifecycle.clean(project, parts, steps.PRIME)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@
 from tests import unit
 from textwrap import dedent
 
-from testtools.matchers import Equals, Is
+from testtools.matchers import Equals, Is, MatchesRegex
 
 from snapcraft.project._project_info import ProjectInfo
 from snapcraft.project import errors
@@ -43,6 +43,22 @@ class ProjectInfoTest(unit.TestCase):
         self.assertThat(info.summary, Equals("bar"))
         self.assertThat(info.description, Equals("baz"))
         self.assertThat(info.confinement, Equals("strict"))
+
+    def test_empty_yaml(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml("")
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            ProjectInfo,
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path,
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "'name' is a required property in {!r}".format(snapcraft_yaml_file_path)
+            ),
+        )
 
     def test_minimal_load_with_name_only(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
@@ -156,10 +172,12 @@ class InvalidYamlTest(unit.TestCase):
         )
 
         self.assertThat(raised.source, Equals(snapcraft_yaml_file_path))
+        # libyaml had a spelling mistake indentation/intendation
         self.assertThat(
             raised.message,
-            Equals(
-                "found a tab character that violate intendation on line 5, column 1"
+            MatchesRegex(
+                "found a tab character that violate (indentation|intendation)"
+                " on line 5, column 1"
             ),
         )
 
