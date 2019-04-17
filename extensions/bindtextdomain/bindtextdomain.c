@@ -64,8 +64,11 @@ char *bindtextdomain(const char *domainname, const char *dirname)
                  * going to use, so we can't look in any particular directory.
                  */
                 dir = opendir (snap_path);
-                if (dir == NULL)
+                if (dir == NULL) {
+                        free (snap_path);
+                        snap_path = NULL;
                         continue;
+                }
 
                 while ((ent = readdir (dir)) != NULL) {
                         if (ent->d_name[0] == '.')
@@ -82,7 +85,6 @@ char *bindtextdomain(const char *domainname, const char *dirname)
                          * this far, be sure it's freed before any goto 
                          * or continue
                          */
-
                         if (access (snap_locale_path, F_OK) == 0) {
                                 closedir (dir);
                                 free (snap_locale_path);
@@ -98,8 +100,6 @@ char *bindtextdomain(const char *domainname, const char *dirname)
                 closedir (dir);
                 free (snap_path);
                 snap_path = NULL;
-                free (snap_locale_path);
-                snap_locale_path = NULL;
         }
         /*
          * we fell out of the loop, so we'll go to orig regardless - no need to
@@ -109,12 +109,12 @@ char *bindtextdomain(const char *domainname, const char *dirname)
 
 ok:
         ret = r_bindtextdomain (domainname, snap_path);
+        free (snap_path);
+        snap_path = NULL;
         goto out;
 orig:
         ret = r_bindtextdomain (domainname, dirname);
         goto out;
 out:
-        free (snap_path);
-        snap_path = NULL;
         return ret;
 }
