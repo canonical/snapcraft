@@ -1571,7 +1571,7 @@ class StateTestCase(StateBaseTestCase):
 
     @patch(
         "snapcraft.internal.elf.ElfFile._extract",
-        return_value=(("", "", ""), "EXEC", "", dict(), False),
+        return_value=(("", "", ""), "EXEC", "", dict(), False, True),
     )
     @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft.internal.pluginhandler._migrate_files")
@@ -1644,7 +1644,7 @@ class StateTestCase(StateBaseTestCase):
 
     @patch(
         "snapcraft.internal.elf.ElfFile._extract",
-        return_value=(("", "", ""), "EXEC", "", dict(), False),
+        return_value=(("", "", ""), "EXEC", "", dict(), False, True),
     )
     @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft.internal.pluginhandler._migrate_files")
@@ -1700,7 +1700,7 @@ class StateTestCase(StateBaseTestCase):
 
     @patch(
         "snapcraft.internal.elf.ElfFile._extract",
-        return_value=(("", "", ""), "EXEC", "", dict(), False),
+        return_value=(("", "", ""), "EXEC", "", dict(), False, True),
     )
     @patch(
         "snapcraft.internal.elf.ElfFile.load_dependencies",

@@ -22,6 +22,18 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  # openjdk-9 is currently broken except for amd64 and i386 on xenial
+  if [[ "$OPENJDK_VERSION" == "LATEST" ]] &&
+     [[ "$SPREAD_SYSTEM" == ubuntu-16.04-armhf ]] || \
+     [[  "$SPREAD_SYSTEM" == ubuntu-16.04-arm64 ]] || \
+     [[  "$SPREAD_SYSTEM" == ubuntu-16.04-s390x ]] || \
+     [[  "$SPREAD_SYSTEM" == ubuntu-16.04-ppc64el ]]
+  then
+    echo "Skipping test as it is currently broken for $SPREAD_SYSTEM"
+    echo "due to https://launchpad.net/ubuntu/+source/openjdk-9"
+    exit 0
+  fi
+
   cd "$SNAP_DIR"
   snapcraft
   sudo snap install ant-hello_*.snap --dangerous

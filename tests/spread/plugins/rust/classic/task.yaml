@@ -7,9 +7,8 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
-
-  # Set the confinement type of this snap to classic
-  sed -i 's/\(confinement.*\)strict/\1classic/' "$SNAP_DIR/snap/snapcraft.yaml"
+  # Change the confinement to classic
+  set_confinement "$SNAP_DIR/snap/snapcraft.yaml" classic
 
   # Install patchelf but mark it autoinstalled
   # to automatically restore

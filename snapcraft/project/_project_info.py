@@ -86,4 +86,7 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
     except yaml.YAMLError as e:
         raise errors.YamlValidationError(str(e), yaml_file_path) from e
 
+    if yaml_contents is None:
+        yaml_contents = OrderedDict()
+
     return yaml_contents

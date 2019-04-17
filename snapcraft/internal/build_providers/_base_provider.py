@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -124,9 +124,25 @@ class Provider(abc.ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.destroy()
 
+    @classmethod
+    @abc.abstractclassmethod
+    def ensure_provider(cls) -> None:
+        """Necessary steps to ensure the provider is correctly setup."""
+
+    @classmethod
+    @abc.abstractclassmethod
+    def setup_provider(cls, *, echoer) -> None:
+        """Necessary steps to install the provider on the host."""
+
+    @classmethod
     @abc.abstractclassmethod
     def _get_provider_name(cls) -> str:
         """Return the provider name."""
+
+    @classmethod
+    @abc.abstractclassmethod
+    def _get_is_snap_injection_capable(cls) -> bool:
+        """Return whether the provider can install snaps from the host."""
 
     @abc.abstractmethod
     def create(self) -> None:
@@ -141,7 +157,7 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: Sequence[str]) -> None:
+    def _run(self, command: Sequence[str]) -> Optional[bytes]:
         """Run a command on the instance."""
 
     @abc.abstractmethod
@@ -157,14 +173,6 @@ class Provider(abc.ABC):
         """Push a file into the instance."""
 
     @abc.abstractmethod
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
-        """Mount a path from the host inside the instance."""
-
-    @abc.abstractmethod
-    def _umount(self, *, mountpoint: str) -> None:
-        """Unmount the mountpoint from the instance."""
-
-    @abc.abstractmethod
     def _mount_snaps_directory(self) -> None:
         """Mount the host directory with snaps into the provider."""
 
@@ -176,6 +184,20 @@ class Provider(abc.ABC):
     def mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
+
+    @abc.abstractmethod
+    def _mount_prime_directory(self) -> bool:
+        """Mount the host prime directory into the provider.
+
+        :returns: True if the prime directory was already mounted.
+        """
+
+    def expose_prime(self) -> None:
+        """Provider steps needed to expose the prime directory to the host.
+        """
+        os.makedirs(self.project.prime_dir, exist_ok=True)
+        if not self._mount_prime_directory():
+            self._run(command=["snapcraft", "clean", "--unprime"])
 
     def execute_step(self, step: steps.Step) -> None:
         self._run(command=["snapcraft", step.name])
@@ -257,8 +279,14 @@ class Provider(abc.ABC):
             self.provider_project_dir, "snap-registry.yaml"
         )
 
-        # We do not want to inject from the host if not running from the snap.
-        inject_from_host = common.is_snap()
+        # We do not want to inject from the host if not running from the snap
+        # or if the provider cannot handle snap mounts.
+        # This latter problem should go away when API for retrieving snaps
+        # through snapd is generally available.
+        if self._get_is_snap_injection_capable():
+            inject_from_host = common.is_snap()
+        else:
+            inject_from_host = False
 
         snap_injector = SnapInjector(
             snap_dir=self._SNAPS_MOUNTPOINT,
@@ -282,15 +310,18 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
+    def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
+        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+
     def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
-        # TODO support users for the qemu provider.
         cloud_user_data_filepath = os.path.join(
             self.provider_project_dir, "user-data.yaml"
         )
         if os.path.exists(cloud_user_data_filepath):
             return cloud_user_data_filepath
 
-        user_data = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+        user_data = self._get_cloud_user_data_string(timezone=timezone)
+
         with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
             print(user_data, file=cloud_user_data_file, end="")
 

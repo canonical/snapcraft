@@ -120,7 +120,9 @@ prepare: |
   apt-get install -y snapd
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-      sudo snap install --classic --beta multipass
+      snap install --classic --beta multipass
+      # Remove lxd and lxd-client deb packages
+      apt-get remove --purge --yes lxd lxd-client
   fi
 
   if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
@@ -153,11 +155,9 @@ suites:
  tests/spread/general/:
    summary: tests of snapcraft core functionality
 
- tests/spread/multipass/:
-   summary: tests of snapcraft using multipass
-   # Keep this 18.04 only for now as it is the only stable base.
+ tests/spread/build-providers/:
+   summary: tests of snapcraft using build providers
    systems: [ubuntu-18.04*]
-   manual: true
 
  # Plugin-specific suites
  tests/spread/plugins/ant/:

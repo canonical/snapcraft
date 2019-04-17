@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,8 +29,6 @@ from tests.unit.build_providers import ProviderImpl
 
 
 class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
-    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
-
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -47,7 +45,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
         self.useFixture(fixture_setup.FakeMultipass())
 
     def test_validation_passes(self):
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base=self.base)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core")
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
 
@@ -57,7 +55,7 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
 
     def test_validation_fails(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, name="name with spaces", base=self.base
+            self.path, name="name with spaces", base="core"
         )
         snapcraft_yaml.update_part("part1", dict(plugin="nil"))
         self.useFixture(snapcraft_yaml)
@@ -68,8 +66,6 @@ class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
 
 
 class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
-    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
-
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -96,7 +92,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.shell_mock = shell_mock
 
-        self.make_snapcraft_yaml("pull", base=self.base)
+        self.make_snapcraft_yaml("pull", base="core")
 
     def test_step_with_debug_using_build_provider_fails(self):
         result = self.run_command(["--debug", "pull"])
@@ -117,8 +113,6 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
 
 class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
-    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
-
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -150,7 +144,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.pack_project_mock = pack_project_mock
         self.execute_step_mock = execute_step_mock
 
-        self.make_snapcraft_yaml("pull", base=self.base)
+        self.make_snapcraft_yaml("pull", base="core")
 
     def test_step_with_shell_after(self):
         result = self.run_command(["pull", "--shell-after"])
@@ -220,9 +214,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.shell_mock.assert_not_called()
 
 
-class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
-    scenarios = (("core18", dict(base="core18")), ("no base", dict(base=None)))
-
+class BuildProviderTryCommandTestCase(LifecycleCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(
@@ -230,6 +222,38 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
         )
         self.useFixture(fixture_setup.FakeMultipass())
 
+        mount_prime_mock = mock.Mock()
+
+        class Provider(ProviderImpl):
+            def _mount_prime_directory(self) -> None:
+                mount_prime_mock()
+
+        patcher = mock.patch(
+            "snapcraft.internal.build_providers.get_provider_for", return_value=Provider
+        )
+        self.provider = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.mount_prime_mock = mount_prime_mock
+
+        self.make_snapcraft_yaml("pull", base="core")
+
+    def test_try(self):
+        result = self.run_command(["try"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.mount_prime_mock.assert_called_once_with()
+
+
+class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
+        )
+        self.useFixture(fixture_setup.FakeMultipass())
+
+        clean_project_mock = mock.Mock()
         clean_mock = mock.Mock()
 
         class Provider(ProviderImpl):
@@ -237,6 +261,9 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
                 raise ProviderExecError(
                     provider_name="fake", command=["snapcraft", "pull"], exit_code=1
                 )
+
+            def clean_project(self):
+                clean_project_mock()
 
             def clean(self, part_names):
                 clean_mock(part_names=part_names)
@@ -247,18 +274,54 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
         self.provider = patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.clean_project_mock = clean_project_mock
         self.clean_mock = clean_mock
 
-        self.make_snapcraft_yaml("pull", base=self.base)
+        self.make_snapcraft_yaml("pull", base="core")
+
+    @mock.patch("snapcraft.internal.lifecycle.clean")
+    def test_clean(self, lifecycle_clean_mock):
+        result = self.run_command(["clean"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        lifecycle_clean_mock.assert_called_once_with(mock.ANY, tuple(), steps.PRIME)
+        self.clean_project_mock.assert_called_once_with()
+        self.clean_mock.assert_not_called()
 
     def test_clean_a_single_part(self):
         result = self.run_command(["clean", "part1"])
 
         self.assertThat(result.exit_code, Equals(0))
+        self.clean_project_mock.assert_not_called()
         self.clean_mock.assert_called_once_with(part_names=("part1",))
 
     def test_clean_multiple_parts(self):
         result = self.run_command(["clean", "part1", "part2", "part3"])
 
         self.assertThat(result.exit_code, Equals(0))
+        self.clean_project_mock.assert_not_called()
         self.clean_mock.assert_called_once_with(part_names=("part1", "part2", "part3"))
+
+    def test_unprime_with_build_environment_errors(self):
+        result = self.run_command(["clean", "--unprime"])
+
+        self.assertThat(result.exit_code, Equals(2))
+        self.clean_project_mock.assert_not_called()
+        self.clean_mock.assert_not_called()
+
+    @mock.patch("snapcraft.cli.lifecycle.get_project")
+    @mock.patch("snapcraft.internal.lifecycle.clean")
+    def test_unprime_in_managed_host(self, lifecycle_clean_mock, project_mock):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
+        )
+        project_mock.return_value = "fake-project"
+
+        result = self.run_command(["clean", "--unprime"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        lifecycle_clean_mock.assert_called_once_with(
+            "fake-project", tuple(), steps.PRIME
+        )
+        self.clean_project_mock.assert_not_called()
+        self.clean_mock.assert_not_called()

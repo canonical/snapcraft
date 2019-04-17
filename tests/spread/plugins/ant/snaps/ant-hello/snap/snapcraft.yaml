@@ -9,7 +9,7 @@ grade: devel
 
 apps:
   ant-hello:
-    command: bin/java oata.HelloWorld
+    command: bin/java -cp $SNAP/jar/HelloWorld.jar oata.HelloWorld
 
 parts:
   ant:

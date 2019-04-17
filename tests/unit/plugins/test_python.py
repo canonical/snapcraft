@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
+import jsonschema
 import os
 from textwrap import dedent
 from unittest import mock
@@ -152,6 +153,36 @@ class PythonPluginPropertiesTest(unit.TestCase):
 
         for property in expected_pull_properties:
             self.assertIn(property, resulting_pull_properties)
+
+
+class PythonPluginSchemaValidationTest(unit.TestCase):
+    def test_sources_validation_neither(self):
+        schema = self._get_schema()
+        properties = {}
+        self.assertRaises(
+            jsonschema.ValidationError, jsonschema.validate, properties, schema
+        )
+
+    def test_sources_validation_source(self):
+        schema = self._get_schema()
+        properties = {"source": ""}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_packages(self):
+        schema = self._get_schema()
+        properties = {"python-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def test_sources_validation_both(self):
+        schema = self._get_schema()
+        properties = {"source": "", "python-packages": []}
+        jsonschema.validate(properties, schema)
+
+    def _get_schema(self):
+        schema = python.PythonPlugin.schema()
+        # source definition comes from the main schema
+        schema["properties"]["source"] = {"type": "string"}
+        return schema
 
 
 class PythonPluginTest(PythonPluginBaseTest):

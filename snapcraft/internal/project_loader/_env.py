@@ -110,6 +110,7 @@ def snapcraft_global_environment(project: project.Project) -> Dict[str, str]:
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(project.parallel_build_count),
         "SNAPCRAFT_PROJECT_NAME": name,
         "SNAPCRAFT_PROJECT_VERSION": version,
+        "SNAPCRAFT_PROJECT_DIR": project._project_dir,
         "SNAPCRAFT_PROJECT_GRADE": grade,
         "SNAPCRAFT_STAGE": project.stage_dir,
         "SNAPCRAFT_PRIME": project.prime_dir,

@@ -29,7 +29,7 @@ from testscenarios import multiply_scenarios
 import snapcraft.internal.errors
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import exception_handler
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
@@ -46,6 +46,8 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
 class ErrorsBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
+
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         patcher = mock.patch("sys.exit")
         self.exit_mock = patcher.start()
@@ -98,8 +100,9 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         super().setUp()
 
     @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    @mock.patch("snapcraft.internal.common.is_snap", return_value=False)
     def test_handler_no_raven_traceback_non_snapcraft_exceptions_debug(
-        self, raven_client_mock
+        self, is_snap_mock, raven_client_mock
     ):
         snapcraft.cli._errors.RavenClient = None
         try:

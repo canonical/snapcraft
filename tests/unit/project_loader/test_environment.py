@@ -258,6 +258,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_PART_INSTALL="{}/parts/main/install"'.format(self.path),
                     'SNAPCRAFT_PART_SRC="{}/parts/main/src"'.format(self.path),
                     'SNAPCRAFT_PRIME="{}/prime"'.format(self.path),
+                    'SNAPCRAFT_PROJECT_DIR="{}"'.format(self.path),
                     'SNAPCRAFT_PROJECT_GRADE="stable"',
                     'SNAPCRAFT_PROJECT_NAME="test"',
                     'SNAPCRAFT_PROJECT_VERSION="1"',
@@ -508,6 +509,11 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         ][0]
         env = project_config.parts.build_env_for_part(part1)
         self.assertThat(env, Contains('SNAPCRAFT_EXTENSIONS_DIR="/foo"'))
+
+    def test_project_dir(self):
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        env = project_config.parts.build_env_for_part(project_config.parts.all_parts[0])
+        self.assertThat(env, Contains('SNAPCRAFT_PROJECT_DIR="{}"'.format(self.path)))
 
     def test_build_environment(self):
         self.useFixture(FakeOsRelease())

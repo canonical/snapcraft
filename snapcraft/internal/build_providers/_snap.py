@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -44,10 +44,9 @@ class _SnapOp(enum.Enum):
 
 def _get_snap_channel(snap_name: str) -> str:
     """Returns the channel to use for snap_name."""
-    if snap_name == "snapcraft":
-        channel = os.getenv(
-            "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/stable"
-        )
+    env_channel = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", None)
+    if env_channel is not None and snap_name == "snapcraft":
+        channel = env_channel
         logger.warning(
             "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT is set: installing "
             "snapcraft from {}".format(channel)
@@ -161,7 +160,7 @@ class _SnapManager:
     def _set_data(self) -> None:
         op = self.get_op()
         host_snap_repo = self._get_snap_repo()
-        install_cmd = ["sudo", "snap"]
+        install_cmd = ["snap"]
 
         if op == _SnapOp.INJECT:
             install_cmd.append("install")
@@ -247,7 +246,7 @@ class SnapInjector:
         snap_dir: str,
         registry_filepath: str,
         snap_arch: str,
-        runner: Callable[..., None],
+        runner: Callable[..., Optional[bytes]],
         snap_dir_mounter: Callable[[], None],
         snap_dir_unmounter: Callable[[], None],
         file_pusher: Callable[..., None],
@@ -299,21 +298,15 @@ class SnapInjector:
         # Disable autorefresh for 15 minutes,
         # https://github.com/snapcore/snapd/pull/5436/files
         now_plus_15 = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        logger.debug("Holding refreshes for snaps.")
         self._runner(
-            [
-                "sudo",
-                "snap",
-                "set",
-                "core",
-                "refresh.hold={}Z".format(now_plus_15.isoformat()),
-            ]
+            ["snap", "set", "core", "refresh.hold={}Z".format(now_plus_15.isoformat())],
+            hide_output=True,
         )
         # Auto refresh may have kicked in while setting the hold.
         logger.debug("Waiting for pending snap auto refreshes.")
         with contextlib.suppress(errors.ProviderExecError):
-            self._runner(
-                ["sudo", "snap", "watch", "--last=auto-refresh"], hide_output=True
-            )
+            self._runner(["snap", "watch", "--last=auto-refresh"], hide_output=True)
 
     def _inject_assertions(self) -> None:
         assertions = []  # type: List[List[str]]
@@ -335,7 +328,7 @@ class SnapInjector:
             self._file_pusher(
                 source=assertion_file.name, destination=assertion_file.name
             )
-            self._runner(["sudo", "snap", "ack", assertion_file.name])
+            self._runner(["snap", "ack", assertion_file.name])
 
     def _get_latest_revision(self, snap_name) -> Optional[str]:
         try:

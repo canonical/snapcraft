@@ -4,9 +4,11 @@ environment:
   SNAP_DIR: ../snaps/autotools-hello
 
 prepare: |
-  cd "$SNAP_DIR"
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
   # Change the confinement to classic
-  sed -i -e "s/confinement: strict/confinement: classic/" snap/snapcraft.yaml
+  set_confinement "$SNAP_DIR/snap/snapcraft.yaml" classic
 
 restore: |
   cd "$SNAP_DIR"
