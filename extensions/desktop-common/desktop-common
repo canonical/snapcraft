@@ -56,7 +56,7 @@ function is_subpath() {
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
-if [ "$WITH_SNAP_DESKTOP_RUNTIME" = "yes" ]; then
+if [ -n "$SNAP_DESKTOP_RUNTIME" ]; then
   # add general paths not added by snapcraft due to runtime snap
   append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$SNAP_DESKTOP_ARCH_TRIPLET"
   append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET"
