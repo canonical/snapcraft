@@ -1,38 +1,5 @@
 #!/bin/bash
 
-if [ "$SNAP_ARCH" == "amd64" ]; then
-  ARCH='x86_64-linux-gnu'
-elif [ "$SNAP_ARCH" == "armhf" ]; then
-  ARCH="arm-linux-gnueabihf"
-else
-  ARCH="$SNAP_ARCH-linux-gnu"
-fi
-
-KF5=$SNAP/kf5
-if [ ! -d $KF5 ]; then
-  # This litters the paths a bit by essentially duplicating everything, but
-  # that seems simplest to have both kf5 and !kf5 work with the same code.
-  KF5=$SNAP
-fi
-
-if [ ! -d $KF5/usr ]; then
-  source /etc/os-release
-  runtime="kde-frameworks-5"
-  slot="kde-frameworks-5:kde-frameworks-5-slot"
-  if [ "$VERSION" == "18" ]; then
-    runtime="kde-frameworks-5-core18"
-    slot="kde-frameworks-5-core18:kde-frameworks-5-core18-slot"
-  fi
-
-  echo "You need to connect this snap to the $runtime snap."
-  echo ""
-  echo "You can do this with those commands:"
-  echo "snap install $runtime"
-  echo "snap refresh $runtime"
-  echo "snap connect $SNAP_NAME:kde-frameworks-5-plug $slot"
-  exit 1
-fi
-
 if [ -n "$KF5_SNAP_COMMON_HOME" ]; then
   # https://forum.snapcraft.io/t/home-why-is-it-versioned/9708/2
   export HOME=$SNAP_USER_COMMON
@@ -43,20 +10,20 @@ export PATH=$PATH:$SNAP/usr/bin:$SNAP/usr/sbin:$KF5/usr/bin:$KF5/usr/sbin
 # / in the snap is basically ubuntu-core.
 export PATH=$PATH:/usr/local/sbin:/usr/local/bin
 
-export LD_LIBRARY_PATH=$KF5/lib:$KF5/lib/$ARCH:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$KF5/usr/lib:$KF5/usr/lib/$ARCH:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$SNAP/lib:$SNAP/lib/$ARCH:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$SNAP/usr/lib:$SNAP/usr/lib/$ARCH:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/lib:$KF5/lib/$SNAP_DESKTOP_ARCH_TRIPLET:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/usr/lib:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$SNAP/lib:$SNAP/lib/$SNAP_DESKTOP_ARCH_TRIPLET:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$SNAP/usr/lib:$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET:$LD_LIBRARY_PATH
 
 # XKB config
 export XKB_CONFIG_ROOT=$KF5/usr/share/X11/xkb
 
 # Mesa Libs
-export LD_LIBRARY_PATH=$KF5/usr/lib/$ARCH/mesa:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$KF5/usr/lib/$ARCH/mesa-egl:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/mesa:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/mesa-egl:$LD_LIBRARY_PATH
 
 # libGL Drivers
-export LIBGL_DRIVERS_PATH=$KF5/usr/lib/$ARCH/dri
+export LIBGL_DRIVERS_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/dri
 export LD_LIBRARY_PATH=$LIBGL_DRIVERS_PATH:$LD_LIBRARY_PATH
 
 # Grab proprietary nvidia mount when possible.
@@ -64,7 +31,7 @@ export LD_LIBRARY_PATH=$LIBGL_DRIVERS_PATH:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/var/lib/snapd/lib/gl:$LD_LIBRARY_PATH
 
 # Pulseaudio plugins
-export LD_LIBRARY_PATH=$KF5/usr/lib/$ARCH/pulseaudio:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/pulseaudio:$LD_LIBRARY_PATH
 
 # Necessary for the SDK to find the translations directory
 # FIXME: do we (kde) really need this?
@@ -133,25 +100,25 @@ mkdir -p $XDG_CONFIG_HOME/fontconfig
 make_user_fontconfig > $FONTCONFIG_FILE
 
 # GStreamer
-export GST_PLUGIN_PATH_1_0=$SNAP/usr/lib/$ARCH/gstreamer-1.0/:$KF5/usr/lib/$ARCH/gstreamer-1.0/
+export GST_PLUGIN_PATH_1_0=$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0/:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0/
 
 # Qt Libs
-export LD_LIBRARY_PATH=$KF5/usr/lib/$ARCH/qt5/libs:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/libs:$LD_LIBRARY_PATH
 
 # Qt Modules
 #
 # /usr/lib/arch/ is used for (e.g.) grantlee which uses a hardcoded path on top
 # of QT_PLUGIN_PATH (if it didn't have the hardcoded variant this wouldn't work
 # outside snaps either...
-export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$SNAP/usr/lib/$ARCH/qt5/plugins:$SNAP/usr/lib/$ARCH/
-export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$KF5/usr/lib/$ARCH/qt5/plugins:$KF5/usr/lib/$ARCH/
-export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$SNAP/usr/lib/$ARCH/qt5/qml
-export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$SNAP/lib/$ARCH
-export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$KF5/usr/lib/$ARCH/qt5/qml
-export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$KF5/lib/$ARCH
+export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/plugins:$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/
+export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/plugins:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/
+export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/qml
+export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$SNAP/lib/$SNAP_DESKTOP_ARCH_TRIPLET
+export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/qml
+export QML2_IMPORT_PATH=$QML2_IMPORT_PATH:$KF5/lib/$SNAP_DESKTOP_ARCH_TRIPLET
 
 # Qt Webengine
-export QTWEBENGINEPROCESS_PATH=$KF5/usr/lib/$ARCH/qt5/libexec/QtWebEngineProcess
+export QTWEBENGINEPROCESS_PATH=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/qt5/libexec/QtWebEngineProcess
 
 # Removes Qt warning: Could not find a location
 # of the system Compose files
@@ -172,7 +139,7 @@ export QT_QPA_PLATFORMTHEME=${QT_QPA_PLATFORMTHEME:-kde}
 export KDE_FORK_SLAVES=1
 ## Neon PATCH! make KIO look for slaves in a dynamic location depending on $SNAP
 ## FIXME: should be made a : separated list so we can look in $SNAP and $KF5!
-export KF5_LIBEXEC_DIR=$KF5/usr/lib/$ARCH/libexec/kf5
+export KF5_LIBEXEC_DIR=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/libexec/kf5
 
 # Link icons into home so (xcursor) can find its cursor theme.
 mkdir -p $HOME/.icons
@@ -184,9 +151,9 @@ export QT_SELECT=5
 # qtchooser hardcodes reference paths, we'll need to rewrite them properly
 [ -d $XDG_CONFIG_HOME/qtchooser ] || mkdir -p $XDG_CONFIG_HOME/qtchooser
 echo "$SNAP/usr/lib/qt5/bin" > $XDG_CONFIG_HOME/qtchooser/5.conf
-echo "$SNAP/usr/lib/$ARCH" >> $XDG_CONFIG_HOME/qtchooser/5.conf
+echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> $XDG_CONFIG_HOME/qtchooser/5.conf
 echo "$SNAP/usr/lib/qt5/bin" > $XDG_CONFIG_HOME/qtchooser/default.conf
-echo "$SNAP/usr/lib/$ARCH" >> $XDG_CONFIG_HOME/qtchooser/default.conf
+echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> $XDG_CONFIG_HOME/qtchooser/default.conf
 
 # This relies on qtbase patch
 # 0001-let-qlibraryinfo-fall-back-to-locate-qt.conf-via-XDG.patch

@@ -64,7 +64,8 @@ class Kf5_neonExtension(DesktopCommonExtension):
             "environment": {**self.environment, "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         }
 
-        command_chain = self.app_snippet["command-chain"]
+        command_chain = ["snap/command-chain/kf5-connect"]
+        command_chain = command_chain + self.app_snippet["command-chain"]
         command_chain = command_chain + ["snap/command-chain/kf5-launch"]
 
         self.app_snippet = {
@@ -79,7 +80,10 @@ class Kf5_neonExtension(DesktopCommonExtension):
                 "plugin": "dump",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/kf5-neon",
                 "source-type": "local",
-                "organize": {"kf5-launch": "snap/command-chain/"},
+                "organize": {
+                    "kf5-connect": "snap/command-chain/",
+                    "kf5-launch": "snap/command-chain/",
+                },
                 "build-packages": ["build-essential", "cmake"],
             },
         }
