@@ -1800,7 +1800,7 @@ class FullAdapterTest(unit.TestCase):
 
     def test_missing_command(self):
         raised = self.assertRaises(
-            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+            errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1808,7 +1808,7 @@ class FullAdapterTest(unit.TestCase):
     def test_missing_command_with_spaces(self):
         self.snapcraft_yaml["apps"]["app"]["command"] = "test-command arg1 arg2"
         raised = self.assertRaises(
-            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+            errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1817,7 +1817,7 @@ class FullAdapterTest(unit.TestCase):
         _create_file(os.path.join(self.prime_dir, "test-command"), executable=False)
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandError, self._get_packager().write_snap_yaml
+            errors.InvalidAppCommandNotExecutable, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
