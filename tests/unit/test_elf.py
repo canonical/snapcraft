@@ -16,7 +16,6 @@
 import fixtures
 import logging
 import os
-import subprocess
 import tempfile
 import sys
 
@@ -333,39 +332,6 @@ class TestPatcherErrors(TestElfBase):
         self.assertRaises(
             errors.PatcherGenericError, elf_patcher.patch, elf_file=elf_file
         )
-
-    def test_patch_fails_with_old_version(self):
-        self.fake_elf = fixture_setup.FakeElf(
-            root_path=self.path, patchelf_version="0.8"
-        )
-        self.useFixture(self.fake_elf)
-
-        elf_file = self.fake_elf["fake_elf-bad-patchelf"]
-        # The base_path does not matter here as there are not files to
-        # be crawled for.
-        elf_patcher = elf.Patcher(dynamic_linker="/lib/fake-ld", root_path="/fake")
-
-        with mock.patch(
-            "subprocess.check_call", wraps=subprocess.check_call
-        ) as mock_check_call:
-            self.assertRaises(
-                errors.PatcherNewerPatchelfError, elf_patcher.patch, elf_file=elf_file
-            )
-
-            # Test that .note.go.buildid is stripped off
-            mock_check_call.assert_has_calls(
-                [
-                    mock.call(
-                        ["patchelf", "--set-interpreter", "/lib/fake-ld", mock.ANY]
-                    ),
-                    mock.call(
-                        ["strip", "--remove-section", ".note.go.buildid", mock.ANY]
-                    ),
-                    mock.call(
-                        ["patchelf", "--set-interpreter", "/lib/fake-ld", mock.ANY]
-                    ),
-                ]
-            )
 
 
 class TestSonameCache(unit.TestCase):

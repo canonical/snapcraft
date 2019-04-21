@@ -865,7 +865,14 @@ class ValidVersionTest(ProjectBaseTest):
 
     scenarios = [
         (version, dict(version=version))
-        for version in ["buttered-popcorn", "1.2.3", "v12.4:1:2~", "HeLlo", "v+"]
+        for version in [
+            "'buttered-popcorn'",
+            "'1.2.3'",
+            '"1.2.3"',
+            "'v12.4:1:2~'",
+            "'HeLlo'",
+            "'v+'",
+        ]
     ]
 
     def test_valid_version(self):
@@ -874,7 +881,7 @@ class ValidVersionTest(ProjectBaseTest):
                 """\
             name: test
             base: core18
-            version: '{}'
+            version: {}
             summary: test
             description: test
             confinement: strict
@@ -963,7 +970,11 @@ class InvalidVersionSpecificTest(ProjectBaseTest):
             raised.message,
             Equals(
                 "The 'version' property does not match the required "
-                "schema: snap versions need to be strings."
+                "schema: snap versions need to be strings. They must "
+                "also be wrapped in quotes when the value will be "
+                "interpreted by the YAML parser as a non-string. "
+                "Examples: '1', '1.2', '1.2.3', git (will be replaced "
+                "by a git describe based version string)."
             ),
         )
 

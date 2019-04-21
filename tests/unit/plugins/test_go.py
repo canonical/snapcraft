@@ -238,6 +238,12 @@ class GoPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
+class MockElfFile:
+    def __init__(self, *, path: str) -> None:
+        self.path = path
+        self.is_dynamic = True
+
+
 class GoPluginTest(GoPluginBaseTest):
     def setUp(self):
 
@@ -608,6 +614,61 @@ class GoPluginTest(GoPluginBaseTest):
             cwd=plugin._gopath_src,
             env=mock.ANY,
         )
+
+    @mock.patch("snapcraft.internal.elf.ElfFile")
+    def test_build_classic_dynamic_relink(self, mock_elffile):
+        class Options:
+            source = ""
+            go_channel = "latest/stable"
+            go_packages = ["github.com/gotools/vet"]
+            go_importpath = ""
+            go_buildtags = ""
+
+        mock_elffile.return_value = MockElfFile(path="foo")
+        self.project.info.confinement = "classic"
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        os.makedirs(plugin._gopath_bin)
+        os.makedirs(plugin.builddir)
+        # fake some binaries
+        binary = os.path.join(plugin._gopath_bin, "vet")
+        open(binary, "w").close()
+
+        self.run_mock.reset_mock()
+        plugin.build()
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["go", "build", "-o", binary, plugin.options.go_packages[0]],
+                    cwd=plugin._gopath_src,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    [
+                        "go",
+                        "build",
+                        "-ldflags",
+                        "-linkmode=external",
+                        "-o",
+                        binary,
+                        plugin.options.go_packages[0],
+                    ],
+                    cwd=plugin._gopath_src,
+                    env=mock.ANY,
+                ),
+            ]
+        )
+
+        self.assertTrue(os.path.exists(plugin._gopath))
+        self.assertTrue(os.path.exists(plugin._gopath_src))
+        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
+        self.assertTrue(os.path.exists(vet_binary))
 
 
 class GoPluginSchemaValidationTest(unit.TestCase):

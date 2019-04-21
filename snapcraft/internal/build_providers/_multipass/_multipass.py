@@ -166,6 +166,7 @@ class Multipass(Provider):
 
     def create(self) -> None:
         """Create the multipass instance and setup the build environment."""
+        self.echoer.info("Launching a VM.")
         self.launch_instance()
         self._instance_info = self._get_instance_info()
 
@@ -208,6 +209,24 @@ class Multipass(Provider):
                 uid_map={str(os.getuid()): "0"},
                 gid_map={str(os.getgid()): "0"},
             )
+
+    def _mount_prime_directory(self) -> bool:
+        # Resolve the home directory
+        home_dir = (
+            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
+        )
+        prime_mountpoint = os.path.join(home_dir, "prime")
+        if self._instance_info.is_mounted(prime_mountpoint):
+            return True
+
+        self._mount(
+            mountpoint=prime_mountpoint,
+            dev_or_path=self.project.prime_dir,
+            uid_map={str(os.getuid()): "0"},
+            gid_map={str(os.getgid()): "0"},
+        )
+
+        return False
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()

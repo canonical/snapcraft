@@ -965,6 +965,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
                 "expected": '"{}/usr/lib/foo"'.format(plugin.installdir),
             },
             {
+                "path": "anotherConfig.cmake",
+                "contents": '"$ENV{SNAPCRAFT_STAGE}/usr/lib/another"',
+                "expected": '"{}/usr/lib/another"'.format(plugin.installdir),
+            },
+            {
                 "path": "bar.cmake",
                 "contents": '"/usr/lib/bar"',
                 "expected": '"/usr/lib/bar"',
@@ -1980,6 +1985,16 @@ class CatkinFindTestCase(unit.TestCase):
         self.assertThat(
             " ".join(positional_args), Contains("catkin_find --first-only foo")
         )
+
+    def test_find_only_in_catkin_workspace(self):
+        self.check_output_mock.return_value = os.path.join(
+            self.catkin._catkin_install_path, "bar"
+        ).encode(sys.getfilesystemencoding())
+
+        with testtools.ExpectedException(
+            catkin.CatkinPackageNotFoundError, "Unable to find Catkin package 'foo'"
+        ):
+            self.catkin.find("foo")
 
     def test_find_non_existing_package(self):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(1, "foo")
