@@ -18,10 +18,11 @@ import copy
 import logging
 import os
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List  # noqa: F401
 
 from snapcraft.project import Project
 from snapcraft.internal import project_loader
+from snapcraft.formatting_utils import remove_suffix
 from . import errors
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,12 @@ def conduct_environment_sanity_check(
     yaml_data = copy.deepcopy(yaml_data)
 
     _verify_command_chain_only_full_adapter(yaml_data, schema)
+
+
+def conduct_config_sanity_check(project_config) -> None:
+    """Sanity check the project configuration.
+    """
+    _validate_common_id(project_config.data)
 
 
 def _check_snap_dir(snap_dir_path: str) -> None:
@@ -112,3 +119,44 @@ def _verify_command_chain_only_full_adapter(
             adapter = project_loader.Adapter[adapter_string.upper()]
             if adapter == project_loader.Adapter.LEGACY:
                 raise errors.CommandChainWithLegacyAdapterError(app_name)
+
+
+def _validate_common_id(config_data: Dict[str, Any]) -> None:
+    """ Check if common-id in part matches metadata filename
+
+    In appstream the common ID is encoded in the metadata file name, so check for
+    consistency and warn the user if names don't match. Example data:
+    common-id: org.kde.kbruch.desktop
+    parse-info: [usr/share/metainfo/org.kde.kbruch.appdata.xml]
+    """
+    if "apps" not in config_data or "parts" not in config_data:
+        return
+
+    common_ids = _get_common_ids(config_data)
+    filenames = _get_metadata_filenames(config_data)
+
+    for common_id in common_ids:
+        if remove_suffix(common_id, ".desktop") not in filenames:
+            raise errors.CommonIdMismatchError(common_id, common_ids[common_id])
+
+
+def _get_common_ids(config_data: Dict[str, Any]) -> Dict[str, str]:
+    common_ids = {}  # type: Dict[str, str]
+    for app in config_data["apps"]:
+        common_id = config_data["apps"][app].get("common-id")
+        if common_id:
+            common_ids[common_id] = app
+    return common_ids
+
+
+def _get_metadata_filenames(config_data: Dict[str, Any]) -> List[str]:
+    filenames = []  # type: List[str]
+    for part in config_data["parts"]:
+        parse_info = config_data["parts"][part].get("parse-info")
+        if parse_info:
+            for filename in parse_info:
+                for suffix in [".metainfo.xml", ".appdata.xml"]:
+                    if filename.endswith(suffix):
+                        filename = remove_suffix(os.path.basename(filename), suffix)
+                        filenames.append(filename)
+    return filenames

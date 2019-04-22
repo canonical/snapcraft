@@ -16,6 +16,7 @@
 
 import logging
 import os
+import textwrap
 
 import fixtures
 from testtools.matchers import Equals
@@ -24,8 +25,10 @@ import snapcraft
 from snapcraft.project._sanity_checks import (
     conduct_project_sanity_check,
     conduct_environment_sanity_check,
+    conduct_config_sanity_check,
 )
 from snapcraft.project import errors, _schema
+from snapcraft.internal import project_loader
 
 from tests import unit
 
@@ -206,3 +209,77 @@ class EnvironmentSanityChecksTest(unit.TestCase):
         )
 
         self.assertThat(raised.app_name, Equals("test-app"))
+
+
+class ConfigSanityChecksTest(unit.TestCase):
+    scenarios = [
+        ("appdata", dict(suffix="appdata.xml")),
+        ("metainfo", dict(suffix="metainfo.xml")),
+    ]
+
+    def make_snapcraft_project(self, body):
+        yaml = textwrap.dedent(
+            """\
+            name: test
+            base: core18
+            version: "1.0"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            {body}
+            """
+        )
+
+        yaml_path = self.make_snapcraft_yaml(yaml.format(body=body))
+        project = snapcraft.project.Project(snapcraft_yaml_file_path=yaml_path)
+        return project_loader.load_config(project)
+
+    def test_common_id_valid(self):
+        project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                apps:
+                  test-app:
+                    command: test
+                    common-id: com.test.app.desktop
+                parts:
+                  test-part:
+                    plugin: nil
+                    parse-info: [foo/bar/com.test.app.{}]
+                """.format(
+                    self.suffix
+                )
+            )
+        )
+        try:
+            conduct_config_sanity_check(project_config)
+        except errors.CommonIdMismatchError as e:
+            self.fail(str(e))
+
+    def test_common_id_invalid(self):
+        project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                apps:
+                  test-app:
+                    command: test
+                    common-id: com.tset.app.desktop
+                parts:
+                  test-part:
+                    plugin: nil
+                    parse-info: [foo/bar/com.test.app.{}]
+                """.format(
+                    self.suffix
+                )
+            )
+        )
+        raised = self.assertRaises(
+            errors.CommonIdMismatchError, conduct_config_sanity_check, project_config
+        )
+        self.assertThat(
+            str(raised),
+            Equals(
+                "Common ID 'com.tset.app.desktop' specified in app 'test-app' doesn't match any metadata file."
+            ),
+        )

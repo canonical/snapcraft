@@ -76,3 +76,14 @@ class FormatPathVariableTestCases(unit.TestCase):
         paths = ["/usr/bin", "/usr/sbin"]
         output = formatting_utils.format_path_variable("PATH", paths, "", ",")
         self.assertThat(output, Equals('PATH="$PATH,/usr/bin,/usr/sbin"'))
+
+
+class RemoveSuffixTestCases(unit.TestCase):
+    def test_remove_suffix(self):
+        self.assertThat(formatting_utils.remove_suffix("", ""), Equals(""))
+        self.assertThat(formatting_utils.remove_suffix("", "a"), Equals(""))
+        self.assertThat(formatting_utils.remove_suffix("a", "a"), Equals(""))
+        self.assertThat(formatting_utils.remove_suffix("a", ""), Equals("a"))
+        self.assertThat(formatting_utils.remove_suffix("a", "b"), Equals("a"))
+        self.assertThat(formatting_utils.remove_suffix("ab", "b"), Equals("a"))
+        self.assertThat(formatting_utils.remove_suffix("abb", "b"), Equals("ab"))

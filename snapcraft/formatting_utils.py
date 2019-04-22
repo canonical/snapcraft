@@ -81,3 +81,16 @@ def pluralize(container: Sized, if_one: str, if_multiple: str) -> str:
         return if_one
     else:
         return if_multiple
+
+
+def remove_suffix(astring: str, suffix: str) -> str:
+    """Remove the suffix from the given string.
+
+    :param str astring: The string to remove the suffix from.
+    :param str suffix: The suffix to remove.
+    """
+    if not suffix:
+        return astring
+    if astring.endswith(suffix):
+        return astring[: -len(suffix)]
+    return astring

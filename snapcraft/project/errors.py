@@ -110,6 +110,14 @@ class CommandChainWithLegacyAdapterError(SanityCheckError):
         super().__init__(app_name=app_name)
 
 
+class CommonIdMismatchError(SanityCheckError):
+
+    fmt = "Common ID {name!r} specified in app {app!r} doesn't match any metadata file."
+
+    def __init__(self, name: str, app: str) -> None:
+        super().__init__(name=name, app=app)
+
+
 def _determine_preamble(error):
     messages = []
     path = _determine_property_path(error)

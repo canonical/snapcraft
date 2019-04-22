@@ -34,7 +34,10 @@ from snapcraft.internal import (
     project_loader,
     steps,
 )
-from snapcraft.project._sanity_checks import conduct_project_sanity_check
+from snapcraft.project._sanity_checks import (
+    conduct_project_sanity_check,
+    conduct_config_sanity_check,
+)
 from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
 
@@ -74,6 +77,7 @@ def _execute(  # noqa: C901
 
     if build_environment.is_managed_host or build_environment.is_host:
         project_config = project_loader.load_config(project)
+        conduct_config_sanity_check(project_config)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
             _pack(project.prime_dir, output=output)
