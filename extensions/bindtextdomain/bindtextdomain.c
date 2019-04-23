@@ -54,8 +54,11 @@ char *bindtextdomain(const char *domainname, const char *dirname)
                 if (asprintf (&snap_path, "%s/%s", snap, paths[i]) < 0)
                         continue;
 
-                if (access (snap_path, F_OK) < 0)
+                if (access (snap_path, F_OK) < 0) {
+                        free(snap_path);
+                        snap_path = NULL;
                         continue;
+                }
 
                 /*
                  * if the mo file exists for one language we assume it exists for them
