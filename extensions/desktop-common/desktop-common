@@ -77,7 +77,7 @@ export XLOCALEDIR="$SNAP_DESKTOP_RUNTIME/usr/share/X11/locale"
 
 # Set XCursors path
 export XCURSOR_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/icons"
-prepend_dir XCURSOR_PATH $SNAP/data-dir/icons
+prepend_dir XCURSOR_PATH "$SNAP/data-dir/icons"
 
 # Mesa Libs for OpenGL support
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/mesa"
