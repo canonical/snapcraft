@@ -79,9 +79,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
 
         command_chain = self.app_snippet["command-chain"]
 
-        command_chain = command_chain + [
-            "snap/command-chain/desktop-gnome-specific",
-        ]
+        command_chain = command_chain + ["snap/command-chain/desktop-gnome-specific"]
 
         self.app_snippet = {
             **self.app_snippet,
