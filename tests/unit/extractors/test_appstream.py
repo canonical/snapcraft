@@ -215,7 +215,7 @@ class AppstreamIconsTestCase(unit.TestCase):
     ):
         self._create_appstream_file()
         _create_desktop_file(
-            "usr/share/applicatins/my.app.desktop", icon="${{SNAP}}/icon.png"
+            "usr/share/applications/my.app.desktop", icon="${{SNAP}}/icon.png"
         )  # icon: '${SNAP}/icon.png'.
         open("icon.png", "w").close()
         self._expect_icon("/icon.png")
