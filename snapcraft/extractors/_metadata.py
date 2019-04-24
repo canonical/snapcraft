@@ -48,6 +48,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         """  # noqa
 
         self._data = {}  # type: Dict[str, Union[str, List[str]]]
+        self.common_id_list = []  # type: List[str]
 
         if common_id:
             self._data["common_id"] = common_id
@@ -73,6 +74,9 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         :param ExtractedMetadata other: Metadata from which to update
         """
         self._data.update(other.to_dict())
+        common_id = self.get_common_id()
+        if common_id:
+            self.common_id_list.append(common_id)
 
     def get_common_id(self) -> str:
         """Return extracted common_id.

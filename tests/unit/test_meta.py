@@ -1963,6 +1963,88 @@ class CommandChainTest(unit.TestCase):
         )
 
 
+class CommonIdTestCase(CreateBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        self.create_metadata_file("part", "1.metainfo.xml", "test.id.1")
+        self.create_metadata_file("part", "2.metainfo.xml", "test.id.2")
+
+    def create_metadata_file(self, part, name, common_id):
+        # Create metadata files
+        filename = os.path.join("parts", part, "src", name)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <component type="desktop">
+                      <id>{}</id>
+                    </component>
+                    """.format(
+                        common_id
+                    )
+                )
+            )
+
+    def make_snapcraft_project(self, common_id):
+        yaml = textwrap.dedent(
+            """\
+           name: test
+           base: core18
+           version: "1.0"
+           summary: test
+           description: test
+           confinement: strict
+           grade: stable
+           adopt-info: part
+           apps:
+             test-app:
+               command: echo
+               common-id: {common_id}
+           parts:
+             part:
+               plugin: nil
+               parse-info: ["1.metainfo.xml", "2.metainfo.xml"]
+           """
+        )
+
+        yaml_path = self.make_snapcraft_yaml(yaml.format(common_id=common_id))
+        project = Project(snapcraft_yaml_file_path=yaml_path)
+        return project_loader.load_config(project)
+
+    def test_common_id(self):
+        config = self.make_snapcraft_project(common_id="test.id.2")
+        for part in config.parts.all_parts:
+            part.makedirs()
+            part.mark_pull_done()
+            part.build()
+            part.stage()
+            part.prime()
+        _snap_packaging.create_snap_packaging(config)
+        self.assertNotIn(
+            "is not used in any appstream metafile.", self.fake_logger.output
+        )
+
+    def test_common_id_mismatch(self):
+        config = self.make_snapcraft_project(common_id="tset.id.2")
+        for part in config.parts.all_parts:
+            part.makedirs()
+            part.mark_pull_done()
+            part.build()
+            part.stage()
+            part.prime()
+        _snap_packaging.create_snap_packaging(config)
+        self.assertIn(
+            "Common ID 'tset.id.2' specified in app 'test-app' is not used in any appstream metafile.",
+            self.fake_logger.output,
+        )
+
+
 def _create_file(path, *, content="", executable=False):
     basepath = os.path.dirname(path)
     if basepath:
