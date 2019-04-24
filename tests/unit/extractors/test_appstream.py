@@ -210,6 +210,16 @@ class AppstreamIconsTestCase(unit.TestCase):
         open("myicon.png", "w").close()
         self._expect_icon("/icon.png")
 
+    def test_appstream_no_icon_desktop_fallback_icon_exists_with_snap_variable_prefix(
+        self
+    ):
+        self._create_appstream_file()
+        _create_desktop_file(
+            "usr/share/applicatins/my.app.desktop", icon="${{SNAP}}/icon.png"
+        )  # icon: '${SNAP}/icon.png'.
+        open("icon.png", "w").close()
+        self._expect_icon("/icon.png")
+
     def test_appstream_no_icon_theme_fallback_png(self):
         self._create_appstream_file()
         _create_desktop_file("usr/share/applications/my.app.desktop", icon="icon")
