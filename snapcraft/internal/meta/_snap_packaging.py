@@ -642,7 +642,9 @@ class _SnapPackaging:
                 raise errors.InvalidAppCommandNotFound(command_without_args, app_name)
 
             if not is_executable:
-                raise errors.InvalidAppCommandNotExecutable(command_without_args, app_name)
+                raise errors.InvalidAppCommandNotExecutable(
+                    command_without_args, app_name
+                )
 
         # Finally, assuming there is a meta runner, add it to the BEGINNING of the
         # command chain. This is to ensure all subsequent commands in the chain get
