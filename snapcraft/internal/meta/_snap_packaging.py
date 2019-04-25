@@ -750,13 +750,10 @@ class _SnapPackaging:
         for app in self._config_data["apps"]:
             app_common_id = self._config_data["apps"][app].get("common-id")
             if app_common_id not in common_id_list:
-                app_name = _get_app_name_from_common_id(
-                    self._config_data, app_common_id
-                )
                 logger.warning(
                     "Common ID {common_id!r} specified in app {app!r} is "
                     "not used in any metadata file.".format(
-                        common_id=app_common_id, app=app_name
+                        common_id=app_common_id, app=app
                     )
                 )
 
