@@ -755,7 +755,7 @@ class _SnapPackaging:
                 )
                 logger.warning(
                     "Common ID {common_id!r} specified in app {app!r} is "
-                    "not used in any appstream metafile.".format(
+                    "not used in any metadata file.".format(
                         common_id=app_common_id, app=app_name
                     )
                 )

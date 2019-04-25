@@ -2031,7 +2031,7 @@ class CommonIdTestCase(CreateBaseTestCase):
         )
 
     def test_common_id_mismatch(self):
-        config = self.make_snapcraft_project(common_id="tset.id.2")
+        config = self.make_snapcraft_project(common_id="test.id.mismatch")
         for part in config.parts.all_parts:
             part.makedirs()
             part.mark_pull_done()
@@ -2040,7 +2040,7 @@ class CommonIdTestCase(CreateBaseTestCase):
             part.prime()
         _snap_packaging.create_snap_packaging(config)
         self.assertIn(
-            "Common ID 'tset.id.2' specified in app 'test-app' is not used in any appstream metafile.",
+            "Common ID 'test.id.mismatch' specified in app 'test-app' is not used in any appstream metafile.",
             self.fake_logger.output,
         )
 
