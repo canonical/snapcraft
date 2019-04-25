@@ -586,14 +586,7 @@ class PipInstallTest(PipCommandBaseTestCase):
     ]
 
     def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = [
-            "install",
-            "--user",
-            "--no-compile",
-            "--no-index",
-            "--find-links",
-            mock.ANY,
-        ]
+        common_args = ["install", "--user", "--no-index", "--find-links", mock.ANY]
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 

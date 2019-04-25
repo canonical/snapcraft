@@ -335,9 +335,6 @@ class Pip:
         #
         # --user: Install packages to PYTHONUSERBASE, which we've pointed to
         #         the installdir.
-        # --no-compile: Don't compile .pyc files. FIXME: This is legacy, and
-        #               should be removed once this refactor has been
-        #               validated.
         # --no-index: Don't hit pypi, assume the packages are already
         #             downloaded (i.e. by using `self.download()`)
         # --find-links: Provide the directory into which the packages should
@@ -349,7 +346,6 @@ class Pip:
             [
                 "install",
                 "--user",
-                "--no-compile",
                 "--no-index",
                 "--find-links",
                 self._python_package_dir,
