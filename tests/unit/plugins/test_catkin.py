@@ -1877,18 +1877,18 @@ class CompilersTestCase(unit.TestCase):
         cxx_include_dir = os.path.join(
             self.compilers._compilers_install_path, "usr", "include"
         )
-        self.assertThat(
-            self.compilers.cxxflags, Contains("-I{}".format(cxx_include_dir))
-        )
-        self.assertThat(
-            self.compilers.cxxflags,
-            Contains("-I{}".format(os.path.join(cxx_include_dir, "c++", "5"))),
-        )
+
+        # Order matters here
         self.assertThat(
             self.compilers.cxxflags,
-            Contains(
-                "-I{}".format(
-                    os.path.join(cxx_include_dir, self.project.arch_triplet, "c++", "5")
+            Equals(
+                "-I{} -I{} -I{} -I{}".format(
+                    cxx_include_dir,
+                    os.path.join(cxx_include_dir, self.project.arch_triplet),
+                    os.path.join(cxx_include_dir, "c++", "5"),
+                    os.path.join(
+                        cxx_include_dir, self.project.arch_triplet, "c++", "5"
+                    ),
                 )
             ),
         )

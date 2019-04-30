@@ -1015,31 +1015,31 @@ class Compilers:
 
     @property
     def cxxflags(self):
-        paths = set(
-            common.get_include_paths(
-                self._compilers_install_path, self._project.arch_triplet
-            )
+        paths = common.get_include_paths(
+            self._compilers_install_path, self._project.arch_triplet
         )
 
         try:
-            paths.add(
-                _get_highest_version_path(
-                    os.path.join(self._compilers_install_path, "usr", "include", "c++")
-                )
+            arch_independent_path = _get_highest_version_path(
+                os.path.join(self._compilers_install_path, "usr", "include", "c++")
             )
-            paths.add(
-                _get_highest_version_path(
-                    os.path.join(
-                        self._compilers_install_path,
-                        "usr",
-                        "include",
-                        self._project.arch_triplet,
-                        "c++",
-                    )
+            arch_dependent_path = _get_highest_version_path(
+                os.path.join(
+                    self._compilers_install_path,
+                    "usr",
+                    "include",
+                    self._project.arch_triplet,
+                    "c++",
                 )
             )
         except CatkinNoHighestVersionPathError as e:
             raise CatkinGccVersionError(str(e))
+
+        if arch_independent_path not in paths:
+            paths.append(arch_independent_path)
+
+        if arch_dependent_path not in paths:
+            paths.append(arch_dependent_path)
 
         return formatting_utils.combine_paths(paths, prepend="-I", separator=" ")
 
