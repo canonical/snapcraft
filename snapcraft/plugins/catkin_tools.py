@@ -26,7 +26,6 @@ import os
 import logging
 
 import snapcraft.plugins.catkin
-from snapcraft.plugins.catkin import Compilers
 
 import snapcraft
 
@@ -94,28 +93,11 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         catkincmd.extend(["--install", "--install-space", self.rosdir])
 
         # Add any cmake-args requested from the plugin options.
-        compilers = Compilers(
-            self._compilers_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
-        )
-
         catkincmd.append("--cmake-args")
         build_type = "Release"
         if "debug" in self.options.build_attributes:
             build_type = "Debug"
-
-        catkincmd.extend(
-            [
-                '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
-                '-DCMAKE_CXX_FLAGS="$CPPFLAGS {}"'.format(compilers.cxxflags),
-                '-DCMAKE_LD_FLAGS="$LDFLAGS {}"'.format(compilers.ldflags),
-                "-DCMAKE_C_COMPILER={}".format(compilers.c_compiler_path),
-                "-DCMAKE_CXX_COMPILER={}".format(compilers.cxx_compiler_path),
-                "-DCMAKE_BUILD_TYPE={}".format(build_type),
-            ]
-        )
+        catkincmd.append("-DCMAKE_BUILD_TYPE={}".format(build_type))
 
         catkincmd.extend(self.options.catkin_cmake_args)
 
@@ -138,13 +120,6 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         if self.catkin_packages:
             catkincmd.extend(self.catkin_packages)
 
-        compilers = Compilers(
-            self._compilers_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
-        )
-
         # This command must run in bash due to a bug in Catkin that causes it
         # to explode if there are spaces in the cmake args (which there are).
-        self._run_in_bash(catkincmd, env=compilers.environment)
+        self._run_in_bash(catkincmd)
