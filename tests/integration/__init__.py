@@ -735,7 +735,7 @@ def get_package_version(package_name, series, deb_arch):
         "text": "on",
     }
     query = requests.get(
-        "http://people.canonical.com/~ubuntu-archive/madison.cgi", params
+        "https://people.canonical.com/~ubuntu-archive/madison.cgi", params
     )
     query.raise_for_status()
     package = query.text.strip().split("\n")[-1]
