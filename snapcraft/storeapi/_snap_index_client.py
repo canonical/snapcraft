@@ -45,7 +45,7 @@ class SnapIndexClient(Client):
             ),
         )
 
-    def get_default_headers(self):
+    def get_default_headers(self, api="v2"):
         """Return default headers for CPI requests.
         Tries to build an 'Authorization' header with local credentials
         if they are available.
@@ -59,7 +59,12 @@ class SnapIndexClient(Client):
 
         branded_store = os.getenv("SNAPCRAFT_UBUNTU_STORE")
         if branded_store:
-            headers["X-Ubuntu-Store"] = branded_store
+            if api == "v2":
+                headers["Snap-Device-Store"] = branded_store
+            elif api == "v1":
+                headers["X-Ubuntu-Store"] = branded_store
+            else:
+                logger.warning("Incorrect API version passed: {!r}.".format(api))
 
         return headers
 
@@ -103,7 +108,7 @@ class SnapIndexClient(Client):
 
         :return Assertion for the snap.
         """
-        headers = self.get_default_headers()
+        headers = self.get_default_headers(api="v1")
         logger.debug("Getting snap-declaration for {}".format(snap_id))
         url = "/api/v1/snaps/assertions/{}/{}/{}".format(
             assertion_type, constants.DEFAULT_SERIES, snap_id

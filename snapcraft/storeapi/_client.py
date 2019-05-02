@@ -77,7 +77,11 @@ class Client:
             headers = self._snapcraft_headers
 
         final_url = urllib.parse.urljoin(self.root_url, url)
-        logger.debug("Calling {} with params {}".format(final_url, params))
+        logger.debug(
+            "Calling {} with params {} and headers {}".format(
+                final_url, params, headers
+            )
+        )
         try:
             response = self.session.request(
                 method, final_url, headers=headers, params=params, **kwargs

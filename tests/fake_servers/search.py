@@ -66,7 +66,10 @@ class FakeStoreSearchServer(base.BaseFakeServer):
         # core snap is used in integration tests with fake servers.
         snap = request.matchdict["snap"]
         # tests/data/test-snap.snap
-        test_sha3_384 = "8c0118831680a22090503ee5db98c88dd90ef551d80fc816dec968f60527216199dacc040cddfe5cec6870db836cb908"
+        test_sha3_384 = (
+            "8c0118831680a22090503ee5db98c88dd90ef551d80fc816"
+            "dec968f60527216199dacc040cddfe5cec6870db836cb908"
+        )
         revision = "10000"
         confinement = "strict"
 
@@ -80,7 +83,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             sha3_384 = "wrong sha"
         elif (
             snap == "test-snap-branded-store"
-            and request.headers.get("X-Ubuntu-Store") == "Test-Branded"
+            and request.headers.get("Snap-Device-Store") == "Test-Branded"
         ):
             sha3_384 = test_sha3_384
         else:
