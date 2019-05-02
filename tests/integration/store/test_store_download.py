@@ -28,7 +28,7 @@ class DownloadTestCase(integration.StoreTestCase):
             self.skipTest("There is no core snap in the staging server")
         super().setUp()
 
-    @skip.skip_unless_codename("xenial")
+    @skip.skip_unless_codename("xenial", "test tailored for xenial")
     def test_download_os_snap(self):
         self.run_snapcraft("pull", "kernel-download")
         self.assertThat(
