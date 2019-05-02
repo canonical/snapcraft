@@ -888,13 +888,13 @@ def validate(snap_name, validations, revoke=False, key=None):
     for validation in validations:
         gated_name, rev = validation.split("=", 1)
         echo.info("Getting details for {}".format(gated_name))
-        approved_data = store.cpi.get_package(gated_name, "stable")
+        approved_data = store.cpi.get_info(gated_name)
         assertion = {
             "type": "validation",
             "authority-id": authority_id,
             "series": release,
             "snap-id": snap_id,
-            "approved-snap-id": approved_data["snap_id"],
+            "approved-snap-id": approved_data.snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",

@@ -1,3 +1,19 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2016-2019 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 import requests
 from requests.adapters import HTTPAdapter
@@ -12,6 +28,7 @@ from . import errors
 # Set urllib3's logger to only emit errors, not warnings. Otherwise even
 # retries are printed, and they're nasty.
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 class Client:
@@ -60,6 +77,7 @@ class Client:
             headers = self._snapcraft_headers
 
         final_url = urllib.parse.urljoin(self.root_url, url)
+        logger.debug("Calling {} with params {}".format(final_url, params))
         try:
             response = self.session.request(
                 method, final_url, headers=headers, params=params, **kwargs
