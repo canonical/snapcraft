@@ -75,7 +75,7 @@ class SnapIndexClient(Client):
         headers = self.get_default_headers()
         headers.update(
             {
-                "Accept": "application/hal+json",
+                "Accept": "application/json",
                 "Snap-Device-Series": constants.DEFAULT_SERIES,
             }
         )
