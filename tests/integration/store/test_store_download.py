@@ -18,7 +18,7 @@ import os
 
 from testtools.matchers import FileExists
 
-from tests import integration
+from tests import integration, skip
 
 
 class DownloadTestCase(integration.StoreTestCase):
@@ -28,6 +28,7 @@ class DownloadTestCase(integration.StoreTestCase):
             self.skipTest("There is no core snap in the staging server")
         super().setUp()
 
+    @skip.skip_unless_codename("xenial")
     def test_download_os_snap(self):
         self.run_snapcraft("pull", "kernel-download")
         self.assertThat(
