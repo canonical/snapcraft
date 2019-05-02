@@ -81,9 +81,7 @@ class SnapIndexClient(Client):
         )
 
         params = dict()
-        params[
-            "fields"
-        ] = "channel-map, snap,snap-id,name,publisher,confinement,revision"
+        params["fields"] = "channel-map,snap-id,name,publisher,confinement,revision"
         if arch is not None:
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))
