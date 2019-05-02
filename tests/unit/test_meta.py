@@ -2040,7 +2040,7 @@ class CommonIdTestCase(CreateBaseTestCase):
             part.prime()
         _snap_packaging.create_snap_packaging(config)
         self.assertIn(
-            "Common ID 'test.id.mismatch' specified in app 'test-app' is not used in any appstream metafile.",
+            "Common ID 'test.id.mismatch' specified in app 'test-app' is not used in any metadata file.",
             self.fake_logger.output.strip(),
         )
 
