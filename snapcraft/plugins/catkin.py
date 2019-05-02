@@ -278,7 +278,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         self._rosdistro = _BASE_TO_ROS_RELEASE_MAP[project.info.base]
 
-        self.build_packages.extend(["libc6-dev", "make", "python-pip"])
+        self.build_packages.extend(["gcc", "g++", "libc6-dev", "make", "python-pip"])
         self.__pip = None
 
         # roslib is the base requiremet to actually create a workspace with
@@ -472,16 +472,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             self.project,
         )
         catkin.setup()
-
-        # Pull our own compilers so we use ones that match up with the version
-        # of ROS we're using.
-        compilers = Compilers(
-            self._compilers_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
-        )
-        compilers.setup()
 
         # Use rosdep for dependency detection and resolution
         rosdep = _ros.rosdep.Rosdep(
@@ -799,27 +789,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # All the arguments that follow are meant for CMake
         catkincmd.append("--cmake-args")
 
-        # Make sure we're using our own compilers (the one on the system may
-        # be the wrong version).
-        compilers = Compilers(
-            self._compilers_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
-        )
         build_type = "Release"
         if "debug" in self.options.build_attributes:
             build_type = "Debug"
-        catkincmd.extend(
-            [
-                '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
-                '-DCMAKE_CXX_FLAGS="$CPPFLAGS {}"'.format(compilers.cxxflags),
-                '-DCMAKE_LD_FLAGS="$LDFLAGS {}"'.format(compilers.ldflags),
-                "-DCMAKE_C_COMPILER={}".format(compilers.c_compiler_path),
-                "-DCMAKE_CXX_COMPILER={}".format(compilers.cxx_compiler_path),
-                "-DCMAKE_BUILD_TYPE={}".format(build_type),
-            ]
-        )
+        catkincmd.append("-DCMAKE_BUILD_TYPE={}".format(build_type))
 
         # Finally, add any cmake-args requested from the plugin options
         catkincmd.extend(self.options.catkin_cmake_args)
@@ -828,7 +801,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # to explode if there are spaces in the cmake args (which there are).
         # This has been fixed in Catkin Tools... perhaps we should be using
         # that instead.
-        self._run_in_bash(catkincmd, env=compilers.environment)
+        self._run_in_bash(catkincmd)
 
     def snap_fileset(self):
         """Filter useless files out of the snap.
@@ -966,108 +939,6 @@ class CatkinPackageNotFoundError(errors.SnapcraftError):
 
     def __init__(self, package_name):
         super().__init__(package_name=package_name)
-
-
-class Compilers:
-    def __init__(self, compilers_path, ubuntu_sources, ubuntu_keyrings, project):
-        self._compilers_path = compilers_path
-        self._ubuntu_sources = ubuntu_sources
-        self._ubuntu_keyrings = ubuntu_keyrings
-        self._project = project
-
-        self._compilers_install_path = os.path.join(self._compilers_path, "install")
-        self.__gcc_version = None
-
-    def setup(self):
-        os.makedirs(self._compilers_install_path, exist_ok=True)
-
-        # Since we support building older ROS distros we need to make sure we
-        # use the corresponding compiler versions, so they can't be
-        # build-packages. We'll just download them to another place and use
-        # them from there.
-        logger.info("Preparing to fetch compilers...")
-        ubuntu = repo.Ubuntu(
-            self._compilers_path,
-            sources=self._ubuntu_sources,
-            keyrings=self._ubuntu_keyrings,
-            project_options=self._project,
-        )
-
-        logger.info("Fetching compilers...")
-        ubuntu.get(["gcc", "g++"])
-
-        logger.info("Installing compilers...")
-        ubuntu.unpack(self._compilers_install_path)
-
-    @property
-    def environment(self):
-        env = os.environ.copy()
-
-        paths = common.get_library_paths(
-            self._compilers_install_path, self._project.arch_triplet
-        )
-        ld_library_path = formatting_utils.combine_paths(
-            paths, prepend="", separator=":"
-        )
-
-        env["LD_LIBRARY_PATH"] = env.get("LD_LIBRARY_PATH", "") + ":" + ld_library_path
-
-        env["PATH"] = (
-            env.get("PATH", "")
-            + ":"
-            + os.path.join(self._compilers_install_path, "usr", "bin")
-        )
-
-        return env
-
-    @property
-    def c_compiler_path(self):
-        return os.path.join(self._compilers_install_path, "usr", "bin", "gcc")
-
-    @property
-    def cxx_compiler_path(self):
-        return os.path.join(self._compilers_install_path, "usr", "bin", "g++")
-
-    @property
-    def cflags(self):
-        return ""
-
-    @property
-    def cxxflags(self):
-        paths = set(
-            common.get_include_paths(
-                self._compilers_install_path, self._project.arch_triplet
-            )
-        )
-
-        try:
-            paths.add(
-                _get_highest_version_path(
-                    os.path.join(self._compilers_install_path, "usr", "include", "c++")
-                )
-            )
-            paths.add(
-                _get_highest_version_path(
-                    os.path.join(
-                        self._compilers_install_path,
-                        "usr",
-                        "include",
-                        self._project.arch_triplet,
-                        "c++",
-                    )
-                )
-            )
-        except CatkinNoHighestVersionPathError as e:
-            raise CatkinGccVersionError(str(e))
-
-        return formatting_utils.combine_paths(paths, prepend="-I", separator=" ")
-
-    @property
-    def ldflags(self):
-        paths = common.get_library_paths(
-            self._compilers_install_path, self._project.arch_triplet
-        )
-        return formatting_utils.combine_paths(paths, prepend="-L", separator=" ")
 
 
 class _Catkin:
