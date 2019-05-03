@@ -17,6 +17,7 @@
 import contextlib
 import importlib
 import logging
+import os
 import sys
 
 import jsonschema
@@ -29,10 +30,19 @@ logger = logging.getLogger(__name__)
 
 
 def load_plugin(
-    plugin_name, part_name, project_options, properties, part_schema, definitions_schema
+    plugin_name,
+    part_name,
+    project_options,
+    properties,
+    part_schema,
+    definitions_schema,
+    local_plugins_dir=None,
 ):
+    if not local_plugins_dir:
+        local_plugins_dir = os.path.join(os.getcwd(), "snap", "plugins")
+
     module_name = plugin_name.replace("-", "_")
-    module = _load_module(module_name, plugin_name, project_options.local_plugins_dir)
+    module = _load_module(module_name, plugin_name, local_plugins_dir)
     plugin_class = _get_plugin(module)
     if not plugin_class:
         raise errors.PluginError("no plugin found in module {!r}".format(plugin_name))

@@ -226,10 +226,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         )
         self.useFixture(fixture_setup.FakeSnapcraftctl())
 
-    def make_snapcraft_yaml(self, content, encoding="utf-8"):
-        with contextlib.suppress(FileExistsError):
-            os.mkdir("snap")
-        snapcraft_yaml = os.path.join("snap", "snapcraft.yaml")
+    def make_snapcraft_yaml(self, content, encoding="utf-8", location=""):
+        snap_dir = os.path.join(location, "snap")
+        os.makedirs(snap_dir, exist_ok=True)
+        snapcraft_yaml = os.path.join(snap_dir, "snapcraft.yaml")
         with open(snapcraft_yaml, "w", encoding=encoding) as fp:
             fp.write(content)
         return snapcraft_yaml
