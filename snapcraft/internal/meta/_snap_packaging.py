@@ -117,6 +117,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     _ensure_required_keywords(project_config.data)
 
     packaging = _SnapPackaging(project_config, extracted_metadata)
+    packaging.validate_common_ids()
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -736,6 +737,25 @@ class _SnapPackaging:
             raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
         section.update(passthrough)
         return bool(passthrough)
+
+    def validate_common_ids(self) -> None:
+        if (
+            not self._extracted_metadata
+            or not self._extracted_metadata.common_id_list
+            or "apps" not in self._config_data
+        ):
+            return
+
+        common_id_list = self._extracted_metadata.common_id_list
+        for app in self._config_data["apps"]:
+            app_common_id = self._config_data["apps"][app].get("common-id")
+            if app_common_id not in common_id_list:
+                logger.warning(
+                    "Common ID {common_id!r} specified in app {app!r} is "
+                    "not used in any metadata file.".format(
+                        common_id=app_common_id, app=app
+                    )
+                )
 
 
 def _determine_assumes(yaml_data: Dict[str, Any]) -> Set[str]:
