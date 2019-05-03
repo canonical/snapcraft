@@ -123,7 +123,7 @@ def remote_build(
         remote_info["provider"] = provider
         remote_info.save()
 
-    # TODO: change login strategy after launchpad infrastructure is ready
+    # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
     lp = LaunchpadClient(project, build_id)
     lp.login(user)
 
