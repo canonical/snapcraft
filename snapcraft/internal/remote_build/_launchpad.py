@@ -25,8 +25,8 @@ from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
 from typing import Any, Dict, List
 from xdg import BaseDirectory
-from snapcraft import InfoFile
 from snapcraft.project import Project
+from ._info_file import InfoFile
 from .errors import (
     NoLaunchpadUsernameError,
     RemoteBuilderNotReadyError,

@@ -18,12 +18,17 @@ import click
 import os
 import uuid
 
-from snapcraft.internal.remote_build import Worktree, LaunchpadClient, Repo, errors
+from snapcraft.internal.remote_build import (
+    Worktree,
+    LaunchpadClient,
+    Repo,
+    InfoFile,
+    errors,
+)
 from typing import List, Tuple
 from xdg import BaseDirectory
 from . import echo
 from ._options import get_project
-from snapcraft import InfoFile
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 

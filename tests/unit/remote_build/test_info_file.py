@@ -17,7 +17,7 @@
 import fixtures
 import os
 
-from snapcraft import InfoFile
+from snapcraft.internal.remote_build import InfoFile
 from tests import unit
 from testtools.matchers import Equals, FileExists
 
