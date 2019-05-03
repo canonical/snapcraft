@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -155,16 +155,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -287,16 +280,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -343,16 +329,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/edge",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "edge", "snapcraft"]
                 ),
             ]
         )
@@ -393,16 +372,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -425,16 +397,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -527,16 +492,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "refresh", "--channel", "latest/stable", "core"]),
+                call(["snap", "refresh", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "refresh",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "refresh", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -567,16 +525,9 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "install", "--channel", "latest/stable", "core"]),
+                call(["snap", "install", "--channel", "stable", "core"]),
                 call(
-                    [
-                        "snap",
-                        "install",
-                        "--classic",
-                        "--channel",
-                        "latest/stable",
-                        "snapcraft",
-                    ]
+                    ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
                 ),
             ]
         )
@@ -606,7 +557,7 @@ class GetChannelTest(unit.TestCase):
         self.useFixture(self.fake_logger)
 
     def test_default_channel_for_snapcraft(self):
-        self.assertThat(_get_snap_channel("snapcraft"), Equals("latest/stable"))
+        self.assertThat(str(_get_snap_channel("snapcraft")), Equals("latest/stable"))
         self.assertThat(
             self.fake_logger.output,
             Not(
@@ -623,7 +574,7 @@ class GetChannelTest(unit.TestCase):
                 "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/edge"
             )
         )
-        self.assertThat(_get_snap_channel("snapcraft"), Equals("latest/edge"))
+        self.assertThat(str(_get_snap_channel("snapcraft")), Equals("latest/edge"))
         self.assertThat(
             self.fake_logger.output,
             Contains(
@@ -633,7 +584,7 @@ class GetChannelTest(unit.TestCase):
         )
 
     def test_default_channel_for_other_snap(self):
-        self.assertThat(_get_snap_channel("core"), Equals("latest/stable"))
+        self.assertThat(str(_get_snap_channel("core")), Equals("latest/stable"))
         self.assertThat(
             self.fake_logger.output,
             Not(
@@ -650,7 +601,7 @@ class GetChannelTest(unit.TestCase):
                 "SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", "latest/edge"
             )
         )
-        self.assertThat(_get_snap_channel("core"), Equals("latest/stable"))
+        self.assertThat(str(_get_snap_channel("core")), Equals("latest/stable"))
         self.assertThat(
             self.fake_logger.output,
             Not(

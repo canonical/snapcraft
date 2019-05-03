@@ -119,18 +119,12 @@ class RustPlugin(snapcraft.BasePlugin):
         # Basic options:
         # -y: assume yes
         # --no-modify-path: do not modify bashrc
-        options = ["-y", "--no-modify-path"]
-
-        # Check if we want to initialize using a specific channel.
-        if self.options.rust_channel:
-            options.extend(["--channel", self.options.rust_channel])
+        options = ["-y", "--default-toolchain", "none", "--no-modify-path"]
 
         # Fetch rust
         self.run([rustup_init_cmd] + options, env=self._build_env())
 
     def _fetch_rust(self):
-        # Setup the channel in case rustup-init was run before or a revision which cannot be hanndled
-        # from rustup-init
         # https://rust-lang-nursery.github.io/edition-guide/rust-2018/rustup-for-managing-rust-versions.html
         toolchain = self._get_toolchain()
         self.run([self._rustup_cmd, "install", toolchain], env=self._build_env())
@@ -229,7 +223,6 @@ class RustPlugin(snapcraft.BasePlugin):
         return env
 
     def _get_toolchain(self) -> str:
-        toolchain = None
         if self.options.rust_revision:
             toolchain = self.options.rust_revision
         elif self.options.rust_channel:

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,22 +33,16 @@ class FakeStoreSearchServer(base.BaseFakeServer):
     # XXX This fake server as reused as download server, to avoid passing a
     # port as an argument. --elopio - 2016-05-01
 
-    _API_PATH = "/api/v1/"
-
     def configure(self, configurator):
-        configurator.add_route(
-            "details",
-            urllib.parse.urljoin(self._API_PATH, "snaps/details/{snap}"),
-            request_method="GET",
-        )
-        configurator.add_view(self.details, route_name="details")
+        configurator.add_route("info", "/v2/snaps/info/{snap}", request_method="GET")
+        configurator.add_view(self.info, route_name="info")
 
         configurator.add_route(
             "download", "/download-snap/{snap}", request_method="GET"
         )
         configurator.add_view(self.download, route_name="download")
 
-    def details(self, request):
+    def info(self, request):
         snap = request.matchdict["snap"]
         logger.debug(
             "Handling details request for package {}, with headers {}".format(
@@ -58,7 +52,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
         if "User-Agent" not in request.headers:
             response_code = 500
             return response.Response(None, response_code)
-        payload = self._get_details_payload(request)
+        payload = self._get_info_payload(request)
         if payload is None:
             response_code = 404
             return response.Response(json.dumps({}).encode(), response_code)
@@ -68,50 +62,72 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             payload, response_code, [("Content-Type", content_type)]
         )
 
-    def _get_details_payload(self, request):
+    def _get_info_payload(self, request):
         # core snap is used in integration tests with fake servers.
         snap = request.matchdict["snap"]
-        # sha512sum tests/data/test-snap.snap
-        test_sha512 = (
-            "69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef"
-            "d22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b"
-            "fda4128234e4c201f28fe9"
+        # tests/data/test-snap.snap
+        test_sha3_384 = (
+            "8c0118831680a22090503ee5db98c88dd90ef551d80fc816"
+            "dec968f60527216199dacc040cddfe5cec6870db836cb908"
         )
         revision = "10000"
         confinement = "strict"
 
         if snap in ("test-snap", "core"):
-            sha512 = test_sha512
+            sha3_384 = test_sha3_384
         elif snap == "snapcraft":
-            sha512 = test_sha512
+            sha3_384 = test_sha3_384
             revision = "25"
             confinement = "classic"
         elif snap == "test-snap-with-wrong-sha":
-            sha512 = "wrong sha"
-        elif snap == "test-snap-branded-store":
-            # Branded-store snaps require Store pinning and authorization.
-            if (
-                request.headers.get("X-Ubuntu-Store") != "Test-Branded"
-                or request.headers.get("Authorization") is None
-            ):
-                return None
-            sha512 = test_sha512
+            sha3_384 = "wrong sha"
+        elif (
+            snap == "test-snap-branded-store"
+            and request.headers.get("Snap-Device-Store") == "Test-Branded"
+        ):
+            sha3_384 = test_sha3_384
         else:
             return None
 
+        channel_map = list()
+        for arch in ("amd64", "i386", "s390x", "arm64", "armhf"):
+            for risk in ("stable", "edge"):
+                channel_map.append(
+                    {
+                        "channel": {
+                            "architecture": arch,
+                            "name": risk,
+                            "released-at": "019-01-17T15:01:26.537392+00:00",
+                            "risk": risk,
+                            "track": "latest",
+                        },
+                        "download": {
+                            "deltas": [],
+                            "sha3-384": sha3_384,
+                            "url": urllib.parse.urljoin(
+                                "http://localhost:{}".format(self.server.server_port),
+                                "download-snap/test-snap.snap",
+                            ),
+                        },
+                        "created-at": "2019-01-16T14:59:16.711111+00:00",
+                        "confinement": confinement,
+                        "revision": revision,
+                    }
+                )
+
         return json.dumps(
             {
-                "anon_download_url": urllib.parse.urljoin(
-                    "http://localhost:{}".format(self.server.server_port),
-                    "download-snap/test-snap.snap",
-                ),
-                "download_sha3_384": "1234567890",
-                "download_sha512": sha512,
-                "snap_id": "good",
-                "developer_id": snap + "-developer-id",
-                "release": ["16"],
-                "revision": revision,
-                "confinement": confinement,
+                "channel-map": channel_map,
+                "snap": {
+                    "name": snap,
+                    "snap-id": "good",
+                    "publisher": {
+                        "id": snap + "-developer-id",
+                        "validation": "unproven",
+                    },
+                },
+                "snap-id": "good",
+                "name": snap,
             }
         ).encode()
 

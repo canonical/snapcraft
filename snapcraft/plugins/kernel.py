@@ -507,7 +507,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def pull(self):
         super().pull()
-        snapcraft.download("core", "stable", self.os_snap, self.project.deb_arch)
+        snapcraft.download(
+            "core",
+            risk="stable",
+            download_path=self.os_snap,
+            arch=self.project.deb_arch,
+        )
 
     def do_configure(self):
         super().do_configure()
