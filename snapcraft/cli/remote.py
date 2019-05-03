@@ -131,11 +131,11 @@ def remote_build(
         # Show build status
         lp.recover_build(status)
         lp.show_build_status()
-        return
     elif recover:
         # Recover from interrupted build
         echo.info("Recover build {}...".format(recover))
         lp.recover_build(recover)
+        _monitor_build(lp)
     else:
         # If build architectures not set in snapcraft.yaml, let the user override
         # Launchpad defaults using --arch.
@@ -157,6 +157,7 @@ def remote_build(
             )
 
         # Create build recipe
+        # (delete any existing snap to remove leftovers from previous builds)
         lp.delete_snap()
         lp.create_snap(url, branch, archs)
 
@@ -172,7 +173,10 @@ def remote_build(
                 req_number
             )
         )
+        _monitor_build(lp)
 
+
+def _monitor_build(lp: LaunchpadClient) -> None:
     lp.monitor_build()
     echo.info("Build complete.")
     lp.delete_snap()
@@ -224,9 +228,7 @@ def _list_architectures(project, arch: str) -> List[str]:
     arch_from_yaml = _project_architectures(project)
     if arch_from_yaml:
         if arch:
-            echo.warning(
-                "Architecture list already set in snapcraft.yaml, ignoring --arch option."
-            )
+            raise errors.ConflictingArchListError()
         archs = arch_from_yaml
     elif arch == "all":
         archs = _SUPPORTED_ARCHS
