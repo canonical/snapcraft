@@ -207,7 +207,7 @@ class AppstreamIconsTestCase(unit.TestCase):
     def test_appstream_no_icon_desktop_fallback_icon_exists(self):
         self._create_appstream_file()
         _create_desktop_file("usr/share/applications/my.app.desktop", icon="/icon.png")
-        open("myicon.png", "w").close()
+        open("icon.png", "w").close()
         self._expect_icon("/icon.png")
 
     def test_appstream_no_icon_theme_fallback_png(self):

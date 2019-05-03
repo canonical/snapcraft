@@ -64,10 +64,6 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        self.compilers = catkin_tools.Compilers(
-            "compilers_path", "sources", ["keyring"], self.project
-        )
-
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -76,7 +72,6 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
         self.check_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch("snapcraft.plugins.catkin_tools.Compilers")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
@@ -89,7 +84,6 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
         run_output_mock,
         bashrun_mock,
         run_mock,
-        compilers_mock,
     ):
         self.properties.catkin_packages.append("package_2")
 
@@ -111,14 +105,13 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
                 self.test.assertIn("package_2", packages)
                 return True
 
-        bashrun_mock.assert_called_with(check_pkg_arguments(self), env=mock.ANY)
+        bashrun_mock.assert_called_with(check_pkg_arguments(self))
 
         finish_build_mock.assert_called_once_with()
 
-    @mock.patch("snapcraft.plugins.catkin_tools.Compilers")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
-    def test_build_runs_in_bash(self, run_output_mock, run_mock, compilers_mock):
+    def test_build_runs_in_bash(self, run_output_mock, run_mock):
         plugin = catkin_tools.CatkinToolsPlugin(
             "test-part", self.properties, self.project
         )
@@ -130,7 +123,6 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
             [mock.call(["/bin/bash", mock.ANY], cwd=mock.ANY, env=mock.ANY)]
         )
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
@@ -143,7 +135,6 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
         run_output_mock,
         bashrun_mock,
         run_mock,
-        compilers_mock,
     ):
         plugin = catkin_tools.CatkinToolsPlugin(
             "test-part", self.properties, self.project
@@ -163,7 +154,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
                     and "my_package" in command
                 )
 
-        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
+        bashrun_mock.assert_called_with(check_build_command())
 
         finish_build_mock.assert_called_once_with()
 
@@ -195,10 +186,9 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.catkin_cmake_args = self.catkin_cmake_args
 
-    @mock.patch("snapcraft.plugins.catkin_tools.Compilers")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_use_in_snap_python")
-    def test_prepare_build(self, use_python_mock, bashrun_mock, compilers_mock):
+    def test_prepare_build(self, use_python_mock, bashrun_mock):
         plugin = catkin_tools.CatkinToolsPlugin(
             "test-part", self.properties, self.project
         )
