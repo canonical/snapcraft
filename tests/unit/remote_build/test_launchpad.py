@@ -38,7 +38,7 @@ class BuildImpl:
 
     def getFileUrls(self, *args, **kw):
         self.getFileUrls_mock(*args, **kw)
-        return ["url_for/snap_file"]
+        return ["url_for/snap_file_i386.snap"]
 
 
 class SnapImpl:
@@ -196,7 +196,7 @@ class LaunchpadTestCase(unit.TestCase):
         lpc.monitor_build(interval=0)
         mock_download.assert_has_calls(
             [
-                mock.call("url_for/snap_file", "snap_file"),
+                mock.call("url_for/snap_file_i386.snap", "snap_file_i386.snap"),
                 mock.call("url_for/build_log_file_2", "buildlog_amd64.txt.gz"),
             ]
         )
