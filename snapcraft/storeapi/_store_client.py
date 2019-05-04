@@ -1,4 +1,19 @@
-import hashlib
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2016-2019 Canonical Ltd
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import urllib.parse
 from time import sleep
@@ -236,39 +251,45 @@ class StoreClient:
             self.sca.close_channels, snap_id, channel_names
         )
 
-    def download(self, snap_name, channel, download_path, arch=None, except_hash=""):
+    def download(
+        self,
+        snap_name,
+        *,
+        risk: str,
+        download_path: str,
+        track: str = None,
+        arch: str = None,
+        except_hash=""
+    ):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
-        package = self.cpi.get_package(snap_name, channel, arch)
-        if package["download_sha3_384"] != except_hash:
-            self._download_snap(
-                snap_name,
-                channel,
-                arch,
-                download_path,
-                # FIXME LP: #1662665
-                package["anon_download_url"],
-                package["download_sha512"],
-            )
-        return package["download_sha3_384"]
+        snap_info = self.cpi.get_info(snap_name)
+        channel_mapping = snap_info.get_channel_mapping(
+            risk=risk, track=track, arch=arch
+        )
+        if channel_mapping.download.sha3_384 == except_hash:
+            return channel_mapping.download.sha3_384
 
-    def _download_snap(
-        self, name, channel, arch, download_path, download_url, expected_sha512
-    ):
-        if self._is_downloaded(download_path, expected_sha512):
-            logger.info("Already downloaded {} at {}".format(name, download_path))
-            return
-        logger.info("Downloading {}".format(name))
+        try:
+            channel_mapping.download.verify(download_path)
+        except errors.StoreDownloadError:
+            self._download_snap(channel_mapping.download, download_path)
 
+        channel_mapping.download.verify(download_path)
+        return channel_mapping.download.sha3_384
+
+    def _download_snap(self, download_details, download_path):
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.
-        resume_possible = False
         total_read = 0
-        probe_url = requests.head(download_url)
+        probe_url = requests.head(download_details.url)
         if probe_url.is_redirect and "internap" in probe_url.headers["Location"]:
             download_url = probe_url.headers["Location"]
             resume_possible = True
+        else:
+            download_url = download_details.url
+            resume_possible = False
 
         # HttpAdapter cannot help here as this is a stream.
         # LP: #1617765
@@ -300,21 +321,6 @@ class StoreClient:
                 if not retry_count:
                     raise e
                 sleep(1)
-
-        if self._is_downloaded(download_path, expected_sha512):
-            logger.info("Successfully downloaded {} at {}".format(name, download_path))
-        else:
-            raise errors.SHAMismatchError(download_path, expected_sha512)
-
-    def _is_downloaded(self, path, expected_sha512):
-        if not os.path.exists(path):
-            return False
-
-        file_sum = hashlib.sha512()
-        with open(path, "rb") as f:
-            for file_chunk in iter(lambda: f.read(file_sum.block_size * 128), b""):
-                file_sum.update(file_chunk)
-        return expected_sha512 == file_sum.hexdigest()
 
     def push_assertion(self, snap_id, assertion, endpoint, force=False):
         return self.sca.push_assertion(snap_id, assertion, endpoint, force)

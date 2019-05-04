@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -116,12 +116,26 @@ class NoSnapIdError(StoreError):
         super().__init__(snap_name=snap_name, forum_url=_FORUM_URL)
 
 
-class SHAMismatchError(StoreError):
+class StoreDownloadError(StoreError):
+    pass
 
-    fmt = "SHA512 checksum for {path} is not {expected_sha}."
 
-    def __init__(self, path, expected_sha):
-        super().__init__(path=path, expected_sha=expected_sha)
+class DownloadNotFoundError(StoreDownloadError):
+
+    fmt = "Downloaded file not found {path!r}."
+
+    def __init__(self, *, path: str) -> None:
+        super().__init__(path=path)
+
+
+class SHAMismatchError(StoreDownloadError):
+
+    fmt = (
+        "The SHA3-384 checksum for {path!r} was {calculated!r}: expected {expected!r}."
+    )
+
+    def __init__(self, *, path: str, expected: str, calculated: str) -> None:
+        super().__init__(path=path, expected=expected, calculated=calculated)
 
 
 class StoreAuthenticationError(StoreError):

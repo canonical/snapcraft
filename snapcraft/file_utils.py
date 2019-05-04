@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -311,6 +311,14 @@ def requires_path_exists(path: str, error_fmt: str = None) -> Generator:
     yield
 
 
+def _file_reader_iter(path: str, block_size=2 ** 20):
+    with open(path, "rb") as f:
+        block = f.read(block_size)
+        while len(block) > 0:
+            yield block
+            block = f.read(block_size)
+
+
 def calculate_sha3_384(path: str) -> str:
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
     return calculate_hash(path, algorithm="sha3_384")
@@ -321,13 +329,8 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
     # This will raise an AttributeError if algorithm is unsupported
     hasher = getattr(hashlib, algorithm)()
 
-    blocksize = 2 ** 20
-    with open(path, "rb") as f:
-        while True:
-            buf = f.read(blocksize)
-            if not buf:
-                break
-            hasher.update(buf)
+    for block in _file_reader_iter(path):
+        hasher.update(block)
     return hasher.hexdigest()
 
 

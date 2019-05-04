@@ -162,6 +162,8 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--default-toolchain",
+                        "none",
                         "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
@@ -261,6 +263,8 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--default-toolchain",
+                        "none",
                         "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
@@ -302,9 +306,9 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--default-toolchain",
+                        "none",
                         "--no-modify-path",
-                        "--channel",
-                        "nightly",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -345,6 +349,8 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--default-toolchain",
+                        "none",
                         "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
@@ -385,6 +391,8 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--default-toolchain",
+                        "none",
                         "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),

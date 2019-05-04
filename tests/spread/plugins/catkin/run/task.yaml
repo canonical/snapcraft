@@ -26,7 +26,7 @@ execute: |
 
   # Verify that the hardcoded /usr/bin/python in rosversion is changed to
   # use /usr/bin/env
-  [ "$(head -n 1 prime/usr/bin/rosversion)" = "#!/usr/bin/env python" ]
+  expr "$(head -n 1 prime/usr/bin/rosversion)" : '^#!/usr/bin/env\spython2\?$' > /dev/null
 
   # Regression test for LP: #1660852. Make sure --help actually gets passed to
   # roslaunch instead of being eaten by setup.sh.
