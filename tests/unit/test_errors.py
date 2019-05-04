@@ -278,6 +278,32 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
+            "InvalidAppCommandNotFound",
+            {
+                "exception": errors.InvalidAppCommandNotFound,
+                "kwargs": {"command": "test-command", "app_name": "test-app"},
+                "expected_message": (
+                    "Failed to generate snap metadata: "
+                    "The specified command 'test-command' defined in the app "
+                    "'test-app' does not exist.\n"
+                    "Ensure that 'test-command' is relative to the prime directory."
+                ),
+            },
+        ),
+        (
+            "InvalidAppCommandNotExecutable",
+            {
+                "exception": errors.InvalidAppCommandNotExecutable,
+                "kwargs": {"command": "test-command", "app_name": "test-app"},
+                "expected_message": (
+                    "Failed to generate snap metadata: "
+                    "The specified command 'test-command' defined in the app "
+                    "'test-app' does not exist.\n"
+                    "Ensure that 'test-command' is executable."
+                ),
+            },
+        ),
+        (
             "InvalidAppCommandFormatError",
             {
                 "exception": errors.InvalidAppCommandFormatError,
