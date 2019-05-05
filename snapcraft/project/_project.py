@@ -57,6 +57,7 @@ class Project(ProjectOptions):
         self.local_plugins_dir = self._get_local_plugins_dir()
 
     def _get_snapcraft_assets_dir(self) -> str:
+        # Use the default dir if the yaml file path is not specified
         if not self.info:
             return os.path.join(self._project_dir, "snap")
 

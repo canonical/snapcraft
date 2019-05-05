@@ -25,6 +25,7 @@ import jsonschema
 import snapcraft
 from snapcraft.project.errors import YamlValidationError
 from snapcraft.internal import errors
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def load_plugin(
     properties,
     part_schema,
     definitions_schema,
-    local_plugins_dir=None,
+    local_plugins_dir: Optional[str] = None,
 ):
     if not local_plugins_dir:
         local_plugins_dir = os.path.join(os.getcwd(), "snap", "plugins")
