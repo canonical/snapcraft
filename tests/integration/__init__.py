@@ -128,7 +128,7 @@ class TestCase(testtools.TestCase):
         debug: bool = True,
         pre_func: Callable[[], None] = lambda: None,
         env=None,
-    ) -> None:
+    ) -> str:
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 

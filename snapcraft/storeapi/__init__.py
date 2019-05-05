@@ -19,6 +19,8 @@ import logging
 import pymacaroons
 
 from . import errors
+from . import channels  # noqa: F401
+from . import status  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
