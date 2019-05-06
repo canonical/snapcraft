@@ -27,11 +27,7 @@ from launchpadlib.launchpad import Launchpad
 from typing import Any, Dict, List, Tuple
 from xdg import BaseDirectory
 from snapcraft.project import Project
-from .errors import (
-    NoLaunchpadUsernameError,
-    RemoteBuilderNotReadyError,
-    RemoteBuildNotFoundError,
-)
+from . import errors
 
 import snapcraft
 from snapcraft.config import Config
@@ -76,7 +72,7 @@ class LaunchpadClient:
                 user = urllib.parse.unquote(escaped_user)
 
         if not user:
-            raise NoLaunchpadUsernameError
+            raise errors.NoLaunchpadUsernameError
 
         self.user = user
         self._lp = Launchpad.login_with(
@@ -139,7 +135,7 @@ class LaunchpadClient:
             time.sleep(timeout)
         else:
             self.delete_snap()
-            raise RemoteBuilderNotReadyError()
+            raise errors.RemoteBuilderNotReadyError()
 
         self._waiting = [build["arch_tag"] for build in builds.entries]
         self._builds_collection_link = snap_build_request.builds_collection_link
@@ -155,7 +151,9 @@ class LaunchpadClient:
         try:
             request = self._lp.load(url)
         except restfulclient.errors.NotFound:
-            raise RemoteBuildNotFoundError(name=self._name, req_number=req_number)
+            raise errors.RemoteBuildNotFoundError(
+                name=self._name, req_number=req_number
+            )
 
         logger.debug("Request URL: {}".format(request))
         builds = self._lp.load(request.builds_collection_link)
