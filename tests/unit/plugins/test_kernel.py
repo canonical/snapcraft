@@ -1279,7 +1279,12 @@ ACCEPT=n
         plugin.pull()
 
         download_mock.assert_called_once_with(
-            "core", "stable", plugin.os_snap, self.project.deb_arch, ""
+            "core",
+            risk="stable",
+            track=None,
+            download_path=plugin.os_snap,
+            arch=self.project.deb_arch,
+            except_hash="",
         )
 
     def test_unsupported_base(self):
