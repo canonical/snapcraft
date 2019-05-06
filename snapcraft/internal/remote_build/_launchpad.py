@@ -20,13 +20,13 @@ import shutil
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
 from typing import Any, Dict, List
 from xdg import BaseDirectory
 from snapcraft.project import Project
-from ._info_file import InfoFile
 from .errors import (
     NoLaunchpadUsernameError,
     RemoteBuilderNotReadyError,
@@ -34,6 +34,7 @@ from .errors import (
 )
 
 import snapcraft
+from snapcraft.config import Config
 
 _LP_POLL_INTERVAL = 30
 _LP_SUCCESS_STATUS = "Successfully built"
@@ -62,12 +63,17 @@ class LaunchpadClient:
         self._credentials = os.path.join(self._data_dir, "credentials")
 
     def login(self, user: str) -> None:
-        info = InfoFile(os.path.join(self._data_dir, "config.yaml"))
+        conf = Config()
+        conf.load()
+
         if user:
-            info.save(user=user)
+            escaped_user = urllib.parse.quote(user).replace("%", "%%")
+            conf.set("username", escaped_user, section_name="Launchpad")
+            conf.save()
         else:
-            info.load()
-            user = info["user"] if "user" in info else None
+            escaped_user = conf.get("username", section_name="Launchpad")
+            if escaped_user:
+                user = urllib.parse.unquote(escaped_user)
 
         if not user:
             raise NoLaunchpadUsernameError
@@ -84,7 +90,7 @@ class LaunchpadClient:
     def create_snap(self, repository: str, branch: str, archs: List[str]) -> None:
         """Create a snap recipe."""
         logger.debug("Create snap for {}".format(self._id))
-        # TODO: remove this after launchpad infrastructure is ready
+        # TODO: remove this after launchpad infrastructure is ready (LP #1827679)
         url = repository.replace("git+ssh://", "https://")
         snap = {
             "name": self._id,
