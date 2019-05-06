@@ -24,7 +24,7 @@ import urllib.parse
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from xdg import BaseDirectory
 from snapcraft.project import Project
 from .errors import (
@@ -181,13 +181,15 @@ class LaunchpadClient:
                     elif build_state == _LP_FAIL_STATUS:
                         self._process_fail(build)
 
-    def show_build_status(self) -> None:
+    def get_build_status(self) -> List[Tuple[str, str]]:
+        status = []  # type: List[Tuple[str, str]]
         builds = self._lp.load(self._builds_collection_link)
         for build in builds.entries:
-            print(type(build))
             arch = build["arch_tag"]
             build_state = build["buildstate"]
-            logger.info("{}: {}".format(arch, build_state))
+            status.append((arch, build_state))
+
+        return status
 
     def _process_build(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]

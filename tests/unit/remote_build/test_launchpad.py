@@ -221,15 +221,15 @@ class LaunchpadTestCase(unit.TestCase):
         )
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
-    @mock.patch("logging.Logger.info")
-    def test_show_build_status(self, mock_info, mock_lp):
+    def test_get_build_status(self, mock_lp):
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
         lpc.start_build()
-        lpc.show_build_status()
-        mock_info.assert_has_calls(
-            [mock.call("i386: Successfully built"), mock.call("amd64: Failed to build")]
+        build_status = lpc.get_build_status()
+        self.assertThat(
+            build_status,
+            Equals([("i386", "Successfully built"), ("amd64", "Failed to build")]),
         )
 
     def _make_snapcraft_project(self):

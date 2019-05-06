@@ -131,7 +131,8 @@ def remote_build(
     if status:
         # Show build status
         lp.recover_build(status)
-        lp.show_build_status()
+        for arch, build_status in lp.get_build_status():
+            echo.info("{}: {}".format(arch, build_status))
     elif recover:
         # Recover from interrupted build
         echo.info("Recover build {}...".format(recover))
