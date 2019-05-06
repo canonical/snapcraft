@@ -22,7 +22,7 @@ import logging
 import os
 import sys
 import urllib.parse
-from typing import TextIO
+from typing import TextIO, Optional
 
 from xdg import BaseDirectory
 
@@ -177,7 +177,7 @@ class Config(object):
         )
         return urllib.parse.urlparse(url).netloc
 
-    def get(self, option_name: str, section_name=None) -> str:
+    def get(self, option_name: str, section_name: Optional[str] = None) -> str:
         if not section_name:
             section_name = self._section_name()
         try:
@@ -185,7 +185,9 @@ class Config(object):
         except (configparser.NoSectionError, configparser.NoOptionError, KeyError):
             return None
 
-    def set(self, option_name: str, value: str, section_name=None) -> None:
+    def set(
+        self, option_name: str, value: str, section_name: Optional[str] = None
+    ) -> None:
         if not section_name:
             section_name = self._section_name()
         if not self.parser.has_section(section_name):
