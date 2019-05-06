@@ -139,10 +139,15 @@ def remote_build(
     else:
         # If build architectures not set in snapcraft.yaml, let the user override
         # Launchpad defaults using --arch.
-        archs = _list_architectures(project, arch)
+        project_architectures = _get_project_architectures(project)
+        if project_architectures and arch:
+            raise click.BadOptionUsage(
+                "Can't use --arch, architecture list is already set in snapcraft.yaml."
+            )
+        archs = _choose_architectures(project_architectures, arch)
 
         # Sanity check for build architectures
-        _check_supported_archs(archs)
+        _check_supported_architectures(archs)
 
         # The default branch to build
         branch = "master"
@@ -215,7 +220,7 @@ def _copy_and_send_tree(
     return url
 
 
-def _check_supported_archs(archs: List[str]) -> None:
+def _check_supported_architectures(archs: List[str]) -> None:
     unsupported_archs = []
     for item in archs:
         if item not in _SUPPORTED_ARCHS:
@@ -224,12 +229,9 @@ def _check_supported_archs(archs: List[str]) -> None:
         raise errors.UnsupportedArchitectureError(archs=unsupported_archs)
 
 
-def _list_architectures(project, arch: str) -> List[str]:
-    arch_from_yaml = _project_architectures(project)
-    if arch_from_yaml:
-        if arch:
-            raise errors.ConflictingArchListError()
-        archs = arch_from_yaml
+def _choose_architectures(project_architectures: List[str], arch: str) -> List[str]:
+    if project_architectures:
+        archs = project_architectures
     elif arch == "all":
         archs = _SUPPORTED_ARCHS
     else:
@@ -238,7 +240,7 @@ def _list_architectures(project, arch: str) -> List[str]:
     return archs
 
 
-def _project_architectures(project) -> List[str]:
+def _get_project_architectures(project) -> List[str]:
     archs = []
     if project.info.architectures:
         for item in project.info.architectures:

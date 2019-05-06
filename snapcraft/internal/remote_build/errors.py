@@ -79,8 +79,3 @@ class UnsupportedArchitectureError(RemoteBuildBaseError):
 
     def __init__(self, *, archs: List[str]) -> None:
         super().__init__(archs=", ".join(archs))
-
-
-class ConflictingArchListError(RemoteBuildBaseError):
-
-    fmt = "Can't use --arch, architecture list is already set in snapcraft.yaml."
