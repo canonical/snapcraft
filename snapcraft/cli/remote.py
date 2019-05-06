@@ -25,6 +25,7 @@ from snapcraft.internal.remote_build import (
     InfoFile,
     errors,
 )
+from snapcraft.formatting_utils import humanize_list
 from typing import List, Tuple
 from xdg import BaseDirectory
 from . import echo
@@ -166,7 +167,7 @@ def remote_build(
         lp.delete_snap()
         lp.create_snap(url, branch, archs)
 
-        targets = " for {}".format(", ".join(archs)) if archs else ""
+        targets = " for {}".format(humanize_list(archs, "and", "{}")) if archs else ""
         echo.info(
             "Building package{}. This may take some time to finish.".format(targets)
         )
