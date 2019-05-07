@@ -278,6 +278,9 @@ def promote(snap_name, from_channel, to_channel, yes):
         snapcraft promote my-snap --from-channel stable/patch --to-channel stable
         snapcraft promote my-snap --from-channel experimental/stable --to-channel stable
     """
+    echo.warning(
+        "snapcraft promote does not have a stable CLI interface. Use with caution in scripts."
+    )
     parsed_from_channel = storeapi.channels.Channel(from_channel)
     parsed_to_channel = storeapi.channels.Channel(to_channel)
 
