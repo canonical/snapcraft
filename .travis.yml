@@ -131,6 +131,8 @@ jobs:
         - ./runtests.sh spread
     - stage: integration
       name: store
+      env:
+        SNAPCRAFT_PACKAGE_TYPE: snap
       addons:
         apt:
           packages:
