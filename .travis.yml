@@ -131,8 +131,6 @@ jobs:
         - ./runtests.sh spread
     - stage: integration
       name: store
-      env:
-        SNAPCRAFT_PACKAGE_TYPE: snap
       addons:
         apt:
           packages:
@@ -161,4 +159,4 @@ jobs:
       before_script:
         - rm -rf snapcraft
       script:
-        - ./runtests.sh tests/integration/store
+        - SNAPCRAFT_PACKAGE_TYPE=snap ./runtests.sh tests/integration/store
