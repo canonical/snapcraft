@@ -16,6 +16,7 @@
 
 import os
 
+from snapcraft.internal.deprecations import handle_deprecation_notice
 from ._project_options import ProjectOptions
 from ._project_info import ProjectInfo  # noqa: F401
 
@@ -53,13 +54,28 @@ class Project(ProjectOptions):
 
         super().__init__(target_deb_arch, debug, work_dir=work_dir)
 
+        self.local_plugins_dir = self._get_local_plugins_dir()
+
     def _get_snapcraft_assets_dir(self) -> str:
+        # Many test cases don't set the yaml file path and assume the default dir
+        if not self.info:
+            return os.path.join(self._project_dir, "snap")
+
         if self.info.snapcraft_yaml_file_path.endswith(
             os.path.join("build-aux", "snap", "snapcraft.yaml")
         ):
             return os.path.join(self._project_dir, "build-aux", "snap")
         else:
             return os.path.join(self._project_dir, "snap")
+
+    def _get_local_plugins_dir(self) -> str:
+        deprecated_plugins_dir = os.path.join(self._parts_dir, "plugins")
+        if os.path.exists(deprecated_plugins_dir):
+            handle_deprecation_notice("dn2")
+            return deprecated_plugins_dir
+        else:
+            assets_dir = self._get_snapcraft_assets_dir()
+            return os.path.join(assets_dir, "plugins")
 
     def _get_global_state_file_path(self) -> str:
         if self._is_managed_host:

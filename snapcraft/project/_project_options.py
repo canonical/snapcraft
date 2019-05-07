@@ -24,7 +24,6 @@ from typing import List, Set  # noqa: F401
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
-from snapcraft.internal.deprecations import handle_deprecation_notice
 
 
 logger = logging.getLogger(__name__)
@@ -131,17 +130,6 @@ def _get_platform_architecture():
     return architecture
 
 
-def _get_local_plugins_dir(project_dir: str, parts_dir: str) -> str:
-    deprecated_plugins_dir = os.path.join(parts_dir, "plugins")
-    if os.path.exists(deprecated_plugins_dir):
-        handle_deprecation_notice("dn2")
-        local_plugins_dir = deprecated_plugins_dir
-    else:
-        local_plugins_dir = os.path.join(project_dir, "snap", "plugins")
-
-    return local_plugins_dir
-
-
 class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
@@ -198,10 +186,6 @@ class ProjectOptions:
         return self.__machine_info["kernel"]
 
     @property
-    def local_plugins_dir(self) -> str:
-        return self._local_plugins_dir
-
-    @property
     def parts_dir(self) -> str:
         return self._parts_dir
 
@@ -231,7 +215,6 @@ class ProjectOptions:
         self._parts_dir = os.path.join(work_dir, "parts")
         self._stage_dir = os.path.join(work_dir, "stage")
         self._prime_dir = os.path.join(work_dir, "prime")
-        self._local_plugins_dir = _get_local_plugins_dir(project_dir, self._parts_dir)
 
         logger.debug("Parts dir {}".format(self._parts_dir))
         logger.debug("Stage dir {}".format(self._stage_dir))
