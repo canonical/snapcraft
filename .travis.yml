@@ -102,15 +102,21 @@ jobs:
             classic: true
           - name: transfer
           - name: http
-          - name: lxd
-      before_script:
-        - sudo apt autoremove --purge lxd lxd-client
-        - sudo lxd waitready
-        - sudo lxd init --auto
+        apt:
+          packages:
+            - libapt-pkg-dev
+            - libffi-dev
+            - libnacl-dev
+            - libsodium-dev
+            - libssl-dev
+            - libxml2-dev
+            - libxslt-dev
+            - libyaml-dev
+            - python3.5-dev
       script:
-        - sudo snapcraft snap --use-lxd
-        - sudo cp *.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - sudo cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - snapcraft snap --destructive-mode
+        - cp *.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
@@ -125,5 +131,32 @@ jobs:
         - ./runtests.sh spread
     - stage: integration
       name: store
-      script: 
-        - sudo ./tools/travis/run_integration_test.sh tests/integration/store
+      addons:
+        apt:
+          packages:
+            - bzr
+            - git
+            - libapt-pkg-dev
+            - libffi-dev
+            - libnacl-dev
+            - libsodium-dev
+            - libssl-dev
+            - libxml2-dev
+            - libxslt-dev
+            - libyaml-dev
+            - mercurial
+            - p7zip-full
+            - python3-yaml
+            - python3.5-dev
+            - rpm2cpio
+            - squashfs-tools
+            - subversion
+            - xdelta3
+      install:
+        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
+        - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
+        - ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --dangerous --classic}
+      before_script:
+        - rm -rf snapcraft
+      script:
+        - SNAPCRAFT_PACKAGE_TYPE=snap ./runtests.sh tests/integration/store
