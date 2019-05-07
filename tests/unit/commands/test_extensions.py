@@ -34,6 +34,7 @@ class ExtensionsCommandTest(CommandBaseTestCase):
         self.useFixture(_test1_extension_fixture())
         self.useFixture(_test2_extension_fixture())
         self.useFixture(_test3_extension_fixture())
+        self.useFixture(_test4_extension_fixture())
 
     @mock.patch(
         "pkgutil.iter_modules",
@@ -41,6 +42,7 @@ class ExtensionsCommandTest(CommandBaseTestCase):
             (None, "test1", None),
             (None, "test2", None),
             (None, "test3", None),
+            (None, "_test4", None),
         ),
     )
     def test_list_extensions(self, fake_iter_modules):
@@ -223,3 +225,14 @@ def _test3_extension_fixture():
             self.parts = {"extension-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeExtension("test3", Test3Extension)
+
+
+def _test4_extension_fixture():
+    class Test4Extension(Extension):
+        supported_bases = ("core16", "core18")
+
+        def __init__(self, yaml_data):
+            super().__init__(yaml_data)
+            self.parts = {"extension-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeExtension("_test4", Test4Extension)
