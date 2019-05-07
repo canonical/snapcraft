@@ -144,7 +144,7 @@ def remote_build(
         project_architectures = _get_project_architectures(project)
         if project_architectures and arch:
             raise click.BadOptionUsage(
-                "Can't use --arch, architecture list is already set in snapcraft.yaml."
+                "Cannot use --arch, architecture list is already set in snapcraft.yaml."
             )
         archs = _choose_architectures(project_architectures, arch)
 
