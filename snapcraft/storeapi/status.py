@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional, Set
-from typing import Dict  # noqa: F401
+from typing import Any, Dict, List, Optional, Set
 
 from . import channels
 from . import constants
@@ -39,7 +38,7 @@ class SnapStatusChannelDetails:
         for attr in ["arch", "revision", "version"]:
             yield self.__getattribute__(attr)
 
-    def __init__(self, *, snap_name: str, arch: str, payload) -> None:
+    def __init__(self, *, snap_name: str, arch: str, payload: Dict[str, Any]) -> None:
         self._snap_name = snap_name
         self._arch = arch
         self._payload = payload
@@ -69,7 +68,7 @@ class SnapStatusTrackDetails:
     def __repr__(self) -> str:
         return "<SnapStatusTrackDetails: {} on {}>".format(self._snap_name, self.track)
 
-    def __init__(self, *, snap_name: str, track: str, payload) -> None:
+    def __init__(self, *, snap_name: str, track: str, payload: Dict[str, Any]) -> None:
         self._snap_name = snap_name
         self._track = track
         self._payload = payload
@@ -125,7 +124,7 @@ class SnapStatus:
     def __repr__(self) -> str:
         return "<SnapStatus: {}>".format(self._snap_name)
 
-    def __init__(self, *, snap_name: str, payload) -> None:
+    def __init__(self, *, snap_name: str, payload: Dict[str, Any]) -> None:
         self._snap_name = snap_name
         self._payload = payload
 
