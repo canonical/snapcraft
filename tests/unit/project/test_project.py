@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from tests import unit
 
 from testtools.matchers import Equals, Is
@@ -49,3 +51,33 @@ class ProjectTest(unit.TestCase):
 
         # Only 1 value is enough
         self.assertThat(project.info.name, Equals("foo"))
+
+
+class ProjectLocationTest(unit.TestCase):
+
+    scenarios = [
+        ("standard", {"location": ""}),
+        ("alternative", {"location": "build-aux"}),
+    ]
+
+    def test_project_local_plugin_location(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            """\
+            name: foo
+            version: "1"
+            summary: bar
+            description: baz
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """,
+            location=self.location,
+        )
+
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        self.assertThat(
+            project.local_plugins_dir,
+            Equals(os.path.join(os.getcwd(), self.location, "snap", "plugins")),
+        )

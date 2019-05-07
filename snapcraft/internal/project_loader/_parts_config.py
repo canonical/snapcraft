@@ -183,6 +183,7 @@ class PartsConfig:
             project_options=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
+            local_plugins_dir=self._project.local_plugins_dir,
         )
 
         logger.debug(
