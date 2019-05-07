@@ -76,7 +76,7 @@ class LaunchpadClient:
 
         self.user = user
         self._lp = Launchpad.login_with(
-            "snapcraft {}".format(snapcraft.__version__),
+            "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
             self._cache_dir,
             credentials_file=self._credentials,
