@@ -86,4 +86,4 @@ class ProjectLocationTest(unit.TestCase):
 class ProjectTimestampTest(unit.TestCase):
     def test_get_snapcraft_started(self):
         project = Project()
-        self.assertThat(project._get_start_time(), LessThan(datetime.now()))
+        self.assertThat(project._get_start_time(), LessThan(datetime.utcnow()))

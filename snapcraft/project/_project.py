@@ -56,7 +56,7 @@ class Project(ProjectOptions):
         super().__init__(target_deb_arch, debug, work_dir=work_dir)
 
         self.local_plugins_dir = self._get_local_plugins_dir()
-        self._start_time = datetime.now()
+        self._start_time = datetime.utcnow()
 
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir
