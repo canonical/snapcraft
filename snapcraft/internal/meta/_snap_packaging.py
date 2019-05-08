@@ -438,9 +438,7 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(
-                copy.deepcopy(self._config_data),
-                self._parts_dir,
-                self._global_state_file,
+                self._project_config.project, copy.deepcopy(self._config_data)
             )
             with open(manifest_file_path, "w") as manifest_file:
                 yaml_utils.dump(annotated_snapcraft, stream=manifest_file)

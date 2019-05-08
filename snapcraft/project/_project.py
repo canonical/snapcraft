@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from datetime import datetime
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from ._project_options import ProjectOptions
@@ -55,6 +56,7 @@ class Project(ProjectOptions):
         super().__init__(target_deb_arch, debug, work_dir=work_dir)
 
         self.local_plugins_dir = self._get_local_plugins_dir()
+        self._start_time = datetime.utcnow()
 
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir
@@ -84,3 +86,7 @@ class Project(ProjectOptions):
             state_file_path = os.path.join(self._parts_dir, ".snapcraft_global_state")
 
         return state_file_path
+
+    def _get_start_time(self) -> datetime:
+        """Returns the timestamp for when a snapcraft project was loaded."""
+        return self._start_time

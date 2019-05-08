@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from datetime import datetime
+
+from testtools.matchers import Equals, Is, LessThan
 
 from tests import unit
-
-from testtools.matchers import Equals, Is
-
 from snapcraft.project import Project
 
 
@@ -81,3 +81,9 @@ class ProjectLocationTest(unit.TestCase):
             project.local_plugins_dir,
             Equals(os.path.join(os.getcwd(), self.location, "snap", "plugins")),
         )
+
+
+class ProjectTimestampTest(unit.TestCase):
+    def test_get_snapcraft_started(self):
+        project = Project()
+        self.assertThat(project._get_start_time(), LessThan(datetime.utcnow()))
