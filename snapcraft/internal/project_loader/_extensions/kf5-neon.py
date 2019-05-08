@@ -65,7 +65,8 @@ class Kf5_neonExtension(DesktopCommonExtension):
         }
 
         command_chain = ["snap/command-chain/kf5-connect"]
-        command_chain = command_chain + self.app_snippet["command-chain"]
+        if "command-chain" in self.app_snippet:
+            command_chain = command_chain + self.app_snippet["command-chain"]
         command_chain = command_chain + ["snap/command-chain/kf5-launch"]
 
         self.app_snippet = {

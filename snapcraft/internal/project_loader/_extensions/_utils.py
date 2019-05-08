@@ -48,7 +48,7 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
-    original_yaml_data = copy.deepcopy(yaml_data)
+    # original_yaml_data = copy.deepcopy(yaml_data)
     base = yaml_data.get("base")
 
     # Mapping of extension names to set of app names to which the extension needs to be
@@ -69,7 +69,7 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Process extensions in a consistent order
     for extension_name in sorted(declared_extensions.keys()):
-        extension = _load_extension(base, extension_name, original_yaml_data)
+        extension = _load_extension(base, extension_name, yaml_data)
         _apply_extension(
             yaml_data, declared_extensions[extension_name], extension_name, extension
         )

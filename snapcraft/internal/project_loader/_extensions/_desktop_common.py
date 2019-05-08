@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Any, Dict
+from typing import List  # noqa: F401
 
 from ._extension import Extension
 
@@ -32,6 +33,15 @@ class DesktopCommonExtension(Extension):
         """
 
         super().__init__(yaml_data)
+
+        # Check if we've been already applied
+        parts = yaml_data.get("parts")
+        if parts and "desktop-common-extension" in parts.keys():
+            self.plugs = {}  # type: Dict[str, Any]
+            self.environment = {}  # type: Dict[str, str]
+            self.command_chain = []  # type: List[str]
+            self.parts = {}  # type: Dict[str, Any]
+            return
 
         self.plugs = {
             "gtk-3-themes": {
