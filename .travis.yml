@@ -116,7 +116,8 @@ jobs:
       script:
         - snapcraft snap --destructive-mode
         - cp *.snap "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
-        - cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache
+        - sudo cp "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
