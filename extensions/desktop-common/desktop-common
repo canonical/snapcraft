@@ -436,4 +436,8 @@ ln -sfn "$REALHOME/.config/ibus/bus" "$IBUS_CONFIG_PATH"
 
 export SNAP_DESKTOP_WAYLAND_AVAILABLE
 
+if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
+  echo "SNAP_DESKTOP_LAST_REVISION=$SNAP_REVISION" > "$SNAP_USER_DATA/.last_revision"
+fi
+
 exec "$@"
