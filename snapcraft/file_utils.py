@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator, List
+from typing import Pattern, Callable, Generator, List, Optional
 from typing import Set  # noqa F401
 
 from snapcraft.internal import common
@@ -400,3 +400,13 @@ def get_linker_version_from_file(linker_file: str) -> str:
     linker_version = m.group("linker_version")
 
     return linker_version
+
+
+def get_shebang_from_file(file_path: str) -> Optional[str]:
+    """Returns the shebang from file_path or None if not found."""
+    shebang = None
+    with open(file_path, "rb") as exefile:
+        if exefile.read(2) == b"#!":
+            shebang = exefile.readline().strip().decode("utf-8")
+
+    return shebang

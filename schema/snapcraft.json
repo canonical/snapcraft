@@ -503,7 +503,7 @@
                                 "legacy",
                                 "full"
                             ],
-                            "default": "legacy"
+                            "default": "full"
                         },
                         "command-chain": {
                             "type": "array",

@@ -549,6 +549,33 @@ class _SnapPackaging:
 
         return snap_yaml
 
+    def _ensure_command(
+        self, command: str, shebang: str, adapter: project_loader.Adapter
+    ) -> str:
+        """Ensures the shebang is correct and returns a working command."""
+        if shebang is None or not shebang.startswith("/usr/bin/env"):
+            return '"{}"'.format(command)
+
+        shebang = shell_utils.which(shebang.split()[1])
+        new_shebang = self._install_path_pattern.sub("$SNAP", shebang)
+        new_shebang = re.sub(self._prime_dir, "$SNAP", new_shebang)
+        if new_shebang != shebang:
+            # If the shebang was pointing to an executable within the
+            # local 'parts' dir, make command execute it directly,
+            # since we can't use $SNAP in the shebang itself.
+            # We do not quote as snapd rejects them as only
+            # '^[A-Za-z0-9/. _#:$-]*$') is valid.
+            if adapter == project_loader.Adapter.FULL:
+                # strip the $SNAP from new_shebang as it is an invalid
+                # command for snapd.
+                new_command = "{} {}".format(new_shebang.lstrip("$SNAP/"), command)
+            else:
+                new_command = "{} {}".format(new_shebang, command)
+        else:
+            new_command = command
+
+        return new_command
+
     def _write_wrap_exe(self, wrapexec, wrappath, shebang=None, args=None, cwd=None):
         if args:
             quoted_args = ['"{}"'.format(arg) for arg in args]
@@ -557,18 +584,9 @@ class _SnapPackaging:
         args = " ".join(quoted_args) + ' "$@"' if args else '"$@"'
         cwd = "cd {}".format(cwd) if cwd else ""
 
-        executable = '"{}"'.format(wrapexec)
-
-        if shebang:
-            if shebang.startswith("/usr/bin/env "):
-                shebang = shell_utils.which(shebang.split()[1])
-            new_shebang = self._install_path_pattern.sub("$SNAP", shebang)
-            new_shebang = re.sub(self._prime_dir, "$SNAP", new_shebang)
-            if new_shebang != shebang:
-                # If the shebang was pointing to and executable within the
-                # local 'parts' dir, have the wrapper script execute it
-                # directly, since we can't use $SNAP in the shebang itself.
-                executable = '"{}" "{}"'.format(new_shebang, wrapexec)
+        executable = self._ensure_command_shebang(
+            wrapexec, shebang, project_loader.Adapter.LEGACY
+        )
 
         with open(wrappath, "w+") as f:
             print("#!/bin/sh", file=f)
@@ -585,7 +603,6 @@ class _SnapPackaging:
             wrappath = os.path.join(self._prime_dir, basename) + ".wrapper"
         else:
             wrappath = exepath + ".wrapper"
-        shebang = None
 
         if os.path.exists(wrappath):
             os.remove(wrappath)
@@ -594,13 +611,14 @@ class _SnapPackaging:
         if not os.path.exists(exepath) and "/" not in execparts[0]:
             _find_bin(execparts[0], self._prime_dir)
             wrapexec = execparts[0]
+            # This is not a file that lives in the snap so there is no
+            # shebang to check for.
+            shebang = None
         else:
-            with open(exepath, "rb") as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b"#!":
-                    shebang = exefile.readline().strip().decode("utf-8")
+            # If the file has a shebang, the path might be pointing to
+            # the local 'parts' dir. Extract it so that _write_wrap_exe
+            # will have a chance to rewrite it.
+            shebang = file_utils.get_shebang_from_file(exepath)
 
         self._write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=execparts[1:])
 
@@ -627,8 +645,8 @@ class _SnapPackaging:
         # First, validate the commands. Without a wrapper, we're bound by snapd's
         # restrictions. No quotes, and the first string must be a relative path from
         # the root of the snap.
-        commands = (app[k] for k in ("command", "stop-command") if k in app)
-        for command in commands:
+        for command_key in (k for k in ["command", "stop-command"] if k in app):
+            command = app[command_key]
             if not _APP_COMMAND_PATTERN.match(command):
                 raise errors.InvalidAppCommandFormatError(command, app_name)
 
@@ -643,6 +661,13 @@ class _SnapPackaging:
 
             if not is_executable:
                 raise errors.InvalidAppCommandError(command_without_args, app_name)
+
+            # Now, ensure we have a correct shebang set for this command.
+            app[command_key] = self._ensure_command(
+                command,
+                file_utils.get_shebang_from_file(command),
+                project_loader.Adapter.FULL,
+            )
 
         # Finally, assuming there is a meta runner, add it to the BEGINNING of the
         # command chain. This is to ensure all subsequent commands in the chain get
