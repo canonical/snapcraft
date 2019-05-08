@@ -42,37 +42,7 @@ class _SnapOp(enum.Enum):
     REFRESH = 3
 
 
-_VALID_RISKS = ["stable", "candidate", "beta", "edge"]
-
-
-class _Channel:
-    def __str__(self) -> str:
-        return self._channel
-
-    def __init__(self, channel: str) -> None:
-        channel_parts = channel.split("/")
-        if len(channel_parts) == 1:
-            self.track = None
-            self.risk = channel_parts[0]
-            self.branch = None
-        elif len(channel_parts) == 3:
-            self.track = channel_parts[0]
-            self.risk = channel_parts[1]
-            self.branch = channel_parts[2]
-        elif len(channel_parts) == 2 and channel_parts[0] in _VALID_RISKS:
-            self.track = None
-            self.risk = channel_parts[0]
-            self.branch = channel_parts[1]
-        elif len(channel_parts) == 2 and channel_parts[1] in _VALID_RISKS:
-            self.track = channel_parts[0]
-            self.risk = channel_parts[1]
-            self.branch = None
-        else:
-            raise RuntimeError("Channel logic failed for: {!r]".format(channel))
-        self._channel = channel
-
-
-def _get_snap_channel(snap_name: str) -> _Channel:
+def _get_snap_channel(snap_name: str) -> storeapi.channels.Channel:
     """Returns the channel to use for snap_name."""
     env_channel = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", None)
     if env_channel is not None and snap_name == "snapcraft":
@@ -84,7 +54,7 @@ def _get_snap_channel(snap_name: str) -> _Channel:
     else:
         channel = "latest/stable"
 
-    return _Channel(channel)
+    return storeapi.channels.Channel(channel)
 
 
 class _SnapManager:

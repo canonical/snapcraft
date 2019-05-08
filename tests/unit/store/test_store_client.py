@@ -1349,29 +1349,36 @@ class GetSnapStatusTestCase(StoreTestCase):
                 "latest": {
                     "16": {
                         "i386": [
-                            {"info": "none", "channel": "stable"},
-                            {"info": "none", "channel": "beta"},
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
                             {
+                                "channel": "beta",
                                 "info": "specific",
-                                "version": "1.0-i386",
+                                "revision": 6,
+                                "version": "1.1-amd64",
+                            },
+                            {
                                 "channel": "edge",
+                                "info": "specific",
                                 "revision": 3,
+                                "version": "1.0-i386",
                             },
                         ],
                         "amd64": [
                             {
-                                "info": "specific",
-                                "version": "1.0-amd64",
                                 "channel": "stable",
-                                "revision": 2,
-                            },
-                            {
                                 "info": "specific",
-                                "version": "1.1-amd64",
-                                "channel": "beta",
-                                "revision": 4,
+                                "revision": 2,
+                                "version": "1.0-amd64",
                             },
-                            {"info": "tracking", "channel": "edge"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "channel": "beta",
+                                "info": "specific",
+                                "revision": 4,
+                                "version": "1.1-amd64",
+                            },
+                            {"channel": "edge", "info": "tracking"},
                         ],
                     }
                 }

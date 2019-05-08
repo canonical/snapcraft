@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from textwrap import dedent
 
 from testtools.matchers import Equals, Contains, FileExists
 
@@ -72,16 +73,18 @@ class StatusTestCase(integration.StoreTestCase):
         self.login()
 
         output = self.run_snapcraft(["status", "basic"])
-        expected = "\n".join(
-            (
-                "Track    Arch    Channel    Version    Revision",
-                "latest   amd64   stable     1.0-amd64  2",
-                "                 beta       1.1-amd64  4",
-                "                 edge       ^          ^",
-                "         i386    stable     -          -",
-                "                 beta       -          -",
-                "                 edge       1.0-i386   3",
-            )
+        expected = dedent(
+            """\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     1.0-amd64  2
+                             candidate  -          -
+                             beta       1.1-amd64  4
+                             edge       ^          ^
+                     i386    stable     -          -
+                             candidate  -          -
+                             beta       1.1-amd64  6
+                             edge       1.0-i386   3
+            """
         )
         self.assertThat(output, Contains(expected))
 
@@ -118,13 +121,13 @@ class StatusTestCase(integration.StoreTestCase):
         self.assertThat(self.push(snap_path, release="candidate,beta"), Equals(0))
 
         output = self.run_snapcraft(["status", name])
-        expected = "\n".join(
-            (
-                "Track    Arch    Channel    Version                           Revision",  # noqa
-                "latest   all     stable     -                                 -",
-                "                 candidate  {version}  1",
-                "                 beta       {version}  1",
-                "                 edge       ^                                 ^",
-            )
+        expected = dedent(
+            """\
+            Track    Arch    Channel    Version    Revision
+            latest   all     stable     -          -
+                             candidate  {version}  1
+                             beta       {version}  1
+                             edge       ^          ^
+            """
         ).format(version=version)
         self.assertThat(output, Contains(expected))
