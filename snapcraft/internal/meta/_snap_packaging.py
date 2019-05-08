@@ -568,6 +568,8 @@ class _SnapPackaging:
             if adapter == project_loader.Adapter.FULL:
                 # strip the $SNAP from new_shebang as it is an invalid
                 # command for snapd.
+                if new_shebang.startswith("$SNAP/"):
+                    new_shebang = new_shebang[len("$SNAP/"):]
                 new_command = "{} {}".format(new_shebang.lstrip("$SNAP/"), command)
             else:
                 new_command = "{} {}".format(new_shebang, command)
@@ -665,7 +667,7 @@ class _SnapPackaging:
             # Now, ensure we have a correct shebang set for this command.
             app[command_key] = self._ensure_command(
                 command,
-                file_utils.get_shebang_from_file(command),
+                file_utils.get_shebang_from_file(os.path.join(self._prime_dir, command)),
                 project_loader.Adapter.FULL,
             )
 
