@@ -123,7 +123,7 @@ class LaunchpadTestCase(unit.TestCase):
         lpc.login("user")
         self.assertThat(lpc.user, Equals("user"))
         mock_login.assert_called_with(
-            "snapcraft {}".format(snapcraft.__version__),
+            "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
             mock.ANY,
             credentials_file=mock.ANY,
