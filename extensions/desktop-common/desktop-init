@@ -39,6 +39,10 @@ fi
 
 SNAP_DESKTOP_ARCH_TRIPLET="$ARCH"
 
+PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+LD_LIBRARY_PATH:}$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/$ARCH:$SNAP/usr/lib/$ARCH"
+LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+
 if [ -f "$SNAP/lib/bindtextdomain.so" ]; then
   export LD_PRELOAD="$LD_PRELOAD:$SNAP/lib/bindtextdomain.so"
 fi
@@ -46,5 +50,7 @@ fi
 export REALHOME
 export SNAP_DESKTOP_COMPONENTS_NEED_UPDATE
 export SNAP_DESKTOP_ARCH_TRIPLET
+export PATH
+export LD_LIBRARY_PATH
 
 exec "$@"
