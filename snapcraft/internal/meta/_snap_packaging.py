@@ -117,6 +117,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     _ensure_required_keywords(project_config.data)
 
     packaging = _SnapPackaging(project_config, extracted_metadata)
+    packaging.validate_common_ids()
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -437,9 +438,7 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(
-                copy.deepcopy(self._config_data),
-                self._parts_dir,
-                self._global_state_file,
+                self._project_config.project, copy.deepcopy(self._config_data)
             )
             with open(manifest_file_path, "w") as manifest_file:
                 yaml_utils.dump(annotated_snapcraft, stream=manifest_file)
@@ -736,6 +735,25 @@ class _SnapPackaging:
             raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
         section.update(passthrough)
         return bool(passthrough)
+
+    def validate_common_ids(self) -> None:
+        if (
+            not self._extracted_metadata
+            or not self._extracted_metadata.common_id_list
+            or "apps" not in self._config_data
+        ):
+            return
+
+        common_id_list = self._extracted_metadata.common_id_list
+        for app in self._config_data["apps"]:
+            app_common_id = self._config_data["apps"][app].get("common-id")
+            if app_common_id not in common_id_list:
+                logger.warning(
+                    "Common ID {common_id!r} specified in app {app!r} is "
+                    "not used in any metadata file.".format(
+                        common_id=app_common_id, app=app
+                    )
+                )
 
 
 def _determine_assumes(yaml_data: Dict[str, Any]) -> Set[str]:

@@ -1,3 +1,60 @@
+snapcraft (3.4.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: add a set_confinement helper
+  * tests: classic confinement spread tests for ant and maven (LP: #1805206)
+  * build providers: get rid of attribute warnings from pylxd (#2535)
+  * rust plugin: fix usage of rust-channel (#2538) (LP: #1825062)
+  * storeapi: move from details (v1) to info (v2) (#2550)
+
+  [ Tony Simpson ]
+  * project loader: add SNAPCRAFT_PROJECT_DIR environment variable (#2534)
+    (LP: #1824417)
+
+  [ Kyle Fazzari ]
+  * tests: allow python2 as well as python for catkin spread tests (#2540)
+  * integration tests: use correct series in get_package_version (#2548)
+  * catkin plugin: use build-packages for compilers (#2545) (LP: #1827148)
+
+  [ Claudio Matsuoka ]
+  * extractors: fix typo in appstream icon unit test (#2543)
+  * meta: Validate common ID against appstream metadata (#2542) (LP: #1814902)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 03 May 2019 12:48:58 +0000
+
+snapcraft (3.4) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * build providers: modify the _run signature (#2511) (LP: #1821401)
+  * build providers: support for provider setup (#2515) (LP: #1821586)
+  * readme: add snap store badge (#2516)
+  * build providers: initial support for LXD (#2509) (LP: #1805221)
+  * cli: cleanup environment detection (#2521)
+  * build providers: add API for friendly instance type names (#2522)
+  * snap: set core as a base (#2520)
+  * ci: improve travis integration conditionals (#2523)
+  * cli: snapcraft try (#2524) (LP: #1805212)
+  * build providers: idempotent destroy for LXD (#2529)
+  * tests: add missing pylxd Build-Depends
+  * tests: restrict catking stage-snap tests arches
+
+  [ Claudio Matsuoka ]
+  * repo: handle deb package fetch error (#2513)
+  * project: ensure yaml load returns a dictionary (#2517)
+  * many: better handling of appstream icons (#2512) (LP: #1814898)
+  * go plugin, elf: use patchelf 0.10 and relink dynamic go binaries (#2519)
+    (LP: #1805205)
+  * snap: use snapcraft's 0.10 patchelf branch (#2528)
+  * snap: revert to patchelf 0.9 with local patches (#2531)
+
+  [ adanhawth ]
+  * schema: add more detail wrt numeric version errors (#2506)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: check stage-snaps for ROS dependencies (#2525)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Mon, 08 Apr 2019 20:40:27 +0000
+
 snapcraft (3.3) xenial; urgency=medium
 
   [ Sergio Schvezov ]

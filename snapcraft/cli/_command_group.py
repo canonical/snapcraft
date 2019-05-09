@@ -72,4 +72,8 @@ class SnapcraftGroup(click.Group):
 
         # Hide the legacy commands
         commands.pop(commands.index("cleanbuild"))
+
+        # Hide commands with unstable cli
+        commands.pop(commands.index("promote"))
+
         return commands

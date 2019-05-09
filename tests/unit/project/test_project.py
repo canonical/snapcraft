@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from datetime import datetime
+
+from testtools.matchers import Equals, Is, LessThan
+
 from tests import unit
-
-from testtools.matchers import Equals, Is
-
 from snapcraft.project import Project
 
 
@@ -49,3 +51,39 @@ class ProjectTest(unit.TestCase):
 
         # Only 1 value is enough
         self.assertThat(project.info.name, Equals("foo"))
+
+
+class ProjectLocationTest(unit.TestCase):
+
+    scenarios = [
+        ("standard", {"location": ""}),
+        ("alternative", {"location": "build-aux"}),
+    ]
+
+    def test_project_local_plugin_location(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            """\
+            name: foo
+            version: "1"
+            summary: bar
+            description: baz
+            confinement: strict
+
+            parts:
+              part1:
+                plugin: nil
+            """,
+            location=self.location,
+        )
+
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        self.assertThat(
+            project.local_plugins_dir,
+            Equals(os.path.join(os.getcwd(), self.location, "snap", "plugins")),
+        )
+
+
+class ProjectTimestampTest(unit.TestCase):
+    def test_get_snapcraft_started(self):
+        project = Project()
+        self.assertThat(project._get_start_time(), LessThan(datetime.utcnow()))

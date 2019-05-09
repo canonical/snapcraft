@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2018 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,9 +23,9 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import config, storeapi, ProjectOptions
+from snapcraft import config, storeapi
 from snapcraft.storeapi import errors, constants
 import tests
 from tests import fixture_setup, unit
@@ -166,58 +166,43 @@ class LoginTestCase(StoreTestCase):
 
 class DownloadTestCase(StoreTestCase):
 
-    # sha512 of tests/data/test-snap.snap
-    EXPECTED_SHA512 = (
-        "69D57DCACF4F126592D4E6FF689AD8BB8A083C7B9FE44F6E738EF"
-        "d22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b"
-        "fda4128234e4c201f28fe9"
-    )
+    # sha3-384 of tests/data/test-snap.snap
+    EXPECTED_SHA3_384 = ""
 
-    def test_download_unexisting_snap_raises_exception(self):
+    def test_download_nonexistent_snap_raises_exception(self):
         self.client.login("dummy", "test correct password")
         e = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
-            "unexisting-snap",
-            "test-channel",
-            "dummy",
-            "test-arch",
+            "nonexistent-snap",
+            risk="stable",
+            download_path="dummy.snap",
+            arch="test-arch",
         )
-        self.assertThat(
-            str(e),
-            Equals(
-                "Snap 'unexisting-snap' for 'test-arch' cannot be found in "
-                "the 'test-channel' channel."
-            ),
-        )
+        self.assertThat(str(e), Equals("Snap 'nonexistent-snap' was not found."))
 
     def test_download_snap(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
         self.client.login("dummy", "test correct password")
         download_path = os.path.join(self.path, "test-snap.snap")
-        self.client.download("test-snap", "test-channel", download_path)
-        self.assertIn(
-            "Successfully downloaded test-snap at {}".format(download_path),
-            self.fake_logger.output,
-        )
+        self.client.download("test-snap", risk="stable", download_path=download_path)
+        self.assertThat(download_path, FileExists())
 
-    def test_download_from_branded_store_requires_login(self):
-        err = self.assertRaises(
+    def test_download_snap_missing_risk(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.client.login("dummy", "test correct password")
+
+        e = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
-            "test-snap-branded-store",
-            "test-channel",
-            "dummy",
+            "test-snap",
+            risk="beta",
+            download_path="dummy.snap",
         )
-
-        arch = ProjectOptions().deb_arch
         self.assertThat(
-            str(err),
-            Equals(
-                "Snap 'test-snap-branded-store' for '{}' cannot be found in "
-                "the 'test-channel' channel.".format(arch)
-            ),
+            str(e), Equals("Snap 'test-snap' was not found in the 'beta' channel.")
         )
 
     def test_download_from_branded_store_requires_store(self):
@@ -226,25 +211,20 @@ class DownloadTestCase(StoreTestCase):
             errors.SnapNotFoundError,
             self.client.download,
             "test-snap-branded-store",
-            "test-channel",
-            "dummy",
+            risk="stable",
+            download_path="dummy.snap",
         )
 
-        arch = ProjectOptions().deb_arch
         self.assertThat(
-            str(err),
-            Equals(
-                "Snap 'test-snap-branded-store' for '{}' cannot be found in "
-                "the 'test-channel' channel.".format(arch)
-            ),
+            str(err), Equals("Snap 'test-snap-branded-store' was not found.")
         )
 
     def test_download_from_branded_store(self):
-        # Downloading from a branded-store requires login (authorization)
-        # and setting 'SNAPCRAFT_UBUNTU_STORE' environment variable to the
+        # Downloading from a branded-store requires setting the
+        # 'SNAPCRAFT_UBUNTU_STORE' environment variable to the
         # correct store 'slug' (the branded store identifier).
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
 
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_UBUNTU_STORE", "Test-Branded")
@@ -252,41 +232,35 @@ class DownloadTestCase(StoreTestCase):
         self.client.login("dummy", "test correct password")
 
         download_path = os.path.join(self.path, "brand.snap")
-        self.client.download("test-snap-branded-store", "test-channel", download_path)
-
-        self.assertIn(
-            "Successfully downloaded test-snap-branded-store at {}".format(
-                download_path
-            ),
-            self.fake_logger.output,
+        self.client.download(
+            "test-snap-branded-store", risk="stable", download_path=download_path
         )
+        self.assertThat(download_path, FileExists())
 
     def test_download_already_downloaded_snap(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
         self.client.login("dummy", "test correct password")
         download_path = os.path.join(self.path, "test-snap.snap")
         # download first time.
-        self.client.download("test-snap", "test-channel", download_path)
+        self.client.download("test-snap", risk="stable", download_path=download_path)
+        first_stat = os.stat(download_path)
         # download again.
-        self.client.download("test-snap", "test-channel", download_path)
-        self.assertIn(
-            "Already downloaded test-snap at {}".format(download_path),
-            self.fake_logger.output,
-        )
+        self.client.download("test-snap", risk="stable", download_path=download_path)
+        second_stat = os.stat(download_path)
+        # If these are equal it means a second download did not happen.
+        self.assertThat(second_stat, Equals(first_stat))
 
     def test_download_on_sha_mismatch(self):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
         self.client.login("dummy", "test correct password")
         download_path = os.path.join(self.path, "test-snap.snap")
         # Write a wrong file in the download path.
         open(download_path, "w").close()
-        self.client.download("test-snap", "test-channel", download_path)
-        self.assertIn(
-            "Successfully downloaded test-snap at {}".format(download_path),
-            self.fake_logger.output,
-        )
+        first_stat = os.stat(download_path)
+        self.client.download("test-snap", risk="stable", download_path=download_path)
+        second_stat = os.stat(download_path)
+        # If these are different it means that the download did happen.
+        self.assertThat(second_stat, Not(Equals(first_stat)))
 
     def test_download_with_hash_mismatch_raises_exception(self):
         self.client.login("dummy", "test correct password")
@@ -295,8 +269,8 @@ class DownloadTestCase(StoreTestCase):
             errors.SHAMismatchError,
             self.client.download,
             "test-snap-with-wrong-sha",
-            "test-channel",
-            download_path,
+            risk="stable",
+            download_path=download_path,
         )
 
 
@@ -1375,29 +1349,36 @@ class GetSnapStatusTestCase(StoreTestCase):
                 "latest": {
                     "16": {
                         "i386": [
-                            {"info": "none", "channel": "stable"},
-                            {"info": "none", "channel": "beta"},
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
                             {
+                                "channel": "beta",
                                 "info": "specific",
-                                "version": "1.0-i386",
+                                "revision": 6,
+                                "version": "1.1-amd64",
+                            },
+                            {
                                 "channel": "edge",
+                                "info": "specific",
                                 "revision": 3,
+                                "version": "1.0-i386",
                             },
                         ],
                         "amd64": [
                             {
-                                "info": "specific",
-                                "version": "1.0-amd64",
                                 "channel": "stable",
-                                "revision": 2,
-                            },
-                            {
                                 "info": "specific",
-                                "version": "1.1-amd64",
-                                "channel": "beta",
-                                "revision": 4,
+                                "revision": 2,
+                                "version": "1.0-amd64",
                             },
-                            {"info": "tracking", "channel": "edge"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "channel": "beta",
+                                "info": "specific",
+                                "revision": 4,
+                                "version": "1.1-amd64",
+                            },
+                            {"channel": "edge", "info": "tracking"},
                         ],
                     }
                 }

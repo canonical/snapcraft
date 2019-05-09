@@ -18,6 +18,18 @@ set_base()
     sed -i "1ibase: $base"  "$snapcraft_yaml_path"
 }
 
+set_confinement()
+{
+    snapcraft_yaml_path="$1"
+    confinement="$2"
+
+    if grep -q "^confinement: " "$snapcraft_yaml_path"; then
+        sed -i -e "s/confinement: \w*$/confinement: $confinement/" "$snapcraft_yaml_path"
+    else
+        sed -i "1iconfinement: $confinement"  "$snapcraft_yaml_path"
+    fi
+}
+
 set_openjdk_version()
 {
     snapcraft_yaml_path="$1"

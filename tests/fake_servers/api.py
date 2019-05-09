@@ -1099,7 +1099,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "16": {
                         "i386": [
                             {"info": "none", "channel": "stable"},
-                            {"info": "none", "channel": "beta"},
+                            {"info": "none", "channel": "candidate"},
+                            {
+                                "info": "specific",
+                                "version": "1.1-amd64",
+                                "channel": "beta",
+                                "revision": 6,
+                            },
                             {
                                 "info": "specific",
                                 "version": "1.0-i386",
@@ -1114,6 +1120,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                 "channel": "stable",
                                 "revision": 2,
                             },
+                            {"info": "none", "channel": "candidate"},
                             {
                                 "info": "specific",
                                 "version": "1.1-amd64",

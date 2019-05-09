@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,16 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import contextlib
 import os
 import functools
+import operator
 import stat
 import sys
 from textwrap import dedent
-
-# Using mypy 'type:' comment below, but flake8 thinks these aren't used
-from typing import Dict, List, Union  # noqa
+from typing import Dict, List, Union  # noqa: F401
 
 import click
+from tabulate import tabulate
 
 import snapcraft
 from snapcraft import storeapi, formatting_utils
@@ -60,6 +61,15 @@ _MESSAGE_REGISTER_NO = dedent(
 
     In the meantime you can register an alternative name."""
 )
+
+
+@contextlib.contextmanager
+def _requires_login():
+    try:
+        yield
+    except storeapi.errors.InvalidCredentialsError:
+        echo.error("No valid credentials found." ' Have you run "snapcraft login"?')
+        raise
 
 
 @click.group()
@@ -224,6 +234,92 @@ def release(snap_name, revision, channels):
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
     snapcraft.release(snap_name, revision, channels.split(","))
+
+
+@storecli.command()
+@click.argument("snap-name", metavar="<snap-name>")
+@click.option(
+    "--from-channel",
+    metavar="<from-channel>",
+    required=True,
+    help="The channel to promote from.",
+)
+@click.option(
+    "--to-channel",
+    metavar="<to-channel>",
+    required=True,
+    help="The channel to promote to.",
+)
+@click.option("--yes", is_flag=True, help="Do not prompt for confirmation.")
+def promote(snap_name, from_channel, to_channel, yes):
+    """Promote a build set from to a channel.
+
+    A build set is a set of commonly tagged revisions, the most simple
+    form of a build set is a set of revisions released to a channel.
+
+    Currently, only channels are supported to release from (<from-channel>)
+
+    Prior to releasing, visual confirmation shall be required.
+
+    The format for channels is `[<track>/]<risk>[/<branch>]` where
+
+    \b
+        - <track> is used to have long term release channels. It is implicitly
+          set to the default.
+        - <risk> is mandatory and can be either `stable`, `candidate`, `beta`
+          or `edge`.
+        - <branch> is optional and dynamically creates a channel with a
+          specific expiration date.
+
+    \b
+    Examples:
+        snapcraft promote my-snap --from-channel candidate --to-channel stable
+        snapcraft promote my-snap --from-channel lts/candidate --to-channel lts/stable
+        snapcraft promote my-snap --from-channel stable/patch --to-channel stable
+        snapcraft promote my-snap --from-channel experimental/stable --to-channel stable
+    """
+    echo.warning(
+        "snapcraft promote does not have a stable CLI interface. Use with caution in scripts."
+    )
+    parsed_from_channel = storeapi.channels.Channel(from_channel)
+    parsed_to_channel = storeapi.channels.Channel(to_channel)
+
+    if parsed_from_channel == parsed_to_channel:
+        raise click.BadOptionUsage(
+            "--from-channel and --to-channel cannot be the same."
+        )
+    elif parsed_from_channel.risk == "edge" and parsed_from_channel.branch is None:
+        raise click.BadOptionUsage(
+            "{!r} is not a valid set value for --from-channel.".format(
+                parsed_from_channel
+            )
+        )
+
+    store = storeapi.StoreClient()
+    with _requires_login():
+        status_payload = store.get_snap_status(snap_name)
+
+    snap_status = storeapi.status.SnapStatus(
+        snap_name=snap_name, payload=status_payload
+    )
+    from_channel_set = snap_status.get_channel_set(parsed_from_channel)
+    echo.info("Build set information for {!r}".format(parsed_from_channel))
+    click.echo(
+        tabulate(
+            sorted(from_channel_set, key=operator.attrgetter("arch")),
+            headers=["Arch", "Revision", "Version"],
+            tablefmt="plain",
+        )
+    )
+    if yes or click.confirm(
+        "Do you want to promote the current set to the {!r} channel?".format(
+            parsed_to_channel
+        )
+    ):
+        for c in from_channel_set:
+            snapcraft.release(snap_name, str(c.revision), [str(parsed_to_channel)])
+    else:
+        echo.wrapped("Channel promotion cancelled")
 
 
 @storecli.command()

@@ -20,7 +20,6 @@ import os
 import os.path
 import re
 import subprocess
-import shutil
 import sys
 import tempfile
 import textwrap
@@ -383,8 +382,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         self.assertTrue("bionic" in plugin.PLUGIN_STAGE_SOURCES)
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
-    def test_pull_invalid_dependency(self, compilers_mock):
+    def test_pull_invalid_dependency(self):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
@@ -542,7 +540,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             self.project,
         )
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
@@ -555,7 +552,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         run_output_mock,
         bashrun_mock,
         run_mock,
-        compilers_mock,
     ):
         self.properties.catkin_packages.append("package_2")
 
@@ -575,7 +571,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
                 self.test.assertIn("package_2", packages)
                 return True
 
-        bashrun_mock.assert_called_with(check_pkg_arguments(self), env=mock.ANY)
+        bashrun_mock.assert_called_with(check_pkg_arguments(self))
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -584,10 +580,9 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
 
         finish_build_mock.assert_called_once_with()
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
-    def test_build_runs_in_bash(self, run_output_mock, run_mock, compilers_mock):
+    def test_build_runs_in_bash(self, run_output_mock, run_mock):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
@@ -1271,7 +1266,6 @@ class BuildTestCase(CatkinPluginBaseTest):
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.catkin_cmake_args = self.catkin_cmake_args
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
@@ -1284,7 +1278,6 @@ class BuildTestCase(CatkinPluginBaseTest):
         run_output_mock,
         bashrun_mock,
         run_mock,
-        compilers_mock,
     ):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
@@ -1329,7 +1322,7 @@ class BuildTestCase(CatkinPluginBaseTest):
                     in command
                 )
 
-        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
+        bashrun_mock.assert_called_with(check_build_command())
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -1338,7 +1331,6 @@ class BuildTestCase(CatkinPluginBaseTest):
 
         finish_build_mock.assert_called_once_with()
 
-    @mock.patch("snapcraft.plugins.catkin.Compilers")
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
@@ -1351,7 +1343,6 @@ class BuildTestCase(CatkinPluginBaseTest):
         run_output_mock,
         bashrun_mock,
         run_mock,
-        compilers_mock,
     ):
         self.properties.catkin_packages = None
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
@@ -1396,7 +1387,7 @@ class BuildTestCase(CatkinPluginBaseTest):
                     in command
                 )
 
-        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
+        bashrun_mock.assert_called_with(check_build_command())
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -1772,154 +1763,6 @@ class RecursivelyHandleRosinstallFilesTestCase(unit.TestCase):
                 mock.call(os.path.join("source_path", "2.rosinstall")),
             ]
         )
-
-
-class CompilersTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.project = snapcraft.project.Project()
-        self.compilers = catkin.Compilers(
-            "compilers_path", "sources", ["keyring"], self.project
-        )
-
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
-        self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("subprocess.check_output")
-        self.check_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        # Pretend we have gcc v5
-        os.makedirs(
-            os.path.join(
-                self.compilers._compilers_install_path, "usr", "include", "c++", "5"
-            )
-        )
-        os.makedirs(
-            os.path.join(
-                self.compilers._compilers_install_path,
-                "usr",
-                "include",
-                self.project.arch_triplet,
-                "c++",
-                "5",
-            )
-        )
-
-    def test_setup(self):
-        # Return something other than a Mock to ease later assertions
-        self.check_output_mock.return_value = b""
-
-        self.compilers.setup()
-
-        # Verify that both gcc and g++ were installed (no other .debs)
-        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
-        self.ubuntu_mock.assert_has_calls(
-            [
-                mock.call(
-                    self.compilers._compilers_path,
-                    sources="sources",
-                    keyrings=["keyring"],
-                    project_options=self.project,
-                ),
-                mock.call().get(["gcc", "g++"]),
-                mock.call().unpack(self.compilers._compilers_install_path),
-            ]
-        )
-
-    def test_setup_can_run_multiple_times(self):
-        self.compilers.setup()
-
-        # Make sure running setup() again doesn't have problems with the old
-        # environment. An exception will be raised if setup can't be called
-        # twice.
-        self.compilers.setup()
-
-    def test_environment(self):
-        # Setup a few valid library paths
-        library_path1 = os.path.join(
-            self.compilers._compilers_install_path, "usr", "lib"
-        )
-        library_path2 = os.path.join(
-            self.compilers._compilers_install_path,
-            "usr",
-            "lib",
-            self.project.arch_triplet,
-        )
-        for path in (library_path1, library_path2):
-            os.makedirs(path)
-
-        environment = self.compilers.environment
-
-        self.assertThat(environment, Contains("LD_LIBRARY_PATH"))
-        self.expectThat(environment["LD_LIBRARY_PATH"], Contains(library_path1))
-        self.expectThat(environment["LD_LIBRARY_PATH"], Contains(library_path2))
-
-        self.assertThat(environment, Contains("PATH"))
-        self.expectThat(
-            environment["PATH"],
-            Contains(
-                os.path.join(self.compilers._compilers_install_path, "usr", "bin")
-            ),
-        )
-
-    def test_c_compiler_path(self):
-        self.assertThat(
-            self.compilers.c_compiler_path,
-            Equals(
-                os.path.join(
-                    self.compilers._compilers_install_path, "usr", "bin", "gcc"
-                )
-            ),
-        )
-
-    def test_cxx_compiler_path(self):
-        self.assertThat(
-            self.compilers.cxx_compiler_path,
-            Equals(
-                os.path.join(
-                    self.compilers._compilers_install_path, "usr", "bin", "g++"
-                )
-            ),
-        )
-
-    def test_cflags(self):
-        self.assertThat(self.compilers.cflags, Equals(""))
-
-    def test_cxxflags(self):
-        cxx_include_dir = os.path.join(
-            self.compilers._compilers_install_path, "usr", "include"
-        )
-        self.assertThat(
-            self.compilers.cxxflags, Contains("-I{}".format(cxx_include_dir))
-        )
-        self.assertThat(
-            self.compilers.cxxflags,
-            Contains("-I{}".format(os.path.join(cxx_include_dir, "c++", "5"))),
-        )
-        self.assertThat(
-            self.compilers.cxxflags,
-            Contains(
-                "-I{}".format(
-                    os.path.join(cxx_include_dir, self.project.arch_triplet, "c++", "5")
-                )
-            ),
-        )
-
-    def test_cxxflags_without_include_path_raises(self):
-        shutil.rmtree(self.compilers._compilers_install_path)
-        with testtools.ExpectedException(
-            catkin.CatkinGccVersionError,
-            "Failed to determine gcc version: Failed to determine highest path in "
-            "'.*': nothing found",
-        ):
-            self.compilers.cxxflags
-
-    def test_ldflags(self):
-        self.assertThat(self.compilers.ldflags, Equals(""))
 
 
 class CatkinFindTestCase(unit.TestCase):

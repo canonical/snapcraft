@@ -42,7 +42,7 @@ class _SnapOp(enum.Enum):
     REFRESH = 3
 
 
-def _get_snap_channel(snap_name: str) -> str:
+def _get_snap_channel(snap_name: str) -> storeapi.channels.Channel:
     """Returns the channel to use for snap_name."""
     env_channel = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_CHANNEL_SNAPCRAFT", None)
     if env_channel is not None and snap_name == "snapcraft":
@@ -54,7 +54,7 @@ def _get_snap_channel(snap_name: str) -> str:
     else:
         channel = "latest/stable"
 
-    return channel
+    return storeapi.channels.Channel(channel)
 
 
 class _SnapManager:
@@ -144,7 +144,7 @@ class _SnapManager:
         if host_snap_info["revision"].startswith("x"):
             return []
 
-        assertions = []  # type: List[List[str]]
+        assertions = list()  # type: List[List[str]]
         assertions.append(
             ["snap-declaration", "snap-name={}".format(host_snap_repo.name)]
         )
@@ -160,10 +160,12 @@ class _SnapManager:
     def _set_data(self) -> None:
         op = self.get_op()
         host_snap_repo = self._get_snap_repo()
-        install_cmd = ["snap"]
+
+        install_cmd = []  # type: List[str]
+        snap_revision = None
 
         if op == _SnapOp.INJECT:
-            install_cmd.append("install")
+            install_cmd = ["snap", "install"]
             host_snap_info = host_snap_repo.get_local_snap_info()
             snap_revision = host_snap_info["revision"]
 
@@ -176,20 +178,17 @@ class _SnapManager:
             snap_file_name = "{}_{}.snap".format(host_snap_repo.name, snap_revision)
             install_cmd.append(os.path.join(self._snap_dir, snap_file_name))
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
-            install_cmd.append(op.name.lower())
+            install_cmd = ["snap", op.name.lower()]
             snap_channel = _get_snap_channel(self.snap_name)
-            store_snap_info = storeapi.StoreClient().cpi.get_package(
-                self.snap_name, snap_channel, self._snap_arch
+            store_snap_info = storeapi.StoreClient().cpi.get_info(self.snap_name)
+            snap_channel_map = store_snap_info.get_channel_mapping(
+                risk=snap_channel.risk, track=snap_channel.track, arch=self._snap_arch
             )
-            snap_revision = store_snap_info["revision"]
-            confinement = store_snap_info["confinement"]
-            if confinement == "classic":
+            snap_revision = snap_channel_map.revision
+            if snap_channel_map.confinement == "classic":
                 install_cmd.append("--classic")
-            install_cmd.extend(["--channel", snap_channel])
+            install_cmd.extend(["--channel", snap_channel_map.channel_details.name])
             install_cmd.append(host_snap_repo.name)
-        elif op == _SnapOp.NOP:
-            install_cmd = []
-            snap_revision = None
 
         self.__install_cmd = install_cmd
         self.__revision = snap_revision
