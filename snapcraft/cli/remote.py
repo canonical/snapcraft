@@ -102,7 +102,8 @@ def remote_build(
         snapcraft remote-build --status 47860738
     """
     echo.warning(
-        "The remote-build authentication method will be changed in upcoming releases. Use with caution in scripts."
+        "snapcraft remote-build is offered as a preview. Authentication and transport "
+        "mechanisms will change in future releases. Use with caution in scripts."
     )
 
     project = get_project()
