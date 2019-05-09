@@ -195,7 +195,7 @@ def _get_icon_from_desktop_file(
         entry.parse(os.path.join(workdir, path))
         icon = entry.getIcon()
 
-        if icon.startswith("${{SNAP}}/"):  # matches '${SNAP}'.
+        if icon.startswith(r"${SNAP}/"):
             icon = icon[8:]  # strip the '${SNAP}' prefix.
             icon = os.path.join(workdir, icon)
 
