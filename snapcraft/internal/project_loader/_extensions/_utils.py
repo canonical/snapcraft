@@ -156,10 +156,21 @@ def _apply_extension(
     app_extension = extension.app_snippet
     for app_name in app_names:
         app_definition = yaml_data["apps"][app_name]
+
         for property_name, property_value in app_extension.items():
             app_definition[property_name] = _apply_extension_property(
                 app_definition.get(property_name), property_value
             )
+
+        # Handle command chain prepending and appending
+        command_chain = _apply_extension_command_chain(
+            app_definition.get("command-chain"),
+            extension.command_chain_prepend,
+            extension.command_chain_append,
+        )
+        if command_chain:
+            app_definition["command-chain"] = command_chain
+
 
     # Next, apply the part-specific components
     part_extension = extension.part_snippet
@@ -177,6 +188,21 @@ def _apply_extension(
             raise errors.ExtensionPartConflictError(extension_name, part_name)
 
         parts[part_name] = part_definition
+
+
+def _apply_extension_command_chain(
+    current_chain: List[str], chain_prepend: List[str], chain_append: List[str]
+) -> List[str]:
+    if not chain_prepend and not chain_append:
+        return []
+
+    command_chain = current_chain if current_chain else []
+    if chain_prepend:
+        command_chain = chain_prepend + command_chain
+    if chain_append:
+        command_chain = command_chain + chain_append
+
+    return command_chain
 
 
 def _apply_extension_property(existing_property: Any, extension_property: Any):

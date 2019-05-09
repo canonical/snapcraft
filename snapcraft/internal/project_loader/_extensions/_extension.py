@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Any, Dict
-from typing import Tuple  # noqa: F401
+from typing import List, Tuple  # noqa: F401
 
 
 class Extension:
@@ -50,3 +50,5 @@ class Extension:
         self.app_snippet = dict()  # type: Dict[str, Any]
         self.part_snippet = dict()  # type: Dict[str, Any]
         self.parts = dict()  # type: Dict[str, Any]
+        self.command_chain_prepend = list()  # type: List[str]
+        self.command_chain_append = list()  # type: List[str]

@@ -64,16 +64,9 @@ class Kf5_neonExtension(DesktopCommonExtension):
             "environment": {**self.environment, "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         }
 
-        command_chain = ["snap/command-chain/kf5-connect"]
-        if "command-chain" in self.app_snippet:
-            command_chain = command_chain + self.app_snippet["command-chain"]
-        command_chain = command_chain + ["snap/command-chain/kf5-launch"]
-
-        self.app_snippet = {
-            **self.app_snippet,
-            "command-chain": command_chain,
-            "adapter": "full",
-        }
+        self.command_chain_prepend = ["snap/command-chain/kf5-connect"]
+        self.command_chain_append = ["snap/command-chain/kf5-launch"]
+        self.app_snippet = {**self.app_snippet, "adapter": "full"}
 
         self.parts = {
             **self.parts,
