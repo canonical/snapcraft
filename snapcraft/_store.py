@@ -26,7 +26,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Dict, Iterable, TextIO
+from typing import Dict, Iterable, Optional, TextIO
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -761,10 +761,19 @@ def close(snap_name, channel_names):
     logger.info(msg)
 
 
-def download(snap_name, channel, download_path, arch, except_hash=""):
+def download(
+    snap_name,
+    *,
+    arch: str,
+    download_path: str,
+    risk: str,
+    track: Optional[str] = None,
+    except_hash=""
+):
     """Download snap from the store to download_path.
     :param str snap_name: The snap name to download.
-    :param str channel: the channel to get the snap from.
+    :param str risk: the channel risk get the snap from.
+    :param str track: the specific channel track get the snap from.
     :param str download_path: the path to write the downloaded snap to.
     :param str arch: the architecture of the download as a deb arch.
     :param str except_hash: do not download if set to a sha3_384 hash that
@@ -775,7 +784,14 @@ def download(snap_name, channel, download_path, arch, except_hash=""):
     :returns: A sha3_384 of the file that was or would have been downloaded.
     """
     store = storeapi.StoreClient()
-    return store.download(snap_name, channel, download_path, arch, except_hash)
+    return store.download(
+        snap_name,
+        risk=risk,
+        track=track,
+        download_path=download_path,
+        arch=arch,
+        except_hash=except_hash,
+    )
 
 
 def status(snap_name, series, arch):
@@ -888,13 +904,13 @@ def validate(snap_name, validations, revoke=False, key=None):
     for validation in validations:
         gated_name, rev = validation.split("=", 1)
         echo.info("Getting details for {}".format(gated_name))
-        approved_data = store.cpi.get_package(gated_name, "stable")
+        approved_data = store.cpi.get_info(gated_name)
         assertion = {
             "type": "validation",
             "authority-id": authority_id,
             "series": release,
             "snap-id": snap_id,
-            "approved-snap-id": approved_data["snap_id"],
+            "approved-snap-id": approved_data.snap_id,
             "approved-snap-revision": rev,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "revoked": "false",

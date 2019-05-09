@@ -86,6 +86,9 @@ def find_extension(extension_name: str) -> Type[Extension]:
     :rtype: type(Extension)
     :raises: errors.ExtensionNotFoundError if the extension is not found
     """
+    if extension_name.startswith("_"):
+        raise errors.ExtensionNotFoundError(extension_name)
+
     try:
         extension_module = importlib.import_module(
             "snapcraft.internal.project_loader._extensions.{}".format(extension_name)

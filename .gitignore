@@ -25,6 +25,7 @@ parts
 stage
 prime
 .vscode
+.idea
 .mypy_cache
 .spread-reuse.*
 pip-wheel-metadata/

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,9 +21,10 @@ from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
+from . import channels
+from . import status
 from snapcraft.internal.errors import SnapcraftError
 from snapcraft import formatting_utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -116,12 +117,26 @@ class NoSnapIdError(StoreError):
         super().__init__(snap_name=snap_name, forum_url=_FORUM_URL)
 
 
-class SHAMismatchError(StoreError):
+class StoreDownloadError(StoreError):
+    pass
 
-    fmt = "SHA512 checksum for {path} is not {expected_sha}."
 
-    def __init__(self, path, expected_sha):
-        super().__init__(path=path, expected_sha=expected_sha)
+class DownloadNotFoundError(StoreDownloadError):
+
+    fmt = "Downloaded file not found {path!r}."
+
+    def __init__(self, *, path: str) -> None:
+        super().__init__(path=path)
+
+
+class SHAMismatchError(StoreDownloadError):
+
+    fmt = (
+        "The SHA3-384 checksum for {path!r} was {calculated!r}: expected {expected!r}."
+    )
+
+    def __init__(self, *, path: str, expected: str, calculated: str) -> None:
+        super().__init__(path=path, expected=expected, calculated=calculated)
 
 
 class StoreAuthenticationError(StoreError):
@@ -772,3 +787,35 @@ def _handle_macaroon_permission_required(response_json):
             )
 
     return ""
+
+
+class ChannelNotAvailableOnArchError(StoreError):
+    fmt = (
+        "No releases available for {snap_name!r} on channel {channel!r} "
+        "for architecture {arch!r}.\n"
+        "Ensure the selected channel contains released revisions for this architecture."
+    )
+
+    def __init__(self, *, snap_name: str, channel: channels.Channel, arch: str) -> None:
+        super().__init__(snap_name=snap_name, channel=channel, arch=arch)
+
+
+class InvalidChannelSet(StoreError):
+    fmt = (
+        "The {channel!r} channel for {snap_name!r} does not form a complete set.\n"
+        "There is no revision released for the following architectures: {arches!r}.\n"
+        "Ensure the selected channel contains released revisions for "
+        "all architectures."
+    )
+
+    def __init__(
+        self,
+        *,
+        snap_name: str,
+        channel: channels.Channel,
+        channel_outliers: List[status.SnapStatusChannelDetails]
+    ) -> None:
+        arches = formatting_utils.humanize_list(
+            [c.arch for c in channel_outliers], "and"
+        )
+        super().__init__(snap_name=snap_name, channel=channel, arches=arches)

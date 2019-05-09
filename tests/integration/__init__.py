@@ -128,7 +128,7 @@ class TestCase(testtools.TestCase):
         debug: bool = True,
         pre_func: Callable[[], None] = lambda: None,
         env=None,
-    ) -> None:
+    ) -> str:
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -741,7 +741,7 @@ def get_package_version(package_name, series, deb_arch):
         "text": "on",
     }
     query = requests.get(
-        "http://people.canonical.com/~ubuntu-archive/madison.cgi", params
+        "https://people.canonical.com/~ubuntu-archive/madison.cgi", params
     )
     query.raise_for_status()
     package = query.text.strip().split("\n")[-1]

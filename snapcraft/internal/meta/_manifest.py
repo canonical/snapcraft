@@ -18,16 +18,20 @@ import contextlib
 import os
 import json
 from collections import OrderedDict
-from typing import Any, Dict  # noqa: F401
+from typing import Any, Dict, TYPE_CHECKING
 
 import snapcraft
 from snapcraft.internal import errors, os_release, steps
 from snapcraft.internal.states import GlobalState, get_state
 
+if TYPE_CHECKING:
+    from snapcraft.project import Project
 
-def annotate_snapcraft(data, parts_dir: str, global_state_path: str):
+
+def annotate_snapcraft(project: "Project", data: Dict[str, Any]) -> Dict[str, Any]:
     manifest = OrderedDict()  # type: Dict[str, Any]
     manifest["snapcraft-version"] = snapcraft._get_version()
+    manifest["snapcraft-started-at"] = project._get_start_time().isoformat() + "Z"
 
     release = os_release.OsRelease()
     with contextlib.suppress(errors.OsReleaseIdError):
@@ -45,12 +49,12 @@ def annotate_snapcraft(data, parts_dir: str, global_state_path: str):
             raise errors.InvalidContainerImageInfoError(image_info) from exception
         manifest["image-info"] = image_info_dict
 
-    global_state = GlobalState.load(filepath=global_state_path)
+    global_state = GlobalState.load(filepath=project._get_global_state_file_path())
     manifest["build-packages"] = global_state.get_build_packages()
     manifest["build-snaps"] = global_state.get_build_snaps()
 
     for part in data["parts"]:
-        state_dir = os.path.join(parts_dir, part, "state")
+        state_dir = os.path.join(project.parts_dir, part, "state")
         pull_state = get_state(state_dir, steps.PULL)
         manifest["parts"][part]["build-packages"] = pull_state.assets.get(
             "build-packages", []
