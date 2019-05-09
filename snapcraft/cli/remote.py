@@ -101,6 +101,9 @@ def remote_build(
         snapcraft remote-build --recover 47860738
         snapcraft remote-build --status 47860738
     """
+    echo.warning(
+        "snapcraft remote-build does not have a stable CLI interface. Use with caution in scripts."
+    )
 
     project = get_project()
 
