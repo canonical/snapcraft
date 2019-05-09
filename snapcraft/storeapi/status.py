@@ -150,7 +150,7 @@ class SnapStatus:
         ]
 
         # Make sure this is a valid build set (has released revisions for every channel/arch)
-        channel_outliers = [c for c in channel_selection if c.info != "specific"]
+        channel_outliers = [c for c in channel_selection if c.revision is None]
         if channel_outliers:
             raise errors.InvalidChannelSet(
                 snap_name=self._snap_name,
