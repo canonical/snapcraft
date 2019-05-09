@@ -1112,6 +1112,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                 "channel": "edge",
                                 "revision": 3,
                             },
+                            {
+                                "info": "branch",
+                                "version": "1.1-i386",
+                                "channel": "edge/test",
+                                "revision": 9,
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
                         ],
                         "amd64": [
                             {
@@ -1128,6 +1135,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                 "revision": 4,
                             },
                             {"info": "tracking", "channel": "edge"},
+                            {
+                                "info": "branch",
+                                "version": "1.1-amd64",
+                                "channel": "edge/test",
+                                "revision": 10,
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
                         ],
                     }
                 }
