@@ -114,22 +114,22 @@ class StatusTestCase(integration.StoreTestCase):
         # Build a random snap, register, push and release it.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd("basic")
+        self.run_snapcraft(["init"])
         self.update_name_and_version(name, version)
         self.run_snapcraft("snap")
-        snap_path = "{}_{}_{}.snap".format(name, version, "all")
+        snap_path = "{}_{}_{}.snap".format(name, version, self.deb_arch)
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertThat(self.push(snap_path, release="candidate,beta"), Equals(0))
+        self.assertThat(self.push(snap_path, release="beta"), Equals(0))
 
         output = self.run_snapcraft(["status", name])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version    Revision
-            latest   all     stable     -          -
-                             candidate  {version}  1
+            Track    Arch    Channel    Version                           Revision
+            latest   {arch}   stable     -                                 -
+                             candidate  -                                 -
                              beta       {version}  1
-                             edge       ^          ^
+                             edge       ^                                 ^
             """
-        ).format(version=version)
+        ).format(arch=self.deb_arch, version=version)
         self.assertThat(output, Contains(expected))
