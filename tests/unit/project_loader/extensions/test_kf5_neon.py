@@ -49,12 +49,17 @@ class Kf5NeonExtensionTest(ProjectLoaderBaseTest):
         for app in project.data["apps"]:
             self.assertThat(project.data["apps"][app]["adapter"], Equals("full"))
             command_chain = project.data["apps"][app]["command-chain"]
-            self.assertThat(command_chain, Equals([
-                "snap/command-chain/kf5-connect",
-                "snap/command-chain/desktop-init",
-                "snap/command-chain/desktop-common",
-                "snap/command-chain/kf5-launch",
-            ]))
+            self.assertThat(
+                command_chain,
+                Equals(
+                    [
+                        "snap/command-chain/kf5-connect",
+                        "snap/command-chain/desktop-init",
+                        "snap/command-chain/desktop-common",
+                        "snap/command-chain/kf5-launch",
+                    ]
+                ),
+            )
 
         all_parts = project.data["parts"]
         expected_parts = [

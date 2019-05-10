@@ -171,7 +171,6 @@ def _apply_extension(
         if command_chain:
             app_definition["command-chain"] = command_chain
 
-
     # Next, apply the part-specific components
     part_extension = extension.part_snippet
     parts = yaml_data["parts"]
