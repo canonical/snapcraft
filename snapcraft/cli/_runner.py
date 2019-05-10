@@ -30,6 +30,7 @@ from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
 from .inspect import inspectcli
+from .remote import remotecli
 from .help import helpcli
 from .extensions import extensioncli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
@@ -51,6 +52,7 @@ command_groups = [
     extensioncli,
     versioncli,
     inspectcli,
+    remotecli,
 ]
 
 
