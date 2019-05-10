@@ -74,5 +74,6 @@ class SnapcraftGroup(click.Group):
 
         # Hide commands with unstable cli
         commands.pop(commands.index("promote"))
+        commands.pop(commands.index("remote-build"))
 
         return commands
