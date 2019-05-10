@@ -398,6 +398,9 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(y, Equals(expected))
 
     def test_create_meta_with_app_desktop_key(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
         os.mkdir(self.prime_dir)
         _create_file(os.path.join(self.prime_dir, "app.sh"))
         _create_file(
@@ -411,9 +414,10 @@ class CreateTestCase(CreateBaseTestCase):
             os.path.join(self.prime_dir, "app2.desktop"),
             content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
         )
+        _create_file(os.path.join(icon_dir, "app3.png"))
         _create_file(
             os.path.join(self.prime_dir, "app3.desktop"),
-            content="[Desktop Entry]\nExec=app3.exe\nIcon=app3.png",
+            content="[Desktop Entry]\nExec=app3.exe\nIcon=${SNAP}/usr/share/app3.png",
         )
         self.config_data["apps"] = {
             "app1": {"command": "app.sh", "desktop": "app1.desktop"},
@@ -450,11 +454,20 @@ class CreateTestCase(CreateBaseTestCase):
         section = "Desktop Entry"
         self.assertTrue(section in contents)
         self.assertThat(contents[section].get("Exec"), Equals("my-package %U"))
+        self.assertThat(
+            contents[section].get("Icon"), Equals("${SNAP}/usr/share/app3.png")
+        )
+        self.assertThat(
+            fake_logger.output,
+            Not(Contains(
+                "Icon {} specified in desktop file {} not found "
+                "in prime directory".format("${SNAP}/usr/share/app3.png", "app3.desktop")
+            )),
+        )
 
         snap_yaml = os.path.join("prime", "meta", "snap.yaml")
         self.assertThat(snap_yaml, Not(FileContains("desktop: app1.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: app2.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app3.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: my-package.desktop")))
 
 
