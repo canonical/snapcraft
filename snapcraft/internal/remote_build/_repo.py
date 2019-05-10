@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import git
+import importlib
 
-from git.exc import InvalidGitRepositoryError
 from typing import List
-from .errors import RemoteBuilderNotSupportedError
+from typing import Any  # noqa: F401
+from . import errors
 
 import snapcraft
 
@@ -28,9 +28,15 @@ class Repo:
 
     def __init__(self, path: str) -> None:
         self._root = path
+
+        try:
+            git = importlib.import_module("git")  # type: Any
+        except ImportError:
+            raise errors.GitNotFoundError
+
         try:
             self._repo = git.Repo(path)
-        except InvalidGitRepositoryError:
+        except git.exc.InvalidGitRepositoryError:
             self._repo = git.Repo.init(path)
 
     def add(self, entry: str) -> None:
@@ -53,14 +59,14 @@ class Repo:
             self._repo.git.push(url, branch, force=True)
             self._repo.git.push(url, "--tags")
         else:
-            raise RemoteBuilderNotSupportedError(provider=provider)
+            raise errors.RemoteBuilderNotSupportedError(provider=provider)
         return url
 
     def add_remote(self, provider: str, user: str, build_id: str) -> str:
         if provider == "launchpad":
             url = self._remote_url(user, build_id)
         else:
-            raise RemoteBuilderNotSupportedError(provider=provider)
+            raise errors.RemoteBuilderNotSupportedError(provider=provider)
 
         for remote in self._repo.remotes:
             if remote.name == provider:

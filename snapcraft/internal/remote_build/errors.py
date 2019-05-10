@@ -45,6 +45,14 @@ class NotGitRepositoryError(RemoteBuildBaseError):
     fmt = "Current directory is not a git repository."
 
 
+class GitNotFoundError(RemoteBuildBaseError):
+
+    fmt = (
+        "This snapcraft version requires git to be installed on your system to "
+        "execute remote-build. Please install git and run the command again."
+    )
+
+
 class InvalidVersionGitError(RemoteBuildBaseError):
 
     fmt = (
