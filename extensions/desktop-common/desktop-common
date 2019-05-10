@@ -34,7 +34,7 @@ function update_xdg_dirs_values() {
     source "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
   fi
 
-  if [ -z ${XDG_SPECIAL_DIRS+x} ]; then
+  if [ -z "${XDG_SPECIAL_DIRS+x}" ]; then
     save_initial_values=true
   fi
 

@@ -4,6 +4,7 @@ KF5="$SNAP/kf5"
 export KF5
 
 if [ ! -d "$KF5/usr" ]; then
+  # shellcheck disable=SC1091
   source /etc/os-release
   runtime="kde-frameworks-5"
   slot="kde-frameworks-5:kde-frameworks-5-slot"

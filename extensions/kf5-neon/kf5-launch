@@ -42,38 +42,38 @@ export XDG_CONFIG_DIRS=$SNAP/etc/xdg:$KF5/etc/xdg:${XDG_CONFIG_DIRS:-/etc/xdg}
 export XDG_DATA_DIRS=$SNAP/usr/local/share:$SNAP/usr/share:$KF5/usr/local/share:$KF5/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
 
 export XDG_DATA_HOME=$SNAP_USER_DATA/.local/share
-mkdir -p $XDG_DATA_HOME
+mkdir -p "$XDG_DATA_HOME"
 
 export XDG_CONFIG_HOME=$SNAP_USER_DATA/.config
-mkdir -p $XDG_CONFIG_HOME
+mkdir -p "$XDG_CONFIG_HOME"
 
-if [ -e $SNAP_USER_DATA/.local/config/kdeglobals ]; then
+if [ -e "$SNAP_USER_DATA/.local/config/kdeglobals" ]; then
   # Migrate legacy path previously (incorrectly) used for configs.
   # The current var $HOME/.config is in line with the XDG default.
-  cp -rv $SNAP_USER_DATA/.local/config/. $XDG_CONFIG_HOME
-  rm -rv $SNAP_USER_DATA/.local/config/
+  cp -rv "$SNAP_USER_DATA/.local/config/." "$XDG_CONFIG_HOME"
+  rm -rv "$SNAP_USER_DATA/.local/config/"
 fi
 
 export XDG_CACHE_HOME=$SNAP_USER_DATA/.cache
-mkdir -p $XDG_CACHE_HOME
+mkdir -p "$XDG_CACHE_HOME"
 
 export XDG_RUNTIME_DIR=$SNAP_USER_DATA/.local/var/run/$UID
-mkdir -p $XDG_RUNTIME_DIR
+mkdir -p "$XDG_RUNTIME_DIR"
 
 # Font Config
 export FONTCONFIG_PATH=$KF5/etc/fonts/config.d
 export FONTCONFIG_FILE=$XDG_CONFIG_HOME/fontconfig/fonts.conf
 
-REALHOME=`getent passwd $UID | cut -d ':' -f 6`
+REALHOME=$(getent passwd $UID | cut -d ':' -f 6)
 # Keep an array of data dirs, for looping through them
 IFS=':' read -r -a data_dirs_array <<< "$XDG_DATA_DIRS"
 
 function make_user_fontconfig {
   echo "<fontconfig>"
-  if [ -d $REALHOME/.local/share/fonts ]; then
+  if [ -d "$REALHOME/.local/share/fonts" ]; then
     echo "  <dir>$REALHOME/.local/share/fonts</dir>"
   fi
-  if [ -d $REALHOME/.fonts ]; then
+  if [ -d "$REALHOME/.fonts" ]; then
     echo "  <dir>$REALHOME/.fonts</dir>"
   fi
   for d in "${data_dirs_array[@]}"; do
@@ -86,7 +86,7 @@ function make_user_fontconfig {
   # works: without it, fontconfig will try to write to the real user home
   # cachedir and be blocked by AppArmor.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
-  if [ -d $REALHOME/.cache/fontconfig ]; then
+  if [ -d "$REALHOME/.cache/fontconfig" ]; then
     echo "  <cachedir>$REALHOME/.cache/fontconfig</cachedir>"
   fi
   echo "</fontconfig>"
@@ -95,9 +95,9 @@ function make_user_fontconfig {
 # This relies on the desktop, x11, or unity7 interface from what I can tell.
 # We'll configure the in-snap fontconfig to look in the outside resoruces,
 # the outside resources are made readable by the aforementioned interfaces.
-rm -rf $XDG_DATA_HOME/{fontconfig,fonts,fonts-*,themes,.themes}
-mkdir -p $XDG_CONFIG_HOME/fontconfig
-make_user_fontconfig > $FONTCONFIG_FILE
+rm -rf "$XDG_DATA_HOME"/{fontconfig,fonts,fonts-*,themes,.themes}
+mkdir -p "$XDG_CONFIG_HOME/fontconfig"
+make_user_fontconfig > "$FONTCONFIG_FILE"
 
 # GStreamer
 export GST_PLUGIN_PATH_1_0=$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0/:$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gstreamer-1.0/
@@ -142,18 +142,18 @@ export KDE_FORK_SLAVES=1
 export KF5_LIBEXEC_DIR=$KF5/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/libexec/kf5
 
 # Link icons into home so (xcursor) can find its cursor theme.
-mkdir -p $HOME/.icons
-ln -fs $KF5/usr/share/icons/* $HOME/.icons
+mkdir -p "$HOME/.icons"
+ln -fs "$KF5"/usr/share/icons/* "$HOME/.icons"
 
 # Make sure QtChooser isn't being terrible to us
 export QTCHOOSER_NO_GLOBAL_DIR=1
 export QT_SELECT=5
 # qtchooser hardcodes reference paths, we'll need to rewrite them properly
-[ -d $XDG_CONFIG_HOME/qtchooser ] || mkdir -p $XDG_CONFIG_HOME/qtchooser
-echo "$SNAP/usr/lib/qt5/bin" > $XDG_CONFIG_HOME/qtchooser/5.conf
-echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> $XDG_CONFIG_HOME/qtchooser/5.conf
-echo "$SNAP/usr/lib/qt5/bin" > $XDG_CONFIG_HOME/qtchooser/default.conf
-echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> $XDG_CONFIG_HOME/qtchooser/default.conf
+[ -d "$XDG_CONFIG_HOME/qtchooser" ] || mkdir -p "$XDG_CONFIG_HOME/qtchooser"
+echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/5.conf"
+echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> "$XDG_CONFIG_HOME/qtchooser/5.conf"
+echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/default.conf"
+echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> "$XDG_CONFIG_HOME/qtchooser/default.conf"
 
 # This relies on qtbase patch
 # 0001-let-qlibraryinfo-fall-back-to-locate-qt.conf-via-XDG.patch
@@ -161,19 +161,19 @@ echo "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET" >> $XDG_CONFIG_HOME/qtchooser/de
 # here are applied to everything that uses QLibraryInfo as final fallback and
 # has no XDG_* fallback before that. Currently the most interesting offender
 # is QtWebEngine which will not work unless the Data path is correctly set.
-cat << EOF > $XDG_CONFIG_HOME/qt.conf
+cat << EOF > "$XDG_CONFIG_HOME/qt.conf"
 [Paths]
 Data = $KF5/usr/share/qt5/
 Translations = $KF5/usr/share/qt5/translations
 EOF
 
 # requires `locales, libc-bin` being stage-packages
-if [ -e $KF5/usr/share/i18n ]; then
+if [ -e "$KF5/usr/share/i18n" ]; then
   export I18NPATH=$KF5/usr/share/i18n
   locpath=$XDG_DATA_HOME/locale
-  mkdir -p $locpath
+  mkdir -p "$locpath"
   export LOCPATH=$locpath:/usr/lib/locale # core snap contains C.UTF-8 already
-  LC_ALL=C.UTF-8 $SNAP/kf5-locale-gen || exit 1
+  LC_ALL=C.UTF-8 "$SNAP/kf5-locale-gen" || exit 1
 fi
 
 exec "$@"
