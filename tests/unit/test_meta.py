@@ -468,6 +468,7 @@ class CreateTestCase(CreateBaseTestCase):
         snap_yaml = os.path.join("prime", "meta", "snap.yaml")
         self.assertThat(snap_yaml, Not(FileContains("desktop: app1.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: app2.desktop")))
+        self.assertThat(snap_yaml, Not(FileContains("desktop: app3.desktop")))
         self.assertThat(snap_yaml, Not(FileContains("desktop: my-package.desktop")))
 
 

@@ -194,7 +194,6 @@ def _get_icon_from_desktop_file(
         entry = DesktopEntry()
         entry.parse(os.path.join(workdir, path))
         icon = entry.getIcon()
-
         icon_path = (
             icon
             if os.path.isabs(icon)
