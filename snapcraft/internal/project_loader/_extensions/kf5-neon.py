@@ -33,7 +33,7 @@ class Kf5_neonExtension(DesktopCommonExtension):
     supports_classic = False
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
-        """Create a new Kde5Extension.
+        """Create a new Kf5_neonExtension.
         Note that this extension does not support classic snaps.
         :param dict yaml_data: Loaded snapcraft.yaml data.
         """
@@ -66,7 +66,7 @@ class Kf5_neonExtension(DesktopCommonExtension):
 
         self.command_chain_prepend = ["snap/command-chain/kf5-connect"]
         self.command_chain_append = ["snap/command-chain/kf5-launch"]
-        self.app_snippet = {**self.app_snippet, "adapter": "full"}
+        self.app_snippet = {**self.app_snippet, "adapter": "none"}
 
         self.parts = {
             **self.parts,
