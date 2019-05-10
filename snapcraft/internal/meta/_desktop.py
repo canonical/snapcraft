@@ -68,7 +68,9 @@ class DesktopFile:
                     icon = metadata_icon
 
             icon = icon.lstrip("/")
-            if icon.startswith("${SNAP}/") and os.path.exists(os.path.join(self._prime_dir, icon[8:])):
+            if icon.startswith("${SNAP}/") and os.path.exists(
+                os.path.join(self._prime_dir, icon[8:])
+            ):
                 self._parser[section]["Icon"] = icon
             elif os.path.exists(os.path.join(self._prime_dir, icon)):
                 self._parser[section]["Icon"] = "${{SNAP}}/{}".format(icon)

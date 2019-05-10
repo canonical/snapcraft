@@ -459,10 +459,14 @@ class CreateTestCase(CreateBaseTestCase):
         )
         self.assertThat(
             fake_logger.output,
-            Not(Contains(
-                "Icon {} specified in desktop file {} not found "
-                "in prime directory".format("${SNAP}/usr/share/app3.png", "app3.desktop")
-            )),
+            Not(
+                Contains(
+                    "Icon {} specified in desktop file {} not found "
+                    "in prime directory".format(
+                        "${SNAP}/usr/share/app3.png", "app3.desktop"
+                    )
+                )
+            ),
         )
 
         snap_yaml = os.path.join("prime", "meta", "snap.yaml")
