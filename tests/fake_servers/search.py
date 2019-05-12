@@ -90,7 +90,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             return None
 
         channel_map = list()
-        for arch in ("amd64", "i386", "s390x", "arm64", "armhf"):
+        for arch in ("amd64", "i386", "s390x", "arm64", "armhf", "ppc64el"):
             for risk in ("stable", "edge"):
                 channel_map.append(
                     {
