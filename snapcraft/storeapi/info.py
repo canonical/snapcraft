@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from . import errors
 from snapcraft.file_utils import calculate_hash
@@ -38,7 +38,7 @@ class SnapChannelDetails:
             self.name, self.architecture, self.released_at
         )
 
-    def __init__(self, **details) -> None:
+    def __init__(self, details: Dict[str, Any]) -> None:
         self._payload = details
 
     @property
@@ -66,7 +66,7 @@ class SnapDownloadDetails:
     def __repr__(self) -> str:
         return "<SnapDownloadDetails: {!r} with size {!r}>".format(self.url, self.size)
 
-    def __init__(self, **download) -> None:
+    def __init__(self, download: Dict[str, Any]) -> None:
         self._payload = download
 
     @property
@@ -96,7 +96,7 @@ class SnapPublisherDetails:
     def __repr__(self) -> str:
         return "<SnapPublisherDetails: {!r}>".format(self.username)
 
-    def __init__(self, **publisher) -> None:
+    def __init__(self, publisher: Dict[str, Any]) -> None:
         self._payload = publisher
 
     @property
@@ -120,14 +120,14 @@ class SnapDetails:
     def __repr__(self) -> str:
         return "<SnapDetails: {!r} with snap-id {!r}>".format(self.name, self.snap_id)
 
-    def __init__(self, **snap) -> None:
+    def __init__(self, snap: Dict[str, Any]) -> None:
         self._payload = snap
         self._publisher = None  # type: Optional[SnapPublisherDetails]
 
     @property
     def publisher(self) -> SnapPublisherDetails:
         if self._publisher is None:
-            self._publisher = SnapPublisherDetails(**self._payload.get("publisher"))
+            self._publisher = SnapPublisherDetails(self._payload.get("publisher"))
         return self._publisher
 
     @property
@@ -145,7 +145,7 @@ class SnapChannelMapping:
             self.channel_details, self.revision
         )
 
-    def __init__(self, **channel) -> None:
+    def __init__(self, channel: Dict[str, Any]) -> None:
         self._payload = channel
         self._channel_details = None  # type: Optional[SnapChannelDetails]
         self._download = None  # type: Optional[SnapDownloadDetails]
@@ -153,13 +153,13 @@ class SnapChannelMapping:
     @property
     def channel_details(self) -> SnapChannelDetails:
         if self._channel_details is None:
-            self._channel_details = SnapChannelDetails(**self._payload.get("channel"))
+            self._channel_details = SnapChannelDetails(self._payload.get("channel"))
         return self._channel_details
 
     @property
     def download(self) -> SnapDownloadDetails:
         if self._download is None:
-            self._download = SnapDownloadDetails(**self._payload.get("download"))
+            self._download = SnapDownloadDetails(self._payload.get("download"))
         return self._download
 
     @property
@@ -179,7 +179,7 @@ class SnapInfo:
     def __repr__(self) -> str:
         return "<SnapInfo: {!r}>".format(self.name)
 
-    def __init__(self, **snap_info_resp) -> None:
+    def __init__(self, snap_info_resp: Dict[str, Any]) -> None:
         self._payload = snap_info_resp
         self._channel_map = None  # type: Optional[List[SnapChannelMapping]]
         self._snap = None  # type: Optional[SnapDetails]
@@ -188,14 +188,14 @@ class SnapInfo:
     def channel_map(self) -> List[SnapChannelMapping]:
         if self._channel_map is None:
             self._channel_map = [
-                SnapChannelMapping(**i) for i in self._payload.get("channel-map", [])
+                SnapChannelMapping(i) for i in self._payload.get("channel-map", [])
             ]
         return self._channel_map
 
     @property
     def snap(self) -> SnapDetails:
         if self._snap is None:
-            self._snap = SnapDetails(**self._payload.get("snap"))
+            self._snap = SnapDetails(self._payload.get("snap"))
         return self._snap
 
     @property

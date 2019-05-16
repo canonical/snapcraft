@@ -6,5 +6,5 @@ description: test
 
 parts:
   kernel:
-    plugin: kernel
     source: .
+    plugin: kernel

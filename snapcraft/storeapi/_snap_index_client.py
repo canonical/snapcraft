@@ -86,7 +86,9 @@ class SnapIndexClient(Client):
         )
 
         params = dict()
-        params["fields"] = "channel-map,snap-id,name,publisher,confinement,revision"
+        params[
+            "fields"
+        ] = "channel-map,snap-id,name,publisher,confinement,revision,download"
         if arch is not None:
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))
@@ -96,7 +98,7 @@ class SnapIndexClient(Client):
             raise errors.SnapNotFoundError(snap_name, arch)
         resp.raise_for_status()
 
-        return SnapInfo(**resp.json())
+        return SnapInfo(resp.json())
 
     def get_assertion(
         self, assertion_type: str, snap_id: str
