@@ -66,7 +66,7 @@ class PromoteTestCase(integration.StoreTestCase):
         # Push and release the snap
         snap_file_path = "{}_{}_{}.snap".format(name, version, self.deb_arch)
         self.assertThat(os.path.join(snap_file_path), FileExists())
-        output = self.run_snapcraft(["push", "--release", "beta", snap_file_path])
+        output = self.run_snapcraft(["push", "--release", "edge/test", snap_file_path])
 
         # Promote it
         output = self.run_snapcraft(
@@ -74,11 +74,11 @@ class PromoteTestCase(integration.StoreTestCase):
                 "promote",
                 name,
                 "--from-channel",
-                "beta",
+                "edge/test",
                 "--to-channel",
-                "candidate",
+                "beta",
                 "--yes",
             ]
         )
-        expected = r".*The \'candidate\' channel is now open.*"
+        expected = r".*The 'beta' channel is now open.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

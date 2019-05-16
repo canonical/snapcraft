@@ -1,3 +1,24 @@
+snapcraft (3.5) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * vcs: ignore .idea (#2558)
+  * ci: remove dependency on LXD from travis tests (#2557)
+  * cli: snapcraft promote (#2556) (LP: #1827513)
+  * manifest: expose snapcraft-started-at (#2559) (LP: #1806658)
+  * storeapi: allow promotion from branches
+  * tests: release and promote to grade devel channels
+  * tests: fix the status test
+  * tests: add ppc64el to the fake server info results
+
+  [ Claudio Matsuoka ]
+  * project: read local plugins from build-aux (#2551) (LP: #1827095)
+  * extensions: block direct use of private extensions (#2555)
+
+  [ Daniel Llewellyn ]
+  * meta: take ${SNAP} into account .desktop icon checks (#2541)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Sat, 11 May 2019 14:56:00 +0000
+
 snapcraft (3.4.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]

@@ -75,15 +75,17 @@ class StatusTestCase(integration.StoreTestCase):
         output = self.run_snapcraft(["status", "basic"])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version    Revision
+            Track    Arch    Channel    Version    Revision    Expires at
             latest   amd64   stable     1.0-amd64  2
                              candidate  -          -
                              beta       1.1-amd64  4
                              edge       ^          ^
+                             edge/test  1.1-amd64  10          2019-05-30T01:17:06.465504
                      i386    stable     -          -
                              candidate  -          -
                              beta       1.1-amd64  6
                              edge       1.0-i386   3
+                             edge/test  1.1-i386   9           2019-05-30T01:17:06.465504
             """
         )
         self.assertThat(output, Contains(expected))
@@ -112,22 +114,22 @@ class StatusTestCase(integration.StoreTestCase):
         # Build a random snap, register, push and release it.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd("basic")
+        self.run_snapcraft(["init"])
         self.update_name_and_version(name, version)
         self.run_snapcraft("snap")
-        snap_path = "{}_{}_{}.snap".format(name, version, "all")
+        snap_path = "{}_{}_{}.snap".format(name, version, self.deb_arch)
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertThat(self.push(snap_path, release="candidate,beta"), Equals(0))
+        self.assertThat(self.push(snap_path, release="beta"), Equals(0))
 
         output = self.run_snapcraft(["status", name])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version    Revision
-            latest   all     stable     -          -
-                             candidate  {version}  1
+            Track    Arch    Channel    Version                           Revision
+            latest   {arch}   stable     -                                 -
+                             candidate  -                                 -
                              beta       {version}  1
-                             edge       ^          ^
+                             edge       ^                                 ^
             """
-        ).format(version=version)
+        ).format(arch=self.deb_arch, version=version)
         self.assertThat(output, Contains(expected))
