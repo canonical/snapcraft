@@ -18,7 +18,7 @@ Then, setup LXD:
     lxc config set snapcraft-dev raw.idmap "both $UID 1000"
     lxc start snapcraft-dev
 
-Instal the required dependencies:
+Install the required dependencies:
 
     lxc exec snapcraft-dev -- apt update
     lxc exec snapcraft-dev -- apt install --yes \
