@@ -4,21 +4,24 @@
 
 We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu 16.04 LTS base)
 
-First we setup LXD:
+Clone these sources and make it your working directory:
+    git clone https://github.com/snapcore/snapcraft.git
+    cd snapcraft
+
+Then, setup LXD:
 
     sudo snap install lxd
     sudo lxd init  # If unsure, pick `dir` as the storage backend.
     sudo adduser "$USER" lxd
     newgrp lxd
-    lxc create ubuntu:16.04 snapcraft-dev
+    lxc init ubuntu:16.04 snapcraft-dev
     lxc config set snapcraft-dev raw.idmap "both $UID 1000"
-    lxc config device add snapcraft-dev snapcraft-project disk source="$(PWD)" path=/home/ubuntu/snapcraft
     lxc start snapcraft-dev
 
-The we install the required dependencies:
+Instal the required dependencies:
 
     lxc exec snapcraft-dev -- apt update
-    lxc exec snapcraft-dev -- apt install \
+    lxc exec snapcraft-dev -- apt install --yes \
         execstack \
         g++ \
         gcc \
@@ -26,23 +29,25 @@ The we install the required dependencies:
         libffi-dev \
         libsodium-dev \
         libxml2-dev \
-        libxslt-dev
+        libxslt-dev \
         libyaml-dev \
         make \
         p7zip-full \
         patchelf \
         python3-dev \
-        python3-venv \
+        python3-pip \
         rpm2cpio \
-        squashfs-tools \
-    lxc exec snapcraft-dev -- sudo -u ubuntu pip3 install -U pip
-    lxc exec snapcraft-dev -- sudo -u ubuntu pip install \
+        squashfs-tools
+    lxc exec snapcraft-dev -- sudo -iu ubuntu pip3 install --upgrade --user pip
+    lxc config device add snapcraft-dev snapcraft-project disk source="$PWD" path=/home/ubuntu/snapcraft
+    lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --user \
         -r snapcraft/requirements.txt \
         -r snapcraft/requirements-devel.txt
 
 Optionally, to quickly try out snapcraft from within the environment:
 
-    lxc exec snapcraft-dev -- sudo -u ubuntu pip install --editable snapcraft
+    lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
+        "cd snapcraft && pip install --no-use-pep517 --user --editable ."
 
 > Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
