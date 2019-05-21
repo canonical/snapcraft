@@ -21,6 +21,7 @@ import platform
 import sys
 from contextlib import suppress
 from typing import List, Set  # noqa: F401
+from typing import Dict, Optional
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
@@ -105,7 +106,13 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 _WINDOWS_TRANSLATIONS = {"AMD64": "x86_64"}
 
 
-_HOST_CODENAME_FOR_BASE = {"core18": "bionic", "core": "xenial"}
+_HOST_INFO_FOR_BASE = {
+    None: dict(codename="xenial", name="Ubuntu", version_id="16.04"),
+    "core": dict(codename="xenial", name="Ubuntu", version_id="16.04"),
+    "core18": dict(codename="bionic", name="Ubuntu", version_id="18.04"),
+}
+
+
 _HOST_COMPATIBILITY = {
     "xenial": ["trusty", "xenial"],
     "bionic": ["trusty", "xenial", "bionic"],
@@ -258,6 +265,10 @@ class ProjectOptions:
 
         self._set_machine(target_deb_arch)
 
+    def get_expected_release_info_for_base(self, base: str) -> Optional[Dict[str, str]]:
+        """Return the expected codename to build for a base."""
+        return _HOST_INFO_FOR_BASE.get(base)
+
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.
 
@@ -276,10 +287,14 @@ class ProjectOptions:
             codename = os_release.OsRelease().version_codename()
             logger.debug("Running on {!r}".format(codename))
 
-        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(base)  # type: str
-        compatible_hosts = _HOST_COMPATIBILITY.get(
-            build_host_for_base, []
-        )  # type: List[str]
+        build_host_info_for_base = _HOST_INFO_FOR_BASE.get(base)
+        if build_host_info_for_base:
+            build_host_codename_for_base = build_host_info_for_base.get("codename")
+            compatible_hosts = _HOST_COMPATIBILITY.get(
+                build_host_codename_for_base, list()
+            )  # type: List[str]
+        else:
+            compatible_hosts = list()
         return codename in compatible_hosts
 
     # This is private to not make the API public given that base
