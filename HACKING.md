@@ -1,95 +1,69 @@
 # Snapcraft
 
-## Evaluating pull requests
+## Setting up a development environment
 
-Oftentimes all you want to do is see if a given pull request solves the issue you were having (you reported that bug, right?). You can always run that pull request from source if you want (see below), but there's an easier way: use `snapcraft-pr`. First of all, you need it installed:
+We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu 16.04 LTS base)
 
-    sudo snap install --classic snapcraft-pr
+First we setup LXD:
 
-Every pull request on github has an associated ID, which is used across the project to refer to it in comments, etc. It's clearly displayed on each pull request, but you can also determine it from the URL, for example, the ID of `https://github.com/snapcore/snapcraft/pull/2094` is `2094`.
+    sudo snap install lxd
+    sudo lxd init  # If unsure, pick `dir` as the storage backend.
+    sudo adduser "$USER" lxd
+    newgrp lxd
+    lxc create ubuntu:16.04 snapcraft-dev
+    lxc config set snapcraft-dev raw.idmap "both $UID 1000"
+    lxc config device add snapcraft-dev snapcraft-project disk source="$(PWD)" path=/home/ubuntu/snapcraft
+    lxc start snapcraft-dev
 
-Once you've determined the pull request ID, you can tell `snapcraft-pr` that you want to use it by running:
+The we install the required dependencies:
 
-    snapcraft-pr.init <pull request id>
+    lxc exec snapcraft-dev -- apt update
+    lxc exec snapcraft-dev -- apt install \
+        execstack \
+        g++ \
+        gcc \
+        libapt-pkg-dev \
+        libffi-dev \
+        libsodium-dev \
+        libxml2-dev \
+        libxslt-dev
+        libyaml-dev \
+        make \
+        p7zip-full \
+        patchelf \
+        python3-dev \
+        python3-venv \
+        rpm2cpio \
+        squashfs-tools \
+    lxc exec snapcraft-dev -- sudo -u ubuntu pip3 install -U pip
+    lxc exec snapcraft-dev -- sudo -u ubuntu pip install \
+        -r snapcraft/requirements.txt \
+        -r snapcraft/requirements-devel.txt
 
-Once that has completed, you can now use that version of snapcraft almost exactly like how you would normally use the `snapcraft` command, but instead of using `snapcraft`, use `snapcraft-pr <pull request id>`. For example, if you would normally run `snapcraft cleanbuild`, run `snapcraft-pr <pull request id> cleanbuild`.
+Optionally, to quickly try out snapcraft from within the environment:
 
-If the pull request gets updated after you've already done this, you can update your version by simply running `snapcraft-pr.init <pull request id>` again.
+    lxc exec snapcraft-dev -- sudo -u ubuntu pip install --editable snapcraft
 
-
-## Installing from pip
-
-First install a few dependencies:
-
-    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools patchelf execstack rpm2cpio p7zip-full libyaml-dev libxml2-dev libxslt-dev
-
-Create and activate a new virtual environment:
-
-    mkdir -p ~/venv/snapcraft
-    python3 -m venv ~/venv/snapcraft
-    source ~/venv/snapcraft/bin/activate
-
-
-Make sure pip is up-to-date:
-
-    (snapcraft) $ pip install --upgrade pip
-
-
-Install snapcraft (and its dependencies):
-
-    (snapcraft) $ pip install -r requirements.txt .
-
-
-## Running
-
-To see all the commands and options, run `snapcraft --help`.
-
-
-## Hacking
-
-We'd love the help!
-
-- Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
-- Make sure to read the [contribution guide](CONTRIBUTING.md)
-- Our mailing list is snapcraft@lists.ubuntu.com
-- We can also be found on the #snappy IRC channel on Freenode
-
-
-### Installing for development
-
-You'll need to install the development dependencies, and you'll also probably want to install it in `editable` mode so any changes you make take affect:
-
-    (snapcraft) $ pip install -r requirements.txt -r requirements-devel.txt --editable .
-
+> Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
 ### Testing
 
 See the [Testing guide](TESTING.md).
 
-### Project Layout
-
-- **bin:** Holds the main snapcraft script. Putting this bin in your PATH or directly running scripts from it will find the rest of the source tree automatically.
-
-- **examples:** Entering the subdirectories and running `../../bin/snapcraft snap` will generally yield interesting results. These examples will give you an idea of what snapcraft can do. These examples are not used during automated testing, they are simply for experimenting.
-
-- **plugins:** Holds yaml metadata for the current snapcraft plugins.
-
-- **tests:** Tests, obviously. `unit` holds Python unit tests and `plainbox` holds plainbox integration tests.
-
-- **snapcraft:** The Python module that houses the core snapcraft logic. The `plugins` subdirectory holds the code for each plugin.
-
-
-### Updating library filter
-
-To update the list of libraries that get excluded from inclusion into a
-snap run:
-
-    ./libraries/generate_lib_list.py libraries/<release>
-
-e.g.; to update the list for 16.04,
-
-    ./libraries/generate_lib_list.py libraries/16.04
-
 ### Enabling debug output
 
 Given that the `--debug` option in snapcraft is reserved for project specific debugging, enabling for the `logger.debug` calls is achieved by setting the "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" environment variable to a truthful value. Snapcraft's internal tools, e.g.; `snapraftctl` should pick up this environment variable as well.
+
+## Evaluating pull requests
+
+Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, the Travis CI setup for snapcraft _publishes_ the resulting snap that was built for x86-64 using `transfer.sh`.
+To download the snap, find the relevant CI job run for the PR under review and locate the "snap" stage, the URL to download from will be located at the end of logs for that job.
+
+## Reaching out
+
+We'd love the help!
+
+- Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
+- Make sure to read the [contribution guide](CONTRIBUTING.md)
+- Find us under the snapcraft category of the forum https://forum.snapcraft.io
+- Discuss with us using IRC in #snapcraft on Freenode.
