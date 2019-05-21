@@ -32,7 +32,10 @@ from snapcraft.internal import (
     project_loader,
     steps,
 )
-from snapcraft.project._sanity_checks import conduct_project_sanity_check
+from snapcraft.project._sanity_checks import (
+    conduct_project_sanity_check,
+    get_project_environment_warnings,
+)
 from snapcraft.project.errors import YamlValidationError
 
 if typing.TYPE_CHECKING:
@@ -53,6 +56,10 @@ def _execute(  # noqa: C901
     # fmt: on
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
+
+    environment_warnings = get_project_environment_warnings(project)
+    if environment_warnings:
+        echo.warning(environment_warnings)
 
     conduct_project_sanity_check(project)
 

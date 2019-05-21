@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,7 +40,7 @@ import xdg
 
 import snapcraft
 from snapcraft import yaml_utils
-from snapcraft.internal import elf
+from snapcraft.internal import elf, os_release
 from tests import fake_servers
 from tests.fake_servers import api, search, upload
 from tests.file_utils import get_snapcraft_path
@@ -984,6 +984,7 @@ class SnapcraftYaml(fixtures.Fixture):
         summary="test-summary",
         description="test-description",
         confinement="strict",
+        base=None,
         architectures=None,
     ):
         super().__init__()
@@ -991,6 +992,8 @@ class SnapcraftYaml(fixtures.Fixture):
         self.data = {"confinement": confinement, "parts": {}, "apps": {}}
         if name is not None:
             self.data["name"] = name
+        if base is not None:
+            self.data["base"] = base
         if version is not None:
             self.data["version"] = version
         if summary is not None:
@@ -1299,6 +1302,64 @@ class FakeSnapcraftIsASnap(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable("SNAP", "/snap/snapcraft/current"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_NAME", "snapcraft"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "devel"))
+
+
+class FakeSnapcraftIsADeb(fixtures.Fixture):
+    def __init__(self, *, return_value=True) -> None:
+        super().__init__()
+
+        self.return_value = return_value
+
+    def _setUp(self) -> None:
+        super()._setUp()
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.is_deb", return_value=self.return_value
+            )
+        )
+
+
+class FakeSnapcraftIsInDockerInstance(fixtures.Fixture):
+    def __init__(self, *, return_value=True) -> None:
+        super().__init__()
+
+        self.return_value = return_value
+
+    def _setUp(self) -> None:
+        super()._setUp()
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.is_docker_instance",
+                return_value=self.return_value,
+            )
+        )
+
+
+class FakeOsRelease(fixtures.Fixture):
+    def __init__(self, *, codename: str, name: str, version_id: str) -> None:
+        super().__init__()
+        self.codename = codename
+        self.name = name
+        self.version_id = version_id
+
+    def _setUp(self):
+        super()._setUp()
+
+        # Unfortunate that we use paths for this
+        with tempfile.NamedTemporaryFile("w") as temp_file:
+            print("NAME={}".format(self.name), file=temp_file)
+            print("VERSION_ID={}".format(self.version_id), file=temp_file)
+            print("VERSION_CODENAME={}".format(self.codename), file=temp_file)
+            temp_file.flush()
+            fake_release = os_release.OsRelease(os_release_file=temp_file.name)
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.os_release.OsRelease", return_value=fake_release
+            )
+        )
 
 
 class FakeExtension(fixtures.Fixture):

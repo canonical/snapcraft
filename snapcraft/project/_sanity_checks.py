@@ -19,6 +19,8 @@ import os
 import re
 
 import snapcraft
+from ._environment_checks import EnvironmentChecks
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +34,6 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
 }
 
-# TODO: Add conduct_environment_sanity_check() to be run in the build environment
-
 
 def conduct_project_sanity_check(project: snapcraft.project.Project):
     """Sanity check the project itself before continuing.
@@ -44,6 +44,10 @@ def conduct_project_sanity_check(project: snapcraft.project.Project):
     snap_dir_path = os.path.join(project._project_dir, "snap")
     if os.path.isdir(snap_dir_path):
         _check_snap_dir(snap_dir_path)
+
+
+def get_project_environment_warnings(project: snapcraft.project.Project) -> str:
+    return EnvironmentChecks(project).get_messages()
 
 
 def _check_snap_dir(snap_dir_path: str):
