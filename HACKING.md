@@ -8,51 +8,20 @@ Clone these sources and make it your working directory:
     git clone https://github.com/snapcore/snapcraft.git
     cd snapcraft
 
-Then, setup LXD:
+If you already have LXD setup you can skip this part, if not, run:
 
     sudo snap install lxd
     sudo lxd init  # If unsure, pick `dir` as the storage backend.
     sudo adduser "$USER" lxd
     newgrp lxd
-    lxc init ubuntu:16.04 snapcraft-dev
-    lxc config set snapcraft-dev raw.idmap "both $UID 1000"
-    lxc start snapcraft-dev
 
-Install the required dependencies:
+Setup the environment by running:
 
-    lxc exec snapcraft-dev -- apt update
-    lxc exec snapcraft-dev -- apt install --yes \
-        execstack \
-        g++ \
-        gcc \
-        libapt-pkg-dev \
-        libffi-dev \
-        libsodium-dev \
-        libxml2-dev \
-        libxslt-dev \
-        libyaml-dev \
-        make \
-        p7zip-full \
-        patchelf \
-        python3-dev \
-        python3-pip \
-        rpm2cpio \
-        squashfs-tools
-    lxc exec snapcraft-dev -- sudo -iu ubuntu pip3 install --upgrade --user pip
-    lxc config device add snapcraft-dev snapcraft-project disk source="$PWD" path=/home/ubuntu/snapcraft
-    lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --user \
-        -r snapcraft/requirements.txt \
-        -r snapcraft/requirements-devel.txt
-
-Optionally, to quickly try out snapcraft from within the environment:
-
-    lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
-        "cd snapcraft && pip install --no-use-pep517 --user --editable ."
+    ./tools/environment-setup.sh
 
 To work inside this environment, run:
 
     lxc exec snapcraft-dev -- sudo -iu ubuntu bash
-
 
 > Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
