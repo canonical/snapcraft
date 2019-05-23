@@ -42,7 +42,7 @@ class ProviderImpl(Provider):
         self.save_info_mock = mock.Mock()
 
     def _run(self, command, hide_output=False) -> Optional[bytes]:
-        self.run_mock(command)
+        return self.run_mock(command)
 
     def _launch(self) -> None:
         self.launch_mock()
@@ -55,12 +55,6 @@ class ProviderImpl(Provider):
 
     def _unmount(self, *, mountpoint: str) -> None:
         self.unmount_mock(mountpoint=mountpoint)
-
-    def _mount_snaps_directory(self) -> None:
-        self._mount(mountpoint=self._SNAPS_MOUNTPOINT, dev_or_path="snaps-dev")
-
-    def _unmount_snaps_directory(self) -> None:
-        self._unmount(mountpoint=self._SNAPS_MOUNTPOINT)
 
     def _push_file(self, *, source: str, destination: str) -> None:
         self.push_file_mock(source=source, destination=destination)

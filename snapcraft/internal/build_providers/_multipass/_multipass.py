@@ -146,15 +146,6 @@ class Multipass(Provider):
         mount = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.umount(mount=mount)
 
-    def _mount_snaps_directory(self) -> None:
-        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
-        # CoreLibExecDir
-        path = os.path.join(os.path.sep, "var", "lib", "snapd", "snaps")
-        self._mount(mountpoint=self._SNAPS_MOUNTPOINT, dev_or_path=path)
-
-    def _unmount_snaps_directory(self):
-        self._umount(mountpoint=self._SNAPS_MOUNTPOINT)
-
     def _push_file(self, *, source: str, destination: str) -> None:
         destination = "{}:{}".format(self.instance_name, destination)
         self._multipass_cmd.copy_files(source=source, destination=destination)
