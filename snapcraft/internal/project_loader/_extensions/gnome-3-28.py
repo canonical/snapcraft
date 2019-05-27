@@ -84,7 +84,6 @@ class Gnome_3_28Extension(DesktopCommonExtension):
         self.app_snippet = {
             **self.app_snippet,
             "command-chain": command_chain,
-            "adapter": "none",
         }
 
         self.parts = {
