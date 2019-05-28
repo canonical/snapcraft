@@ -1,6 +1,6 @@
 summary: Build a snap using legacy scriptlets
 
-systems: [ubuntu-14*, ubuntu-16*]
+systems: [ubuntu-16*]
 
 environment:
   SNAP_DIR: ../snaps/scriplets

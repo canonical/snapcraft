@@ -1,6 +1,6 @@
 summary: Build a snap that pulls parts with filesets from the wiki
 
-systems: [ubuntu-14*, ubuntu-16*]
+systems: [ubuntu-16*]
 
 environment:
   SNAP_DIR: snaps/wiki-filesets
@@ -27,4 +27,3 @@ execute: |
 
   # Verify the right files and directories made it to stage.
   [ -z "$(compare_dir_contents stage expected_staged.txt)" ]
-  
