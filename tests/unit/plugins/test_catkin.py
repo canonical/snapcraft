@@ -179,12 +179,14 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         # Check rosdistro property
         rosdistro = schema["properties"]["rosdistro"]
-        expected = ("type", "default")
+        expected = ("type",)
         self.assertThat(rosdistro, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(rosdistro, Contains(prop))
         self.assertThat(rosdistro["type"], Equals("string"))
-        self.assertThat(rosdistro["default"], Equals("indigo"))
+
+        # Ensure that it's required
+        self.assertThat(schema["required"], Contains("rosdistro"))
 
     def test_schema_catkin_packages(self):
         schema = catkin.CatkinPlugin.schema()

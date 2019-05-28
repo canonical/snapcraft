@@ -30,7 +30,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The source space containing Catkin packages. By default this is 'src'.
     - rosdistro:
       (string)
-      The ROS distro required by this system. Defaults to 'indigo'.
+      The ROS distro required by this system. Options are 'indigo', 'jade',
+      'kinetic', or 'lunar'.
     - include-roscore:
       (boolean)
       Whether or not to include roscore with the part. Defaults to true.
@@ -169,7 +170,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema["properties"]["rosdistro"] = {"type": "string", "default": "indigo"}
+        schema["properties"]["rosdistro"] = {"type": "string"}
         schema["properties"]["catkin-packages"] = {
             "type": "array",
             "minitems": 1,
@@ -217,6 +218,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
             "type": "string",
             "default": "http://localhost:11311",
         }
+
+        schema["required"].append("rosdistro")
 
         return schema
 
