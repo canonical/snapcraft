@@ -159,7 +159,13 @@ def remote_build(
         branch = "master"
 
         # Send local data to the remote repository
+        if not click.confirm(
+            "All data sent to remote builders is public. Are you sure you want to continue?"
+        ):
+            return
+
         echo.info("Sending data to remote builder...")
+
         if git:
             url, branch = _send_current_tree(provider, lp.user, build_id + "-git")
         else:
