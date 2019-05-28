@@ -11,8 +11,7 @@ environment:
 prepare: |
   cd "$SNAP_DIR"
 
-  # By default this snap will end up using Indigo, which is EOL. Make sure it uses
-  # Kinetic instead.
+  # Legacy requires the rosdistro to be specified
   echo "    rosdistro: kinetic" >> snap/snapcraft.yaml
 
 restore: |
