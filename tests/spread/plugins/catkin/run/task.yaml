@@ -10,9 +10,8 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-# ROS Indigo doesn't support arm64 (there are no packages in the archive). Also,
-# Indigo snaps have trouble building past 16.04.
-systems: [-ubuntu-*-arm64, -ubuntu-18*]
+# ROS Kinetic only supports 16.04
+systems: [ubuntu-16.04*]
 
 execute: |
   cd "$SNAP_DIR"

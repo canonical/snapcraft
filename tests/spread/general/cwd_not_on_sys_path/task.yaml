@@ -1,8 +1,5 @@
 summary: Build a snap that would crash snapcraft if it loaded modules from cwd
 
-# The python plugin doesn't work on trusty
-systems: [-ubuntu-14*]
-
 environment:
   SNAP_DIR: snaps/sys-path-test
 

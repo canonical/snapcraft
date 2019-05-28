@@ -1,8 +1,5 @@
 summary: Build and run a basic Go snap
 
-# Classic snaps don't build on 14.04
-systems: [-ubuntu-14*]
-
 environment:
   SNAP_DIR: ../snaps/go-gotty
 

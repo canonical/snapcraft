@@ -36,8 +36,6 @@ backends:
     key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
     systems:
-      - ubuntu-14.04-64:
-          workers: 3
       - ubuntu-16.04-64:
           workers: 3
       - ubuntu-18.04-64:
