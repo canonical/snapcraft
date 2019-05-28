@@ -8,9 +8,6 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-# There is no meson on trusty
-systems: [-ubuntu-14.04*]
-
 execute: |
   cd "$SNAP_DIR"
   snapcraft
