@@ -62,6 +62,11 @@ def _execute(  # noqa: C901
     build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
+    if project.info.base is None:
+        from .legacy import run_legacy_snapcraft
+
+        run_legacy_snapcraft()
+
     echo.wrapped(
         "Using {!r}: Project assets will be "
         "searched for from the {!r} directory.".format(

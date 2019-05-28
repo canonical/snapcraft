@@ -1,0 +1,19 @@
+summary: cleanbuild backwards compatibility for valid yaml when no base is set
+
+environment:
+  SNAP_DIR: ../snaps/cleanbuild-no-base-valid-yaml
+
+prepare: |
+  snap install lxd
+  lxd waitready --timeout=30
+  lxd init --auto
+
+restore: |
+  cd "$SNAP_DIR"
+  rm -f ./*.snap
+  rm -f ./*_source.tar.bz2
+
+execute: |
+  cd "$SNAP_DIR"
+
+  snapcraft cleanbuild
