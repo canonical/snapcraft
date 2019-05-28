@@ -188,16 +188,19 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
-    def test_monitor_build(self, mock_download, mock_lp):
+    def test_monitor_build(self, mock_download_file, mock_lp):
+        open("test_i386.txt.gz", "w").close()
+        open("test_i386.txt.gz.1", "w").close()
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
         lpc.start_build()
         lpc.monitor_build(interval=0)
-        mock_download.assert_has_calls(
+        mock_download_file.assert_has_calls(
             [
+                mock.call("url_for/build_log_file_1", "test_i386.txt.gz.2"),
                 mock.call("url_for/snap_file_i386.snap", "snap_file_i386.snap"),
-                mock.call("url_for/build_log_file_2", "buildlog_amd64.txt.gz"),
+                mock.call("url_for/build_log_file_2", "test_amd64.txt.gz"),
             ]
         )
 
@@ -207,17 +210,17 @@ class LaunchpadTestCase(unit.TestCase):
         "tests.unit.remote_build.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
     @mock.patch("logging.Logger.error")
-    def test_monitor_build_error(self, mock_log, mock_urls, mock_download, mock_lp):
+    def test_monitor_build_error(self, mock_log, mock_urls, mock_download_file, mock_lp):
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
         lpc.start_build()
         lpc.monitor_build(interval=0)
-        mock_download.assert_has_calls(
-            [mock.call("url_for/build_log_file_2", "buildlog_amd64.txt.gz")]
+        mock_download_file.assert_has_calls(
+            [mock.call("url_for/build_log_file_2", "test_amd64.txt.gz")]
         )
         mock_log.assert_called_with(
-            "Build failed for arch amd64. Log file is 'buildlog_amd64.txt.gz'."
+            "Build failed for arch amd64. Log file is 'test_amd64.txt.gz'."
         )
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
