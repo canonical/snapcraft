@@ -315,6 +315,11 @@ def clean(parts, use_lxd, unprime):
     build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
+    if project.info.base is None:
+        from .legacy import run_legacy_snapcraft
+
+        run_legacy_snapcraft()
+
     if unprime and not build_environment.is_managed_host:
         raise click.BadOptionUsage("--unprime is not a valid option.")
 
