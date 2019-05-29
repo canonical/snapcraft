@@ -2,6 +2,8 @@ summary: cleanbuild backwards compatibility for valid yaml when no base is set
 
 environment:
   SNAP_DIR: ../snaps/cleanbuild-no-base-valid-yaml
+  # This is set to "host" in spread.yaml's prepare
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 prepare: |
   snap install lxd
