@@ -848,7 +848,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             )
         else:
             # POST/PUT
-            info = json.loads(request.params["info"])
+            info = json.loads(request.params["info"].decode())
             invalid = any([e.get("filename", "").endswith("invalid") for e in info])
             conflict = any([e.get("filename", "").endswith("conflict") for e in info])
             conflict_with_braces = any(
