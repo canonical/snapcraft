@@ -77,9 +77,12 @@ class Client:
             headers = self._snapcraft_headers
 
         final_url = urllib.parse.urljoin(self.root_url, url)
+        debug_headers = headers.copy()
+        if "Authorization" in debug_headers:
+            debug_headers["Authorization"] = "<macaroon>"
         logger.debug(
             "Calling {} with params {} and headers {}".format(
-                final_url, params, headers
+                final_url, params, debug_headers
             )
         )
         try:
