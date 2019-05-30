@@ -21,6 +21,7 @@ import os
 import click
 
 from . import echo
+from ._command import SnapcraftProjectCommand
 from ._options import (
     add_build_options,
     get_build_environment,
@@ -61,11 +62,6 @@ def _execute(  # noqa: C901
 
     build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
-
-    if project.info.base is None:
-        from .legacy import run_legacy_snapcraft
-
-        run_legacy_snapcraft()
 
     echo.wrapped(
         "Using {!r}: Project assets will be "
@@ -177,7 +173,7 @@ def init():
     )
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @click.pass_context
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -193,7 +189,7 @@ def pull(ctx, parts, **kwargs):
     _execute(steps.PULL, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -208,7 +204,7 @@ def build(parts, **kwargs):
     _execute(steps.BUILD, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -223,7 +219,7 @@ def stage(parts, **kwargs):
     _execute(steps.STAGE, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -255,7 +251,7 @@ def try_command(**kwargs):
     echo.info("You can now run `snap try {}`.".format(project.prime_dir))
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -277,7 +273,7 @@ def snap(directory, output, **kwargs):
         _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @click.argument("directory")
 @click.option("--output", "-o", help="path to the resulting snap.")
 def pack(directory, output, **kwargs):
@@ -295,7 +291,8 @@ def pack(directory, output, **kwargs):
     _pack(directory, output=output)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--use-lxd",
@@ -305,7 +302,7 @@ def pack(directory, output, **kwargs):
 )
 @click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
 @click.option("--step", required=False, cls=HiddenOption)
-def clean(parts, use_lxd, unprime, step):
+def clean(ctx, parts, use_lxd, unprime, step):
     """Remove a part's assets.
 
     \b

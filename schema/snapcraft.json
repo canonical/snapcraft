@@ -782,6 +782,7 @@
     },
     "required": [
         "name",
+        "base",
         "parts"
     ],
 

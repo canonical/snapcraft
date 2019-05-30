@@ -15,36 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
-import sys
 
 import click
 
 from ._options import get_project
-from snapcraft.internal import common, errors
+from ._command import SnapcraftProjectCommand, run_legacy_snapcraft
+from snapcraft.internal import errors
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 
 logger = logging.getLogger(__name__)
-
-
-def run_legacy_snapcraft() -> None:
-    if not common.is_snap():
-        raise errors.SnapcraftEnvironmentError(
-            "Legacy mode not supported in this installation. "
-            "Install snapcraft from https://snapcraft.io/snapcraft and try again."
-        )
-
-    legacy_python = os.path.join(
-        common.get_legacy_snapcraft_dir(), "usr", "bin", "python3"
-    )
-    legacy_snapcraft = os.path.join(
-        common.get_legacy_snapcraft_dir(), "bin", "snapcraft"
-    )
-
-    cmd = [legacy_python, legacy_snapcraft] + sys.argv[1:]
-    logging.debug("Running legacy snapcraft with: {}".format(cmd))
-    os.execv(legacy_python, cmd)
 
 
 @click.group()
@@ -54,14 +34,10 @@ def legacycli(ctx, **kwargs):
 
 
 @legacycli.command(
-    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True)
+    cls=SnapcraftProjectCommand,
+    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True),
 )
-@click.option(
-    "--remote",
-    metavar="<remote>",
-    help="Use a specific lxd remote instead of a local container.",
-)
-def cleanbuild(remote):
+def cleanbuild():
     """Create a snap using a clean environment managed by a build provider.
 
     \b
@@ -80,9 +56,6 @@ def cleanbuild(remote):
     This command is no longer available when using the base keyword."""
     # We can only end up here with an invalid yaml
     project = get_project()
-    if project.info.base is None:
-        run_legacy_snapcraft()
-
     conduct_project_sanity_check(project)
 
     # if we got this far, the environment must be broken
