@@ -43,7 +43,7 @@ def run_legacy_snapcraft() -> None:
     )
 
     cmd = [legacy_python, legacy_snapcraft] + sys.argv[1:]
-    logging.debug("Running legacy snapcraf with: {}".format(cmd))
+    logging.debug("Running legacy snapcraft with: {}".format(cmd))
     os.execv(legacy_python, cmd)
 
 
