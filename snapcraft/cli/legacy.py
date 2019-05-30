@@ -14,17 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-
 import click
 
 from ._options import get_project
 from ._command import SnapcraftProjectCommand, run_legacy_snapcraft
 from snapcraft.internal import errors
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
