@@ -301,8 +301,7 @@ def pack(directory, output, **kwargs):
     help="Forces snapcraft to use LXD for this clean command.",
 )
 @click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
-@click.option("--step", required=False, cls=HiddenOption)
-def clean(ctx, parts, use_lxd, unprime, step):
+def clean(ctx, parts, use_lxd, unprime):
     """Remove a part's assets.
 
     \b
@@ -318,12 +317,8 @@ def clean(ctx, parts, use_lxd, unprime, step):
 
         run_legacy_snapcraft()
 
-    # This option is only valid in legacy.
-    if step:
-        raise click.BadOptionUsage("no such option: --step")
-
     if unprime and not build_environment.is_managed_host:
-        raise click.BadOptionUsage("no suck option: --unprime")
+        raise click.BadOptionUsage("--unprime is not a valid option.")
 
     if build_environment.is_managed_host or build_environment.is_host:
         step = steps.PRIME if unprime else None
