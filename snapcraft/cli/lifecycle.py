@@ -292,7 +292,6 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@click.pass_context
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--use-lxd",
@@ -301,7 +300,8 @@ def pack(directory, output, **kwargs):
     help="Forces snapcraft to use LXD for this clean command.",
 )
 @click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
-def clean(ctx, parts, use_lxd, unprime):
+@click.option("--step", required=False, cls=HiddenOption)
+def clean(parts, use_lxd, unprime, step):
     """Remove a part's assets.
 
     \b
@@ -309,11 +309,15 @@ def clean(ctx, parts, use_lxd, unprime):
         snapcraft clean
         snapcraft clean my-part
     """
+    # This option is only valid in legacy.
+    if step:
+        raise click.BadOptionUsage("no such option: --step")
+
     build_environment = get_build_environment(use_lxd=use_lxd)
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if unprime and not build_environment.is_managed_host:
-        raise click.BadOptionUsage("--unprime is not a valid option.")
+        raise click.BadOptionUsage("not such option: --unprime")
 
     if build_environment.is_managed_host or build_environment.is_host:
         step = steps.PRIME if unprime else None
