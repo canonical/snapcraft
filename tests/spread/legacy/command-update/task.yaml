@@ -1,6 +1,6 @@
 summary: Ensure the update command creates parts.yaml and headers.yaml
 
-systems: [ubuntu-14*, ubuntu-16*]
+systems: [ubuntu-16*]
 
 restore: |
   rm -rf ./parts
@@ -32,4 +32,3 @@ execute: |
     fi
   done
   test $nparts = 1
-

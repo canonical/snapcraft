@@ -1,6 +1,6 @@
 summary: Ensure the define command outputs correctly
 
-systems: [ubuntu-14*, ubuntu-16*]
+systems: [ubuntu-16*]
 
 restore: |
   rm -rf ./parts
