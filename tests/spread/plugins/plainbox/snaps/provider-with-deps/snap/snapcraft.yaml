@@ -19,11 +19,12 @@ parts:
             - build-essential
         python-packages:
             - idna==2.7
-            - requests-oauthlib
-            - XlsxWriter
-            - Jinja2
-            - guacamole
-            - padme
+            - requests-oauthlib==1.2.0
+            - urllib3==1.24
+            - xlsxwriter==1.1.8
+            - Jinja2==2.10.1
+            - guacamole==0.9.2
+            - padme==1.1.1
     parent-plainbox-provider:
         plugin: plainbox-provider
         source: ./2017.com.example_parent
