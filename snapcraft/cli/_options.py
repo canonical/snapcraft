@@ -79,17 +79,16 @@ def get_build_environment(**kwargs):
     return env.BuilderEnvironmentConfig(force_provider=provider)
 
 
-def get_project(*, is_managed_host: bool = False, skip_context: bool = False, **kwargs):
+def get_project(*, is_managed_host: bool = False, **kwargs):
     # We need to do this here until we can get_snapcraft_yaml as part of Project.
     if is_managed_host:
         os.chdir(os.path.expanduser(os.path.join("~", "project")))
 
     snapcraft_yaml_file_path = get_snapcraft_yaml()
 
-    # This method may be called from a click.Command where a context does
-    # not yet exist.
-    if not skip_context:
-        ctx = click.get_current_context()
+    # This method may be called from a click.Command with no parent.
+    ctx = click.get_current_context()
+    if ctx.parent is not None:
         for key, value in ctx.parent.params.items():
             if not kwargs.get(key):
                 kwargs[key] = value

@@ -54,9 +54,7 @@ class SnapcraftProjectCommand(click.Command):
     def _is_legacy(self) -> bool:
         try:
             build_environment = get_build_environment()
-            project = get_project(
-                is_managed_host=build_environment.is_managed_host, skip_context=True
-            )
+            project = get_project(is_managed_host=build_environment.is_managed_host)
         except Exception:
             # If we cannot load the project, we assume we are in non legacy
             # where the error should be properly handled.
