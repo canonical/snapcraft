@@ -1,5 +1,7 @@
 summary: cleanbuild backwards compatibility for valid yaml when no base is set
 
+systems: [ubuntu-16*]
+
 environment:
   SNAP_DIR: ../snaps/cleanbuild-no-base-valid-yaml
   # This is set to "host" in spread.yaml's prepare
