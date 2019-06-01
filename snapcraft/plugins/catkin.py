@@ -99,6 +99,13 @@ _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
 _ROS_KEYRING_PATH = os.path.join(snapcraft.internal.common.get_keyringsdir(), "ros.gpg")
 
+# This needs to be removed once ROS finishes rolling out key rotation. See
+# https://discourse.ros.org/t/security-issue-on-ros-build-farm/9342 for more
+# details.
+_OLD_ROS_KEYRING_PATH = os.path.join(
+    snapcraft.internal.common.get_keyringsdir(), "ros_old.gpg"
+)
+
 
 class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
     fmt = (
@@ -268,7 +275,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
     @property
     def PLUGIN_STAGE_KEYRINGS(self):
-        return [_ROS_KEYRING_PATH]
+        return [_ROS_KEYRING_PATH, _OLD_ROS_KEYRING_PATH]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
