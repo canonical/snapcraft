@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,6 @@ import click
 
 from snapcraft.internal import deprecations
 from . import echo
-from . import env
 
 
 _CMD_DEPRECATED_REPLACEMENTS = {
@@ -36,6 +35,8 @@ _CMD_ALIASES = {
 }
 
 _CMD_DEPRECATION_NOTICES = {"history": "dn4"}
+
+_CMD_LEGACY = ["cleanbuild", "refresh", "search", "update", "define"]
 
 
 class SnapcraftGroup(click.Group):
@@ -66,12 +67,10 @@ class SnapcraftGroup(click.Group):
 
         # Inspect is for internal usage: hide it
         commands.pop(commands.index("inspect"))
-        build_environment = env.BuilderEnvironmentConfig()
-        if build_environment.is_host:
-            commands.pop(commands.index("refresh"))
 
         # Hide the legacy commands
-        commands.pop(commands.index("cleanbuild"))
+        for command in _CMD_LEGACY:
+            commands.pop(commands.index(command))
 
         # Hide commands with unstable cli
         commands.pop(commands.index("promote"))
