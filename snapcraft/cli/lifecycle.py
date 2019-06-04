@@ -299,9 +299,15 @@ def pack(directory, output, **kwargs):
     required=False,
     help="Forces snapcraft to use LXD for this clean command.",
 )
+@click.option(
+    "--destructive-mode",
+    is_flag=True,
+    required=False,
+    help="Forces snapcraft to try and use the current host to clean.",
+)
 @click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
 @click.option("--step", required=False, cls=HiddenOption)
-def clean(parts, use_lxd, unprime, step):
+def clean(parts, use_lxd, destructive_mode, unprime, step):
     """Remove a part's assets.
 
     \b
@@ -313,7 +319,9 @@ def clean(parts, use_lxd, unprime, step):
     if step:
         raise click.BadOptionUsage("no such option: --step")
 
-    build_environment = get_build_environment(use_lxd=use_lxd)
+    build_environment = get_build_environment(
+        use_lxd=use_lxd, destructive_mode=destructive_mode
+    )
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if unprime and not build_environment.is_managed_host:

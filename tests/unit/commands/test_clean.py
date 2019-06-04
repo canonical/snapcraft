@@ -108,6 +108,13 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(2))
 
+    def test_destructive_mode(self):
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(["clean", "--destructive-mode"])
+
+        self.assertThat(result.exit_code, Equals(0))
+
 
 class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
     def test_local_plugin_not_removed(self):
