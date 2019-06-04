@@ -311,17 +311,17 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
 
     @mock.patch("snapcraft.cli.lifecycle.get_project")
     @mock.patch("snapcraft.internal.lifecycle.clean")
-    def test_unprime_in_managed_host(self, lifecycle_clean_mock, project_mock):
+    def test_unprime_in_managed_host(self, lifecycle_clean_mock, get_project_mock):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
         )
-        project_mock.return_value = "fake-project"
+        project_mock = mock.Mock()
+        project_mock.info.base.return_value = "core"
+        get_project_mock.return_value = project_mock
 
         result = self.run_command(["clean", "--unprime"])
 
         self.assertThat(result.exit_code, Equals(0))
-        lifecycle_clean_mock.assert_called_once_with(
-            "fake-project", tuple(), steps.PRIME
-        )
+        lifecycle_clean_mock.assert_called_once_with(project_mock, tuple(), steps.PRIME)
         self.clean_project_mock.assert_not_called()
         self.clean_mock.assert_not_called()

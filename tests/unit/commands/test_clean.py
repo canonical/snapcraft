@@ -324,11 +324,12 @@ class CleanCommandReverseDependenciesTestCase(CommandBaseTestCase):
 
 
 class CleanCommandSnapcraftYamlTest(CommandBaseTestCase):
-    def test_clean_with_only_name_defined(self):
+    def test_clean_with_only_name_and_base_defined(self):
         self.make_snapcraft_yaml(
             dedent(
                 """\
             name: clean-test
+            base: core
         """
             )
         )
