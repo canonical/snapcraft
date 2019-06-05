@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from unittest import mock
 
 from testtools.matchers import Equals
 
@@ -200,3 +201,31 @@ class FormatSnapFileNameErrorTest(unit.TestCase):
         # fact that version is not allowed.
         snap = dict(name="name")
         self.assertRaises(KeyError, common.format_snap_name, snap)
+
+
+class IsDebTest(unit.TestCase):
+    def test_not_linux(self):
+        self.assertThat(common.is_deb(platform="darwin"), Equals(False))
+
+    def test_argv0_not_for_deb(self):
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/opt/bin/snapcraft"), Equals(False)
+        )
+
+    @mock.patch(
+        "subprocess.check_output",
+        side_effect=lambda x: "bash: /usr/bin/snapcraft".encode(),
+    )
+    def test_not_packaged_in_snapcraft(self, check_output_mock):
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
+        )
+
+    @mock.patch(
+        "subprocess.check_output",
+        side_effect=lambda x: "snapcraft: /usr/bin/snapcraft".encode(),
+    )
+    def test_packaged_in_snapcraft(self, check_output_mock):
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(True)
+        )
