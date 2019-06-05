@@ -134,6 +134,27 @@ def is_docker_instance() -> bool:
     return os.path.exists(_DOCKERENV_FILE)
 
 
+def is_deb(*, argv0: str = sys.argv[0], platform: str = sys.platform) -> bool:
+    # If not on linux, not worth checking.
+    if platform != "linux":
+        return False
+    # Check the path snapcraft is installed to as a deb.
+    if argv0 != "/usr/bin/snapcraft":
+        return False
+    # Use that path to verify it is part of a deb.
+    try:
+        output = (
+            subprocess.check_output(["dpkg", "-S", "/usr/bin/snapcraft"])
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        return False
+    # output format is "<deb-name>: <path>"
+    deb_name = output.split(":")[0]
+    return deb_name == "snapcraft"
+
+
 def set_plugindir(plugindir):
     global _plugindir
     _plugindir = plugindir
