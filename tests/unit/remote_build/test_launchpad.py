@@ -210,7 +210,9 @@ class LaunchpadTestCase(unit.TestCase):
         "tests.unit.remote_build.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
     @mock.patch("logging.Logger.error")
-    def test_monitor_build_error(self, mock_log, mock_urls, mock_download_file, mock_lp):
+    def test_monitor_build_error(
+        self, mock_log, mock_urls, mock_download_file, mock_lp
+    ):
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
