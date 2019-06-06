@@ -175,7 +175,7 @@ class LaunchpadClient:
                 logger.debug("{} state: {}".format(arch, build_state))
                 if arch in self._waiting:
                     if build_state == _LP_SUCCESS_STATUS:
-                        self._process_build(build)
+                        self._process_success(build)
                     elif build_state == _LP_FAIL_STATUS:
                         self._process_fail(build)
 
@@ -189,7 +189,7 @@ class LaunchpadClient:
 
         return status
 
-    def _process_build(self, build: Dict[str, Any]) -> None:
+    def _process_success(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
         snap_build = self._lp.load(build["self_link"])
         urls = snap_build.getFileUrls()
@@ -198,6 +198,8 @@ class LaunchpadClient:
             logger.error("Snap file not available for arch {}.".format(arch))
             self._waiting.remove(arch)
             return
+
+        self._download_log(build)
 
         for url in urls:
             snap_name = url.rsplit("/", 1)[-1]
@@ -213,19 +215,32 @@ class LaunchpadClient:
         self._waiting.remove(arch)
 
     def _process_fail(self, build: Dict[str, Any]) -> None:
-        arch = build["arch_tag"]
-        url = build["build_log_url"]
-        logger.debug("Fail log url: {}".format(url))
-        fail_log = "buildlog_{}.txt.gz".format(arch)
         try:
-            self._download_file(url, fail_log)
+            arch = build["arch_tag"]
+            log_name = self._download_log(build)
             logger.error(
-                "Build failed for arch {}. Log file is {!r}.".format(arch, fail_log)
+                "Build failed for arch {}. Log file is {!r}.".format(arch, log_name)
             )
         except urllib.error.HTTPError as e:
             logger.error("Log file download error ({}): {}".format(arch, e))
         finally:
             self._waiting.remove(arch)
+
+    def _get_logfile_name(self, build: Dict[str, Any]) -> str:
+        arch = build["arch_tag"]
+        log_name = name = "{}_{}.txt.gz".format(self._name, arch)
+        number = 1
+        while os.path.isfile(log_name):
+            log_name = "{}.{}".format(name, number)
+            number += 1
+        return log_name
+
+    def _download_log(self, build: Dict[str, Any]) -> str:
+        url = build["build_log_url"]
+        logger.debug("Build log url: {}".format(url))
+        log_name = self._get_logfile_name(build)
+        self._download_file(url, log_name)
+        return log_name
 
     def _download_file(self, url: str, name: str) -> None:
         logger.debug("Download snap from {!r}".format(url))
