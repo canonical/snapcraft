@@ -22,6 +22,7 @@ import sys
 import click
 
 from . import echo
+from ._command import SnapcraftProjectCommand
 from ._options import (
     add_build_options,
     get_build_environment,
@@ -173,7 +174,7 @@ def init():
     )
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @click.pass_context
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -189,7 +190,7 @@ def pull(ctx, parts, **kwargs):
     _execute(steps.PULL, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -204,7 +205,7 @@ def build(parts, **kwargs):
     _execute(steps.BUILD, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -219,7 +220,7 @@ def stage(parts, **kwargs):
     _execute(steps.STAGE, parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -251,7 +252,7 @@ def try_command(**kwargs):
     echo.info("You can now run `snap try {}`.".format(project.prime_dir))
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @add_build_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -273,7 +274,7 @@ def snap(directory, output, **kwargs):
         _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @click.argument("directory")
 @click.option("--output", "-o", help="path to the resulting snap.")
 def pack(directory, output, **kwargs):
@@ -291,7 +292,7 @@ def pack(directory, output, **kwargs):
     _pack(directory, output=output)
 
 
-@lifecyclecli.command()
+@lifecyclecli.command(cls=SnapcraftProjectCommand)
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--use-lxd",
@@ -299,8 +300,15 @@ def pack(directory, output, **kwargs):
     required=False,
     help="Forces snapcraft to use LXD for this clean command.",
 )
+@click.option(
+    "--destructive-mode",
+    is_flag=True,
+    required=False,
+    help="Forces snapcraft to try and use the current host to clean.",
+)
 @click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
-def clean(parts, use_lxd, unprime):
+@click.option("--step", required=False, cls=HiddenOption)
+def clean(parts, use_lxd, destructive_mode, unprime, step):
     """Remove a part's assets.
 
     \b
@@ -308,11 +316,17 @@ def clean(parts, use_lxd, unprime):
         snapcraft clean
         snapcraft clean my-part
     """
-    build_environment = get_build_environment(use_lxd=use_lxd)
+    # This option is only valid in legacy.
+    if step:
+        raise click.BadOptionUsage("no such option: --step")
+
+    build_environment = get_build_environment(
+        use_lxd=use_lxd, destructive_mode=destructive_mode
+    )
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if unprime and not build_environment.is_managed_host:
-        raise click.BadOptionUsage("--unprime is not a valid option.")
+        raise click.BadOptionUsage("not such option: --unprime")
 
     if build_environment.is_managed_host or build_environment.is_host:
         step = steps.PRIME if unprime else None

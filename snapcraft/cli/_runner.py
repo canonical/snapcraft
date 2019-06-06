@@ -90,7 +90,13 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
     log.configure(log_level=log_level)
     # The default command
     if not ctx.invoked_subcommand:
-        ctx.forward(lifecyclecli.commands["snap"])
+        snap_command = lifecyclecli.commands["snap"]
+        # Fill in the context with default values for the snap command.
+        if "directory" not in ctx.params:
+            ctx.params["directory"] = None
+        if "output" not in ctx.params:
+            ctx.params["output"] = None
+        snap_command.invoke(ctx)
 
 
 # This would be much easier if they were subcommands

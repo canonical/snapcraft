@@ -1,6 +1,6 @@
 summary: Ensure the define command outputs correctly
 
-systems: [ubuntu-14*, ubuntu-16*]
+systems: [ubuntu-16*]
 
 restore: |
   rm -rf ./parts
@@ -9,13 +9,6 @@ restore: |
 execute: |
   export XDG_DATA_HOME="$PWD/parts"
 
-  # Create a snapcraft.yaml with no base entry
-  snapcraft init
-
-  # Remove the base entry
-  sed -i '/base: core18/d' snap/snapcraft.yaml
-
-  # Now update
   snapcraft update
   snapcraft define curl > define.txt
 

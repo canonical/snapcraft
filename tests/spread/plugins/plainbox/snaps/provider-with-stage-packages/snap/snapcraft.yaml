@@ -13,8 +13,9 @@ parts:
         plugin: python
         python-packages:
             - idna==2.7
-            - checkbox-ng
-            - requests-oauthlib
+            - checkbox-ng==1.0.0
+            - requests-oauthlib==1.2.0
+            - urllib3==1.24
         build-packages:
             - libxml2-dev
             - libxslt1-dev
