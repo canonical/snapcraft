@@ -10,7 +10,7 @@ grade: devel
 parts:
     checkbox-ng-dev:
         plugin: python
-        source: git://git.launchpad.net/checkbox-ng
+        source: https://git.launchpad.net/checkbox-ng
         source-type: git
         build-packages:
             - libxml2-dev
