@@ -17,6 +17,7 @@
 import logging
 import typing
 import os
+import sys
 
 import click
 
@@ -86,7 +87,7 @@ def _execute(  # noqa: C901
             build_provider_class.ensure_provider()
         except build_providers.errors.ProviderNotFound as provider_error:
             if provider_error.prompt_installable:
-                if click.confirm(
+                if os.isatty(sys.stdin.fileno()) and click.confirm(
                     "Support for {!r} needs to be set up. "
                     "Would you like to do that it now?".format(provider_error.provider)
                 ):
