@@ -247,7 +247,7 @@ class DownloadTestCase(StoreTestCase):
         self.client.download("test-snap", risk="stable", download_path=download_path)
         second_stat = os.stat(download_path)
         # If these are equal it means a second download did not happen.
-        self.assertThat(second_stat, Equals(first_stat))
+        self.assertThat(second_stat.st_ctime, Equals(first_stat.st_ctime))
 
     def test_download_on_sha_mismatch(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
