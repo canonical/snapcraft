@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from unittest import mock
 
 from testtools.matchers import Equals
+import fixtures
 
 from snapcraft.internal import common, errors
 from tests import unit
@@ -204,28 +204,40 @@ class FormatSnapFileNameErrorTest(unit.TestCase):
 
 
 class IsDebTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.check_output_mock = fixtures.MockPatch("subprocess.check_output")
+        self.useFixture(self.check_output_mock)
+
     def test_not_linux(self):
         self.assertThat(common.is_deb(platform="darwin"), Equals(False))
+        self.check_output_mock.mock.assert_not_called()
 
     def test_argv0_not_for_deb(self):
         self.assertThat(
             common.is_deb(platform="linux", argv0="/opt/bin/snapcraft"), Equals(False)
         )
+        self.check_output_mock.mock.assert_not_called()
 
-    @mock.patch(
-        "subprocess.check_output",
-        side_effect=lambda x: "bash: /usr/bin/snapcraft".encode(),
-    )
-    def test_not_packaged_in_snapcraft(self, check_output_mock):
+    def test_not_packaged_in_snapcraft(self):
+        self.check_output_mock.mock.side_effect = (
+            lambda x: "bash: /usr/bin/snapcraft".encode()
+        )
         self.assertThat(
             common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
         )
+        self.check_output_mock.mock.assert_called_once_with(
+            ["dpkg", "-S", "/usr/bin/snapcraft"]
+        )
 
-    @mock.patch(
-        "subprocess.check_output",
-        side_effect=lambda x: "snapcraft: /usr/bin/snapcraft".encode(),
-    )
-    def test_packaged_in_snapcraft(self, check_output_mock):
+    def test_packaged_in_snapcraft(self):
+        self.check_output_mock.mock.side_effect = (
+            lambda x: "snapcraft: /usr/bin/snapcraft".encode()
+        )
         self.assertThat(
             common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(True)
+        )
+        self.check_output_mock.mock.assert_called_once_with(
+            ["dpkg", "-S", "/usr/bin/snapcraft"]
         )
