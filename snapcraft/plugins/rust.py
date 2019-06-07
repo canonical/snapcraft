@@ -232,6 +232,13 @@ class RustPlugin(snapcraft.BasePlugin):
 
         return toolchain
 
+    def _get_linker(self) -> str:
+        arch_triplet = self.project.arch_triplet
+        if arch_triplet == "i386-linux-gnu":
+            return "i686-linux-gnu-gcc"
+        else:
+            return "{}-gcc".format(arch_triplet)
+
     def _write_cargo_config(self) -> None:
         # python toml's output dumps sections for targets with quotes that
         # cargo later cannot pickup.
@@ -241,6 +248,7 @@ class RustPlugin(snapcraft.BasePlugin):
             jobs=self.parallel_build_count,
             rustc_cmd=self._rustc_cmd,
             rustdoc_cmd=self._rustdoc_cmd,
+            linker=self._get_linker(),
         )
 
         cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
@@ -258,7 +266,7 @@ class RustPlugin(snapcraft.BasePlugin):
                 rustdoc = "{rustdoc_cmd}"
 
                 [target.{target}]
-                linker = "{arch_triplet}-gcc"
+                linker = "{linker}"
             """
                 ).format(**config),
                 file=toml_config_file,
@@ -272,9 +280,7 @@ class RustPlugin(snapcraft.BasePlugin):
             rustldflags.extend(["-C", "link-arg={}".format(flag)])
 
         if self.project.is_cross_compiling:
-            rustldflags.extend(
-                ["-C", "linker={}-gcc".format(self.project.arch_triplet)]
-            )
+            rustldflags.extend(["-C", "linker={}".format(self._get_linker())])
 
         return rustldflags
 
