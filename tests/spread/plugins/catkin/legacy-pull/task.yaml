@@ -24,7 +24,12 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 # ROS Kinetic only supports 16.04
-systems: [ubuntu-16.04*]
+systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
 
 execute: |
   cd "$SNAP_DIR"
