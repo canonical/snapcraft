@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
 from testtools.matchers import Equals
 import fixtures
@@ -224,6 +225,26 @@ class IsDebTest(unit.TestCase):
         self.check_output_mock.mock.side_effect = (
             lambda x: "bash: /usr/bin/snapcraft".encode()
         )
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
+        )
+        self.check_output_mock.mock.assert_called_once_with(
+            ["dpkg", "-S", "/usr/bin/snapcraft"]
+        )
+
+    def test_package_not_found(self):
+        self.check_output_mock.mock.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["dpkg"]
+        )
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
+        )
+        self.check_output_mock.mock.assert_called_once_with(
+            ["dpkg", "-S", "/usr/bin/snapcraft"]
+        )
+
+    def test_dpkg_not_found(self):
+        self.check_output_mock.mock.side_effect = FileNotFoundError("dpkg")
         self.assertThat(
             common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
         )

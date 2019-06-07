@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -148,7 +148,7 @@ def is_deb(*, argv0: str = sys.argv[0], platform: str = sys.platform) -> bool:
             .decode()
             .strip()
         )
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return False
     # output format is "<deb-name>: <path>"
     deb_name = output.split(":")[0]
