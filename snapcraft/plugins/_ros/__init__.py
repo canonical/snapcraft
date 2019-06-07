@@ -15,4 +15,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.plugins._ros import rosdep  # noqa
+from snapcraft.plugins._ros import rospack  # noqa
 from snapcraft.plugins._ros import wstool  # noqa
