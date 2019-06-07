@@ -141,8 +141,9 @@ def is_deb(*, argv0: str = sys.argv[0], platform: str = sys.platform) -> bool:
     # If running from the snap, this is certainly not the deb
     if is_snap():
         return False
-    # Check the path snapcraft is installed to as a deb.
-    if argv0 != "/usr/bin/snapcraft":
+    # Check the path snapcraft is installed to as a deb, taking
+    # into account relative paths.
+    if os.path.abspath(argv0) != "/usr/bin/snapcraft":
         return False
     # Use that path to verify it is part of a deb.
     try:
