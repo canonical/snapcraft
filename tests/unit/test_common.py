@@ -21,7 +21,7 @@ from testtools.matchers import Equals
 import fixtures
 
 from snapcraft.internal import common, errors
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class CommonTestCase(unit.TestCase):
@@ -213,6 +213,13 @@ class IsDebTest(unit.TestCase):
 
     def test_not_linux(self):
         self.assertThat(common.is_deb(platform="darwin"), Equals(False))
+        self.check_output_mock.mock.assert_not_called()
+
+    def test_running_from_snap(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+        self.assertThat(
+            common.is_deb(platform="linux", argv0="/usr/bin/snapcraft"), Equals(False)
+        )
         self.check_output_mock.mock.assert_not_called()
 
     def test_argv0_not_for_deb(self):
