@@ -192,9 +192,8 @@ class InvalidAppCommandNotExecutable(SnapcraftError):
 
     fmt = (
         "Failed to generate snap metadata: "
-        "The specified command {command!r} defined in the app {app_name!r} does "
-        "not exist.\n"
-        "Ensure that {command!r} is executable."
+        "The specified command {command!r} defined in the app {app_name!r} "
+        "is not executable."
     )
 
     def __init__(self, command, app_name):

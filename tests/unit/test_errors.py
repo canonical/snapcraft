@@ -298,8 +298,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "expected_message": (
                     "Failed to generate snap metadata: "
                     "The specified command 'test-command' defined in the app "
-                    "'test-app' does not exist.\n"
-                    "Ensure that 'test-command' is executable."
+                    "'test-app' is not executable."
                 ),
             },
         ),
