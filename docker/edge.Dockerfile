@@ -6,12 +6,12 @@ RUN apt dist-upgrade --yes
 RUN apt install --yes curl jq squashfs-tools
 
 # Grab the core snap from the stable channel and unpack it in the proper place
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/core' | jq '.download_url' -r) --output core.snap
+RUN curl -L $(curl -s https://api.snapcraft.io/v2/snaps/info/core -H "Snap-Device-Series: 16" | jq '."channel-map" | .[] | select(.channel.name=="edge") | select(.channel.architecture=="amd64").download.url') --output core.snap
 RUN mkdir -p /snap/core
 RUN unsquashfs -d /snap/core/current core.snap
 
 # Grab the snapcraft snap from the edge channel and unpack it in the proper place
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel=edge' | jq '.download_url' -r) --output snapcraft.snap
+RUN curl -L $(curl -s https://api.snapcraft.io/v2/snaps/info/snapcraft -H "Snap-Device-Series: 16" | jq '."channel-map" | .[] | select(.channel.name=="edge") | select(.channel.architecture=="amd64").download.url') --output core.snap
 RUN mkdir -p /snap/snapcraft
 RUN unsquashfs -d /snap/snapcraft/current snapcraft.snap
 
