@@ -69,7 +69,7 @@ class Rospack:
         # rospack isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
         logger.info("Preparing to fetch rospack...")
-        ubuntu = repo.Ubuntu(
+        ubuntu_repo = repo.Ubuntu(
             self._rospack_path,
             sources=self._ubuntu_sources,
             keyrings=self._ubuntu_keyrings,
@@ -77,7 +77,7 @@ class Rospack:
         )
 
         logger.info("Fetching rospack...")
-        ubuntu.get(
+        ubuntu_repo.get(
             [
                 "ros-{}-rospack".format(self._ros_distro),
                 "ros-{}-catkin".format(self._ros_distro),
@@ -85,7 +85,7 @@ class Rospack:
         )
 
         logger.info("Installing rospack...")
-        ubuntu.unpack(self._rospack_install_path)
+        ubuntu_repo.unpack(self._rospack_install_path)
 
     def list_names(self) -> Set[str]:
         """Obtain list of packages present in the workspace."""
