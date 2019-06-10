@@ -2,7 +2,7 @@
 SNAP="/snap/snapcraft/current"
 SNAP_NAME="$(awk '/^name:/{print $2}' $SNAP/meta/snap.yaml)"
 SNAP_VERSION="$(awk '/^version:/{print $2}' $SNAP/meta/snap.yaml)"
-SNAP_ARCH="amd64"
+SNAP_ARCH="$(dpkg --print-architecture)"
 
 export SNAP
 export SNAP_NAME
