@@ -66,13 +66,25 @@ def remotecli():
     help="Set architectures to build.",
 )
 @click.option(
+    "--accept-public-upload",
+    is_flag=True,
+    required=False,
+    help="Acknowledge that uploaded code is public.",
+)
+@click.option(
     "--git", is_flag=True, required=False, help="Build a local git repository."
 )
 @click.option(
     "--user", metavar="<username>", nargs=1, required=False, help="Launchpad username."
 )
 def remote_build(
-    recover: int, status: int, user: str, arch: str, git: bool, echoer=echo
+    recover: int,
+    status: int,
+    user: str,
+    arch: str,
+    git: bool,
+    accept_public_upload: bool,
+    echoer=echo,
 ) -> None:
     """Dispatch a snap for remote build.
 
@@ -159,7 +171,7 @@ def remote_build(
         branch = "master"
 
         # Send local data to the remote repository
-        if not click.confirm(
+        if not accept_public_upload and not click.confirm(
             "All data sent to remote builders is public. Are you sure you want to continue?"
         ):
             return
