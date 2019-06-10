@@ -18,7 +18,9 @@ import os
 import logging
 import subprocess
 import tempfile
+from typing import List, Set
 
+import snapcraft
 from snapcraft.internal import common, repo
 from snapcraft import formatting_utils
 
@@ -29,13 +31,25 @@ class Rospack:
     def __init__(
         self,
         *,
-        ros_distro,
-        ros_package_path,
-        rospack_path,
-        ubuntu_sources,
-        ubuntu_keyrings,
-        project
-    ):
+        ros_distro: str,
+        ros_package_path: str,
+        rospack_path: str,
+        ubuntu_sources: str,
+        ubuntu_keyrings: List[str],
+        project: snapcraft.project.Project
+    ) -> None:
+        """Create a new Rospack instance.
+
+        :param str ros_distro: Name of the ROS distribution.
+        :param str ros_package_path: The workspace to use.
+        :param str rospack_path: Working directory for rospack (where it will be
+                                 installed).
+        :param str ubuntu_sources: Ubuntu repositories from which rospack will be
+                                   installed.
+        :param list ubuntu_keyrings: List of paths to keyrings to use for sources.
+        :param project: Instance of Project for project-wide settings.
+        :type project: snapcraft.Project
+        """
         self._ros_distro = ros_distro
         self._ros_package_path = ros_package_path
         self._rospack_path = rospack_path
@@ -46,7 +60,9 @@ class Rospack:
         self._rospack_install_path = os.path.join(self._rospack_path, "install")
         self._rospack_cache_path = os.path.join(self._rospack_path, "cache")
 
-    def setup(self):
+    def setup(self) -> None:
+        """Fetch, unpack, and setup rospack."""
+
         # Make sure we can run multiple times without error
         os.makedirs(self._rospack_install_path, exist_ok=True)
 
@@ -71,15 +87,16 @@ class Rospack:
         logger.info("Installing rospack...")
         ubuntu.unpack(self._rospack_install_path)
 
-    def list_names(self):
+    def list_names(self) -> Set[str]:
         """Obtain list of packages present in the workspace."""
+
         output = self._run(["list-names"]).strip()
         if output:
             return set(output.split("\n"))
         else:
             return set()
 
-    def _run(self, arguments):
+    def _run(self, arguments) -> str:
         with tempfile.NamedTemporaryFile(mode="w+") as f:
             lines = [
                 'export PYTHONPATH="{}"'.format(
