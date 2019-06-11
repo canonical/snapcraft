@@ -1,5 +1,7 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile
+from rcl_interfaces.msg import ParameterDescriptor
 from std_msgs.msg import String
 
 
@@ -7,11 +9,15 @@ class Listener(Node):
     def __init__(self):
         super().__init__("listener")
 
-        self._subscription = self.create_subscription(String, "chatter", self._callback)
-
-        parameter = self.get_parameter("exit-after-receive")
+        self.declare_parameter("exit_after_receive", False, ParameterDescriptor())
+        parameter = self.get_parameter("exit_after_receive")
         self._exit_after_receive = parameter.value
         self.should_exit = False
+
+        qos_profile = QoSProfile(depth=1)
+        self._subscription = self.create_subscription(
+            String, "chatter", self._callback, qos_profile
+        )
 
     def _callback(self, message):
         self.get_logger().info("I heard {!r}".format(message.data))
