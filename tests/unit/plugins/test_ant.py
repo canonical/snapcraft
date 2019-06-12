@@ -70,7 +70,11 @@ class AntPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["ant-build-targets", "ant-properties"]
+        expected_build_properties = [
+            "ant-build-targets",
+            "ant-properties",
+            "ant-buildfile",
+        ]
         resulting_build_properties = ant.AntPlugin.get_build_properties()
 
         self.assertThat(
@@ -141,6 +145,7 @@ class AntPluginBaseTest(unit.TestCase):
             ant_version = ant._DEFAULT_ANT_VERSION
             ant_version_checksum = ant._DEFAULT_ANT_CHECKSUM
             ant_openjdk_version = self.java_version
+            ant_buildfile = None
 
         self.options = Options()
 
@@ -218,6 +223,19 @@ class AntPluginBaseTest(unit.TestCase):
             ["ant", "artifacts", "jar", "-Dbasedir=."],
             cwd=plugin.builddir,
             env=mock.ANY,
+        )
+
+    def test_build_with_explicit_buildfile(self):
+        self.options.ant_buildfile = "test.xml"
+
+        plugin = ant.AntPlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin)
+
+        plugin.build()
+
+        self.run_mock.assert_called_once_with(
+            ["ant", "-f", "test.xml"], cwd=plugin.builddir, env=mock.ANY
         )
 
     def test_env(self):

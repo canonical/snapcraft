@@ -17,7 +17,6 @@
 """The ant plugin is useful for ant based parts.
 
 The ant build system is commonly used to build Java projects.
-The plugin requires a build.xml in the root of the source tree.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -49,6 +48,13 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       openjdk version available to the base to use. If not set the latest
       version available to the base will be used.
+
+    - ant-buildfile
+      (string)
+      The path to the Ant buildfile to use, relative to the root of the
+      source tree
+      Defaults to a build.xml file in the root of the source tree.
+
 """
 
 import logging
@@ -111,6 +117,8 @@ class AntPlugin(snapcraft.BasePlugin):
 
         schema["properties"]["ant-openjdk-version"] = {"type": "string", "default": ""}
 
+        schema["properties"]["ant-buildfile"] = {"type": "string"}
+
         schema["required"] = ["source"]
 
         return schema
@@ -125,7 +133,7 @@ class AntPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["ant-build-targets", "ant-properties"]
+        return ["ant-build-targets", "ant-properties", "ant-buildfile"]
 
     @property
     def _ant_tar(self):
@@ -187,6 +195,9 @@ class AntPlugin(snapcraft.BasePlugin):
         self._ant_tar.provision(self._ant_dir, clean_target=False, keep_tarball=True)
 
         command = ["ant"]
+
+        if self.options.ant_buildfile:
+            command.extend(["-f", self.options.ant_buildfile])
 
         if self.options.ant_build_targets:
             command.extend(self.options.ant_build_targets)
