@@ -37,7 +37,7 @@ class WorktreeTestCase(unit.TestCase):
         self._wt = Worktree(
             self._source.path,
             self._dest.path,
-            ignore=["test_*.snap", "buildlog_*.txt*", "parts", "stage", "prime"],
+            ignore=["test_*.snap", "test_*.txt.gz*", "parts", "stage", "prime"],
         )
         self._wt.sync()
 
@@ -82,8 +82,8 @@ class WorktreeTestCase(unit.TestCase):
             ".gitignore",
             "test_0.1_amd64.snap",
             "other_0.1_amd64.snap",
-            "buildlog_i386.txt.gz",
-            "buildlog_amd64.txt",
+            "test_i386.txt.gz",
+            "test_amd64.txt.gz.2",
         ]:
             self._source.create_file(name)
         for dirname in [".svn", ".bzr", "parts", "stage", "prime"]:
