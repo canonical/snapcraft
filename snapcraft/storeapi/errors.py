@@ -404,9 +404,8 @@ class StoreServerError(StoreError):
         what = "The Snap Store encountered an error while processing your request"
         error_code = response.status_code
         error_text = responses[error_code].lower()
-        action = (
-            "The operational status of the Snap Store can be checked at "
-            "{}".format(_STORE_STATUS_URL)
+        action = "The operational status of the Snap Store can be checked at {}".format(
+            _STORE_STATUS_URL
         )
 
         super().__init__(
