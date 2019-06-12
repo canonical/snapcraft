@@ -224,7 +224,7 @@ def _copy_and_send_tree(
     wt = Worktree(
         ".",
         work_dir,
-        ignore=[name + "_*.snap", "buildlog_*.txt*", "parts", "stage", "prime"],
+        ignore=[name + "_*.snap", name + "_*.txt.gz*", "parts", "stage", "prime"],
     )
     url = wt.add_remote(provider, user, build_id)
     wt.sync()
