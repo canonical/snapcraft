@@ -62,5 +62,8 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu pip install \
 # Install the project for quick tests
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --editable snapcraft
 
+# Install black to run static tests
+lxc exec snapcraft-dev -- snap install black --edge --devmode
+
 echo "Environment ready, enter it by running: "
 echo "lxc exec snapcraft-dev -- sudo -iu ubuntu bash"
