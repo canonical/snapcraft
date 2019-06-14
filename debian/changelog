@@ -1,3 +1,26 @@
+snapcraft (3.6) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * docker images: update to be self contained (#2591)
+  * static: update to newer black (#2599)
+  * repo: set priority to critical for debs (LP: #1821313)
+
+  [ Kyle Fazzari ]
+  * docker images: use build stages and generate locale (#2588)
+  * {catkin,colcon} plugin: remove old ROS key (#2586)
+  * catkin plugin: check workspace for dependencies (#2585) (LP: #1832044)
+
+  [ Stefan Bodewig ]
+  * ant plugin: make build file location configurable (#2596)
+
+  [ Chris Patterson ]
+  * tools: add `black` snap to environment-setup.sh (#2595)
+
+  [ dependabot[bot] ]
+  * requirements: bump pyxdg from 0.25 to 0.26 (#2587)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 14 Jun 2019 20:00:41 +0000
+
 snapcraft (3.5.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
