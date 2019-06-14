@@ -721,7 +721,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "kwargs": {
                     "exception": requests.exceptions.ConnectionError("bad error")
                 },
-                "expected_message": ("There seems to be a network error: bad error"),
+                "expected_message": "There seems to be a network error: bad error",
             },
         ),
         (
@@ -785,7 +785,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             {
                 "exception": errors.MountPointNotFoundError,
                 "kwargs": {"mount_point": "test-mount-point"},
-                "expected_message": ("Nothing is mounted at 'test-mount-point'"),
+                "expected_message": "Nothing is mounted at 'test-mount-point'",
             },
         ),
         (
@@ -793,7 +793,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             {
                 "exception": errors.RootNotMountedError,
                 "kwargs": {"root": "test-root"},
-                "expected_message": ("'test-root' is not mounted"),
+                "expected_message": "'test-root' is not mounted",
             },
         ),
         (
@@ -801,7 +801,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             {
                 "exception": errors.InvalidMountinfoFormat,
                 "kwargs": {"row": [1, 2, 3]},
-                "expected_message": ("Unable to parse mountinfo row: [1, 2, 3]"),
+                "expected_message": "Unable to parse mountinfo row: [1, 2, 3]",
             },
         ),
         (
@@ -809,7 +809,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             {
                 "exception": errors.InvalidStepError,
                 "kwargs": {"step_name": "test-step-name"},
-                "expected_message": ("'test-step-name' is not a valid lifecycle step"),
+                "expected_message": "'test-step-name' is not a valid lifecycle step",
             },
         ),
         (
@@ -817,7 +817,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             {
                 "exception": errors.NoLatestStepError,
                 "kwargs": {"part_name": "test-part-name"},
-                "expected_message": ("The 'test-part-name' part hasn't run any steps"),
+                "expected_message": "The 'test-part-name' part hasn't run any steps",
             },
         ),
         (
