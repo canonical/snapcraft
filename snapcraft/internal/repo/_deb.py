@@ -328,10 +328,20 @@ class Ubuntu(BaseRepo):
         logger.info("Installing build dependencies: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(
-            {"DEBIAN_FRONTEND": "noninteractive", "DEBCONF_NONINTERACTIVE_SEEN": "true"}
+            {
+                "DEBIAN_FRONTEND": "noninteractive",
+                "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                "DEBIAN_PRIORITY": "critical",
+            }
         )
 
-        apt_command = ["sudo", "apt-get", "--no-install-recommends", "-y"]
+        apt_command = [
+            "sudo",
+            "--preserve-env",
+            "apt-get",
+            "--no-install-recommends",
+            "-y",
+        ]
         if not is_dumb_terminal():
             apt_command.extend(["-o", "Dpkg::Progress-Fancy=1"])
         apt_command.append("install")
