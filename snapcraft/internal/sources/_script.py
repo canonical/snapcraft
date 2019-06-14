@@ -29,9 +29,16 @@ class Script(FileBase):
         source_commit=None,
         source_branch=None,
         source_depth=None,
+        source_checksum=None,
     ):
         super().__init__(
-            source, source_dir, source_tag, source_commit, source_branch, source_depth
+            source,
+            source_dir,
+            source_tag,
+            source_commit,
+            source_branch,
+            source_depth,
+            source_checksum,
         )
 
     def download(self, filepath: str = None) -> str:

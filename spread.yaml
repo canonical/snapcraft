@@ -200,6 +200,8 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
+ tests/spread/plugins/conda/:
+   summary: tests of snapcraft's Conda plugin
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
