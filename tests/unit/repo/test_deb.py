@@ -379,12 +379,13 @@ class BuildPackagesTestCase(unit.TestCase):
         mock_check_call.assert_has_calls(
             [
                 call(
-                    "sudo apt-get --no-install-recommends -y "
+                    "sudo --preserve-env apt-get --no-install-recommends -y "
                     "-o Dpkg::Progress-Fancy=1 install".split()
                     + sorted(set(installable)),
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                        "DEBIAN_PRIORITY": "critical",
                     },
                 )
             ]
@@ -402,11 +403,12 @@ class BuildPackagesTestCase(unit.TestCase):
         mock_check_call.assert_has_calls(
             [
                 call(
-                    "sudo apt-get --no-install-recommends -y install".split()
+                    "sudo --preserve-env apt-get --no-install-recommends -y install".split()
                     + sorted(set(installable)),
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                        "DEBIAN_PRIORITY": "critical",
                     },
                 )
             ]
@@ -424,6 +426,7 @@ class BuildPackagesTestCase(unit.TestCase):
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                        "DEBIAN_PRIORITY": "critical",
                     },
                 )
             ]
