@@ -28,6 +28,18 @@ class VCSError(SnapcraftSourceError):
     fmt = "{message}"
 
 
+class SnapcraftSourceNotFoundError(SnapcraftSourceError):
+
+    fmt = (
+        "Failed to pull source: {source!r}.\n"
+        "Please ensure the source path is correct and that it is accessible.\n"
+        "See `snapcraft help sources` for more information."
+    )
+
+    def __init__(self, source):
+        super().__init__(source=source)
+
+
 class SnapcraftSourceUnhandledError(SnapcraftSourceError):
 
     fmt = (
