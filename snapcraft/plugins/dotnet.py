@@ -43,9 +43,7 @@ from snapcraft.internal import errors
 from typing import List
 
 
-_DOTNET_RELEASE_METADATA_URL = (
-    "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"
-)  # noqa
+_DOTNET_RELEASE_METADATA_URL = "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"  # noqa
 _RUNTIME_DEFAULT = "2.0.5"
 
 # TODO extend for other architectures
