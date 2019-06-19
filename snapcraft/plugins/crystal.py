@@ -81,15 +81,15 @@ class CrystalPlugin(snapcraft.BasePlugin):
         self.run(["shards", "build", "--production"], self.builddir)
 
         output_bin = os.path.join(self.builddir, "bin")
+        if not os.path.exists(output_bin):
+            raise errors.SnapcraftEnvironmentError(
+                "No binaries were built. Ensure the shards.yaml contains valid targets."
+            )
+
         install_bin_path = os.path.join(self.installdir, "bin")
 
         bin_paths = (os.path.join(output_bin, b) for b in os.listdir(output_bin))
         elf_files = (elf.ElfFile(path=b) for b in bin_paths if elf.ElfFile.is_elf(b))
-
-        if not elf_files:
-            raise errors.SnapcraftEnvironmentError(
-                "No binaries were built. Ensure the shards.yaml contains valid targets."
-            )
 
         os.makedirs(install_bin_path, exist_ok=True)
 
