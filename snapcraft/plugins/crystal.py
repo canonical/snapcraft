@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2019 Manas.Tech
+# License granted by Canonical Limited
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,14 +28,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The Snap Store channel to install Crystal from.
 """
 
-from typing import List
-
 import os
-import re
 import shutil
 
 import snapcraft
-from snapcraft.internal import repo, elf
+from snapcraft import file_utils
+from snapcraft.internal import common, elf, errors
 
 _CRYSTAL_CHANNEL = "latest/stable"
 
@@ -48,6 +47,7 @@ class CrystalPlugin(snapcraft.BasePlugin):
             "type": "string",
             "default": _CRYSTAL_CHANNEL,
         }
+        schema["required"] = ["source"]
 
         return schema
 
@@ -55,19 +55,13 @@ class CrystalPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         return ["crystal-channel"]
 
-    @property
-    def libc6_libs(self) -> List[str]:
-        if self._libc6_libs is None:
-            self._libc6_libs = repo.Repo.get_package_libraries("libc6")
-        return self._libc6_libs
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._libc6_libs = None
+        if project.info.base not in ("core", "core16", "core18"):
+            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
 
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
-
         self.build_packages.extend(
             [
                 "gcc",
@@ -89,26 +83,32 @@ class CrystalPlugin(snapcraft.BasePlugin):
         output_bin = os.path.join(self.builddir, "bin")
         install_bin_path = os.path.join(self.installdir, "bin")
 
-        binary_paths = (
-            (b, os.path.join(output_bin, b)) for b in os.listdir(output_bin)
-        )
-        binaries = (b for b in binary_paths if elf.ElfFile.is_elf(b[1]))
+        bin_paths = (os.path.join(output_bin, b) for b in os.listdir(output_bin))
+        elf_files = (elf.ElfFile(path=b) for b in bin_paths if elf.ElfFile.is_elf(b))
 
-        if not binaries:
-            raise errors.SnapcraftEnvironmentError("No binaries were built.")
+        if not elf_files:
+            raise errors.SnapcraftEnvironmentError(
+                "No binaries were built. Ensure the shards.yaml contains valid targets."
+            )
 
         os.makedirs(install_bin_path, exist_ok=True)
 
-        for binary_name, binary_path in binaries:
-            shutil.copy2(binary_path, os.path.join(install_bin_path, binary_name))
+        for elf_file in elf_files:
+            shutil.copy2(
+                elf_file.path,
+                os.path.join(install_bin_path, os.path.basename(elf_file.path)),
+            )
 
-            ldd_output = self.run_output(["ldd", binary_path], self.builddir)
-            libs_deps = re.findall(r"(\/.*)\s\(", ldd_output)
-
-            for lib_path in libs_deps:
-                if lib_path in self.libc6_libs:
-                    continue
-
-                lib_install_path = os.path.join(self.installdir, lib_path[1:])
+            elf_dependencies_path = elf_file.load_dependencies(
+                root_path=self.installdir,
+                core_base_path=common.get_core_path(self.project.info.base),
+            )
+            for elf_dependency_path in elf_dependencies_path:
+                lib_install_path = os.path.join(
+                    self.installdir, elf_dependency_path[1:]
+                )
                 os.makedirs(os.path.dirname(lib_install_path), exist_ok=True)
-                shutil.copy2(lib_path, lib_install_path)
+                if not os.path.exists(lib_install_path):
+                    file_utils.link_or_copy(
+                        elf_dependency_path, lib_install_path, follow_symlinks=True
+                    )

@@ -12,4 +12,5 @@ apps:
 
 parts:
   crystal-hello:
+    source: hello
     plugin: crystal
