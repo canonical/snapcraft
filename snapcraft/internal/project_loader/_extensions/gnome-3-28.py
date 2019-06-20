@@ -93,6 +93,6 @@ class Gnome_3_28Extension(DesktopCommonExtension):
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
                 "source-type": "local",
                 "organize": {"desktop-*": "snap/command-chain/"},
-                "build-packages": ["build-essential", "libgtk-3-dev"],
+                "build-packages": ["libgtk-3-dev"],
             },
         }
