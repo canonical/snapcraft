@@ -84,6 +84,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
         self.app_snippet = {
             **self.app_snippet,
             "command-chain": command_chain,
+            "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
         }
 
         self.parts = {
