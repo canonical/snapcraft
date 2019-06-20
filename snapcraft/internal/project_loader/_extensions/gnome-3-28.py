@@ -53,7 +53,7 @@ class Gnome_3_28Extension(DesktopCommonExtension):
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                 },
                 "/usr/share/xml/iso-codes": {
-                    "symlink": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
+                    "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
                 },
             }
         }  # type: Dict[str, Any]
