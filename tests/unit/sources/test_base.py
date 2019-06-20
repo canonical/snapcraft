@@ -52,6 +52,16 @@ class TestFileBase(unit.TestCase):
             file_src.source_dir, src=expected, clean_target=False
         )
 
+    @mock.patch("shutil.copy2", side_effect=FileNotFoundError())
+    def test_pull_copy_source_does_not_exist(self, mock_shutil_copy2):
+        file_src = self.get_mock_file_base("does-not-exist.tar.gz", ".")
+
+        raised = self.assertRaises(errors.SnapcraftSourceNotFoundError, file_src.pull)
+
+        self.assertThat(
+            str(raised), Contains("Failed to pull source: 'does-not-exist.tar.gz'")
+        )
+
     @mock.patch("snapcraft.internal.sources._base.requests")
     @mock.patch("snapcraft.internal.sources._base.download_requests_stream")
     @mock.patch("snapcraft.internal.sources._base.download_urllib_source")
