@@ -264,7 +264,8 @@
                 "base",
                 "gadget",
                 "kernel",
-                "os"
+                "os",
+                "snapd"
             ]
         },
         "frameworks": {
