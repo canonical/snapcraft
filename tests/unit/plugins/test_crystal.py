@@ -15,17 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import jsonschema
 from textwrap import dedent
 from unittest import mock
 
-from testtools.matchers import Contains, Equals, FileExists, HasLength, Not
+from testtools.matchers import Equals, FileExists, HasLength
 import fixtures
 
 from snapcraft.internal import errors
 from snapcraft.project import Project
 from snapcraft.plugins import crystal
-from tests import fixture_setup, unit
+from tests import unit
 
 
 class CrystalPluginBaseTest(unit.TestCase):
