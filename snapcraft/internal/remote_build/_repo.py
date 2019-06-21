@@ -56,7 +56,7 @@ class Repo:
 
         if provider == "launchpad":
             url = self._remote_url(user, build_id)
-            self._repo.git.push(url, branch, force=True)
+            self._repo.git.push(url, branch + ":refs/head/master", force=True)
             self._repo.git.push(url, "--tags")
         else:
             raise errors.RemoteBuilderNotSupportedError(provider=provider)
@@ -95,6 +95,9 @@ class Repo:
 
     @property
     def branch_name(self) -> str:
+        # Check whether we are in a detached HEAD state
+        if self._repo.git.rev_parse("--symbolic-full-name", "HEAD") == "HEAD":
+            return "HEAD"
         return self._repo.active_branch.name
 
     @staticmethod
