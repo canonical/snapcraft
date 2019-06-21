@@ -47,8 +47,8 @@ class CrystalPluginBaseTest(unit.TestCase):
             target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
         )
 
-        self.run_mock = fixtures.MockPatch("snapcraft.internal.common.run")
-        self.useFixture(self.run_mock)
+        self.fake_run = fixtures.MockPatch("snapcraft.internal.common.run")
+        self.useFixture(self.fake_run)
 
 
 class CrystalPluginPropertiesTest(unit.TestCase):
@@ -131,7 +131,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
 
         plugin.pull()
 
-        self.run_mock.mock.assert_not_called()
+        self.fake_run.mock.assert_not_called()
 
     def test_build(self):
         class Options:
@@ -154,13 +154,13 @@ class CrystalPluginTest(CrystalPluginBaseTest):
 
         plugin.build()
 
-        self.run_mock.mock.assert_has_calls(
+        self.fake_run.mock.assert_has_calls(
             [
                 mock.call(["shards", "install", "--production"], cwd=plugin.builddir),
                 mock.call(["shards", "build", "--production"], cwd=plugin.builddir),
             ]
         )
-        self.assertThat(self.run_mock.mock.call_count, Equals(2))
+        self.assertThat(self.fake_run.mock.call_count, Equals(2))
 
         for b in binaries:
             self.assertThat(os.path.join(plugin.installdir, "bin", b), FileExists())
