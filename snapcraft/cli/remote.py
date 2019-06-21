@@ -29,7 +29,7 @@ from snapcraft.formatting_utils import humanize_list
 from typing import List, Tuple
 from xdg import BaseDirectory
 from . import echo
-from ._options import get_project
+from ._options import get_project, PromptOption
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 
@@ -68,8 +68,9 @@ def remotecli():
 @click.option(
     "--accept-public-upload",
     is_flag=True,
-    required=False,
+    prompt="All data sent to remote builders is public. Are you sure you want to continue?",
     help="Acknowledge that uploaded code is public.",
+    cls=PromptOption,
 )
 @click.option(
     "--git", is_flag=True, required=False, help="Build a local git repository."
@@ -113,6 +114,9 @@ def remote_build(
         snapcraft remote-build --recover 47860738
         snapcraft remote-build --status 47860738
     """
+    if not accept_public_upload:
+        raise errors.AcceptPublicUploadError()
+
     echo.warning(
         "snapcraft remote-build is offered as a preview. Authentication and transport "
         "mechanisms will change in future releases. Use with caution in scripts."
@@ -171,11 +175,6 @@ def remote_build(
         branch = "master"
 
         # Send local data to the remote repository
-        if not accept_public_upload and not click.confirm(
-            "All data sent to remote builders is public. Are you sure you want to continue?"
-        ):
-            return
-
         echo.info("Sending data to remote builder...")
 
         if git:
