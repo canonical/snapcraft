@@ -108,6 +108,15 @@ class RepoTestCase(unit.TestCase):
         )
         self.assertThat(str(raised), Contains("is not supported"))
 
+    def test_branch_name_detached_head(self):
+        repo = Repo(self._dir.path)
+        repo.add("foo")
+        repo.commit()
+        commit = self._check_output("git", "rev-parse", "HEAD")
+        commit = commit.decode("ascii").strip()
+        self._run("git", "checkout", commit)
+        self.assertThat(repo.branch_name, Equals("HEAD"))
+
     @mock.patch("git.Repo")
     def test_push_remote(self, mock_repo):
         repo = Repo(self._dir.path)
@@ -117,7 +126,7 @@ class RepoTestCase(unit.TestCase):
                 mock.call(self._dir.path),
                 mock.call().git.push(
                     "git+ssh://user@git.launchpad.net/~user/+git/id/",
-                    "branch",
+                    "branch:refs/head/master",
                     force=True,
                 ),
                 mock.call().git.push(
