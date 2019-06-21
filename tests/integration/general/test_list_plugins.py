@@ -42,6 +42,7 @@ class ListPluginsTestCase(integration.TestCase):
             "scons",
             "catkin",
             "colcon",
+            "crystal",
             "dotnet",
             "godeps",
             "kernel",
