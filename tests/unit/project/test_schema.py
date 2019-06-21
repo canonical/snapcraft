@@ -259,7 +259,8 @@ class InvalidNamesTest(ValidationBaseTest):
 class ValidTypesTest(ValidationBaseTest):
 
     scenarios = [
-        (type_, dict(type_=type_)) for type_ in ["app", "gadget", "kernel", "os", "snapd"]
+        (type_, dict(type_=type_))
+        for type_ in ["app", "gadget", "kernel", "os", "snapd"]
     ]
 
     def test_valid_types(self):
