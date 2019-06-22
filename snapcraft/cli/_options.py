@@ -19,11 +19,32 @@ import os
 import click
 
 from snapcraft.project import Project, get_snapcraft_yaml
+from snapcraft.cli.echo import confirm, prompt
 
 
 class HiddenOption(click.Option):
     def get_help_record(self, ctx):
         pass
+
+
+class PromptOption(click.Option):
+    def prompt_for_value(self, ctx):
+        default = self.get_default(ctx)
+
+        # If this is a prompt for a flag we need to handle this
+        # differently.
+        if self.is_bool_flag:
+            return confirm(self.prompt, default)
+
+        return prompt(
+            self.prompt,
+            default=default,
+            type=self.type,
+            hide_input=self.hide_input,
+            show_choices=self.show_choices,
+            confirmation_prompt=self.confirmation_prompt,
+            value_proc=lambda x: self.process_value(ctx, x),
+        )
 
 
 _BUILD_OPTION_NAMES = [
