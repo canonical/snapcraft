@@ -318,7 +318,7 @@ class SnapInjector:
         if not assertions:
             return
 
-        with tempfile.NamedTemporaryFile() as assertion_file:
+        with tempfile.NamedTemporaryFile(dir="/tmp") as assertion_file:
             for assertion in assertions:
                 assertion_file.write(repo.snaps.get_assertion(assertion))
                 assertion_file.write(b"\n")
