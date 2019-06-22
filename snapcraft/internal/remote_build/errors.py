@@ -87,3 +87,11 @@ class UnsupportedArchitectureError(RemoteBuildBaseError):
 
     def __init__(self, *, archs: List[str]) -> None:
         super().__init__(archs=", ".join(archs))
+
+
+class AcceptPublicUploadError(RemoteBuildBaseError):
+
+    fmt = (
+        "Remote build needs explicit acknowledgement that data sent to build servers "
+        "is public.\nIn non-interactive runs, please use option --accept-public-upload."
+    )
