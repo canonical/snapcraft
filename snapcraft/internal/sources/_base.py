@@ -104,16 +104,19 @@ class FileBase(Base):
         source_file = None
         is_source_url = snapcraft.internal.common.isurl(self.source)
 
-        # If not, first check if it is a url and download and if not
+        # First check if it is a url and download and if not
         # it is probably locally referenced.
-        if not source_file and is_source_url:
+        if is_source_url:
             source_file = self.download()
-        elif not source_file:
+        else:
             basename = os.path.basename(self.source)
             source_file = os.path.join(self.source_dir, basename)
             # We make this copy as the provisioning logic can delete
             # this file and we don't want that.
-            shutil.copy2(self.source, source_file)
+            try:
+                shutil.copy2(self.source, source_file)
+            except FileNotFoundError as exc:
+                raise errors.SnapcraftSourceNotFoundError(self.source) from exc
 
         # Verify before provisioning
         if self.source_checksum:

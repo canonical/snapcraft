@@ -204,6 +204,8 @@ suites:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
+ tests/spread/plugins/crystal/:
+   summary: tests of snapcraft's Crystal plugin
  tests/spread/plugins/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
    # Keep this 16.04 as it is the only supported system for this plugin
