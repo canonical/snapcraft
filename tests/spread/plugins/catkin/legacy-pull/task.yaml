@@ -23,6 +23,12 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
+# On failure print out the apt-config to ensure repository
+# failures are not related to original release image modifications
+# for a given series.
+debug: |
+  apt-config dump
+
 # ROS Kinetic only supports 16.04
 systems:
    - ubuntu-16.04
