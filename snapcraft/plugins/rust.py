@@ -40,8 +40,9 @@ import collections
 import logging
 import os
 from contextlib import suppress
-from textwrap import dedent
-from typing import List
+from typing import List, Optional
+
+import toml
 
 import snapcraft
 from snapcraft import sources
@@ -239,38 +240,24 @@ class RustPlugin(snapcraft.BasePlugin):
         else:
             return "{}-gcc".format(arch_triplet)
 
-    def _write_cargo_config(self) -> None:
-        # python toml's output dumps sections for targets with quotes that
-        # cargo later cannot pickup.
+    def _write_cargo_config(self, cargo_config_path: Optional[str] = None) -> None:
+        if cargo_config_path is None:
+            cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
+        if os.path.dirname(cargo_config_path):
+            os.makedirs(os.path.dirname(cargo_config_path), exist_ok=True)
+
+        target = {self._get_target(): dict(linker=self._get_linker())}
         config = dict(
             arch_triplet=self.project.arch_triplet,
-            target=self._get_target(),
             jobs=self.parallel_build_count,
             rustc_cmd=self._rustc_cmd,
             rustdoc_cmd=self._rustdoc_cmd,
-            linker=self._get_linker(),
+            target=target,
         )
-
-        cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
-        os.makedirs(os.path.dirname(cargo_config_path), exist_ok=True)
 
         # Cf. http://doc.crates.io/config.html
         with open(cargo_config_path, "w") as toml_config_file:
-            print(
-                dedent(
-                    """\
-                [build]
-                jobs = {jobs}
-                target = "{target}"
-                rustc = "{rustc_cmd}"
-                rustdoc = "{rustdoc_cmd}"
-
-                [target.{target}]
-                linker = "{linker}"
-            """
-                ).format(**config),
-                file=toml_config_file,
-            )
+            toml.dump(config, toml_config_file)
 
     def _get_rustflags(self) -> List[str]:
         ldflags = shell_utils.getenv("LDFLAGS")
