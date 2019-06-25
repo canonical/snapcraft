@@ -22,6 +22,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 from unittest import mock
+import toml
 
 import snapcraft
 from snapcraft.internal import errors
@@ -524,6 +525,29 @@ class RustPluginTest(RustPluginBaseTest):
         expected_manifest["cargo-version"] = "test cargo version"
 
         self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+    def test_write_cargo_config(self):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        config_toml_path = "config.toml"
+
+        plugin._write_cargo_config(cargo_config_path=config_toml_path)
+
+        self.assertThat(config_toml_path, FileExists())
+
+        config = toml.load(config_toml_path)
+
+        self.assertThat(
+            config,
+            Equals(
+                dict(
+                    rustdoc_cmd=plugin._rustdoc_cmd,
+                    rustc_cmd=plugin._rustc_cmd,
+                    arch_triplet=plugin.project.arch_triplet,
+                    jobs=plugin.parallel_build_count,
+                    target={plugin._get_target(): dict(linker=plugin._get_linker())},
+                )
+            ),
+        )
 
     def test_unsupported_base(self):
         project = snapcraft.project.Project(
