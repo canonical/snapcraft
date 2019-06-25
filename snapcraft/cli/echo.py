@@ -26,6 +26,11 @@ from typing import Any
 from snapcraft.internal import common
 
 
+def is_tty_connected() -> bool:
+    """ Check to see if running under TTY. """
+    return sys.stdin.isatty()
+
+
 def wrapped(msg: str) -> None:
     """Output msg wrapped to the terminal width to stdout.
 
@@ -80,7 +85,7 @@ def confirm(
             show_default=show_default,
             err=err,
         )
-        if sys.stdin.isatty()
+        if is_tty_connected()
         else default
     )
 
@@ -111,6 +116,6 @@ def prompt(
             show_default=show_default,
             err=err,
         )
-        if sys.stdin.isatty()
+        if is_tty_connected()
         else default
     )

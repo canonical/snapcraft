@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import fixtures
 import json
 import os
 from textwrap import dedent
@@ -22,7 +23,6 @@ from click.testing import CliRunner
 from snapcraft import storeapi
 from snapcraft.cli._runner import run
 from tests import fixture_setup, unit
-
 
 _sample_keys = [
     {
@@ -73,6 +73,12 @@ class CommandBaseTestCase(unit.TestCase):
         self.runner = CliRunner()
 
     def run_command(self, args, **kwargs):
+        # For click testing, runner will overwrite the descriptors for stdio -
+        # ensure TTY always appears connected.
+        self.useFixture(
+            fixtures.MockPatch("snapcraft.cli.echo.is_tty_connected", return_value=True)
+        )
+
         return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
 
 

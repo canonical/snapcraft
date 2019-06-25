@@ -123,7 +123,7 @@ def register(snap_name, private, store):
     """
     if private:
         click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
-    if click.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
+    if echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
         snapcraft.register(snap_name, is_private=private, store_id=store)
         click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
     else:
@@ -311,7 +311,7 @@ def promote(snap_name, from_channel, to_channel, yes):
             tablefmt="plain",
         )
     )
-    if yes or click.confirm(
+    if yes or echo.confirm(
         "Do you want to promote the current set to the {!r} channel?".format(
             parsed_to_channel
         )

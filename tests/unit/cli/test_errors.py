@@ -26,6 +26,7 @@ import fixtures
 from testtools.matchers import FileContains, MatchesRegex, Equals
 from testscenarios import multiply_scenarios
 
+import snapcraft.cli.echo
 import snapcraft.internal.errors
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import exception_handler
@@ -207,7 +208,7 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         except ImportError:
             self.skipTest("raven needs to be installed for this test.")
 
-        patcher = mock.patch("click.prompt")
+        patcher = mock.patch("snapcraft.cli.echo.prompt")
         self.prompt_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
