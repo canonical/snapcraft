@@ -45,7 +45,8 @@ parseargs(){
         if [ "$test_suite" == "static" ] ; then
             run_static_tests
         elif [ "$test_suite" == "spread" ] ; then
-            run_spread
+            shift
+            run_spread "$1"
         else
             run_snapcraft_tests "$@"
         fi
@@ -93,7 +94,7 @@ run_spread(){
     export PATH=$TMP_SPREAD:$PATH
     ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
 
-    spread -v google:
+    spread -v google:"$1"
 }
 
 if [ "$test_suite" == "-h" ] || [ "$test_suite" == "--help" ]; then

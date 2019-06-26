@@ -127,11 +127,19 @@ jobs:
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
     - stage: integration
-      name: spread
+      name: spread-ubuntu-16.04-64
       if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
       script:
         - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-        - ./runtests.sh spread
+        - ./runtests.sh spread ubuntu-16.04-64
+
+    - stage: integration
+      name: spread-ubuntu-18.04-64
+      if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
+      script:
+        - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
+        - ./runtests.sh spread ubuntu-18.04-64
+
     - stage: integration
       name: store
       addons:
