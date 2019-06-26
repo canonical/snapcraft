@@ -26,6 +26,7 @@ class ListPluginsTestCase(integration.TestCase):
         expected = {
             "ant",
             "catkin-tools",
+            "conda",
             "dump",
             "gradle",
             "make",
