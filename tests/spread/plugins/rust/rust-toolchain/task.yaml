@@ -1,0 +1,38 @@
+summary: Build a rust snap using rust-toolchain
+environment:
+  SNAP_DIR: ../snaps/rust-hello
+
+systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
+   - ubuntu-18.04-armhf
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # Set the toolchain file to an at least week old release to avoid any
+  # potentially old nightly being cleared in the future.
+  echo "nightly-$(date --date "last Tue" +%F)" > "$SNAP_DIR/rust-toolchain"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  rm -rf rust-toolchain
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Verify that it builds
+  snapcraft build
+
+  # Verify that nightly was used instead of the default stable
+  MATCH 'rustc-version: rustc .*-nightly' < parts/rust-hello/state/build
