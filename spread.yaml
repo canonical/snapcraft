@@ -35,10 +35,10 @@ backends:
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
-          workers: 5
+          workers: 8
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
-          workers: 10
+          workers: 16
           image: ubuntu-1804-64-virt-enabled
   autopkgtest:
     type: adhoc
