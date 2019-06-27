@@ -96,6 +96,9 @@ class TestCase(testtools.TestCase):
         # Use a dumb terminal for tests
         self.useFixture(fixtures.EnvironmentVariable("TERM", "dumb"))
 
+        # Force appearance of TTY for pexpect to work with echo.is_connected_tty()
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_HAS_TTY", "y"))
+
         # Disable Sentry reporting for tests, otherwise they'll hang waiting
         # for input
         self.useFixture(

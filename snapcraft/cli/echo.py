@@ -18,9 +18,10 @@
 These methods, which are named after common logging levels, wrap around
 click.echo adding the corresponding color codes for each level.
 """
-import sys
-
 import click
+import distutils.util
+import os
+import sys
 
 from typing import Any
 from snapcraft.internal import common
@@ -28,6 +29,9 @@ from snapcraft.internal import common
 
 def is_tty_connected() -> bool:
     """ Check to see if running under TTY. """
+    if distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1:
+        return True
+
     return sys.stdin.isatty()
 
 
