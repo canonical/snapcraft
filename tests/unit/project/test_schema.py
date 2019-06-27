@@ -115,6 +115,42 @@ class ValidationTest(ValidationBaseTest):
                 "reload-command": "binary7 --reload",
                 "daemon": "simple",
             },
+            "service8": {
+                "command": "binary8",
+                "daemon": "dbus",
+                "bus-name": "org.test.snapcraft",
+            },
+            "service9": {
+                "command": "binary9",
+                "daemon": "simple",
+                "start-timeout": "1s",
+            },
+            "service10": {
+                "command": "binary10",
+                "daemon": "simple",
+                "stop-timeout": "1s",
+            },
+            "service11": {
+                "command": "binary11",
+                "daemon": "simple",
+                "restart-delay": "1s",
+            },
+            "service12": {
+                "command": "binary12",
+                "daemon": "simple",
+                "watchdog-timeout": "1s",
+            },
+            "service13": {
+                "command": "binary13",
+                "daemon": "oneshot",
+                "timer": "mon,10:00-12:00",
+            },
+            "service14": {
+                "command": "binary14",
+                "daemon": "simple",
+                "restart-condition": "on-watchdog",
+                "watchdog-timeout": "30s",
+            },
         }
 
         Validator(self.data).validate()
@@ -124,7 +160,7 @@ class ValidationTest(ValidationBaseTest):
             "service1": {
                 "command": "binary1",
                 "daemon": "simple",
-                "restart-condition": "on-watchdog",
+                "restart-condition": "on-tuesday",
             }
         }
 
@@ -136,8 +172,9 @@ class ValidationTest(ValidationBaseTest):
             str(raised),
             Contains(
                 "The 'apps/service1/restart-condition' property does not match "
-                "the required schema: 'on-watchdog' is not one of ['on-success', "
-                "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']"
+                "the required schema: 'on-tuesday' is not one of ['on-success', "
+                "'on-failure', 'on-abnormal', 'on-abort', 'on-watchdog', 'always', "
+                "'never']"
             ),
         )
 
@@ -299,6 +336,7 @@ class ValidRestartConditionsTest(ValidationBaseTest):
             "on-failure",
             "on-abnormal",
             "on-abort",
+            "on-watchdog",
             "never",
         ]
     ]

@@ -339,6 +339,9 @@
                         "command"
                     ],
                     "dependencies": {
+                        "bus-name": [
+                            "daemon"
+                        ],
                         "refresh-mode": [
                             "daemon"
                         ],
@@ -348,10 +351,25 @@
                         "stop-command": [
                             "daemon"
                         ],
+                        "start-timeout": [
+                            "daemon"
+                        ],
+                        "stop-timeout": [
+                            "daemon"
+                        ],
+                        "watchdog-timeout": [
+                            "daemon"
+                        ],
+                        "restart-delay": [
+                            "daemon"
+                        ],
                         "post-stop-command": [
                             "daemon"
                         ],
                         "reload-command": [
+                            "daemon"
+                        ],
+                        "restart-condition": [
                             "daemon"
                         ],
                         "before": [
@@ -359,13 +377,28 @@
                         ],
                         "after": [
                             "daemon"
+                        ],
+                        "timer": [
+                            "daemon"
                         ]
                     },
                     "additionalProperties": false,
                     "properties": {
+                        "autostart": {
+                            "type": "string",
+                            "description": "Name of the desktop file placed by the application in $SNAP_USER_DATA/.config/autostart to indicate that application should be started with the user's desktop session.",
+                            "pattern": "^[A-Za-z0-9. _#:$-]+\\.desktop$",
+                            "validation-failure": "{.instance!r} is not a valid desktop file name (e.g. myapp.desktop)"
+                        },
                         "common-id": {
                             "type": "string",
                             "description": "common identifier across multiple packaging formats"
+                        },
+                        "bus-name": {
+                            "type": "string",
+                            "description": "D-Bus name this service is reachable as (mandatory if daemon=dbus)",
+                            "pattern": "^[A-Za-z0-9/. _#:$-]*$",
+                            "validation-failure": "{.instance!r} is not a valid bus name."
                         },
                         "desktop": {
                             "type": "string",
@@ -387,11 +420,37 @@
                             "type": "string",
                             "description": "command executed after stopping a service"
                         },
+                        "start-timeout": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "validation-failure": "{.instance!r} is not a valid timeout value.",
+                            "description": "Optional time to wait for daemon to start - <n>ns | <n>us | <n>ms | <n>s | <n>m"
+                        },
                         "stop-timeout": {
-                            "description": "timeout in seconds"
+                            "type": "string",
+                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "validation-failure": "{.instance!r} is not a valid timeout value.",
+                            "description": "Optional time to wait for daemon to stop - <n>ns | <n>us | <n>ms | <n>s | <n>m"
+                        },
+                        "watchdog-timeout": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "validation-failure": "{.instance!r} is not a valid timeout value.",
+                            "description": "Service watchdog timeout - <n>ns | <n>us | <n>ms | <n>s | <n>m"
                         },
                         "reload-command": {
-                            "description": "command executed to reload a service"
+                            "type": "string",
+                            "description": "Command to use to ask the service to reload its configuration."
+                        },
+                        "restart-delay": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "validation-failure": "{.instance!r} is not a valid delay value.",
+                            "description": "Delay between service restarts - <n>ns | <n>us | <n>ms | <n>s | <n>m. Defaults to unset. See the systemd.service manual on RestartSec for details."
+                        },
+                        "timer": {
+                            "type": "string",
+                            "description": "The service is activated by a timer, app must be a daemon. (systemd.time calendar event string)"
                         },
                         "daemon": {
                             "type": "string",
@@ -400,7 +459,8 @@
                                 "simple",
                                 "forking",
                                 "oneshot",
-                                "notify"
+                                "notify",
+                                "dbus"
                             ]
                         },
                         "after": {
@@ -450,6 +510,7 @@
                                 "on-failure",
                                 "on-abnormal",
                                 "on-abort",
+                                "on-watchdog",
                                 "always",
                                 "never"
                             ]
