@@ -1,3 +1,6 @@
+# The legacy tests intermittently fail when the backend is GCE, setting to
+# manual until we can properly address the issue.
+manual: true
 summary: |
   Minimally ensure the plugin works without bases by running pull.
   The plugin can be tested without bases in full through the legacy release of
