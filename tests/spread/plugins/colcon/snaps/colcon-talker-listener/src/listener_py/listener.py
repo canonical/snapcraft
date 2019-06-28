@@ -9,8 +9,9 @@ class Listener(Node):
     def __init__(self):
         super().__init__("listener")
 
-        self.declare_parameter("exit_after_receive", False, ParameterDescriptor())
-        parameter = self.get_parameter("exit_after_receive")
+        parameter = self.declare_parameter(
+            "exit_after_receive", False, ParameterDescriptor()
+        )
         self._exit_after_receive = parameter.value
         self.should_exit = False
 
