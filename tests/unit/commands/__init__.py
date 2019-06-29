@@ -27,15 +27,11 @@ from tests import fixture_setup, unit
 _sample_keys = [
     {
         "name": "default",
-        "sha3-384": (
-            "vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp"
-        ),
+        "sha3-384": "vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp",
     },
     {
         "name": "another",
-        "sha3-384": (
-            "JsfToV5hO2eN9l89pYYCKXUioTERrZIIHUgQQd47jW8YNNBskupiIjWYd3KXLY_D"
-        ),
+        "sha3-384": "JsfToV5hO2eN9l89pYYCKXUioTERrZIIHUgQQd47jW8YNNBskupiIjWYd3KXLY_D",
     },
 ]
 

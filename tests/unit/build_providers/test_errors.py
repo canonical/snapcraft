@@ -151,7 +151,7 @@ class ErrorFormattingTest(unit.TestCase):
             dict(
                 exception=errors.ProviderInstanceNotFoundError,
                 kwargs=dict(instance_name="test-build"),
-                expected_message=("Cannot find an instance named 'test-build'."),
+                expected_message="Cannot find an instance named 'test-build'.",
             ),
         ),
         (
@@ -257,9 +257,7 @@ class ErrorFormattingTest(unit.TestCase):
             dict(
                 exception=errors.UnsupportedHostError,
                 kwargs=dict(base="core66", platform="beos", provider="multipass"),
-                expected_message=(
-                    "Building for 'core66' is not supported on platform 'beos' using provider: 'multipass'."
-                ),
+                expected_message="Building for 'core66' is not supported on platform 'beos' using provider: 'multipass'.",
             ),
         ),
     ]

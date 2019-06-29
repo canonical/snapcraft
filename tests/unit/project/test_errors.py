@@ -41,7 +41,7 @@ class ErrorFormattingTest(unit.TestCase):
             {
                 "exception": errors.YamlValidationError,
                 "kwargs": {"source": ".snapcraft.yaml", "message": "error"},
-                "expected_message": ("Issues while validating .snapcraft.yaml: error"),
+                "expected_message": "Issues while validating .snapcraft.yaml: error",
             },
         ),
         (

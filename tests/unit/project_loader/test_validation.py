@@ -853,7 +853,7 @@ class AliasesTest(ProjectLoaderBaseTest):
         )
         return load_config(project)
 
-    def test_aliases(self,):
+    def test_aliases(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
@@ -1341,8 +1341,7 @@ class InvalidGradeTest(ProjectLoaderBaseTest):
     ]
 
     def test_invalid_yaml_invalid_grade_types(self):
-        snapcraft_yaml = (
-            """\
+        snapcraft_yaml = """\
             name: test
             version: "1"
             summary: test
@@ -1353,8 +1352,9 @@ class InvalidGradeTest(ProjectLoaderBaseTest):
             parts:
               part1:
                 plugin: nil
-            """
-        ).format(self.grade)
+            """.format(
+            self.grade
+        )
 
         raised = self.assertRaises(
             errors.YamlValidationError, self.make_snapcraft_project, snapcraft_yaml

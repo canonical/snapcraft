@@ -1,4 +1,3 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015-2018 Canonical Ltd
@@ -1266,7 +1265,7 @@ class CoreSetupTestCase(unit.TestCase):
 
         lifecycle.execute(steps.PULL, project_config)
 
-        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
+        regex = ".*mkdir -p {}\nunsquashfs -d {} .*{}\n".format(
             os.path.dirname(self.core_path), self.core_path, core_snap_hash
         )
         self.assertThat(
@@ -1298,7 +1297,7 @@ class CoreSetupTestCase(unit.TestCase):
 
         lifecycle.execute(steps.PULL, project_config)
 
-        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
+        regex = ".*mkdir -p {}\nunsquashfs -d {} .*{}\n".format(
             os.path.dirname(self.core_path), self.core_path, core_snap_hash
         )
         self.assertThat(
