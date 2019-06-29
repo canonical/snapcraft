@@ -35,7 +35,7 @@ def cicli():
 @click.option(
     "--refresh",
     is_flag=True,
-    help=("Refresh the macaroon required to be able to push and release to channels"),
+    help="Refresh the macaroon required to be able to push and release to channels",
 )
 def enableci(ci_system, refresh):
     """Enable continuous-integration systems to build and release snaps."""

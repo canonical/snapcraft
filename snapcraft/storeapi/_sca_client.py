@@ -42,10 +42,9 @@ class SCAClient(Client):
 
     @staticmethod
     def _is_needs_refresh_response(response):
-        return response.status_code == requests.codes.unauthorized and response.headers.get(
-            "WWW-Authenticate"
-        ) == (
-            "Macaroon needs_refresh=1"
+        return (
+            response.status_code == requests.codes.unauthorized
+            and response.headers.get("WWW-Authenticate") == "Macaroon needs_refresh=1"
         )
 
     def request(self, *args, **kwargs):
@@ -242,9 +241,9 @@ class SCAClient(Client):
         try:
             response_json = response.json()
         except JSONDecodeError:
-            message = (
-                "Invalid response from the server when getting {}: {} {}"
-            ).format(endpoint, response.status_code, response)
+            message = "Invalid response from the server when getting {}: {} {}".format(
+                endpoint, response.status_code, response
+            )
             logger.debug(message)
             raise errors.StoreValidationError(
                 snap_id, response, message="Invalid response from the server"

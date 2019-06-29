@@ -1714,15 +1714,13 @@ class PushBinaryMetadataTestCase(StoreTestCase):
                 metadata,
                 False,
             )
-        should = (
-            """
+        should = """
             Metadata not pushed!
             Conflict in 'icon' field:
                 In snapcraft.yaml: '{}'
                 In the Store:      'original-icon'
             You can repeat the push-metadata command with --force to force the local values into the Store
-        """
-        ).format(
+        """.format(
             filename
         )  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))

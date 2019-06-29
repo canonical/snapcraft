@@ -159,7 +159,7 @@ class BaseDeltasGenerator:
                 count = 0
             progress_indicator.update(count)
             count += 1
-            time.sleep(.2)
+            time.sleep(0.2)
             ret = proc.poll()
         print("")
         # the caller should finish the progressbar outside
@@ -195,9 +195,13 @@ class BaseDeltasGenerator:
 
         delta_cmd = self.get_delta_cmd(self.source_path, self.target_path, delta_file)
 
-        workdir, stdout_path, stdout_file, stderr_path, stderr_file = self._setup_std_output(
-            delta_file
-        )
+        (
+            workdir,
+            stdout_path,
+            stdout_file,
+            stderr_path,
+            stderr_file,
+        ) = self._setup_std_output(delta_file)
 
         proc = subprocess.Popen(
             delta_cmd, stdout=stdout_file, stderr=stderr_file, cwd=workdir
