@@ -29,6 +29,6 @@ execute: |
   colcon-talker-listener.ros2 --help | MATCH "usage: ros2"
 
   # Run the ROS system. By default this will never exit, but the snap supports
-  # an `exit-after-receive` parameter that, if true, will cause the system to
+  # an `exit_after_receive` parameter that, if true, will cause the system to
   # shutdown after the listener has successfully received a message.
-  colcon-talker-listener exit-after-receive:=true | MATCH "I heard 'Hello, world"
+  colcon-talker-listener exit_after_receive:=true | MATCH "I heard 'Hello, world"
