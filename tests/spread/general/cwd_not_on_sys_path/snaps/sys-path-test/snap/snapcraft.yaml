@@ -11,3 +11,4 @@ confinement: strict
 parts:
   part:
     plugin: python
+    source: .
