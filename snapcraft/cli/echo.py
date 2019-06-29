@@ -19,8 +19,20 @@ These methods, which are named after common logging levels, wrap around
 click.echo adding the corresponding color codes for each level.
 """
 import click
+import distutils.util
+import os
+import sys
 
+from typing import Any
 from snapcraft.internal import common
+
+
+def is_tty_connected() -> bool:
+    """ Check to see if running under TTY. """
+    if distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1:
+        return True
+
+    return sys.stdin.isatty()
 
 
 def wrapped(msg: str) -> None:
@@ -55,3 +67,59 @@ def error(msg: str) -> None:
     If the terminal supports color the output will be red.
     """
     click.echo("\033[0;31m{}\033[0m".format(msg))
+
+
+def confirm(
+    msg: str,
+    default: bool = False,
+    abort: bool = False,
+    prompt_suffix: str = ": ",
+    show_default: bool = True,
+    err: bool = False,
+) -> bool:
+    """Output message as a confirmation prompt.
+    If not running on a tty, assume the default value.
+    """
+    return (
+        click.confirm(
+            msg,
+            default=default,
+            abort=abort,
+            prompt_suffix=prompt_suffix,
+            show_default=show_default,
+            err=err,
+        )
+        if is_tty_connected()
+        else default
+    )
+
+
+def prompt(
+    msg: str,
+    default: Any = None,
+    hide_input: bool = False,
+    confirmation_prompt: bool = False,
+    type=None,
+    value_proc=None,
+    prompt_suffix: str = ": ",
+    show_default: bool = True,
+    err: bool = False,
+) -> Any:
+    """Output message as a generic prompt.
+    If not running on a tty, assume the default value.
+    """
+    return (
+        click.prompt(
+            msg,
+            default=default,
+            hide_input=hide_input,
+            confirmation_prompt=confirmation_prompt,
+            type=type,
+            value_proc=value_proc,
+            prompt_suffix=prompt_suffix,
+            show_default=show_default,
+            err=err,
+        )
+        if is_tty_connected()
+        else default
+    )

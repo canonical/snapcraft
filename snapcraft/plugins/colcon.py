@@ -68,7 +68,7 @@ from snapcraft.internal import errors, mangling
 logger = logging.getLogger(__name__)
 
 # Map bases to ROS releases
-_ROSDISTRO_TO_BASE_MAP = {"bouncy": "core18", "crystal": "core18"}
+_ROSDISTRO_TO_BASE_MAP = {"bouncy": "core18", "crystal": "core18", "dashing": "core18"}
 
 # Map bases to Ubuntu releases. Every base in _ROSDISTRO_TO_BASE_MAP needs to be
 # specified here.

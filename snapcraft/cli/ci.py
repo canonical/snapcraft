@@ -17,8 +17,8 @@ import importlib
 
 import click
 
+from . import echo
 from ._options import get_project
-
 
 _SUPPORTED_CI_SYSTEMS = ("travis",)
 
@@ -45,5 +45,5 @@ def enableci(ci_system, refresh):
     if refresh:
         module.refresh(project)
     else:
-        if click.confirm(module.__doc__):
+        if echo.confirm(module.__doc__):
             module.enable(project)

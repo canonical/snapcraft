@@ -330,7 +330,7 @@ def _prompt_sentry():
             return value
         raise click.BadParameter("Please choose a valid answer.")
 
-    return click.prompt(msg, default="no", value_proc=validate).lower()
+    return echo.prompt(msg, default="no", value_proc=validate).lower()
 
 
 def _submit_trace(exc_info):
