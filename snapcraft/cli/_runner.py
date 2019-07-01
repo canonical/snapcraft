@@ -54,7 +54,11 @@ command_groups = [
 ]
 
 
-@click.group(cls=SnapcraftGroup, invoke_without_command=True)
+@click.group(
+    cls=SnapcraftGroup,
+    invoke_without_command=True,
+    context_settings=dict(help_option_names=["-h", "--help"]),
+)
 @click.version_option(
     message=SNAPCRAFT_VERSION_TEMPLATE, version=snapcraft.__version__  # type: ignore
 )
