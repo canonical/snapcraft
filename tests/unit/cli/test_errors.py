@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 import tempfile
 import xdg
@@ -23,12 +24,14 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains, MatchesRegex
+from testtools.matchers import FileContains, Equals
 from testscenarios import multiply_scenarios
 
+import snapcraft.cli.echo
 import snapcraft.internal.errors
+from snapcraft.internal.build_providers.errors import ProviderExecError
 from snapcraft.cli._errors import exception_handler
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
@@ -46,8 +49,14 @@ class ErrorsBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
         patcher = mock.patch("sys.exit")
         self.exit_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch("builtins.print")
+        self.print_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch("snapcraft.cli._errors.echo.error")
@@ -69,23 +78,29 @@ class ErrorsBaseTestCase(unit.TestCase):
             exception_handler(*sys.exc_info(), debug=debug)
 
     def assert_exception_traceback_exit_1_with_debug(self):
-        self.error_mock.assert_not_called
+        self.assertThat(self.error_mock.call_count, Equals(1))
         self.exit_mock.assert_called_once_with(1)
-        self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self)
-        )
 
-    def assert_exception_traceback_exit_1_without_raven(self):
-        self.error_mock.assert_not_called
-        self.exit_mock.assert_called_once_with(1)
-        self.print_exception_mock.assert_called_once_with(
-            RuntimeError, mock.ANY, mock.ANY, file=sys.stdout
-        )
+        # called twice - once for stdout, once for trace file
+        self.assertThat(self.print_exception_mock.call_count, Equals(2))
 
     def assert_no_exception_traceback_exit_1_without_debug(self):
-        self.error_mock.assert_not_called
+        self.assertThat(self.error_mock.call_count, Equals(1))
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_not_called()
+
+    def assert_print_exception_called_only_tracefile(self, error):
+        self.print_exception_mock.assert_called_once_with(
+            error, mock.ANY, mock.ANY, file=_Tracefile(self)
+        )
+
+    def assert_print_exception_called_both_stdout_and_tempfile(self, error):
+        expected_calls = [
+            mock.call(error, mock.ANY, mock.ANY, file=_Tracefile(self)),
+            mock.call(error, mock.ANY, mock.ANY, file=_Stdout(self)),
+        ]
+
+        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
 
 
 class ErrorsTestCase(ErrorsBaseTestCase):
@@ -93,8 +108,9 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         super().setUp()
 
     @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    @mock.patch("snapcraft.internal.common.is_snap", return_value=False)
     def test_handler_no_raven_traceback_non_snapcraft_exceptions_debug(
-        self, raven_client_mock
+        self, is_snap_mock, raven_client_mock
     ):
         snapcraft.cli._errors.RavenClient = None
         try:
@@ -102,7 +118,9 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.assert_exception_traceback_exit_1_without_raven()
+        self.error_mock.assert_called_once_with("not a SnapcraftError")
+        self.exit_mock.assert_called_once_with(1)
+        self.assert_print_exception_called_both_stdout_and_tempfile(RuntimeError)
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
@@ -112,7 +130,7 @@ class ErrorsTestCase(ErrorsBaseTestCase):
 
         self.error_mock.assert_called_once_with("is a SnapcraftError")
         self.exit_mock.assert_called_once_with(123)
-        self.print_exception_mock.assert_not_called
+        self.print_exception_mock.assert_not_called()
 
     def test_handler_traces_snapcraft_exceptions_with_debug(self):
         try:
@@ -120,11 +138,70 @@ class ErrorsTestCase(ErrorsBaseTestCase):
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.error_mock.assert_not_called
-        self.exit_mock.assert_not_called
-        self.print_exception_mock.assert_called_once_with(
-            TestSnapcraftError, mock.ANY, mock.ANY
+        self.error_mock.assert_called_once_with("is a SnapcraftError")
+        self.exit_mock.assert_called_once_with(123)
+        self.assert_print_exception_called_both_stdout_and_tempfile(TestSnapcraftError)
+
+
+class ProviderErrorTest(ErrorsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch("shutil.move")
+        self.move_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @mock.patch("os.path.isfile", return_value=False)
+    def test_provider_error_legit(self, isfile_function):
+        # Provider exception was raised in host environment, no crash file
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
         )
+        self._raise_exec_error()
+        self.move_mock.assert_not_called()
+        self.print_exception_mock.assert_not_called()
+
+    @mock.patch("os.path.isfile", return_value=True)
+    def test_provider_error_outer(self, isfile_function):
+        # Provider exception was raised in host environment with crash file
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self._raise_exec_error()
+
+        # Only moved if reportable
+        self.move_mock.assert_not_called()
+        self.print_exception_mock.assert_not_called()
+
+    @mock.patch("os.path.isfile", return_value=False)
+    def test_provider_error_host(self, isfile_function):
+        # Some other error raised in the host environment
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self._raise_other_error()
+        self.move_mock.assert_not_called()
+        self.assertThat(self.print_exception_mock.call_count, Equals(1))
+
+    @mock.patch("os.path.isfile", return_value=False)
+    @mock.patch.object(snapcraft.cli._errors, "RavenClient")
+    def test_provider_error_inner(self, isfile_function, raven_client_mock):
+        # Error raised inside the build provider
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
+        )
+        snapcraft.cli._errors.RavenClient = "something"
+        self._raise_other_error()
+        self.move_mock.assert_not_called()
+        self.assertThat(self.print_exception_mock.call_count, Equals(2))
+
+    def _raise_exec_error(self):
+        self.call_handler(
+            ProviderExecError(provider_name="foo", command="bar", exit_code=2), False
+        )
+
+    def _raise_other_error(self):
+        self.call_handler(KeyError, False)
 
 
 class SendToSentryBaseTest(ErrorsBaseTestCase):
@@ -136,7 +213,7 @@ class SendToSentryBaseTest(ErrorsBaseTestCase):
         except ImportError:
             self.skipTest("raven needs to be installed for this test.")
 
-        patcher = mock.patch("click.prompt")
+        patcher = mock.patch("snapcraft.cli.echo.prompt")
         self.prompt_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -182,34 +259,33 @@ class SendToSentryIsYesTest(SendToSentryBaseTest):
         self.mock_isatty.return_value = self.tty
 
         try:
-            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+            self.call_handler(RuntimeError("not a SnapcraftError"), False)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.raven_client_mock.assert_called_once_with(
-            mock.ANY,
-            transport=self.raven_request_mock,
-            name="snapcraft",
-            processors=mock.ANY,
-            release=mock.ANY,
-            auto_log_stacks=False,
-        )
+        if self.tty:
+            self.raven_client_mock.assert_called_once_with(
+                mock.ANY,
+                transport=self.raven_request_mock,
+                name="snapcraft",
+                processors=mock.ANY,
+                release=mock.ANY,
+                auto_log_stacks=False,
+            )
+        else:
+            # Cannot prompt if not connected to TTY.
+            self.raven_client_mock.assert_not_called()
 
         # It we have a tty, then the trace should be saved to a file and sent to sentry.
         # If we don't have a tty, then the same should happen, but the trace should
         # also be printed.
-        self.error_mock.assert_not_called
+        self.error_mock.assert_called_once_with("not a SnapcraftError")
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
-        if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
-            )
-
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+        if self.tty:
+            self.assert_print_exception_called_only_tracefile(RuntimeError)
+        else:
+            self.assert_print_exception_called_both_stdout_and_tempfile(RuntimeError)
 
 
 class SendToSentryIsNoTest(SendToSentryBaseTest):
@@ -227,7 +303,7 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         self.mock_isatty.return_value = self.tty
 
         try:
-            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+            self.call_handler(RuntimeError("not a SnapcraftError"), False)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
@@ -236,18 +312,13 @@ class SendToSentryIsNoTest(SendToSentryBaseTest):
         # It we have a tty, then the trace should be saved to a file and sent to sentry.
         # If we don't have a tty, then the same should happen, but the trace should
         # also be printed.
-        self.error_mock.assert_not_called
+        self.error_mock.assert_called_once_with("not a SnapcraftError")
         self.exit_mock.assert_called_once_with(1)
 
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
-        if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
-            )
-
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+        if self.tty:
+            self.assert_print_exception_called_only_tracefile(RuntimeError)
+        else:
+            self.assert_print_exception_called_both_stdout_and_tempfile(RuntimeError)
 
 
 class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
@@ -266,49 +337,47 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         self.mock_isatty.return_value = self.tty
 
         try:
-            self.call_handler(RuntimeError("not a SnapcraftError"), True)
+            self.call_handler(RuntimeError("not a SnapcraftError"), False)
         except Exception:
             self.fail("Exception unexpectedly raised")
 
-        self.raven_client_mock.assert_called_once_with(
-            mock.ANY,
-            transport=self.raven_request_mock,
-            name="snapcraft",
-            processors=mock.ANY,
-            release=mock.ANY,
-            auto_log_stacks=False,
-        )
-        config_path = os.path.join(
-            xdg.BaseDirectory.save_config_path("snapcraft"), "cli.cfg"
-        )
-        self.assertThat(
-            config_path,
-            FileContains(
-                dedent(
-                    """\
-            [Sentry]
-            always_send = true
-
-            """
-                )
-            ),
-        )
-
-        # It we have a tty, then the trace should be saved to a file and sent to sentry.
-        # If we don't have a tty, then the same should happen, but the trace should
-        # also be printed.
-        self.error_mock.assert_not_called
-        self.exit_mock.assert_called_once_with(1)
-
-        expected_calls = [
-            mock.call(RuntimeError, mock.ANY, mock.ANY, file=_Tracefile(self))
-        ]
-        if not self.tty:
-            expected_calls.append(
-                mock.call(RuntimeError, mock.ANY, mock.ANY, file=sys.stdout)
+        if self.tty:
+            self.raven_client_mock.assert_called_once_with(
+                mock.ANY,
+                transport=self.raven_request_mock,
+                name="snapcraft",
+                processors=mock.ANY,
+                release=mock.ANY,
+                auto_log_stacks=False,
             )
 
-        self.print_exception_mock.assert_has_calls(expected_calls, any_order=True)
+            config_path = os.path.join(
+                xdg.BaseDirectory.save_config_path("snapcraft"), "cli.cfg"
+            )
+            self.assertThat(
+                config_path,
+                FileContains(
+                    dedent(
+                        """\
+                [Sentry]
+                always_send = true
+
+                """
+                    )
+                ),
+            )
+
+            # It we have a tty, then the trace should be saved to a file and sent to sentry.
+            self.assert_print_exception_called_only_tracefile(RuntimeError)
+        else:
+            # Cannot prompt if not connected to TTY.
+            self.raven_client_mock.assert_not_called()
+
+            # If we don't have a tty, the trace should be printed and saved to file.
+            self.assert_print_exception_called_both_stdout_and_tempfile(RuntimeError)
+
+        self.error_mock.assert_called_once_with("not a SnapcraftError")
+        self.exit_mock.assert_called_once_with(1)
 
 
 class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
@@ -392,10 +461,24 @@ class _Tracefile:
         self._test = test
 
     def __eq__(self, other):
-        try:
-            self._test.assertThat(
-                other.name, MatchesRegex("{}.*/trace.txt".format(tempfile.gettempdir()))
-            )
-        except AttributeError:
+        if not hasattr(other, "name"):
             return False
-        return True
+
+        if re.match("{}.*/trace.txt".format(tempfile.gettempdir()), other.name):
+            return True
+
+        return False
+
+
+class _Stdout:
+    def __init__(self, test):
+        self._test = test
+
+    def __eq__(self, other):
+        if not hasattr(other, "name"):
+            return False
+
+        if other.name == "<stdout>":
+            return True
+
+        return False
