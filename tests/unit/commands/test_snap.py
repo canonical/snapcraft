@@ -108,14 +108,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type="bad-type")
 
-        raised = self.assertRaises(YamlValidationError, self.run_command, ["snap"])
-
-        self.assertThat(
-            str(raised),
-            Contains(
-                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'snapd']"
-            ),
-        )
+        self.assertRaises(YamlValidationError, self.run_command, ["snap"])
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()

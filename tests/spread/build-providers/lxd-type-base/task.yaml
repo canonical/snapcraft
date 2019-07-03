@@ -1,0 +1,19 @@
+summary: Build a base snap using the snap-name as a base for the environment
+
+environment:
+  SNAP_DIR: ../snaps/core18-base
+
+restore: |
+  cd "$SNAP_DIR"
+
+  snapcraft clean --use-lxd
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  snapcraft pull --use-lxd
+
+  /snap/bin/lxc start snapcraft-core18
+  /snap/bin/lxc exec snapcraft-core18 cat /etc/os-release | MATCH "VERSION_CODENAME=bionic"
+  /snap/bin/lxc stop snapcraft-core18

@@ -90,12 +90,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        if self.project.info.base is None:
-            image = "snapcraft:core16"
-        else:
-            image = "snapcraft:{}".format(self.project.info.base)
-
-        return image
+        return "snapcraft:{}".format(self.project.info.get_effective_base())
 
     def _launch(self) -> None:
         cloud_user_data_filepath = self._get_cloud_user_data()

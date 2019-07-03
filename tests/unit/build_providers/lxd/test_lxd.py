@@ -226,6 +226,35 @@ class LXDInitTest(LXDBaseTest):
         # This call should not fail
         instance.destroy()
 
+    def test_create_for_type_base(self):
+        self.project.info.name = "core18"
+        self.project.info.type = "base"
+        self.project.info.base = None
+
+        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        with mock.patch.object(
+            LXD, "_get_cloud_user_data_string", return_value="fake-cloud"
+        ):
+            instance.create()
+
+        self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
+            config={
+                "name": "snapcraft-core18",
+                "environment.SNAPCRAFT_BUILD_ENVIRONMENT": "managed-host",
+                "raw.idmap": "both 1000 0",
+                "source": {
+                    "mode": "pull",
+                    "type": "image",
+                    "server": "https://cloud-images.ubuntu.com/minimal/releases/",
+                    "protocol": "simplestreams",
+                    "alias": "18.04",
+                },
+                "environment.SNAPCRAFT_HAS_TTY": "False",
+                "user.user-data": "fake-cloud",
+            },
+            wait=True,
+        )
+
 
 class LXDLaunchedTest(LXDBaseTest):
     def setUp(self):

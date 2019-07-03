@@ -227,6 +227,36 @@ class MultipassTest(BaseProviderBaseTest):
             cloud_init=mock.ANY,
         )
 
+    def test_launch_for_type_base(self):
+        self.project.info.name = "core18"
+        self.project.info.type = "base"
+        self.project.info.base = None
+
+        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        self.useFixture(
+            fixtures.MockPatchObject(
+                instance,
+                "_get_instance_info",
+                side_effect=[
+                    errors.ProviderInfoError(
+                        provider_name="multipass", exit_code=1, stderr=b"error"
+                    ),
+                    {},
+                ],
+            )
+        )
+
+        instance.create()
+
+        self.multipass_cmd_mock().launch.assert_called_once_with(
+            instance_name="snapcraft-core18",
+            cpus="2",
+            mem="2G",
+            disk="256G",
+            image="snapcraft:core18",
+            cloud_init=mock.ANY,
+        )
+
     def test_launch_with_ram_from_environment(self):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "4G")
