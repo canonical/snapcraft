@@ -62,9 +62,12 @@ class YamlValidationError(SnapcraftError):
         if preamble:
             messages.append(preamble)
 
-        if supplement:
+        # If we have a preamble we are not at the root
+        if supplement and preamble:
             messages.append(error.message)
             messages.append("({})".format(supplement))
+        elif supplement:
+            messages.append(supplement)
         elif cause:
             messages.append(cause)
         else:

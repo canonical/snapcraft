@@ -51,6 +51,13 @@ class ProjectInfo:
         """Validate the snapcraft.yaml for this project."""
         _schema.Validator(self.__raw_snapcraft).validate()
 
+    def get_effective_base(self) -> str:
+        """Return name for type base or the base otherwise."""
+        if self.type == "base":
+            return self.name
+        else:
+            return self.base
+
     def get_raw_snapcraft(self):
         # TODO this should be a MappingProxyType, but ordered writing
         #      depends on reading in the current code base.

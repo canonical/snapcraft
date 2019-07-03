@@ -38,8 +38,8 @@ backends:
           workers: 8
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
-          workers: 16
-          image: ubuntu-1804-64-virt-enabled
+          workers: 18
+          image: ubuntu-1804-64
   autopkgtest:
     type: adhoc
     allocate: |

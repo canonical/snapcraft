@@ -18,7 +18,7 @@ from textwrap import dedent
 from unittest import mock
 
 from testscenarios.scenarios import multiply_scenarios
-from testtools.matchers import Contains, Equals, MatchesRegex
+from testtools.matchers import Contains, Equals, MatchesAny, MatchesRegex
 
 from . import ProjectBaseTest
 from snapcraft.project import errors
@@ -303,7 +303,19 @@ class ValidTypesTest(ValidationBaseTest):
     def test_valid_types(self):
         data = self.data.copy()
         data["type"] = self.type_
+        if self.type_ == "base":
+            data.pop("base")
         Validator(data).validate()
+
+
+_BASE_TYPE_MSG = (
+    "must be one of 'base: <base> and type: <app|gadget|kernel|snapd>' "
+    "or 'type: base (without a base)'"
+)
+_TYPE_ENUM_TMPL = (
+    "The 'type' property does not match the required schema: '{}' is not one of "
+    "['app', 'base', 'gadget', 'kernel', 'snapd']"
+)
 
 
 class InvalidTypesTest(ValidationBaseTest):
@@ -318,12 +330,31 @@ class InvalidTypesTest(ValidationBaseTest):
 
         raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
 
-        expected_message = (
-            "The 'type' property does not match the required "
-            "schema: '{}' is not one of "
-            "['app', 'base', 'gadget', 'kernel', 'snapd']"
-        ).format(self.type_)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
+        self.assertThat(
+            raised.message,
+            # The schema is not loaded in order, so we can get different results depending on what is loaded first.
+            MatchesAny(
+                Equals(_BASE_TYPE_MSG), Equals(_TYPE_ENUM_TMPL.format(self.type_))
+            ),
+            message=data,
+        )
+
+
+class CombinedBaseTypeTest(ValidationBaseTest):
+    def test_type_base_and_no_base(self):
+        data = self.data.copy()
+        data.pop("base")
+        data["type"] = "base"
+
+        Validator(data).validate()
+
+    def test_type_base_and_base(self):
+        data = self.data.copy()
+        data["type"] = "base"
+
+        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
+
+        self.assertThat(raised.message, Equals(_BASE_TYPE_MSG), message=data)
 
 
 class ValidRestartConditionsTest(ValidationBaseTest):

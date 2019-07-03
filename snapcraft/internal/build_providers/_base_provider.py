@@ -255,16 +255,18 @@ class Provider(abc.ABC):
     def _ensure_base(self) -> None:
         info = self._load_info()
         provider_base = info["base"] if "base" in info else None
-        if self._base_has_changed(self.project.info.base, provider_base):
+        if self._base_has_changed(
+            self.project.info.get_effective_base(), provider_base
+        ):
             self.echoer.warning(
                 "Project base changed from {!r} to {!r}, cleaning build instance.".format(
-                    provider_base, self.project.info.base
+                    provider_base, self.project.info.get_effective_base()
                 )
             )
             self.clean_project()
 
     def _setup_snapcraft(self) -> None:
-        self._save_info(base=self.project.info.base)
+        self._save_info(base=self.project.info.get_effective_base())
 
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
@@ -293,8 +295,8 @@ class Provider(abc.ABC):
         # This build can be driven from a non snappy enabled system, so we may
         # find ourself in a situation where the base is not set like on OSX or
         # Windows.
-        if self.project.info.base is not None:
-            snap_injector.add(snap_name=self.project.info.base)
+        if self.project.info.get_effective_base() is not None:
+            snap_injector.add(snap_name=self.project.info.get_effective_base())
 
         snap_injector.apply()
 
