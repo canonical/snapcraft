@@ -16,7 +16,8 @@
 
 from unittest import mock
 
-from testtools.matchers import Equals, Is
+from testtools.matchers import Equals, Is, FileContains, FileExists
+import fixtures
 
 from snapcraft.internal.repo import errors, snaps
 from tests import unit
@@ -323,6 +324,68 @@ class SnapPackageLifecycleTest(unit.TestCase):
                 ]
             ),
         )
+
+    def test_download_from_host(self):
+        fake_get_assertion = fixtures.MockPatch(
+            "snapcraft.internal.repo.snaps.get_assertion", return_value=b"foo-assert"
+        )
+        self.useFixture(fake_get_assertion)
+
+        self.fake_snapd.snaps_result = [
+            {
+                "id": "fake-snap-id",
+                "name": "fake-snap",
+                "channel": "stable",
+                "revision": "10",
+            }
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
+        snap_pkg.local_download(
+            snap_path="fake-snap.snap", assertion_path="fake-snap.assert"
+        )
+
+        self.assertThat("fake-snap.snap", FileExists())
+        self.assertThat(
+            "fake-snap.assert", FileContains("foo-assert\nfoo-assert\nfoo-assert\n")
+        )
+        fake_get_assertion.mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "account-key",
+                        "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                    ]
+                ),
+                mock.call(["snap-declaration", "snap-name=fake-snap"]),
+                mock.call(
+                    ["snap-revision", "snap-revision=10", "snap-id=fake-snap-id"]
+                ),
+            ]
+        )
+
+    def test_download_from_host_dangerous(self):
+        fake_get_assertion = fixtures.MockPatch(
+            "snapcraft.internal.repo.snaps.get_assertion", return_value=b"foo-assert"
+        )
+        self.useFixture(fake_get_assertion)
+        self.fake_snapd.snaps_result = [
+            {
+                "id": "fake-snap-id",
+                "name": "fake-snap",
+                "channel": "stable",
+                "revision": "x1",
+            }
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap/strict/stable")
+        snap_pkg.local_download(
+            snap_path="fake-snap.snap", assertion_path="fake-snap.assert"
+        )
+
+        self.assertThat("fake-snap.snap", FileExists())
+        self.assertThat("fake-snap.assert", FileContains(""))
+        fake_get_assertion.mock.assert_not_called()
 
     def test_install_logged_in(self):
         self.fake_snapd.find_result = [

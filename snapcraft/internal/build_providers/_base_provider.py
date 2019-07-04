@@ -86,7 +86,6 @@ _CLOUD_USER_DATA_TMPL = dedent(
 
 class Provider(abc.ABC):
 
-    _SNAPS_MOUNTPOINT = os.path.join(os.path.sep, "var", "cache", "snapcraft", "snaps")
     _INSTANCE_PROJECT_DIR = "~/project"
 
     def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
@@ -171,14 +170,6 @@ class Provider(abc.ABC):
     @abc.abstractmethod
     def _push_file(self, *, source: str, destination: str) -> None:
         """Push a file into the instance."""
-
-    @abc.abstractmethod
-    def _mount_snaps_directory(self) -> None:
-        """Mount the host directory with snaps into the provider."""
-
-    @abc.abstractmethod
-    def _unmount_snaps_directory(self) -> None:
-        """Unmount the host directory with snaps from the provider."""
 
     @abc.abstractmethod
     def mount_project(self) -> None:
@@ -289,12 +280,9 @@ class Provider(abc.ABC):
             inject_from_host = False
 
         snap_injector = SnapInjector(
-            snap_dir=self._SNAPS_MOUNTPOINT,
             registry_filepath=registry_filepath,
             snap_arch=self.project.deb_arch,
             runner=self._run,
-            snap_dir_mounter=self._mount_snaps_directory,
-            snap_dir_unmounter=self._unmount_snaps_directory,
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
         )

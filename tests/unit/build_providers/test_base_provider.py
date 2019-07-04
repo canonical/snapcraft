@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -201,14 +201,11 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         provider._setup_snapcraft()
 
         self.snap_injector_mock.assert_called_once_with(
-            snap_dir=provider._SNAPS_MOUNTPOINT,
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
-            snap_dir_mounter=provider._mount_snaps_directory,
-            snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
             inject_from_host=True,
         )
@@ -229,14 +226,11 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         provider._setup_snapcraft()
 
         self.snap_injector_mock.assert_called_once_with(
-            snap_dir=provider._SNAPS_MOUNTPOINT,
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
-            snap_dir_mounter=provider._mount_snaps_directory,
-            snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
             inject_from_host=True,
         )
@@ -276,14 +270,11 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         provider._setup_snapcraft()
 
         self.snap_injector_mock.assert_called_once_with(
-            snap_dir=provider._SNAPS_MOUNTPOINT,
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
-            snap_dir_mounter=provider._mount_snaps_directory,
-            snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
             inject_from_host=False,
         )
@@ -304,14 +295,11 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         provider._setup_snapcraft()
 
         self.snap_injector_mock.assert_called_once_with(
-            snap_dir=provider._SNAPS_MOUNTPOINT,
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
-            snap_dir_mounter=provider._mount_snaps_directory,
-            snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
             inject_from_host=False,
         )
@@ -329,14 +317,11 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         provider._setup_snapcraft()
 
         self.snap_injector_mock.assert_called_once_with(
-            snap_dir=provider._SNAPS_MOUNTPOINT,
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
             snap_arch=self.project.deb_arch,
             runner=provider._run,
-            snap_dir_mounter=provider._mount_snaps_directory,
-            snap_dir_unmounter=provider._unmount_snaps_directory,
             file_pusher=provider._push_file,
             inject_from_host=False,
         )
