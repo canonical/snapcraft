@@ -33,6 +33,7 @@ class Ros2TestCase(unit.TestCase):
             version="release-beta3",
             bootstrap_path="bootstrap_path",
             ubuntu_sources="sources",
+            ubuntu_keyrings=["keyring"],
             project=self.project,
         )
 

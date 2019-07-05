@@ -35,7 +35,9 @@ _BUILD_ROS2_STEP = "build-ros2"
 class Bootstrapper:
     """Bootstrap ROS2 by building the underlay from source."""
 
-    def __init__(self, *, version, bootstrap_path, ubuntu_sources, project):
+    def __init__(
+        self, *, version, bootstrap_path, ubuntu_sources, ubuntu_keyrings, project
+    ):
         """Initialize bootstrapper.
 
         :param str version: The ROS2 version to boostrap (e.g. release-beta3)
@@ -47,6 +49,7 @@ class Bootstrapper:
         """
         self._version = version
         self._ubuntu_sources = ubuntu_sources
+        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
 
         self._bootstrap_path = bootstrap_path
@@ -157,6 +160,7 @@ class Bootstrapper:
         ubuntu = repo.Ubuntu(
             self._bootstrap_path,
             sources=self._ubuntu_sources,
+            keyrings=self._ubuntu_keyrings,
             project_options=self._project,
         )
 

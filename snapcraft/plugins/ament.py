@@ -38,6 +38,8 @@ from . import _ros
 
 logger = logging.getLogger(__name__)
 
+_ROS_KEYRING_PATH = os.path.join(snapcraft.internal.common.get_keyringsdir(), "ros.gpg")
+
 
 class AmentPlugin(snapcraft.BasePlugin):
     @property
@@ -57,6 +59,10 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 """.format(
             "xenial"
         )
+
+    @property
+    def PLUGIN_STAGE_KEYRINGS(self):
+        return [_ROS_KEYRING_PATH]
 
     @classmethod
     def schema(cls):
@@ -105,6 +111,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             version=self.options.version,
             bootstrap_path=self._bootstrap_dir,
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
+            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,
         )
 
