@@ -300,6 +300,10 @@
             "type": "string",
             "description": "the base snap to use"
         },
+        "build-base": {
+            "type": "string",
+            "description": "force a build environment based on base to create a snap"
+        },
         "epoch": {
             "description": "the snap epoch, used to specify upgrade paths",
             "format": "epoch"
@@ -869,7 +873,7 @@
                     ]
                 },
                 {
-                    "usage": "base: <base> and type: <app|gadget|kernel|snapd>",
+                    "usage": "base: <base> and type: <app|gadget|kernel|snapd> (without a build-base)",
                     "properties": {
                         "type": {
                             "enum": [
@@ -880,8 +884,19 @@
                             ]
                         }
                     },
-                    "required": [
-                        "base"
+                    "allOf": [
+                        {
+                            "required": [
+                                "base"
+                            ]
+                        },
+                        {
+                            "not":{
+                                "required": [
+                                    "build-base"
+                                ]
+                            }
+                        }
                     ]
                 }
             ]

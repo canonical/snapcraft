@@ -45,6 +45,7 @@ class ProjectInfo:
         self.architectures = self.__raw_snapcraft.get("architectures")
         self.grade = self.__raw_snapcraft.get("grade")
         self.base = self.__raw_snapcraft.get("base")
+        self.build_base = self.__raw_snapcraft.get("build-base")
         self.type = self.__raw_snapcraft.get("type")
 
     def validate_raw_snapcraft(self):
@@ -52,8 +53,12 @@ class ProjectInfo:
         _schema.Validator(self.__raw_snapcraft).validate()
 
     def get_build_base(self) -> str:
-        """Return name for type base or the base otherwise."""
-        if self.type == "base":
+        """
+        Return name for type base or the base otherwise build-base is set
+        """
+        if self.build_base:
+            return self.build_base
+        elif self.type == "base":
             return self.name
         else:
             return self.base

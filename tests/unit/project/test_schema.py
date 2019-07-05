@@ -309,7 +309,7 @@ class ValidTypesTest(ValidationBaseTest):
 
 
 _BASE_TYPE_MSG = (
-    "must be one of 'base: <base> and type: <app|gadget|kernel|snapd>' "
+    "must be one of 'base: <base> and type: <app|gadget|kernel|snapd> (without a build-base)' "
     "or 'type: base (without a base)'"
 )
 _TYPE_ENUM_TMPL = (
@@ -355,6 +355,22 @@ class CombinedBaseTypeTest(ValidationBaseTest):
         raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
 
         self.assertThat(raised.message, Equals(_BASE_TYPE_MSG), message=data)
+
+    def test_build_base_and_base(self):
+        data = self.data.copy()
+        data["build-base"] = "fake-base"
+
+        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
+
+        self.assertThat(raised.message, Equals(_BASE_TYPE_MSG), message=data)
+
+    def test_build_base_and_type_base(self):
+        data = self.data.copy()
+        data.pop("base")
+        data["type"] = "base"
+        data["build-base"] = "fake-base"
+
+        Validator(data).validate()
 
 
 class ValidRestartConditionsTest(ValidationBaseTest):
