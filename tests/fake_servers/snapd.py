@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,6 +32,10 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         parsed_url = parse.urlparse(self.path)
         if parsed_url.path == "/v2/snaps":
             self._handle_snaps()
+        elif parsed_url.path.startswith("/v2/snaps/") and parsed_url.path.endswith(
+            "file"
+        ):
+            self._handle_snap_file(parsed_url)
         elif parsed_url.path.startswith("/v2/snaps/"):
             self._handle_snap_details(parsed_url)
         elif parsed_url.path == "/v2/find":
@@ -47,6 +51,13 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
         self.end_headers()
         response = json.dumps({"result": params}).encode()
         self.wfile.write(response)
+
+    def _handle_snap_file(self, parsed_url):
+        self.send_response(200)
+        self.send_header("Content-Length", len(parsed_url))
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(parsed_url.encode())
 
     def _handle_snap_details(self, parsed_url):
         status_code = 404

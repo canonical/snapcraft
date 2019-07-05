@@ -78,7 +78,7 @@ logger = logging.getLogger(__name__)
 _ANT_ARCHIVE_FORMAT_URL = (
     "https://archive.apache.org/dist/ant/binaries/apache-ant-{version}-bin.tar.bz2"
 )
-_DEFAULT_ANT_SNAP_CHANNEL = "latest/edge"
+_DEFAULT_ANT_SNAP_CHANNEL = "latest/stable"
 
 
 class UnsupportedJDKVersionError(errors.SnapcraftError):

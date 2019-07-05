@@ -8,6 +8,8 @@ description: |
     into Snappy.
 adopt-info: snapcraft
 confinement: classic
+assumes:
+  - snapd2.39
 
 apps:
   snapcraft:
