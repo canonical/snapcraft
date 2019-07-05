@@ -58,8 +58,10 @@ class CrystalPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project.info.base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+        if project.info.get_build_base() not in ("core", "core16", "core18"):
+            raise errors.PluginBaseError(
+                part_name=self.name, base=project.info.get_build_base()
+            )
 
         self.build_snaps.append("crystal/{}".format(self.options.crystal_channel))
         self.build_packages.extend(
@@ -101,7 +103,7 @@ class CrystalPlugin(snapcraft.BasePlugin):
 
             elf_dependencies_path = elf_file.load_dependencies(
                 root_path=self.installdir,
-                core_base_path=common.get_core_path(self.project.info.base),
+                core_base_path=common.get_core_path(self.project.info.get_build_base()),
             )
             for elf_dependency_path in elf_dependencies_path:
                 lib_install_path = os.path.join(

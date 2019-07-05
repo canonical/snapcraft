@@ -90,8 +90,10 @@ class RustPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project.info.base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+        if project.info.get_build_base() not in ("core", "core16", "core18"):
+            raise errors.PluginBaseError(
+                part_name=self.name, base=project.info.get_build_base()
+            )
 
         self.build_packages.extend(["gcc", "git", "curl", "file"])
         self._rust_dir = os.path.expanduser(os.path.join("~", ".cargo"))

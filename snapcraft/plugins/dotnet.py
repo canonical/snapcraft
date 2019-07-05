@@ -102,7 +102,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_dir = os.path.join(self.partdir, "dotnet")
         self._dotnet_sdk_dir = os.path.join(self._dotnet_dir, "sdk")
 
-        self._setup_base_tools(project.info.base)
+        self._setup_base_tools(project.info.get_build_base())
 
         self._sdk = self._get_sdk()
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")

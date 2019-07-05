@@ -95,8 +95,10 @@ class CMakePlugin(snapcraft.BasePlugin):
         self.build_packages.append("cmake")
         self.out_of_source_build = True
 
-        if project.info.base not in ("core", "core16", "core18"):
-            raise errors.PluginBaseError(part_name=self.name, base=project.info.base)
+        if project.info.get_build_base() not in ("core", "core16", "core18"):
+            raise errors.PluginBaseError(
+                part_name=self.name, base=project.info.get_build_base()
+            )
 
         if options.make_parameters:
             logger.warning("make-paramaters is deprecated, ignoring.")
