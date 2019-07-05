@@ -144,7 +144,7 @@ class ProjectInfoTest(unit.TestCase):
         raw_snapcraft = info.get_raw_snapcraft()
         self.assertThat(raw_snapcraft.get("name"), Equals("foo"))
 
-    def test_get_effective_base_for_defined_base(self):
+    def test_get_build_base_for_defined_base(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(
                 """\
@@ -156,9 +156,9 @@ class ProjectInfoTest(unit.TestCase):
 
         info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
-        self.assertThat(info.get_effective_base(), Equals("core20"))
+        self.assertThat(info.get_build_base(), Equals("core20"))
 
-    def test_get_effective_base_for_defined_type_base(self):
+    def test_get_build_base_for_defined_type_base(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(
                 """\
@@ -170,7 +170,7 @@ class ProjectInfoTest(unit.TestCase):
 
         info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
-        self.assertThat(info.get_effective_base(), Equals("core20"))
+        self.assertThat(info.get_build_base(), Equals("core20"))
 
 
 class InvalidYamlTest(unit.TestCase):

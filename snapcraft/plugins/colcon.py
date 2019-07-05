@@ -227,7 +227,9 @@ class ColconPlugin(snapcraft.BasePlugin):
                 ros_repo=ros_repo,
                 ubuntu_repo=ubuntu_repo,
                 security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.base],
+                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
+                    self.project.info.get_build_base()
+                ],
             )
         )
 
@@ -240,8 +242,10 @@ class ColconPlugin(snapcraft.BasePlugin):
         self.out_of_source_build = True
 
         self._rosdistro = options.colcon_rosdistro
-        if project.info.base != _ROSDISTRO_TO_BASE_MAP[self._rosdistro]:
-            raise ColconPluginBaseError(self.name, project.info.base, self._rosdistro)
+        if project.info.get_build_base() != _ROSDISTRO_TO_BASE_MAP[self._rosdistro]:
+            raise ColconPluginBaseError(
+                self.name, project.info.get_build_base(), self._rosdistro
+            )
 
         # Beta warning. Remove this comment and warning once plugin is stable.
         logger.warn(
@@ -335,7 +339,9 @@ class ColconPlugin(snapcraft.BasePlugin):
             ros_distro=self._rosdistro,
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
-            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.base],
+            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
+                self.project.info.get_build_base()
+            ],
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
             ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,

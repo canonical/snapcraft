@@ -51,7 +51,7 @@ class ProjectInfo:
         """Validate the snapcraft.yaml for this project."""
         _schema.Validator(self.__raw_snapcraft).validate()
 
-    def get_effective_base(self) -> str:
+    def get_build_base(self) -> str:
         """Return name for type base or the base otherwise."""
         if self.type == "base":
             return self.name
