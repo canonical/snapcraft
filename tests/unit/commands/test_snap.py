@@ -113,7 +113,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(
             str(raised),
             Contains(
-                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'os', 'snapd']"
+                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'snapd']"
             ),
         )
 

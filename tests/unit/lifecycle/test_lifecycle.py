@@ -114,32 +114,6 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(self.fake_logger.output, Contains("Pulling part2"))
         self.assertThat(self.fake_logger.output, Not(Contains("Pulling part1")))
 
-    def test_os_type_returned_by_lifecycle(self):
-        project_config = self.make_snapcraft_project(
-            textwrap.dedent(
-                """\
-                parts:
-                  part1:
-                    plugin: nil
-                  part2:
-                    plugin: nil
-                    after:
-                      - part1
-                """
-            ),
-            "type: os",
-        )
-
-        snap_info = lifecycle.execute(steps.PULL, project_config)
-
-        expected_snap_info = {
-            "name": "test",
-            "version": "1.0",
-            "arch": [project_config.project.deb_arch],
-            "type": "os",
-        }
-        self.assertThat(snap_info, Equals(expected_snap_info))
-
     def test_dirty_stage_part_with_built_dependent_raises(self):
         # Set the option to error on dirty/outdated steps
         with snapcraft.config.CLIConfig() as cli_config:
