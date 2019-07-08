@@ -260,7 +260,7 @@ class ValidTypesTest(ValidationBaseTest):
 
     scenarios = [
         (type_, dict(type_=type_))
-        for type_ in ["app", "gadget", "kernel", "os", "snapd"]
+        for type_ in ["app", "base", "gadget", "kernel", "snapd"]
     ]
 
     def test_valid_types(self):
