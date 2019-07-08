@@ -113,7 +113,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(
             str(raised),
             Contains(
-                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'os', 'snapd']"
+                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'snapd']"
             ),
         )
 
@@ -258,7 +258,7 @@ version: 99
 
         self.assertThat("mysnap_99_all.snap", FileExists())
 
-    def test_snap_from_dir_type_os_does_not_use_all_root(self):
+    def test_snap_from_dir_type_base_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -271,7 +271,7 @@ version: 99
                 name: mysnap
                 version: 99
                 architectures: [amd64, armhf]
-                type: os
+                type: base
             """
                 ),
                 file=f,
