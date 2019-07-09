@@ -1035,12 +1035,12 @@ def _migratable_filesets(fileset, srcdir):
     include_files = _generate_include_set(srcdir, includes)
     exclude_files, exclude_dirs = _generate_exclude_set(srcdir, excludes)
 
-    # And chop files, including whole trees if any dirs are mentioned
+    # Chop files, including whole trees if any dirs are mentioned.
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
         snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + "/")])
 
-    # Separate dirs from files
+    # Separate dirs from files.
     snap_dirs = set(
         [
             x
@@ -1049,16 +1049,30 @@ def _migratable_filesets(fileset, srcdir):
             and not os.path.islink(os.path.join(srcdir, x))
         ]
     )
+
+    # Remove snap_dirs from snap_files.
     snap_files = snap_files - snap_dirs
 
-    # Make sure we also obtain the parent directories of files
+    # Include (resolved) parent directories for each selected file.
     for snap_file in snap_files:
+        snap_file = file_utils.get_resolved_relative_path(snap_file, srcdir)
         dirname = os.path.dirname(snap_file)
         while dirname:
             snap_dirs.add(dirname)
             dirname = os.path.dirname(dirname)
 
-    return snap_files, snap_dirs
+    # Resolve parent paths for dirs and files.
+    resolved_snap_dirs = set()
+    for snap_dir in snap_dirs:
+        snap_dir = file_utils.get_resolved_relative_path(snap_dir, srcdir)
+        resolved_snap_dirs.add(snap_dir)
+
+    resolved_snap_files = set()
+    for snap_file in snap_files:
+        snap_file = file_utils.get_resolved_relative_path(snap_file, srcdir)
+        resolved_snap_files.add(snap_file)
+
+    return resolved_snap_files, resolved_snap_dirs
 
 
 def _migrate_files(
@@ -1070,20 +1084,15 @@ def _migrate_files(
     follow_symlinks=False,
     fixup_func=lambda *args: None,
 ):
-
-    for directory in snap_dirs:
-        src = os.path.join(srcdir, directory)
-        dst = os.path.join(dstdir, directory)
+    for snap_dir in sorted(snap_dirs):
+        src = os.path.join(srcdir, snap_dir)
+        dst = os.path.join(dstdir, snap_dir)
 
         snapcraft.file_utils.create_similar_directory(src, dst)
 
-    for snap_file in snap_files:
+    for snap_file in sorted(snap_files):
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
-
-        snapcraft.file_utils.create_similar_directory(
-            os.path.dirname(src), os.path.dirname(dst)
-        )
 
         if missing_ok and not os.path.exists(src):
             continue
