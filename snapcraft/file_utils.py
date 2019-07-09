@@ -398,3 +398,24 @@ def get_linker_version_from_file(linker_file: str) -> str:
     linker_version = m.group("linker_version")
 
     return linker_version
+
+
+def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
+    """Resolve path components against target base_directory.
+
+    If the resulting target path is a symlink, it will not be followed.
+    Only the path's parents are fully resolved against base_directory,
+    and the relative path is returned.
+
+    :param str relative_path: Path of target, relative to base_directory.
+    :param str base_directory: Base path of target.
+    :return: Resolved path, relative to base_directory.
+    :rtype: str
+    """
+    parent_relpath, filename = os.path.split(relative_path)
+    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
+
+    filename_abspath = os.path.join(parent_abspath, filename)
+    filename_relpath = os.path.relpath(filename_abspath, base_directory)
+
+    return filename_relpath
