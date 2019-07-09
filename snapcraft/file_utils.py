@@ -250,28 +250,26 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def create_similar_directory(
-    source: str, destination: str, follow_symlinks: bool = False
-) -> None:
+def create_similar_directory(source: str, destination: str) -> None:
     """Create a directory with the same permission bits and owner information.
 
     :param str source: Directory from which to copy name, permission bits, and
                        owner information.
     :param str destintion: Directory to create and to which the `source`
                            information will be copied.
-    :param bool follow_symlinks: Whether or not symlinks should be followed.
     """
 
-    stat = os.stat(source, follow_symlinks=follow_symlinks)
+    stat = os.stat(source, follow_symlinks=False)
     uid = stat.st_uid
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
+
     try:
-        os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
+        os.chown(destination, uid, gid, follow_symlinks=False)
     except PermissionError as exception:
         logger.debug("Unable to chown {}: {}".format(destination, exception))
 
-    shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    shutil.copystat(source, destination, follow_symlinks=False)
 
 
 def executable_exists(path: str) -> bool:
