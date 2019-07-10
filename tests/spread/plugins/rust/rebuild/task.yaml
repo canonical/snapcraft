@@ -17,7 +17,21 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
+  # Restore the original source
+  git checkout "src/main.rs"
+
 execute: |
   cd "$SNAP_DIR"
-  snapcraft
-  snapcraft
+  snapcraft build
+
+  # modify the source to force a rebuild
+  sed -e "s/hello world/hello rebuild/" -i src/main.rs
+
+  # Run snap build again with the modified source, this should not fail.
+  snapcraft build
+
+  # Verify the changed source is reflected
+  if ! diff src/main.rs parts/rust-hello/src/src/main.rs; then
+    echo "The source has not changed."
+    exit 1
+  fi
