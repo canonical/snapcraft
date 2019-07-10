@@ -202,6 +202,7 @@ class RustPlugin(snapcraft.BasePlugin):
             self.builddir,
             "--root",
             self.installdir,
+            "--force",
         ]
         toolchain = self._get_toolchain()
         if toolchain is not None:
