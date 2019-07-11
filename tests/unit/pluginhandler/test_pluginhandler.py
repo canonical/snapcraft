@@ -334,42 +334,6 @@ class PluginTestCase(unit.TestCase):
                 "Expected migrated 'bar' to be a copy of 'foo'",
             )
 
-    @patch("os.chown")
-    def test_migrate_files_preserves_ownership(self, chown_mock):
-        os.makedirs("install")
-        os.makedirs("stage")
-
-        foo = os.path.join("install", "foo")
-
-        with open(foo, "w") as f:
-            f.write("installed")
-
-        files, dirs = pluginhandler._migratable_filesets(["*"], "install")
-        pluginhandler._migrate_files(
-            files, dirs, "install", "stage", follow_symlinks=True
-        )
-
-        self.assertTrue(chown_mock.called)
-
-    @patch("os.chown")
-    def test_migrate_files_chown_permissions(self, chown_mock):
-        os.makedirs("install")
-        os.makedirs("stage")
-
-        chown_mock.side_effect = PermissionError("No no no")
-
-        foo = os.path.join("install", "foo")
-
-        with open(foo, "w") as f:
-            f.write("installed")
-
-        files, dirs = pluginhandler._migratable_filesets(["*"], "install")
-        pluginhandler._migrate_files(
-            files, dirs, "install", "stage", follow_symlinks=True
-        )
-
-        self.assertTrue(chown_mock.called)
-
     def test_migrate_files_preserves_file_mode(self):
         os.makedirs("install")
         os.makedirs("stage")
@@ -395,9 +359,7 @@ class PluginTestCase(unit.TestCase):
             Equals(stat.S_IMODE(os.stat(os.path.join("stage", "foo")).st_mode)),
         )
 
-    @patch("os.chown")
-    def test_migrate_files_preserves_file_mode_chown_permissions(self, chown_mock):
-        chown_mock.side_effect = PermissionError("No no no")
+    def test_migrate_files_preserves_file_mode_chown_permissions(self):
         os.makedirs("install")
         os.makedirs("stage")
 
@@ -421,8 +383,6 @@ class PluginTestCase(unit.TestCase):
             new_mode,
             Equals(stat.S_IMODE(os.stat(os.path.join("stage", "foo")).st_mode)),
         )
-
-        self.assertTrue(chown_mock.called)
 
     def test_migrate_files_preserves_directory_mode(self):
         os.makedirs("install/foo")
