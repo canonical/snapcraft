@@ -14,13 +14,14 @@ if ! grep -q '^name: snapcraft$' snap/snapcraft.yaml; then
 fi
 
 # Create the container
-if ! lxc list | grep -q "snapcraft-dev"; then
+if ! lxc info snapcraft-dev >/dev/null 2>&1; then
     lxc init ubuntu:16.04 snapcraft-dev
 fi
 if ! lxc config get snapcraft-dev raw.idmap | grep -q "both $UID 1000"; then
     lxc config set snapcraft-dev raw.idmap "both $UID 1000"
 fi
-if ! lxc list | grep "snapcraft-dev" | grep -q "RUNNING"; then
+
+if ! lxc info snapcraft-dev | grep -q "Status: Running"; then
     lxc start snapcraft-dev
 fi
 
