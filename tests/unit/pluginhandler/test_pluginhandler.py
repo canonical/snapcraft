@@ -120,6 +120,29 @@ class PluginTestCase(unit.TestCase):
         )
         self.assertThat(exclude, Equals(["etc", "usr/lib/*.a"]))
 
+    def test_migrate_files_follows_includes_symlinks(self):
+        os.makedirs(os.path.join("install", "usr", "bin"))
+        os.makedirs("stage")
+
+        os.symlink(os.path.join("usr", "bin"), os.path.join("install", "bin"))
+
+        with open(os.path.join("install", "usr", "bin", "whoami"), "w") as f:
+            f.write("snapcraft")
+
+        files, dirs = pluginhandler._migratable_filesets(["bin/*"], "install")
+        pluginhandler._migrate_files(files, dirs, "install", "stage")
+
+        # Verify that the symlinks were preserved
+        self.assertTrue(
+            os.path.islink(os.path.join("stage", "bin")),
+            "Expected migrated 'bar' to be a symlink.",
+        )
+
+        self.assertTrue(
+            os.path.isfile(os.path.join("stage", "usr", "bin", "whoami")),
+            "Expected migrated 'usr/bin/whoami' to be copied.",
+        )
+
     @patch.object(snapcraft.plugins.nil.NilPlugin, "snap_fileset")
     def test_migratable_fileset_for_no_options_modification(self, mock_snap_fileset):
         """Making sure migratable_fileset_for() doesn't modify options"""
