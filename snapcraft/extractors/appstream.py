@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import operator
 import os
 from io import StringIO
@@ -212,11 +213,15 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     if not os.path.exists(os.path.join(workdir, theme_dir)):
         return None
 
+    # TODO: use index.theme
     entries = os.listdir(os.path.join(workdir, theme_dir))
+    # size is NxN
+    x_entries = (e.split("x") for e in entries if "x" in e)
+    sized_entries = (e[0] for e in x_entries if e[0] == e[1])
     sizes = {}
-    for entry in entries:
-        if "x" in entry:
-            sizes[int(entry.split("x")[0])] = entry
+    for icon_size in sized_entries:
+        with contextlib.suppress(ValueError):
+            sizes[int(icon_size)] = "{0}x{0}".format(icon_size)
 
     if sizes:
         size = max(sizes.items(), key=operator.itemgetter(1))[0]
@@ -228,12 +233,11 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     else:
         icon_size = None
 
+    icon_path = None
     if icon_size:
         for suffix in suffixes:
             icon_path = os.path.join(theme_dir, icon_size, "apps", icon + suffix)
             if os.path.exists(os.path.join(workdir, icon_path)):
                 break
-        else:
-            icon_path = None
 
     return icon_path
