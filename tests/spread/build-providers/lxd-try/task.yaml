@@ -1,10 +1,4 @@
 summary: Try a basic snap using LXD and ensure that it runs
-# TODO remove once either this version of snapcraft reaches stable
-#      or the new snap download is implemented using snapd's API
-#      introduced in 2.38
-manual: true
-warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-priority: 90  # Run this test relatively early since fetching images can take time
 
 environment:
   SNAP_DIR: ../snaps/make-hello
@@ -13,10 +7,6 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
-
-  snap install lxd
-  lxd waitready --timeout=30
-  lxd init --auto
 
 restore: |
   cd "$SNAP_DIR"
@@ -30,12 +20,13 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft try --use-lxd
+  # lxd mounting as root is just not going to work.
+  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft try --use-lxd"
   snap try prime
   [ "$(make-hello)" = "hello world" ]
 
   # snapcraft clean when trying keeps the dir
-  snapcraft clean --use-lxd
+  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   if [ ! -d prime ]; then
       echo "The prime directory should not have been removed while trying"
       exit 1
@@ -43,7 +34,7 @@ execute: |
 
   # Remove the snap try and clean again
   snap remove make-hello
-  snapcraft clean --use-lxd
+  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   if [ -d prime ]; then
       echo "The prime directory should have been removed"
       exit 1

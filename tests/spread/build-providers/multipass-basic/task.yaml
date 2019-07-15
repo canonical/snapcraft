@@ -1,6 +1,4 @@
 summary: Build a basic snap using multipass and ensure that it runs
-warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-priority: 90  # Run this test relatively early since fetching images can take time
 manual: true
 
 environment:
