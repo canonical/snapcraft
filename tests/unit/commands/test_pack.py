@@ -117,7 +117,7 @@ class PackCommandTestCase(PackCommandBaseTestCase):
 
         self.assertThat("mysnap_99_all.snap", FileExists())
 
-    def test_snap_from_dir_type_os_does_not_use_all_root(self):
+    def test_snap_from_dir_type_base_does_not_use_all_root(self):
         with open(self.snap_yaml, "w") as f:
             f.write(
                 dedent(
@@ -125,7 +125,7 @@ class PackCommandTestCase(PackCommandBaseTestCase):
                 name: mysnap
                 version: 99
                 architectures: [amd64, armhf]
-                type: os
+                type: base
             """
                 )
             )

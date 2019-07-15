@@ -250,28 +250,26 @@ def link_or_copy_tree(
             copy_function(source, destination)
 
 
-def create_similar_directory(
-    source: str, destination: str, follow_symlinks: bool = False
-) -> None:
+def create_similar_directory(source: str, destination: str) -> None:
     """Create a directory with the same permission bits and owner information.
 
     :param str source: Directory from which to copy name, permission bits, and
                        owner information.
     :param str destintion: Directory to create and to which the `source`
                            information will be copied.
-    :param bool follow_symlinks: Whether or not symlinks should be followed.
     """
 
-    stat = os.stat(source, follow_symlinks=follow_symlinks)
+    stat = os.stat(source, follow_symlinks=False)
     uid = stat.st_uid
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
+
     try:
-        os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
+        os.chown(destination, uid, gid, follow_symlinks=False)
     except PermissionError as exception:
         logger.debug("Unable to chown {}: {}".format(destination, exception))
 
-    shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
+    shutil.copystat(source, destination, follow_symlinks=False)
 
 
 def executable_exists(path: str) -> bool:
@@ -400,3 +398,24 @@ def get_linker_version_from_file(linker_file: str) -> str:
     linker_version = m.group("linker_version")
 
     return linker_version
+
+
+def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
+    """Resolve path components against target base_directory.
+
+    If the resulting target path is a symlink, it will not be followed.
+    Only the path's parents are fully resolved against base_directory,
+    and the relative path is returned.
+
+    :param str relative_path: Path of target, relative to base_directory.
+    :param str base_directory: Base path of target.
+    :return: Resolved path, relative to base_directory.
+    :rtype: str
+    """
+    parent_relpath, filename = os.path.split(relative_path)
+    parent_abspath = os.path.realpath(os.path.join(base_directory, parent_relpath))
+
+    filename_abspath = os.path.join(parent_abspath, filename)
+    filename_relpath = os.path.relpath(filename_abspath, base_directory)
+
+    return filename_relpath

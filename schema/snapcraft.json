@@ -264,7 +264,6 @@
                 "base",
                 "gadget",
                 "kernel",
-                "os",
                 "snapd"
             ]
         },
