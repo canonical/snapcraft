@@ -1,6 +1,4 @@
 summary: A faulty snap to test error handling
-warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
-priority: 90  # Run this test relatively early since fetching images can take time
 manual: true
 
 environment:
