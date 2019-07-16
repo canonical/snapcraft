@@ -4,25 +4,7 @@
 # Launcher common exports for any desktop app #
 ###############################################
 
-function prepend_dir() {
-  local var="$1"
-  local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\$dir\${$var:+:\$$var}\""
-  fi
-}
-
-function append_dir() {
-  local var="$1"
-  local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\${$var:+\$$var:}\$dir\""
-  fi
-}
-
-function can_open_file() {
-  head -c0 "$1" &> /dev/null
-}
+source "$(dirname $0)/desktop-utils.sh"
 
 function update_xdg_dirs_values() {
   local save_initial_values=false
@@ -53,12 +35,6 @@ function update_xdg_dirs_values() {
       XDG_SPECIAL_DIRS_PATHS+=("$value")
     fi
   done
-}
-
-function is_subpath() {
-  dir="$(realpath "$1")"
-  parent="$(realpath "$2")"
-  [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
 if [ -n "$SNAP_DESKTOP_RUNTIME" ]; then
@@ -308,7 +284,7 @@ if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   # included by the system fontconfig configuration: namely the
   # etc/fonts/conf.d/50-user.conf file.
   mkdir -p "$XDG_CONFIG_HOME/fontconfig"
-  make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
+  async_exec make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
 
   # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
   # GTK 3.20 looks into XDG_DATA_DIR which has connected themes.
@@ -323,7 +299,7 @@ if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   if [ ! -f "$SNAP_DESKTOP_RUNTIME/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
       cp --preserve=timestamps -dR "$SNAP_DESKTOP_RUNTIME/usr/share/mime" "$XDG_DATA_HOME"
-      update-mime-database "$XDG_DATA_HOME/mime"
+      async_exec update-mime-database "$XDG_DATA_HOME/mime"
     fi
   fi
 fi
@@ -336,7 +312,7 @@ if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
     mkdir -p "$GIO_MODULE_DIR"
     ln -sf "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
     ln -sf "$SNAP/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gio/modules/"*.so "$GIO_MODULE_DIR"
-    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
+    async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
 fi
 
@@ -366,7 +342,7 @@ function compile_schemas {
   fi
 }
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
-  compile_schemas "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
+  async_exec compile_schemas "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/glib-2.0/glib-compile-schemas"
 fi
 
 # Enable gsettings user changes
@@ -390,7 +366,7 @@ export GDK_PIXBUF_MODULEDIR=$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRI
 if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
   if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
-    "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
+    async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_DESKTOP_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
   fi
 fi
 
@@ -406,9 +382,9 @@ if [ "$SNAP_DESKTOP_COMPONENTS_NEED_UPDATE" = "true" ]; then
           mkdir -p "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
           if [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" ]; then
-            "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
+            async_exec "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
           elif [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-cache.gtk2" ]; then
-            "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
+            async_exec "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
           fi
         fi
       fi
@@ -435,5 +411,7 @@ mkdir -p "$IBUS_CONFIG_PATH"
 ln -sfn "$REALHOME/.config/ibus/bus" "$IBUS_CONFIG_PATH"
 
 export SNAP_DESKTOP_WAYLAND_AVAILABLE
+
+export_async_pids
 
 exec "$@"
