@@ -32,6 +32,7 @@ The plugin will take into account the following build-attributes:
 import os
 import shutil
 import fnmatch
+import urllib.parse
 import urllib.request
 import json
 
@@ -42,9 +43,7 @@ from snapcraft.internal import errors
 from typing import List
 
 
-_DOTNET_RELEASE_METADATA_URL = (
-    "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"
-)  # noqa
+_DOTNET_RELEASE_METADATA_URL = "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"  # noqa
 _RUNTIME_DEFAULT = "2.0.5"
 
 # TODO extend for other architectures
@@ -211,15 +210,21 @@ class DotNetPlugin(snapcraft.BasePlugin):
         if "sdk-linux-x64" in metadata[0]:
             # look for sdk-linux-x64 property, if it doesn't exist
             # look for ubuntu.14.04 entry as shipped during 1.1
-            sdk_packge_name = metadata[0]["sdk-linux-x64"]
+            sdk_package_url = metadata[0]["sdk-linux-x64"]
         elif "sdk-ubuntu.14.04" in metadata[0]:
-            sdk_packge_name = metadata[0]["sdk-ubuntu.14.04"]
+            sdk_package_url = metadata[0]["sdk-ubuntu.14.04"]
         else:
             raise DotNetBadReleaseDataError(version)
 
-        sdk_package_url = "{}{}".format(metadata[0]["blob-sdk"], sdk_packge_name)
+        # for older releases prepend the base sdk url
+        if not sdk_package_url.startswith("http"):
+            sdk_package_url = "{}{}".format(metadata[0]["blob-sdk"], sdk_package_url)
+
+        parsed_url = urllib.parse.urlparse(sdk_package_url)
+        filename = os.path.basename(parsed_url.path)
+
         sdk_checksum = self._get_package_checksum(
-            metadata[0]["checksums-sdk"], sdk_packge_name, version
+            metadata[0]["checksums-sdk"], filename, version
         )
 
         return {"package_url": sdk_package_url, "checksum": sdk_checksum}
@@ -245,7 +250,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
         if not hash or not checksum:
             raise DotNetBadReleaseDataError(version)
 
-        return "{}/{}".format(hash.lower(), checksum)
+        return "{}/{}".format(hash.lower(), checksum.lower())
 
     def env(self, root):
         # Update the PATH only during the Build and Install step

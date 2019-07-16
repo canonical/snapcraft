@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -111,6 +111,10 @@ class CatkinPluginBaseTest(unit.TestCase):
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("snapcraft.plugins._ros.rospack.Rospack")
+        self.rospack_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch("snapcraft.plugins.catkin._Catkin")
         self.catkin_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -134,6 +138,23 @@ class CatkinPluginBaseTest(unit.TestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
+                    ubuntu_sources=sources,
+                    ubuntu_keyrings=keyrings,
+                    project=self.project,
+                ),
+                mock.call().setup(),
+            ]
+        )
+
+    def assert_rospack_setup(
+        self, rosdistro, package_path, rospack_path, sources, keyrings
+    ):
+        self.rospack_mock.assert_has_calls(
+            [
+                mock.call(
+                    ros_distro=rosdistro,
+                    ros_package_path=package_path,
+                    rospack_path=rospack_path,
                     ubuntu_sources=sources,
                     ubuntu_keyrings=keyrings,
                     project=self.project,
@@ -1040,6 +1061,14 @@ class PullTestCase(CatkinPluginBaseTest):
             plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
+        self.assert_rospack_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rospack"),
+            plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
+        )
+
         self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
@@ -1079,6 +1108,14 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
+        )
+
+        self.assert_rospack_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rospack"),
             plugin.PLUGIN_STAGE_SOURCES,
             plugin.PLUGIN_STAGE_KEYRINGS,
         )
@@ -1132,6 +1169,14 @@ class PullTestCase(CatkinPluginBaseTest):
             plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
+        self.assert_rospack_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rospack"),
+            plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
+        )
+
         self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
@@ -1162,6 +1207,14 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
+        )
+
+        self.assert_rospack_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rospack"),
             plugin.PLUGIN_STAGE_SOURCES,
             plugin.PLUGIN_STAGE_KEYRINGS,
         )
@@ -1207,6 +1260,14 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.PLUGIN_STAGE_SOURCES,
+            plugin.PLUGIN_STAGE_KEYRINGS,
+        )
+
+        self.assert_rospack_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rospack"),
             plugin.PLUGIN_STAGE_SOURCES,
             plugin.PLUGIN_STAGE_KEYRINGS,
         )
@@ -1571,6 +1632,9 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock = mock.MagicMock()
         self.rosdep_mock.get_dependencies.return_value = {"bar"}
 
+        self.rospack_mock = mock.MagicMock()
+        self.rospack_mock.list_names.return_value = set()
+
         self.catkin_mock = mock.MagicMock()
         exception = catkin.CatkinPackageNotFoundError("foo")
         self.catkin_mock.find.side_effect = exception
@@ -1580,7 +1644,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
 
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo"}, self.rosdep_mock, self.catkin_mock
+                {"foo"}, self.rosdep_mock, self.rospack_mock, self.catkin_mock
             ),
             Equals({"apt": {"baz"}}),
         )
@@ -1593,7 +1657,9 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock.resolve_dependency.return_value = {"apt": {"baz"}}
 
         self.assertThat(
-            catkin._find_system_dependencies(None, self.rosdep_mock, self.catkin_mock),
+            catkin._find_system_dependencies(
+                None, self.rosdep_mock, self.rospack_mock, self.catkin_mock
+            ),
             Equals({"apt": {"baz"}}),
         )
 
@@ -1601,10 +1667,25 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock.resolve_dependency.assert_called_once_with("bar")
         self.catkin_mock.find.assert_called_once_with("bar")
 
+    def test_find_system_dependencies_already_satisfied_in_source(self):
+        self.rospack_mock.list_names.return_value = {"bar"}
+
+        self.assertThat(
+            catkin._find_system_dependencies(
+                None, self.rosdep_mock, self.rospack_mock, self.catkin_mock
+            ),
+            Equals(dict()),
+        )
+
+        self.rosdep_mock.get_dependencies.assert_called_once_with()
+        self.rospack_mock.list_names.assert_called_once_with()
+        self.rosdep_mock.resolve_dependency.assert_not_called()
+        self.catkin_mock.find.assert_not_called()
+
     def test_find_system_dependencies_local_only(self):
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock
+                {"foo", "bar"}, self.rosdep_mock, self.rospack_mock, self.catkin_mock
             ),
             HasLength(0),
         )
@@ -1621,7 +1702,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
 
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo"}, self.rosdep_mock, self.catkin_mock
+                {"foo"}, self.rosdep_mock, self.rospack_mock, self.catkin_mock
             ),
             HasLength(0),
         )
@@ -1642,7 +1723,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.catkin_mock.find.side_effect = _fake_find
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock
+                {"foo", "bar"}, self.rosdep_mock, self.rospack_mock, self.catkin_mock
             ),
             Equals({"apt": {"quux"}}),
         )
@@ -1666,6 +1747,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             catkin._find_system_dependencies,
             {"foo"},
             self.rosdep_mock,
+            self.rospack_mock,
             self.catkin_mock,
         )
 
@@ -1688,6 +1770,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             catkin._find_system_dependencies,
             {"foo"},
             self.rosdep_mock,
+            self.rospack_mock,
             self.catkin_mock,
         )
 

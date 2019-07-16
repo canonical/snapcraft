@@ -54,7 +54,11 @@ command_groups = [
 ]
 
 
-@click.group(cls=SnapcraftGroup, invoke_without_command=True)
+@click.group(
+    cls=SnapcraftGroup,
+    invoke_without_command=True,
+    context_settings=dict(help_option_names=["-h", "--help"]),
+)
 @click.version_option(
     message=SNAPCRAFT_VERSION_TEMPLATE, version=snapcraft.__version__  # type: ignore
 )
@@ -90,7 +94,13 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
     log.configure(log_level=log_level)
     # The default command
     if not ctx.invoked_subcommand:
-        ctx.forward(lifecyclecli.commands["snap"])
+        snap_command = lifecyclecli.commands["snap"]
+        # Fill in the context with default values for the snap command.
+        if "directory" not in ctx.params:
+            ctx.params["directory"] = None
+        if "output" not in ctx.params:
+            ctx.params["output"] = None
+        snap_command.invoke(ctx)
 
 
 # This would be much easier if they were subcommands

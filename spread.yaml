@@ -19,6 +19,10 @@ environment:
   # Disable all Sentry error reporting
   SNAPCRAFT_ENABLE_ERROR_REPORTING: "no"
 
+  # Ensure that we have the right debian configuration for legacy
+  DEBIAN_FRONTEND: noninteractive
+  DEBIAN_PRIORITY: critical
+
   TOOLS_DIR: /snapcraft/tests/spread/tools
 
 backends:
@@ -31,10 +35,10 @@ backends:
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
-          workers: 5
+          workers: 8
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
-          workers: 10
+          workers: 16
           image: ubuntu-1804-64-virt-enabled
   autopkgtest:
     type: adhoc
@@ -196,10 +200,14 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
+ tests/spread/plugins/conda/:
+   summary: tests of snapcraft's Conda plugin
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
  tests/spread/plugins/cmake/:
    summary: tests of snapcraft's CMake plugin
+ tests/spread/plugins/crystal/:
+   summary: tests of snapcraft's Crystal plugin
  tests/spread/plugins/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
    # Keep this 16.04 as it is the only supported system for this plugin

@@ -17,7 +17,6 @@
 """The ant plugin is useful for ant based parts.
 
 The ant build system is commonly used to build Java projects.
-The plugin requires a build.xml in the root of the source tree.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -34,11 +33,16 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       Run the given ant targets.
 
+    - ant-channel:
+      (string)
+      The channel to use for ant in the snap store, if not using tarball from
+      the ant archive (see ant-version and ant-version-checksum).
+      Defaults to latest/edge.
+
     - ant-version:
       (string)
-      The version of ant you want to use to build the source artifacts.
-      Defaults to the current release downloadable from
-      https://archive.apache.org/dist/ant/binaries/.
+      The version of ant you want to use to build the source artifacts, if
+      not using the snap version of ant.
 
     - ant-version-checksum:
       (string)
@@ -49,6 +53,13 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       openjdk version available to the base to use. If not set the latest
       version available to the base will be used.
+
+    - ant-buildfile
+      (string)
+      The path to the Ant buildfile to use, relative to the root of the
+      source tree
+      Defaults to a build.xml file in the root of the source tree.
+
 """
 
 import logging
@@ -64,12 +75,10 @@ from snapcraft.internal import errors, sources
 
 logger = logging.getLogger(__name__)
 
-
-_DEFAULT_ANT_VERSION = "1.10.5"
-_DEFAULT_ANT_CHECKSUM = "sha512/a7f1e0cec9d5ed1b3ab6cddbb9364f127305a997bbc88ecd734f9ef142ec0332375e01ace3592759bb5c3307cd9c1ac0a78a30053f304c7030ea459498e4ce4e"
-_ANT_URL = (
+_ANT_ARCHIVE_FORMAT_URL = (
     "https://archive.apache.org/dist/ant/binaries/apache-ant-{version}-bin.tar.bz2"
 )
+_DEFAULT_ANT_SNAP_CHANNEL = "latest/stable"
 
 
 class UnsupportedJDKVersionError(errors.SnapcraftError):
@@ -105,11 +114,15 @@ class AntPlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
+        schema["properties"]["ant-channel"] = {"type": "string"}
+
         schema["properties"]["ant-version"] = {"type": "string"}
 
         schema["properties"]["ant-version-checksum"] = {"type": "string"}
 
         schema["properties"]["ant-openjdk-version"] = {"type": "string", "default": ""}
+
+        schema["properties"]["ant-buildfile"] = {"type": "string"}
 
         schema["required"] = ["source"]
 
@@ -119,18 +132,23 @@ class AntPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ["ant-version", "ant-version-checksum", "ant-openjdk-version"]
+        return [
+            "ant-channel",
+            "ant-version",
+            "ant-version-checksum",
+            "ant-openjdk-version",
+        ]
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["ant-build-targets", "ant-properties"]
+        return ["ant-build-targets", "ant-properties", "ant-buildfile"]
 
     @property
     def _ant_tar(self):
         if self._ant_tar_handle is None:
-            ant_uri = _ANT_URL.format(version=self._ant_version)
+            ant_uri = _ANT_ARCHIVE_FORMAT_URL.format(version=self._ant_version)
             self._ant_tar_handle = sources.Tar(
                 ant_uri, self._ant_dir, source_checksum=self._ant_checksum
             )
@@ -166,27 +184,41 @@ class AntPlugin(snapcraft.BasePlugin):
         self._java_version = version
 
     def _setup_ant(self):
-        self._ant_tar_handle = None
-        self._ant_dir = os.path.join(self.partdir, "ant")
         if self.options.ant_version:
+            self.use_archive_tarball = True
+            self._ant_tar_handle = None
+            self._ant_dir = os.path.join(self.partdir, "ant")
             self._ant_version = self.options.ant_version
             self._ant_checksum = self.options.ant_version_checksum
         else:
-            self._ant_version = _DEFAULT_ANT_VERSION
-            self._ant_checksum = _DEFAULT_ANT_CHECKSUM
+            self.use_archive_tarball = False
+
+            if self.options.ant_channel:
+                build_snap = "ant/" + self.options.ant_channel
+            else:
+                build_snap = "ant/" + _DEFAULT_ANT_SNAP_CHANNEL
+
+            self.build_snaps.append(build_snap)
 
     def pull(self):
         super().pull()
 
-        os.makedirs(self._ant_dir, exist_ok=True)
-        self._ant_tar.download()
+        if self.use_archive_tarball:
+            os.makedirs(self._ant_dir, exist_ok=True)
+            self._ant_tar.download()
 
     def build(self):
         super().build()
 
-        self._ant_tar.provision(self._ant_dir, clean_target=False, keep_tarball=True)
+        if self.use_archive_tarball:
+            self._ant_tar.provision(
+                self._ant_dir, clean_target=False, keep_tarball=True
+            )
 
         command = ["ant"]
+
+        if self.options.ant_buildfile:
+            command.extend(["-f", self.options.ant_buildfile])
 
         if self.options.ant_build_targets:
             command.extend(self.options.ant_build_targets)
@@ -246,7 +278,11 @@ class AntPlugin(snapcraft.BasePlugin):
 
     def _build_environment(self):
         env = os.environ.copy()
-        ant_bin = os.path.join(self._ant_dir, "bin")
+
+        if self.use_archive_tarball:
+            ant_bin = os.path.join(self._ant_dir, "bin")
+        else:
+            ant_bin = os.path.join("snap", "bin", "ant")
 
         if env.get("PATH"):
             new_path = "{}:{}".format(ant_bin, env.get("PATH"))

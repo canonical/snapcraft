@@ -133,7 +133,7 @@ def edit_collaborators(snap_name, key_name):
                 " ".join(store_error.error_list[0]["extra"])
             )
         )
-        if click.confirm("Are you sure you want to continue?"):
+        if echo.confirm("Are you sure you want to continue?"):
             new_dev_assertion.push(force=True)
         else:
             echo.warning("The collaborators for this snap have not been altered.")

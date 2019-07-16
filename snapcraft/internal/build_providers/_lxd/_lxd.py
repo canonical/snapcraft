@@ -120,7 +120,7 @@ class LXD(Provider):
 
     @classmethod
     def _get_is_snap_injection_capable(cls) -> bool:
-        return False
+        return True
 
     def _run(
         self, command: Sequence[str], hide_output: bool = False
@@ -212,25 +212,15 @@ class LXD(Provider):
                     provider_name=self._get_provider_name(), error_message=lxd_api_error
                 ) from lxd_api_error
 
-    def _mount_snaps_directory(self) -> None:
-        raise NotImplementedError(
-            "Feature not supported with provider {!r}".format(self._get_provider_name())
-        )
-
-    def _unmount_snaps_directory(self):
-        raise NotImplementedError(
-            "Feature not supported with provider {!r}".format(self._get_provider_name())
-        )
-
     def _push_file(self, *, source: str, destination: str) -> None:
         self._ensure_container_running()
 
         # TODO: better handling of larger files.
-        with open(source) as source_data:
+        with open(source, "rb") as source_data:
             source_contents = source_data.read()
 
         try:
-            self._container.files.put(destination, source_contents.encode())
+            self._container.files.put(destination, source_contents)
         except pylxd.exceptions.LXDAPIException as lxd_api_error:
             raise errors.ProviderFileCopyError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error

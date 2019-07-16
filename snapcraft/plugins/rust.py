@@ -30,18 +30,25 @@ Additionally, this plugin uses the following plugin-specific keywords:
       select rust channel (stable, beta, nightly)
     - rust-revision
       (string)
-      select rust version
+      select rust version, this is preferred over rust-channel
     - rust-features
       (list of strings)
       Features used to build optional dependencies
+
+If a rust-toolchain file is found, the toolchain specified there will
+be used unless rust-channel or rust-revision are set which will
+override the rust-toolchain file. If neither rust-toolchain exists nor
+rust-channel or rust-revision are set, the latest stable toolchain
+will be used.
 """
 
 import collections
 import logging
 import os
 from contextlib import suppress
-from textwrap import dedent
-from typing import List
+from typing import List, Optional
+
+import toml
 
 import snapcraft
 from snapcraft import sources
@@ -119,30 +126,34 @@ class RustPlugin(snapcraft.BasePlugin):
         # Basic options:
         # -y: assume yes
         # --no-modify-path: do not modify bashrc
-        options = ["-y", "--default-toolchain", "none", "--no-modify-path"]
+        options = ["-y", "--no-modify-path"]
+        if self._get_toolchain() is not None:
+            options.extend(["--default-toolchain", "none"])
 
         # Fetch rust
         self.run([rustup_init_cmd] + options, env=self._build_env())
 
-    def _fetch_rust(self):
-        # https://rust-lang-nursery.github.io/edition-guide/rust-2018/rustup-for-managing-rust-versions.html
+    def _fetch_rust(self) -> None:
         toolchain = self._get_toolchain()
-        self.run([self._rustup_cmd, "install", toolchain], env=self._build_env())
+
+        # We only do this when one of the snapcraft properties are set,
+        # the reason for this is faster iterations when changing any
+        # of the toolchain related properties.
+        # When changing the rust-toolchain file a re-pull will be triggered
+        # due to source changes and the right thing will happen.
+        if toolchain is not None:
+            # https://rust-lang-nursery.github.io/edition-guide/rust-2018/rustup-for-managing-rust-versions.html
+            self.run([self._rustup_cmd, "install", toolchain], env=self._build_env())
 
         # Add the appropriate target cross compilation target if necessary.
         # https://github.com/rust-lang/rustup.rs/blob/master/README.md#cross-compilation
         if self.project.is_cross_compiling:
-            self.run(
-                [
-                    self._rustup_cmd,
-                    "target",
-                    "add",
-                    "--toolchain",
-                    toolchain,
-                    self._get_target(),
-                ],
-                env=self._build_env(),
-            )
+            add_target_cmd = [self._rustup_cmd, "target", "add"]
+            if toolchain is not None:
+                add_target_cmd.extend(["--toolchain", toolchain])
+            add_target_cmd.append(self._get_target())
+
+            self.run(add_target_cmd, env=self._build_env())
 
     def _fetch_cargo_deps(self):
         if self.options.source_subdir:
@@ -150,16 +161,16 @@ class RustPlugin(snapcraft.BasePlugin):
         else:
             sourcedir = self.sourcedir
 
-        self.run(
-            [
-                self._cargo_cmd,
-                "+{}".format(self._get_toolchain()),
-                "fetch",
-                "--manifest-path",
-                os.path.join(sourcedir, "Cargo.toml"),
-            ],
-            env=self._build_env(),
-        )
+        fetch_cmd = [
+            self._cargo_cmd,
+            "fetch",
+            "--manifest-path",
+            os.path.join(sourcedir, "Cargo.toml"),
+        ]
+        toolchain = self._get_toolchain()
+        if toolchain is not None:
+            fetch_cmd.insert(1, "+{}".format(toolchain))
+        self.run(fetch_cmd, env=self._build_env())
 
     def _get_target(self) -> str:
         # Cf. rustc --print target-list
@@ -186,13 +197,16 @@ class RustPlugin(snapcraft.BasePlugin):
 
         install_cmd = [
             self._cargo_cmd,
-            "+{}".format(self._get_toolchain()),
             "install",
             "--path",
             self.builddir,
             "--root",
             self.installdir,
+            "--force",
         ]
+        toolchain = self._get_toolchain()
+        if toolchain is not None:
+            install_cmd.insert(1, "+{}".format(toolchain))
 
         # Even though this is mostly harmless when not cross compiling
         # the flag is in place to avoid a situation where an earlier
@@ -222,47 +236,55 @@ class RustPlugin(snapcraft.BasePlugin):
 
         return env
 
-    def _get_toolchain(self) -> str:
+    def _get_toolchain(self) -> Optional[str]:
+        """Return the toolchain to use.
+
+        If a rust-toolchain file is present, None will be returned.
+        If a rust-toolchain file is not present and neither rust-version
+        nor rust-channel are set, then stable will be returned.
+        """
+        if self.options.source_subdir:
+            sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
+        else:
+            sourcedir = self.sourcedir
+        rust_toolchain_path = os.path.join(sourcedir, "rust-toolchain")
+
         if self.options.rust_revision:
             toolchain = self.options.rust_revision
         elif self.options.rust_channel:
             toolchain = self.options.rust_channel
-        else:
+        elif not os.path.exists(rust_toolchain_path):
             toolchain = "stable"
+        else:
+            toolchain = None
 
         return toolchain
 
-    def _write_cargo_config(self) -> None:
-        # python toml's output dumps sections for targets with quotes that
-        # cargo later cannot pickup.
+    def _get_linker(self) -> str:
+        arch_triplet = self.project.arch_triplet
+        if arch_triplet == "i386-linux-gnu":
+            return "i686-linux-gnu-gcc"
+        else:
+            return "{}-gcc".format(arch_triplet)
+
+    def _write_cargo_config(self, cargo_config_path: Optional[str] = None) -> None:
+        if cargo_config_path is None:
+            cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
+        if os.path.dirname(cargo_config_path):
+            os.makedirs(os.path.dirname(cargo_config_path), exist_ok=True)
+
+        target = {self._get_target(): dict(linker=self._get_linker())}
         config = dict(
             arch_triplet=self.project.arch_triplet,
-            target=self._get_target(),
             jobs=self.parallel_build_count,
             rustc_cmd=self._rustc_cmd,
             rustdoc_cmd=self._rustdoc_cmd,
+            target=target,
         )
-
-        cargo_config_path = os.path.join(self.builddir, ".cargo", "config")
-        os.makedirs(os.path.dirname(cargo_config_path), exist_ok=True)
 
         # Cf. http://doc.crates.io/config.html
         with open(cargo_config_path, "w") as toml_config_file:
-            print(
-                dedent(
-                    """\
-                [build]
-                jobs = {jobs}
-                target = "{target}"
-                rustc = "{rustc_cmd}"
-                rustdoc = "{rustdoc_cmd}"
-
-                [target.{target}]
-                linker = "{arch_triplet}-gcc"
-            """
-                ).format(**config),
-                file=toml_config_file,
-            )
+            toml.dump(config, toml_config_file)
 
     def _get_rustflags(self) -> List[str]:
         ldflags = shell_utils.getenv("LDFLAGS")
@@ -272,24 +294,30 @@ class RustPlugin(snapcraft.BasePlugin):
             rustldflags.extend(["-C", "link-arg={}".format(flag)])
 
         if self.project.is_cross_compiling:
-            rustldflags.extend(
-                ["-C", "linker={}-gcc".format(self.project.arch_triplet)]
-            )
+            rustldflags.extend(["-C", "linker={}".format(self._get_linker())])
 
         return rustldflags
 
     def _record_manifest(self):
-        toolchain_option = "+{}".format(self._get_toolchain())
-
         self._manifest["rustup-version"] = self.run_output(
             [self._rustup_cmd, "--version"], env=self._build_env()
         )
-        self._manifest["rustc-version"] = self.run_output(
-            [self._rustc_cmd, toolchain_option, "--version"], env=self._build_env()
-        )
-        self._manifest["cargo-version"] = self.run_output(
-            [self._cargo_cmd, toolchain_option, "--version"], env=self._build_env()
-        )
+        toolchain = self._get_toolchain()
+        if toolchain is not None:
+            toolchain_option = "+{}".format(toolchain)
+            self._manifest["rustc-version"] = self.run_output(
+                [self._rustc_cmd, toolchain_option, "--version"], env=self._build_env()
+            )
+            self._manifest["cargo-version"] = self.run_output(
+                [self._cargo_cmd, toolchain_option, "--version"], env=self._build_env()
+            )
+        else:
+            self._manifest["rustc-version"] = self.run_output(
+                [self._rustc_cmd, "--version"], env=self._build_env()
+            )
+            self._manifest["cargo-version"] = self.run_output(
+                [self._cargo_cmd, "--version"], env=self._build_env()
+            )
         with suppress(FileNotFoundError, IsADirectoryError):
             with open(os.path.join(self.builddir, "Cargo.lock")) as lock_file:
                 self._manifest["cargo-lock-contents"] = lock_file.read()

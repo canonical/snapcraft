@@ -20,11 +20,32 @@ import click
 
 from . import env
 from snapcraft.project import Project, get_snapcraft_yaml
+from snapcraft.cli.echo import confirm, prompt
 
 
 class HiddenOption(click.Option):
     def get_help_record(self, ctx):
         pass
+
+
+class PromptOption(click.Option):
+    def prompt_for_value(self, ctx):
+        default = self.get_default(ctx)
+
+        # If this is a prompt for a flag we need to handle this
+        # differently.
+        if self.is_bool_flag:
+            return confirm(self.prompt, default)
+
+        return prompt(
+            self.prompt,
+            default=default,
+            type=self.type,
+            hide_input=self.hide_input,
+            show_choices=self.show_choices,
+            confirmation_prompt=self.confirmation_prompt,
+            value_proc=lambda x: self.process_value(ctx, x),
+        )
 
 
 _BUILD_OPTION_NAMES = [
@@ -86,14 +107,16 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
 
     snapcraft_yaml_file_path = get_snapcraft_yaml()
 
+    # This method may be called from a click.Command with no parent.
     ctx = click.get_current_context()
-    for key, value in ctx.parent.params.items():
-        if not kwargs.get(key):
-            kwargs[key] = value
+    if ctx.parent is not None:
+        for key, value in ctx.parent.params.items():
+            if not kwargs.get(key):
+                kwargs[key] = value
 
     project = Project(
-        debug=kwargs.pop("debug"),
-        target_deb_arch=kwargs.pop("target_arch"),
+        debug=kwargs.pop("debug", False),
+        target_deb_arch=kwargs.pop("target_arch", None),
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         is_managed_host=is_managed_host,
     )

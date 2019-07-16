@@ -30,7 +30,6 @@ from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
-from snapcraft.internal.build_providers.errors import ProviderExecError
 
 # raven is not available on 16.04
 try:
@@ -43,7 +42,6 @@ except ImportError:
 # - annotate the part and lifecycle step in the message
 # - add link to privacy policy
 _MSG_TRACEBACK_PRINT = "Sorry, an error occurred in Snapcraft:"
-_MSG_TRACEBACK_FILE = "Sorry, an error occurred in Snapcraft."
 _MSG_TRACEBACK_LOCATION = "You can find the traceback in file {!r}."
 _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent(
     """\
@@ -78,6 +76,127 @@ TRACEBACK_HOST = TRACEBACK_MANAGED + ".{}".format(os.getpid())
 logger = logging.getLogger(__name__)
 
 
+def _is_connected_to_tty() -> bool:
+    # Used by inner instance, SNAPCRAFT_HAS_TTY is set by outer instance.
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        return distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1
+
+    return sys.stdout.isatty()
+
+
+def _is_reportable_error(exc_info) -> bool:
+    # Report non-snapcraft errors.
+    if not issubclass(exc_info[0], errors.SnapcraftError):
+        return True
+
+    # Report snapcraft 'reportable' errors.
+    if issubclass(exc_info[0], errors.SnapcraftReportableError):
+        return True
+
+    return False
+
+
+def _is_printable_traceback(exc_info, debug) -> bool:
+    # Always print with debug.
+    if debug:
+        return True
+
+    # If it is not a reportable error, then it is not a printable traceback.
+    if not _is_reportable_error(exc_info):
+        return False
+
+    # Print if not connected to a tty.
+    if not _is_connected_to_tty():
+        return True
+
+    # Print if not using snap.
+    if not snapcraft.internal.common.is_snap():
+        return True
+
+    return False
+
+
+def _handle_sentry_submission(exc_info) -> None:
+    # Only attempt to submit reportable errors.
+    if not _is_reportable_error(exc_info):
+        return
+
+    # Only attempt if running as snap (with Raven requirement).
+    if not snapcraft.internal.common.is_snap():
+        # Suggest manual reporting instead.
+        click.echo(_MSG_MANUALLY_REPORT)
+        return
+
+    if _is_send_to_sentry(exc_info):
+        try:
+            _submit_trace(exc_info)
+        except Exception as exc:
+            # Failed to send - let user know and suggest manual reporting.
+            echo.error(
+                "Encountered an issue while trying to submit the report: {}".format(
+                    str(exc)
+                )
+            )
+            click.echo(_MSG_MANUALLY_REPORT)
+        else:
+            # Sent successfully.
+            click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+
+
+def _print_exception_message(exc_info, debug) -> None:
+    click.echo(_MSG_TRACEBACK_PRINT)
+
+    # Print exception in exc_info[1].
+    message = str(exc_info[1])
+    echo.error(message)
+
+
+def _process_exception(exc_info, debug, trace_filepath):
+    _print_exception_message(exc_info, debug)
+
+    if _is_printable_traceback(exc_info, debug):
+        _print_trace_output(exc_info)
+
+    _handle_sentry_submission(exc_info)
+
+    if trace_filepath:
+        with open(trace_filepath, "w") as tf:
+            _print_trace_output(exc_info, tf)
+
+
+def _process_inner_exception(exc_info, debug):
+    # On inner host, always save trace output and process exception.
+    _process_exception(exc_info, debug, TRACEBACK_MANAGED)
+
+
+def _process_outer_exception(exc_info, debug):
+    # Temporary file path to store trace in, if needed.
+    trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
+
+    # On outer host, check if we have traceback generated from inner.
+    if os.path.isfile(TRACEBACK_HOST):
+        # If traceback file exists, it has already been processed by
+        # the inside snapcraft (i.e. printing and sentry submission)
+        # we just need to retrieve it for the user if it's reportable.
+        if not _is_reportable_error(exc_info):
+            return
+
+        shutil.move(TRACEBACK_HOST, trace_filepath)
+    else:
+        # No traceback found, this must be captured and processed.
+        # If reportable or debug is enabled, capture trace file.
+        if _is_reportable_error(exc_info) or debug:
+            _process_exception(exc_info, debug, trace_filepath)
+        else:
+            _process_exception(exc_info, debug, None)
+
+            # No trace file, nothing left to do.
+            return
+
+    # This is a reportable error, let the user know where to find the trace.
+    click.echo(_MSG_TRACEBACK_LOCATION.format(trace_filepath))
+
+
 def exception_handler(  # noqa: C901
     exception_type, exception, exception_traceback, *, debug=False
 ) -> None:
@@ -88,116 +207,49 @@ def exception_handler(  # noqa: C901
 
     These are the rules of engagement:
 
-        - a non snapcraft handled error occurs and raven is setup,
-          so we go over confirmation logic showing the relevant traceback
-        - a non snapcraft handled error occurs and raven is not setup,
-          so we just show the traceback
-        - a snapcraft handled error occurs, debug=True so a traceback
-          is shown
-        - a snapcraft handled error occurs, debug=False so only the
-          exception message is shown
+        - Print exception message (always)
+
+        - Capture trace in temporary file and print path, conditionally if:
+          (1) Exception is SnapcraftReportableError or
+          (2) Exception is non-Snapcraft error
+          (3) debug is true
+
+        - Automatically send bug report if:
+          (1) SNAPCRAFT_ENABLE_SILENT_REPORT=y
+          (2) "Always" send has been previously set.
+
+        - Prompt to send bug report, conditionally if connected to TTY and:
+          (1) Exception is SnapcraftReportableError or
+          (2) Exception is non-Snapcraft error
+
+        - Print trace, conditionally if:
+          (1) debug is true, or
+          (2) Reportable (see above) and either:
+              (a) no TTY
+              (b) not running as snap
+
+        - Use exit code from snapcraft error (if available), otherwise 1.
     """
-    exc_info = (exception_type, exception, exception_traceback)
     exit_code = 1
-    # We're building directly on host (i.e. no inner instances have sent
-    # trace information to sentry), or crash is our own.
-    is_snapcraft_host = not os.path.isfile(TRACEBACK_HOST)
-    is_snapcraft_managed_host = (
-        os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host"
-    )
-    # When inner instance crashes let it send its trace information. We filter
-    # out ProviderExecError to prevent sending another trace dump outside.
-    is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError) and (
-        is_snapcraft_host or exception_type is not ProviderExecError
-    )
-    is_snapcraft_reportable_error = issubclass(
-        exception_type, errors.SnapcraftReportableError
-    )
-    is_raven_setup = snapcraft.internal.common.is_snap()
-    is_connected_to_tty = (
-        # used by inner instance, variable set by outer instance
-        (distutils.util.strtobool(os.getenv("SNAPCRAFT_HAS_TTY", "n")) == 1)
-        if is_snapcraft_managed_host
-        else sys.stdout.isatty()
-    )
-    ask_to_report = False
 
-    if not is_snapcraft_error:
-        ask_to_report = True
-    elif is_snapcraft_error and debug:
+    # If SnapcraftError, use defined exit code.
+    if issubclass(exception_type, errors.SnapcraftError):
         exit_code = exception.get_exit_code()
-        traceback.print_exception(*exc_info)
-    elif is_snapcraft_error and not debug:
-        exit_code = exception.get_exit_code()
-        echo.error(str(exception))
-        if is_snapcraft_reportable_error:
-            ask_to_report = True
+
+    exc_info = (exception_type, exception, exception_traceback)
+
+    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
+        _process_inner_exception(exc_info, debug)
     else:
-        click.echo("Unhandled error case")
-        exit_code = -1
-
-    if ask_to_report:
-        if is_snapcraft_managed_host or is_snapcraft_host:
-            if not is_raven_setup:
-                click.echo(_MSG_TRACEBACK_PRINT)
-                traceback.print_exception(*exc_info, file=sys.stdout)
-                click.echo(_MSG_MANUALLY_REPORT)
-            else:
-                if is_snapcraft_managed_host:
-                    # On inner host, prepare our traceback data to be retrieved.
-                    traceback.print_exception(
-                        exc_info[0],
-                        exc_info[1],
-                        exc_info[2],
-                        file=open(TRACEBACK_MANAGED, "w"),
-                    )
-
-                # Print traceback if not on terminal
-                if is_connected_to_tty:
-                    click.echo(_MSG_TRACEBACK_FILE)
-                else:
-                    click.echo(_MSG_TRACEBACK_PRINT)
-                    traceback.print_exception(*exc_info, file=sys.stdout)
-
-                # Also ask the user to send traceback data to sentry.
-                if _is_send_to_sentry(exc_info):
-                    try:
-                        _submit_trace(exc_info)
-                    except Exception as exc:
-                        # we really cannot do much more from this exit handler.
-                        echo.error(
-                            "Encountered an issue while trying to submit the report: {}".format(
-                                str(exc)
-                            )
-                        )
-                    else:
-                        click.echo(_MSG_SEND_TO_SENTRY_THANKS)
-
-                if not is_snapcraft_managed_host:
-                    trace_filepath = _handle_trace_output(exc_info)
-                    click.echo(_MSG_TRACEBACK_LOCATION.format(trace_filepath))
-        else:
-            # On outer host, check if we have traceback from managed host
-            # and retrieve it.
-            if os.path.isfile(TRACEBACK_HOST):
-                trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
-                shutil.move(TRACEBACK_HOST, trace_filepath)
-            else:
-                trace_filepath = _handle_trace_output(exc_info)
-            click.echo(_MSG_TRACEBACK_LOCATION.format(trace_filepath))
+        _process_outer_exception(exc_info, debug)
 
     sys.exit(exit_code)
 
 
-def _handle_trace_output(exc_info) -> str:
-    trace_filepath = os.path.join(tempfile.mkdtemp(), "trace.txt")
-    with open(trace_filepath, "w") as trace_file:
-        # mypy does not like *exc_info with a kwarg that follows
-        # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
-        traceback.print_exception(
-            exc_info[0], exc_info[1], exc_info[2], file=trace_file
-        )
-    return trace_filepath
+def _print_trace_output(exc_info, file=sys.stdout) -> None:
+    # mypy does not like *exc_info with a kwarg that follows
+    # snapcraft/cli/_errors.py:132: error: "print_exception" gets multiple values for keyword argument "file"
+    traceback.print_exception(exc_info[0], exc_info[1], exc_info[2], file=file)
 
 
 def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
@@ -230,7 +282,10 @@ def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
 
     # Either ALWAYS has not been selected in a previous run or the
     # configuration for where that value is stored cannot be read, so
-    # resort to prompting.
+    # resort to prompting (if connected to TTY).
+    if not _is_connected_to_tty():
+        return False
+
     while True:
         try:
             response = _prompt_sentry()
@@ -241,9 +296,7 @@ def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
             return False
 
         if response in _VIEW_VALUES:
-            traceback.print_exception(
-                exc_info[0], exc_info[1], exc_info[2], file=sys.stdout
-            )
+            _print_trace_output(exc_info)
         elif response in _YES_VALUES:
             return True
         elif response in _NO_VALUES:
@@ -277,7 +330,7 @@ def _prompt_sentry():
             return value
         raise click.BadParameter("Please choose a valid answer.")
 
-    return click.prompt(msg, default="no", value_proc=validate).lower()
+    return echo.prompt(msg, default="no", value_proc=validate).lower()
 
 
 def _submit_trace(exc_info):

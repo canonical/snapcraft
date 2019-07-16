@@ -154,6 +154,13 @@ class AppstreamIconsTestCase(unit.TestCase):
                     )
                 )
 
+    def _create_index_theme(self, theme: str):
+        # TODO: populate index.theme
+        dir_name = os.path.join("usr", "share", "icons", theme)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        open(os.path.join(dir_name, "index.theme"), "w").close()
+
     def _create_icon_file(self, theme: str, size: str, filename: str) -> None:
         dir_name = os.path.join("usr", "share", "icons", theme, size, "apps")
         if not os.path.exists(dir_name):
@@ -164,6 +171,17 @@ class AppstreamIconsTestCase(unit.TestCase):
         expected = ExtractedMetadata(icon=icon)
         actual = appstream.extract("foo.appdata.xml", workdir=".")
         self.assertThat(actual.get_icon(), Equals(expected.get_icon()))
+
+    def test_appstream_NxN_size_not_int_is_skipped(self):
+        self._create_appstream_file(icon="icon", icon_type="stock")
+        dir_name = os.path.join("usr", "share", "icons", "hicolor", "NxN")
+        os.makedirs(dir_name)
+        self._expect_icon(None)
+
+    def test_appstream_index_theme_is_not_confused_for_size(self):
+        self._create_appstream_file(icon="icon", icon_type="stock")
+        self._create_index_theme("hicolor")
+        self._expect_icon(None)
 
     def test_appstream_stock_icon_exists_png(self):
         self._create_appstream_file(icon="icon", icon_type="stock")

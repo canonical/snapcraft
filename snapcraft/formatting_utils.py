@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Iterable, List, Sized
+from typing import Iterable, Sized
 
 
-def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
+def combine_paths(paths: Iterable[str], prepend: str, separator: str) -> str:
     """Combine list of paths into a string.
 
     :param list paths: List of paths to stringify.
@@ -30,7 +30,7 @@ def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
 
 
 def format_path_variable(
-    envvar: str, paths: List[str], prepend: str, separator: str
+    envvar: str, paths: Iterable[str], prepend: str, separator: str
 ) -> str:
     """Return a path-like environment variable definition that appends.
 

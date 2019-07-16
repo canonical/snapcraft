@@ -100,6 +100,9 @@ class TestCase(testtools.TestCase):
         # Use a dumb terminal for tests
         self.useFixture(fixtures.EnvironmentVariable("TERM", "dumb"))
 
+        # Force appearance of TTY for pexpect to work with echo.is_connected_tty()
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_HAS_TTY", "y"))
+
         # Disable Sentry reporting for tests, otherwise they'll hang waiting
         # for input
         self.useFixture(
@@ -128,7 +131,7 @@ class TestCase(testtools.TestCase):
         debug: bool = True,
         pre_func: Callable[[], None] = lambda: None,
         env=None,
-    ) -> None:
+    ) -> str:
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 

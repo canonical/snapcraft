@@ -1,3 +1,109 @@
+snapcraft (3.6) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * docker images: update to be self contained (#2591)
+  * static: update to newer black (#2599)
+  * repo: set priority to critical for debs (LP: #1821313)
+
+  [ Kyle Fazzari ]
+  * docker images: use build stages and generate locale (#2588)
+  * {catkin,colcon} plugin: remove old ROS key (#2586)
+  * catkin plugin: check workspace for dependencies (#2585) (LP: #1832044)
+
+  [ Stefan Bodewig ]
+  * ant plugin: make build file location configurable (#2596)
+
+  [ Chris Patterson ]
+  * tools: add `black` snap to environment-setup.sh (#2595)
+
+  [ dependabot[bot] ]
+  * requirements: bump pyxdg from 0.25 to 0.26 (#2587)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 14 Jun 2019 20:00:41 +0000
+
+snapcraft (3.5.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * requirements: update to requests-toolbelt 0.8.0 (#2565)
+  * kernel plugin: correctly download the os.snap (#2566) (LP: #1828843)
+  * docs: consolidate on a simple HACKING.md (#2568)
+  * plainbox spread tests: lock down python packages (#2579)
+  * cli: refactor re-execution into legacy (#2571)
+  * plainbox spread tests: use https for the git source entries (#2583)
+  * catkin spread tests: finer system filter for legacy-pull (#2584)
+  * unit tests: stricter file checking on store download tests
+  * LEGACY common: add is_deb method
+  * LEGACY lifecycle: warn about bases
+  * LEGACY unit tests: stricter testing for common.is_deb
+  * LEGACY common: take into account dpkg not being found
+  * LEGACY common: check if running from snap before deb
+  * LEGACY common: check for relative argv0 in is_deb
+
+  [ Ian Metcalf ]
+  * dotnet plugin: fix parsing of newer sdk releases (#2537)
+
+  [ Kyle Fazzari ]
+  * catkin spread tests: use kinetic instead of indigo (#2575) (LP: #1830769)
+  * keyrings: update ROS signing key (#2578)
+  * LEGACY tests: stop testing indigo in catkin spread (#2572)
+  * LEGACY catkin plugin: remove default rosdistro (#2576)
+
+  [ Adam Collard ]
+  * cli: add --destructive-mode to clean (#2577)
+
+  [ Michael Vogt ]
+  * cli: do not prompt when there is no tty available on stdin (#2570)
+
+  [ dalance ]
+  * rust plugin: fix linker on i386 (#2580)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 06 Jun 2019 19:24:29 +0000
+
+snapcraft (3.5) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * vcs: ignore .idea (#2558)
+  * ci: remove dependency on LXD from travis tests (#2557)
+  * cli: snapcraft promote (#2556) (LP: #1827513)
+  * manifest: expose snapcraft-started-at (#2559) (LP: #1806658)
+  * storeapi: allow promotion from branches
+  * tests: release and promote to grade devel channels
+  * tests: fix the status test
+  * tests: add ppc64el to the fake server info results
+
+  [ Claudio Matsuoka ]
+  * project: read local plugins from build-aux (#2551) (LP: #1827095)
+  * extensions: block direct use of private extensions (#2555)
+
+  [ Daniel Llewellyn ]
+  * meta: take ${SNAP} into account .desktop icon checks (#2541)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Sat, 11 May 2019 14:56:00 +0000
+
+snapcraft (3.4.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: add a set_confinement helper
+  * tests: classic confinement spread tests for ant and maven (LP: #1805206)
+  * build providers: get rid of attribute warnings from pylxd (#2535)
+  * rust plugin: fix usage of rust-channel (#2538) (LP: #1825062)
+  * storeapi: move from details (v1) to info (v2) (#2550)
+
+  [ Tony Simpson ]
+  * project loader: add SNAPCRAFT_PROJECT_DIR environment variable (#2534)
+    (LP: #1824417)
+
+  [ Kyle Fazzari ]
+  * tests: allow python2 as well as python for catkin spread tests (#2540)
+  * integration tests: use correct series in get_package_version (#2548)
+  * catkin plugin: use build-packages for compilers (#2545) (LP: #1827148)
+
+  [ Claudio Matsuoka ]
+  * extractors: fix typo in appstream icon unit test (#2543)
+  * meta: Validate common ID against appstream metadata (#2542) (LP: #1814902)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 03 May 2019 12:48:58 +0000
+
 snapcraft (3.4) xenial; urgency=medium
 
   [ Sergio Schvezov ]

@@ -23,7 +23,7 @@ from . import errors
 
 
 def latest_step(
-    parts: List[pluginhandler.PluginHandler]
+    parts: List[pluginhandler.PluginHandler],
 ) -> Tuple[pluginhandler.PluginHandler, steps.Step, int]:
     """Determine and return the latest step that was run.
 

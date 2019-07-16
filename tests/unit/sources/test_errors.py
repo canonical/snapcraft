@@ -23,6 +23,18 @@ class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
         (
+            "SnapcraftSourceNotFoundError",
+            {
+                "exception": errors.SnapcraftSourceNotFoundError,
+                "kwargs": {"source": "file-not-found.tar.gz"},
+                "expected_message": (
+                    "Failed to pull source: 'file-not-found.tar.gz'.\n"
+                    "Please ensure the source path is correct and that it is accessible.\n"
+                    "See `snapcraft help sources` for more information."
+                ),
+            },
+        ),
+        (
             "SnapcraftSourceUnhandledError",
             {
                 "exception": errors.SnapcraftSourceUnhandledError,

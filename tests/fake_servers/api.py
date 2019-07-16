@@ -405,7 +405,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "error_list": [
                         {
                             "code": "invalid-field",
-                            "message": ("The 'channels' field content is not valid."),
+                            "message": "The 'channels' field content is not valid.",
                         }
                     ]
                 }
@@ -848,7 +848,11 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             )
         else:
             # POST/PUT
-            info = json.loads(request.params["info"])
+            # snapcraft.storeapi._metadata._build_binary_request_data
+            if type(request.params["info"]) == bytes:
+                info = json.loads(request.params["info"].decode())
+            else:
+                info = json.loads(request.params["info"])
             invalid = any([e.get("filename", "").endswith("invalid") for e in info])
             conflict = any([e.get("filename", "").endswith("conflict") for e in info])
             conflict_with_braces = any(
@@ -1099,12 +1103,25 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "16": {
                         "i386": [
                             {"info": "none", "channel": "stable"},
-                            {"info": "none", "channel": "beta"},
+                            {"info": "none", "channel": "candidate"},
+                            {
+                                "info": "specific",
+                                "version": "1.1-amd64",
+                                "channel": "beta",
+                                "revision": 6,
+                            },
                             {
                                 "info": "specific",
                                 "version": "1.0-i386",
                                 "channel": "edge",
                                 "revision": 3,
+                            },
+                            {
+                                "info": "branch",
+                                "version": "1.1-i386",
+                                "channel": "edge/test",
+                                "revision": 9,
+                                "expires_at": "2019-05-30T01:17:06.465504",
                             },
                         ],
                         "amd64": [
@@ -1114,6 +1131,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                 "channel": "stable",
                                 "revision": 2,
                             },
+                            {"info": "none", "channel": "candidate"},
                             {
                                 "info": "specific",
                                 "version": "1.1-amd64",
@@ -1121,6 +1139,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                 "revision": 4,
                             },
                             {"info": "tracking", "channel": "edge"},
+                            {
+                                "info": "branch",
+                                "version": "1.1-amd64",
+                                "channel": "edge/test",
+                                "revision": 10,
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
                         ],
                     }
                 }

@@ -259,7 +259,8 @@ class InvalidNamesTest(ValidationBaseTest):
 class ValidTypesTest(ValidationBaseTest):
 
     scenarios = [
-        (type_, dict(type_=type_)) for type_ in ["app", "gadget", "kernel", "os"]
+        (type_, dict(type_=type_))
+        for type_ in ["app", "base", "gadget", "kernel", "snapd"]
     ]
 
     def test_valid_types(self):
@@ -283,7 +284,7 @@ class InvalidTypesTest(ValidationBaseTest):
         expected_message = (
             "The 'type' property does not match the required "
             "schema: '{}' is not one of "
-            "['app', 'base', 'gadget', 'kernel', 'os']"
+            "['app', 'base', 'gadget', 'kernel', 'snapd']"
         ).format(self.type_)
         self.assertThat(raised.message, Equals(expected_message), message=data)
 

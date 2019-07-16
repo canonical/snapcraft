@@ -21,9 +21,10 @@ from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
+from . import channels
+from . import status
 from snapcraft.internal.errors import SnapcraftError
 from snapcraft import formatting_utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -403,9 +404,8 @@ class StoreServerError(StoreError):
         what = "The Snap Store encountered an error while processing your request"
         error_code = response.status_code
         error_text = responses[error_code].lower()
-        action = (
-            "The operational status of the Snap Store can be checked at "
-            "{}".format(_STORE_STATUS_URL)
+        action = "The operational status of the Snap Store can be checked at {}".format(
+            _STORE_STATUS_URL
         )
 
         super().__init__(
@@ -786,3 +786,35 @@ def _handle_macaroon_permission_required(response_json):
             )
 
     return ""
+
+
+class ChannelNotAvailableOnArchError(StoreError):
+    fmt = (
+        "No releases available for {snap_name!r} on channel {channel!r} "
+        "for architecture {arch!r}.\n"
+        "Ensure the selected channel contains released revisions for this architecture."
+    )
+
+    def __init__(self, *, snap_name: str, channel: channels.Channel, arch: str) -> None:
+        super().__init__(snap_name=snap_name, channel=channel, arch=arch)
+
+
+class InvalidChannelSet(StoreError):
+    fmt = (
+        "The {channel!r} channel for {snap_name!r} does not form a complete set.\n"
+        "There is no revision released for the following architectures: {arches!r}.\n"
+        "Ensure the selected channel contains released revisions for "
+        "all architectures."
+    )
+
+    def __init__(
+        self,
+        *,
+        snap_name: str,
+        channel: channels.Channel,
+        channel_outliers: List[status.SnapStatusChannelDetails]
+    ) -> None:
+        arches = formatting_utils.humanize_list(
+            [c.arch for c in channel_outliers], "and"
+        )
+        super().__init__(snap_name=snap_name, channel=channel, arches=arches)

@@ -209,7 +209,7 @@ class AliasesTest(ProjectLoaderBaseTest):
         )
         return load_config(p)
 
-    def test_aliases(self,):
+    def test_aliases(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 

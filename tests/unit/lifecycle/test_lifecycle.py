@@ -18,6 +18,7 @@ import logging
 import os
 import subprocess
 import textwrap
+from datetime import datetime
 from unittest import mock
 
 import fixtures
@@ -112,32 +113,6 @@ class ExecutionTestCase(LifecycleTestBase):
 
         self.assertThat(self.fake_logger.output, Contains("Pulling part2"))
         self.assertThat(self.fake_logger.output, Not(Contains("Pulling part1")))
-
-    def test_os_type_returned_by_lifecycle(self):
-        project_config = self.make_snapcraft_project(
-            textwrap.dedent(
-                """\
-                parts:
-                  part1:
-                    plugin: nil
-                  part2:
-                    plugin: nil
-                    after:
-                      - part1
-                """
-            ),
-            "type: os",
-        )
-
-        snap_info = lifecycle.execute(steps.PULL, project_config)
-
-        expected_snap_info = {
-            "name": "test",
-            "version": "1.0",
-            "arch": [project_config.project.deb_arch],
-            "type": "os",
-        }
-        self.assertThat(snap_info, Equals(expected_snap_info))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
         # Set the option to error on dirty/outdated steps
@@ -556,6 +531,15 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch(
+            "snapcraft.project.Project._get_start_time",
+            return_value=datetime.strptime(
+                "2019-05-07T19:25:53.939041", "%Y-%m-%dT%H:%M:%S.%f"
+            ),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         original_check_output = subprocess.check_output
 
         def fake_uname(cmd, *args, **kwargs):
@@ -612,6 +596,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -668,6 +653,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -728,6 +714,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -790,6 +777,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -853,6 +841,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -914,6 +903,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -978,6 +968,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -1041,6 +1032,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -1095,6 +1087,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -1154,6 +1147,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test
@@ -1232,6 +1226,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
         expected = textwrap.dedent(
             """\
             snapcraft-version: '3.0'
+            snapcraft-started-at: '2019-05-07T19:25:53.939041Z'
             snapcraft-os-release-id: ubuntu
             snapcraft-os-release-version-id: '16.04'
             name: test

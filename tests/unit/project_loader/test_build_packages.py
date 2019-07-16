@@ -37,9 +37,7 @@ class VCSBuildPackagesTest(ProjectLoaderBaseTest):
         (
             "tar",
             dict(
-                source=(
-                    "https://github.com/ubuntu-core/snapcraft/archive/2.0.1.tar.gz"
-                ),
+                source="https://github.com/ubuntu-core/snapcraft/archive/2.0.1.tar.gz",
                 expected_package=None,
             ),
         ),

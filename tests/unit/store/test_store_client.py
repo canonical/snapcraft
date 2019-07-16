@@ -247,7 +247,7 @@ class DownloadTestCase(StoreTestCase):
         self.client.download("test-snap", risk="stable", download_path=download_path)
         second_stat = os.stat(download_path)
         # If these are equal it means a second download did not happen.
-        self.assertThat(second_stat, Equals(first_stat))
+        self.assertThat(second_stat.st_ctime, Equals(first_stat.st_ctime))
 
     def test_download_on_sha_mismatch(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -1349,29 +1349,50 @@ class GetSnapStatusTestCase(StoreTestCase):
                 "latest": {
                     "16": {
                         "i386": [
-                            {"info": "none", "channel": "stable"},
-                            {"info": "none", "channel": "beta"},
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
                             {
+                                "channel": "beta",
                                 "info": "specific",
-                                "version": "1.0-i386",
+                                "revision": 6,
+                                "version": "1.1-amd64",
+                            },
+                            {
                                 "channel": "edge",
+                                "info": "specific",
                                 "revision": 3,
+                                "version": "1.0-i386",
+                            },
+                            {
+                                "channel": "edge/test",
+                                "info": "branch",
+                                "revision": 9,
+                                "version": "1.1-i386",
+                                "expires_at": "2019-05-30T01:17:06.465504",
                             },
                         ],
                         "amd64": [
                             {
-                                "info": "specific",
-                                "version": "1.0-amd64",
                                 "channel": "stable",
-                                "revision": 2,
-                            },
-                            {
                                 "info": "specific",
-                                "version": "1.1-amd64",
-                                "channel": "beta",
-                                "revision": 4,
+                                "revision": 2,
+                                "version": "1.0-amd64",
                             },
-                            {"info": "tracking", "channel": "edge"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "channel": "beta",
+                                "info": "specific",
+                                "revision": 4,
+                                "version": "1.1-amd64",
+                            },
+                            {"channel": "edge", "info": "tracking"},
+                            {
+                                "channel": "edge/test",
+                                "info": "branch",
+                                "revision": 10,
+                                "version": "1.1-amd64",
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
                         ],
                     }
                 }
@@ -1693,15 +1714,13 @@ class PushBinaryMetadataTestCase(StoreTestCase):
                 metadata,
                 False,
             )
-        should = (
-            """
+        should = """
             Metadata not pushed!
             Conflict in 'icon' field:
                 In snapcraft.yaml: '{}'
                 In the Store:      'original-icon'
             You can repeat the push-metadata command with --force to force the local values into the Store
-        """
-        ).format(
+        """.format(
             filename
         )  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))

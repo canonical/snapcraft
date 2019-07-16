@@ -264,7 +264,7 @@
                 "base",
                 "gadget",
                 "kernel",
-                "os"
+                "snapd"
             ]
         },
         "frameworks": {
@@ -790,6 +790,7 @@
     },
     "required": [
         "name",
+        "base",
         "parts"
     ],
 

@@ -20,6 +20,7 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 from typing import Sequence
+from typing import List  # noqa: F401
 from urllib import parse
 
 import requests_unixsocket
@@ -27,6 +28,11 @@ from requests import exceptions
 
 from . import errors
 
+
+_STORE_ASSERTION = [
+    "account-key",
+    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+]
 
 _CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
@@ -139,7 +145,12 @@ class SnapPackage:
                 current_channel = "latest/{}".format(current_channel)
         return current_channel
 
-    def is_classic(self):
+    def has_assertions(self) -> bool:
+        # A revision starting with x has been installed with
+        # --dangerous.
+        return not self.get_local_snap_info()["revision"].startswith("x")
+
+    def is_classic(self) -> bool:
         store_channels = self._get_store_channels()
         try:
             return store_channels[self.channel]["confinement"] == "classic"
@@ -153,12 +164,39 @@ class SnapPackage:
             )
             raise
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """Check if the snap is valid."""
         if not self.in_store:
             return False
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
+
+    def local_download(self, *, snap_path: str, assertion_path: str) -> None:
+        assertions = list()  # type: List[List[str]]
+        # We write an empty assertions file for dangerous installs to
+        # have a consistent interface.
+        if self.has_assertions():
+            assertions.append(["snap-declaration", "snap-name={}".format(self.name)])
+            assertions.append(
+                [
+                    "snap-revision",
+                    "snap-revision={}".format(self._local_snap_info["revision"]),
+                    "snap-id={}".format(self._local_snap_info["id"]),
+                ]
+            )
+
+        if assertions:
+            assertions.insert(0, _STORE_ASSERTION)
+
+        with open(assertion_path, "wb") as assertion_file:
+            for assertion in assertions:
+                assertion_file.write(get_assertion(assertion))
+                assertion_file.write(b"\n")
+
+        snap_file_iter = _get_local_snap_file_iter(self.name, chunk_size=1024)
+        with open(snap_path, "wb") as snap_file:
+            for buf in snap_file_iter:
+                snap_file.write(buf)
 
     def download(self, *, directory: str = None):
         """Downloads a given snap."""
@@ -300,6 +338,17 @@ def _get_parsed_snap(snap):
 
 def get_snapd_socket_path_template():
     return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
+
+
+def _get_local_snap_file_iter(snap_name, *, chunk_size: int):
+    slug = "snaps/{}/file".format(parse.quote(snap_name, safe=""))
+    url = get_snapd_socket_path_template().format(slug)
+    try:
+        snap_file = requests_unixsocket.get(url)
+    except exceptions.ConnectionError as e:
+        raise errors.SnapdConnectionError(snap_name, url) from e
+    snap_file.raise_for_status()
+    return snap_file.iter_content(chunk_size)
 
 
 def _get_local_snap_info(snap_name):

@@ -68,9 +68,11 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def make_snapcraft_yaml(self, n=1, snap_type="app", snapcraft_yaml=None):
+    def make_snapcraft_yaml(
+        self, n=1, snap_type="app", base="core18", snapcraft_yaml=None
+    ):
         if not snapcraft_yaml:
-            base_entry = "base: core18" if snap_type == "app" else ""
+            base_entry = "" if base is None else "base: {}".format(base)
             snapcraft_yaml = self.yaml_template.format(
                 snap_type=snap_type, base_entry=base_entry
             )
@@ -111,7 +113,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(
             str(raised),
             Contains(
-                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'os']"
+                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'snapd']"
             ),
         )
 
@@ -138,56 +140,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
         )
-
-    def test_snap_type_os_does_not_use_all_root(self):
-        self.make_snapcraft_yaml(snap_type="os")
-
-        result = self.run_command(["snap"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("\nSnapped snap-test_1.0_amd64.snap\n"))
-
-        self.popen_spy.assert_called_once_with(
-            [
-                "mksquashfs",
-                self.prime_dir,
-                "snap-test_1.0_amd64.snap",
-                "-noappend",
-                "-comp",
-                "xz",
-                "-no-xattrs",
-                "-no-fragments",
-            ],
-            stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE,
-        )
-
-        self.assertThat("snap-test_1.0_amd64.snap", FileExists())
-
-    def test_snap_type_base_does_not_use_all_root(self):
-        self.make_snapcraft_yaml(snap_type="base")
-
-        result = self.run_command(["snap"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("\nSnapped snap-test_1.0_amd64.snap\n"))
-
-        self.popen_spy.assert_called_once_with(
-            [
-                "mksquashfs",
-                self.prime_dir,
-                "snap-test_1.0_amd64.snap",
-                "-noappend",
-                "-comp",
-                "xz",
-                "-no-xattrs",
-                "-no-fragments",
-            ],
-            stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE,
-        )
-
-        self.assertThat("snap-test_1.0_amd64.snap", FileExists())
 
     def test_snap_defaults_with_parts_in_prime(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -306,23 +258,26 @@ version: 99
 
         self.assertThat("mysnap_99_all.snap", FileExists())
 
-    def test_snap_from_dir_type_os_does_not_use_all_root(self):
+    def test_snap_from_dir_type_base_does_not_use_all_root(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
         meta_dir = os.path.join("mysnap", "meta")
         os.makedirs(meta_dir)
         with open(os.path.join(meta_dir, "snap.yaml"), "w") as f:
-            f.write(
-                """name: mysnap
-version: 99
-architectures: [amd64, armhf]
-type: os
-"""
+            print(
+                dedent(
+                    """\
+                name: mysnap
+                version: 99
+                architectures: [amd64, armhf]
+                type: base
+            """
+                ),
+                file=f,
             )
-        self.make_snapcraft_yaml()
 
-        result = self.run_command(["snap", "mysnap"])
+        result = self.run_command(["pack", "mysnap"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Snapped mysnap_99_multi.snap\n"))

@@ -20,8 +20,9 @@ parts:
         python-packages:
             - checkbox-ng==1.0.0
             - idna==2.7
-            - requests-oauthlib
-            - xlsxwriter
+            - requests-oauthlib==1.2.0
+            - urllib3==1.24
+            - xlsxwriter==1.1.8
         build-packages:
             - libxml2-dev
             - libxslt1-dev

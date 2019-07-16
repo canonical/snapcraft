@@ -22,6 +22,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 from unittest import mock
+import toml
 
 import snapcraft
 from snapcraft.internal import errors
@@ -162,9 +163,9 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--no-modify-path",
                         "--default-toolchain",
                         "none",
-                        "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -218,6 +219,72 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
                         plugin.builddir,
                         "--root",
                         plugin.installdir,
+                        "--force",
+                        "--target",
+                        self.target,
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                )
+            ]
+        )
+
+    @mock.patch("snapcraft.internal.sources._script.Script.download")
+    def test_cross_compile_with_rust_toolchain_file(self, mock_download):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "rust-toolchain"), "w").close()
+
+        plugin.pull()
+
+        self.assertThat(self.run_mock.call_count, Equals(3))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [plugin._rustup_cmd, "target", "add", self.target],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "fetch",
+                        "--manifest-path",
+                        os.path.join(plugin.sourcedir, "Cargo.toml"),
+                    ],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
+                ),
+            ]
+        )
+
+        self.run_mock.reset_mock()
+
+        plugin.build()
+
+        self.assertThat(os.path.join(plugin.builddir, ".cargo", "config"), FileExists())
+
+        self.assertThat(self.run_mock.call_count, Equals(1))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "install",
+                        "--path",
+                        plugin.builddir,
+                        "--root",
+                        plugin.installdir,
+                        "--force",
                         "--target",
                         self.target,
                     ],
@@ -263,9 +330,9 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--no-modify-path",
                         "--default-toolchain",
                         "none",
-                        "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -279,6 +346,43 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         plugin._cargo_cmd,
                         "+stable",
+                        "fetch",
+                        "--manifest-path",
+                        os.path.join(plugin.sourcedir, "Cargo.toml"),
+                    ],
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
+                ),
+            ]
+        )
+
+    @mock.patch.object(rust.sources, "Script")
+    def test_pull_with_rust_toolchain_file(self, script_mock):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "rust-toolchain"), "w").close()
+
+        plugin.options.rust_revision = []
+        plugin.options.rust_channel = []
+
+        plugin.pull()
+
+        self.assertThat(self.run_mock.call_count, Equals(2))
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                    ],
+                    cwd=os.path.join(plugin.partdir, "build"),
+                    env=plugin._build_env(),
+                ),
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
                         "fetch",
                         "--manifest-path",
                         os.path.join(plugin.sourcedir, "Cargo.toml"),
@@ -306,9 +410,9 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--no-modify-path",
                         "--default-toolchain",
                         "none",
-                        "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -349,9 +453,9 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--no-modify-path",
                         "--default-toolchain",
                         "none",
-                        "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -391,9 +495,9 @@ class RustPluginTest(RustPluginBaseTest):
                     [
                         os.path.join(plugin._rust_dir, "rustup.sh"),
                         "-y",
+                        "--no-modify-path",
                         "--default-toolchain",
                         "none",
-                        "--no-modify-path",
                     ],
                     cwd=os.path.join(plugin.partdir, "build"),
                     env=plugin._build_env(),
@@ -439,6 +543,28 @@ class RustPluginTest(RustPluginBaseTest):
                 plugin.builddir,
                 "--root",
                 plugin.installdir,
+                "--force",
+            ],
+            cwd=os.path.join(plugin.partdir, "build"),
+            env=plugin._build_env(),
+        )
+
+    def test_build_with_rust_toolchain_file(self):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "rust-toolchain"), "w").close()
+
+        plugin.build()
+
+        self.run_mock.assert_called_once_with(
+            [
+                plugin._cargo_cmd,
+                "install",
+                "--path",
+                plugin.builddir,
+                "--root",
+                plugin.installdir,
+                "--force",
             ],
             cwd=os.path.join(plugin.partdir, "build"),
             env=plugin._build_env(),
@@ -460,6 +586,7 @@ class RustPluginTest(RustPluginBaseTest):
                 plugin.builddir,
                 "--root",
                 plugin.installdir,
+                "--force",
                 "--features",
                 "conditional-compilation",
             ],
@@ -524,6 +651,29 @@ class RustPluginTest(RustPluginBaseTest):
         expected_manifest["cargo-version"] = "test cargo version"
 
         self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+    def test_write_cargo_config(self):
+        plugin = rust.RustPlugin("test-part", self.options, self.project)
+        config_toml_path = "config.toml"
+
+        plugin._write_cargo_config(cargo_config_path=config_toml_path)
+
+        self.assertThat(config_toml_path, FileExists())
+
+        config = toml.load(config_toml_path)
+
+        self.assertThat(
+            config,
+            Equals(
+                dict(
+                    rustdoc_cmd=plugin._rustdoc_cmd,
+                    rustc_cmd=plugin._rustc_cmd,
+                    arch_triplet=plugin.project.arch_triplet,
+                    jobs=plugin.parallel_build_count,
+                    target={plugin._get_target(): dict(linker=plugin._get_linker())},
+                )
+            ),
+        )
 
     def test_unsupported_base(self):
         project = snapcraft.project.Project(

@@ -96,7 +96,7 @@ def _run_mksquashfs(
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ["-noappend", "-comp", "xz", "-no-xattrs", "-no-fragments"]
-    if snap_type not in ("os", "base"):
+    if snap_type != "base":
         mksquashfs_args.append("-all-root")
 
     complete_command = [
@@ -126,7 +126,7 @@ def _run_mksquashfs(
                     count = 0
                 progress_indicator.update(count)
                 count += 1
-                time.sleep(.2)
+                time.sleep(0.2)
                 ret = proc.poll()
         print("")
         if ret != 0:
