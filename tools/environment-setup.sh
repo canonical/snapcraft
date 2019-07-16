@@ -14,9 +14,16 @@ if ! grep -q '^name: snapcraft$' snap/snapcraft.yaml; then
 fi
 
 # Create the container
-lxc init ubuntu:16.04 snapcraft-dev
-lxc config set snapcraft-dev raw.idmap "both $UID 1000"
-lxc start snapcraft-dev
+if ! lxc info snapcraft-dev >/dev/null 2>&1; then
+    lxc init ubuntu:16.04 snapcraft-dev
+fi
+if ! lxc config get snapcraft-dev raw.idmap | grep -q "both $UID 1000"; then
+    lxc config set snapcraft-dev raw.idmap "both $UID 1000"
+fi
+
+if ! lxc info snapcraft-dev | grep -q "Status: Running"; then
+    lxc start snapcraft-dev
+fi
 
 # Wait for cloud-init before moving on
 lxc exec snapcraft-dev -- cloud-init status --wait
@@ -51,8 +58,10 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --upgrade pip
 
 # Now that /home/ubuntu has been used, add the project
-lxc config device add snapcraft-dev snapcraft-project disk \
-    source="$PWD" path=/home/ubuntu/snapcraft
+if ! lxc config device show snapcraft-dev | grep -q snapcraft-project; then
+    lxc config device add snapcraft-dev snapcraft-project disk \
+        source="$PWD" path=/home/ubuntu/snapcraft
+fi
 
 # Install python dependencies
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install \
