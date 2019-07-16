@@ -9,8 +9,12 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
+  # export the full path for sudo to work
+  SNAP_DIR="$(realpath "$SNAP_DIR")"
+  export SNAP_DIR
   cd "$SNAP_DIR"
-  snapcraft clean --use-lxd
+
+  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -18,6 +22,9 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  # export the full path for sudo to work
+  SNAP_DIR="$(realpath "$SNAP_DIR")"
+  export SNAP_DIR
   cd "$SNAP_DIR"
 
   # lxd mounting as root is just not going to work.
