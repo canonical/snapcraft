@@ -8,6 +8,8 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  chown ubuntu "$SNAP_DIR"
+
 restore: |
   # export the full path for sudo to work
   SNAP_DIR="$(realpath "$SNAP_DIR")"
@@ -16,6 +18,8 @@ restore: |
 
   sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   rm -f ./*.snap
+
+  chown root "$SNAP_DIR"
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
