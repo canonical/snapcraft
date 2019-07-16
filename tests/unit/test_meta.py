@@ -346,6 +346,7 @@ class CreateTestCase(CreateBaseTestCase):
                 "environment": {"XDG_SOMETHING": "$SNAP_USER_DATA", "LANG": "C"},
             },
             "app5": {"command": "app.sh", "common-id": "test-common-id"},
+            "app6": {"command": "app.sh", "autostart": "app6.desktop"},
         }
         self.config_data["plugs"] = {"network-server": {"interface": "network-bind"}}
 
@@ -382,6 +383,10 @@ class CreateTestCase(CreateBaseTestCase):
                 "app5": {
                     "command": "snap/command-chain/snapcraft-runner $SNAP/command-app5.wrapper",
                     "common-id": "test-common-id",
+                },
+                "app6": {
+                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app6.wrapper",
+                    "autostart": "app6.desktop",
                 },
             },
             "description": "my description",
