@@ -65,6 +65,18 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
+    def get_package_for_file(cls, file_path: str) -> str:
+        """Return the package name that provides file_path.
+
+        :param str file_path: the absolute path to the file to search for.
+        :returns: package name that provides file_path.
+        :rtype: str
+        :raises snapcraft.repo.errors.FileProviderNotFound:
+            if file_path is not provided by any package.
+        """
+        raise errors.NoNativeBackendError()
+
+    @classmethod
     def get_packages_for_source_type(cls, source_type):
         """Return a list of packages required to to work with source_type.
 

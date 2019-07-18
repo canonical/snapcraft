@@ -20,6 +20,7 @@ from subprocess import CalledProcessError
 from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
 
 from testtools.matchers import Contains, Equals, FileExists, Not
+import fixtures
 
 import snapcraft
 from snapcraft.internal import repo
@@ -582,3 +583,44 @@ class BuildPackagesTestCase(unit.TestCase):
         )
 
         mock_check_call.assert_called_once_with(["sudo", "apt", "update"])
+
+
+class PackageForFileTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        def fake_dpkg_query(*args, **kwargs):
+            # dpkg-query -S file_path
+            if args[0][2] == "/bin/bash":
+                return "bash: /bin/bash\n".encode()
+            elif args[0][2] == "/bin/sh":
+                return (
+                    "diversion by dash from: /bin/sh\n"
+                    "diversion by dash to: /bin/sh.distrib\n"
+                    "dash: /bin/sh\n"
+                ).encode()
+            else:
+                raise CalledProcessError(
+                    1,
+                    "dpkg-query: no path found matching pattern {}".format(args[0][2]),
+                )
+
+        self.useFixture(
+            fixtures.MockPatch("subprocess.check_output", side_effect=fake_dpkg_query)
+        )
+
+    def test_get_package_for_file(self):
+        self.assertThat(repo.Ubuntu.get_package_for_file("/bin/bash"), Equals("bash"))
+
+    def test_get_package_for_file_with_no_leading_slash(self):
+        self.assertThat(repo.Ubuntu.get_package_for_file("bin/bash"), Equals("bash"))
+
+    def test_get_package_for_file_with_diversions(self):
+        self.assertThat(repo.Ubuntu.get_package_for_file("/bin/sh"), Equals("dash"))
+
+    def test_get_package_for_file_not_found(self):
+        self.assertRaises(
+            repo.errors.FileProviderNotFound,
+            repo.Ubuntu.get_package_for_file,
+            "/bin/not-found",
+        )
