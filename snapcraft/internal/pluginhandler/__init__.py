@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,6 +32,7 @@ from snapcraft.internal import common, elf, errors, repo, sources, states, steps
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
+from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
 from ._runner import Runner
@@ -891,16 +892,13 @@ class PluginHandler:
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
-        if system:
-            formatted_system = "\n".join(sorted(system))
-            # We cannot error if we consider the content interface...
-            logger.warning(
-                "The {part_name!r} part needs the following libraries that are not "
-                "included in the snap or base: \n{files}\nThese dependencies can be "
-                "satisfied via more stage-packages, more parts, or content sharing.".format(
-                    part_name=self.name, files=formatted_system
-                )
-            )
+        resolver = MissingDependencyResolver(elf_files=system)
+        resolver.print_resolutions(
+            part_name=self.name,
+            stage_packages_exist=self._part_properties.get("stage-packages"),
+            echoer=logger,
+        )
+
         return dependency_paths
 
     def get_primed_dependency_paths(self):
