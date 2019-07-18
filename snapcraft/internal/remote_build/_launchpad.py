@@ -111,7 +111,7 @@ class LaunchpadClient:
         except restfulclient.errors.NotFound:
             pass
 
-    def start_build(self, timeout: int = 5, attempts: int = 5) -> int:
+    def start_build(self, timeout: int = 5, attempts: int = 30) -> int:
         """Initiate a new snap build."""
         owner = self._lp.people[self.user]
         dist = self._lp.distributions["ubuntu"]
@@ -132,8 +132,21 @@ class LaunchpadClient:
             )
             if builds.entries:
                 break
-            time.sleep(timeout)
+
+            count = i + 1
+            if count < attempts:
+                logger.info(
+                    "Builder busy, will retry in {} seconds... (attempt #{} of {})".format(
+                        timeout, count, attempts
+                    )
+                )
+                time.sleep(timeout)
         else:
+            logger.info(
+                "Builder busy, bailing... (attempt #{} of {})".format(
+                    attempts, attempts
+                )
+            )
             self.delete_snap()
             raise errors.RemoteBuilderNotReadyError()
 

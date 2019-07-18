@@ -195,7 +195,7 @@ def remote_build(
         )
 
         # Start building
-        req_number = lp.start_build(timeout=5, attempts=5)
+        req_number = lp.start_build()
         echo.info(
             "If interrupted, resume with: 'snapcraft remote-build --recover {}'".format(
                 req_number
