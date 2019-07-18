@@ -55,6 +55,14 @@ class CacheUpdateFailedError(RepoError):
         super().__init__(errors=errors)
 
 
+class FileProviderNotFound(RepoError):
+
+    fmt = "{file_path} is not provided by any package."
+
+    def __init__(self, *, file_path: str) -> None:
+        super().__init__(file_path=file_path)
+
+
 class BuildPackageNotFoundError(RepoError):
 
     fmt = "Could not find a required package in 'build-packages': {package}"

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import functools
 import glob
 import hashlib
 import logging
@@ -55,6 +56,31 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+
+
+@functools.lru_cache(maxsize=256)
+def _run_dpkg_query_s(file_path: str) -> str:
+    try:
+        output = (
+            subprocess.check_output(
+                ["dpkg-query", "-S", os.path.join(os.path.sep, file_path)],
+                stderr=subprocess.STDOUT,
+                env=dict(LANG="C.UTF-8"),
+            )
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError as call_error:
+        logger.debug(
+            "Error finding package for {}: {}".format(file_path, str(call_error))
+        )
+        raise errors.FileProviderNotFound(file_path=file_path) from call_error
+
+    # Remove diversions
+    provides_output = [p for p in output.splitlines() if not p.startswith("diversion")][
+        0
+    ]
+    return provides_output.split(":")[0]
 
 
 class _AptCache:
@@ -269,6 +295,10 @@ class Ubuntu(BaseRepo):
             }
 
         return _library_list[package_name].copy()
+
+    @classmethod
+    def get_package_for_file(cls, file_path: str) -> str:
+        return _run_dpkg_query_s(file_path)
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
