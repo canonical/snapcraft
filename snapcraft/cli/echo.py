@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,6 +24,11 @@ import click
 
 from typing import Any
 from snapcraft.internal import common
+
+
+def is_tty_connected() -> bool:
+    """ Check to see if running under TTY. """
+    return sys.stdin.isatty()
 
 
 def wrapped(msg: str) -> None:
@@ -80,7 +85,7 @@ def confirm(
             show_default=show_default,
             err=err,
         )
-        if sys.stdin.isatty()
+        if is_tty_connected()
         else default
     )
 
@@ -111,6 +116,6 @@ def prompt(
             show_default=show_default,
             err=err,
         )
-        if sys.stdin.isatty()
+        if is_tty_connected()
         else default
     )
