@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import sys
 import typing
@@ -22,6 +23,7 @@ import click
 
 from . import echo
 from . import env
+from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 from ._options import add_build_options, get_project
 from snapcraft.internal import (
     errors,
@@ -37,6 +39,9 @@ from snapcraft.project._sanity_checks import (
     get_project_environment_warnings,
 )
 from snapcraft.project.errors import YamlValidationError
+
+
+logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from snapcraft.internal.project import Project  # noqa: F401
@@ -54,6 +59,7 @@ def _execute(  # noqa: C901
     **kwargs
 ) -> "Project":
     # fmt: on
+    _clean_provider_error()
     build_environment = env.BuilderEnvironmentConfig()
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
@@ -91,6 +97,7 @@ def _execute(  # noqa: C901
                 else:
                     instance.execute_step(step)
             except Exception:
+                _retrieve_provider_error(instance)
                 if project.debug:
                     instance.shell()
                 else:
@@ -116,6 +123,21 @@ def _execute(  # noqa: C901
 def _pack(directory: str, *, output: str) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
+
+
+def _clean_provider_error() -> None:
+    if os.path.isfile(TRACEBACK_HOST):
+        try:
+            os.remove(TRACEBACK_HOST)
+        except Exception as e:
+            logger.debug("can't remove error file: {}", str(e))
+
+
+def _retrieve_provider_error(instance) -> None:
+    try:
+        instance.pull_file(TRACEBACK_MANAGED, TRACEBACK_HOST, delete=True)
+    except Exception as e:
+        logger.debug("can't retrieve error file: {}", str(e))
 
 
 @click.group()
