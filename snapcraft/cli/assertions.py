@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -133,7 +133,7 @@ def edit_collaborators(snap_name, key_name):
                 " ".join(store_error.error_list[0]["extra"])
             )
         )
-        if click.confirm("Are you sure you want to continue?"):
+        if echo.confirm("Are you sure you want to continue?"):
             new_dev_assertion.push(force=True)
         else:
             echo.warning("The collaborators for this snap have not been altered.")
