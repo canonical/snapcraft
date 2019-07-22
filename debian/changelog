@@ -1,3 +1,69 @@
+snapcraft (3.7) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * static: use beta channel for black (#2606)
+  * catkin spread tests: dump apt-config on failures for legacy (#2610)
+  * rust plugin: use toml to dump the config (#2611)
+  * rust plugin: use rust-toolchain by default if present (#2613)
+  * conda plugin: new plugin (#2608)
+  * build providers: support injection for LXD (#2621)
+  * schema: remove support for os when using bases (#2626)
+  * appstream extractor: skip non icon file paths (#2630)
+  * spread tests: enable LXD build provider tests (#2631)
+  * build environment: detect base type and use name as base
+  * plugins: use get_build_base to determine base support
+  * project: add support for build-base
+  * repo: add support for querying file ownership
+  * pluginhandler: suggest stage-packages for missing DT_NEEDED
+  * tests: add python3-toml for autopkgtests
+  * spread tests: limit conda plugin to non autopkgtests x86-64 systems
+  * spread tests: crystal tests should only run on x86-64
+
+  [ Chris Patterson ]
+  * black: minor format changes from updated black (#2603)
+  * sources: introduce SnapcraftSourceNotFoundError (#2604)
+  * spread: use more workers to reduce job times
+  * catkin/legacy-pull: set test to manual
+  * cli: convert users of click.confirm/prompt to echo.confirm/prompt
+  * echo: respect SNAPCRAFT_HAS_TTY for is_tty_connected()
+  * ant plugin: switch to using ant snap for building (by default)
+  * general spread tests: set base for cwd test (#2618)
+  * errors: refactor exception/error handling (#2602)
+  * tests/unit/pluginhandler: introduce tests to repro symlink preservation bug
+  * file_utils/create_similar_directory: drop follow_symlinks option
+  * pluginhandler: honour symlink directory paths for filesets (LP: #1833408)
+  * test_pluginhandler: remove faulty (redundant) tests
+  * schema: synchronizing snapd supported schema to snapcraft (#2627)
+
+  [ Brian J. Cardiff ]
+  * crystal plugin: new plugin (#2598)
+
+  [ Mike Miller ]
+  * build providers: enforce well-known temp dir (#2607) (LP: #1833292)
+
+  [ Pawel Stolowski ]
+  * schema: allow snapd as snap type (#2609)
+
+  [ Claudio Matsuoka ]
+  * echo: add wrappers for click.prompt() and click.confirm()
+
+  [ Kyle Fazzari ]
+  * colcon plugin: add support for dashing (#2593)
+
+  [ anatoly techtonik ]
+  * cli: add -h short option for help (#2527) (LP: #1807423)
+
+  [ Stefan Bodewig ]
+  * use the stable risk level now that ant has been released
+
+  [ Chris MacNaughton ]
+  * rust plugin: add ability to rebuild (#2620) (LP: #1825858)
+
+  [ Carlo Lobrano ]
+  * tools: let environment-setup.sh skip unnecessary steps (#2625)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 22 Jul 2019 19:10:34 +0000
+
 snapcraft (3.6) xenial; urgency=medium
 
   [ Sergio Schvezov ]
