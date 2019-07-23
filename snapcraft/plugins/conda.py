@@ -120,7 +120,7 @@ class CondaPlugin(snapcraft.BasePlugin):
 
     def pull(self):
         if self.project.deb_arch != "amd64":
-            raise MinicondaBadArchitectureError(architecture=self.project_arch)
+            raise MinicondaBadArchitectureError(architecture=self.project.deb_arch)
         miniconda_source_script = self._get_miniconda_source()
         miniconda_source_script.download(filepath=self._miniconda_script)
         os.chmod(self._miniconda_script, mode=0o755)

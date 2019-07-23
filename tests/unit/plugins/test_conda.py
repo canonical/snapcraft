@@ -47,6 +47,9 @@ class CondaPluginBaseTest(unit.TestCase):
             target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
         )
 
+        if self.project.deb_arch != "amd64":
+            self.skipTest("architecture is not supported by conda plugin")
+
         self.fake_check_call = fixtures.MockPatch("subprocess.check_call")
         self.useFixture(self.fake_check_call)
 
