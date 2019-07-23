@@ -36,6 +36,8 @@ _DEPRECATION_MESSAGES = {
     "dn7": "The 'prepare' keyword has been replaced by 'override-build'",
     "dn8": "The 'build' keyword has been replaced by 'override-build'",
     "dn9": "The 'install' keyword has been replaced by 'override-build'",
+    "dn10": "The 'version-script' keyword has been deprecated in favour of "
+    "the 'snapcraftctl set-version' part scriptlet.",
 }
 
 _DEPRECATION_URL_FMT = "http://snapcraft.io/docs/deprecation-notices/{id}"
