@@ -525,9 +525,14 @@ class _SnapPackaging:
             snap_yaml["base"] = self._config_data["base"]
 
         # Reparse the version, the order should stick.
-        snap_yaml["version"] = _version.get_version(
-            self._config_data["version"], self._config_data.get("version-script")
-        )
+        version = self._config_data["version"]
+        version_script = self._config_data.get("version-script")
+
+        if version_script:
+            # Deprecation warning for use of version-script.
+            handle_deprecation_notice("dn10")
+
+        snap_yaml["version"] = _version.get_version(version, version_script)
 
         for key_name in _OPTIONAL_PACKAGE_KEYS:
             if key_name in self._config_data:
