@@ -273,7 +273,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "Failed to generate snap metadata: "
                     "The specified command 'test-command' defined in the app "
                     "'test-app' does not exist or is not executable.\n"
-                    "Ensure that 'test-command' is relative to the prime directory."
+                    "Ensure that 'test-command' is installed with the correct path."
                 ),
             },
         ),
@@ -286,7 +286,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "Failed to generate snap metadata: "
                     "The specified command 'test-command' defined in the app "
                     "'test-app' does not exist.\n"
-                    "Ensure that 'test-command' is relative to the prime directory."
+                    "Ensure that 'test-command' is installed with the correct path."
                 ),
             },
         ),
