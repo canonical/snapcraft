@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -48,8 +48,9 @@ def conduct_project_sanity_check(project: Project) -> None:
     if project.info is not None:
         project.info.validate_raw_snapcraft()
 
-    snap_dir_path = os.path.join(project._project_dir, "snap")
+    snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):
+        # TODO: move this check to the ProjectInfo class.
         _check_snap_dir(snap_dir_path)
 
 
@@ -76,14 +77,17 @@ def _check_snap_dir(snap_dir_path: str) -> None:
                 unexpected_paths.add(path)
 
     if unexpected_paths:
-        logger.warn(
-            "The snap/ directory is meant specifically for snapcraft, but it contains "
+        snap_dir_relpath = os.path.relpath(snap_dir_path, os.getcwd())
+        logger.warning(
+            "The {snap_dir!r} directory is meant specifically for snapcraft, but it contains "
             "the following non-snapcraft-related paths, which is unsupported and will "
             "cause unexpected behavior:"
-            "\n- {}\n\n"
-            "If you must store these files within the snap/ directory, move them to "
-            "snap/local/, which is ignored by snapcraft.".format(
-                "\n- ".join(sorted(unexpected_paths))
+            "\n- {unexpected_files}\n\n"
+            "If you must store these files within the {snap_dir!r} directory, move them to "
+            "{snap_dir_local!r}, which is ignored by snapcraft.".format(
+                snap_dir=snap_dir_relpath,
+                snap_dir_local=os.path.join(snap_dir_relpath, "local"),
+                unexpected_files="\n- ".join(sorted(unexpected_paths)),
             )
         )
 

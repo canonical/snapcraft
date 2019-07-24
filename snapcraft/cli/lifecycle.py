@@ -63,14 +63,6 @@ def _execute(  # noqa: C901
     build_environment = get_build_environment(**kwargs)
     project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
 
-    echo.wrapped(
-        "Using {!r}: Project assets will be "
-        "searched for from the {!r} directory.".format(
-            project.info.snapcraft_yaml_file_path,
-            os.path.relpath(project._get_snapcraft_assets_dir(), project._project_dir),
-        )
-    )
-
     conduct_project_sanity_check(project)
 
     if build_environment.is_managed_host or build_environment.is_host:
