@@ -41,18 +41,49 @@ class BuildImpl:
         return ["url_for/snap_file_i386.snap"]
 
 
+class SnapBuildReqImpl(DictAttr):
+    def __init__(self, **kwargs):
+        self._data = {
+            "status": "Completed",
+            "error_message": "",
+            "self_link": "http://request_self_link/1234",
+            "builds_collection_link": "http://builds_collection_link",
+            "builds": DictAttr(
+                {
+                    "entries": [
+                        {
+                            "arch_tag": "i386",
+                            "buildstate": "Successfully built",
+                            "self_link": "http://build_self_link_1",
+                            "build_log_url": "url_for/build_log_file_1",
+                        },
+                        {
+                            "arch_tag": "amd64",
+                            "buildstate": "Failed to build",
+                            "self_link": "http://build_self_link_2",
+                            "build_log_url": "url_for/build_log_file_2",
+                        },
+                    ]
+                }
+            ),
+        }
+
+        # Easy updating to default dictionary.
+        self._data.update(**kwargs)
+
+    def lp_refresh(self):
+        pass
+
+
 class SnapImpl:
     def __init__(self):
         self.requestBuilds_mock = mock.Mock()
+        self.requestBuilds_impl = SnapBuildReqImpl()
         self.lp_delete_mock = mock.Mock()
 
     def requestBuilds(self, *args, **kw):
         self.requestBuilds_mock(*args, **kw)
-        request = {
-            "self_link": "http://request_self_link/1234",
-            "builds_collection_link": "http://builds_collection_link",
-        }
-        return DictAttr(request)
+        return self.requestBuilds_impl
 
     def lp_delete(self):
         self.lp_delete_mock()
@@ -81,6 +112,7 @@ class LaunchpadImpl:
         self.snaps = SnapsImpl()
         self.people = {"user": "/~user"}
         self.distributions = {"ubuntu": DistImpl()}
+        self.rbi = SnapBuildReqImpl()
 
     def load(self, url: str, *args, **kw):
         self.load_mock(url, *args, **kw)
@@ -93,23 +125,7 @@ class LaunchpadImpl:
         elif "http://build_self_link_1" in url:
             return BuildImpl()
         else:
-            builds = {
-                "entries": [
-                    {
-                        "arch_tag": "i386",
-                        "buildstate": "Successfully built",
-                        "self_link": "http://build_self_link_1",
-                        "build_log_url": "url_for/build_log_file_1",
-                    },
-                    {
-                        "arch_tag": "amd64",
-                        "buildstate": "Failed to build",
-                        "self_link": "http://build_self_link_2",
-                        "build_log_url": "url_for/build_log_file_2",
-                    },
-                ]
-            }
-            return DictAttr(builds)
+            return self.rbi.builds
 
 
 class LaunchpadTestCase(unit.TestCase):
@@ -161,15 +177,31 @@ class LaunchpadTestCase(unit.TestCase):
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
         num = lpc.start_build()
-        lpc._lp.load_mock.assert_called_once_with("http://builds_collection_link")
         self.assertThat(num, Equals("1234"))
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch(
-        "tests.unit.remote_build.test_launchpad.LaunchpadImpl.load",
-        return_value=DictAttr({"entries": []}),
+        "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
+        return_value=SnapBuildReqImpl(
+            status="Failed", error_message="snapcraft.yaml not found..."
+        ),
     )
-    def test_start_build_error(self, mock_load, mock_lp):
+    def test_start_build_error(self, mock_rb, mock_lp):
+        lpc = LaunchpadClient(self._project, "id")
+        lpc.user = "user"
+        lpc._lp = LaunchpadImpl()
+
+        raised = self.assertRaises(
+            errors.RemoteBuilderError, lpc.start_build, timeout=0, attempts=1
+        )
+        self.assertThat(str(raised), Contains("snapcraft.yaml not found..."))
+
+    @mock.patch("launchpadlib.launchpad.Launchpad")
+    @mock.patch(
+        "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
+        return_value=SnapBuildReqImpl(status="Pending", error_message=""),
+    )
+    def test_start_build_error_timeout(self, mock_rb, mock_lp):
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
