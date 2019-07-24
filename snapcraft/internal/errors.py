@@ -168,7 +168,32 @@ class InvalidAppCommandError(SnapcraftError):
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app_name!r} does "
         "not exist or is not executable.\n"
-        "Ensure that {command!r} is relative to the prime directory."
+        "Ensure that {command!r} is installed with the correct path."
+    )
+
+    def __init__(self, command, app_name):
+        super().__init__(command=command, app_name=app_name)
+
+
+class InvalidAppCommandNotFound(SnapcraftError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "The specified command {command!r} defined in the app {app_name!r} does "
+        "not exist.\n"
+        "Ensure that {command!r} is installed with the correct path."
+    )
+
+    def __init__(self, command, app_name):
+        super().__init__(command=command, app_name=app_name)
+
+
+class InvalidAppCommandNotExecutable(SnapcraftError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "The specified command {command!r} defined in the app {app_name!r} "
+        "is not executable."
     )
 
     def __init__(self, command, app_name):

@@ -633,14 +633,18 @@ class _SnapPackaging:
             command_without_args = command.split()[0]
             binary_path = os.path.join(self._prime_dir, command_without_args)
             is_executable = False
-            with contextlib.suppress(FileNotFoundError):
+            try:
                 mode = os.stat(binary_path).st_mode
                 is_executable = (
                     mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH
                 )
+            except FileNotFoundError:
+                raise errors.InvalidAppCommandNotFound(command_without_args, app_name)
 
             if not is_executable:
-                raise errors.InvalidAppCommandError(command_without_args, app_name)
+                raise errors.InvalidAppCommandNotExecutable(
+                    command_without_args, app_name
+                )
 
         # Finally, assuming there is a meta runner, add it to the BEGINNING of the
         # command chain. This is to ensure all subsequent commands in the chain get
@@ -656,7 +660,7 @@ class _SnapPackaging:
             try:
                 new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
             except FileNotFoundError:
-                raise errors.InvalidAppCommandError(command=app[k], app_name=app)
+                raise errors.InvalidAppCommandNotFound(command=app[k], app_name=app)
             except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
 
