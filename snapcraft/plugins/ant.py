@@ -34,10 +34,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Run the given ant targets.
 
     - ant-channel:
-      (string)
-      The channel to use for ant in the snap store, if not using tarball from
+      (string, default: latest/stable)
+      The channel to use for ant in the snap store, if not using tarballs from
       the ant archive (see ant-version and ant-version-checksum).
-      Defaults to latest/edge.
 
     - ant-version:
       (string)
@@ -55,11 +54,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       version available to the base will be used.
 
     - ant-buildfile
-      (string)
+      (string, default: build.xml)
       The path to the Ant buildfile to use, relative to the root of the
-      source tree
-      Defaults to a build.xml file in the root of the source tree.
-
+      source tree.
 """
 
 import logging
