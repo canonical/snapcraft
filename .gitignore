@@ -13,6 +13,7 @@ dist
 *.egg-info
 .eggs/
 *.pyc
+pip-wheel-metadata
 .coverage**
 htmlcov
 __pycache__
