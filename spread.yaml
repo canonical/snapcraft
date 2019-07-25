@@ -200,6 +200,12 @@ suites:
  tests/spread/plugins/catkin/:
    summary: tests of snapcraft's Catkin plugin
    kill-timeout: 180m
+   systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
  tests/spread/plugins/copy/:
    summary: tests of snapcraft's Copy plugin
  tests/spread/plugins/cmake/:

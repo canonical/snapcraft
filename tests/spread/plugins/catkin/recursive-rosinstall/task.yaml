@@ -10,9 +10,6 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-# ROS Kinetic only supports 16.04
-systems: [ubuntu-16.04*]
-
 execute: |
   cd "$SNAP_DIR"
 
