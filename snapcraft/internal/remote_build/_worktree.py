@@ -35,13 +35,18 @@ logger = logging.getLogger(__name__)
 class WorkTree:
     """Manages tree for remote-build project."""
 
-    def __init__(self, worktree_dir: str, project: Project) -> None:
+    def __init__(
+        self, worktree_dir: str, project: Project, package_all_sources=False
+    ) -> None:
         """Create remote-build WorkTree.
 
         :param str worktree_dir: Directory to use for working tree.
         :param Project project: Snapcraft project.
+        :param bool package_all_sources: Package all sources instead of
+               the default of local-only sources.
         """
         self._project = project
+        self._package_all_sources = package_all_sources
 
         # Get snapcraft yaml (as OrderedDict).
         self._snapcraft_config = (
@@ -157,8 +162,11 @@ class WorkTree:
         else:
             print_name = part_name
 
-        # Skip non-local sources (the remote builder can fetch those directly).
-        if not isinstance(source_handler, snapcraft.internal.sources.Local):
+        # Skip non-local sources (the remote builder can fetch those directly),
+        # unless configured to package all sources.
+        if not self._package_all_sources and not isinstance(
+            source_handler, snapcraft.internal.sources.Local
+        ):
             logger.debug("passing through source for {}: {}".format(print_name, source))
             return source
 
