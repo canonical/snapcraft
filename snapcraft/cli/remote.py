@@ -67,6 +67,11 @@ def remotecli():
     cls=PromptOption,
 )
 @click.option(
+    "--package-all-sources",
+    is_flag=True,
+    help="Package all sources to send to remote builder, not just local sources.",
+)
+@click.option(
     "--user", metavar="<username>", nargs=1, required=False, help="Launchpad username."
 )
 def remote_build(
@@ -75,6 +80,7 @@ def remote_build(
     user: str,
     arch: str,
     accept_public_upload: bool,
+    package_all_sources: bool,
     echoer=echo,
 ) -> None:
     """Dispatch a snap for remote build.
@@ -137,7 +143,7 @@ def remote_build(
 
     # Pull/update sources for project.
     worktree_dir = os.path.join(remote_dir, "worktree")
-    wt = WorkTree(worktree_dir, project)
+    wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
     repo_dir = wt.prepare_repository()
 
     # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
