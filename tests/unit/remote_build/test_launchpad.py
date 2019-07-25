@@ -20,16 +20,20 @@ import textwrap
 from snapcraft.internal.remote_build import LaunchpadClient, errors
 from testtools.matchers import Equals, Contains
 from tests import unit
-from typing import Any, Dict
 from unittest import mock
 
 
-class DictAttr:
-    def __init__(self, data: Dict[str, Any]):
-        self._data = data
+class FakeLaunchpadObject:
+    """Mimic behavior of many launchpad objects."""
 
-    def __getattr__(self, attr):
-        return self._data[attr]
+    def __init__(self):
+        pass
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __getitem__(self, key):
+        return self.__getattribute__(key)
 
 
 class BuildImpl:
@@ -41,35 +45,49 @@ class BuildImpl:
         return ["url_for/snap_file_i386.snap"]
 
 
-class SnapBuildReqImpl(DictAttr):
-    def __init__(self, **kwargs):
-        self._data = {
-            "status": "Completed",
-            "error_message": "",
-            "self_link": "http://request_self_link/1234",
-            "builds_collection_link": "http://builds_collection_link",
-            "builds": DictAttr(
-                {
-                    "entries": [
-                        {
-                            "arch_tag": "i386",
-                            "buildstate": "Successfully built",
-                            "self_link": "http://build_self_link_1",
-                            "build_log_url": "url_for/build_log_file_1",
-                        },
-                        {
-                            "arch_tag": "amd64",
-                            "buildstate": "Failed to build",
-                            "self_link": "http://build_self_link_2",
-                            "build_log_url": "url_for/build_log_file_2",
-                        },
-                    ]
-                }
-            ),
-        }
+class SnapBuildEntryImpl(FakeLaunchpadObject):
+    def __init__(self, arch_tag="", buildstate="", self_link="", build_log_url=""):
+        self.arch_tag = arch_tag
+        self.buildstate = buildstate
+        self.self_link = self_link
+        self.build_log_url = build_log_url
 
-        # Easy updating to default dictionary.
-        self._data.update(**kwargs)
+
+class SnapBuildsImpl(FakeLaunchpadObject):
+    def __init__(
+        self,
+        entries=[
+            SnapBuildEntryImpl(
+                arch_tag="i386",
+                buildstate="Successfully built",
+                self_link="http://build_self_link_1",
+                build_log_url="url_for/build_log_file_1",
+            ),
+            SnapBuildEntryImpl(
+                arch_tag="amd64",
+                buildstate="Failed to build",
+                self_link="http://build_self_link_2",
+                build_log_url="url_for/build_log_file_2",
+            ),
+        ],
+    ):
+        self.entries = entries
+
+
+class SnapBuildReqImpl(FakeLaunchpadObject):
+    def __init__(
+        self,
+        status="Completed",
+        error_message="",
+        self_link="http://request_self_link/1234",
+        builds_collection_link="http://builds_collection_link",
+        builds=SnapBuildsImpl(),
+    ):
+        self.status = status
+        self.error_message = error_message
+        self.self_link = self_link
+        self.builds_collection_link = builds_collection_link
+        self.builds = builds
 
     def lp_refresh(self):
         pass
@@ -117,11 +135,7 @@ class LaunchpadImpl:
     def load(self, url: str, *args, **kw):
         self.load_mock(url, *args, **kw)
         if "/+build-request/" in url:
-            request = {
-                "self_link": "http://request_self_link/1234",
-                "builds_collection_link": "http://builds_collection_link",
-            }
-            return DictAttr(request)
+            return SnapBuildReqImpl()
         elif "http://build_self_link_1" in url:
             return BuildImpl()
         else:
