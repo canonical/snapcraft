@@ -27,3 +27,4 @@ prime
 .vscode
 .mypy_cache
 .spread-reuse.*
+.idea/
