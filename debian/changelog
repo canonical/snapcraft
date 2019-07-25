@@ -1,3 +1,103 @@
+snapcraft (2.44) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * docker: support for testing snapcraft in proposed (#2245)
+  * snap: add the https transport (#2244)
+  * build providers: environment setup for projects (#2225)
+  * build providers: provide support to shell in (#2249)
+  * build providers: shell in provider if debug is used (#2252)
+  * build-providers: add support for --shell-after  (#2253)
+  * build providers: add support for --shell (#2254)
+  * build providers: snapcraft images for multipass (#2258)
+  * build providers: allow setting ram and disk size (#2260)
+  * build providers: inject the base for classic (#2261)
+  * build providers: allow snapcraft channel selection (#2265)
+  * build providers: refresh packages on bring up (#2267)
+  * build providers: let the implementor pick the image (#2269)
+  * reporting: fail gracefully on submit errors (#2271)
+  * meta: friendlier message for incorrect app command (#2272)
+  * snap: use a newer PyYAML and drop patches (#2274)
+  * build providers: use the best CPU configuration (#2273)
+  * build providers: use the provider if exported (#2275)
+  * snap: move to a newer pysha3 (#2277)
+  * spread: move legacy wiki tests to spread (#2276)
+  * snap: pull early (#2278)
+  * build providers: re-exec as root (#2281)
+  * build providers: cleaner start and launch messaging (#2282)
+  * setup: improve dir setup for when running in legacy mode (#2307)
+  * snap: legacy needs to now it is legacy for re-exec (#2311)
+  * meta: support relocatable prime for path verification (#2287) (#2312)
+  * nodejs plugin: add support for ppc64el and s390x (#2310) (#2310) (#2314)
+  * tests: add spread suite for plainbox plugin (#2317) (#2321)
+  * project_loader: add git to build-packages for version: git (#2403) (#2406)
+  * yaml_utils: allow unicode while encoding (#2414) (#2416)
+  * clean: user friendly message when cleaning (#2422)
+  * rust plugin: refactor to use the latest rustup
+  * tests: remove osx tests for legacy
+  * static: fix new shell check issues
+  * project loader: remove special LD_LIBRARY_FLAGS handling for classic
+  * meta: handle symlinked hooks (#2478) (#2481)
+  * common: add is_deb method
+  * lifecycle: warn about bases
+  * unit tests: stricter testing for common.is_deb
+  * common: take into account dpkg not being found
+  * common: check if running from snap before deb
+  * common: check for relative argv0 in is_deb
+  * repo: set priority to critical for debs
+  * cli: convert users of click.confirm/prompt to echo.confirm/prompt
+  * cli: retrieve error data from provider (#2455)
+  * tests: use more fine grained assertions in lifecycle tests (#2637)
+  * spread tests: finer grained system selection for unicode test
+  * rust plugin: fix linker on i386 (#2580)
+  * tests: skip rust unit tests on s390x
+  * spread tests: finer grained system support for catkin tests
+  * New upstream release (LP: #1837823)
+
+  [ Kyle Fazzari ]
+  * yaml loading: properly handle unhashable types (#2247)
+  * pluginhandler: stop using alias for snapcraftctl (#2251)
+  * local source: don't include .snapcraft directory (#2256)
+  * meta: take charge of environment used to run commands (#2257)
+  * cli: show trace if no tty (#2259)
+  * catkin plugin: use SnapcraftException (#2255)
+  * project_loader: add preflight check (#2250)
+  * project: catch parent YAML exceptions (#2263)
+  * tests: disable integration tests using snaps in bionic container (#2266)
+  * catkin, rosdep: stop using FileNotFoundErrors (#2270)
+  * sanity checks: allow snap/local dir (#2268)
+  * sanity checks: run properly on build VMs (#2279)
+  * snapcraft snap: refactor override-build into a script (#2283)
+  * packaging: pin click to v6 in requirements.txt (#2299)
+  * part grammar processor: lazily capture attributes from plugin (#2297)
+  * requirements.txt: stop using pymacaroons-pynacl (#2303)
+  * pluginhandler: update build should overwrite organize (#2290) (#2305)
+  * ruby plugin: support new download URL (#2467)
+  * integration tests: use correct series in get_package_version (#2549)
+  * catkin spread test: allow python2 as well as python (#2547)
+  * catkin plugin: ensure cxxflags are consistent (#2546)
+  * tests: stop testing indigo in catkin spread (#2572)
+  * catkin plugin: remove default rosdistro (#2576)
+  * repo,baseplugin: support trusting repo keys (#2437)
+
+  [ Chris Patterson ]
+  * static: use beta channel for black
+  * errors: refactor exception/error handling (#2602)
+  * echo: respect SNAPCRAFT_HAS_TTY for is_tty_connected()
+
+  [ John Lenton ]
+  * yaml: replace yaml.safe_load() with CSafeLoader (#2218)
+
+  [ Michał Sawicz ]
+  * meta: make hooks executable instead of complaining they are not (#2441)
+
+  [ artivis ]
+  * plugin ament: support trusting repo keys
+
+  [ Claudio Matsuoka ]
+  * echo: add wrappers for click.prompt() and click.confirm()
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 25 Jul 2019 01:59:51 +0000
+
 snapcraft (2.43.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
