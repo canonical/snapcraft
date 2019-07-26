@@ -113,7 +113,7 @@ class TestLinkOrCopyTree(unit.TestCase):
 
     def test_link_file_to_file_raises(self):
         raised = self.assertRaises(
-            NotADirectoryError, file_utils.link_or_copy_tree, "1", "qux"
+            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
         )
 
         self.assertThat(str(raised), Equals("'1' is not a directory"))
@@ -121,7 +121,7 @@ class TestLinkOrCopyTree(unit.TestCase):
     def test_link_file_into_directory(self):
         os.mkdir("qux")
         raised = self.assertRaises(
-            NotADirectoryError, file_utils.link_or_copy_tree, "1", "qux"
+            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
         )
 
         self.assertThat(str(raised), Equals("'1' is not a directory"))
@@ -135,7 +135,7 @@ class TestLinkOrCopyTree(unit.TestCase):
     def test_link_directory_overwrite_file_raises(self):
         open("qux", "w").close()
         raised = self.assertRaises(
-            NotADirectoryError, file_utils.link_or_copy_tree, "foo", "qux"
+            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "foo", "qux"
         )
 
         self.assertThat(
