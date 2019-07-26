@@ -22,6 +22,7 @@ from unittest import mock
 from testtools.matchers import DirExists, Equals, FileContains, FileExists, Not
 
 from snapcraft.internal import common
+from snapcraft.internal import errors
 from snapcraft.internal import sources
 from tests import unit
 
@@ -84,7 +85,7 @@ class TestLocal(unit.TestCase):
         os.symlink("dummy", "destination")
 
         local = sources.Local("src", "destination")
-        self.assertRaises(NotADirectoryError, local.pull)
+        self.assertRaises(errors.SnapcraftEnvironmentError, local.pull)
 
     def test_pull_with_existing_source_file_error(self):
         os.makedirs(os.path.join("src", "dir"))
@@ -94,7 +95,7 @@ class TestLocal(unit.TestCase):
         open("destination", "w").close()
 
         local = sources.Local("src", "destination")
-        self.assertRaises(NotADirectoryError, local.pull)
+        self.assertRaises(errors.SnapcraftEnvironmentError, local.pull)
 
     def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self):
         os.makedirs(os.path.join("src", "dir"))

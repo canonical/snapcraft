@@ -197,12 +197,12 @@ def link_or_copy_tree(
     """
 
     if not os.path.isdir(source_tree):
-        raise NotADirectoryError("{!r} is not a directory".format(source_tree))
+        raise SnapcraftEnvironmentError("{!r} is not a directory".format(source_tree))
 
     if not os.path.isdir(destination_tree) and (
         os.path.exists(destination_tree) or os.path.islink(destination_tree)
     ):
-        raise NotADirectoryError(
+        raise SnapcraftEnvironmentError(
             "Cannot overwrite non-directory {!r} with directory "
             "{!r}".format(destination_tree, source_tree)
         )
