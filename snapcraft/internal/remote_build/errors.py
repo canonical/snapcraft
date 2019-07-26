@@ -45,19 +45,33 @@ class NotGitRepositoryError(RemoteBuildBaseError):
     fmt = "Current directory is not a git repository."
 
 
-class GitNotFoundError(RemoteBuildBaseError):
+class GitNotFoundVersionError(RemoteBuildBaseError):
 
     fmt = (
-        "This snapcraft version requires git to be installed on your system to "
-        "execute remote-build. Please install git and run the command again."
+        "This remote-build project requires `git` to be installed "
+        "because of it use of `version: git`.  Either install `git`, "
+        "set the `version` statically, or use the `snapcraftctl set-version` "
+        "part scriptlet with `adopt-info`."
     )
 
 
-class InvalidVersionGitError(RemoteBuildBaseError):
+class GitNotFoundProviderError(RemoteBuildBaseError):
 
     fmt = (
-        "Can't use version 'git' in a non-git remote build.\n"
-        "Either build with --git, or use a different version in snapcraft.yaml."
+        "The remote build provider ({provider!r}) requires "
+        "the use of the `git` utility, and `git` is not installed. "
+        "Please install `git` and run the command again."
+    )
+
+    def __init__(self, *, provider: str) -> None:
+        super().__init__(provider=provider)
+
+
+class BaseRequiredError(RemoteBuildBaseError):
+
+    fmt = (
+        "Remote build currently requires that the project uses bases.\n"
+        "Please specify an appropriate `base` keyword and try again."
     )
 
 
@@ -95,6 +109,15 @@ class UnsupportedArchitectureError(RemoteBuildBaseError):
 
     def __init__(self, *, archs: List[str]) -> None:
         super().__init__(archs=", ".join(archs))
+
+
+class UnsupportedVersionScriptError(RemoteBuildBaseError):
+
+    fmt = (
+        "Remote-build does not support the use of `version-script`.\n"
+        "Please use `snapcraftctl set-version` part scriptlet with "
+        "`adopt-info`, or set `version` statically."
+    )
 
 
 class AcceptPublicUploadError(RemoteBuildBaseError):

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import importlib
 import logging
 import os
 import shutil
@@ -26,11 +28,11 @@ from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
 from typing import Any, Dict, List, Tuple
 from xdg import BaseDirectory
-from snapcraft.project import Project
 from . import errors
 
 import snapcraft
 from snapcraft.config import Config
+from snapcraft.project import Project
 
 _LP_POLL_INTERVAL = 30
 _LP_SUCCESS_STATUS = "Successfully built"
@@ -43,6 +45,11 @@ class LaunchpadClient:
     """Launchpad remote builder operations."""
 
     def __init__(self, project: Project, build_id: str) -> None:
+        try:
+            self._git_module = importlib.import_module("git")  # type: Any
+        except ImportError:
+            raise errors.GitNotFoundProviderError(provider="Launchpad")
+
         self._id = build_id
         self._core_channel = "stable"
         self._snapcraft_channel = "edge"
@@ -83,7 +90,7 @@ class LaunchpadClient:
             version="devel",
         )
 
-    def create_snap(self, repository: str, branch: str, archs: List[str]) -> None:
+    def create_snap(self, repository: str, archs: List[str]) -> None:
         """Create a snap recipe."""
         logger.debug("Create snap for {}".format(self._id))
         # TODO: remove this after launchpad infrastructure is ready (LP #1827679)
@@ -92,7 +99,7 @@ class LaunchpadClient:
             "name": self._id,
             "owner": "/~" + self.user,
             "git_repository_url": url,
-            "git_path": branch,
+            "git_path": "master",
             "auto_build": False,
             "auto_build_archive": "/ubuntu/+archive/primary",
             "auto_build_pocket": "Updates",
@@ -130,7 +137,6 @@ class LaunchpadClient:
                 )
             )
 
-            # No entries yet, sleep for specified duration.
             time.sleep(timeout)
 
             # Refresh status.
@@ -276,3 +282,35 @@ class LaunchpadClient:
         logger.debug("Download snap from {!r}".format(url))
         with urllib.request.urlopen(url) as response, open(name, "wb") as snapfile:
             shutil.copyfileobj(response, snapfile)  # type: ignore
+
+    def _gitify_repository(self, repo_dir: str):
+        """Git-ify source repository tree.
+
+        :return: Git repo.
+        """
+        git_repo = self._git_module.Repo.init(repo_dir)
+
+        for f in os.listdir(repo_dir):
+            if f != ".git":
+                git_repo.index.add([f])
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        git_repo.index.commit(
+            "snapcraft commit\n\nversion: {}\ntimestamp: {}\n".format(
+                snapcraft.__version__, timestamp
+            )
+        )
+
+        return git_repo
+
+    def push_source_tree(self, user: str, repo_dir: str) -> str:
+        """Push source tree to launchpad, returning URL."""
+        git_repo = self._gitify_repository(repo_dir)
+
+        url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}/".format(
+            user=user, id=self._id
+        )
+
+        logger.info("Sending data to remote builder... ({})".format(url))
+        git_repo.git.push(url, "HEAD:master", force=True)
+        return url
