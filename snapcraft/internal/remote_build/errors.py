@@ -77,6 +77,14 @@ class RemoteBuilderNotReadyError(RemoteBuildBaseError):
     fmt = "Remote builder is not ready, please wait a few moments and try again."
 
 
+class RemoteBuilderError(RemoteBuildBaseError):
+
+    fmt = "Remote builder failed with error: {builder_error!r}"
+
+    def __init__(self, *, builder_error: str) -> None:
+        super().__init__(builder_error=builder_error)
+
+
 class UnsupportedArchitectureError(RemoteBuildBaseError):
 
     fmt = (
