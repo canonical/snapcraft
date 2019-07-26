@@ -45,6 +45,56 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
             ["git", "clone", "--recursive", "git://my-source", "source_dir"]
         )
 
+    def test_add(self):
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.add("file")
+        self.mock_run.assert_called_once_with(
+            ["git", "-C", "source_dir", "add", "file"]
+        )
+
+    def test_add_abs_path(self):
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.add(os.path.join(source_dir, "file"))
+        self.mock_run.assert_called_once_with(
+            ["git", "-C", "source_dir", "add", "file"]
+        )
+
+    def test_init(self):
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.init()
+        self.mock_run.assert_called_once_with(["git", "-C", "source_dir", "init"])
+
+    def test_push(self):
+        url = "git://my-source"
+        refspec = "HEAD:master"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.push(url, refspec)
+        self.mock_run.assert_called_once_with(
+            ["git", "-C", "source_dir", "push", url, refspec]
+        )
+
+    def test_push_force(self):
+        url = "git://my-source"
+        refspec = "HEAD:master"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.push(url, refspec, force=True)
+        self.mock_run.assert_called_once_with(
+            ["git", "-C", "source_dir", "push", "--force", url, refspec]
+        )
+
     def test_pull_with_depth(self):
         git = sources.Git("git://my-source", "source_dir", source_depth=2)
 
