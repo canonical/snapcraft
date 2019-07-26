@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import git
+import os
+import tarfile
 
-from snapcraft.internal.remote_build import Worktree
-from testtools.matchers import Equals, NotEquals
-from tests import unit
+from snapcraft.internal.remote_build import WorkTree
+from snapcraft.project import Project
+from tests import fixture_setup, unit
 from . import TestDir
 
 
-class WorktreeTestCase(unit.TestCase):
+class WorkTreeTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -34,89 +35,152 @@ class WorktreeTestCase(unit.TestCase):
         self._source.create_dir("empty_dir")
 
         self._dest = self.useFixture(TestDir())
-        self._wt = Worktree(
-            self._source.path,
-            self._dest.path,
-            ignore=["test_*.snap", "test_*.txt.gz*", "parts", "stage", "prime"],
+
+        self._snapcraft_yaml = fixture_setup.SnapcraftYaml(self._source.path)
+        self._snapcraft_yaml.update_part(
+            "my-part", {"plugin": "nil", "source": self._source.path}
         )
-        self._wt.sync()
+        self.useFixture(self._snapcraft_yaml)
+        self.load_project_and_worktree()
+
+    def load_project_and_worktree(self):
+        """(Re)load project and worktree."""
+        self._project = Project(
+            snapcraft_yaml_file_path=self._snapcraft_yaml.snapcraft_yaml_file_path
+        )
+        self._project._project_dir = self._source.path
+        self._wt = WorkTree(self._dest.path, self._project)
+
+    def archive_path(self, part_name, source_selector=None):
+        if source_selector:
+            return os.path.join(
+                self._dest.path,
+                "repo",
+                "sources",
+                part_name,
+                source_selector,
+                part_name + ".tar.gz",
+            )
+        return os.path.join(
+            self._dest.path, "repo", "sources", part_name, part_name + ".tar.gz"
+        )
+
+    def tarball_file_list(self, part_name, source_selector):
+        archive_path = self.archive_path(part_name, source_selector)
+        file_list = []
+        with tarfile.open(archive_path, "r") as t:
+            for m in t.getmembers():
+                file_list.append(os.path.relpath(m.name, "./"))
+        return file_list
+
+    def tarball_file_contains(self, part_name, source_selector, *paths):
+        file_list = self.tarball_file_list(part_name, source_selector)
+        return os.path.join(*paths) in file_list
 
     def test_worktree_creation(self):
-        self.assertTrue(self._dest.exists("foo"))
-        self.assertTrue(self._dest.exists("bar"))
-        self.assertTrue(self._dest.exists("dir", "baz"))
-        self.assertTrue(self._dest.exists("empty_dir"))
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache"))
+        self.assertTrue(self._dest.exists("cache", "my-part"))
+        self.assertTrue(self._dest.exists("repo"))
+        self.assertTrue(self._dest.exists("repo", "sources"))
+        self.assertTrue(self._dest.exists("repo", "sources", "my-part"))
+        self.assertTrue(
+            self._dest.exists("repo", "sources", "my-part", "my-part.tar.gz")
+        )
+        self.assertTrue(self._dest.exists("repo", "snap"))
+        self.assertTrue(self._dest.exists("repo", "snap", "snapcraft.yaml"))
 
-    def test_worktree_new_file(self):
+    def test_worktree_cache_new_file(self):
+        self._wt.prepare_repository()
         self._source.create_file("new_file")
-        self.assertFalse(self._dest.exists("new_file"))
-        self._wt.sync()
-        self.assertTrue(self._dest.exists("new_file"))
+        self.assertFalse(self._dest.exists("cache", "my-part", "new_file"))
+        self.assertFalse(self.tarball_file_contains("my-part", None, "new_file"))
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache", "my-part", "new_file"))
+        self.assertTrue(self.tarball_file_contains("my-part", None, "new_file"))
 
-    def test_worktree_remove_file(self):
-        self.assertTrue(self._dest.exists("foo"))
+    def test_worktree_cache_remove_file(self):
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache", "my-part", "foo"))
+        self.assertTrue(self.tarball_file_contains("my-part", None, "foo"))
         self._source.unlink("foo")
-        self._wt.sync()
-        self.assertFalse(self._dest.exists("foo"))
+        self._wt.prepare_repository()
+        self.assertFalse(self._dest.exists("cache", "my-part", "foo"))
+        self.assertFalse(self.tarball_file_contains("my-part", None, "foo"))
 
-    def test_worktree_remove_empty_dir(self):
-        self.assertTrue(self._dest.exists("empty_dir"))
+    def test_worktree_cache_remove_empty_dir(self):
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache", "my-part", "empty_dir"))
+        self.assertTrue(self.tarball_file_contains("my-part", None, "empty_dir"))
         self._source.rmdir("empty_dir")
-        self._wt.sync()
-        self.assertFalse(self._dest.exists("empty_dir"))
+        self._wt.prepare_repository()
+        self.assertFalse(self._dest.exists("cache", "my-part", "empty_dir"))
+        self.assertFalse(self.tarball_file_contains("my-part", None, "empty_dir"))
 
-    def test_worktree_remove_dir(self):
-        self.assertTrue(self._dest.exists("dir"))
+    def test_worktree_cache_remove_dir(self):
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache", "my-part", "dir"))
+        self.assertTrue(self.tarball_file_contains("my-part", None, "dir"))
         self._source.unlink("dir", "baz")
         self._source.rmdir("dir")
-        self._wt.sync()
-        self.assertFalse(self._dest.exists("dir"))
+        self._wt.prepare_repository()
+        self.assertFalse(self._dest.exists("cache", "my-part", "dir"))
+        self.assertFalse(self.tarball_file_contains("my-part", None, "dir"))
 
-    def test_git_repository_creation(self):
-        self.assertTrue(self._dest.exists(".git"))
-        repo = git.Repo(self._dest.path)
-        self.assertThat(len(repo.head.object.hexsha), Equals(40))
+    def test_assets_yaml(self):
+        self._source.create_dir("snap", "gui")
+        self._source.create_file("snap", "gui", "test.desktop")
+        self._source.create_file("snap", "gui", "test.png")
+        self.assertFalse(self._dest.exists("repo", "snap", "gui", "test.desktop"))
+        self.assertFalse(self._dest.exists("repo", "snap", "gui", "test.png"))
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("repo", "snap", "gui", "test.desktop"))
+        self.assertTrue(self._dest.exists("repo", "snap", "gui", "test.png"))
 
-    def test_worktree_ignored_files(self):
-        for name in [
-            ".gitignore",
-            "test_0.1_amd64.snap",
-            "other_0.1_amd64.snap",
-            "test_i386.txt.gz",
-            "test_amd64.txt.gz.2",
-        ]:
-            self._source.create_file(name)
-        for dirname in [".svn", ".bzr", "parts", "stage", "prime"]:
-            self._source.create_dir(dirname)
-        self._wt.sync()
-        self.assertTrue(self._dest.exists("other_0.1_amd64.snap"))
-        for name in [
-            ".gitignore",
-            "test_0.1_amd64.snap",
-            "buildlog_i386.txt.gz",
-            "buildlog_amd64.txt",
-            ".svn",
-            ".bzr",
-            "parts",
-            "stage",
-            "prime",
-        ]:
-            self.assertFalse(self._dest.exists(name))
+    def test_deprecated_local_plugins(self):
+        self._source.create_dir("snap", "plugins")
+        self._source.create_file("snap", "plugins", "plugin.py")
+        self.assertFalse(self._dest.exists("repo", "snap", "plugins", "plugin.py"))
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("repo", "snap", "plugins", "plugin.py"))
 
-    def test_sync_commit_add_file(self):
-        repo = git.Repo(self._dest.path)
-        sha = repo.head.object.hexsha
-        self._wt.sync()
-        self.assertThat(repo.head.object.hexsha, Equals(sha))
-        self._source.create_file("new_file")
-        self._wt.sync()
-        self.assertThat(repo.head.object.hexsha, NotEquals(sha))
-
-    def test_sync_commit_remove_file(self):
-        repo = git.Repo(self._dest.path)
-        sha = repo.head.object.hexsha
-        self._wt.sync()
-        self.assertThat(repo.head.object.hexsha, Equals(sha))
-        self._source.unlink("foo")
-        self._wt.sync()
-        self.assertThat(repo.head.object.hexsha, NotEquals(sha))
+    def test_source_selectors(self):
+        self._snapcraft_yaml.update_part(
+            "src-selectors",
+            {
+                "plugin": "nil",
+                "source": [
+                    {"on i386": self._source.path},
+                    {"on arm64": self._source.path},
+                ],
+            },
+        )
+        self.load_project_and_worktree()
+        self._wt.prepare_repository()
+        self.assertTrue(self._dest.exists("cache"))
+        self.assertTrue(self._dest.exists("cache", "src-selectors"))
+        self.assertTrue(self._dest.exists("cache", "src-selectors", "on i386"))
+        self.assertTrue(self._dest.exists("cache", "src-selectors", "on arm64"))
+        self.assertTrue(self._dest.exists("repo"))
+        self.assertTrue(self._dest.exists("repo", "sources"))
+        self.assertTrue(self._dest.exists("repo", "sources", "my-part"))
+        self.assertTrue(
+            self._dest.exists("repo", "sources", "my-part", "my-part.tar.gz")
+        )
+        self.assertTrue(
+            self._dest.exists(
+                "repo", "sources", "src-selectors", "on i386", "src-selectors.tar.gz"
+            )
+        )
+        self.assertTrue(
+            self._dest.exists(
+                "repo", "sources", "src-selectors", "on arm64", "src-selectors.tar.gz"
+            )
+        )
+        self.assertFalse(
+            self._dest.exists(
+                "repo", "sources", "src-selectors", "src-selectors.tar.gz"
+            )
+        )
+        self.assertTrue(self._dest.exists("repo", "snap"))
+        self.assertTrue(self._dest.exists("repo", "snap", "snapcraft.yaml"))
