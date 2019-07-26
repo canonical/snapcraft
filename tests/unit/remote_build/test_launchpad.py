@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import snapcraft
 import textwrap
 
@@ -21,6 +22,7 @@ from snapcraft.internal.remote_build import LaunchpadClient, errors
 from testtools.matchers import Equals, Contains
 from tests import unit
 from unittest import mock
+from . import TestDir
 
 
 class FakeLaunchpadObject:
@@ -165,12 +167,12 @@ class LaunchpadTestCase(unit.TestCase):
         lpc = LaunchpadClient(self._project, "id")
         lpc.user = "user"
         lpc._lp = LaunchpadImpl()
-        lpc.create_snap("git+ssh://repo", "branch", ["arch1", "arch2"])
+        lpc.create_snap("git+ssh://repo", ["arch1", "arch2"])
         lpc._lp.snaps.new.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
             auto_build_pocket="Updates",
-            git_path="branch",
+            git_path="master",
             git_repository_url="https://repo",
             name="id",
             owner="/~user",
@@ -300,3 +302,14 @@ class LaunchpadTestCase(unit.TestCase):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path
         )
         return project
+
+    @mock.patch("launchpadlib.launchpad.Launchpad")
+    def test_git_repository_creation(self, mock_lp):
+        source_testdir = self.useFixture(TestDir())
+        source_testdir.create_file("foo")
+        repo_dir = source_testdir.path
+        lpc = LaunchpadClient(self._project, "id")
+        self.assertFalse(os.path.exists(os.path.join(repo_dir, ".git")))
+        git_repo = lpc._gitify_repository(repo_dir)
+        self.assertTrue(os.path.exists(os.path.join(repo_dir, ".git")))
+        self.assertThat(len(git_repo.head.object.hexsha), Equals(40))
