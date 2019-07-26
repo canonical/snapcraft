@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import importlib
 import logging
 import os
 import shutil
@@ -32,6 +31,7 @@ from . import errors
 
 import snapcraft
 from snapcraft.config import Config
+from snapcraft.internal.sources._git import Git
 from snapcraft.project import Project
 
 _LP_POLL_INTERVAL = 30
@@ -45,9 +45,7 @@ class LaunchpadClient:
     """Launchpad remote builder operations."""
 
     def __init__(self, project: Project, build_id: str) -> None:
-        try:
-            self._git_module = importlib.import_module("git")  # type: Any
-        except ImportError:
+        if not Git.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
         self._id = build_id
@@ -283,34 +281,39 @@ class LaunchpadClient:
         with urllib.request.urlopen(url) as response, open(name, "wb") as snapfile:
             shutil.copyfileobj(response, snapfile)  # type: ignore
 
-    def _gitify_repository(self, repo_dir: str):
+    def _gitify_repository(self, repo_dir: str) -> Git:
         """Git-ify source repository tree.
 
-        :return: Git repo.
+        :return: Git handler instance to git repository.
         """
-        git_repo = self._git_module.Repo.init(repo_dir)
+        git_handler = Git(repo_dir, repo_dir, silent=True)
 
+        # Init repo.
+        git_handler.init()
+
+        # Add all files found in repo.
         for f in os.listdir(repo_dir):
             if f != ".git":
-                git_repo.index.add([f])
+                git_handler.add(f)
 
+        # Commit files.
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        git_repo.index.commit(
+        git_handler.commit(
             "snapcraft commit\n\nversion: {}\ntimestamp: {}\n".format(
                 snapcraft.__version__, timestamp
             )
         )
 
-        return git_repo
+        return git_handler
 
     def push_source_tree(self, user: str, repo_dir: str) -> str:
         """Push source tree to launchpad, returning URL."""
-        git_repo = self._gitify_repository(repo_dir)
+        git_handler = self._gitify_repository(repo_dir)
 
         url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}/".format(
             user=user, id=self._id
         )
 
         logger.info("Sending data to remote builder... ({})".format(url))
-        git_repo.git.push(url, "HEAD:master", force=True)
+        git_handler.push(url, "HEAD:master", force=True)
         return url

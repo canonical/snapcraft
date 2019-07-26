@@ -310,6 +310,17 @@ class LaunchpadTestCase(unit.TestCase):
         repo_dir = source_testdir.path
         lpc = LaunchpadClient(self._project, "id")
         self.assertFalse(os.path.exists(os.path.join(repo_dir, ".git")))
-        git_repo = lpc._gitify_repository(repo_dir)
+        lpc._gitify_repository(repo_dir)
         self.assertTrue(os.path.exists(os.path.join(repo_dir, ".git")))
-        self.assertThat(len(git_repo.head.object.hexsha), Equals(40))
+
+    @mock.patch("launchpadlib.launchpad.Launchpad")
+    @mock.patch("snapcraft.internal.sources.Git.push", return_value=None)
+    def test_push_source_tree(self, mock_push, mock_lp):
+        source_testdir = self.useFixture(TestDir())
+        source_testdir.create_file("foo")
+        repo_dir = source_testdir.path
+        lpc = LaunchpadClient(self._project, "id")
+        lpc.push_source_tree("user", repo_dir)
+        mock_push.assert_called_with(
+            "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
+        )
