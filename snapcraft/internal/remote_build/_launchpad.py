@@ -123,23 +123,53 @@ class LaunchpadClient:
         )
         logger.debug("Request URL: {}".format(snap_build_request))
 
-        build_number = snap_build_request.self_link.rsplit("/", 1)[-1]
-
-        for i in range(0, attempts):
-            builds = self._lp.load(snap_build_request.builds_collection_link)
+        while attempts > 0 and snap_build_request.status == "Pending":
             logger.debug(
-                "Builds collection entries: {} ({})".format(len(builds.entries), i)
+                "Build request: status={} error={}".format(
+                    snap_build_request.status, snap_build_request.error_message
+                )
             )
-            if builds.entries:
-                break
+
+            # No entries yet, sleep for specified duration.
             time.sleep(timeout)
-        else:
+
+            # Refresh status.
+            snap_build_request.lp_refresh()
+            attempts -= 1
+
+        # Build request failed.
+        if snap_build_request.status == "Failed":
+            self.delete_snap()
+            raise errors.RemoteBuilderError(
+                builder_error=snap_build_request.error_message
+            )
+
+        # Timed out.
+        if snap_build_request.status == "Pending":
             self.delete_snap()
             raise errors.RemoteBuilderNotReadyError()
 
-        self._waiting = [build["arch_tag"] for build in builds.entries]
-        self._builds_collection_link = snap_build_request.builds_collection_link
+        # Shouldn't end up here.
+        if snap_build_request.status != "Completed":
+            self.delete_snap()
+            raise errors.RemoteBuilderError(
+                builder_error="Unknown builder error - reported status: {}".format(
+                    snap_build_request.status
+                )
+            )
 
+        # Shouldn't end up here either.
+        if not snap_build_request.builds.entries:
+            self.delete_snap()
+            raise errors.RemoteBuilderError(
+                builder_error="Unknown builder error - no build entries found."
+            )
+
+        self._waiting = [
+            build["arch_tag"] for build in snap_build_request.builds.entries
+        ]
+        self._builds_collection_link = snap_build_request.builds_collection_link
+        build_number = snap_build_request.self_link.rsplit("/", 1)[-1]
         return build_number
 
     def recover_build(self, req_number: int) -> None:
