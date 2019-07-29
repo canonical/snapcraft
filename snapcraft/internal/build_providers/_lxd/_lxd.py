@@ -236,7 +236,15 @@ class LXD(Provider):
         # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
         lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
         endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
-        self._lxd_client = pylxd.Client(endpoint=endpoint)
+        try:
+            self._lxd_client = pylxd.Client(endpoint=endpoint)
+        except pylxd.client.exceptions.ClientConnectionFailed:
+            raise errors.ProviderCommunicationError(
+                provider_name=self._get_provider_name(),
+                message="cannot connect to the LXD socket ({!r}).".format(
+                    lxd_socket_path
+                ),
+            )
         self._container = None  # type: Optional[pylxd.models.container.Container]
 
     def create(self) -> None:

@@ -103,11 +103,11 @@ class ProviderCommunicationError(ProviderBaseError):
 
     fmt = (
         "An error occurred when trying to communicate with the "
-        "{provider_name!r} provider."
+        "{provider_name!r} provider: {message}."
     )
 
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+    def __init__(self, *, provider_name: str, message: str) -> None:
+        super().__init__(provider_name=provider_name, message=message)
 
 
 class ProviderLaunchError(_GenericProviderError):
