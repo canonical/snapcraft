@@ -144,8 +144,6 @@ def _handle_sentry_submission(exc_info) -> None:
 
 
 def _print_exception_message(exc_info, debug) -> None:
-    click.echo(_MSG_TRACEBACK_PRINT)
-
     # Print exception in exc_info[1].
     message = str(exc_info[1])
     echo.error(message)
@@ -186,6 +184,9 @@ def _process_outer_exception(exc_info, debug):
         # No traceback found, this must be captured and processed.
         # If reportable or debug is enabled, capture trace file.
         if _is_reportable_error(exc_info) or debug:
+            # Only show this message for reportable errors.
+            click.echo(_MSG_TRACEBACK_PRINT)
+
             _process_exception(exc_info, debug, trace_filepath)
         else:
             _process_exception(exc_info, debug, None)
