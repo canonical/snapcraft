@@ -360,10 +360,10 @@ class ErrorFormattingTest(unit.TestCase):
             "ProviderCommunicationError",
             dict(
                 exception=errors.ProviderCommunicationError,
-                kwargs=dict(provider_name="multipass"),
+                kwargs=dict(provider_name="multipass", message="failed to foo"),
                 expected_message=(
                     "An error occurred when trying to communicate with the "
-                    "'multipass' provider."
+                    "'multipass' provider: failed to foo."
                 ),
             ),
         ),
