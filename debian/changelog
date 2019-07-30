@@ -1,3 +1,20 @@
+snapcraft (3.7.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ant plugin: correct default channel and improve help
+  * cli: improve help for push-metadata
+  * project, cli: clean up snap asset messages
+  * file utils: better error for NotADirectory
+  * cli: only say sorry for in-snapcraft issues
+
+  [ Chris Patterson ]
+  * deprecations: add deprecation notice for version-script (dn10)
+
+  [ Carlo Lobrano ]
+  * meta: add InvalidAppCommand errors for non-existent and not-found (#2539)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Tue, 30 Jul 2019 17:59:00 +0000
+
 snapcraft (3.7) xenial; urgency=medium
 
   [ Sergio Schvezov ]
