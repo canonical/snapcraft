@@ -136,7 +136,7 @@ def remote_build(
         if "provider" in remote_info:
             provider = remote_info["provider"]
     else:
-        build_id = "snapcraft-{}".format(uuid.uuid4().hex)
+        build_id = "snapcraft-{}-{}".format(project.info.name, uuid.uuid4().hex)
         remote_info["id"] = build_id
         remote_info["provider"] = provider
         remote_info.save()
