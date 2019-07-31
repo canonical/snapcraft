@@ -48,7 +48,9 @@ def list_extensions(**kwargs):
         extension = project_loader.find_extension(extension_name)
         extension_info = collections.OrderedDict()
         extension_info["Extension name"] = extension_name
-        extension_info["Supported bases"] = ", ".join(sorted(extension.supported_bases))
+        extension_info["Supported bases"] = ", ".join(
+            sorted(extension.get_supported_bases())
+        )
         extensions.append(extension_info)
 
     click.echo(tabulate.tabulate(extensions, headers="keys"))

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -126,7 +126,7 @@ def _load_extension(
         raise errors.ExtensionBaseRequiredError()
 
     extension_class = find_extension(extension_name)
-    if base not in extension_class.supported_bases:
+    if base not in extension_class.get_supported_bases():
         raise errors.ExtensionUnsupportedBaseError(extension_name, base)
 
     # Hand the extension a copy of the yaml data so the only way they can modify it is

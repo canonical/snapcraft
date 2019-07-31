@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,18 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import abc
 from typing import Any, Dict
-from typing import Tuple  # noqa: F401
+from typing import Tuple
 
 
-class Extension:
+class Extension(metaclass=abc.ABCMeta):
     """Extension is the class from which all extensions inherit.
 
     Extensions have the ability to add snippets to apps, parts, and indeed add new parts
     to a given snapcraft.yaml. All they need to do is define the proper variables.
 
-    :cvar supported_bases: Class variable, tuple of base names supported by the
-                           extension.
     :ivar root_snippet: Instance variable, dict of properties to apply to root of the
                         snapcraft.yaml.
     :ivar app_snippet: Instance variable, dict of properties to apply to apps using this
@@ -35,7 +34,10 @@ class Extension:
     :ivar parts: Instance variable, dict of part definitions required by this extension.
     """
 
-    supported_bases = None  # type: Tuple[str, ...]
+    @staticmethod
+    @abc.abstractmethod
+    def get_supported_bases() -> Tuple[str, ...]:
+        """Return a tuple of supported bases."""
 
     def __init__(self, yaml_data: Dict[str, Any]) -> None:
         """Create a new Extension.
