@@ -128,6 +128,7 @@ class SCAClient(Client):
         delta_hash=None,
         source_hash=None,
         target_hash=None,
+        built_at=None,
     ):
         data = {
             "name": snap_name,
@@ -141,6 +142,8 @@ class SCAClient(Client):
             data["delta_hash"] = delta_hash
             data["source_hash"] = source_hash
             data["target_hash"] = target_hash
+        if built_at is not None:
+            data["built_at"] = built_at
         auth = _macaroon_auth(self.conf)
         response = self.post(
             "snap-push/",

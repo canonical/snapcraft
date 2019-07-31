@@ -539,6 +539,7 @@ def push(snap_filename, release_channels=None):
     """
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
+    built_at = snap_yaml.get("snapcraft-started-at")
     store = storeapi.StoreClient()
 
     logger.debug(
@@ -558,22 +559,22 @@ def push(snap_filename, release_channels=None):
 
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(snap_name, snap_filename, source_snap)
+            result = _push_delta(snap_name, snap_filename, source_snap, built_at)
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
                 "Falling back to pushing full snap...".format(str(e))
             )
-            result = _push_snap(snap_name, snap_filename)
+            result = _push_snap(snap_name, snap_filename, built_at)
         except storeapi.errors.StorePushError as e:
             store_error = e.error_list[0].get("message")
             logger.warning(
                 "Unable to push delta to store: {}\n"
                 "Falling back to pushing full snap...".format(store_error)
             )
-            result = _push_snap(snap_name, snap_filename)
+            result = _push_snap(snap_name, snap_filename, built_at)
     else:
-        result = _push_snap(snap_name, snap_filename)
+        result = _push_snap(snap_name, snap_filename, built_at)
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
 
@@ -584,16 +585,16 @@ def push(snap_filename, release_channels=None):
         release(snap_name, result["revision"], release_channels)
 
 
-def _push_snap(snap_name, snap_filename):
+def _push_snap(snap_name, snap_filename, built_at):
     store = storeapi.StoreClient()
     with _requires_login():
-        tracker = store.upload(snap_name, snap_filename)
+        tracker = store.upload(snap_name, snap_filename, built_at=built_at)
     result = tracker.track()
     tracker.raise_for_code()
     return result
 
 
-def _push_delta(snap_name, snap_filename, source_snap):
+def _push_delta(snap_name, snap_filename, source_snap, built_at):
     store = storeapi.StoreClient()
     delta_format = "xdelta3"
     logger.debug("Found cached source snap {}.".format(source_snap))
@@ -623,6 +624,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
                 source_hash=snap_hashes["source_hash"],
                 target_hash=snap_hashes["target_hash"],
                 delta_hash=snap_hashes["delta_hash"],
+                built_at=built_at,
             )
         result = delta_tracker.track()
         delta_tracker.raise_for_code()
