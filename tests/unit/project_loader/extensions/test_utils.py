@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+from typing import Tuple
 
 from testtools.matchers import Contains, Equals, Not
 
@@ -599,7 +600,9 @@ class InvalidExtensionTest(ExtensionTestBase):
 
 def _environment_extension_fixture():
     class EnvironmentExtension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -613,7 +616,9 @@ def _environment_extension_fixture():
 
 def _plug_extension_fixture():
     class PlugExtension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -624,7 +629,9 @@ def _plug_extension_fixture():
 
 def _plug2_extension_fixture():
     class Plug2Extension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -635,7 +642,9 @@ def _plug2_extension_fixture():
 
 def _daemon_extension_fixture():
     class DaemonExtension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -646,7 +655,9 @@ def _daemon_extension_fixture():
 
 def _adopt_info_extension_fixture():
     class AdoptExtension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -657,7 +668,9 @@ def _adopt_info_extension_fixture():
 
 def _invalid_extension_fixture():
     class InvalidExtension(Extension):
-        supported_bases = ("core18",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)

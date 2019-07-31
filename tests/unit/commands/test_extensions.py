@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+from typing import Tuple
 
 from unittest import mock
 from testtools.matchers import Equals
@@ -188,7 +189,9 @@ def _test1_extension_fixture():
         It does stuff.
         """
 
-        supported_bases = ("core16",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -206,7 +209,9 @@ def _test2_extension_fixture():
         It does other stuff.
         """
 
-        supported_bases = ("core16",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16",)
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -218,7 +223,9 @@ def _test2_extension_fixture():
 
 def _test3_extension_fixture():
     class Test3Extension(Extension):
-        supported_bases = ("core16", "core18")
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16", "core18")
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
@@ -229,7 +236,9 @@ def _test3_extension_fixture():
 
 def _test4_extension_fixture():
     class Test4Extension(Extension):
-        supported_bases = ("core16", "core18")
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16", "core18")
 
         def __init__(self, yaml_data):
             super().__init__(yaml_data)
