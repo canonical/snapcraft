@@ -73,7 +73,38 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertRegexpMatches(
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
-        mock_upload.assert_called_once_with("basic", self.snap_file)
+        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
+
+    def test_push_with_started_at(self):
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        mock_tracker.track.return_value = {
+            "code": "ready_to_release",
+            "processed": True,
+            "can_release": True,
+            "url": "/fake/url",
+            "revision": 9,
+        }
+        patcher = mock.patch.object(storeapi.StoreClient, "upload")
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_upload.return_value = mock_tracker
+        snap_file = os.path.join(
+            os.path.dirname(tests.__file__), "data", "test-snap-with-started-at.snap"
+        )
+
+        # Upload
+        with mock.patch(
+            "snapcraft.storeapi._status_tracker.StatusTracker"
+        ) as mock_tracker:
+            result = self.run_command(["push", snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertRegexpMatches(
+            self.fake_logger.output, r"Revision 9 of 'basic' created\."
+        )
+        mock_upload.assert_called_once_with(
+            "basic", snap_file, built_at="2019-05-07T19:25:53.939041Z"
+        )
 
     def test_push_without_login_must_raise_exception(self):
         raised = self.assertRaises(
@@ -164,7 +195,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
-        mock_upload.assert_called_once_with("basic", self.snap_file)
+        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
 
     def test_push_and_release_a_snap(self):
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
@@ -213,7 +244,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
         self.assertThat(result.output, Contains("The 'beta' channel is now open"))
-        mock_upload.assert_called_once_with("basic", self.snap_file)
+        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
         mock_release.assert_called_once_with("basic", 9, ["beta"])
 
     def test_push_and_release_a_snap_to_N_channels(self):
@@ -278,7 +309,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             result.output, Contains("The 'beta,edge,candidate' channel is now open")
         )
 
-        mock_upload.assert_called_once_with("basic", self.snap_file)
+        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
         mock_release.assert_called_once_with("basic", 9, ["edge", "beta", "candidate"])
 
     def test_push_displays_humanized_message(self):
@@ -435,7 +466,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["push", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
-        mock_upload.assert_called_once_with("basic", self.snap_file)
+        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
 
     def test_push_with_delta_upload_failure_falls_back(self):
         # Upload
@@ -477,10 +508,11 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
+                    built_at=None,
                 ),
                 mock.call().track(),
                 mock.call().raise_for_code(),
-                mock.call("basic", self.snap_file),
+                mock.call("basic", self.snap_file, built_at=None),
                 mock.call().track(),
                 mock.call().raise_for_code(),
             ]
@@ -536,8 +568,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
+                    built_at=None,
                 ),
-                mock.call("basic", self.snap_file),
+                mock.call("basic", self.snap_file, built_at=None),
             ]
         )
 
