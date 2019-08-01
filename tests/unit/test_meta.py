@@ -333,6 +333,19 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertThat(y["layout"], Equals(layout))
 
+    def test_adapter_full_with_command_chain(self):
+        self.config_data["apps"] = {"app": {"command": "foo", "command-chain": ["bar"]}}
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "bar"), executable=True)
+
+        y = self.generate_meta_yaml()
+
+        self.expectThat(y["apps"]["app"]["command"], Equals("foo"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals([os.path.join("snap", "command-chain", "snapcraft-runner"), "bar"]),
+        )
+
     def test_create_meta_with_app(self):
         os.mkdir(self.prime_dir)
         _create_file(os.path.join(self.prime_dir, "app.sh"))

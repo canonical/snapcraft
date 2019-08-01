@@ -310,8 +310,10 @@ def _update_yaml_with_defaults(config_data, schema):
     ]
     default_adapter = app_schema["adapter"]["default"]
     for app in config_data.get("apps", {}).values():
-        if "adapter" not in app:
+        if "adapter" not in app and "command-chain" not in app:
             app["adapter"] = default_adapter
+        elif "adapter" not in app and "command-chain" in app:
+            app["adapter"] = "full"
 
 
 def _ensure_required_keywords(config_data):
