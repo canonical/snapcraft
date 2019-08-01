@@ -21,11 +21,7 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.project._sanity_checks import (
-    conduct_project_sanity_check,
-    conduct_environment_sanity_check,
-)
-from snapcraft.project import errors, _schema
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
 from tests import fixture_setup, unit
 
@@ -159,72 +155,3 @@ class ProjectSanityChecksTest(unit.TestCase):
             snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path,
         )
         conduct_project_sanity_check(project)
-
-
-class EnvironmentSanityChecksTest(unit.TestCase):
-    def test_command_chain_with_none_adapter(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {"command-chain": ["test-command-chain"], "adapter": "none"}
-            }
-        }
-
-        try:
-            conduct_environment_sanity_check(
-                project, yaml_data, _schema.Validator().schema
-            )
-        except Exception:
-            self.fail("No exception was expected")
-
-    def test_command_chain_with_full_adapter(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {"command-chain": ["test-command-chain"], "adapter": "full"}
-            }
-        }
-
-        try:
-            conduct_environment_sanity_check(
-                project, yaml_data, _schema.Validator().schema
-            )
-        except Exception:
-            self.fail("No exception was expected")
-
-    # FIXME: This test should fail once the default adapter changes to "full", just
-    # remove it
-    def test_command_chain_without_adapter_raises(self):
-        project = snapcraft.project.Project()
-        yaml_data = {"apps": {"test-app": {"command-chain": ["test-command-chain"]}}}
-
-        raised = self.assertRaises(
-            errors.CommandChainWithLegacyAdapterError,
-            conduct_environment_sanity_check,
-            project,
-            yaml_data,
-            _schema.Validator().schema,
-        )
-
-        self.assertThat(raised.app_name, Equals("test-app"))
-
-    def test_command_chain_with_legacy_adapter_raises(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {
-                    "command-chain": ["test-command-chain"],
-                    "adapter": "legacy",
-                }
-            }
-        }
-
-        raised = self.assertRaises(
-            errors.CommandChainWithLegacyAdapterError,
-            conduct_environment_sanity_check,
-            project,
-            yaml_data,
-            _schema.Validator().schema,
-        )
-
-        self.assertThat(raised.app_name, Equals("test-app"))

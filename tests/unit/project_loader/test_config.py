@@ -16,7 +16,6 @@
 
 from textwrap import dedent
 
-from unittest import mock
 from testtools.matchers import Contains, Equals
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest
@@ -272,33 +271,4 @@ class FilesetsTest(unit.TestCase):
             Contains(
                 "'$3' referred to in the 'stage' fileset but it is not in filesets"
             ),
-        )
-
-
-class SanityChecksTest(LoadPartBaseTest):
-    @mock.patch(
-        "snapcraft.internal.project_loader._config.conduct_environment_sanity_check"
-    )
-    def test_sanity_checks_called(self, mock_sanity_check):
-        project_config = self.make_snapcraft_project(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1.0"
-                summary: test summary
-                description: test description
-
-                grade: devel
-                confinement: strict
-
-                parts:
-                    test-part:
-                        plugin: nil
-                """
-            )
-        )
-
-        mock_sanity_check.assert_called_once_with(
-            project_config.project, project_config.data, project_config.validator.schema
         )
