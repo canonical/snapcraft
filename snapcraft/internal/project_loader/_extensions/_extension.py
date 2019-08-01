@@ -18,6 +18,8 @@ import abc
 from typing import Any, Dict
 from typing import Tuple
 
+from .. import errors
+
 
 class Extension(metaclass=abc.ABCMeta):
     """Extension is the class from which all extensions inherit.
@@ -39,12 +41,25 @@ class Extension(metaclass=abc.ABCMeta):
     def get_supported_bases() -> Tuple[str, ...]:
         """Return a tuple of supported bases."""
 
-    def __init__(self, yaml_data: Dict[str, Any]) -> None:
+    def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         """Create a new Extension.
 
+        :param str extension_name: The name of the extension.
         :param dict yaml_data: Loaded snapcraft.yaml data.
         """
+        self._sanity_check(extension_name=extension_name, yaml_data=yaml_data)
+
         self.root_snippet = dict()  # type: Dict[str, Any]
         self.app_snippet = dict()  # type: Dict[str, Any]
         self.part_snippet = dict()  # type: Dict[str, Any]
         self.parts = dict()  # type: Dict[str, Any]
+
+    def _sanity_check(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
+        base = yaml_data.get("base")
+
+        # A base is required in order to use extensions, so raise an error if not specified.
+        if not base:
+            raise errors.ExtensionBaseRequiredError()
+
+        if base not in self.get_supported_bases():
+            raise errors.ExtensionUnsupportedBaseError(extension_name, base)

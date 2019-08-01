@@ -604,8 +604,8 @@ def _environment_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.root_snippet = {"environment": {"TEST_EXTENSION": 1}}
             self.app_snippet = {"environment": {"TEST_EXTENSION": 1}}
             self.part_snippet = {"after": ["extension-part"]}
@@ -620,8 +620,8 @@ def _plug_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"plugs": ["test-plug"]}
 
     return fixture_setup.FakeExtension("plug", PlugExtension)
@@ -633,8 +633,8 @@ def _plug2_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"plugs": ["test-plug2"]}
 
     return fixture_setup.FakeExtension("plug2", Plug2Extension)
@@ -646,8 +646,8 @@ def _daemon_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"daemon": "simple"}
 
     return fixture_setup.FakeExtension("daemon", DaemonExtension)
@@ -659,8 +659,8 @@ def _adopt_info_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.root_snippet = {"adopt-info": "some-part-name"}
 
     return fixture_setup.FakeExtension("adopt", AdoptExtension)
@@ -672,8 +672,8 @@ def _invalid_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"unsupported-key": "value"}
 
     return fixture_setup.FakeExtension("invalid", InvalidExtension)
