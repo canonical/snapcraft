@@ -41,6 +41,11 @@ class Extension(metaclass=abc.ABCMeta):
     def get_supported_bases() -> Tuple[str, ...]:
         """Return a tuple of supported bases."""
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_supported_confinement() -> Tuple[str, ...]:
+        """Return a tuple of supported confinement settings."""
+
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         """Create a new Extension.
 
@@ -63,3 +68,10 @@ class Extension(metaclass=abc.ABCMeta):
 
         if base not in self.get_supported_bases():
             raise errors.ExtensionUnsupportedBaseError(extension_name, base)
+
+        # Default to devmode if confinement is not set.
+        confinement = yaml_data.get("confinement", "devmode")
+        if confinement not in self.get_supported_confinement():
+            raise errors.ExtensionUnsupportedConfinementError(
+                extension_name, confinement
+            )

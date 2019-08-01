@@ -193,6 +193,10 @@ def _test1_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16",)
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"environment": {"EXTENSION_NAME": "test1"}}
@@ -213,6 +217,10 @@ def _test2_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16",)
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.part_snippet = {"after": ["extension-part"]}
@@ -227,6 +235,10 @@ def _test3_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16", "core18")
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.parts = {"extension-part": {"plugin": "nil"}}
@@ -239,6 +251,10 @@ def _test4_extension_fixture():
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16", "core18")
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)

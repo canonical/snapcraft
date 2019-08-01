@@ -84,6 +84,18 @@ class ExtensionUnsupportedBaseError(ProjectLoaderError):
         super().__init__(extension_name=extension_name, base=base)
 
 
+class ExtensionUnsupportedConfinementError(ProjectLoaderError):
+    fmt = (
+        "Failed to load extension {extension_name!r}: "
+        "this extension does not support {confinement!r} confinement.\n"
+        "Either use a different extension, or use a confinement setting "
+        "supported by this extension."
+    )
+
+    def __init__(self, extension_name: str, confinement: str) -> None:
+        super().__init__(extension_name=extension_name, confinement=confinement)
+
+
 class ExtensionMissingDocumentationError(ProjectLoaderError):
     fmt = (
         "The {extension_name!r} extension appears to be missing documentation.\n"
