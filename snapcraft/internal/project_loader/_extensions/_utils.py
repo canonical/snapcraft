@@ -121,17 +121,13 @@ def supported_extension_names() -> List[str]:
 def _load_extension(
     base: str, extension_name: str, yaml_data: Dict[str, Any]
 ) -> Extension:
-    # A base is required in order to use extensions, so raise an error if not specified.
-    if not base:
-        raise errors.ExtensionBaseRequiredError()
-
     extension_class = find_extension(extension_name)
-    if base not in extension_class.get_supported_bases():
-        raise errors.ExtensionUnsupportedBaseError(extension_name, base)
 
     # Hand the extension a copy of the yaml data so the only way they can modify it is
     # by going through the extension API.
-    return extension_class(copy.deepcopy(yaml_data))
+    return extension_class(
+        extension_name=extension_name, yaml_data=copy.deepcopy(yaml_data)
+    )
 
 
 def _apply_extension(
