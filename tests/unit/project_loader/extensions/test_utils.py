@@ -597,12 +597,73 @@ class InvalidExtensionTest(ExtensionTestBase):
         self.assertThat(raised.extension_name, Equals("environment"))
         self.assertThat(raised.base, Equals("unsupported"))
 
+    def test_unsupported_default_confinement(self):
+        raised = self.assertRaises(
+            errors.ExtensionUnsupportedConfinementError,
+            self.make_snapcraft_project,
+            textwrap.dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                grade: stable
+                base: core18
+
+                apps:
+                    test-app:
+                        command: echo "hello"
+                        extensions: [environment]
+
+                parts:
+                    extension-part:
+                        plugin: nil
+                """
+            ),
+        )
+
+        self.assertThat(raised.extension_name, Equals("environment"))
+        self.assertThat(raised.confinement, Equals("devmode"))
+
+    def test_unsupported_confinement(self):
+        raised = self.assertRaises(
+            errors.ExtensionUnsupportedConfinementError,
+            self.make_snapcraft_project,
+            textwrap.dedent(
+                """\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                grade: stable
+                confinement: unsupported
+                base: core18
+
+                apps:
+                    test-app:
+                        command: echo "hello"
+                        extensions: [environment]
+
+                parts:
+                    extension-part:
+                        plugin: nil
+                """
+            ),
+        )
+
+        self.assertThat(raised.extension_name, Equals("environment"))
+        self.assertThat(raised.confinement, Equals("unsupported"))
+
 
 def _environment_extension_fixture():
     class EnvironmentExtension(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
@@ -620,6 +681,10 @@ def _plug_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"plugs": ["test-plug"]}
@@ -632,6 +697,10 @@ def _plug2_extension_fixture():
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
@@ -646,6 +715,10 @@ def _daemon_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"daemon": "simple"}
@@ -659,6 +732,10 @@ def _adopt_info_extension_fixture():
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
 
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.root_snippet = {"adopt-info": "some-part-name"}
@@ -671,6 +748,10 @@ def _invalid_extension_fixture():
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
