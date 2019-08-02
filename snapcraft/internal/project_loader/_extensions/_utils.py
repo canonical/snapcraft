@@ -98,7 +98,9 @@ def find_extension(extension_name: str) -> Type[Extension]:
 
     # This may throw an AttributeError, but that would be programmer error of whoever
     # is hacking on extensions.
-    extension_class_name = "{}Extension".format(extension_name.capitalize())
+    extension_class_name = "{}Extension".format(
+        extension_name.capitalize().replace("-", "_")
+    )
     return getattr(extension_module, extension_class_name)
 
 
@@ -122,6 +124,12 @@ def _load_extension(
     base: str, extension_name: str, yaml_data: Dict[str, Any]
 ) -> Extension:
     extension_class = find_extension(extension_name)
+
+    # Does this project use classic confinement?
+    if yaml_data.get("confinement") == "classic":
+        # Check whether extension supports classic confinement
+        if not extension_class.supports_classic:
+            raise errors.ExtensionUnsupportedClassicError(extension_name)
 
     # Hand the extension a copy of the yaml data so the only way they can modify it is
     # by going through the extension API.
