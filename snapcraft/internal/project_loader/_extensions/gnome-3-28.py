@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,54 +15,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import types and tell flake8 to ignore the "unused" List.
-from typing import Any, Dict, List  # noqa: F401
 
-from ._desktop_common import DesktopCommonExtension
-from .. import errors
+from typing import Any, Dict, Tuple
+
+from ._extension import Extension
 
 
-class Gnome_3_28Extension(DesktopCommonExtension):
+_PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
+
+
+class Gnome_3_28Extension(Extension):
     """The Gnome extension.
+
     This extension is to be used by applications that require GTK+.
-    Examples might include productivity applications or utilities.
-    Note that this extension does not support classically-confined snaps at this time.
     """
 
-    supported_bases = ("core18",)
-    supports_classic = False
+    @staticmethod
+    def get_supported_bases() -> Tuple[str, ...]:
+        return ("core18",)
 
-    def __init__(self, yaml_data: Dict[str, Any]) -> None:
-        """Create a new GnomeExtension.
-        Note that this extension does not support classic snaps.
-        :param dict yaml_data: Loaded snapcraft.yaml data.
-        """
+    @staticmethod
+    def get_supported_confinement() -> Tuple[str, ...]:
+        return ("strict", "devmode")
 
-        super().__init__(yaml_data)
+    def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
+        super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        platform_snap = ""
-        base = yaml_data.get("base")
-
-        if base == "core18":
-            platform_snap = "gnome-3-28-1804"
-        else:
-            raise errors.ExtensionUnsupportedBaseError("gnome", base)
-
-        layout = {
-            "layout": {
-                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
-                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
-                },
-                "/usr/share/xml/iso-codes": {
-                    "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
-                },
-            }
-        }  # type: Dict[str, Any]
-
+        platform_snap = _PLATFORM_SNAP[yaml_data.get("base")]
         self.root_snippet = {
-            **self.root_snippet,
-            **layout,
             "plugs": {
-                **self.plugs,
+                "gtk-3-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes:gtk-3-themes",
+                },
+                "icon-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/icons",
+                    "default-provider": "gtk-common-themes:icon-themes",
+                },
+                "sound-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/sounds",
+                    "default-provider": "gtk-common-themes:sound-themes",
+                },
                 platform_snap: {
                     "interface": "content",
                     "target": "$SNAP/gnome-platform",
@@ -71,29 +67,41 @@ class Gnome_3_28Extension(DesktopCommonExtension):
                     ),
                 },
             },
-            "environment": {
-                **self.environment,
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+            "layout": {
+                "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
+                    "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
+                },
+                "/usr/share/xml/iso-codes": {
+                    "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
+                },
             },
         }
 
-        command_chain = self.app_snippet["command-chain"]
-
-        command_chain = command_chain + ["snap/command-chain/desktop-gnome-specific"]
-
         self.app_snippet = {
-            **self.app_snippet,
-            "command-chain": command_chain,
+            "command-chain": [
+                "snap/command-chain/desktop-init",
+                "snap/command-chain/desktop-common",
+                "snap/command-chain/desktop-gnome-specific",
+            ],
             "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
         }
 
         self.parts = {
-            **self.parts,
             "gnome-extension": {
                 "plugin": "dump",
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
                 "source-type": "local",
                 "organize": {"desktop-*": "snap/command-chain/"},
                 "build-packages": ["libgtk-3-dev"],
+            },
+            "desktop-common-extension": {
+                "plugin": "dump",
+                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
+                "organize": {"desktop-*": "snap/command-chain/"},
+            },
+            "desktop-common-bindtextdomain": {
+                "plugin": "make",
+                "source": "$SNAPCRAFT_EXTENSIONS_DIR/bindtextdomain",
             },
         }
