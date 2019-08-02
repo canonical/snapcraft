@@ -47,7 +47,7 @@ def list_extensions(**kwargs):
     for extension_name in sorted(extension_names):
         extension = project_loader.find_extension(extension_name)
         extension_info = collections.OrderedDict()
-        extension_info["Extension name"] = extension_name
+        extension_info["Extension name"] = extension_name.replace("_", "-")
         extension_info["Supported bases"] = ", ".join(
             sorted(extension.get_supported_bases())
         )
