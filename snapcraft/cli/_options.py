@@ -95,7 +95,8 @@ def get_build_environment(**kwargs):
 
     if force_destructive_mode and force_use_lxd:
         raise click.BadOptionUsage(
-            "--use-lxd and --destructive-mode cannot be used together."
+            "--destructive-mode",
+            "--use-lxd and --destructive-mode cannot be used together.",
         )
     elif force_use_lxd:
         provider = "lxd"

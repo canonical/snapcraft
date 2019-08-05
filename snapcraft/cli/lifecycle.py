@@ -304,7 +304,7 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     """
     # This option is only valid in legacy.
     if step:
-        raise click.BadOptionUsage("no such option: --step")
+        raise click.BadOptionUsage("--step", "no such option: --step")
 
     build_environment = get_build_environment(
         use_lxd=use_lxd, destructive_mode=destructive_mode
@@ -312,7 +312,7 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if unprime and not build_environment.is_managed_host:
-        raise click.BadOptionUsage("not such option: --unprime")
+        raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     if build_environment.is_managed_host or build_environment.is_host:
         step = steps.PRIME if unprime else None
