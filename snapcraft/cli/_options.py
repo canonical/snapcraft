@@ -23,11 +23,6 @@ from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
 
 
-class HiddenOption(click.Option):
-    def get_help_record(self, ctx):
-        pass
-
-
 class PromptOption(click.Option):
     def prompt_for_value(self, ctx):
         default = self.get_default(ctx)
@@ -48,35 +43,46 @@ class PromptOption(click.Option):
         )
 
 
-_BUILD_OPTION_NAMES = [
-    "--target-arch",
-    "--debug",
-    "--shell",
-    "--shell-after",
-    "--destructive-mode",
-    "--use-lxd",
-]
-
 _BUILD_OPTIONS = [
-    dict(metavar="<arch>", help="Target architecture to cross compile to"),
-    dict(is_flag=True, help="Shells into the environment if the build fails."),
-    dict(is_flag=True, help="Shells into the environment in lieu of the step to run."),
-    dict(is_flag=True, help="Shells into the environment after the step has run."),
     dict(
-        is_flag=True, help="Forces snapcraft to try and use the current host to build."
+        param_decls="--target-arch",
+        metavar="<arch>",
+        help="Target architecture to cross compile to",
     ),
-    dict(is_flag=True, help="Forces snapcraft to use LXD to build."),
+    dict(
+        param_decls="--debug",
+        is_flag=True,
+        help="Shells into the environment if the build fails.",
+    ),
+    dict(
+        param_decls="--shell",
+        is_flag=True,
+        help="Shells into the environment in lieu of the step to run.",
+    ),
+    dict(
+        param_decls="--shell-after",
+        is_flag=True,
+        help="Shells into the environment after the step has run.",
+    ),
+    dict(
+        param_decls="--destructive-mode",
+        is_flag=True,
+        help="Forces snapcraft to try and use the current host to build.",
+    ),
+    dict(
+        param_decls="--use-lxd",
+        is_flag=True,
+        help="Forces snapcraft to use LXD to build.",
+    ),
 ]
 
 
 def add_build_options(hidden=False):
     def _add_build_options(func):
-        for name, params in zip(
-            reversed(_BUILD_OPTION_NAMES), reversed(_BUILD_OPTIONS)
-        ):
-            option = click.option(
-                name, **params, cls=HiddenOption if hidden else click.Option
-            )
+        for build_option in reversed(_BUILD_OPTIONS):
+            build_option = build_option.copy()
+            param_decls = build_option.pop("param_decls")
+            option = click.option(param_decls, **build_option, hidden=hidden)
             func = option(func)
         return func
 

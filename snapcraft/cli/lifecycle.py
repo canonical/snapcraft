@@ -22,12 +22,7 @@ import click
 
 from . import echo
 from ._command import SnapcraftProjectCommand
-from ._options import (
-    add_build_options,
-    get_build_environment,
-    get_project,
-    HiddenOption,
-)
+from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -297,8 +292,8 @@ def pack(directory, output, **kwargs):
     required=False,
     help="Forces snapcraft to try and use the current host to clean.",
 )
-@click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
-@click.option("--step", required=False, cls=HiddenOption)
+@click.option("--unprime", is_flag=True, required=False, hidden=True)
+@click.option("--step", required=False, hidden=True)
 def clean(parts, use_lxd, destructive_mode, unprime, step):
     """Remove a part's assets.
 
