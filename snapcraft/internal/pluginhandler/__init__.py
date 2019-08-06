@@ -451,7 +451,6 @@ class PluginHandler:
         elif os.path.isdir(self.plugin.sourcedir):
             shutil.rmtree(self.plugin.sourcedir)
 
-        self.makedirs()
         self._do_runner_step(steps.PULL)
         self.mark_pull_done()
 
@@ -733,7 +732,6 @@ class PluginHandler:
         _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
-        self.makedirs()
         self._do_runner_step(steps.STAGE)
 
         # Only mark this step done if _do_stage() didn't run, in which case
@@ -789,11 +787,11 @@ class PluginHandler:
         self.mark_cleaned(steps.STAGE)
 
     def _do_runner_step(self, step: steps.Step):
+        self.makedirs()
         self._current_step = step
         return getattr(self._runner, "{}".format(step.name))()
 
     def prime(self, force=False) -> None:
-        self.makedirs()
         self._do_runner_step(steps.PRIME)
 
         # Only mark this step done if _do_prime() didn't run, in which case
