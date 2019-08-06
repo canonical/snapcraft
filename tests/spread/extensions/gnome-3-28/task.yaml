@@ -3,12 +3,7 @@ summary: Build and run a basic gnome snap
 environment:
   SNAP_DIR: ../snaps/glib-hello
 
-# This is a manual test until v2.36 of core is in stable
-manual: true
-
 prepare: |
-  sudo snap refresh --edge core
-
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
@@ -22,11 +17,10 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
-  sudo snap refresh --stable core
-
 execute: |
   cd "$SNAP_DIR"
   snapcraft
+
   sudo snap install glib-hello_*.snap --dangerous
   [ "$(glib-hello)" = "hello world" ]
 
