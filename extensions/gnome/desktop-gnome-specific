@@ -4,7 +4,8 @@
 # GTK launcher specific part #
 ##############################
 
-source "$(dirname $0)/desktop-utils.sh"
+# shellcheck disable=SC1091 source=extensions/desktop-common/desktop-utils.sh
+source "$(dirname "$0")/desktop-utils.sh"
 
 if [ "$SNAP_DESKTOP_WAYLAND_AVAILABLE" = "true" ]; then
   export GDK_BACKEND="wayland"

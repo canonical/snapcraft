@@ -26,25 +26,29 @@ function is_subpath() {
   [ "${dir##$parent/}" != "$dir" ] && return 0 || return 1
 }
 
-if [ -f "/tmp/SNAP_DESKTOP_PIDS" ]; then
-  source "/tmp/SNAP_DESKTOP_PIDS"
+# TMPDIR is declared by the snap runtime
+DESKTOP_PIDS_PATH="${TMPDIR:-/tmp}/SNAP_DESKTOP_PIDS"
+
+if [ -f "$DESKTOP_PIDS_PATH" ]; then
+  # shellcheck source=/dev/null
+  source "$DESKTOP_PIDS_PATH"
 else
   declare -A PIDS
 fi
 
 function async_exec() {
-  $@ &
-  PIDS[$!]=$@
+  "$@" &
+  PIDS[$!]=$*
 }
 
 function wait_for_async_execs() {
-  for pid in ${!PIDS[@]}
+  for pid in "${!PIDS[@]}"
   do
     wait "$pid" && continue || echo "ERROR: ${PIDS[$pid]} exited abnormally with status $?"
   done
-  rm -f "/tmp/SNAP_DESKTOP_PIDS"
+  rm -f "$DESKTOP_PIDS_PATH"
 }
 
 function export_async_pids() {
-  declare -p PIDS > "/tmp/SNAP_DESKTOP_PIDS"
+  declare -p PIDS > "$DESKTOP_PIDS_PATH"
 }

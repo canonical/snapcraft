@@ -4,7 +4,8 @@
 # Launcher common exports for any desktop app #
 ###############################################
 
-source "$(dirname $0)/desktop-utils.sh"
+# shellcheck disable=SC1091 source=extensions/desktop-common/desktop-utils.sh
+source "$(dirname "$0")/desktop-utils.sh"
 
 function update_xdg_dirs_values() {
   local save_initial_values=false

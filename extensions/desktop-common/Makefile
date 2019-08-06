@@ -15,3 +15,4 @@ install:
 	install -d $(BIN_DIR)
 	install desktop-common $(BIN_DIR)/
 	install desktop-init $(BIN_DIR)/
+	install desktop-utils.sh $(BIN_DIR)/
