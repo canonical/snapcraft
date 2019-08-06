@@ -91,9 +91,8 @@ class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
                         "build-packages": ["libgtk-3-dev"],
                     },
                     "desktop-common-extension": {
-                        "plugin": "dump",
+                        "plugin": "make",
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
-                        "organize": {"desktop-*": "snap/command-chain/"},
                     },
                     "desktop-common-bindtextdomain": {
                         "plugin": "make",
