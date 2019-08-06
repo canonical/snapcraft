@@ -85,8 +85,7 @@ class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
                 {
                     "gnome-extension": {
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
-                        "plugin": "dump",
-                        "organize": {"desktop-*": "snap/command-chain/"},
+                        "plugin": "make",
                         "build-packages": ["libgtk-3-dev"],
                     },
                     "desktop-common-extension": {
