@@ -621,7 +621,9 @@
                             "minitems": 1,
                             "uniqueItems": true,
                             "items": {
-                                "type": "string"
+                                "enum": [
+                                    "gnome-3-28"
+                                ]
                             }
                         }
                     }
