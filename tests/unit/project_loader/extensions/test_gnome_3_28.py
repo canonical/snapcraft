@@ -84,19 +84,18 @@ class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
             Equals(
                 {
                     "gnome-extension": {
-                        "plugin": "dump",
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
-                        "source-type": "local",
+                        "plugin": "dump",
                         "organize": {"desktop-*": "snap/command-chain/"},
                         "build-packages": ["libgtk-3-dev"],
                     },
                     "desktop-common-extension": {
-                        "plugin": "make",
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
+                        "plugin": "make",
                     },
                     "desktop-common-bindtextdomain": {
-                        "plugin": "make",
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/bindtextdomain",
+                        "plugin": "make",
                     },
                 }
             ),
