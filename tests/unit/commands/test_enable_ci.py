@@ -28,7 +28,9 @@ class EnableCITestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(
             result.output,
-            Contains('Missing argument "ci-system".  Choose from travis.'),
+            Contains(
+                'Error: Missing argument "<ci-system>".  Choose from:\n\ttravis.\n'
+            ),
         )
 
     def test_enable_ci_unknown(self):

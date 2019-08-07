@@ -22,12 +22,7 @@ import click
 
 from . import echo
 from ._command import SnapcraftProjectCommand
-from ._options import (
-    add_build_options,
-    get_build_environment,
-    get_project,
-    HiddenOption,
-)
+from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -297,8 +292,8 @@ def pack(directory, output, **kwargs):
     required=False,
     help="Forces snapcraft to try and use the current host to clean.",
 )
-@click.option("--unprime", is_flag=True, required=False, cls=HiddenOption)
-@click.option("--step", required=False, cls=HiddenOption)
+@click.option("--unprime", is_flag=True, required=False, hidden=True)
+@click.option("--step", required=False, hidden=True)
 def clean(parts, use_lxd, destructive_mode, unprime, step):
     """Remove a part's assets.
 
@@ -309,7 +304,7 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     """
     # This option is only valid in legacy.
     if step:
-        raise click.BadOptionUsage("no such option: --step")
+        raise click.BadOptionUsage("--step", "no such option: --step")
 
     build_environment = get_build_environment(
         use_lxd=use_lxd, destructive_mode=destructive_mode
@@ -317,7 +312,7 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     project = get_project(is_managed_host=build_environment.is_managed_host)
 
     if unprime and not build_environment.is_managed_host:
-        raise click.BadOptionUsage("not such option: --unprime")
+        raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     if build_environment.is_managed_host or build_environment.is_host:
         step = steps.PRIME if unprime else None

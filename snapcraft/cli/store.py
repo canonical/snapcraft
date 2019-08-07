@@ -294,13 +294,14 @@ def promote(snap_name, from_channel, to_channel, yes):
 
     if parsed_from_channel == parsed_to_channel:
         raise click.BadOptionUsage(
-            "--from-channel and --to-channel cannot be the same."
+            "--to-channel", "--from-channel and --to-channel cannot be the same."
         )
     elif parsed_from_channel.risk == "edge" and parsed_from_channel.branch is None:
         raise click.BadOptionUsage(
+            "--from-channel",
             "{!r} is not a valid set value for --from-channel.".format(
                 parsed_from_channel
-            )
+            ),
         )
 
     store = storeapi.StoreClient()

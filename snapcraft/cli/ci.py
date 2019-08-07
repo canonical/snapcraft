@@ -20,7 +20,7 @@ import click
 from . import echo
 from ._options import get_project
 
-_SUPPORTED_CI_SYSTEMS = ("travis",)
+_SUPPORTED_CI_SYSTEMS = ["travis"]
 
 
 @click.group()
