@@ -126,6 +126,7 @@ class PluginHandler:
         )
 
         self._migrate_state_file()
+        self._current_step = None  # type: steps.Step
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
@@ -187,9 +188,9 @@ class PluginHandler:
         except errors.ScriptletDuplicateDataError as e:
             raise errors.ScriptletDuplicateFieldError("grade", e.other_step)
 
-    def _set_scriptlet_metadata(self, metadata: snapcraft.extractors.ExtractedMetadata):
-        step = self.next_step()
-
+    def _check_scriplet_metadata_dupe(
+        self, metadata: snapcraft.extractors.ExtractedMetadata, step: steps.Step
+    ):
         # First, ensure the metadata set here doesn't conflict with metadata
         # already set for this step
         conflicts = metadata.overlap(self._scriptlet_metadata[step])
@@ -209,6 +210,18 @@ class PluginHandler:
                         step, other_step, list(conflicts)
                     )
 
+    def _set_scriptlet_metadata(self, metadata: snapcraft.extractors.ExtractedMetadata):
+        try:
+            step = self.next_step()
+            self._check_scriplet_metadata_dupe(metadata, step)
+        except errors.NoNextStepError:
+            # We've already run through all the steps, don't bother to
+            # check for duplication as it is not really necessary and
+            # _check_scriplet_metadata_dupe() assumes that all steps
+            # haven't already executed.  Determine the current step
+            # as saved by _do_runner_step().
+            step = self._current_step
+
         self._scriptlet_metadata[step].update(metadata)
 
     def makedirs(self):
@@ -222,6 +235,11 @@ class PluginHandler:
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
+
+    def _do_runner_step(self, step: steps.Step):
+        self.makedirs()
+        self._current_step = step
+        return getattr(self._runner, "{}".format(step.name))()
 
     def _migrate_state_file(self):
         # In previous versions of Snapcraft, the state directory was a file.
@@ -438,8 +456,7 @@ class PluginHandler:
         elif os.path.isdir(self.plugin.sourcedir):
             shutil.rmtree(self.plugin.sourcedir)
 
-        self.makedirs()
-        self._runner.pull()
+        self._do_runner_step(steps.PULL)
         self.mark_pull_done()
 
     def check_pull(self):
@@ -453,6 +470,7 @@ class PluginHandler:
         return None
 
     def update_pull(self):
+        self._do_runner_step(steps.PULL)
         self.source_handler.update()
         self.mark_pull_done()
 
@@ -575,7 +593,7 @@ class PluginHandler:
         self._do_build(update=True)
 
     def _do_build(self, *, update=False):
-        self._runner.build()
+        self._do_runner_step(steps.BUILD)
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
@@ -719,8 +737,7 @@ class PluginHandler:
         _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
-        self.makedirs()
-        self._runner.stage()
+        self._do_runner_step(steps.STAGE)
 
         # Only mark this step done if _do_stage() didn't run, in which case
         # we have no directories or files to track.
@@ -775,8 +792,7 @@ class PluginHandler:
         self.mark_cleaned(steps.STAGE)
 
     def prime(self, force=False) -> None:
-        self.makedirs()
-        self._runner.prime()
+        self._do_runner_step(steps.PRIME)
 
         # Only mark this step done if _do_prime() didn't run, in which case
         # we have no files, directories, or dependency paths to track.
