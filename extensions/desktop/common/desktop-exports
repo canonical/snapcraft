@@ -392,7 +392,7 @@ if [ "$needs_update" = true ]; then
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
     for theme in "${data_dirs_array[$i]}"/icons/*; do
       if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
-        theme_dir=$XDG_DATA_HOME/icons/$(basename "$theme")
+        theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
         if [ ! -d "$theme_dir" ]; then
           mkdir -p "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
