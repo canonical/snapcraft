@@ -20,7 +20,7 @@ function append_dir() {
 }
 
 function can_open_file() {
-  head -c0 "$1" &> /dev/null
+  [ -f "$1" ] && [ -r "$1" ]
 }
 
 function update_xdg_dirs_values() {
