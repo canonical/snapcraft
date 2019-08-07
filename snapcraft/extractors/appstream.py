@@ -34,7 +34,7 @@ _XSLT = """\
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="text"/>
 <xsl:output omit-xml-declaration="yes" indent="yes"/>
-<xsl:strip-space  elements="*"/>
+<xsl:strip-space elements="*"/>
 
 <xsl:template match="@* | node()">
     <xsl:copy>
@@ -43,15 +43,20 @@ _XSLT = """\
 </xsl:template>
 
 <xsl:template match="p" xml:space="preserve">
-<xsl:value-of select="." />
+<xsl:value-of select="normalize-space(text())" />
+    <xsl:for-each select="ul/li[not(@xml:lang)] | ul/li[@xml:lang = en]">
+<xsl:text>&#xA;</xsl:text>
+<xsl:text>- </xsl:text>
+<xsl:value-of select="text()" />
+    </xsl:for-each>
 <xsl:text>&#xA;</xsl:text>
 <xsl:text>&#xA;</xsl:text>
 </xsl:template>
 
-<xsl:template match="ul">
+<xsl:template match="//ul">
     <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
 <xsl:text>- </xsl:text>
-<xsl:value-of select="." />
+<xsl:value-of select="text()" />
 <xsl:text>&#xA;</xsl:text>
     </xsl:for-each>
 </xsl:template>
@@ -125,7 +130,7 @@ def _get_xslt():
 
 def _get_value_from_xml_element(tree, key) -> Optional[str]:
     node = tree.find(key)
-    if node is not None:
+    if node is not None and node.text:
         return node.text.strip()
     else:
         return None
