@@ -236,6 +236,11 @@ class PluginHandler:
         for d in dirs:
             os.makedirs(d, exist_ok=True)
 
+    def _do_runner_step(self, step: steps.Step):
+        self.makedirs()
+        self._current_step = step
+        return getattr(self._runner, "{}".format(step.name))()
+
     def _migrate_state_file(self):
         # In previous versions of Snapcraft, the state directory was a file.
         # Rather than die if we're running on output from an old version,
@@ -785,11 +790,6 @@ class PluginHandler:
             raise errors.MissingStateCleanError(steps.STAGE)
 
         self.mark_cleaned(steps.STAGE)
-
-    def _do_runner_step(self, step: steps.Step):
-        self.makedirs()
-        self._current_step = step
-        return getattr(self._runner, "{}".format(step.name))()
 
     def prime(self, force=False) -> None:
         self._do_runner_step(steps.PRIME)
