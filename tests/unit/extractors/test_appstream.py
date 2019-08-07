@@ -370,6 +370,93 @@ class AppstreamTest(unit.TestCase):
             ),
         )
 
+    def test_appstream_with_ul_in_p(self):
+        file_name = "snapcraft.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <name xml:lang="tr">Çizim</name>
+              <name xml:lang="pt_BR">Drawing</name>
+              <summary>A drawing application for the GNOME desktop</summary>
+              <summary xml:lang="pt_BR">Uma aplicacao de desenho para o ambiente GNOME</summary>
+              <summary xml:lang="nl">Een tekenprogramma voor de GNOME-werkomgeving</summary>
+              <description>
+                <p>"Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.</p>
+                <p xml:lang="pt_BR">"Drawing" e um simples editor de imagens, que suporta arquivos PNG,JPEG e BMP</p>
+                <p xml:lang="nl">"Tekenen" is een eenvoudige afbeeldingsbewerker, met ondersteuning voor PNG, JPEG en BMP.</p>
+                <p xml:lang="fr">"Dessin" est un éditeur d'images basique, qui supporte les fichiers de type PNG, JPEG ou BMP.</p>
+                <p>It allows you to draw or edit pictures with tools such as:
+                  <ul>
+                    <li>Pencil (with various options)</li>
+                    <li xml:lang="pt_BR">Lápis (Com varias opções)</li>
+                    <li xml:lang="nl">Potlood (verschillende soorten)</li>
+                    <li xml:lang="fr">Crayon (avec diverses options)</li>
+                    <li>Selection (cut/copy/paste/drag/…)</li>
+                    <li xml:lang="tr">Seçim (kes/kopyala/yapıştır/sürükle /…)</li>
+                    <li xml:lang="ru">Выделение (вырезать/копировать/вставить/перетащить/…)</li>
+                    <li xml:lang="pt_BR">Seleção (cortar/copiar/colar/arrastar/…)</li>
+                    <li xml:lang="nl">Selectie (knippen/kopiëren/plakken/verslepen/...)</li>
+                    <li xml:lang="it">Selezione (taglia/copia/incolla/trascina/…)</li>
+                    <li xml:lang="he">בחירה (חתיכה/העתקה/הדבקה/גרירה/...)</li>
+                    <li xml:lang="fr">Sélection (copier/coller/déplacer/…)</li>
+                    <li xml:lang="es">Selección (cortar/copiar/pegar/arrastrar/…)</li>
+                    <li xml:lang="de_DE">Auswahl (Ausschneiden/Kopieren/Einfügen/Ziehen/...)</li>
+                    <li>Line, Arc (with various options)</li>
+                    <li xml:lang="pt_BR">Linha, Arco (com varias opcoes)</li>
+                    <li xml:lang="nl">Lijn, Boog (verschillende soorten)</li>
+                    <li xml:lang="fr">Trait, Arc (avec diverses options)</li>
+                    <li>Shapes (rectangle, circle, polygon, …)</li>
+                    <li xml:lang="pt_BR">Formas (retângulo, circulo, polígono, …)</li>
+                    <li xml:lang="nl">Vormen (vierkant, cirkel, veelhoek, ...)</li>
+                    <li xml:lang="fr">Formes (rectangle, cercle, polygone, …)</li>
+                    <li>Text insertion</li>
+                    <li xml:lang="pt_BR">Inserção de texto</li>
+                    <li xml:lang="nl">Tekst invoeren</li>
+                    <li xml:lang="fr">Insertion de texte</li>
+                    <li>Resizing, cropping, rotating</li>
+                    <li xml:lang="pt_BR">Redimencionar, cortar, rotacionar</li>
+                    <li xml:lang="nl">Afmetingen wijzigen, bijsnijden, draaien</li>
+                    <li xml:lang="fr">Redimensionnement, rognage, rotation</li>
+                  </ul>
+                </p>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_summary(),
+            Equals("A drawing application for the GNOME desktop"),
+        )
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+                "Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.
+
+                It allows you to draw or edit pictures with tools such as:
+                - Pencil (with various options)
+                - Selection (cut/copy/paste/drag/…)
+                - Line, Arc (with various options)
+                - Shapes (rectangle, circle, polygon, …)
+                - Text insertion
+                - Resizing, cropping, rotating"""
+                )
+            ),
+        )
+
 
 class AppstreamUnhandledFileTestCase(unit.TestCase):
     def test_unhandled_file_test_case(self):
