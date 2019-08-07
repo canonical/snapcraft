@@ -1,4 +1,4 @@
-# -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 4 -*-
+# -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 8 -*-
 .PHONY: all install
 
 DATA_DIR	:= $(DESTDIR)/data-dir

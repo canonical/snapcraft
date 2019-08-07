@@ -1,4 +1,4 @@
-# -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 4 -*-
+# -*- Mode: Makefile; indent-tabs-mode:t; tab-width: 8 -*-
 .PHONY: all install
 
 PLATFORM_DIR	:= $(DESTDIR)/gnome-platform
@@ -9,4 +9,5 @@ all:
 
 install:
 	install -d $(PLATFORM_DIR)
+	install -d $(BIN_DIR)
 	install desktop-gnome-specific $(BIN_DIR)/
