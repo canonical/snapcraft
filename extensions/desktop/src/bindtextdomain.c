@@ -84,8 +84,8 @@ char *bindtextdomain(const char *domainname, const char *dirname)
                                       domainname) < 0)
                                 continue;
 
-                        /* snap_locale_path has been allocated if we made it 
-                         * this far, be sure it's freed before any goto 
+                        /* snap_locale_path has been allocated if we made it
+                         * this far, be sure it's freed before any goto
                          * or continue
                          */
                         if (access (snap_locale_path, F_OK) == 0) {

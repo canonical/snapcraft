@@ -79,26 +79,15 @@ class Gnome_3_28Extension(Extension):
         }
 
         self.app_snippet = {
-            "command-chain": [
-                "snap/command-chain/desktop-init",
-                "snap/command-chain/desktop-common",
-                "snap/command-chain/desktop-gnome-specific",
-            ],
+            "command-chain": ["snap/command-chain/desktop-launch"],
             "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
         }
 
         self.parts = {
             "gnome-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/gnome",
+                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
+                "source-subdir": "gnome",
                 "plugin": "make",
                 "build-packages": ["libgtk-3-dev"],
-            },
-            "desktop-common-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop-common",
-                "plugin": "make",
-            },
-            "desktop-common-bindtextdomain": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/bindtextdomain",
-                "plugin": "make",
-            },
+            }
         }
