@@ -1,3 +1,21 @@
+snapcraft (3.7.2) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * meta: transparently support command-chain
+  * extensions: structure the base extension class
+  * extensions: refactor checks into the extension base class
+  * extensions: support confinement restrictions
+  * appstream: xslt support for ul nested in p
+
+  [ Colin Watson ]
+  * store: send snapcraft-started-at in push requests
+
+  [ Chris Patterson ]
+  * scriplets: run override-pull on update_pull (#2653)
+  * cli: replace HiddenOption with click 7.0's new flag (#2654)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 07 Aug 2019 23:54:28 +0000
+
 snapcraft (3.7.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
