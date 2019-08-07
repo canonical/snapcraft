@@ -80,6 +80,8 @@ _BUILD_OPTIONS = [
 def add_build_options(hidden=False):
     def _add_build_options(func):
         for build_option in reversed(_BUILD_OPTIONS):
+            # Pop param_decls option to prevent exception further on down the
+            # line for: `got multiple values for keyword argument`.
             build_option = build_option.copy()
             param_decls = build_option.pop("param_decls")
             option = click.option(param_decls, **build_option, hidden=hidden)
