@@ -295,7 +295,7 @@ if [ "$needs_update" = true ]; then
   async_exec make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
 
   # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
-  # GTK 3.20 looks into XDG_DATA_DIR which has connected themes.
+  # GTK 3.20 looks into XDG_DATA_DIRS which has connected themes.
   if [ -d "$SNAP/data-dir/themes" ]; then
     ln -sf "$SNAP/data-dir/themes" "$XDG_DATA_HOME"
     ln -sfn "$SNAP/data-dir/themes" "$SNAP_USER_DATA/.themes"
@@ -362,7 +362,7 @@ fi
 
 # Enable gsettings user changes
 # symlink the dconf file if home plug is connected for read
-DCONF_DEST_USER_DIR=$SNAP_USER_DATA/.config/dconf
+DCONF_DEST_USER_DIR="$SNAP_USER_DATA/.config/dconf"
 if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
   if [ -f "$REALHOME/.config/dconf/user" ]; then
     mkdir -p "$DCONF_DEST_USER_DIR"
