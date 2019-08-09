@@ -149,6 +149,19 @@ class ErrorFormattingTestCase(unit.TestCase):
                 ),
             },
         ),
+        (
+            "PrimedCommandNotFoundError",
+            {
+                "exception": errors.PrimedCommandNotFoundError,
+                "kwargs": {"command": "test-command"},
+                "expected_message": (
+                    "Failed to generate snap metadata: "
+                    "Specified command 'test-command' was not found.\n"
+                    "Verify the command is correct and for a more deterministic outcome, "
+                    "specify the relative path to the command from the prime directory."
+                ),
+            },
+        ),
     )
 
     def test_error_formatting(self):

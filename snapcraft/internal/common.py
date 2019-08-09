@@ -270,6 +270,16 @@ def format_output_in_columns(
     return result_output
 
 
+def get_bin_paths(*, root: str, existing_only=True) -> List[str]:
+    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
+    rooted_paths = (os.path.join(root, p) for p in paths)
+
+    if existing_only:
+        return [p for p in rooted_paths if os.path.exists(p)]
+    else:
+        return list(rooted_paths)
+
+
 def get_include_paths(root, arch_triplet):
     paths = [
         os.path.join(root, "include"),
