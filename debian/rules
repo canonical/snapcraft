@@ -2,11 +2,13 @@
 # -*- Mode:Makefile; indent-tabs-mode:t; tab-width:4 -*-
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild --with bash-completion
+	dh $@
 
+override_dh_auto_clean:
+	@echo
 
-override_dh_autotest:
-	echo "Skipping test.."
+override_dh_auto_build:
+	@echo
 
-override_dh_compress:
-	dh_compress -Xusr/share/doc/snapcraft-examples/demos
+override_dh_auto_install:
+	@echo
