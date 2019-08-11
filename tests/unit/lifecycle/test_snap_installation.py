@@ -41,7 +41,7 @@ class LifecycleSnapTest(LifecycleTestBase):
 
         mock_install_build_snaps.assert_called_once_with({"snap1", "snap2"})
 
-    @mock.patch("snapcraft.internal.common.is_docker_instance", return_value=True)
+    @mock.patch("snapcraft.internal.common.is_in_container", return_value=True)
     @mock.patch("snapcraft.repo.snaps.install_snaps")
     def test_part_with_build_snaps_on_docker(
         self, mock_install_build_snaps, mock_docker_instance
@@ -65,6 +65,6 @@ class LifecycleSnapTest(LifecycleTestBase):
             self.fake_logger.output,
             Contains(
                 "The following snaps are required but not installed as snapcraft "
-                "is running inside docker: "
+                "is running inside docker or podman container: "
             ),
         )

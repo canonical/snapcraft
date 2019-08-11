@@ -65,12 +65,12 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
-    if common.is_docker_instance():
+    if common.is_in_container():
         installed_snaps = []  # type: List[str]
         logger.warning(
             (
                 "The following snaps are required but not installed as snapcraft "
-                "is running inside docker: {}.\n"
+                "is running inside docker or podman container: {}.\n"
                 "Please ensure the environment is properly setup before continuing.\n"
                 "Ignore this message if the appropriate measures have already been taken".format(
                     ", ".join(project_config.build_snaps)
