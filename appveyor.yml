@@ -1,6 +1,7 @@
+image: Visual Studio 2019
 environment:
   matrix:
-  - PYTHON: C:\\Python35-x64
+  - PYTHON: C:\\Python37-x64
 clone_depth: 1
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
@@ -24,6 +25,11 @@ after_test:
 - cmd: |
     venv\\Scripts\\activate.bat
     ECHO %VIRTUAL_ENV%
-    python setup.py sdist
+
+    ECHO "Building snapcraft.exe..."
+    pyinstaller.exe --onefile snapcraft.spec
+
+    ECHO "Building installer..."
+    'C:\Program Files (x86)\Inno Setup 6\iscc.exe' .\snapcraft.iss
 artifacts:
 - path: dist\*
