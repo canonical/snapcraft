@@ -44,7 +44,7 @@ _DEFAULT_LEGACY_SNAPCRAFT_DIR = os.path.join(sys.prefix, "legacy_snapcraft")
 _legacy_snapcraft_dir = _DEFAULT_LEGACY_SNAPCRAFT_DIR
 
 _DOCKERENV_FILE = "/.dockerenv"
-_PODMAN_FLAG = "/run/.containerenv"
+_PODMAN_FILE = "/run/.containerenv"
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -127,7 +127,7 @@ def is_snap() -> bool:
 
 
 def is_in_container() -> bool:
-    return os.path.exists(_DOCKERENV_FILE) or os.path.exists(_PODMAN_FLAG)
+    return any([os.path.exists(p) for p in (_DOCKERENV_FILE, _PODMAN_FILE)])
 
 
 def set_plugindir(plugindir):
