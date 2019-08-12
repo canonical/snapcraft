@@ -33,13 +33,11 @@ after_test:
     pyinstaller.exe --onefile snapcraft.spec
 
     ECHO "Test signing snapcraft.exe..."
-    ps: $cert = New-SelfSignedCertificate -Subject "CN=test-signing.snapcraft.io" -Type CodeSigning  -CertStoreLocation "Cert:\CurrentUser\My"
-    ps: $CertPassword = ConvertTo-SecureString -String "Password1234" -Force -AsPlainText
-    ps: Export-PfxCertificate -Cert "cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath "test-signing.pfx" -Password $CertPassword
+    powershell.exe tools\generate-self-signed-cert.ps1
     'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe' sign /T 'http://timestamp.verisign.com/scripts/timstamp.dll' /F test-signing.pfx /P Password1234 dist\snapcraft.exe
 
     ECHO "Downloading multipass installer..."
-    Invoke-WebRequest 'https://github.com/CanonicalLtd/multipass/releases/download/v0.8.0/multipass-0.8.0+win-win64.exe' -OutFile 'dist\multipass-0.8.0+win-win64.exe'
+    curl.exe -fsS 'https://github.com/CanonicalLtd/multipass/releases/download/v0.8.0/multipass-0.8.0+win-win64.exe' -o 'dist\multipass-0.8.0+win-win64.exe'
 
     ECHO "Building snapcraft installer..."
     'C:\Program Files (x86)\Inno Setup 6\iscc.exe' .\snapcraft.iss
