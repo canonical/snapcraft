@@ -119,6 +119,13 @@ class SnapcraftEnvironmentError(SnapcraftError):
         super().__init__(message=message)
 
 
+class SnapcraftDataDirectoryMissingError(SnapcraftReportableError):
+    fmt = (
+        "Cannot find snapcraft's data files required for proper operation.\n"
+        "Please re-install snapcraft or verify installation is correct."
+    )
+
+
 class SnapcraftMissingLinkerInBaseError(SnapcraftError):
 
     fmt = (
