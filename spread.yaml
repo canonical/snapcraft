@@ -295,6 +295,11 @@ suites:
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
 
+# Extensions tests
+ tests/spread/extensions/:
+   summary: tests of snapcraft's extensions
+   systems: [ubuntu-18.04*]
+
 # Legacy tests
  tests/spread/legacy/:
    summary: legacy snapcraft tests

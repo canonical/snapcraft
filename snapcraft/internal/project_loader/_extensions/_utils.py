@@ -91,14 +91,18 @@ def find_extension(extension_name: str) -> Type[Extension]:
 
     try:
         extension_module = importlib.import_module(
-            "snapcraft.internal.project_loader._extensions.{}".format(extension_name)
+            "snapcraft.internal.project_loader._extensions.{}".format(
+                extension_name.replace("-", "_")
+            )
         )
     except ImportError:
         raise errors.ExtensionNotFoundError(extension_name)
 
     # This may throw an AttributeError, but that would be programmer error of whoever
     # is hacking on extensions.
-    extension_class_name = "{}Extension".format(extension_name.capitalize())
+    extension_class_name = "{}Extension".format(
+        extension_name.capitalize().replace("-", "_")
+    )
     return getattr(extension_module, extension_class_name)
 
 

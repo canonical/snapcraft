@@ -1,0 +1,25 @@
+#!/bin/bash
+##############################
+# GTK launcher specific part #
+##############################
+
+# shellcheck disable=SC2154
+if [ "$wayland_available" = true ]; then
+  export GDK_BACKEND="wayland"
+  export CLUTTER_BACKEND="wayland"
+  # Does not hurt to specify this as well, just in case
+  export QT_QPA_PLATFORM=wayland-egl
+fi
+append_dir GTK_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gtk-3.0"
+
+# ibus and fcitx integration
+GTK_IM_MODULE_DIR="$XDG_CACHE_HOME/immodules"
+export GTK_IM_MODULE_FILE="$GTK_IM_MODULE_DIR/immodules.cache"
+# shellcheck disable=SC2154
+if [ "$needs_update" = true ]; then
+  rm -rf "$GTK_IM_MODULE_DIR"
+  mkdir -p "$GTK_IM_MODULE_DIR"
+  ln -s "$SNAP_DESKTOP_RUNTIME"/usr/lib/"$ARCH"/gtk-3.0/3.0.0/immodules/*.so "$GTK_IM_MODULE_DIR"
+  async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
+fi
+
