@@ -2,11 +2,13 @@ image: Visual Studio 2019
 environment:
   matrix:
   - PYTHON: C:\\Python37-x64
+
 clone_depth: 1
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
 - '%LOCALAPPDATA%\pip\Cache\wheels'
 build: off
+
 before_test:
 - cmd: |
     %PYTHON%\\python.exe -m venv venv
@@ -16,11 +18,13 @@ before_test:
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
     python -m pip install --prefix %VIRTUAL_ENV% -e .
+
 test_script:
 - cmd: |
     venv\\Scripts\\activate.bat
     ECHO %VIRTUAL_ENV%
     python -m unittest run tests.integration.store.test_store_login_logout -v
+
 after_test:
 - cmd: |
     venv\\Scripts\\activate.bat
@@ -29,7 +33,20 @@ after_test:
     ECHO "Building snapcraft.exe..."
     pyinstaller.exe --onefile snapcraft.spec
 
-    ECHO "Building installer..."
+    ECHO "Test signing snapcraft.exe..."
+    ps: $cert = New-SelfSignedCertificate -Subject "CN=test-signing.snapcraft.io" -Type CodeSigning  -CertStoreLocation "Cert:\CurrentUser\My"
+    ps: $CertPassword = ConvertTo-SecureString -String "Password1234" -Force -AsPlainText
+    ps: Export-PfxCertificate -Cert "cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath "test-signing.pfx" -Password $CertPassword
+    'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe' sign /T 'http://timestamp.verisign.com/scripts/timstamp.dll' /F test-signing.pfx /P Password1234 dist\snapcraft.exe
+
+    ECHO "Downloading multipass installer..."
+    Invoke-WebRequest 'https://github.com/CanonicalLtd/multipass/releases/download/v0.8.0/multipass-0.8.0+win-win64.exe' -OutFile 'dist\multipass-0.8.0+win-win64.exe'
+
+    ECHO "Building snapcraft installer..."
     'C:\Program Files (x86)\Inno Setup 6\iscc.exe' .\snapcraft.iss
+
+    ECHO "Test signing snapcraft installer..."
+    'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe' sign /T 'http://timestamp.verisign.com/scripts/timstamp.dll' /F test-signing.pfx /P Password1234 dist\snapcraft-installer.exe
+
 artifacts:
 - path: dist\*
