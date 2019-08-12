@@ -23,7 +23,6 @@ test_script:
 - cmd: |
     venv\\Scripts\\activate.bat
     ECHO %VIRTUAL_ENV%
-    python -m unittest run tests.integration.store.test_store_login_logout -v
 
 after_test:
 - cmd: |
