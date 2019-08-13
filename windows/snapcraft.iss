@@ -39,9 +39,6 @@ Name: "{autoprograms}\Snapcraft for Windows"; Filename: "{app}\snapcraft.exe"
 [Run]
 Filename: "{tmp}\multipass-0.8.0+win-win64.exe"; Description: "Install Multipass"; Flags: postinstall runascurrentuser
 
-[Registry]
-Root: HKLM; Subkey: Software\HHSTECH; ValueType: string; ValueName: InstallPath; ValueData: {app}
-
 [Code]
 const
   ModPathName = 'modifypath';
