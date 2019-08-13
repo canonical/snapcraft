@@ -65,7 +65,7 @@ def _find_windows_data_dir(topdir):
         if os.path.exists(data_dir):
             return data_dir
 
-    raise errors.SnapcraftDataDirectoryMissingError()
+    raise snapcraft.internal.errors.SnapcraftDataDirectoryMissingError()
 
 
 def setup_dirs() -> None:
