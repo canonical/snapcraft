@@ -21,7 +21,7 @@ a = Analysis(
         "responses",
     ],
     hookspath=[],
-    runtime_hooks=[],
+    runtime_hooks=[os.path.join("windows", "hook-pbr.py")],
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
