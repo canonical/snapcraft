@@ -94,9 +94,9 @@ if os.path.exists(changelog):
 # snapcraftctl is not in console_scripts because we need a clean environment.
 # but do not include if building on Windows.
 if sys.platform == "win32":
-    scripts = ([])
+    scripts = []
 else:
-    scripts = (["bin/snapcraftctl"],)
+    scripts = ["bin/snapcraftctl"]
 
 setup(
     name=name,
