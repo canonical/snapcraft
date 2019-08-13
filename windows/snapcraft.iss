@@ -12,8 +12,10 @@ AppUpdatesURL=https://snapcraft.io/
 DefaultDirName={autopf}\Snapcraft for Windows
 DisableProgramGroupPage=yes
 LicenseFile=..\COPYING
-PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+; TODO: multipass installer only supports admin installation
+PrivilegesRequired=admin
+;PrivilegesRequired=lowest
+;PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile=snapcraft.ico
 Compression=lzma
 SolidCompression=yes
