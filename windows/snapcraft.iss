@@ -11,24 +11,27 @@ AppSupportURL=https://snapcraft.io/
 AppUpdatesURL=https://snapcraft.io/
 DefaultDirName={autopf}\Snapcraft for Windows
 DisableProgramGroupPage=yes
-LicenseFile=COPYING
+LicenseFile=..\COPYING
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-SetupIconFile=misc/snapcraft.ico
+SetupIconFile=snapcraft.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 OutputBaseFilename=snapcraft-installer
-OutputDir=dist
+OutputDir=..\dist
+ChangesEnvironment=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
+Name: modifypath; Description: "Add snapcraft to the current user's PATH (Recommended)"
+;Name: modifypathsystem; Description: "Add snapcraft to the system PATH for all users"; Flags: unchecked
 
 [Files]
-Source: "dist\snapcraft.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\multipass-0.8.0+win-win64.exe"; DestDir: "{tmp}";
+Source: "..\dist\snapcraft.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\multipass-0.8.0+win-win64.exe"; DestDir: "{tmp}";
 
 [Icons]
 Name: "{autoprograms}\Snapcraft for Windows"; Filename: "{app}\snapcraft.exe"
@@ -36,3 +39,29 @@ Name: "{autoprograms}\Snapcraft for Windows"; Filename: "{app}\snapcraft.exe"
 [Run]
 Filename: "{tmp}\multipass-0.8.0+win-win64.exe"; Description: "Install Multipass"; Flags: postinstall runascurrentuser
 
+[Registry]
+Root: HKLM; Subkey: Software\HHSTECH; ValueType: string; ValueName: InstallPath; ValueData: {app}
+
+[Code]
+const
+  ModPathName = 'modifypath';
+  ModPathType = 'user';
+
+function ModPathDir(): TArrayOfString;
+begin
+  SetArrayLength(Result, 1);
+  Result[0] := ExpandConstant('{app}');
+end;
+#include "modpath.iss"
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Success: Boolean;
+begin
+  Success := True;
+  if CurStep = ssPostInstall then
+  begin
+    if WizardIsTaskSelected(ModPathName) then
+      ModPath();
+  end;
+end;

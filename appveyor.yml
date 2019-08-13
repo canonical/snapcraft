@@ -38,14 +38,14 @@ after_test:
     pyinstaller.exe --onefile snapcraft.spec
 
     ECHO "Test signing snapcraft.exe..."
-    powershell.exe tools\\generate-self-signed-cert.ps1
+    powershell.exe windows\\generate-self-signed-cert.ps1
     "%SIGNTOOL%" sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\\snapcraft.exe
 
     ECHO "Downloading multipass installer..."
     appveyor DownloadFile "%MULTIPASS_URL%" -FileName "%MULTIPASS_PATH%"
 
     ECHO "Building snapcraft installer..."
-    "%INNOCC%" .\snapcraft.iss
+    "%INNOCC%" dist\\snapcraft.iss
 
     ECHO "Test signing snapcraft installer..."
     "%SIGNTOOL%" sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\\snapcraft-installer.exe
