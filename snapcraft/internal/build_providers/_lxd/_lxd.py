@@ -22,7 +22,11 @@ import urllib.parse
 import warnings
 from typing import Optional, Sequence
 
-import pylxd
+# LXD is only supported on Linux and causes issues when imported on Windows.
+# We conditionally import it and rely on ensure_provider() to check OS before
+# using pylxd.
+if sys.platform == "linux":
+    import pylxd
 
 from .._base_provider import Provider
 from .._base_provider import errors
