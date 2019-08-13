@@ -46,5 +46,5 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
-    icon="misc/snapcraft.ico",
+    icon="windows/snapcraft.ico",
 )
