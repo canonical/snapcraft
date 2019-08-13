@@ -16,8 +16,8 @@
 
 import logging
 import os
-import fixtures
 
+import fixtures
 from testtools import TestCase
 from testtools import matchers as m
 
@@ -42,12 +42,19 @@ class BaseDeltaGenerationTestCase(TestCase):
         with open(self.target_file, "wb") as f:
             f.write(b"This is the target file.")
 
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.file_utils.get_tool_path",
+                side_effect=lambda x: os.path.join("/usr", "bin", x),
+            )
+        )
+
     def test_find_unique_file_name(self):
         tmp_delta = deltas.BaseDeltasGenerator(
             source_path=self.source_file,
             target_path=self.target_file,
             delta_format="xdelta3",
-            delta_tool_path=self.delta_tool_path,
+            delta_tool=self.delta_tool_path,
         )
 
         unique_file_name = tmp_delta.find_unique_file_name(tmp_delta.source_path)
@@ -65,48 +72,8 @@ class BaseDeltaGenerationTestCase(TestCase):
             lambda: deltas.BaseDeltasGenerator(
                 source_path=self.source_file,
                 target_path=self.target_file,
-                delta_format=None,
-                delta_tool_path=self.delta_tool_path,
-            ),
-            m.raises(deltas.errors.DeltaFormatError),
-        )
-        exception = self.assertRaises(
-            deltas.errors.DeltaFormatError,
-            deltas.BaseDeltasGenerator,
-            source_path=self.source_file,
-            target_path=self.target_file,
-            delta_format=None,
-            delta_tool_path="/usr/bin/xdelta3",
-        )
-        expected = "delta_format must be set in subclass!"
-        self.assertThat(str(exception), m.Equals(expected))
-
-        self.assertThat(
-            lambda: deltas.BaseDeltasGenerator(
-                source_path=self.source_file,
-                target_path=self.target_file,
-                delta_format="xdelta3",
-                delta_tool_path=None,
-            ),
-            m.raises(deltas.errors.DeltaToolError),
-        )
-        exception = self.assertRaises(
-            deltas.errors.DeltaToolError,
-            deltas.BaseDeltasGenerator,
-            source_path=self.source_file,
-            target_path=self.target_file,
-            delta_format="xdelta3",
-            delta_tool_path=None,
-        )
-        expected = "delta_tool_path must be set in subclass!"
-        self.assertThat(str(exception), m.Equals(expected))
-
-        self.assertThat(
-            lambda: deltas.BaseDeltasGenerator(
-                source_path=self.source_file,
-                target_path=self.target_file,
                 delta_format="not-defined",
-                delta_tool_path="/usr/bin/xdelta3",
+                delta_tool="/usr/bin/xdelta3",
             ),
             m.raises(deltas.errors.DeltaFormatOptionError),
         )
@@ -116,7 +83,7 @@ class BaseDeltaGenerationTestCase(TestCase):
             source_path=self.source_file,
             target_path=self.target_file,
             delta_format="invalid-delta-format",
-            delta_tool_path=self.delta_tool_path,
+            delta_tool=self.delta_tool_path,
         )
         expected = """delta_format must be a option in ['xdelta3'].
 for now delta_format='invalid-delta-format'"""
@@ -124,15 +91,14 @@ for now delta_format='invalid-delta-format'"""
 
     def test_file_existence_failed(self):
         class Tmpdelta(deltas.BaseDeltasGenerator):
-            delta_format = "xdelta3"
-            delta_tool_path = "delta-gen-tool-path"
+            pass
 
         self.assertThat(
             lambda: deltas.BaseDeltasGenerator(
                 source_path="invalid-source-file",
                 target_path=self.target_file,
                 delta_format="xdelta3",
-                delta_tool_path="delta-gen-tool-path",
+                delta_tool="delta-gen-tool-path",
             ),
             m.raises(ValueError),
         )
@@ -141,7 +107,7 @@ for now delta_format='invalid-delta-format'"""
                 source_path=self.source_file,
                 target_path="invalid-target_file",
                 delta_format="xdelta3",
-                delta_tool_path="delta-gen-tool-path",
+                delta_tool="delta-gen-tool-path",
             ),
             m.raises(ValueError),
         )
@@ -151,7 +117,7 @@ for now delta_format='invalid-delta-format'"""
             source_path=self.source_file,
             target_path=self.target_file,
             delta_format="xdelta3",
-            delta_tool_path=self.delta_tool_path,
+            delta_tool=self.delta_tool_path,
         )
 
         self.assertThat(
@@ -174,7 +140,7 @@ for now delta_format='invalid-delta-format'"""
             source_path=source_file,
             target_path=target_file,
             delta_format="xdelta3",
-            delta_tool_path=self.delta_tool_path,
+            delta_tool=self.delta_tool_path,
         )
 
         self.assertThat(
