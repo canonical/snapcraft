@@ -37,16 +37,16 @@ after_test:
 
     ECHO "Test signing snapcraft.exe..."
     powershell.exe tools\generate-self-signed-cert.ps1
-    %SIGNTOOL% sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft.exe
+    "%SIGNTOOL%" sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft.exe
 
     ECHO "Downloading multipass installer..."
     curl.exe -fsS -o "dist\multipass-0.8.0+win-win64.exe" "https://github.com/CanonicalLtd/multipass/releases/download/v0.8.0/multipass-0.8.0+win-win64.exe"
 
     ECHO "Building snapcraft installer..."
-    %INNOCC% .\snapcraft.iss
+    "%INNOCC%" .\snapcraft.iss
 
     ECHO "Test signing snapcraft installer..."
-    %SIGNTOOL% sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.exe
+    "%SIGNTOOL%" sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.exe
 
 artifacts:
 - path: dist\*
