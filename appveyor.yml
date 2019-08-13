@@ -57,7 +57,7 @@ after_test:
     copy dist\\snapcraft.exe dist\\msix\\
     copy windows\\snapcraft.png dist\\msix\\
     copy windows\\AppxManifest.xml dist\\msix\\
-    %MAKEAPPX% pack /h SHA256 /d dist\\appx /p dist\\snapcraft-installer.msix
+    %MAKEAPPX% pack /h SHA256 /d dist\\msix /p dist\\snapcraft-installer.msix
 
     ECHO "Test signing snapcraft msix installer..."
     "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\\snapcraft-installer.msix
