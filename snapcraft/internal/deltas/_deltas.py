@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,17 +17,15 @@
 
 import logging
 import os
-import shutil
 import subprocess
 import time
+from typing import BinaryIO, Tuple
 
 from snapcraft import file_utils
 from snapcraft.internal.deltas.errors import (
-    DeltaFormatError,
     DeltaFormatOptionError,
     DeltaGenerationError,
     DeltaGenerationTooBigError,
-    DeltaToolError,
 )
 
 
@@ -48,29 +46,23 @@ class BaseDeltasGenerator:
     def __init__(
         self,
         *,
-        source_path,
-        target_path,
-        delta_file_extname="delta",
-        delta_format=None,
-        delta_tool_path=None
-    ):
-
+        source_path: str,
+        target_path: str,
+        delta_tool: str,
+        delta_format: str,
+        delta_file_extname: str = "delta"
+    ) -> None:
         self.source_path = source_path
         self.target_path = target_path
         self.delta_format = delta_format
         self.delta_file_extname = delta_file_extname
-        self.delta_tool_path = delta_tool_path
+        self.delta_tool_path = file_utils.get_tool_path(delta_tool)
 
         # some pre-checks
         self._check_properties()
         self._check_file_existence()
-        self._check_delta_gen_tool()
 
     def _check_properties(self):
-        if not self.delta_format:
-            raise DeltaFormatError()
-        if not self.delta_tool_path:
-            raise DeltaToolError()
         if self.delta_format not in delta_format_options:
             raise DeltaFormatOptionError(
                 delta_format=self.delta_format, format_options_list=delta_format_options
@@ -89,14 +81,7 @@ class BaseDeltasGenerator:
                 "please specify a valid target file".format(self.target_path)
             )
 
-    def _check_delta_gen_tool(self):
-        """Check if the delta generation tool exists"""
-        path_exists = file_utils.executable_exists(self.delta_tool_path)
-        on_system = shutil.which(self.delta_tool_path)
-        if not (path_exists or on_system):
-            raise DeltaToolError(delta_tool=self.delta_tool_path)
-
-    def _check_delta_size_constraint(self, delta_path):
+    def _check_delta_size_constraint(self, delta_path: str) -> None:
         """Ensure delta is sufficiently smaller than target snap.
 
         Although bandwidth is still saved in the case of uploading a delta
@@ -116,7 +101,7 @@ class BaseDeltasGenerator:
                 delta_min_percentage=100 - self.delta_size_min_pct
             )
 
-    def find_unique_file_name(self, path_hint):
+    def find_unique_file_name(self, path_hint: str) -> str:
         """Return a path on disk similar to 'path_hint' that does not exist.
 
         This function can be used to ensure that 'path_hint' points to a file
@@ -130,7 +115,9 @@ class BaseDeltasGenerator:
             counter += 1
         return target
 
-    def _setup_std_output(self, delta_file):
+    def _setup_std_output(
+        self, delta_file: str
+    ) -> Tuple[str, str, BinaryIO, str, BinaryIO]:
         """Helper to setup the stdout and stderr for subprocess"""
         workdir = "/tmp/"
         _, delta_name = os.path.split(delta_file)
@@ -147,7 +134,7 @@ class BaseDeltasGenerator:
 
         return workdir, stdout_path, stdout_file, stderr_path, stderr_file
 
-    def _update_progress_indicator(self, proc, progress_indicator):
+    def _update_progress_indicator(self, proc, progress_indicator) -> None:
         """Update the progress indicator"""
         # the caller should start the progressbar outside
         ret = None
@@ -164,7 +151,9 @@ class BaseDeltasGenerator:
         print("")
         # the caller should finish the progressbar outside
 
-    def make_delta(self, output_dir=None, progress_indicator=None, is_for_test=False):
+    def make_delta(
+        self, output_dir: str = None, progress_indicator=None, is_for_test=False
+    ) -> str:
         """Call the delta generation tool to create the delta file.
 
         returns: generated delta file path

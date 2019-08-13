@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,14 +18,12 @@ import os
 import fixtures
 import logging
 import random
-import shutil
 from unittest import mock
 
 from progressbar import AnimatedMarker, ProgressBar
 from testtools import matchers as m
 
-from snapcraft import file_utils
-from snapcraft.internal import deltas  # noqa
+from snapcraft.internal import deltas
 from tests import fixture_setup, unit
 
 
@@ -35,8 +33,6 @@ class XDelta3TestCase(unit.TestCase):
         self.useFixture(fixture_setup.FakeTerminal())
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
-
-        self.patch(file_utils, "executable_exists", lambda a: True)
 
         self.workdir = self.useFixture(fixtures.TempDir()).path
         self.source_file = os.path.join(self.workdir, "source.snap")
@@ -74,23 +70,6 @@ class XDelta3TestCase(unit.TestCase):
                     target.write(os.urandom(1024))
                 else:
                     target.write(block)
-
-    def test_raises_DeltaToolError_when_xdelta3_not_installed(self):
-        self.patch(file_utils, "executable_exists", lambda a: False)
-        self.patch(shutil, "which", lambda a: None)
-
-        self.assertThat(
-            lambda: deltas.XDelta3Generator(
-                source_path=self.source_file, target_path=self.target_file
-            ),
-            m.raises(deltas.errors.DeltaToolError),
-        )
-        self.assertRaises(
-            deltas.errors.DeltaToolError,
-            deltas.XDelta3Generator,
-            source_path=self.source_file,
-            target_path=self.target_file,
-        )
 
     def test_xdelta3(self):
         self.generate_snap_pair()

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,25 +13,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 import subprocess
 
 from ._deltas import BaseDeltasGenerator
-from snapcraft import file_utils
 
 logger = logging.getLogger(__name__)
 
 
+_DELTA_TOOL = "xdelta3"
+_DELTA_FORMAT = "xdelta3"
+_DELTA_EXTNAME = "xdelta3"
+
+
 class XDelta3Generator(BaseDeltasGenerator):
     def __init__(self, *, source_path, target_path):
-        delta_format = "xdelta3"
-        delta_tool_path = file_utils.get_tool_path("xdelta3")
         super().__init__(
             source_path=source_path,
             target_path=target_path,
-            delta_file_extname="xdelta3",
-            delta_format=delta_format,
-            delta_tool_path=delta_tool_path,
+            delta_tool=_DELTA_TOOL,
+            delta_format=_DELTA_FORMAT,
+            delta_file_extname=_DELTA_EXTNAME,
         )
 
     def get_delta_cmd(self, source_path, target_path, delta_file):

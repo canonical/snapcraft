@@ -35,11 +35,10 @@ from tabulate import tabulate
 from snapcraft.file_utils import calculate_sha3_384, get_tool_path
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
-from snapcraft.internal.errors import SnapDataExtractionError
+from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
-    DeltaToolError,
 )
 
 
@@ -605,7 +604,7 @@ def _push_delta(snap_name, snap_filename, source_snap, built_at):
             source_path=source_snap, target_path=target_snap
         )
         delta_filename = xdelta_generator.make_delta()
-    except (DeltaGenerationError, DeltaGenerationTooBigError, DeltaToolError) as e:
+    except (DeltaGenerationError, DeltaGenerationTooBigError, ToolMissingError) as e:
         raise storeapi.errors.StoreDeltaApplicationError(str(e))
 
     snap_hashes = {

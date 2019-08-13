@@ -272,11 +272,6 @@ def create_similar_directory(source: str, destination: str) -> None:
     shutil.copystat(source, destination, follow_symlinks=False)
 
 
-def executable_exists(path: str) -> bool:
-    """Return True if 'path' exists and is readable and executable."""
-    return os.path.exists(path) and os.access(path, os.R_OK | os.X_OK)
-
-
 @contextmanager
 def requires_command_success(
     command: str, not_found_fmt: str = None, failure_fmt: str = None
