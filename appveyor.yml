@@ -42,7 +42,7 @@ after_test:
     "%SIGNTOOL%" sign /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\\snapcraft.exe
 
     ECHO "Downloading multipass installer..."
-    appveyor DownloadFile "%MULTIPASS_URL%" "%MULTIPASS_PATH%"
+    appveyor DownloadFile "%MULTIPASS_URL%" -FileName "%MULTIPASS_PATH%"
 
     ECHO "Building snapcraft installer..."
     "%INNOCC%" .\snapcraft.iss
