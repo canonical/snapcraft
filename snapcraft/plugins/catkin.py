@@ -68,6 +68,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The URI to ros master setting the env variable ROS_MASTER_URI. Defaults
       to http://localhost:11311.
+    - disable-parallel:
+      (boolean)
+      Disable parallel build, effectively using a single worker.
+      Defaults to False.
 """
 
 import contextlib
@@ -210,6 +214,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
             "default": "http://localhost:11311",
         }
 
+        schema["properties"]["disable-parallel"] = {"type": "boolean", "default": False}
+
         schema["required"] = ["source"]
 
         return schema
@@ -231,7 +237,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["catkin-cmake-args"]
+        return ["catkin-cmake-args", "disable-parallel"]
 
     @property
     def _pip(self):
@@ -797,6 +803,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Specify that the package should be installed along with the rest of
         # the ROS distro.
         catkincmd.extend(["--install-space", self.rosdir])
+
+        if self.disable_parallel:
+            # Specify using a single worker
+            catkincmd.append("-j1")
 
         # All the arguments that follow are meant for CMake
         catkincmd.append("--cmake-args")
