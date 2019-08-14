@@ -96,6 +96,15 @@ class TestElfFileSmoketest(unit.TestCase):
             )
 
 
+class TestInvalidElf(unit.TestCase):
+    def test_invalid_elf_file(self):
+        invalid_elf = os.path.join(self.path, "invalid-elf")
+        open(invalid_elf, "wb").write(b"\x7fELF\x00")
+
+        elf_files = elf.get_elf_files(self.path, ["invalid-elf"])
+        self.assertThat(elf_files, Equals(set()))
+
+
 class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
