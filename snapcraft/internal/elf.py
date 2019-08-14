@@ -24,6 +24,7 @@ import tempfile
 from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
+import elftools.common.exceptions
 from pkg_resources import parse_version
 
 from snapcraft import file_utils
@@ -566,12 +567,20 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
         if os.path.islink(path):
             logger.debug("Skipped link {!r} while finding dependencies".format(path))
             continue
-        # Finally, make sure this is actually an ELF file
-        if ElfFile.is_elf(path):
+
+        # Ignore if file does not have ELF header.
+        if not ElfFile.is_elf(path):
+            continue
+
+        try:
             elf_file = ElfFile(path=path)
-            # if we have dyn symbols we are dynamic
-            if elf_file.needed:
-                elf_files.add(elf_file)
+        except elftools.common.exceptions.ELFError:
+            # Ignore invalid ELF files.
+            continue
+
+        # If ELF has dynamic symbols, add it.
+        if elf_file.needed:
+            elf_files.add(elf_file)
 
     return frozenset(elf_files)
 
