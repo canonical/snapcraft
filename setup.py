@@ -20,6 +20,8 @@ import os
 import re
 import sys
 
+from setuptools import setup
+
 
 def recursive_data_files(directory, install_directory):
     data_files = []
@@ -89,68 +91,30 @@ if os.path.exists(changelog):
         version = match.group(1)
 
 
-# If on Windows, construct an exe distribution
-if sys.platform == "win32":
-    from cx_Freeze import setup, Executable
-
-    # cx_Freeze relevant options
-    build_exe_options = {
-        # Explicitly add any missed packages that are not found at runtime
-        "packages": [
-            "pkg_resources",
-            "pymacaroons",
-            "click",
-            "responses",
-            "configparser",
-            "cffi",
-        ],
-        # Explicit inclusion data, which is then clobbered.
-        "include_files": [
-            ("schema", os.path.join("share", "snapcraft", "schema")),
-            ("extensions", os.path.join("share", "snapcraft", "extensions")),
-            ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
-        ],
-    }
-
-    exe = Executable(script="bin/snapcraft", base=None)  # console subsystem
-
-    setup(
-        name=name,
-        version=version,
-        description=description,
-        author_email=author_email,
-        url=url,
-        packages=packages,
-        package_data=package_data,
-        license=license,
-        classifiers=classifiers,
-        # cx_Freeze-specific arguments
-        options={"build_exe": build_exe_options},
-        executables=[exe],
-    )
-
-# On other platforms, continue as normal
+# snapcraftctl is not in console_scripts because we need a clean environment.
+# Only include it for Linux.
+if sys.platform == "linux":
+    scripts = ["bin/snapcraftctl"]
 else:
-    from setuptools import setup
+    scripts = []
 
-    setup(
-        name=name,
-        version=version,
-        description=description,
-        author_email=author_email,
-        url=url,
-        packages=packages,
-        package_data=package_data,
-        license=license,
-        classifiers=classifiers,
-        entry_points=dict(console_scripts=["snapcraft = snapcraft.cli.__main__:run"]),
-        # snapcraftctl is not in console_scripts because we need a clean environment.
-        scripts=["bin/snapcraftctl"],
-        data_files=(
-            recursive_data_files("schema", "share/snapcraft")
-            + recursive_data_files("keyrings", "share/snapcraft")
-            + recursive_data_files("extensions", "share/snapcraft")
-        ),
-        install_requires=["pysha3", "pyxdg", "requests"],
-        test_suite="tests.unit",
-    )
+setup(
+    name=name,
+    version=version,
+    description=description,
+    author_email=author_email,
+    url=url,
+    packages=packages,
+    package_data=package_data,
+    license=license,
+    classifiers=classifiers,
+    scripts=scripts,
+    entry_points=dict(console_scripts=["snapcraft = snapcraft.cli.__main__:run"]),
+    data_files=(
+        recursive_data_files("schema", "share/snapcraft")
+        + recursive_data_files("keyrings", "share/snapcraft")
+        + recursive_data_files("extensions", "share/snapcraft")
+    ),
+    install_requires=["pysha3", "pyxdg", "requests"],
+    test_suite="tests.unit",
+)
