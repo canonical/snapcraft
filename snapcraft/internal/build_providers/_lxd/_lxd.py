@@ -22,14 +22,17 @@ import urllib.parse
 import warnings
 from typing import Optional, Sequence
 
-import pylxd
-
 from .._base_provider import Provider
 from .._base_provider import errors
 from ._images import get_image_source
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
+# LXD is only supported on Linux and causes issues when imported on Windows.
+# We conditionally import it and rely on ensure_provider() to check OS before
+# using pylxd.
+if sys.platform == "linux":
+    import pylxd
 
 logger = logging.getLogger(__name__)
 # Filter out attribute setting warnings for properties that exist in LXD operations
