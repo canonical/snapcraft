@@ -31,6 +31,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - configflags:
       (list of strings)
       configure flags to pass to the build using the common cmake semantics.
+
+    - artifacts:
+      (list)
+      Link/copy the given files from the build output to the snap
+      installation directory. If specified, the `install` target will
+      be skipped.
 """
 
 import logging
@@ -80,6 +86,14 @@ class CMakePlugin(snapcraft.BasePlugin):
             "items": {"type": "string"},
             "default": [],
         }
+        # For backwards compatibility
+        schema["properties"]["artifacts"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
         schema["required"] = ["source"]
 
         return schema
@@ -88,7 +102,7 @@ class CMakePlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return super().get_build_properties() + ["configflags"]
+        return super().get_build_properties() + ["configflags", "artifacts"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -128,7 +142,12 @@ class CMakePlugin(snapcraft.BasePlugin):
             env=env,
         )
 
-        self.run(["cmake", "--build", ".", "--target", "install"], env=env)
+        if self.options.artifacts:
+            snapcraft.file_utils.link_or_copy_files(
+                sourcedir, self.installdir, self.options.artifacts
+            )
+        else:
+            self.run(["cmake", "--build", ".", "--target", "install"], env=env)
 
     def _get_processed_flags(self) -> List[str]:
         # Return the original if no build_snaps are in options.

@@ -37,6 +37,7 @@ class CMakeBaseTest(unit.TestCase):
             make_parameters = []
             disable_parallel = False
             build_snaps = []
+            artifacts = []
 
         self.options = Options()
 
@@ -55,12 +56,25 @@ class CMakeBaseTest(unit.TestCase):
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        # run_output is used for querying cmake for available targets.
+        patcher = mock.patch("snapcraft.internal.common.run_output")
+        self.run_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.run_output_mock.return_value = textwrap.dedent(
+            """
+            The following are some of the valid targets for this Makefile:
+            ... all (the default if no target is provided)
+            ... clean
+            ... install
+        """
+        )
+
         self.useFixture(fixture_setup.CleanEnvironment())
 
 
 class CMakeTest(CMakeBaseTest):
     def test_get_build_properties(self):
-        expected_build_properties = ["configflags"]
+        expected_build_properties = ["configflags", "artifacts"]
         resulting_build_properties = cmake.CMakePlugin.get_build_properties()
         self.assertThat(
             resulting_build_properties, HasLength(len(expected_build_properties))
