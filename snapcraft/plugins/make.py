@@ -47,7 +47,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Use this variable to redirect the installation into the snap.
 """
 
-import os
 import snapcraft
 import snapcraft.common
 from snapcraft.internal import errors
@@ -107,15 +106,11 @@ class MakePlugin(snapcraft.BasePlugin):
 
         self.run(command + ["-j{}".format(self.parallel_build_count)], env=env)
         if self.options.artifacts:
-            for artifact in self.options.artifacts:
-                source_path = os.path.join(self.builddir, artifact)
-                destination_path = os.path.join(self.installdir, artifact)
-                if os.path.isdir(source_path):
-                    snapcraft.file_utils.link_or_copy_tree(
-                        source_path, destination_path
-                    )
-                else:
-                    snapcraft.file_utils.link_or_copy(source_path, destination_path)
+            snapcraft.file_utils.link_or_copy_path_list(
+                source_tree=self.builddir,
+                destination_tree=self.installdir,
+                path_list=self.options.artifacts,
+            )
         else:
             command.append("install")
             if self.options.make_install_var:
