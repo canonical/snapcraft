@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -87,3 +87,22 @@ def _str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+class OctInt(SnapcraftYAMLObject):
+    """An int represented in octal form."""
+
+    yaml_tag = u"!OctInt"
+
+    def __init__(self, value):
+        super().__init__()
+        self._value = value
+
+    @classmethod
+    def to_yaml(cls, dumper, data):
+        """
+        Convert a Python object to a representation node.
+        """
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:int", "{:04o}".format(data._value)
+        )
