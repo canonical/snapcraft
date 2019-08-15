@@ -64,25 +64,6 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
-class OctInt(yaml_utils.SnapcraftYAMLObject):
-    """An int represented in octal form."""
-
-    yaml_tag = u"!OctInt"
-
-    def __init__(self, value):
-        super().__init__()
-        self._value = value
-
-    @classmethod
-    def to_yaml(cls, dumper, data):
-        """
-        Convert a Python object to a representation node.
-        """
-        return dumper.represent_scalar(
-            "tag:yaml.org,2002:int", "{:04o}".format(data._value)
-        )
-
-
 # From snapd's snap/validate.go, appContentWhitelist, with a slight modification: don't
 # allow leading slashes.
 _APP_COMMAND_PATTERN = re.compile("^[A-Za-z0-9. _#:$-][A-Za-z0-9/. _#:$-]*$")
@@ -694,7 +675,7 @@ class _SnapPackaging:
             for socket in sockets.values():
                 mode = socket.get("socket-mode")
                 if mode is not None:
-                    socket["socket-mode"] = OctInt(mode)
+                    socket["socket-mode"] = yaml_utils.OctInt(mode)
 
     def _validate_command_chain(self, apps: Dict[str, Any]) -> None:
         for app_name, app in apps.items():
