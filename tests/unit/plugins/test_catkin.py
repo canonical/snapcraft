@@ -329,6 +329,18 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             catkin_ros_master_uri["default"], Equals("http://localhost:11311")
         )
 
+    def test_schema_disable_parallel(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check disable-parallel property
+        disable_parallel = schema["properties"]["disable-parallel"]
+        expected = ("type", "default")
+        self.assertThat(disable_parallel, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(disable_parallel, Contains(prop))
+        self.assertThat(disable_parallel["type"], Equals("boolean"))
+        self.assertThat(disable_parallel["default"], Equals(False))
+
     def test_get_pull_properties(self):
         expected_pull_properties = [
             "catkin-packages",
@@ -348,7 +360,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             self.assertIn(property, actual_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["catkin-cmake-args"]
+        expected_build_properties = ["catkin-cmake-args", "disable-parallel"]
         actual_build_properties = catkin.CatkinPlugin.get_build_properties()
 
         self.assertThat(
