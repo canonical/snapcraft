@@ -26,6 +26,7 @@ from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
     deprecations,
+    errors,
     lifecycle,
     project_loader,
     steps,
@@ -309,7 +310,12 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     build_environment = get_build_environment(
         use_lxd=use_lxd, destructive_mode=destructive_mode
     )
-    project = get_project(is_managed_host=build_environment.is_managed_host)
+
+    try:
+        project = get_project(is_managed_host=build_environment.is_managed_host)
+    except errors.ProjectNotFoundError:
+        # Fresh environment, nothing to clean.
+        return
 
     if unprime and not build_environment.is_managed_host:
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")

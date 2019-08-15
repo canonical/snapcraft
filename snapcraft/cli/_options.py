@@ -21,6 +21,7 @@ import click
 from . import env
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
+from snapcraft.internal import errors
 
 
 class PromptOption(click.Option):
@@ -112,7 +113,11 @@ def get_build_environment(**kwargs):
 def get_project(*, is_managed_host: bool = False, **kwargs):
     # We need to do this here until we can get_snapcraft_yaml as part of Project.
     if is_managed_host:
-        os.chdir(os.path.expanduser(os.path.join("~", "project")))
+        try:
+            os.chdir(os.path.expanduser(os.path.join("~", "project")))
+        except FileNotFoundError:
+            # No project found (fresh environment).
+            raise errors.ProjectNotFoundError()
 
     snapcraft_yaml_file_path = get_snapcraft_yaml()
 
