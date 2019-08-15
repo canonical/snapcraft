@@ -414,3 +414,23 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     filename_relpath = os.path.relpath(filename_abspath, base_directory)
 
     return filename_relpath
+
+
+def link_or_copy_files(
+    src_base_dir: str, dst_base_dir: str, file_list: List[str]
+) -> None:
+    """Copy or link files from src_base_dir to dst_base_dir.
+
+    If a file in file_list is a directory, it will be copied recursively.
+
+    :param str src_base_dir: Source directory.
+    :param str dst_base_dir: Destination directory.
+    :param List[str] file_list: List of relative file paths for copying.
+    """
+    for file_name in file_list:
+        source_path = os.path.join(src_base_dir, file_name)
+        destination_path = os.path.join(dst_base_dir, file_name)
+        if os.path.isdir(source_path):
+            link_or_copy_tree(source_path, destination_path)
+        else:
+            link_or_copy(source_path, destination_path)

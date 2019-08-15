@@ -189,6 +189,38 @@ class TestLinkOrCopy(unit.TestCase):
         self.assertTrue(os.path.isfile("foo2/bar/baz/4"))
 
 
+class TestLinkOrCopyFiles(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        os.makedirs(os.path.join("src", "foo", "bar", "baz"))
+        open(os.path.join("src", "1"), "w").close()
+        open(os.path.join("src", "foo", "2"), "w").close()
+        open(os.path.join("src", "foo", "bar", "3"), "w").close()
+        open(os.path.join("src", "foo", "bar", "4"), "w").close()
+
+    def test_link_or_copy_files_all_files(self):
+        os.makedirs("dst")
+
+        file_list = ["1", os.path.join("foo", "2"), os.path.join("foo", "bar", "3")]
+
+        file_utils.link_or_copy_files("src", "dst", file_list)
+        self.assertTrue(os.path.isfile(os.path.join("dst", "1")))
+        self.assertTrue(os.path.isfile(os.path.join("dst", "foo", "2")))
+        self.assertTrue(os.path.isfile(os.path.join("dst", "foo", "bar", "3")))
+        self.assertFalse(os.path.isfile(os.path.join("dst", "foo", "bar", "4")))
+
+    def test_link_or_copy_files_dir(self):
+        os.makedirs("dst")
+
+        file_list = ["1", os.path.join("foo")]
+
+        file_utils.link_or_copy_files("src", "dst", file_list)
+        self.assertTrue(os.path.isfile(os.path.join("dst", "1")))
+        self.assertTrue(os.path.isfile(os.path.join("dst", "foo", "2")))
+        self.assertTrue(os.path.isfile(os.path.join("dst", "foo", "bar", "3")))
+
+
 class RequiresCommandSuccessTestCase(unit.TestCase):
     @mock.patch("subprocess.check_call")
     def test_requires_command_works(self, mock_check_call):
