@@ -172,6 +172,14 @@ class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
+    def test_everything_is_clean_part(self):
+        """Don't crash if everything is already clean."""
+        self.make_snapcraft_yaml(n=3, create=False)
+
+        result = self.run_command(["clean", "clean1"])
+
+        self.assertThat(result.exit_code, Equals(0))
+
 
 class CleanCommandReverseDependenciesTestCase(CommandBaseTestCase):
     def setUp(self):
