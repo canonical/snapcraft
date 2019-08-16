@@ -1,6 +1,7 @@
 image: Visual Studio 2019
 environment:
   INNOCC: C:\Program Files (x86)\Inno Setup 6\iscc.exe
+  MAKEAPPX: C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\makeappx.exe
   SIGNTOOL: C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe
   SNAPCRAFT_INSTALLED_EXE: C:\Program Files (x86)\Snapcraft for Windows\snapcraft.exe
 
@@ -40,6 +41,16 @@ build_script:
     echo "Test signing snapcraft inno installer..."
     "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.exe
 
+    echo "Building snapcraft msix installer..."
+    mkdir dist\msix
+    copy dist\snapcraft.exe dist\msix\
+    copy windows\snapcraft.png dist\msix\
+    copy windows\AppxManifest.xml dist\msix\
+    "%MAKEAPPX%" pack /h SHA256 /d dist\msix /p dist\snapcraft-installer.msix
+
+    echo "Test signing snapcraft msix installer..."
+    "%SIGNTOOL%" sign /fd SHA256 /T "http://timestamp.verisign.com/scripts/timstamp.dll" /F test-signing.pfx /P Password1234 dist\snapcraft-installer.msix
+
 test_script:
 - cmd: |
     echo "Running select unit tests..."
@@ -59,5 +70,6 @@ test_script:
     "%SNAPCRAFT_INSTALLED_EXE%" version
 
 artifacts:
-- path: dist\snapcraft-installer.exe
 - path: dist\snapcraft.exe
+- path: dist\snapcraft-installer.exe
+- path: dist\snapcraft-installer.msix
