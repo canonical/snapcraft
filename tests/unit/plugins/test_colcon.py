@@ -73,6 +73,7 @@ class ColconPluginTestBase(unit.TestCase):
             colcon_catkin_cmake_args = []
             colcon_ament_cmake_args = []
             build_attributes = []
+            disable_parallel = False
 
         self.properties = props()
         self.ubuntu_distro = "bionic"
@@ -953,6 +954,10 @@ class BuildTestCase(ColconPluginTestBase):
         ("one package", {"colcon_packages": ["my_package"]}),
         ("no packages", {"colcon_packages": []}),
         ("all packages", {"colcon_packages": None}),
+        (
+            "all packages single threaded",
+            {"colcon_packages": None, "disable_parallel": True},
+        ),
     ]
 
     build_type_scenarios = [
@@ -990,6 +995,8 @@ class BuildTestCase(ColconPluginTestBase):
         self.properties.colcon_cmake_args = self.colcon_cmake_args
         self.properties.colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
         self.properties.colcon_ament_cmake_args = self.colcon_ament_cmake_args
+        if hasattr(self, "disable_parallel"):
+            self.properties.disable_parallel = self.disable_parallel
 
     @mock.patch.object(colcon.ColconPlugin, "run")
     @mock.patch.object(colcon.ColconPlugin, "run_output", return_value="foo")
@@ -1011,6 +1018,7 @@ class BuildTestCase(ColconPluginTestBase):
         colcon_cmake_args = self.colcon_cmake_args
         colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
         colcon_ament_cmake_args = self.colcon_ament_cmake_args
+        disable_parallel = self.properties.disable_parallel
 
         class _check_build_command:
             def __init__(self, test):
@@ -1035,6 +1043,19 @@ class BuildTestCase(ColconPluginTestBase):
                         command,
                         MatchesRegex(
                             ".*--cmake-args.*{}".format(re.escape(expected_args))
+                        ),
+                    )
+                if disable_parallel:
+                    self.test.assertThat(
+                        command, MatchesRegex(".*--parallel-workers 1")
+                    )
+                else:
+                    self.test.assertThat(
+                        command,
+                        MatchesRegex(
+                            ".*--parallel-workers {}".format(
+                                plugin.parallel_build_count
+                            )
                         ),
                     )
                 if colcon_catkin_cmake_args:
