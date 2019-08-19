@@ -9,19 +9,19 @@ like `--dns=8.8.8.8` added to the command.
 
 ## Creating containers
 
-There are four separate Dockerfiles here, each one corresponding to their
-respective risk level:
+The Dockerfile here can build images for these risk levels:
 
-- **edge.Dockerfile**: Using the snap from edge
-- **beta.Dockerfile**: Using the snap from beta
-- **candidate.Dockerfile**: Using the snap from candidate
-- **stable.Dockerfile**: Using the snap from stable
+- **edge**: Using the snap from edge
+- **beta**: Using the snap from beta
+- **candidate**: Using the snap from candidate
+- **stable**: Using the snap from stable
 
-Build the docker image with the following (note that `--network host` is not
-strictly needed if a proper docker bridge is setup):
+By default, the `edge` image will be built. Pass `--build-arg RISK=<risk>` to
+choose needed risk level for target container:
 
-    docker build --no-cache -f <risk>.Dockerfile --label snapcore/snapcraft --tag snapcore/snapcraft:<risk> --network host .
+    export RISK=beta
+    docker build --no-cache --tag snapcore/snapcraft:$RISK --build-arg RISK=$RISK .
 
 You can push that image with:
 
-    docker push snapcore/snapcraft:<risk>
+    docker push snapcore/snapcraft:$RISK
