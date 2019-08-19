@@ -65,7 +65,7 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
-    if common.is_in_container():
+    if common.is_process_container():
         installed_snaps = []  # type: List[str]
         logger.warning(
             (

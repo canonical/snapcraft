@@ -226,7 +226,7 @@ class Config:
             # If the base is already installed by other means, skip its installation.
             # But, we should always add it when in a docker environment so
             # the creator of said docker image is aware that it is required.
-            if common.is_in_container() or not repo.snaps.SnapPackage.is_snap_installed(
+            if common.is_process_container() or not repo.snaps.SnapPackage.is_snap_installed(
                 project.info.base
             ):
                 self.build_snaps.add(project.info.base)

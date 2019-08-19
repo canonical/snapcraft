@@ -373,7 +373,7 @@ class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
         snap_root = os.path.join(os.path.sep, "snap", "snapcraft", "current")
         self._patch(snap_root)
 
-        with mock.patch("snapcraft.internal.common.is_in_container", return_value=True):
+        with mock.patch("snapcraft.internal.common.is_process_container", return_value=True):
             self.assertThat(
                 file_utils.get_tool_path("tool-command"),
                 Equals(os.path.join(snap_root, self.tool_path)),
@@ -391,7 +391,7 @@ class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        with mock.patch("snapcraft.internal.common.is_in_container", return_value=True):
+        with mock.patch("snapcraft.internal.common.is_process_container", return_value=True):
             self.assertThat(
                 file_utils.get_tool_path("tool-command"),
                 Equals(

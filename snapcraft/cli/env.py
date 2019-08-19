@@ -45,7 +45,7 @@ class BuilderEnvironmentConfig:
         """
         if force_provider:
             build_provider = force_provider
-        elif common.is_in_container():
+        elif common.is_process_container():
             build_provider = "host"
         else:
             build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
