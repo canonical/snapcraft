@@ -127,9 +127,7 @@ def is_snap() -> bool:
 
 
 def is_process_container() -> bool:
-    logger.debug(
-        "snapcraft is running in a docker or podman (OCI) container"
-    )
+    logger.debug("snapcraft is running in a docker or podman (OCI) container")
     return any([os.path.exists(p) for p in (_DOCKERENV_FILE, _PODMAN_FILE)])
 
 
