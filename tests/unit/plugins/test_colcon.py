@@ -1047,13 +1047,13 @@ class BuildTestCase(ColconPluginTestBase):
                     )
                 if disable_parallel:
                     self.test.assertThat(
-                        command, MatchesRegex(".*--parallel-workers 1")
+                        command, MatchesRegex(".*--parallel-workers=1")
                     )
                 else:
                     self.test.assertThat(
                         command,
                         MatchesRegex(
-                            ".*--parallel-workers {}".format(
+                            ".*--parallel-workers={}".format(
                                 plugin.parallel_build_count
                             )
                         ),
