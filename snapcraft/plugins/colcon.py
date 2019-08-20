@@ -633,7 +633,7 @@ class ColconPlugin(snapcraft.BasePlugin):
         colconcmd.extend(["--install-base", self._ros_overlay])
 
         # Specify the number of workers
-        colconcmd.append("--parallel-workers {}".format(self.parallel_build_count))
+        colconcmd.append("--parallel-workers={}".format(self.parallel_build_count))
 
         # All the arguments that follow are meant for CMake
         colconcmd.append("--cmake-args")
