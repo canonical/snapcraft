@@ -178,6 +178,14 @@ class ColconPlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
+        schema["properties"]["colcon-packages-ignore"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+
         schema["required"] = ["source"]
 
         return schema
@@ -196,6 +204,7 @@ class ColconPlugin(snapcraft.BasePlugin):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         ]
 
     @property
@@ -642,6 +651,11 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         # Finally, add any cmake-args requested from the plugin options
         colconcmd.extend(self.options.colcon_cmake_args)
+
+        if self.options.colcon_packages_ignore:
+            colconcmd.extend(
+                ["--packages-ignore"] + self.options.colcon_packages_ignore
+            )
 
         if self.options.colcon_catkin_cmake_args:
             colconcmd.extend(
