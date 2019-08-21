@@ -73,6 +73,7 @@ class ColconPluginTestBase(unit.TestCase):
             colcon_catkin_cmake_args = []
             colcon_ament_cmake_args = []
             build_attributes = []
+            colcon_packages_ignore = []
 
         self.properties = props()
         self.ubuntu_distro = "bionic"
@@ -151,6 +152,7 @@ class ColconPluginTest(ColconPluginTestBase):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         )
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
@@ -270,6 +272,22 @@ class ColconPluginTest(ColconPluginTestBase):
         self.assertThat(colcon_cmake_args["items"], Contains("type"))
         self.assertThat(colcon_cmake_args["items"]["type"], Equals("string"))
 
+    def test_schema_colcon_packages_ignore(self):
+        schema = colcon.ColconPlugin.schema()
+
+        # check colcon-packages-ignore property
+        colcon_packages_ignore = schema["properties"]["colcon-packages-ignore"]
+        expected = ("type", "default", "minitems", "items", "uniqueItems")
+        self.assertThat(colcon_packages_ignore, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(colcon_packages_ignore, Contains(prop))
+        self.assertThat(colcon_packages_ignore["type"], Equals("array"))
+        self.assertThat(colcon_packages_ignore["default"], Equals([]))
+        self.assertThat(colcon_packages_ignore["minitems"], Equals(1))
+        self.assertTrue(colcon_packages_ignore["uniqueItems"])
+        self.assertThat(colcon_packages_ignore["items"], Contains("type"))
+        self.assertThat(colcon_packages_ignore["items"]["type"], Equals("string"))
+
     def test_get_pull_properties(self):
         expected_pull_properties = [
             "colcon-rosdistro",
@@ -290,6 +308,7 @@ class ColconPluginTest(ColconPluginTestBase):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         ]
         actual_build_properties = colcon.ColconPlugin.get_build_properties()
 
@@ -951,6 +970,7 @@ class BuildTestCase(ColconPluginTestBase):
 
     package_scenarios = [
         ("one package", {"colcon_packages": ["my_package"]}),
+        ("two packages", {"colcon_packages": ["my_package", "other_package"]}),
         ("no packages", {"colcon_packages": []}),
         ("all packages", {"colcon_packages": None}),
     ]
@@ -975,12 +995,18 @@ class BuildTestCase(ColconPluginTestBase):
         ("without ament-cmake-args", {"colcon_ament_cmake_args": []}),
     ]
 
+    packages_ignore_scenarios = [
+        ("with packages-ignore", {"colcon_packages_ignore": ["my_package1"]}),
+        ("without packages-ignore", {"colcon_packages_ignore": []}),
+    ]
+
     scenarios = multiply_scenarios(
         package_scenarios,
         build_type_scenarios,
         cmake_args_scenarios,
         catkin_args_scenarios,
         ament_args_scenarios,
+        packages_ignore_scenarios,
     )
 
     def setUp(self):
@@ -990,6 +1016,7 @@ class BuildTestCase(ColconPluginTestBase):
         self.properties.colcon_cmake_args = self.colcon_cmake_args
         self.properties.colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
         self.properties.colcon_ament_cmake_args = self.colcon_ament_cmake_args
+        self.properties.colcon_packages_ignore = self.colcon_packages_ignore
 
     @mock.patch.object(colcon.ColconPlugin, "run")
     @mock.patch.object(colcon.ColconPlugin, "run_output", return_value="foo")
@@ -1011,6 +1038,7 @@ class BuildTestCase(ColconPluginTestBase):
         colcon_cmake_args = self.colcon_cmake_args
         colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
         colcon_ament_cmake_args = self.colcon_ament_cmake_args
+        colcon_packages_ignore = self.colcon_packages_ignore
 
         class _check_build_command:
             def __init__(self, test):
@@ -1051,6 +1079,14 @@ class BuildTestCase(ColconPluginTestBase):
                         command,
                         MatchesRegex(
                             ".*--ament-cmake-args.*{}".format(re.escape(expected_args))
+                        ),
+                    )
+                if colcon_packages_ignore:
+                    expected_args = "".join(colcon_packages_ignore)
+                    self.test.assertThat(
+                        command,
+                        MatchesRegex(
+                            ".*--packages-ignore.*{}".format(re.escape(expected_args))
                         ),
                     )
 
