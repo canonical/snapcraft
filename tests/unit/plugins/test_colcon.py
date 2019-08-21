@@ -970,7 +970,6 @@ class BuildTestCase(ColconPluginTestBase):
 
     package_scenarios = [
         ("one package", {"colcon_packages": ["my_package"]}),
-        ("two packages", {"colcon_packages": ["my_package", "other_package"]}),
         ("no packages", {"colcon_packages": []}),
         ("all packages", {"colcon_packages": None}),
     ]
@@ -996,7 +995,7 @@ class BuildTestCase(ColconPluginTestBase):
     ]
 
     packages_ignore_scenarios = [
-        ("with packages-ignore", {"colcon_packages_ignore": ["my_package1"]}),
+        ("with packages-ignore", {"colcon_packages_ignore": ["my_package"]}),
         ("without packages-ignore", {"colcon_packages_ignore": []}),
     ]
 
@@ -1082,7 +1081,7 @@ class BuildTestCase(ColconPluginTestBase):
                         ),
                     )
                 if colcon_packages_ignore:
-                    expected_args = "".join(colcon_packages_ignore)
+                    expected_args = " ".join(colcon_packages_ignore)
                     self.test.assertThat(
                         command,
                         MatchesRegex(
