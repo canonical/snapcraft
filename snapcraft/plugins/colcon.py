@@ -30,7 +30,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - colcon-packages-ignore:
       (list of strings)
       List of colcon packages to ignore. If not specified or set to an empty
-      list ([]), no packages will be ignore.
+      list ([]), no packages will be ignored.
     - colcon-source-space:
       (string)
       The source space containing colcon packages (defaults to 'src').
