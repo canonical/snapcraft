@@ -134,7 +134,7 @@ jobs:
       if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
       script:
         - cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
-        - ./runtests.sh spread
+        - ./runtests.sh spread "google:"
     - stage: integration
       name: store
       addons:

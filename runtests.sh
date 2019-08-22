@@ -17,13 +17,7 @@
 
 set -e
 
-PATH="$(pwd)/bin:$PATH"
-PYTHONPATH="$(pwd)${PYTHONPATH:+:$PYTHONPATH}"
-
-export PATH
-export PYTHONPATH
-
-printhelp(){
+usage() {
     echo "Usage: "
     echo "    ./runtests.sh static"
     echo "    ./runtests.sh tests/unit [<use-run>]"
@@ -34,27 +28,7 @@ printhelp(){
     echo "<use-run> makes use of run instead of discover to run the tests"
 }
 
-test_suite="$1"
-use_run="$2"
-
-parseargs(){
-    if [[ "$#" -eq 0 ]]; then
-        printhelp
-	exit 1
-    else
-        if [ "$test_suite" == "static" ] ; then
-            run_static_tests
-        elif [ "$test_suite" == "spread" ] ; then
-            run_spread
-        else
-            run_snapcraft_tests "$@"
-        fi
-    fi
-}
-
-coverage 1>/dev/null 2>&1 && coverage="true"
-
-run_static_tests(){
+run_static_tests() {
     echo "Running black"
     black --check --diff .
 
@@ -77,11 +51,21 @@ run_static_tests(){
 }
 
 run_snapcraft_tests(){
+    test_suite="$1"
+    use_run="$2"
+
     if [[ -n "$use_run" ]]; then
         python3 -m unittest -b -v run "$test_suite"
-    elif [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    elif [[ -n "$(command -v coverage)" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+        # Run with coverage results, if available.
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
+
+        coverage report
+        echo
+        echo "Run 'python3-coverage html' to get a nice report"
+        echo "View it by running 'x-www-browser htmlcov'"
+        echo
     else
         python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi
@@ -89,27 +73,32 @@ run_snapcraft_tests(){
 
 run_spread(){
     TMP_SPREAD="$(mktemp -d)"
+    curl -s https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz | tar xzv -C "$TMP_SPREAD"
 
-    export PATH=$TMP_SPREAD:$PATH
-    ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
-
-    spread -v google:
+    if [[ "$#" -eq 0 ]]; then
+        "$TMP_SPREAD/spread" -v lxd:
+    else
+        "$TMP_SPREAD/spread" -v "$@"
+    fi
 }
 
-if [ "$test_suite" == "-h" ] || [ "$test_suite" == "--help" ]; then
-    printhelp
-    exit 0
+if [[ "$#" -eq 0 ]]; then
+    usage
+    exit 1
 fi
 
-parseargs "$@"
+test_suite=$1
+shift
 
-if [[ -n "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
-    coverage report
-
-    echo
-    echo "Run 'python3-coverage html' to get a nice report"
-    echo "View it by running 'x-www-browser htmlcov'"
-    echo
+if [[ "$test_suite" == "static" ]]; then
+    run_static_tests
+elif [[ "$test_suite" == "spread" ]]; then
+    run_spread "$@"
+elif [[ "$test_suite" == "-h" ]] || [[ "$test_suite" == "help" ]]; then
+    usage
+    exit 0
+else
+    run_snapcraft_tests "$test_suite" "$@"
 fi
 
 echo -e '\e[1;32mEverything passed\e[0m'
