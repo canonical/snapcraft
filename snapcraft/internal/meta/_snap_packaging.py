@@ -93,6 +93,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     _ensure_required_keywords(project_config.data)
 
     packaging = _SnapPackaging(project_config, extracted_metadata)
+    packaging.cleanup()
     packaging.validate_common_ids()
     packaging.write_snap_yaml()
     packaging.setup_assets()
@@ -335,6 +336,13 @@ class _SnapPackaging:
         )
 
         os.makedirs(self._meta_dir, exist_ok=True)
+
+    def cleanup(self):
+        gui_dir = os.path.join(self.meta_dir, "gui")
+        if os.path.exists(gui_dir):
+            for f in os.listdir(gui_dir):
+                if os.path.splitext(f)[1] == ".desktop":
+                    os.remove(os.path.join(gui_dir, f))
 
     def write_snap_yaml(self) -> str:
         common.env = self._project_config.snap_env()
@@ -589,12 +597,6 @@ class _SnapPackaging:
 
     def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
         apps = copy.deepcopy(apps)
-        gui_dir = os.path.join(self.meta_dir, "gui")
-        if not os.path.exists(gui_dir):
-            os.mkdir(gui_dir)
-        for f in os.listdir(gui_dir):
-            if os.path.splitext(f)[1] == ".desktop":
-                os.remove(os.path.join(gui_dir, f))
         for app_name, app in apps.items():
             adapter = project_loader.Adapter[app.pop("adapter").upper()]
             if adapter == project_loader.Adapter.LEGACY:
