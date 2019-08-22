@@ -374,7 +374,7 @@ class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
         self._patch(snap_root)
 
         with mock.patch(
-            "snapcraft.internal.common.is_docker_instance", return_value=True
+            "snapcraft.internal.common.is_process_container", return_value=True
         ):
             self.assertThat(
                 file_utils.get_tool_path("tool-command"),
@@ -394,7 +394,7 @@ class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(patcher.stop)
 
         with mock.patch(
-            "snapcraft.internal.common.is_docker_instance", return_value=True
+            "snapcraft.internal.common.is_process_container", return_value=True
         ):
             self.assertThat(
                 file_utils.get_tool_path("tool-command"),

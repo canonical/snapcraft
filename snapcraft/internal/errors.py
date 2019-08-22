@@ -709,3 +709,7 @@ class SnapDataExtractionError(SnapcraftError):
 
     def __init__(self, snap):
         super().__init__(snap=snap)
+
+
+class ProjectNotFoundError(SnapcraftReportableError):
+    fmt = "Failed to find project files."
