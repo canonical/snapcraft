@@ -16,7 +16,7 @@
 
 import os
 
-from testtools.matchers import Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, Not
 
 from snapcraft import yaml_utils
 from snapcraft.internal.meta import application, errors
@@ -224,3 +224,30 @@ class InvalidCommandChainTest(unit.TestCase):
             base="core18",
             prime_dir=self.path,
         )
+
+
+class DesktopFileTest(unit.TestCase):
+    def test_desktop_file(self):
+        desktop_file_path = "foo.desktop"
+        with open(desktop_file_path, "w") as desktop_file:
+            print("[Desktop Entry]", file=desktop_file)
+            print("Exec=in-snap-exe", file=desktop_file)
+        open("command-chain", "w").close()
+        os.chmod("command-chain", 0o755)
+
+        app = application.Application(
+            app_name="foo",
+            app_properties=dict(command="/foo", desktop=desktop_file_path),
+            base="core",
+            prime_dir=self.path,
+        )
+
+        app.generate_desktop_file(snap_name="foo", gui_dir="gui")
+
+        expected_desktop_file_path = os.path.join("gui", "foo.desktop")
+
+        self.expectThat(
+            app.get_yaml(prepend_command_chain=["command-chain"]),
+            Not(Contains("desktop")),
+        )
+        self.expectThat(expected_desktop_file_path, FileExists())
