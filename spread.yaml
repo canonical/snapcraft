@@ -44,7 +44,7 @@ backends:
     type: adhoc
     allocate: |
       echo "Allocating ad-hoc $SPREAD_SYSTEM"
-      if [ -z "${ADT_ARTIFACTS}" ]; then
+      if [ -z "${ADT_ARTIFACTS:-}" ]; then
         FATAL "adhoc only works inside autopkgtest"
         exit 1
       fi
