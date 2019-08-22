@@ -16,11 +16,12 @@
 
 import os
 from copy import deepcopy
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from . import errors
 from ._utils import _executable_is_valid
 from .command import Command
+from .desktop import DesktopFile
 from snapcraft import yaml_utils
 
 
@@ -54,6 +55,7 @@ class Application:
 
         # App Properties that should not make it to snap.yaml
         self._adapter = self._app_properties.pop("adapter", None)
+        self._desktop_file = self._app_properties.pop("desktop", None)
 
         self._commands = self._get_commands()
         self._verify_paths()
@@ -105,6 +107,20 @@ class Application:
             # the snap, i.e. PATH is not used.
             if not _executable_is_valid(executable_path):
                 raise errors.InvalidCommandChainError(item, self._app_name)
+
+    def generate_desktop_file(
+        self, *, snap_name: str, gui_dir: str, icon_path: Optional[str] = None
+    ) -> None:
+        if self._desktop_file is None:
+            return
+
+        desktop_file = DesktopFile(
+            snap_name=snap_name,
+            app_name=self._app_name,
+            filename=self._desktop_file,
+            prime_dir=self._prime_dir,
+        )
+        desktop_file.write(gui_dir=gui_dir, icon_path=icon_path)
 
     def generate_command_wrappers(self) -> None:
         for command in self._commands.values():
