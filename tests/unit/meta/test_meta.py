@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configparser
 import contextlib
 import logging
 import os
@@ -414,84 +413,6 @@ class CreateTestCase(CreateBaseTestCase):
         }
 
         self.assertThat(y, Equals(expected))
-
-    def test_create_meta_with_app_desktop_key(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        os.mkdir(self.prime_dir)
-        _create_file(os.path.join(self.prime_dir, "app.sh"))
-        _create_file(
-            os.path.join(self.prime_dir, "app1.desktop"),
-            content="[Desktop Entry]\nExec=app1.exe\nIcon=app1.png",
-        )
-        icon_dir = os.path.join(self.prime_dir, "usr", "share")
-        os.makedirs(icon_dir)
-        _create_file(os.path.join(icon_dir, "app2.png"))
-        _create_file(
-            os.path.join(self.prime_dir, "app2.desktop"),
-            content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
-        )
-        _create_file(os.path.join(icon_dir, "app3.png"))
-        _create_file(
-            os.path.join(self.prime_dir, "app3.desktop"),
-            content="[Desktop Entry]\nExec=app3.exe\nIcon=${SNAP}/usr/share/app3.png",
-        )
-        self.config_data["apps"] = {
-            "app1": {"command": "app.sh", "desktop": "app1.desktop"},
-            "app2": {"command": "app.sh", "desktop": "app2.desktop"},
-            "my-package": {"command": "app.sh", "desktop": "app3.desktop"},
-        }
-
-        self.generate_meta_yaml()
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "app1.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package.app1 %U"))
-        self.assertThat(contents[section].get("Icon"), Equals("app1.png"))
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "app2.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package.app2 %U"))
-        self.assertThat(
-            contents[section].get("Icon"), Equals("${SNAP}/usr/share/app2.png")
-        )
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "my-package.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package %U"))
-        self.assertThat(
-            contents[section].get("Icon"), Equals("${SNAP}/usr/share/app3.png")
-        )
-        self.assertThat(
-            fake_logger.output,
-            Not(
-                Contains(
-                    "Icon {} specified in desktop file {} not found "
-                    "in prime directory".format(
-                        "${SNAP}/usr/share/app3.png", "app3.desktop"
-                    )
-                )
-            ),
-        )
-
-        snap_yaml = os.path.join("prime", "meta", "snap.yaml")
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app1.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app2.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app3.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: my-package.desktop")))
 
 
 class StopModeTestCase(CreateBaseTestCase):
