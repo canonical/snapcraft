@@ -34,7 +34,7 @@ from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.meta import _desktop, errors as meta_errors, _manifest, _version
+from snapcraft.internal.meta import desktop, errors as meta_errors, _manifest, _version
 
 
 logger = logging.getLogger(__name__)
@@ -657,16 +657,24 @@ class _SnapPackaging:
             app[k] = new_command
 
     def _generate_desktop_file(self, name, app):
+        # Extracted metadata (e.g. from the AppStream) can override the
+        # icon location.
+        if self._extracted_metadata:
+            icon_path = self._extracted_metadata.get_icon()
+        else:
+            icon_path = None
+
         desktop_file_name = app.pop("desktop", "")
         if desktop_file_name:
-            desktop_file = _desktop.DesktopFile(
-                name=name,
-                filename=desktop_file_name,
+            desktop_file = desktop.DesktopFile(
                 snap_name=self._config_data["name"],
+                app_name=name,
+                filename=desktop_file_name,
                 prime_dir=self._prime_dir,
             )
-            desktop_file.parse_and_reformat(self._extracted_metadata)
-            desktop_file.write(gui_dir=os.path.join(self.meta_dir, "gui"))
+            desktop_file.write(
+                gui_dir=os.path.join(self.meta_dir, "gui"), icon_path=icon_path
+            )
 
     def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
         for app in apps.values():
