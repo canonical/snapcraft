@@ -11,7 +11,7 @@ Clone these sources and make it your working directory:
 If you already have LXD setup you can skip this part, if not, run:
 
     sudo snap install lxd
-    sudo lxd init  # If unsure, pick `dir` as the storage backend.
+    sudo lxd init --auto --storage-backend=dir
     sudo adduser "$USER" lxd
     newgrp lxd
 

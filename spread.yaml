@@ -35,7 +35,7 @@ backends:
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
-          workers: 8
+          workers: 12
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
           workers: 18
@@ -44,7 +44,7 @@ backends:
     type: adhoc
     allocate: |
       echo "Allocating ad-hoc $SPREAD_SYSTEM"
-      if [ -z "${ADT_ARTIFACTS}" ]; then
+      if [ -z "${ADT_ARTIFACTS:-}" ]; then
         FATAL "adhoc only works inside autopkgtest"
         exit 1
       fi
@@ -124,7 +124,6 @@ prepare: |
   apt-get install -y snapd
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-      snap install --classic --beta multipass
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client

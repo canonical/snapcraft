@@ -5,6 +5,8 @@ environment:
   SNAP_DIR: ../snaps/exit1
 
 prepare: |
+  snap list multipass || snap install --classic --beta multipass
+
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"

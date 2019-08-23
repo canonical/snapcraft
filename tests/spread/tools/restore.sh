@@ -11,7 +11,7 @@ for snap in $snaps; do
 			# Do not or cannot remove these
 			;;
 		*)
-			snap remove "$snap"
+			snap remove --purge "$snap"
 			;;
 	esac
 done
