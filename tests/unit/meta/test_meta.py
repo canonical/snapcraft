@@ -36,7 +36,7 @@ from testtools.matchers import (
     Not,
 )
 
-from snapcraft.internal.meta import _errors as meta_errors, _snap_packaging
+from snapcraft.internal.meta import errors as meta_errors, _snap_packaging
 from snapcraft import extractors, yaml_utils
 from snapcraft.project import Project
 from snapcraft.project import errors as project_errors
@@ -1507,7 +1507,7 @@ class BaseWrapTest(unit.TestCase):
 class WrapAppTest(BaseWrapTest):
     def test_app_not_found(self):
         self.assertRaises(
-            errors.InvalidAppCommandError,
+            meta_errors.InvalidAppCommandError,
             self.packager._wrap_apps,
             apps=dict(app=dict(command="test-command", adapter="legacy")),
         )
@@ -1717,7 +1717,7 @@ class WrapExeTest(BaseWrapTest):
         ]
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandError, self.packager.write_snap_yaml
+            meta_errors.InvalidAppCommandError, self.packager.write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1736,7 +1736,7 @@ class WrapExeTest(BaseWrapTest):
         _create_file(cmd_path)
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandError, self.packager.write_snap_yaml
+            meta_errors.InvalidAppCommandError, self.packager.write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1802,7 +1802,8 @@ class FullAdapterTest(unit.TestCase):
         self.snapcraft_yaml["apps"]["app"]["command"] = "invalid'app"
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandFormatError, self._get_packager().write_snap_yaml
+            meta_errors.InvalidAppCommandFormatError,
+            self._get_packager().write_snap_yaml,
         )
         self.assertThat(raised.command, Equals("invalid'app"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1811,14 +1812,15 @@ class FullAdapterTest(unit.TestCase):
         self.snapcraft_yaml["apps"]["app"]["command"] = "/test-command"
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandFormatError, self._get_packager().write_snap_yaml
+            meta_errors.InvalidAppCommandFormatError,
+            self._get_packager().write_snap_yaml,
         )
         self.assertThat(raised.command, Equals("/test-command"))
         self.assertThat(raised.app_name, Equals("app"))
 
     def test_missing_command(self):
         raised = self.assertRaises(
-            errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
+            meta_errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1826,7 +1828,7 @@ class FullAdapterTest(unit.TestCase):
     def test_missing_command_with_spaces(self):
         self.snapcraft_yaml["apps"]["app"]["command"] = "test-command arg1 arg2"
         raised = self.assertRaises(
-            errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
+            meta_errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1835,7 +1837,8 @@ class FullAdapterTest(unit.TestCase):
         _create_file(os.path.join(self.prime_dir, "test-command"), executable=False)
 
         raised = self.assertRaises(
-            errors.InvalidAppCommandNotExecutable, self._get_packager().write_snap_yaml
+            meta_errors.InvalidAppCommandNotExecutable,
+            self._get_packager().write_snap_yaml,
         )
         self.assertThat(raised.command, Equals("test-command"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1974,7 +1977,7 @@ class CommandChainTest(unit.TestCase):
 
     def test_missing_command_chain(self):
         raised = self.assertRaises(
-            errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
+            meta_errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.item, Equals("test-chain"))
         self.assertThat(raised.app_name, Equals("app"))
@@ -1983,7 +1986,7 @@ class CommandChainTest(unit.TestCase):
         cmd_path = os.path.join(self.prime_dir, "test-chain")
         _create_file(cmd_path, executable=False)
         raised = self.assertRaises(
-            errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
+            meta_errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
         )
         self.assertThat(raised.item, Equals("test-chain"))
         self.assertThat(raised.app_name, Equals("app"))

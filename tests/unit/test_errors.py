@@ -21,7 +21,6 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors, pluginhandler, steps
-from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
 from snapcraft.internal.project_loader import errors as project_loader_errors
@@ -265,82 +264,6 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
-            "InvalidAppCommandError",
-            {
-                "exception": errors.InvalidAppCommandError,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not exist or is not executable.\n"
-                    "Ensure that 'test-command' is installed with the correct path."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandNotFound",
-            {
-                "exception": errors.InvalidAppCommandNotFound,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not exist.\n"
-                    "Ensure that 'test-command' is installed with the correct path."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandNotExecutable",
-            {
-                "exception": errors.InvalidAppCommandNotExecutable,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' is not executable."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandFormatError",
-            {
-                "exception": errors.InvalidAppCommandFormatError,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not match the pattern expected by snapd.\n"
-                    "The command must consist only of alphanumeric characters, spaces, "
-                    "and the following special characters: / . _ # : $ -"
-                ),
-            },
-        ),
-        (
-            "InvalidCommandChainError",
-            {
-                "exception": errors.InvalidCommandChainError,
-                "kwargs": {"item": "test-chain", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The command-chain item 'test-chain' defined in the app 'test-app' "
-                    "does not exist or is not executable.\n"
-                    "Ensure that 'test-chain' is relative to the prime directory."
-                ),
-            },
-        ),
-        (
-            "InvalidDesktopFileError",
-            {
-                "exception": errors.InvalidDesktopFileError,
-                "kwargs": {"filename": "test-file", "message": "test-message"},
-                "expected_message": (
-                    "Failed to generate desktop file: "
-                    "Invalid desktop file 'test-file': test-message."
-                ),
-            },
-        ),
-        (
             "SnapcraftAfterPartMissingError",
             {
                 "exception": project_loader_errors.SnapcraftAfterPartMissingError,
@@ -514,57 +437,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "Failed to parse container image info: "
                     "SNAPCRAFT_IMAGE_INFO is not a valid JSON string: "
                     "test-image-info"
-                ),
-            },
-        ),
-        # meta errors.
-        (
-            "AdoptedPartMissingError",
-            {
-                "exception": meta_errors.AdoptedPartMissingError,
-                "kwargs": {"part": "test-part"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "'adopt-info' refers to a part named 'test-part', but it is "
-                    "not defined in the 'snapcraft.yaml' file."
-                ),
-            },
-        ),
-        (
-            "AdoptedPartNotParsingInfo",
-            {
-                "exception": meta_errors.AdoptedPartNotParsingInfo,
-                "kwargs": {"part": "test-part"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "'adopt-info' refers to part 'test-part', but that part is "
-                    "lacking the 'parse-info' property."
-                ),
-            },
-        ),
-        (
-            "MissingSnapcraftYamlKeysError",
-            {
-                "exception": meta_errors.MissingSnapcraftYamlKeysError,
-                "kwargs": {"keys": ["test-key1", "test-key2"]},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "Missing required key(s) in snapcraft.yaml: "
-                    "'test-key1' and 'test-key2'. Either specify the missing "
-                    "key(s), or use 'adopt-info' to get them from a part."
-                ),
-            },
-        ),
-        (
-            "AmbiguousPassthroughKeyError",
-            {
-                "exception": meta_errors.AmbiguousPassthroughKeyError,
-                "kwargs": {"keys": ["key1", "key2"]},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The following keys are specified in their regular location "
-                    "as well as in passthrough: 'key1' and 'key2'. "
-                    "Remove duplicate keys."
                 ),
             },
         ),
