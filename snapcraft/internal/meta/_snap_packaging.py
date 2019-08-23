@@ -34,12 +34,7 @@ from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.meta import (
-    _desktop,
-    _errors as meta_errors,
-    _manifest,
-    _version,
-)
+from snapcraft.internal.meta import _desktop, errors as meta_errors, _manifest, _version
 
 
 logger = logging.getLogger(__name__)
@@ -616,7 +611,7 @@ class _SnapPackaging:
         commands = (app[k] for k in ("command", "stop-command") if k in app)
         for command in commands:
             if not _APP_COMMAND_PATTERN.match(command):
-                raise errors.InvalidAppCommandFormatError(command, app_name)
+                raise meta_errors.InvalidAppCommandFormatError(command, app_name)
 
             command_without_args = command.split()[0]
             binary_path = os.path.join(self._prime_dir, command_without_args)
@@ -627,10 +622,12 @@ class _SnapPackaging:
                     mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH
                 )
             except FileNotFoundError:
-                raise errors.InvalidAppCommandNotFound(command_without_args, app_name)
+                raise meta_errors.InvalidAppCommandNotFound(
+                    command_without_args, app_name
+                )
 
             if not is_executable:
-                raise errors.InvalidAppCommandNotExecutable(
+                raise meta_errors.InvalidAppCommandNotExecutable(
                     command_without_args, app_name
                 )
 
@@ -648,9 +645,11 @@ class _SnapPackaging:
             try:
                 new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
             except FileNotFoundError:
-                raise errors.InvalidAppCommandNotFound(command=app[k], app_name=app)
+                raise meta_errors.InvalidAppCommandNotFound(
+                    command=app[k], app_name=app
+                )
             except meta_errors.CommandError as e:
-                raise errors.InvalidAppCommandError(str(e), name)
+                raise meta_errors.InvalidAppCommandError(str(e), name)
 
             if os.path.isfile(self._meta_runner):
                 snap_runner = os.path.relpath(self._meta_runner, self._prime_dir)
@@ -685,7 +684,7 @@ class _SnapPackaging:
                 # command-chain entries must always be relative to the root of the snap,
                 # i.e. PATH is not used.
                 if not _executable_is_valid(executable_path):
-                    raise errors.InvalidCommandChainError(item, app_name)
+                    raise meta_errors.InvalidCommandChainError(item, app_name)
 
     def _process_passthrough_properties(self, snap_yaml: Dict[str, Any]) -> None:
         passthrough_applied = False

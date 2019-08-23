@@ -18,8 +18,8 @@ import configparser
 import logging
 import os
 
+from . import errors
 from snapcraft.extractors import _metadata
-from snapcraft.internal import errors
 
 
 logger = logging.getLogger(__name__)
