@@ -17,8 +17,11 @@
 import logging
 import shutil
 import subprocess
+
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
+
+from ._windows import windows_reload_multipass_path_env, windows_install_multipass
 
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
@@ -46,12 +49,19 @@ class MultipassCommand:
 
     @classmethod
     def ensure_multipass(cls, platform: str) -> None:
+        if platform == "win32":
+            # Reload path env just in case multipass was installed without
+            # launching a new command prompt / shell.
+            windows_reload_multipass_path_env()
+
         if shutil.which(cls.provider_cmd):
             return
 
         if platform == "darwin":
             prompt_installable = True
         elif platform == "linux" and shutil.which("snap"):
+            prompt_installable = True
+        elif platform == "win32":
             prompt_installable = True
         else:
             prompt_installable = False
@@ -75,6 +85,8 @@ class MultipassCommand:
                     "Verify your homebrew installation and try again.\n"
                     "Alternatively, manually install multipass by running 'brew cask install multipass'."
                 )
+        elif platform == "win32":
+            windows_install_multipass(echoer)
         else:
             raise EnvironmentError(
                 "Setting up multipass for {!r} is not supported.".format(platform)
