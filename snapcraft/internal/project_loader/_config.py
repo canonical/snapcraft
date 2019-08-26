@@ -25,6 +25,7 @@ from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
 from snapcraft.internal import common, deprecations, repo, states, steps
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
@@ -222,7 +223,15 @@ class Config:
             self.build_tools.add("git")
 
         # Always add the base for building for non os and base snaps
-        if project.info.base is not None and project.info.type != "base":
+        if project.info.base is None and project.info.type in (
+            "app",
+            "gadget",
+            "kernel",
+        ):
+            raise SnapcraftEnvironmentError(
+                "A base is required for snaps of type {!r}.".format(project.info.type)
+            )
+        if project.info.base is not None:
             # If the base is already installed by other means, skip its installation.
             # But, we should always add it when in a docker environment so
             # the creator of said docker image is aware that it is required.
@@ -230,12 +239,6 @@ class Config:
                 project.info.base
             ):
                 self.build_snaps.add(project.info.base)
-        elif project.info.type != "base":
-            # This exception is here to help with porting issues with bases. In normal
-            # executions, when no base is set, the legacy snapcraft will be executed.
-            raise RuntimeError(
-                "A base is required for {!r} snaps.".format(project.info.type)
-            )
 
         self.parts = PartsConfig(
             parts=self.data,
