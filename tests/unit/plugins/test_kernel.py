@@ -57,7 +57,7 @@ class KernelPluginTestCase(unit.TestCase):
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             )
@@ -1125,7 +1125,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1155,7 +1155,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1188,7 +1188,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1220,7 +1220,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1237,7 +1237,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1264,7 +1264,7 @@ ACCEPT=n
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1344,7 +1344,7 @@ class KernelPluginDefaulTargetsTestCase(unit.TestCase):
                 textwrap.dedent(
                     """\
                     name: test-snap
-                    base: core16
+                    base: core
                     """
                 )
             ),
@@ -1352,3 +1352,35 @@ class KernelPluginDefaulTargetsTestCase(unit.TestCase):
         plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.kernel_image_target, Equals(self.expected))
+
+
+class KernelPluginUnsupportedBase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: kernel-snap
+            base: unsupported-base
+        """
+            )
+        )
+
+        self.project = snapcraft.project.Project(
+            snapcraft_yaml_file_path=snapcraft_yaml_path
+        )
+
+        class Options:
+            pass
+
+        self.options = Options()
+
+    def test_unsupported_base_raises(self):
+        self.assertRaises(
+            errors.PluginBaseError,
+            kernel.KernelPlugin,
+            "test-part",
+            self.options,
+            self.project,
+        )

@@ -64,6 +64,7 @@ import subprocess
 import tempfile
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft.plugins import kbuild
 
 logger = logging.getLogger(__name__)
@@ -208,6 +209,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
+        if project.info.get_build_base() != "core":
+            raise errors.PluginBaseError(
+                part_name=self.name, base=project.info.get_build_base()
+            )
 
         # We need to be able to shell out to modprobe
         self.build_packages.append("kmod")
