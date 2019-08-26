@@ -59,7 +59,7 @@ class MultipassCommand:
         raise errors.ProviderNotFound(
             provider=cls.provider_name,
             prompt_installable=prompt_installable,
-            error_message="https://github.com/CanonicalLtd/multipass/releases",
+            error_message="https://multipass.run",
         )
 
     @classmethod
