@@ -67,6 +67,7 @@ class ColconPluginTestBase(unit.TestCase):
         class props:
             colcon_rosdistro = "crystal"
             colcon_packages = ["my_package"]
+            colcon_packages_ignore = []
             colcon_source_space = "src"
             source_subdir = None
             colcon_cmake_args = []
@@ -152,6 +153,7 @@ class ColconPluginTest(ColconPluginTestBase):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         )
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
@@ -271,6 +273,22 @@ class ColconPluginTest(ColconPluginTestBase):
         self.assertThat(colcon_cmake_args["items"], Contains("type"))
         self.assertThat(colcon_cmake_args["items"]["type"], Equals("string"))
 
+    def test_schema_colcon_packages_ignore(self):
+        schema = colcon.ColconPlugin.schema()
+
+        # check colcon-packages-ignore property
+        colcon_packages_ignore = schema["properties"]["colcon-packages-ignore"]
+        expected = ("type", "default", "minitems", "items", "uniqueItems")
+        self.assertThat(colcon_packages_ignore, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(colcon_packages_ignore, Contains(prop))
+        self.assertThat(colcon_packages_ignore["type"], Equals("array"))
+        self.assertThat(colcon_packages_ignore["default"], Equals([]))
+        self.assertThat(colcon_packages_ignore["minitems"], Equals(1))
+        self.assertTrue(colcon_packages_ignore["uniqueItems"])
+        self.assertThat(colcon_packages_ignore["items"], Contains("type"))
+        self.assertThat(colcon_packages_ignore["items"]["type"], Equals("string"))
+
     def test_get_pull_properties(self):
         expected_pull_properties = [
             "colcon-rosdistro",
@@ -291,6 +309,7 @@ class ColconPluginTest(ColconPluginTestBase):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         ]
         actual_build_properties = colcon.ColconPlugin.get_build_properties()
 
@@ -980,17 +999,24 @@ class BuildTestCase(ColconPluginTestBase):
         ("without ament-cmake-args", {"colcon_ament_cmake_args": []}),
     ]
 
+    packages_ignore_scenarios = [
+        ("with packages-ignore", {"colcon_packages_ignore": ["my_package"]}),
+        ("without packages-ignore", {"colcon_packages_ignore": []}),
+    ]
+
     scenarios = multiply_scenarios(
         package_scenarios,
         build_type_scenarios,
         cmake_args_scenarios,
         catkin_args_scenarios,
         ament_args_scenarios,
+        packages_ignore_scenarios,
     )
 
     def setUp(self):
         super().setUp()
         self.properties.colcon_packages = self.colcon_packages
+        self.properties.colcon_packages_ignore = self.colcon_packages_ignore
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.colcon_cmake_args = self.colcon_cmake_args
         self.properties.colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
@@ -1019,6 +1045,7 @@ class BuildTestCase(ColconPluginTestBase):
         colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
         colcon_ament_cmake_args = self.colcon_ament_cmake_args
         disable_parallel = self.properties.disable_parallel
+        colcon_packages_ignore = self.colcon_packages_ignore
 
         class _check_build_command:
             def __init__(self, test):
@@ -1072,6 +1099,14 @@ class BuildTestCase(ColconPluginTestBase):
                         command,
                         MatchesRegex(
                             ".*--ament-cmake-args.*{}".format(re.escape(expected_args))
+                        ),
+                    )
+                if colcon_packages_ignore:
+                    expected_args = " ".join(colcon_packages_ignore)
+                    self.test.assertThat(
+                        command,
+                        MatchesRegex(
+                            ".*--packages-ignore.*{}".format(re.escape(expected_args))
                         ),
                     )
 
