@@ -1,7 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -126,6 +126,7 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
         ("i386", dict(deb_arch="i386", target="i686-unknown-linux-gnu")),
         ("x86_64", dict(deb_arch="amd64", target="x86_64-unknown-linux-gnu")),
         ("ppc64le", dict(deb_arch="ppc64el", target="powerpc64le-unknown-linux-gnu")),
+        ("s390x", dict(deb_arch="s390x", target="s390x-unknown-linux-gnu")),
     ]
 
     def setUp(self):
