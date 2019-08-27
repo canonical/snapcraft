@@ -148,12 +148,12 @@ class LaunchpadTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self._project = self._make_snapcraft_project()
+        self.lpc = LaunchpadClient(project=self._project, build_id="id", user="user")
 
     @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
     def test_login(self, mock_login):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.login("user")
-        self.assertThat(lpc.user, Equals("user"))
+        self.lpc.login()
+        self.assertThat(self.lpc._user, Equals("user"))
         mock_login.assert_called_with(
             "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
@@ -164,11 +164,9 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_create_snap(self, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.create_snap("git+ssh://repo", ["arch1", "arch2"])
-        lpc._lp.snaps.new.assert_called_with(
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.create_snap("git+ssh://repo", ["arch1", "arch2"])
+        self.lpc._lp.snaps.new.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
             auto_build_pocket="Updates",
@@ -181,18 +179,14 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_delete_snap(self, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.delete_snap()
-        lpc._lp.snaps.getByName_mock.assert_called_with(name="id", owner="/~user")
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.delete_snap()
+        self.lpc._lp.snaps.getByName_mock.assert_called_with(name="id", owner="/~user")
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_start_build(self, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        num = lpc.start_build()
+        self.lpc._lp = LaunchpadImpl()
+        num = self.lpc.start_build()
         self.assertThat(num, Equals("1234"))
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
@@ -203,12 +197,10 @@ class LaunchpadTestCase(unit.TestCase):
         ),
     )
     def test_start_build_error(self, mock_rb, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
+        self.lpc._lp = LaunchpadImpl()
 
         raised = self.assertRaises(
-            errors.RemoteBuilderError, lpc.start_build, timeout=0, attempts=1
+            errors.RemoteBuilderError, self.lpc.start_build, timeout=0, attempts=1
         )
         self.assertThat(str(raised), Contains("snapcraft.yaml not found..."))
 
@@ -218,32 +210,29 @@ class LaunchpadTestCase(unit.TestCase):
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
     def test_start_build_error_timeout(self, mock_rb, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
+        self.lpc._lp = LaunchpadImpl()
         raised = self.assertRaises(
-            errors.RemoteBuilderNotReadyError, lpc.start_build, timeout=0, attempts=1
+            errors.RemoteBuilderNotReadyError,
+            self.lpc.start_build,
+            timeout=0,
+            attempts=1,
         )
         self.assertThat(str(raised), Contains("is not ready"))
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_recover_build(self, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.recover_build(1234)
-        self.assertThat(lpc._lp.load_mock.call_count, Equals(2))
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.recover_build(1234)
+        self.assertThat(self.lpc._lp.load_mock.call_count, Equals(2))
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file, mock_lp):
         open("test_i386.txt.gz", "w").close()
         open("test_i386.txt.gz.1", "w").close()
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.start_build()
-        lpc.monitor_build(interval=0)
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.start_build()
+        self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
             [
                 mock.call("url_for/build_log_file_1", "test_i386.txt.gz.2"),
@@ -261,11 +250,9 @@ class LaunchpadTestCase(unit.TestCase):
     def test_monitor_build_error(
         self, mock_log, mock_urls, mock_download_file, mock_lp
     ):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.start_build()
-        lpc.monitor_build(interval=0)
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.start_build()
+        self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
             [mock.call("url_for/build_log_file_2", "test_amd64.txt.gz")]
         )
@@ -275,11 +262,9 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_get_build_status(self, mock_lp):
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.user = "user"
-        lpc._lp = LaunchpadImpl()
-        lpc.start_build()
-        build_status = lpc.get_build_status()
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.start_build()
+        build_status = self.lpc.get_build_status()
         self.assertThat(
             build_status,
             Equals([("i386", "Successfully built"), ("amd64", "Failed to build")]),
@@ -308,9 +293,8 @@ class LaunchpadTestCase(unit.TestCase):
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
-        lpc = LaunchpadClient(self._project, "id")
         self.assertFalse(os.path.exists(os.path.join(repo_dir, ".git")))
-        lpc._gitify_repository(repo_dir)
+        self.lpc._gitify_repository(repo_dir)
         self.assertTrue(os.path.exists(os.path.join(repo_dir, ".git")))
 
     @mock.patch("launchpadlib.launchpad.Launchpad")
@@ -319,8 +303,7 @@ class LaunchpadTestCase(unit.TestCase):
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
-        lpc = LaunchpadClient(self._project, "id")
-        lpc.push_source_tree("user", repo_dir)
+        self.lpc.push_source_tree(repo_dir)
         mock_push.assert_called_with(
             "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
         )
