@@ -141,15 +141,15 @@ def remote_build(
         remote_info["provider"] = provider
         remote_info.save()
 
+    # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
+    lp = LaunchpadClient(project=project, build_id=build_id, user=user)
+    lp.login()
+
     # Pull/update sources for project.
     worktree_dir = os.path.join(remote_dir, "worktree")
     wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
     repo_dir = wt.prepare_repository()
-
-    # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
-    lp = LaunchpadClient(project, build_id)
-    lp.login(user)
-    url = lp.push_source_tree(user, repo_dir)
+    url = lp.push_source_tree(repo_dir)
 
     if status:
         # Show build status

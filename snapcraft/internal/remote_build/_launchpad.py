@@ -25,7 +25,7 @@ import urllib.parse
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from xdg import BaseDirectory
 from . import errors
 
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 class LaunchpadClient:
     """Launchpad remote builder operations."""
 
-    def __init__(self, project: Project, build_id: str) -> None:
+    def __init__(self, *, project: Project, build_id: str, user: Optional[str]) -> None:
         if not Git.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
@@ -62,24 +62,32 @@ class LaunchpadClient:
 
         os.makedirs(self._data_dir, mode=0o700, exist_ok=True)
         self._credentials = os.path.join(self._data_dir, "credentials")
+        self._load_snapcraft_config()
 
-    def login(self, user: str) -> None:
-        conf = Config()
-        conf.load()
+        # Save user to snapcraft config, if specified.
+        if user is not None:
+            self._user = user
+            self._update_snapcraft_config()
 
-        if user:
-            escaped_user = urllib.parse.quote(user).replace("%", "%%")
-            conf.set("username", escaped_user, section_name="Launchpad")
-            conf.save()
-        else:
-            escaped_user = conf.get("username", section_name="Launchpad")
-            if escaped_user:
-                user = urllib.parse.unquote(escaped_user)
-
-        if not user:
+        if self._user is None:
             raise errors.NoLaunchpadUsernameError
 
-        self.user = user
+    def _load_snapcraft_config(self):
+        self._config = Config()
+        self._config.load()
+        escaped_user = self._config.get("username", section_name="Launchpad")
+        if escaped_user:
+            self._user = urllib.parse.unquote(escaped_user)
+        else:
+            self._user = None
+
+    def _update_snapcraft_config(self):
+        self._config.load()
+        escaped_user = urllib.parse.quote(self._user).replace("%", "%%")
+        self._config.set("username", escaped_user, section_name="Launchpad")
+        self._config.save()
+
+    def login(self) -> None:
         self._lp = Launchpad.login_with(
             "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
@@ -95,7 +103,7 @@ class LaunchpadClient:
         url = repository.replace("git+ssh://", "https://")
         snap = {
             "name": self._id,
-            "owner": "/~" + self.user,
+            "owner": "/~" + self._user,
             "git_repository_url": url,
             "git_path": "master",
             "auto_build": False,
@@ -111,14 +119,14 @@ class LaunchpadClient:
     def delete_snap(self) -> None:
         """Remove a snap recipe and all associated files."""
         try:
-            snap = self._lp.snaps.getByName(name=self._id, owner="/~" + self.user)
+            snap = self._lp.snaps.getByName(name=self._id, owner="/~" + self._user)
             snap.lp_delete()
         except restfulclient.errors.NotFound:
             pass
 
     def start_build(self, timeout: int = 5, attempts: int = 5) -> int:
         """Initiate a new snap build."""
-        owner = self._lp.people[self.user]
+        owner = self._lp.people[self._user]
         dist = self._lp.distributions["ubuntu"]
         snap = self._lp.snaps.getByName(name=self._id, owner=owner)
         snap_build_request = snap.requestBuilds(
@@ -179,7 +187,7 @@ class LaunchpadClient:
     def recover_build(self, req_number: int) -> None:
         """Prepare internal state to monitor an existing build."""
         url = "https://api.launchpad.net/devel/~{}/+snap/{}/+build-request/{}".format(
-            self.user, self._id, req_number
+            self._user, self._id, req_number
         )
 
         try:
@@ -306,12 +314,12 @@ class LaunchpadClient:
 
         return git_handler
 
-    def push_source_tree(self, user: str, repo_dir: str) -> str:
+    def push_source_tree(self, repo_dir: str) -> str:
         """Push source tree to launchpad, returning URL."""
         git_handler = self._gitify_repository(repo_dir)
 
         url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}/".format(
-            user=user, id=self._id
+            user=self._user, id=self._id
         )
 
         logger.info("Sending data to remote builder... ({})".format(url))
