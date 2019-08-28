@@ -41,9 +41,12 @@ jobs:
     # CLA check, only in pull requests, not coming from the bot.
     - stage: static
       name:  CLA check
+      addons:
+        apt:
+          packages:
+            - git
+            - python-launchpadlib
       if: type = pull_request AND sender != snappy-m-o
-      install:
-        - sudo apt update && sudo apt install -y git python-launchpadlib
       git:
         depth: false
       script:
