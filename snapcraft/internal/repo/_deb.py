@@ -443,6 +443,8 @@ class Ubuntu(BaseRepo):
     @classmethod
     def is_package_installed(cls, package_name):
         with apt.Cache() as apt_cache:
+            if package_name not in apt_cache:
+                return False
             return apt_cache[package_name].installed
 
     @classmethod
