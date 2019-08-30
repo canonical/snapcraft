@@ -967,6 +967,89 @@ class PullTestCase(ColconPluginTestBase):
         )
 
 
+class _CheckBuildCommand:
+    def __init__(self, test, plugin):
+        self.test = test
+        self.plugin = plugin
+
+    def __eq__(self, args):
+        # Matching like this for order independence (otherwise it would be
+        # quite fragile)
+        command = " ".join(args)
+        if "debug" in self.test.build_attributes:
+            self.test.assertThat(
+                command, MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug")
+            )
+        else:
+            self.test.assertThat(
+                command, MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release")
+            )
+
+        if self.test.colcon_cmake_args:
+            expected_args = " ".join(self.test.colcon_cmake_args)
+            self.test.assertThat(
+                command,
+                MatchesRegex(".*--cmake-args.*{}".format(re.escape(expected_args))),
+            )
+        if self.test.properties.disable_parallel:
+            self.test.assertThat(command, MatchesRegex(".*--parallel-workers=1"))
+        else:
+            self.test.assertThat(
+                command,
+                MatchesRegex(
+                    ".*--parallel-workers={}".format(self.plugin.parallel_build_count)
+                ),
+            )
+        if self.test.colcon_catkin_cmake_args:
+            expected_args = " ".join(self.test.colcon_catkin_cmake_args)
+            self.test.assertThat(
+                command,
+                MatchesRegex(
+                    ".*--catkin-cmake-args.*{}".format(re.escape(expected_args))
+                ),
+            )
+        if self.test.colcon_ament_cmake_args:
+            expected_args = " ".join(self.test.colcon_ament_cmake_args)
+            self.test.assertThat(
+                command,
+                MatchesRegex(
+                    ".*--ament-cmake-args.*{}".format(re.escape(expected_args))
+                ),
+            )
+        if self.test.colcon_packages_ignore:
+            expected_args = " ".join(self.test.colcon_packages_ignore)
+            self.test.assertThat(
+                command,
+                MatchesRegex(
+                    ".*--packages-ignore.*{}".format(re.escape(expected_args))
+                ),
+            )
+
+        if self.test.colcon_packages:
+            self.test.assertThat(
+                command,
+                Contains(
+                    "--packages-select {}".format(" ".join(self.test.colcon_packages))
+                ),
+            )
+        else:
+            self.test.assertThat(command, Not(Contains("--packages-select")))
+
+        self.test.assertThat(args[0:2], Equals(["colcon", "build"]))
+        self.test.assertThat(command, Contains("--merge-install"))
+        self.test.assertThat(
+            command, Contains("--build-base {}".format(self.plugin.builddir))
+        )
+        self.test.assertThat(
+            command, Contains("--base-paths {}".format(self.plugin._ros_package_path))
+        )
+        self.test.assertThat(
+            command, Contains("--install-base {}".format(self.plugin._ros_overlay))
+        )
+
+        return True
+
+
 class BuildTestCase(ColconPluginTestBase):
 
     package_scenarios = [
@@ -1038,107 +1121,8 @@ class BuildTestCase(ColconPluginTestBase):
 
         prepare_build_mock.assert_called_once_with()
 
-        # Matching like this for order independence (otherwise it would be
-        # quite fragile)
-        build_attributes = self.build_attributes
-        colcon_cmake_args = self.colcon_cmake_args
-        colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
-        colcon_ament_cmake_args = self.colcon_ament_cmake_args
-        disable_parallel = self.properties.disable_parallel
-        colcon_packages_ignore = self.colcon_packages_ignore
-
-        class _check_build_command:
-            def __init__(self, test):
-                self.test = test
-
-            def __eq__(self, args):
-                command = " ".join(args)
-                if "debug" in build_attributes:
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug"),
-                    )
-                else:
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release"),
-                    )
-
-                if colcon_cmake_args:
-                    expected_args = " ".join(colcon_cmake_args)
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(
-                            ".*--cmake-args.*{}".format(re.escape(expected_args))
-                        ),
-                    )
-                if disable_parallel:
-                    self.test.assertThat(
-                        command, MatchesRegex(".*--parallel-workers=1")
-                    )
-                else:
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(
-                            ".*--parallel-workers={}".format(
-                                plugin.parallel_build_count
-                            )
-                        ),
-                    )
-                if colcon_catkin_cmake_args:
-                    expected_args = " ".join(colcon_catkin_cmake_args)
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(
-                            ".*--catkin-cmake-args.*{}".format(re.escape(expected_args))
-                        ),
-                    )
-                if colcon_ament_cmake_args:
-                    expected_args = " ".join(colcon_ament_cmake_args)
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(
-                            ".*--ament-cmake-args.*{}".format(re.escape(expected_args))
-                        ),
-                    )
-                if colcon_packages_ignore:
-                    expected_args = " ".join(colcon_packages_ignore)
-                    self.test.assertThat(
-                        command,
-                        MatchesRegex(
-                            ".*--packages-ignore.*{}".format(re.escape(expected_args))
-                        ),
-                    )
-
-                if self.test.colcon_packages:
-                    self.test.assertThat(
-                        command,
-                        Contains(
-                            "--packages-select {}".format(
-                                " ".join(self.test.colcon_packages)
-                            )
-                        ),
-                    )
-                else:
-                    self.test.assertThat(command, Not(Contains("--packages-select")))
-
-                self.test.assertThat(args[0:2], Equals(["colcon", "build"]))
-                self.test.assertThat(command, Contains("--merge-install"))
-                self.test.assertThat(
-                    command, Contains("--build-base {}".format(plugin.builddir))
-                )
-                self.test.assertThat(
-                    command,
-                    Contains("--base-paths {}".format(plugin._ros_package_path)),
-                )
-                self.test.assertThat(
-                    command, Contains("--install-base {}".format(plugin._ros_overlay))
-                )
-
-                return True
-
         if self.colcon_packages or self.colcon_packages is None:
-            run_mock.assert_called_with(_check_build_command(self))
+            run_mock.assert_called_with(_CheckBuildCommand(self, plugin))
         else:
             run_mock.assert_not_called()
 
