@@ -367,6 +367,30 @@ class ErrorFormattingTest(unit.TestCase):
                 ),
             ),
         ),
+        (
+            "ProviderMultipassDownloadFailed",
+            dict(
+                exception=errors.ProviderMultipassDownloadFailed,
+                kwargs=dict(message="failed to foo"),
+                expected_message=(
+                    "Failed to download Multipass: 'failed to foo'\n"
+                    "Please install manually. You can find the latest release at:\n"
+                    "https://multipass.run"
+                ),
+            ),
+        ),
+        (
+            "ProviderMultipassInstallationFailed",
+            dict(
+                exception=errors.ProviderMultipassInstallationFailed,
+                kwargs=dict(message="failed to foo"),
+                expected_message=(
+                    "Failed to install Multipass: 'failed to foo'\n"
+                    "Please install manually. You can find the latest release at:\n"
+                    "https://multipass.run"
+                ),
+            ),
+        ),
     ]
 
     def test_error_formatting(self):

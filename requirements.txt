@@ -2,7 +2,7 @@ click~=7.0
 configparser==3.5.0
 jsonschema==2.5.1
 progressbar33==2.4
-http://pyyaml.org/download/pyyaml/PyYAML-3.13-cp35-cp35m-win_amd64.whl; sys_platform == 'win32'
+https://pyyaml.org/download/pyyaml/PyYAML-3.13-cp37-cp37m-win_amd64.whl; sys_platform == 'win32'
 PyYAML==3.13; sys_platform != 'win32'
 pyxdg==0.26
 requests==2.20.0
@@ -23,6 +23,5 @@ tabulate==0.7.5
 toml==0.10.0
 python-debian==0.1.28
 chardet==3.0.4
-cx_Freeze>=5.0.2; sys_platform == 'win32'
 https://files.pythonhosted.org/packages/16/4a/b085a04d6dad79aa5c00c65c9b2bbcb2c6c22e5ac341e7968e0ad2c57e2f/lxml-4.3.0.tar.gz; sys_platform != 'win32'
 lxml==4.3.0; sys_platform == 'win32'

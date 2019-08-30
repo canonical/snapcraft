@@ -302,3 +302,25 @@ class ProviderBadDataError(ProviderBaseError):
 
     def __init__(self, *, provider_name: str, data: str) -> None:
         super().__init__(provider_name=provider_name, data=data)
+
+
+class ProviderMultipassDownloadFailed(ProviderBaseError):
+    fmt = (
+        "Failed to download Multipass: {message!r}\n"
+        "Please install manually. You can find the latest release at:\n"
+        "https://multipass.run"
+    )
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ProviderMultipassInstallationFailed(ProviderBaseError):
+    fmt = (
+        "Failed to install Multipass: {message!r}\n"
+        "Please install manually. You can find the latest release at:\n"
+        "https://multipass.run"
+    )
+
+    def __init__(self, message):
+        super().__init__(message=message)

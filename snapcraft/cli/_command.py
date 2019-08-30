@@ -66,6 +66,8 @@ class SnapcraftProjectCommand(click.Command):
         # Building a base is not legacy.
         elif project.info.type == "base":
             return False
+        elif project.info.build_base is not None:
+            return False
         # A project with no base set is legacy.
         elif project.info.base is None:
             return True
