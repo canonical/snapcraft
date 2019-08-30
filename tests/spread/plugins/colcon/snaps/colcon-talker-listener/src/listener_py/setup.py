@@ -13,6 +13,10 @@ setup(
             os.path.join("share", package_name, "launch"),
             [os.path.join("launch", "talk_and_listen.launch.py")],
         ),
+        (
+            os.path.join("share", "ament_index", "resource_index", "packages"),
+            [os.path.join("resource", package_name)],
+        ),
     ],
     install_requires=["setuptools"],
     entry_points={"console_scripts": ["listener = listener:main"]},
