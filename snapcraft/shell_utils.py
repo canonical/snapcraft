@@ -18,6 +18,7 @@
 
 
 import tempfile
+import os
 
 from snapcraft.internal import common
 
@@ -38,4 +39,8 @@ def run_script(script, **kwargs):
         print("#!/bin/sh", file=tempf)
         print(script, file=tempf)
         tempf.flush()
-        return common.run_output(["/bin/sh", tempf.name], **kwargs)
+        if "SNAPCRAFT_DEBUG_SCRIPTS" in os.environ:
+                return common.run_output(["/bin/bash", "-x", tempf.name], **kwargs)
+        else:
+                return common.run_output(["/bin/sh", tempf.name], **kwargs)
+
