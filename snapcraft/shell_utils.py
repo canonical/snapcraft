@@ -38,8 +38,7 @@ def run_script(script, **kwargs):
     with tempfile.NamedTemporaryFile("w+") as tempf:
         print("#!/bin/sh", file=tempf)
         if "SNAPCRAFT_DEBUG_SCRIPTS" in os.environ:
-                return print("set -x", file=tempf)
+            return print("set -x", file=tempf)
         print(script, file=tempf)
         tempf.flush()
         return common.run_output(["/bin/sh", tempf.name], **kwargs)
-
