@@ -20,11 +20,10 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-
 _PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
 
 
-class Gnome_3_28Extension(Extension):
+class ExtensionImpl(Extension):
     """The Gnome extension.
 
     This extension is to be used by applications that require GTK+.
