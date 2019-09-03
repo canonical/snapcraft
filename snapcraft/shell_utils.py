@@ -37,10 +37,9 @@ def run_script(script, **kwargs):
     """Run the script and return the output."""
     with tempfile.NamedTemporaryFile("w+") as tempf:
         print("#!/bin/sh", file=tempf)
+        if "SNAPCRAFT_DEBUG_SCRIPTS" in os.environ:
+                return print("set -x", file=tempf)
         print(script, file=tempf)
         tempf.flush()
-        if "SNAPCRAFT_DEBUG_SCRIPTS" in os.environ:
-                return common.run_output(["/bin/bash", "-x", tempf.name], **kwargs)
-        else:
-                return common.run_output(["/bin/sh", tempf.name], **kwargs)
+        return common.run_output(["/bin/sh", tempf.name], **kwargs)
 
