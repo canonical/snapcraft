@@ -5,7 +5,6 @@ description: This is a basic gnome snap (*only* uses glib). It simply prints a h
 
 grade: devel
 confinement: strict
-base: core18
 
 apps:
   glib-hello:

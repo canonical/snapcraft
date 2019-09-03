@@ -1,4 +1,14 @@
-summary: Build and run a basic gnome snap
+summary: Build and run a basic gnome snap using extensions
+
+# The content snap required for the test to succeed is only
+# available on a subset of all the architectures this testbed
+# can run on.
+systems:
+  - ubuntu-18.04
+  - ubuntu-18.04-amd64
+  - ubuntu-18.04-arm64
+  - ubuntu-18.04-i386
+  - ubuntu-18.04-armhf
 
 environment:
   SNAP_DIR: ../snaps/glib-hello
