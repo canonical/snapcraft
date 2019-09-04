@@ -223,11 +223,7 @@ class Config:
             self.build_tools.add("git")
 
         # Always add the base for building for non os and base snaps
-        if project.info.base is None and project.info.type in (
-            "app",
-            "gadget",
-            "kernel",
-        ):
+        if project.info.base is None and project.info.type in ("app", "gadget"):
             raise SnapcraftEnvironmentError(
                 "A base is required for snaps of type {!r}.".format(project.info.type)
             )

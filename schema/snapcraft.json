@@ -859,11 +859,12 @@
         {
             "anyOf": [
                 {
-                    "usage": "type: <base|snapd> (without a base)",
+                    "usage": "type: <base|kernel|snapd> (without a base)",
                     "properties": {
                         "type": {
                             "enum": [
                                 "base",
+                                "kernel",
                                 "snapd"
                             ]
                         }
@@ -884,13 +885,12 @@
                     ]
                 },
                 {
-                    "usage": "base: <base> and type: <app|gadget|kernel> (without a build-base)",
+                    "usage": "base: <base> and type: <app|gadget> (without a build-base)",
                     "properties": {
                         "type": {
                             "enum": [
                                 "app",
-                                "gadget",
-                                "kernel"
+                                "gadget"
                             ]
                         }
                     },
