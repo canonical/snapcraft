@@ -109,4 +109,12 @@ def setup_dirs() -> None:
         common.set_keyringsdir(os.path.join(data_dir, "keyrings"))
 
     else:
-        raise snapcraft.internal.errors.SnapcraftDataDirectoryMissingError()
+        # Make sure required data directories exist in the default locations.
+        # Plugins and legacy snapcraft directory are not required.
+        for d in [
+            common.get_schemadir(),
+            common.get_extensionsdir(),
+            common.get_keyringsdir(),
+        ]:
+            if not os.path.exists(d):
+                raise snapcraft.internal.errors.SnapcraftDataDirectoryMissingError()
