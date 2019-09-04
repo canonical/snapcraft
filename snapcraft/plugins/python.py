@@ -18,7 +18,7 @@
 
 It can be used for python projects where you would want to do:
 
-    - import python modules with a requirements.txt
+    - import python modules with a requirements.txt or Pipfile.lock
     - build a python project that has a setup.py
     - install packages straight from pip
 
@@ -37,10 +37,13 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - process-dependency-links:
       (bool; default: false)
       Enable the processing of dependency links in pip, which allow one
-      project to provide places to look for another project
+      project to provide places to look for another project.
+    - process-pipfile-lock:
+      (bool; default: false)
+      Enable the processing of Pipfile.lock for requirements.
     - python-packages:
       (list)
-      A list of dependencies to get from PyPI
+      A list of dependencies to get from PyPI.
     - python-version:
       (string; default: python3)
       The python version to use. Valid options are: python2 and python3
@@ -61,6 +64,7 @@ from textwrap import dedent
 from typing import List, Set
 
 import requests
+from requirementslib import Lockfile
 
 import snapcraft
 from snapcraft.common import isurl
@@ -114,6 +118,10 @@ class PythonPlugin(snapcraft.BasePlugin):
             "default": [],
         }
         schema["properties"]["process-dependency-links"] = {
+            "type": "boolean",
+            "default": False,
+        }
+        schema["properties"]["process-pipfile-lock"] = {
             "type": "boolean",
             "default": False,
         }
@@ -198,6 +206,32 @@ class PythonPlugin(snapcraft.BasePlugin):
         self._python_major_version = match.group("major_version")
         self.__pip = None
 
+    def _pipfile_lock_to_requirements(self):
+        """Returns list of requirements."""
+        lockfile_path = self._find_file(filename="Pipfile.lock")
+        if lockfile_path is None:
+            raise SnapcraftPluginPythonFileMissing(
+                plugin_property="pipfile", plugin_property_value="Pipfile.lock"
+            )
+
+        lockfile = Lockfile.create(lockfile_path)
+        return lockfile.as_requirements(dev=False)
+
+    def _process_pipfile_lock(self):
+        """Process Pipfile.lock if enabled.
+
+        Raise exception if enabled and Piplock.file not found."""
+
+        if not self.options.process_pipfile_lock:
+            return
+
+        requirements = self._pipfile_lock_to_requirements()
+        requirements_txt = "\n".join(requirements)
+        out_path = os.path.join(self.partdir, "generated-pipfile-lock-requirements.txt")
+
+        open(out_path, "w").write(requirements_txt)
+        self.options.requirements.append(out_path)
+
     def _setup_base_tools(self, base):
         # NOTE: stage-packages are lazily loaded.
         if base in ("core", "core16", "core18"):
@@ -225,6 +259,9 @@ class PythonPlugin(snapcraft.BasePlugin):
     def pull(self):
         super().pull()
 
+        # Process Pipfile.lock to requirements are generated (if enabled).
+        self._process_pipfile_lock()
+
         self._pip.setup()
 
         with simple_env_bzr(os.path.join(self.installdir, "bin")):
@@ -238,6 +275,9 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
+
+        # Process Pipfile.lock to requirements are generated (if enabled).
+        self._process_pipfile_lock()
 
         with simple_env_bzr(os.path.join(self.installdir, "bin")):
             # Install the packages that have already been downloaded
