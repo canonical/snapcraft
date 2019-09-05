@@ -5,6 +5,7 @@ summary: Build and run a basic gnome snap using extensions
 # can run on.
 systems:
   - ubuntu-18.04
+  - ubuntu-18.04-64
   - ubuntu-18.04-amd64
   - ubuntu-18.04-arm64
   - ubuntu-18.04-i386

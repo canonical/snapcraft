@@ -1,5 +1,9 @@
 summary: Cross-compile a rust snap
 
+systems:
+  - ubuntu-16.04-amd64
+  - ubuntu-18.04-amd64
+
 environment:
   SNAP_DIR: ../snaps/rust-hello
 
