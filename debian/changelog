@@ -1,3 +1,68 @@
+snapcraft (3.8) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * test: autopkgtest beta
+  * debian: minimal deb package for autopkgtest
+  * extensions: new gnome extension (#2655)
+  * deltas: code cleanup
+  * tests: move meta testing to its own package
+  * yaml utils: move OctInt from meta
+  * spread tests: minor performance improvements
+  * meta: move _errors to errors with related error classes
+  * meta: decouple DesktopFile logic
+  * schema: schema: build-base support for the snapd type
+  * rust plugin: support for s390x
+  * schema: build-base support for the kernel type
+  * spread tests: update gnome extension tests
+  * extensions: rename extension classes to known names
+  * extensions: create the gnome-platform directory
+  * extensions: improve docsting (used in the cli)
+  * spread tests: finer grained arch support for autopkgtests
+
+  [ Chris Patterson ]
+  * elf: handle invalid elf files
+  * cli: handle exception when cleaning a part with a fresh project
+  * spread: fix unbound variable error
+  * docs: quick init for lxd in HACKING.md
+  * windows: drop cx_Freeze support in setup.py
+  * cli: use absolute import paths instead of relative imports
+  * requirements: update to python 3.7 for PyYaml wheel
+  * requirements: uprev all OS to pexpect 4.7.0
+  * requirements: add pyinstaller 3.5 for win32
+  * windows: add snapcraft.ico icon
+  * windows: add pyinstaller spec file to generate frozen snapcraft.exe
+  * dirs: find Windows data directory for currently-known scenarios
+  * lxd: conditionally import pylxd based on OS
+  * windows: add inno-installer script
+  * windows: add powershell script to generate self-signed certificate
+  * tests: fix snapcraft command for win32 virtual env
+  * appveyor: build Windows inno-installer
+  * windows: add MSIX/AppX installer
+  * dirs: raise SnapcraftDataDirectoryMissingError() if paths not set
+  * multipass: update ProverNotFound url to https://multipass.run
+  * indicators: windows fix for is_dumb_terminal
+  * multipass: add installation support for windows
+  * travis: use apt addon to prevent apt update issues in CLA-check
+  * multipass: fix setup exception when multipass is not found in PATH
+  * dirs: check for existence of required data directories
+
+  [ Jeremie Deray ]
+  * catkin plugin: forward parallel build count (#2669)
+  * colcon plugin: forward parallel build count (#2670)
+
+  [ Anatoli Babenia ]
+  * lifecycle: add support for building inside podman containers (#2659)
+  * docker: remove snapcraft-wrapper
+
+  [ Stefano Rivera ]
+  * repo: properly handle install query for unknown apt packages (#2692)
+
+  [ Kyle Fazzari ]
+  * spread tests: install package marker into ament index
+  * colcon plugin: add ability to ignore packages (#2687)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 05 Sep 2019 15:48:57 +0000
+
 snapcraft (3.7.2) xenial; urgency=medium
 
   [ Sergio Schvezov ]
