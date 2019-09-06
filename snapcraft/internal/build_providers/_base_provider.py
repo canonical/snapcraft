@@ -45,6 +45,10 @@ def _get_tzdata(timezone_filepath=os.path.join(os.path.sep, "etc", "timezone")) 
     return timezone
 
 
+def _get_apt_primary_mirror() -> str:
+    return os.getenv("SNAPCRAFT_APT_PRIMARY_MIRROR", "http://archive.ubuntu.com/ubuntu")
+
+
 # cloud-init's timezone keyword is not used as it requires tzdata to be installed
 # and the images used may not have it preinstalled.
 _CLOUD_USER_DATA_TMPL = dedent(
@@ -58,6 +62,10 @@ _CLOUD_USER_DATA_TMPL = dedent(
         ignore_growroot_disabled: false
     runcmd:
     - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
+    apt:
+        primary:
+            - arches: [default]
+              uri: {ubuntu_primary_mirror}
     write_files:
         - path: /root/.bashrc
           permissions: 0644
@@ -298,8 +306,12 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
-    def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
-        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+    def _get_cloud_user_data_string(
+        self, timezone=_get_tzdata(), ubuntu_primary_mirror=_get_apt_primary_mirror()
+    ) -> str:
+        return _CLOUD_USER_DATA_TMPL.format(
+            timezone=timezone, ubuntu_primary_mirror=ubuntu_primary_mirror
+        )
 
     def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
         cloud_user_data_filepath = os.path.join(
