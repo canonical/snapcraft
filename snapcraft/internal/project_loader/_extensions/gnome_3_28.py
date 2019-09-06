@@ -24,9 +24,28 @@ _PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
 
 
 class ExtensionImpl(Extension):
-    """The Gnome extension.
+    """This extension eases creation of snaps that integrate with GNOME 3.28
 
-    This extension is to be used by applications that require GTK+.
+    At build time it ensures the right build dependencies are setup and for
+    the runtime it ensures the application is run in an environment catered
+    for GNOME applications.
+
+    It configures each application with the following plugs:
+
+    \b
+    - GTK3 Themes.
+    - Common Icon Themes.
+    - Common Sound Themes
+    - The GNOME runtime libraries and utilities corresponding to 3.28.
+
+    For easier desktop integration, it also configures each application
+    entry with these additional plugs:
+
+    \b
+    - desktop (https://snapcraft.io/docs/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
+    - wayland (https://snapcraft.io/docs/wayland-interface)
+    - x11 (https://snapcraft.io/docs/x11-interface)
     """
 
     @staticmethod
