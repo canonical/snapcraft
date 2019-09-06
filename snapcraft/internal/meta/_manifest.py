@@ -50,17 +50,17 @@ def annotate_snapcraft(project: "Project", data: Dict[str, Any]) -> Dict[str, An
         manifest["image-info"] = image_info_dict
 
     global_state = GlobalState.load(filepath=project._get_global_state_file_path())
-    manifest["build-packages"] = global_state.get_build_packages()
-    manifest["build-snaps"] = global_state.get_build_snaps()
+    manifest["build-packages"] = sorted(global_state.get_build_packages())
+    manifest["build-snaps"] = sorted(global_state.get_build_snaps())
 
     for part in data["parts"]:
         state_dir = os.path.join(project.parts_dir, part, "state")
         pull_state = get_state(state_dir, steps.PULL)
-        manifest["parts"][part]["build-packages"] = pull_state.assets.get(
-            "build-packages", []
+        manifest["parts"][part]["build-packages"] = sorted(
+            pull_state.assets.get("build-packages", [])
         )
-        manifest["parts"][part]["stage-packages"] = pull_state.assets.get(
-            "stage-packages", []
+        manifest["parts"][part]["stage-packages"] = sorted(
+            pull_state.assets.get("stage-packages", [])
         )
         source_details = pull_state.assets.get("source-details", {})
         if source_details:

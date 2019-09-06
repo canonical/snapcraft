@@ -696,8 +696,8 @@ class PluginHandler:
 
         return {
             "uname": uname,
-            "installed-packages": repo.Repo.get_installed_packages(),
-            "installed-snaps": repo.snaps.get_installed_snaps(),
+            "installed-packages": sorted(repo.Repo.get_installed_packages()),
+            "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
         }
 
     def clean_build(self):
