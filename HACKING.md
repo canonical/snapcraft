@@ -25,6 +25,14 @@ To work inside this environment, run:
 
 > Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
+## Non-standard development environment
+
+The development environment created by environment-setup.sh may be customized with:
+
+    ./tools/environment-setup.sh <name> <ubuntu-version>
+
+It is advised that you use the default ubuntu-version (16.04) unless required.  Changing the version is likely to result in unexpected behavior.
+
 ### Testing
 
 See the [Testing guide](TESTING.md).
