@@ -900,14 +900,22 @@ class PluginHandler:
         # We'll only track the part and staged dependencies, since they should have
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
-        (in_part, staged, primed, system) = _split_dependencies(
-            all_dependencies, self.plugin.installdir, self.stagedir, self.primedir
-        )
-        part_dependency_paths = {os.path.dirname(d) for d in in_part}
-        staged_dependency_paths = {os.path.dirname(d) for d in staged}
+        dirs = [self.plugin.installdir, self.stagedir, self.primedir]
+
+        dependencies = _split_dependencies(all_dependencies, dirs)
+        dependency_paths: Set[str] = set()
+
+        part_dependencies = dependencies.get(self.plugin.installdir)
+        part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
+
+        stage_dependencies = dependencies.get(self.stagedir)
+        staged_dependency_paths = {os.path.dirname(d) for d in stage_dependencies}
+
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
-        resolver = MissingDependencyResolver(elf_files=system)
+        missing_set: Set[str] = dependencies.get("/", set())
+        missing_list: List[str] = sorted(list(missing_set))
+        resolver = MissingDependencyResolver(elf_files=missing_list)
         resolver.print_resolutions(
             part_name=self.name,
             stage_packages_exist=self._part_properties.get("stage-packages"),
@@ -975,47 +983,42 @@ class PluginHandler:
             self.clean_pull()
 
 
-def _split_dependencies(dependencies, installdir, stagedir, primedir):
+def _find_directory(file_path: str, dirs: Set[str]):
+    """Finds which of the dirs (if any) file_path is found in.
+
+    Returns tuple (directory, relative_file_path)."""
+    fp_stripped = file_path.lstrip("/")
+
+    for d in dirs:
+        # Check if directory is encoded explicitly in file path.
+        if file_path.startswith(d):
+            return d, os.path.relpath(file_path, d)
+
+        # Check if file exists relative to directory.
+        if os.path.exists(os.path.join(d, fp_stripped)):
+            return d, fp_stripped
+
+    # Must be on host or missing.
+    return "/", fp_stripped
+
+
+def _split_dependencies(dependencies, dependency_dirs) -> Dict[str, Set[str]]:
     """Split dependencies into their corresponding location.
 
-    Return a tuple of sets for each location.
+    Return a dict (keys = matching directories, values = relpath of matches).
     """
 
-    part_dependencies = set()
-    staged_dependencies = set()
-    primed_dependencies = set()
-    system_dependencies = set()
+    # Initialize deps for system/host and search directories.
+    deps: Dict[str, Set[str]] = dict()
+    deps["/"] = set()
+    for dep_dir in dependency_dirs:
+        deps[dep_dir] = set()
 
     for file_path in dependencies:
-        if file_path.startswith(installdir):
-            part_dependencies.add(os.path.relpath(file_path, installdir))
-        elif file_path.startswith(stagedir):
-            staged_dependencies.add(os.path.relpath(file_path, stagedir))
-        elif file_path.startswith(primedir):
-            primed_dependencies.add(os.path.relpath(file_path, primedir))
-        else:
-            file_path = file_path.lstrip("/")
+        dep_dir, dep_path = _find_directory(file_path, dependency_dirs)
+        deps[dep_dir].add(dep_path)
 
-            # This was a dependency that was resolved to be on the system.
-            # However, it's possible that this library is actually included in
-            # the snap and we just missed it because it's in a non-standard
-            # path. Let's make sure it isn't already in the part, stage dir, or
-            # prime dir. If so, add it to that set.
-            if os.path.exists(os.path.join(installdir, file_path)):
-                part_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(stagedir, file_path)):
-                staged_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(primedir, file_path)):
-                primed_dependencies.add(file_path)
-            else:
-                system_dependencies.add(file_path)
-
-    return (
-        part_dependencies,
-        staged_dependencies,
-        primed_dependencies,
-        system_dependencies,
-    )
+    return deps
 
 
 def _expand_part_properties(part_properties, part_schema):
