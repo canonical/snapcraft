@@ -42,7 +42,7 @@ _XSLT = """\
     </xsl:copy>
 </xsl:template>
 
-<xsl:template match="p" xml:space="preserve">
+<xsl:template match="p">
 <xsl:value-of select="normalize-space(text())" />
     <xsl:for-each select="ul/li[not(@xml:lang)] | ul/li[@xml:lang = en]">
 <xsl:text>&#xA;</xsl:text>
