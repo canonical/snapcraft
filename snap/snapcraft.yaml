@@ -1,5 +1,5 @@
 name: snapcraft
-base: core
+base: core18
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -59,7 +59,7 @@ parts:
         - execstack
         - gpgv
         - libffi6
-        - libsodium18
+        - libsodium23
         - libxml2
         - libxslt1.1
         - squashfs-tools
@@ -69,7 +69,7 @@ parts:
 
       echo "Create libsodium symlink..."
       TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-      LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.18")"
+      LIBSODIUM="$(readlink -n "$TRIPLET_PATH/libsodium.so.23")"
       # Remove so the link can be recreated on re-builds
       rm -f "$TRIPLET_PATH/libsodium.so"
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
@@ -91,7 +91,7 @@ parts:
         snapcraftctl set-grade "$grade"
     override-build: |
         snapcraftctl build
-        ./tools/snapcraft-override-build.sh
+        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
     override-prime: |
         snapcraftctl prime
 
@@ -110,9 +110,9 @@ parts:
         - requirements.txt
     override-build: |
         snapcraftctl build
-        ./tools/snapcraft-override-build.sh
+        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
 
-        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/sitecustomize.py
+        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
     organize:
         '*': legacy_snapcraft/
     after: [snapcraft-libs]

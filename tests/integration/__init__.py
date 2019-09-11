@@ -56,7 +56,7 @@ class TestCase(testtools.TestCase):
         if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
             self.patchelf_command = "/snap/snapcraft/current/bin/patchelf"
-            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
+            self.execstack_command = "/snap/snapcraft/current/usr/bin/execstack"
         elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
             self.snapcraft_parser_command = "/usr/bin/snapcraft-parser"
