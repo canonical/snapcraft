@@ -113,6 +113,9 @@ class GradlePluginPropertiesTest(unit.TestCase):
             'Expected "gradle-options" "uniqueItems" to be "True"',
         )
 
+        self.assertThat(properties["gradle-build-jar"]["type"], Equals("boolean"))
+        self.assertThat(properties["gradle-build-jar"]["default"], Equals(True))
+
         output_dir = properties["gradle-output-dir"]
         self.assertTrue(
             "type" in output_dir, 'Expected "type" to be included in "gradle-options"'
@@ -140,7 +143,7 @@ class GradlePluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["gradle-options", "gradle-output-dir"]
+        expected_build_properties = ["gradle-options", "gradle-build-jar", "gradle-output-dir"]
         resulting_build_properties = gradle.GradlePlugin.get_build_properties()
 
         self.assertThat(
@@ -207,6 +210,7 @@ class GradlePluginTest(GradlePluginBaseTest):
 
         class Options:
             gradle_options = []
+            gradle_build_jar = True
             gradle_output_dir = "build/libs"
             gradle_version = gradle._DEFAULT_GRADLE_VERSION
             gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
@@ -390,6 +394,7 @@ class GradleProxyTestCase(GradlePluginBaseTest):
 
         class Options:
             gradle_options = []
+            gradle_build_jar = True
             gradle_output_dir = "build/libs"
             gradle_version = gradle._DEFAULT_GRADLE_VERSION
             gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
@@ -453,6 +458,7 @@ class GradlePluginUnsupportedBase(unit.TestCase):
 
         class Options:
             gradle_options = []
+            gradle_build_jar = True
             gradle_output_dir = "build/libs"
             gradle_version = gradle._DEFAULT_GRADLE_VERSION
             gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
@@ -526,6 +532,7 @@ class UnsupportedJDKVersionErrorTest(unit.TestCase):
 
         class Options:
             gradle_options = []
+            gradle_build_jar = True
             gradle_output_dir = "build/libs"
             gradle_version = gradle._DEFAULT_GRADLE_VERSION
             gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
@@ -542,3 +549,51 @@ class UnsupportedJDKVersionErrorTest(unit.TestCase):
             self.project,
         )
         self.assertThat(str(raised), Equals(self.expected_message))
+
+
+class GradlePluginTestNoJarBuild(GradlePluginBaseTest):
+    """Test the gradle plugin with the gradle-build-jar
+    set to false in the options
+    """
+    def setUp(self):
+        super().setUp()
+
+        snapcraft_yaml_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
+            name: gradle-snap
+            base: core18
+        """
+            )
+        )
+
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+
+        class Options:
+            gradle_options = []
+            gradle_build_jar = False
+            gradle_output_dir = "build/libs"
+            gradle_version = gradle._DEFAULT_GRADLE_VERSION
+            gradle_version_checksum = gradle._DEFAULT_GRADLE_CHECKSUM
+            gradle_openjdk_version = "11"
+
+        self.options = Options()
+
+    def test_with_false_build_jar(self):
+        plugin = gradle.GradlePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin, java_version="11")
+
+        def side(l, **kwargs):
+            os.makedirs(os.path.join(plugin.builddir, "build", "libs"))
+            open(
+                os.path.join(plugin.builddir, "build", "libs", "JavaPackage"), "w"
+            ).close()
+
+        self.run_mock.side_effect = side
+
+        plugin.build()
+
+        self.run_mock.assert_called_once_with(
+            ["gradle"], cwd=plugin.builddir, env=mock.ANY
+        )

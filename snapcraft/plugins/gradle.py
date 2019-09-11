@@ -217,7 +217,7 @@ class GradlePlugin(snapcraft.BasePlugin):
             gradle_cmd
             + self._get_proxy_options()
             + self.options.gradle_options
-            + (["jar"] if self.options.gradle_build_jar else ""),
+            + (["jar"] if self.options.gradle_build_jar else []),
             rootdir=self.builddir,
         )
 
