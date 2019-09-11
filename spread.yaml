@@ -157,8 +157,14 @@ prepare: |
     exit 1
   fi
 
+debug: |
+  journalctl -xe
+
 restore-each: |
   "$TOOLS_DIR"/restore.sh
+
+debug-each: |
+  journalctl -xe
 
 suites:
  # General, core suite
