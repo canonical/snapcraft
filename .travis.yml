@@ -57,7 +57,6 @@ jobs:
       addons:
         apt:
           packages:
-            - bzr
             - git
             - libapt-pkg-dev
             - libffi-dev
@@ -140,7 +139,6 @@ jobs:
       addons:
         apt:
           packages:
-            - bzr
             - git
             - libapt-pkg-dev
             - libffi-dev
