@@ -53,32 +53,8 @@ jobs:
 
     - stage: unit, snap and osx
       name: unit tests
-      addons:
-        apt:
-          packages:
-            - git
-            - libapt-pkg-dev
-            - libffi-dev
-            - libnacl-dev
-            - libsodium-dev
-            - libssl-dev
-            - libxml2-dev
-            - libxslt-dev
-            - libyaml-dev
-            - python3-yaml
-            - python3.6-dev
-            - rpm2cpio
-            - squashfs-tools
-            - subversion
-            - xdelta3
-      install:
-        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
-        - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
       script:
-        - ./runtests.sh tests/unit
-      after_success:
-        - coverage xml
-        - codecov --token="$CODECOV_TOKEN"
+        - SNAPCRAFT_PACKAGE_TYPE=none ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/unit/coverage"
     - stage: unit, snap and osx
       name: osx
       os: osx
