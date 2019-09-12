@@ -121,6 +121,11 @@ prepare: |
       exit 1
   fi
 
+  # Exit now if we are preparing for unit tests.
+  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "none" ]; then
+      exit 0
+  fi
+
   apt-get install -y snapd
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
@@ -167,6 +172,56 @@ debug-each: |
   journalctl -xe
 
 suites:
+ # Unit tests
+ tests/spread/unit/:
+   summary: unit tests for snapcraft
+   manual: true
+   systems:
+   - ubuntu-18*
+   prepare: |
+     apt-get update
+     apt-get install --yes \
+       git \
+       libapt-pkg-dev \
+       libffi-dev \
+       libnacl-dev \
+       libsodium-dev \
+       libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
+       libyaml-dev \
+       python3-venv \
+       python3-yaml \
+       python3.6-dev \
+       rpm2cpio \
+       squashfs-tools \
+       subversion \
+       xdelta3
+     apt-mark auto \
+       git \
+       libapt-pkg-dev \
+       libffi-dev \
+       libnacl-dev \
+       libsodium-dev \
+       libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
+       libyaml-dev \
+       python3-venv \
+       python3-yaml \
+       python3.6-dev \
+       rpm2cpio \
+       squashfs-tools \
+       subversion \
+       xdelta3
+     pyvenv "$HOME/venv/snapcraft"
+     # shellcheck source=/dev/null
+     source "$HOME/venv/snapcraft/bin/activate"
+     pip install --upgrade pip
+     pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt codecov
+   recover: |
+     rm -rf ~/venv
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
