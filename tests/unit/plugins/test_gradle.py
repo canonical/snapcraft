@@ -143,7 +143,11 @@ class GradlePluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["gradle-options", "gradle-build-jar", "gradle-output-dir"]
+        expected_build_properties = [
+            "gradle-options",
+            "gradle-build-jar",
+            "gradle-output-dir",
+        ]
         resulting_build_properties = gradle.GradlePlugin.get_build_properties()
 
         self.assertThat(
@@ -555,6 +559,7 @@ class GradlePluginTestNoJarBuild(GradlePluginBaseTest):
     """Test the gradle plugin with the gradle-build-jar
     set to false in the options
     """
+
     def setUp(self):
         super().setUp()
 

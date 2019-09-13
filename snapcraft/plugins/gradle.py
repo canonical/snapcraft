@@ -177,7 +177,8 @@ class GradlePlugin(snapcraft.BasePlugin):
                 version=version, base=base, valid_versions=valid_versions
             )
 
-        self.stage_packages.append("openjdk-{}-jre-headless".format(version))
+        if self.options.gradle_build_jar:
+            self.stage_packages.append("openjdk-{}-jre-headless".format(version))
         self.build_packages.append("openjdk-{}-jdk-headless".format(version))
         self.build_packages.append("ca-certificates-java")
         self._java_version = version
@@ -246,6 +247,9 @@ class GradlePlugin(snapcraft.BasePlugin):
         self._create_symlinks()
 
     def _create_symlinks(self):
+        if not self.options.gradle_build_jar:
+            return
+
         if self.project.info.get_build_base() not in ("core18", "core16", "core"):
             raise errors.PluginBaseError(
                 part_name=self.name, base=self.project.info.get_build_base()
