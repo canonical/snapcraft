@@ -41,7 +41,6 @@ lxc exec snapcraft-dev -- apt install --yes \
     libxslt-dev \
     libyaml-dev \
     make \
-    p7zip-full \
     patchelf \
     python3-dev \
     python3-pip \
