@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,15 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import subprocess
-
 from unittest import mock
+
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
 from tests import unit
-from tests.subprocess_utils import call, call_with_output
 
 
 # LP: #1733584
@@ -184,83 +183,81 @@ class TestMercurial(unit.sources.SourceTestCase):  # type: ignore
         self.assertThat(raised.exit_code, Equals(1))
 
 
-class MercurialBaseTestCase(unit.TestCase):
-    def rm_dir(self, dir):
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
+def get_side_effect(original_call):
+    def side_effect(cmd, *args, **kwargs):
+        if len(cmd) > 1 and cmd[1] == "id":
+            return "mock-commit".encode()
+        elif cmd[0] == "hg":
+            return
+        return original_call(cmd, *args, **kwargs)
 
-    def clean_dir(self, dir):
-        self.rm_dir(dir)
-        os.mkdir(dir)
-        self.addCleanup(self.rm_dir, dir)
-
-    def clone_repo(self, repo, tree):
-        self.clean_dir(tree)
-        call(["hg", "clone", repo, tree])
-        os.chdir(tree)
-
-    def add_file(self, filename, body, message):
-        with open(filename, "w") as fp:
-            fp.write(body)
-
-        call(["hg", "add", filename])
-        call(["hg", "commit", "-am", message])
-
-    def check_file_contents(self, path, expected):
-        body = None
-        with open(path) as fp:
-            body = fp.read()
-        self.assertThat(body, Equals(expected))
+    return side_effect
 
 
-class MercurialDetailsTestCase(MercurialBaseTestCase):
+class MercurialDetailsTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.working_tree = "hg-test"
         self.source_dir = "hg-checkout"
-        self.clean_dir(self.working_tree)
-        self.clean_dir(self.source_dir)
-        os.chdir(self.working_tree)
-        call(["hg", "init"])
-        with open("testing", "w") as fp:
-            fp.write("testing")
-        call(["hg", "add", "testing"])
-        call(["hg", "commit", "-m", "testing", "-u", "Test User <t@example.com>"])
-        call(["hg", "tag", "-u", "test", "test-tag"])
-        self.expected_commit = call_with_output(["hg", "id"]).split()[0]
-        self.expected_branch = call_with_output(["hg", "branch"])
-        self.expected_tag = "test-tag"
 
-        os.chdir("..")
+        os.mkdir(self.source_dir)
+        # Simulate that we have already cloned the code.
+        os.mkdir(os.path.join(self.source_dir, ".hg"))
 
-        self.hg = sources.Mercurial(self.working_tree, self.source_dir, silent=True)
-        self.hg.pull()
-
-        self.source_details = self.hg._get_source_details()
+        self.fake_check_output = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output",
+                side_effect=get_side_effect(subprocess.check_output),
+            )
+        )
+        self.fake_check_call = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_call",
+                side_effect=get_side_effect(subprocess.check_call),
+            )
+        )
 
     def test_hg_details_commit(self):
-        self.assertThat(
-            self.source_details["source-commit"], Equals(self.expected_commit)
+        hg = sources.Mercurial(self.working_tree, self.source_dir, silent=True)
+        hg.pull()
+
+        source_details = hg._get_source_details()
+        self.assertThat(source_details["source-commit"], Equals("mock-commit"))
+
+        self.fake_check_output.mock.assert_has_calls(
+            [
+                mock.call(["hg", "id", self.source_dir]),
+                mock.call(["hg", "id", self.source_dir]),
+            ]
+        )
+        self.fake_check_call.mock.assert_called_once_with(
+            ["hg", "pull", self.working_tree], stderr=-3, stdout=-3
         )
 
     def test_hg_details_branch(self):
-        self.clean_dir(self.source_dir)
-        self.hg = sources.Mercurial(
-            self.working_tree, self.source_dir, silent=True, source_branch="default"
+        hg = sources.Mercurial(
+            self.working_tree, self.source_dir, silent=True, source_branch="test-branch"
         )
-        self.hg.pull()
+        hg.pull()
 
-        self.source_details = self.hg._get_source_details()
-        self.assertThat(
-            self.source_details["source-branch"], Equals(self.expected_branch)
+        source_details = hg._get_source_details()
+        self.assertThat(source_details["source-branch"], Equals("test-branch"))
+
+        self.fake_check_output.mock.assert_not_called()
+        self.fake_check_call.mock.assert_called_once_with(
+            ["hg", "pull", "-b", "test-branch", self.working_tree], stderr=-3, stdout=-3
         )
 
     def test_hg_details_tag(self):
-        self.clean_dir(self.source_dir)
-        self.hg = sources.Mercurial(
+        hg = sources.Mercurial(
             self.working_tree, self.source_dir, silent=True, source_tag="test-tag"
         )
-        self.hg.pull()
+        hg.pull()
 
-        self.source_details = self.hg._get_source_details()
-        self.assertThat(self.source_details["source-tag"], Equals(self.expected_tag))
+        source_details = hg._get_source_details()
+        self.assertThat(source_details["source-tag"], Equals("test-tag"))
+
+        self.fake_check_output.mock.assert_not_called()
+        self.fake_check_call.mock.assert_called_once_with(
+            ["hg", "pull", "-r", "test-tag", self.working_tree], stderr=-3, stdout=-3
+        )
