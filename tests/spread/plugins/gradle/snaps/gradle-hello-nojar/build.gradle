@@ -1,8 +1,0 @@
-project.buildDir = 'SNAPCRAFT_GRADLE_OUTPUT_DIR/libs'
-
-task deploy (){
-    copy {
-        from "hello.sh"
-        into project.buildDir
-    }
-}

@@ -1,7 +1,7 @@
 summary: Build and run a gradle snap
 
 environment:
-  SNAP_DIR: ../snaps/gradle-hello-nojar
+  SNAP_DIR: ../snaps/gradlew-hello-nojar
   OPENJDK_VERSION/CURRENT: "CURRENT"
   OPENJDK_VERSION/LATEST: "LATEST"  
 

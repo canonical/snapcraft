@@ -1,4 +1,4 @@
-name: gradle-hello
+name: gradlew-hello-nojar
 version: "1.0"
 summary: A java example
 description: this is not much more than an example
@@ -9,12 +9,12 @@ base: core18
 
 apps:
  gradle-hello:
-   command: java/hello.sh
+   command: java/bin/hello
 
 parts:
     local:
         plugin: gradle
         source: .
-        gradle-options: [--debug]
+        gradle-options: [jlink, --debug]
         gradle-build-jar: false
-        gradle-output-dir: 'SNAPCRAFT_GRADLE_OUTPUT_DIR/libs'
+        gradle-output-dir: 'build/image'

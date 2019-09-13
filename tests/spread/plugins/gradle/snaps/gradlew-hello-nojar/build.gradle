@@ -1,0 +1,24 @@
+plugins {
+    id 'org.beryx.jlink' version '2.4.1'
+    id "org.javamodularity.moduleplugin" version "1.1.1"
+}
+
+// project.buildDir = 'SNAPCRAFT_GRADLE_OUTPUT_DIR'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+mainClassName = 'org.modular.hello/org.modular.hello.Hello'
+jlink {
+    mergedModule {
+        requires 'java.naming'
+        requires 'java.xml'
+    }
+    launcher{
+        name = 'hello'
+    }
+}
