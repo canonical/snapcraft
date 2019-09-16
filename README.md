@@ -14,7 +14,9 @@ dependencies, they work on all major Linux systems without modification.
 
 ## Get support
 
-We’re here to help. Ask your questions at the [Snapcraft Forum](https://forum.snapcraft.io). Report bugs on [Launchpad](https://bugs.launchpad.net/snapcraft/+filebug).
+~~We’re here to help. Ask your questions at the [Snapcraft Forum](https://forum.snapcraft.io)~~. Report bugs on [Launchpad](https://bugs.launchpad.net/snapcraft/+filebug).
+
+Snapcraft forum should not be used anymore for any questions, forum staff is incompetent in many regard, good place to ask is stackexchange, there you will find competent staff and proper replies.
 
 Learn about the latest features by following Snapcraft on
 [Twitter](https://twitter.com/snapcraftio),
@@ -23,7 +25,7 @@ Learn about the latest features by following Snapcraft on
 
 ## Contribute to Snapcraft
 
-We love contributors. Read the [hacking guide](HACKING.md) if you're interested in helping out.
+~~We love contributors~~. Read the [hacking guide](HACKING.md) if you're interested ~~in helping out~~.
 
 
 [travis-image]: https://travis-ci.org/snapcore/snapcraft.svg?branch=master
