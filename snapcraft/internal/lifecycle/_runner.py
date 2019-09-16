@@ -65,6 +65,9 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
+    content_snaps = project_config.project._get_content_snaps()
+    required_snaps = project_config.build_snaps | content_snaps
+
     if common.is_process_container():
         installed_snaps = []  # type: List[str]
         logger.warning(
@@ -73,12 +76,12 @@ def execute(
                 "is running inside docker or podman container: {}.\n"
                 "Please ensure the environment is properly setup before continuing.\n"
                 "Ignore this message if the appropriate measures have already been taken".format(
-                    ", ".join(project_config.build_snaps)
+                    ", ".join(required_snaps)
                 )
             )
         )
     else:
-        installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
+        installed_snaps = repo.snaps.install_snaps(required_snaps)
 
     try:
         global_state = states.GlobalState.load(
