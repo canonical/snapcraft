@@ -195,7 +195,6 @@ suites:
        python3.6-dev \
        rpm2cpio \
        squashfs-tools \
-       subversion \
        xdelta3
      apt-mark auto \
        git \
@@ -212,7 +211,6 @@ suites:
        python3.6-dev \
        rpm2cpio \
        squashfs-tools \
-       subversion \
        xdelta3
      pyvenv "$HOME/venv/snapcraft"
      # shellcheck source=/dev/null
