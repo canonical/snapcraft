@@ -18,6 +18,8 @@ import os
 from datetime import datetime
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.meta.snap import Snap
+from typing import Set
 from ._project_options import ProjectOptions
 from ._project_info import ProjectInfo  # noqa: F401
 
@@ -42,10 +44,13 @@ class Project(ProjectOptions):
         else:
             work_dir = project_dir
 
+        super().__init__(target_deb_arch, debug, work_dir=work_dir)
+
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
             self.info = None  # type: ProjectInfo
+
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
@@ -53,10 +58,13 @@ class Project(ProjectOptions):
         self._project_dir = project_dir
         self._work_dir = work_dir
 
-        super().__init__(target_deb_arch, debug, work_dir=work_dir)
-
         self.local_plugins_dir = self._get_local_plugins_dir()
         self._start_time = datetime.utcnow()
+
+        # XXX: (Re)set by Config because it mangles source data.
+        # Ideally everywhere wold converge to operating on snap_meta, and ww
+        # would only need to initialize it once (properly).
+        self._snap_meta = Snap()
 
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir
