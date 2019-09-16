@@ -211,7 +211,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
+                call(snap_name="core18"),
                 call(snap_name="snapcraft"),
                 call(snap_name="core16"),
             ]
@@ -236,7 +236,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
+                call(snap_name="core18"),
                 call(snap_name="snapcraft"),
                 call(snap_name="core16"),
             ]
@@ -253,7 +253,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
+                call(snap_name="core18"),
                 call(snap_name="snapcraft"),
                 call(snap_name="core18"),
             ]
@@ -280,7 +280,7 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
+                call(snap_name="core18"),
                 call(snap_name="snapcraft"),
                 call(snap_name="core18"),
             ]
@@ -304,7 +304,7 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             inject_from_host=False,
         )
         self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core"), call(snap_name="snapcraft")]
+            [call(snap_name="core18"), call(snap_name="snapcraft")]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()
@@ -327,7 +327,7 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
+                call(snap_name="core18"),
                 call(snap_name="snapcraft"),
                 call(snap_name="core18"),
             ]
