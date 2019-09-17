@@ -128,6 +128,48 @@ class DesktopIconTest(unit.TestCase):
             ),
         )
 
+    def test_generate_desktop_file_multisection(self):
+        with open(self.desktop_file_path, "w") as desktop_file:
+            print("[Desktop Entry]", file=desktop_file)
+            print("Exec=in-snap-exe", file=desktop_file)
+            print("Icon={}".format(self.icon), file=desktop_file)
+            print("[Desktop Entry Two]", file=desktop_file)
+            print("Exec=in-snap-exe2", file=desktop_file)
+            print("Icon={}".format(self.icon), file=desktop_file)
+
+        d = DesktopFile(
+            snap_name=self.snap_name,
+            app_name=self.app_name,
+            filename=self.desktop_file_path,
+            prime_dir=self.path,
+        )
+
+        try:
+            d.write(icon_path=self.icon_path, gui_dir=".")
+        except AttributeError:
+            d.write(gui_dir=".")
+
+        self.assertThat(self.expected_desktop_file, FileExists())
+        self.assertThat(
+            self.expected_desktop_file,
+            FileContains(
+                dedent(
+                    """\
+            [Desktop Entry]
+            Exec=foo %U
+            Icon={}
+
+            [Desktop Entry Two]
+            Exec=foo %U
+            Icon={}
+
+        """.format(
+                        self.expected_icon, self.expected_icon
+                    )
+                )
+            ),
+        )
+
 
 class DesktopFileErrorTest(unit.TestCase):
     def test_not_found(self):

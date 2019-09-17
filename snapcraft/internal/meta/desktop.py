@@ -39,24 +39,17 @@ class DesktopFile:
                 filename, "does not exist (defined in the app {!r})".format(app_name)
             )
 
-    def _parse_and_reformat(self, *, icon_path: Optional[str] = None) -> None:
-        self._parser = configparser.ConfigParser(interpolation=None)
-        # mypy type checking ignored, see https://github.com/python/mypy/issues/506
-        self._parser.optionxform = str  # type: ignore
-        self._parser.read(self._path, encoding="utf-8")
-        section = "Desktop Entry"
-        if section not in self._parser.sections():
-            raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Desktop Entry' section"
-            )
+    def _parse_and_reformat_section(self, *, section, icon_path: Optional[str] = None):
         if "Exec" not in self._parser[section]:
             raise errors.InvalidDesktopFileError(self._filename, "missing 'Exec' key")
+
         # XXX: do we want to allow more parameters for Exec?
         if self._app_name == self._snap_name:
             exec_value = "{} %U".format(self._app_name)
         else:
             exec_value = "{}.{} %U".format(self._snap_name, self._app_name)
         self._parser[section]["Exec"] = exec_value
+
         if "Icon" in self._parser[section]:
             icon = self._parser[section]["Icon"]
 
@@ -76,6 +69,20 @@ class DesktopFile:
             # if it is, add "${SNAP}" back and set the icon
             else:
                 self._parser[section]["Icon"] = os.path.join("${SNAP}", icon)
+
+    def _parse_and_reformat(self, *, icon_path: Optional[str] = None) -> None:
+        self._parser = configparser.ConfigParser(interpolation=None)
+        # mypy type checking ignored, see https://github.com/python/mypy/issues/506
+        self._parser.optionxform = str  # type: ignore
+        self._parser.read(self._path, encoding="utf-8")
+
+        if "Desktop Entry" not in self._parser.sections():
+            raise errors.InvalidDesktopFileError(
+                self._filename, "missing 'Desktop Entry' section"
+            )
+
+        for section in self._parser.sections():
+            self._parse_and_reformat_section(section=section, icon_path=icon_path)
 
     def write(self, *, gui_dir: str, icon_path: Optional[str] = None) -> None:
         self._parse_and_reformat(icon_path=icon_path)
