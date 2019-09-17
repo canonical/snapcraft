@@ -49,7 +49,7 @@ class LaunchpadClient:
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
         self._id = build_id
-        self._core_channel = "stable"
+        self._core18_channel = "stable"
         self._snapcraft_channel = "edge"
         self._name = project.info.name
         self._waiting = []  # type: List[str]
@@ -131,7 +131,10 @@ class LaunchpadClient:
         snap = self._lp.snaps.getByName(name=self._id, owner=owner)
         snap_build_request = snap.requestBuilds(
             archive=dist.main_archive,
-            channels={"core": self._core_channel, "snapcraft": self._snapcraft_channel},
+            channels={
+                "core18": self._core18_channel,
+                "snapcraft": self._snapcraft_channel,
+            },
             pocket="Updates",
         )
         logger.debug("Request URL: {}".format(snap_build_request))
