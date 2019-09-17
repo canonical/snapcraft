@@ -17,6 +17,7 @@
 import configparser
 import logging
 import os
+import shlex
 from typing import Optional
 
 from . import errors
@@ -39,16 +40,23 @@ class DesktopFile:
                 filename, "does not exist (defined in the app {!r})".format(app_name)
             )
 
+    def _parse_and_reformat_section_exec(self, section):
+        exec_value = self._parser[section]["Exec"]
+        exec_split = shlex.split(exec_value, posix=False)
+
+        # Ensure command is invoked correctly.
+        if self._app_name == self._snap_name:
+            exec_split[0] = self._app_name
+        else:
+            exec_split[0] = "{}.{}".format(self._snap_name, self._app_name)
+
+        self._parser[section]["Exec"] = " ".join(exec_split)
+
     def _parse_and_reformat_section(self, *, section, icon_path: Optional[str] = None):
         if "Exec" not in self._parser[section]:
             raise errors.InvalidDesktopFileError(self._filename, "missing 'Exec' key")
 
-        # XXX: do we want to allow more parameters for Exec?
-        if self._app_name == self._snap_name:
-            exec_value = "{} %U".format(self._app_name)
-        else:
-            exec_value = "{}.{} %U".format(self._snap_name, self._app_name)
-        self._parser[section]["Exec"] = exec_value
+        self._parse_and_reformat_section_exec(section)
 
         if "Icon" in self._parser[section]:
             icon = self._parser[section]["Icon"]

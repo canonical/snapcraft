@@ -26,18 +26,41 @@ from tests import unit
 
 class DesktopExecTest(unit.TestCase):
     scenarios = (
-        ("snap name != app name", dict(app_name="bar", expected_exec="foo.bar")),
-        ("snap name == app name", dict(app_name="foo", expected_exec="foo")),
+        (
+            "snap name != app name",
+            dict(app_name="bar", app_args="", expected_exec="foo.bar"),
+        ),
+        (
+            "snap name != app name",
+            dict(app_name="bar", app_args="--arg", expected_exec="foo.bar --arg"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="", expected_exec="foo"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="--arg", expected_exec="foo --arg"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="--arg %U", expected_exec="foo --arg %U"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="%U", expected_exec="foo %U"),
+        ),
     )
 
     def setUp(self):
         super().setUp()
         self.snap_name = "foo"
         self.desktop_file_path = "app.desktop"
+        self.exec = " ".join(["in-snap-exe", self.app_args])
 
         with open(self.desktop_file_path, "w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
-            print("Exec=in-snap-exe", file=desktop_file)
+            print("Exec={}".format(self.exec), file=desktop_file)
 
         self.expected_desktop_file = "{}.desktop".format(self.app_name)
 
@@ -57,7 +80,7 @@ class DesktopExecTest(unit.TestCase):
                 dedent(
                     """\
             [Desktop Entry]
-            Exec={} %U
+            Exec={}
 
         """
                 ).format(self.expected_exec)
@@ -118,7 +141,7 @@ class DesktopIconTest(unit.TestCase):
                 dedent(
                     """\
             [Desktop Entry]
-            Exec=foo %U
+            Exec=foo
             Icon={}
 
         """.format(
@@ -156,11 +179,11 @@ class DesktopIconTest(unit.TestCase):
                 dedent(
                     """\
             [Desktop Entry]
-            Exec=foo %U
+            Exec=foo
             Icon={}
 
             [Desktop Entry Two]
-            Exec=foo %U
+            Exec=foo
             Icon={}
 
         """.format(
