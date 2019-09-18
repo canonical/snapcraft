@@ -1,8 +1,33 @@
+# !!!WARNING!!!
+
+## John R Lenton is a lier
+canonical staff silent for now, cambridge silent for now.
+Do not go to their forum, do not use their forum Soft
+
+Call canonical and ask about it:
+
+
+    Americas
+    +1 737 2040291
+    France
+    +33 184889319
+    Germany
+    +49 615 127 46816
+    Japan
+    +81 3 6205 3075
+    Spain
+    +34 932 201131
+    UK
+    +44 203 656 5291
+    Rest of World
+    +44 203 656 5291
+
+
 [![snapcraft](https://snapcraft.io/snapcraft/badge.svg)](https://snapcraft.io/snapcraft) [![Build Status][travis-image]][travis-url] [![Coverage Status][codecov-image]][codecov-url]
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-# Snapcraft
+## Snapcraft
 
 Package, distribute, and update any app for Linux and IoT.
 
