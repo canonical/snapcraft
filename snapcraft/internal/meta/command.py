@@ -86,6 +86,18 @@ def _get_command_path(*, command: str, prime_dir: str) -> str:
 
 
 def _massage_command(*, command: str, prime_dir: str) -> str:
+    """Rewrite command to take into account interpreter and pathing.
+
+    (1) Interpreter: if shebang is found in file, explicitly prepend
+        the interpreter to the command string.  Fixup path of
+        command with $SNAP if required so the interpreter is able
+        to find the correct target.
+    (2) Explicit path: attempt to find the executable if path
+        is ambiguous.  If found in prime_dir, set the path relative
+        to snap.
+
+    Returns massaged command."""
+
     # If command starts with "/" we have no option but to use a wrapper.
     if command.startswith("/"):
         return command
@@ -140,79 +152,74 @@ class Command:
     """Representation of a command string."""
 
     def __str__(self) -> str:
-        command = self.get_command()
-        return command if command else ""
+        return self.command
 
-    def __init__(
-        self,
-        *,
-        app_name: str,
-        command_name: str,
-        command: str,
-        prime_dir: str,
-        can_use_wrapper: bool,
-        massage_command: bool = True
-    ) -> None:
+    def __init__(self, *, app_name: str, command_name: str, command: str) -> None:
         self._app_name = app_name
         self._command_name = command_name
-        self._original_command = command
-        if massage_command:
-            self._command = _massage_command(command=command, prime_dir=prime_dir)
-        else:
-            self._command = command
-        self._prime_dir = prime_dir
-        self._generate_wrapper = None  # type: Optional[bool]
-        self._can_use_wrapper = can_use_wrapper
+        self.command = command
+        self.wrapped_command: Optional[str] = None
+        self.massaged_command: Optional[str] = None
 
-    def _get_wrapped_command_name(self) -> str:
+    @property
+    def command_name(self) -> str:
+        """Read-only to ensure consistency with app dictionary mappings."""
+        return self._command_name
+
+    @property
+    def requires_wrapper(self) -> bool:
+        if self.wrapped_command is not None:
+            command = self.wrapped_command
+        else:
+            command = self.command
+
+        return command.startswith("/") or not _COMMAND_PATTERN.match(command)
+
+    @property
+    def wrapped_command_name(self) -> str:
         """Return the relative in-snap path to the wrapper for command."""
         return "{command_name}-{app_name}.wrapper".format(
-            command_name=self._command_name, app_name=self._app_name
+            command_name=self.command_name, app_name=self._app_name
         )
 
-    def get_command(self) -> Optional[str]:
-        # Verify that command matches a valid snapd pattern.
-        # If the command starts with / we will need a wrapper, snapd strips the
-        # leading /.
-        if not self._command.startswith("/") and _COMMAND_PATTERN.match(self._command):
-            command = self._command
-            use_wrapper = False
-        else:
-            command = self._get_wrapped_command_name()
-            use_wrapper = True
+    def prime_command(
+        self, *, can_use_wrapper: bool, massage_command: bool = True, prime_dir: str
+    ) -> str:
+        """Finalize and prime command, massaging as necessary.
 
-        if use_wrapper and not self._can_use_wrapper:
-            raise errors.InvalidAppCommandFormatError(self._command, self._app_name)
+        Check if command is in prime_dir and raise exception if not valid."""
 
-        # Error for not being executable.
-        command_parts = shlex.split(self._command)
-        command_path = os.path.join(self._prime_dir, command_parts[0])
-        if not use_wrapper and not _executable_is_valid(command_path):
+        if massage_command:
+            self.command = _massage_command(command=self.command, prime_dir=prime_dir)
+
+        if self.requires_wrapper:
+            if not can_use_wrapper:
+                raise errors.InvalidAppCommandFormatError(self.command, self._app_name)
+            self.wrapped_command = self.command
+            self.command = self.wrapped_command_name
+            return self.command
+
+        command_parts = shlex.split(self.command)
+        command_path = os.path.join(prime_dir, command_parts[0])
+        if not _executable_is_valid(command_path):
             raise errors.InvalidAppCommandNotExecutable(
-                command=self._command, app_name=self._app_name
+                command=self.command, app_name=self._app_name
             )
 
-        self._generate_wrapper = use_wrapper
-        return command
+        return self.command
 
-    def generate_wrapper(self) -> Optional[str]:
-        # If None, raise as it is non known if a wrapper is needed at all.
-        # This is a programmatic error.
-        if self._generate_wrapper is None:
-            raise RuntimeError("get_command must be called first.")
-        # If False however, a wrapper should not be generated at all.
-        if not self._generate_wrapper:
+    def write_wrapper(self, *, prime_dir: str) -> Optional[str]:
+        """Write command wrapper if required for this command."""
+        if self.wrapped_command is None:
             return None
 
-        command_wrapper = os.path.join(
-            self._prime_dir, self._get_wrapped_command_name()
-        )
+        command_wrapper = os.path.join(prime_dir, self.wrapped_command_name)
 
         # We cannot exec relative paths in our wrappers.
-        if self._command.startswith("/"):
-            command = self._command
+        if self.wrapped_command.startswith("/"):
+            command = self.wrapped_command
         else:
-            command = os.path.join("$SNAP", self._command)
+            command = os.path.join("$SNAP", self.wrapped_command)
 
         with open(command_wrapper, "w+") as command_file:
             print("#!/bin/sh", file=command_file)
