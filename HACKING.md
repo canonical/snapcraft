@@ -1,5 +1,7 @@
 # Snapcraft
 
+CLOSE ME
+
 ## Setting up a development environment
 
 We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu 16.04 LTS base)
