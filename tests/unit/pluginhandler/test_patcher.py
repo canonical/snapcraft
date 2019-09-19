@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from unittest import mock
 
 from tests import unit
@@ -53,7 +54,6 @@ class PrimeTypeAppDoesPatchingTestCase(unit.TestCase):
                 confinement="strict",
                 core_base="core18",
                 elf_files=frozenset(),
-                plugin=mock.ANY,
                 primedir=self.prime_dir,
                 project=mock.ANY,
                 snap_base_path="/snap/fake-name/current",

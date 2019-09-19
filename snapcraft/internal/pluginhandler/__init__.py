@@ -840,7 +840,6 @@ class PluginHandler:
         else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
-                plugin=self.plugin,
                 project=self._project_options,
                 confinement=self._confinement,
                 core_base=self._base,
