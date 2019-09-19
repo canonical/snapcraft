@@ -908,6 +908,19 @@
                             }
                         }
                     ]
+                },
+                {
+                    "usage": "base: bare (with a build-base)",
+                    "properties": {
+                        "base": {
+                            "enum": [
+                                "bare"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "build-base"
+                    ]
                 }
             ]
         },

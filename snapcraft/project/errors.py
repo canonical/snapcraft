@@ -208,4 +208,6 @@ def _interpret_anyOf(error):
     except (TypeError, KeyError):
         return ""
 
-    return "must be one of {}".format(formatting_utils.humanize_list(usages, "or"))
+    return "must be one of {}".format(
+        formatting_utils.humanize_list(usages, "or", "{}")
+    )
