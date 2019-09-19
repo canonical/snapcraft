@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,9 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
@@ -73,7 +75,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertRegexpMatches(
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
-        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
+        mock_upload.assert_called_once_with(
+            "basic", self.snap_file, built_at=None, channels=[]
+        )
 
     def test_push_with_started_at(self):
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
@@ -103,7 +107,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
         mock_upload.assert_called_once_with(
-            "basic", snap_file, built_at="2019-05-07T19:25:53.939041Z"
+            "basic", snap_file, built_at="2019-05-07T19:25:53.939041Z", channels=[]
         )
 
     def test_push_without_login_must_raise_exception(self):
@@ -195,7 +199,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
-        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
+        mock_upload.assert_called_once_with(
+            "basic", self.snap_file, built_at=None, channels=[]
+        )
 
     def test_push_and_release_a_snap(self):
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
@@ -211,29 +217,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
-            "opened_channels": ["beta"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 9,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                        ]
-                    }
-                }
-            },
-        }
+        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
 
         # Upload
         with mock.patch(
@@ -243,9 +227,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
-        self.assertThat(result.output, Contains("The 'beta' channel is now open"))
-        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
-        mock_release.assert_called_once_with("basic", 9, ["beta"])
+        mock_upload.assert_called_once_with(
+            "basic", self.snap_file, built_at=None, channels=["beta"]
+        )
 
     def test_push_and_release_a_snap_to_N_channels(self):
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
@@ -261,39 +245,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
-            "opened_channels": ["beta,edge,candidate"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {
-                                "revision": 9,
-                                "channel": "candidate",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {
-                                "revision": 9,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {
-                                "revision": 9,
-                                "channel": "edge",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                        ]
-                    }
-                }
-            },
-        }
+        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
 
         # Upload
         with mock.patch(
@@ -305,12 +257,13 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
-        self.assertThat(
-            result.output, Contains("The 'beta,edge,candidate' channel is now open")
-        )
 
-        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
-        mock_release.assert_called_once_with("basic", 9, ["edge", "beta", "candidate"])
+        mock_upload.assert_called_once_with(
+            "basic",
+            self.snap_file,
+            built_at=None,
+            channels=["edge", "beta", "candidate"],
+        )
 
     def test_push_displays_humanized_message(self):
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
@@ -326,39 +279,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
-            "opened_channels": ["beta,edge,candidate"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {
-                                "revision": 9,
-                                "channel": "candidate",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {
-                                "revision": 9,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {
-                                "revision": 9,
-                                "channel": "edge",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                        ]
-                    }
-                }
-            },
-        }
+        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
 
         with mock.patch(
             "snapcraft.storeapi._status_tracker.StatusTracker"
@@ -370,8 +291,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                "After pushing, an attempt will be made to release to "
-                "'beta', 'candidate', and 'edge'"
+                "After pushing, the resulting snap revision will be released to "
+                "'beta', 'candidate', and 'edge' when it passes the Snap Store review."
             ),
         )
 
@@ -466,7 +387,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["push", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
-        mock_upload.assert_called_once_with("basic", self.snap_file, built_at=None)
+        mock_upload.assert_called_once_with(
+            "basic", self.snap_file, built_at=None, channels=[]
+        )
 
     def test_push_with_delta_upload_failure_falls_back(self):
         # Upload
@@ -509,10 +432,11 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
                     built_at=None,
+                    channels=[],
                 ),
                 mock.call().track(),
                 mock.call().raise_for_code(),
-                mock.call("basic", self.snap_file, built_at=None),
+                mock.call("basic", self.snap_file, built_at=None, channels=[]),
                 mock.call().track(),
                 mock.call().raise_for_code(),
             ]
@@ -569,8 +493,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
                     built_at=None,
+                    channels=[],
                 ),
-                mock.call("basic", self.snap_file, built_at=None),
+                mock.call("basic", self.snap_file, built_at=None, channels=[]),
             ]
         )
 

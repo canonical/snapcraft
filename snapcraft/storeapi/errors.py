@@ -407,6 +407,7 @@ class StoreServerError(StoreError):
         action = "The operational status of the Snap Store can be checked at {}".format(
             _STORE_STATUS_URL
         )
+        self.response = response
 
         super().__init__(
             response=response,

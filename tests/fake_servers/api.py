@@ -1101,6 +1101,29 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             "channel_map_tree": {
                 "latest": {
                     "16": {
+                        "all": [
+                            {"info": "none", "channel": "stable"},
+                            {"info": "none", "channel": "candidate"},
+                            {
+                                "info": "specific",
+                                "version": "1.1-amd64",
+                                "channel": "beta",
+                                "revision": 6,
+                            },
+                            {
+                                "info": "specific",
+                                "version": "1.0-i386",
+                                "channel": "edge",
+                                "revision": 3,
+                            },
+                            {
+                                "info": "branch",
+                                "version": "1.1-i386",
+                                "channel": "edge/test",
+                                "revision": 9,
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
+                        ],
                         "i386": [
                             {"info": "none", "channel": "stable"},
                             {"info": "none", "channel": "candidate"},

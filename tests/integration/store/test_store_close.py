@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import FileExists
+import os
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, FileExists
 
 from tests import integration
 
@@ -41,16 +41,28 @@ class ChannelClosingTestCase(integration.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
 
-        # Build a random snap, register, push and release it.
-        name = self.get_unique_name()
-        version = self.get_unique_version()
+        # Change to a random name and version when not on the fake store.
+        if not self.is_store_fake():
+            name = self.get_unique_name()
+            version = self.get_unique_version()
+        # If not, keep the name that is faked in our fake account.
+        else:
+            name = "basic"
+            version = "1.0"
+
         self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
+
         self.run_snapcraft("snap")
-        snap_path = "{}_{}_{}.snap".format(name, version, "all")
-        self.assertThat(snap_path, FileExists())
+
+        # Register the snap
         self.register(name)
-        self.assertThat(self.push(snap_path, release="edge,beta"), Equals(0))
+
+        # Upload the snap
+        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
+        self.assertThat(os.path.join(snap_file_path), FileExists())
+
+        self.assertThat(self.push(snap_file_path, release="edge,beta"), Equals(0))
 
         expected = "The beta channel is now closed."
         status = self.close(name, "beta", expected=expected)

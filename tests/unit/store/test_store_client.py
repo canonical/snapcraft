@@ -1371,6 +1371,29 @@ class GetSnapStatusTestCase(StoreTestCase):
                                 "expires_at": "2019-05-30T01:17:06.465504",
                             },
                         ],
+                        "all": [
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "channel": "beta",
+                                "info": "specific",
+                                "revision": 6,
+                                "version": "1.1-amd64",
+                            },
+                            {
+                                "channel": "edge",
+                                "info": "specific",
+                                "revision": 3,
+                                "version": "1.0-i386",
+                            },
+                            {
+                                "channel": "edge/test",
+                                "info": "branch",
+                                "revision": 9,
+                                "version": "1.1-i386",
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
+                        ],
                         "amd64": [
                             {
                                 "channel": "stable",
