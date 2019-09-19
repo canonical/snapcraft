@@ -165,7 +165,8 @@ def push(snap_file, release):
     if release:
         channel_list = release.split(",")
         click.echo(
-            "After pushing, an attempt will be made to release to {}"
+            "After pushing, the resulting snap revision will be released to "
+            "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
 

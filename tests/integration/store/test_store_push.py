@@ -65,9 +65,15 @@ class PushTestCase(integration.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
 
-        # Change to a random name and version.
-        name = self.get_unique_name()
-        version = self.get_unique_version()
+        # Change to a random name and version when not on the fake store.
+        if not self.is_store_fake():
+            name = self.get_unique_name()
+            version = self.get_unique_version()
+        # If not, keep the name that is faked in our fake account.
+        else:
+            name = "basic"
+            version = "1.0"
+
         self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
 
@@ -75,14 +81,13 @@ class PushTestCase(integration.StoreTestCase):
 
         # Register the snap
         self.register(name)
+
         # Upload the snap
         snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(["push", snap_file_path, "--release", "edge"])
         expected = r".*Ready to release!.*".format(name)
-        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
-        expected = r".*The \'edge\' channel is now open.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_with_deprecated_upload(self):

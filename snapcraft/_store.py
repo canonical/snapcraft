@@ -26,7 +26,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Dict, Iterable, Optional, TextIO
+from typing import Any, Dict, Iterable, List, Optional, TextIO
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -548,52 +548,70 @@ def push(snap_filename, release_channels=None):
         store.push_precheck(snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
-    arch = "all"
 
-    with contextlib.suppress(KeyError):
-        arch = snap_yaml["architectures"][0]
+    try:
+        deb_arch = snap_yaml["architectures"][0]
+    except KeyError:
+        deb_arch = "all"
 
-    source_snap = snap_cache.get(deb_arch=arch)
+    source_snap = snap_cache.get(deb_arch=deb_arch)
     sha3_384_available = hasattr(hashlib, "sha3_384")
 
+    result: Dict[str, Any] = None
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(snap_name, snap_filename, source_snap, built_at)
+            result = _push_delta(
+                snap_name,
+                snap_filename,
+                source_snap,
+                built_at,
+                channels=release_channels,
+            )
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
                 "Falling back to pushing full snap...".format(str(e))
             )
-            result = _push_snap(snap_name, snap_filename, built_at)
         except storeapi.errors.StorePushError as e:
             store_error = e.error_list[0].get("message")
             logger.warning(
                 "Unable to push delta to store: {}\n"
                 "Falling back to pushing full snap...".format(store_error)
             )
-            result = _push_snap(snap_name, snap_filename, built_at)
-    else:
-        result = _push_snap(snap_name, snap_filename, built_at)
+    if result is None:
+        result = _push_snap(
+            snap_name, snap_filename, built_at, channels=release_channels
+        )
+        print(release_channels)
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
+    if release_channels:
+        status(snap_name, storeapi.constants.DEFAULT_SERIES, deb_arch)
 
     snap_cache.cache(snap_filename=snap_filename)
-    snap_cache.prune(deb_arch=arch, keep_hash=calculate_sha3_384(snap_filename))
-
-    if release_channels:
-        release(snap_name, result["revision"], release_channels)
+    snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
 
 
-def _push_snap(snap_name, snap_filename, built_at):
+def _push_snap(
+    snap_name, snap_filename, built_at, *, channels: Optional[List[str]]
+) -> None:
     store = storeapi.StoreClient()
     with _requires_login():
-        tracker = store.upload(snap_name, snap_filename, built_at=built_at)
+        tracker = store.upload(
+            snap_name, snap_filename, built_at=built_at, channels=channels
+        )
     result = tracker.track()
     tracker.raise_for_code()
     return result
 
 
-def _push_delta(snap_name, snap_filename, source_snap, built_at):
+def _push_delta(
+    snap_name,
+    snap_filename,
+    source_snap,
+    built_at,
+    channels: Optional[List[str]] = None,
+) -> None:
     store = storeapi.StoreClient()
     delta_format = "xdelta3"
     logger.debug("Found cached source snap {}.".format(source_snap))
@@ -624,6 +642,7 @@ def _push_delta(snap_name, snap_filename, source_snap, built_at):
                 target_hash=snap_hashes["target_hash"],
                 delta_hash=snap_hashes["delta_hash"],
                 built_at=built_at,
+                channels=channels,
             )
         result = delta_tracker.track()
         delta_tracker.raise_for_code()

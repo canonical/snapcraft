@@ -17,7 +17,7 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Dict, Iterable, List, TextIO, Union
+from typing import Dict, Iterable, List, Optional, TextIO, Union
 
 import pymacaroons
 import requests
@@ -178,6 +178,7 @@ class StoreClient:
         target_hash=None,
         delta_hash=None,
         built_at=None,
+        channels: Optional[List[str]] = None,
     ):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
@@ -197,6 +198,7 @@ class StoreClient:
             target_hash=target_hash,
             delta_hash=delta_hash,
             built_at=built_at,
+            channels=channels,
         )
 
     def release(self, snap_name, revision, channels):
