@@ -62,7 +62,6 @@ class PartPatcher:
         self._elf_files = elf_files
         self._project = project
         self._is_classic = confinement == "classic"
-        self._is_host_compat_with_base = project.is_host_compatible_with_base(core_base)
         self._core_base = core_base
         self._snap_base_path = snap_base_path
         # If libc6 is staged, to avoid symbol mixups we will resort to
@@ -151,10 +150,14 @@ class PartPatcher:
         :raises errors.SnapcraftEnvironementError:
             if something is horribly wrong.
         """
-        logger.debug(
-            "Host compatible with base: {!r}".format(self._is_host_compat_with_base)
-        )
-        if not self._is_host_compat_with_base:
+        # Just return if this is a static base and libc6 has not been staged.
+        if self._project.is_static_base(self._core_base) and not self._is_libc6_staged:
+            return
+        if not (
+            self._project.is_static_base(self._core_base)
+            or self._project.is_host_compatible_with_base(self._core_base)
+        ):
+            logger.debug("Host is not compatible with base")
             self._verify_compat()
         logger.debug("Is classic: {!r}".format(self._is_classic))
         logger.debug("Is libc6 in stage-packages: {!r}".format(self._is_libc6_staged))

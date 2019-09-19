@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -109,7 +109,7 @@ _HOST_COMPATIBILITY = {
     "xenial": ["trusty", "xenial"],
     "bionic": ["trusty", "xenial", "bionic"],
 }
-
+_STATIC_BASES = ["bare"]
 
 _LINKER_VERSION_FOR_BASE = {"core18": "2.27", "core": "2.23"}
 
@@ -221,6 +221,14 @@ class ProjectOptions:
         logger.debug("Prime dir {}".format(self._prime_dir))
 
         self._set_machine(target_deb_arch)
+
+    def is_static_base(self, base: str) -> bool:
+        """Return True if a base that is intended to be static is used.
+
+        Static bases require all their necessary components to live within
+        the snap.
+        """
+        return base in _STATIC_BASES
 
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.
