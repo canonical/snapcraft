@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,35 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import logging
 import os
 from typing import FrozenSet, List
 from typing import Dict  # noqa: F401
 
-import snapcraft.plugins
 from snapcraft import ProjectOptions
 from snapcraft.internal import elf
 from snapcraft.internal import errors
 
 
 logger = logging.getLogger(__name__)
-
-
-def is_go_based_plugin(plugin):
-    """Returns True if plugin is a go based one.
-
-    :param plugin: the snapcraft plugin to inspect.
-    :returns: True if plugin is one that uses go.
-    :rtype: bool.
-    """
-    # We iterate over the plugins suppressing as they may not be loaded.
-    plugin_exceptions = []
-    with contextlib.suppress(AttributeError):
-        plugin_exceptions.append(snapcraft.plugins.godeps.GodepsPlugin)
-    with contextlib.suppress(AttributeError):
-        plugin_exceptions.append(snapcraft.plugins.go.GoPlugin)
-    return isinstance(plugin, tuple(plugin_exceptions))
 
 
 class PartPatcher:
@@ -52,7 +34,6 @@ class PartPatcher:
         self,
         *,
         elf_files: FrozenSet[elf.ElfFile],
-        plugin,
         project: ProjectOptions,
         confinement: str,  # TODO remove once project has this
         core_base: str,  # TODO remove once project has this
@@ -64,7 +45,6 @@ class PartPatcher:
         """Initialize PartPatcher.
 
         :param elf_files: the list of elf files to analyze.
-        :param plugin: the plugin the part is using.
         :param project: the project instance from the part.
         :param confinement: the confinement value the snapcraft project is
                             using (i.e.; devmode, strict, classic).
@@ -80,7 +60,6 @@ class PartPatcher:
         :param primedir: the general prime directory for the snapcraft project.
         """
         self._elf_files = elf_files
-        self._is_go_based_plugin = is_go_based_plugin(plugin)
         self._project = project
         self._is_classic = confinement == "classic"
         self._is_host_compat_with_base = project.is_host_compatible_with_base(core_base)
@@ -131,8 +110,7 @@ class PartPatcher:
                         elf_file.path
                     )
                 )
-                if not self._is_go_based_plugin:
-                    raise patch_error
+                raise patch_error
 
     def _verify_compat(self) -> None:
         linker_version = self._project._get_linker_version_for_base(self._core_base)
