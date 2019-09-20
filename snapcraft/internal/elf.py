@@ -111,35 +111,23 @@ class Library:
         self,
         *,
         soname: str,
-        path: str,
-        root_path: str,
+        soname_path: str,
+        search_paths: List[str],
         core_base_path: str,
         arch: ElfArchitectureTuple,
         soname_cache: SonameCache
     ) -> None:
+
         self.soname = soname
+        self.soname_path = soname_path
+        self.search_paths = search_paths
+        self.core_base_path = core_base_path
+        self.arch = arch
+        self.soname_cache = soname_cache
 
-        # We need to always look for the soname inside root first,
-        # and after exhausting all options look in core_base_path.
-        if path.startswith(root_path):
-            self.path = path
-        else:
-            self.path = _crawl_for_path(
-                soname=soname,
-                root_path=root_path,
-                core_base_path=core_base_path,
-                arch=arch,
-                soname_cache=soname_cache,
-            )
+        # Resolve path, if possible.
+        self.path = self._crawl_for_path()
 
-        if not self.path and path.startswith(core_base_path):
-            self.path = path
-
-        # Required for libraries on the host and the fetching mechanism
-        if not self.path:
-            self.path = path
-
-        # self.path has the correct resulting path.
         if self.path.startswith(core_base_path):
             self.in_base_snap = True
         else:
@@ -148,44 +136,48 @@ class Library:
         logger.debug(
             "{soname} with original path {original_path} found on {path} in base: {in_base}".format(
                 soname=soname,
-                original_path=path,
+                original_path=soname_path,
                 path=self.path,
                 in_base=self.in_base_snap,
             )
         )
 
+    def _update_soname_cache(self, resolved_path: str) -> None:
+        self.soname_cache[self.arch, self.soname] = resolved_path
 
-def _crawl_for_path(
-    *,
-    soname: str,
-    root_path: str,
-    core_base_path: str,
-    arch: ElfArchitectureTuple,
-    soname_cache: SonameCache
-) -> str:
-    # Speed things up and return what was already found once.
-    if (arch, soname) in soname_cache:
-        return soname_cache[arch, soname]
+    def _is_valid_elf(self, resolved_path: str) -> bool:
+        return (
+            os.path.exists(resolved_path)
+            and ElfFile.is_elf(resolved_path)
+            and ElfFile(path=resolved_path).arch == self.arch
+        )
 
-    logger.debug("Crawling to find soname {!r}".format(soname))
-    for path in (root_path, core_base_path):
-        if not os.path.exists(path):
-            continue
-        for root, directories, files in os.walk(path):
-            for file_name in files:
-                if file_name == soname:
-                    file_path = os.path.join(root, file_name)
-                    if ElfFile.is_elf(file_path):
-                        # We found a match by name, anyway. Let's verify that
-                        # the architecture is the one we want.
-                        elf_file = ElfFile(path=file_path)
-                        if elf_file.arch == arch:
-                            soname_cache[arch, soname] = file_path
-                            return file_path
+    def _crawl_for_path(self) -> str:
+        # Speed things up and return what was already found once.
+        if (self.arch, self.soname) in self.soname_cache:
+            return self.soname_cache[self.arch, self.soname]
 
-    # If not found we cache it too
-    soname_cache[arch, soname] = None
-    return None
+        logger.debug("Crawling to find soname {!r}".format(self.soname))
+
+        if self._is_valid_elf(self.soname_path):
+            self._update_soname_cache(self.soname_path)
+            return self.soname_path
+
+        for path in self.search_paths:
+            if not os.path.exists(path):
+                continue
+            for root, directories, files in os.walk(path):
+                if self.soname not in files:
+                    continue
+
+                file_path = os.path.join(root, self.soname)
+                if self._is_valid_elf(file_path):
+                    self._update_soname_cache(file_path)
+                    return file_path
+
+        # Required for libraries on the host and the fetching mechanism.
+        self._update_soname_cache(self.soname_path)
+        return self.soname_path
 
 
 # Old versions of pyelftools return bytes rather than strings for
@@ -323,7 +315,12 @@ class ElfFile:
         return version_required
 
     def load_dependencies(
-        self, root_path: str, core_base_path: str, soname_cache: SonameCache = None
+        self,
+        root_path: str,
+        core_base_path: str,
+        content_dirs: Set[str],
+        arch_triplet: str,
+        soname_cache: SonameCache = None,
     ) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
@@ -343,11 +340,26 @@ class ElfFile:
 
         logger.debug("Getting dependencies for {!r}".format(self.path))
         ldd_out = []  # type: List[str]
+
+        search_paths = [root_path, *content_dirs, core_base_path]
+
+        ld_library_paths: List[str] = list()
+        for path in search_paths:
+            ld_library_paths.extend(common.get_library_paths(path, arch_triplet))
+
+        # Set environment for ldd with LD_LIBRARY_PATH.
+        env = os.environ.copy()
+        env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
+
         try:
             # ldd output sample:
             # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
             # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-            ldd_out = common.run_output(["ldd", self.path]).split("\n")
+            ldd_out = (
+                subprocess.check_output(["ldd", self.path], env=env)
+                .decode()
+                .split("\n")
+            )
         except subprocess.CalledProcessError:
             logger.warning(
                 "Unable to determine library dependencies for {!r}".format(self.path)
@@ -360,8 +372,8 @@ class ElfFile:
                 libs.add(
                     Library(
                         soname=ldd_line[0],
-                        path=ldd_line[2],
-                        root_path=root_path,
+                        soname_path=ldd_line[2],
+                        search_paths=search_paths,
                         core_base_path=core_base_path,
                         arch=self.arch,
                         soname_cache=soname_cache,

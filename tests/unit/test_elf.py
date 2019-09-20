@@ -22,6 +22,7 @@ import sys
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
 from unittest import mock
 
+from snapcraft import ProjectOptions
 from snapcraft.internal import errors, elf
 from tests import unit, fixture_setup
 
@@ -32,6 +33,8 @@ class TestElfBase(unit.TestCase):
 
         self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
         self.useFixture(self.fake_elf)
+        self.content_dirs = []
+        self.arch_triplet = ProjectOptions().arch_triplet
 
 
 class TestLdLibraryPathParser(unit.TestCase):
@@ -123,6 +126,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
         )
 
         self.assertThat(
@@ -142,6 +147,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
             soname_cache=soname_cache,
         )
 
@@ -156,6 +163,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
         )
 
         self.assertThat(
@@ -177,6 +186,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
         )
 
         self.assertThat(libs, Equals(frozenset(["/lib/foo.so.1", "/usr/lib/bar.so.2"])))
@@ -186,6 +197,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
         )
 
         self.assertThat(
@@ -200,6 +213,8 @@ class TestGetLibraries(TestElfBase):
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
             core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
         )
 
         self.assertThat(libs, Equals(set()))

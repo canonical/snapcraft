@@ -104,6 +104,8 @@ class CrystalPlugin(snapcraft.BasePlugin):
             elf_dependencies_path = elf_file.load_dependencies(
                 root_path=self.installdir,
                 core_base_path=common.get_core_path(self.project.info.get_build_base()),
+                arch_triplet=self.project.arch_triplet,
+                content_dirs=self.project._get_provider_content_dirs(),
             )
             for elf_dependency_path in elf_dependencies_path:
                 lib_install_path = os.path.join(
