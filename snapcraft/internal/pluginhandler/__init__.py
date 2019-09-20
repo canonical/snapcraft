@@ -817,16 +817,24 @@ class PluginHandler:
 
         # Clear the cache of all libs that aren't already in the primedir
         self._soname_cache.reset_except_root(self.primedir)
+
+        # Determine content directories.
+        content_dirs = self._project_options._get_provider_content_dirs()
+
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(
                     root_path=self.primedir,
                     core_base_path=core_path,
+                    content_dirs=content_dirs,
+                    arch_triplet=self._project_options.arch_triplet,
                     soname_cache=self._soname_cache,
                 )
             )
 
-        dependency_paths = self._handle_dependencies(all_dependencies)
+        dependency_paths = self._handle_dependencies(
+            all_dependencies=all_dependencies, content_dirs=content_dirs
+        )
 
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
@@ -895,12 +903,14 @@ class PluginHandler:
         # part.
         _clean_migrated_files(primed_files, primed_directories, shared_directory)
 
-    def _handle_dependencies(self, all_dependencies: Set[str]):
+    def _handle_dependencies(
+        self, *, all_dependencies: Set[str], content_dirs: Set[str]
+    ):
         # Split the necessary dependencies into their corresponding location.
         # We'll only track the part and staged dependencies, since they should have
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
-        dirs = [self.plugin.installdir, self.stagedir, self.primedir]
+        dirs = [self.plugin.installdir, self.stagedir, self.primedir, *content_dirs]
 
         dependencies = _split_dependencies(all_dependencies, dirs)
         dependency_paths: Set[str] = set()
