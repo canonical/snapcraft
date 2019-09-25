@@ -148,6 +148,18 @@ class AppCommandTest(unit.TestCase):
             Equals(yaml_utils.OctInt),
         )
 
+    def test_no_command_chain_prepended(self):
+        app = application.Application(
+            app_name="foo",
+            app_properties={"command": "test-command"},
+            base="core18",
+            prime_dir=self.path,
+        )
+
+        self.assertThat(
+            app.get_yaml(prepend_command_chain=[]), Equals({"command": "test-command"})
+        )
+
 
 class WrapperUseTest(unit.TestCase):
     scenarios = (

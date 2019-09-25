@@ -139,9 +139,12 @@ class Application:
         for command_entry, command in self._commands.items():
             self._app_properties[command_entry] = command.get_command()
 
-        self._app_properties[
-            "command-chain"
-        ] = prepend_command_chain + self._app_properties.get("command-chain", list())
+        if "command-chain" in self._app_properties or prepend_command_chain:
+            self._app_properties[
+                "command-chain"
+            ] = prepend_command_chain + self._app_properties.get(
+                "command-chain", list()
+            )
 
         self._fix_sockets()
 
