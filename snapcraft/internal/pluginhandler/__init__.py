@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import cast, Dict, List, Set, Sequence
+from typing import cast, Dict, List, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
@@ -40,6 +40,9 @@ from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._outdated_report import OutdatedReport
 
+if TYPE_CHECKING:
+    from snapcraft.project import Project
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +56,7 @@ class PluginHandler:
         *,
         plugin,
         part_properties,
-        project_options,
+        project_options: "Project",
         part_schema,
         definitions_schema,
         stage_packages_repo,
@@ -63,11 +66,11 @@ class PluginHandler:
         confinement,
         snap_type,
         soname_cache
-    ):
+    ) -> None:
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(part_properties, part_schema)
-        self.stage_packages = []
+        self.stage_packages: List[str] = list()
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
@@ -85,7 +88,7 @@ class PluginHandler:
         self._prime_state = None  # type: states.PrimeState
 
         self._project_options = project_options
-        self.deps = []
+        self.deps: List[str] = list()
 
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
@@ -106,9 +109,9 @@ class PluginHandler:
         )
 
         # Scriptlet data is a dict of dicts for each step
-        self._scriptlet_metadata = collections.defaultdict(
-            snapcraft.extractors.ExtractedMetadata
-        )
+        self._scriptlet_metadata: Dict[
+            steps.Step, snapcraft.extractors.ExtractedMetadata
+        ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
             sourcedir=self.plugin.sourcedir,
