@@ -122,6 +122,23 @@ class CMakeTest(CMakeBaseTest):
             ]
         )
 
+    def test_build_disable_parallel(self):
+        self.options.disable_parallel = True
+
+        plugin = cmake.CMakePlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.builddir)
+        plugin.build()
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["cmake", "--build", ".", "--", "-j1"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                )
+            ]
+        )
+
     def test_build_environment(self):
         plugin = cmake.CMakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.builddir)
