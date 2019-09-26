@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -119,25 +119,8 @@ class CreateKeyTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         mock_check_call.assert_called_once_with(["snap", "create-key", "new-key"])
 
-    @mock.patch("subprocess.check_call")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_create_key_without_login(
-        self,
-        mock_installed,
-        mock_check_output,
-        mock_get_account_information,
-        mock_check_call,
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-        mock_get_account_information.side_effect = storeapi.errors.InvalidCredentialsError(
-            "Test"
-        )
-
+    def test_create_key_without_login_must_ask(self):
         result = self.run_command(["create-key", "new-key"])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        mock_check_call.assert_called_once_with(["snap", "create-key", "new-key"])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )

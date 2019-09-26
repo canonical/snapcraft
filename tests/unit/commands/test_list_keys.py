@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -43,19 +43,11 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
         mock_installed.assert_called_with("snapd")
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_list_keys_without_login(self, mock_installed, mock_check_output):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            [self.command_name],
+    def test_command_without_login_must_ask(self):
+        result = self.run_command([self.command_name])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")

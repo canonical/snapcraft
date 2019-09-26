@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,15 +23,6 @@ from tests import integration
 
 
 class StatusTestCase(integration.StoreTestCase):
-    def test_status_without_login(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ["status", "test-snap"]
-        )
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft ' 'login"?',
-            str(error.output),
-        )
-
     def test_status_with_login_wrong_snap(self):
         self.addCleanup(self.logout)
         self.login()

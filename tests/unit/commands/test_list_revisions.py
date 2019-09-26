@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 from textwrap import dedent
 from unittest import mock
@@ -63,14 +64,11 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_revisions_with_no_permissions(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            [self.command_name, "snap-test"],
+    def test_revisions_without_login_must_ask(self):
+        result = self.run_command([self.command_name, "snap-test"])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     @mock.patch.object(storeapi.StoreClient, "get_account_information")
     def test_revisions_with_3rd_party_snap(self, mock_account_api):

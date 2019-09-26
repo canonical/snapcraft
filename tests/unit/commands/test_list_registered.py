@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,30 +13,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import StoreCommandsBaseTestCase
+from . import CommandBaseTestCase
 
 
-class ListRegisteredTestCase(StoreCommandsBaseTestCase):
+class ListRegisteredTestCase(CommandBaseTestCase):
 
     scenarios = [
         ("list-registered", {"command_name": "list-registered"}),
         ("registered alias", {"command_name": "registered"}),
     ]
 
-    def test_list_registered_without_login(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            [self.command_name],
+    def test_command_without_login_must_ask(self):
+        result = self.run_command([self.command_name])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     def test_list_registered_empty(self, mock_get_account_information):
