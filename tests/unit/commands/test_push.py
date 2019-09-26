@@ -110,14 +110,11 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             "basic", snap_file, built_at="2019-05-07T19:25:53.939041Z", channels=[]
         )
 
-    def test_push_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["push", self.snap_file],
+    def test_push_without_login_must_ask(self):
+        result = self.run_command(["push", self.snap_file])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     def test_push_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push", "test-unexisting-snap"])
@@ -427,12 +424,12 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                 mock.call(
                     "basic",
                     mock.ANY,
+                    built_at=None,
+                    channels=[],
                     delta_format="xdelta3",
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
-                    built_at=None,
-                    channels=[],
                 ),
                 mock.call().track(),
                 mock.call().raise_for_code(),
@@ -488,12 +485,12 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                 mock.call(
                     "basic",
                     mock.ANY,
+                    built_at=None,
+                    channels=[],
                     delta_format="xdelta3",
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
-                    built_at=None,
-                    channels=[],
                 ),
                 mock.call("basic", self.snap_file, built_at=None, channels=[]),
             ]

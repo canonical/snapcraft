@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2018 Canonical Ltd
+# Copyright 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 import fixtures
 from testtools.matchers import Contains, FileExists
@@ -36,19 +35,6 @@ class PushMetadataTestCase(integration.StoreTestCase):
         snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(os.path.join(snap_file_path), FileExists())
         return name, snap_file_path
-
-    def test_without_login(self):
-        _, snap_file_path = self._build_snap()
-
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft,
-            ["push-metadata", snap_file_path],
-        )
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft ' 'login"?',
-            str(error.output),
-        )
 
     def test_with_login(self):
         self.addCleanup(self.logout)

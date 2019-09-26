@@ -29,14 +29,11 @@ class RegisterTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_register_without_login_must_error(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["register", "snap-test"],
-            input="y\n",
+    def test_register_without_login_must_ask(self):
+        result = self.run_command(["register", "snap-name"], input="y\n")
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     def test_register_name_successfully(self):
         with mock.patch.object(

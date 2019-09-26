@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -265,11 +265,8 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
             ),
         )
 
-    def test_release_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["release", "nil-snap", "19", "beta"],
+    def test_release_without_login_must_ask(self):
+        result = self.run_command(["release", "nil-snap", "19", "beta"])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))

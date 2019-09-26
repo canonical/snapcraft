@@ -108,14 +108,11 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("The metadata has been pushed"))
         self.assert_expected_metadata_calls(force=False)
 
-    def test_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["push-metadata", self.snap_file],
+    def test_push_metadata_without_login_must_ask(self):
+        result = self.run_command(["push-metadata", self.snap_file])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     def test_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push-metadata", "test-unexisting-snap"])

@@ -104,11 +104,8 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Contains("format must be name=revision"))
 
-    def test_no_login(self):
-        raised = self.assertRaises(
-            snapcraft.storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["validate", "core", "core=3", "test-snap=4"],
+    def test_validate_without_login_must_ask(self):
+        result = self.run_command(["validate", "core", "core=3", "test-snap=4"])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))

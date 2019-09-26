@@ -16,7 +16,6 @@
 
 import os
 import re
-import subprocess
 
 from testtools.matchers import FileExists, MatchesRegex
 
@@ -27,24 +26,6 @@ from tests import integration, skip
 
 
 class PromoteTestCase(integration.StoreTestCase):
-    def test_promote_without_login(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft,
-            [
-                "promote",
-                "test-snap",
-                "--from-channel",
-                "beta",
-                "--to-channel",
-                "candidate",
-            ],
-        )
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft ' 'login"?',
-            str(error.output),
-        )
-
     @skip.skip_unless_codename("xenial", "test designed for xenial")
     def test_promote_with_login(self):
         self.addCleanup(self.logout)

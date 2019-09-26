@@ -59,14 +59,11 @@ class StatusCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_status_with_no_permissions(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["status", "snap-test"],
+    def test_status_without_login_must_ask(self):
+        result = self.run_command(["status", "snap-test"])
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     @mock.patch.object(storeapi.StoreClient, "get_account_information")
     def test_status_with_3rd_party_snap(self, mock_account_api):
