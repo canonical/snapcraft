@@ -492,7 +492,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             ),
         )
 
-    @mock.patch("multiprocessing.cpu_count", return_value=42)
+    @mock.patch("os.sched_getaffinity", return_value=set(range(0, 42)))
     def test_parts_build_env_contains_parallel_build_count(self, cpu_mock):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
         part1 = [

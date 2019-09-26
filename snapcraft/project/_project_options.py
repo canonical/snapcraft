@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import multiprocessing
 import os
 import platform
 import sys
@@ -133,13 +132,7 @@ def _get_platform_architecture():
 class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
-        build_count = 1
-        try:
-            build_count = multiprocessing.cpu_count()
-        except NotImplementedError:
-            logger.warning("Unable to determine CPU count; disabling parallel builds")
-
-        return build_count
+        return len(os.sched_getaffinity(0))
 
     @property
     def is_cross_compiling(self):
