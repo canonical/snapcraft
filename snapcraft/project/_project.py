@@ -66,6 +66,14 @@ class Project(ProjectOptions):
         # would only need to initialize it once (properly).
         self._snap_meta = Snap()
 
+    def _get_content_snaps(self) -> Set[str]:
+        """Return the set of content snaps from snap_meta."""
+        return set([x.provider for x in self._snap_meta.get_content_plugs()])
+
+    def _get_provider_content_dirs(self) -> Set[str]:
+        """Return the set installed provider content directories."""
+        return self._snap_meta.get_provider_content_directories()
+
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir
         if not self.info:
