@@ -118,13 +118,7 @@ class CMakePlugin(snapcraft.BasePlugin):
         # TODO: there is a better way to specify the job count on newer versions of cmake
         # https://github.com/Kitware/CMake/commit/1ab3881ec9e809ac5f6cad5cd84048310b8683e2
         self.run(
-            [
-                "cmake",
-                "--build",
-                ".",
-                "--",
-                "-j{}".format(self.project.parallel_build_count),
-            ],
+            ["cmake", "--build", ".", "--", "-j{}".format(self.parallel_build_count)],
             env=env,
         )
 
