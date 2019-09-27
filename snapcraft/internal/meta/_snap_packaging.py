@@ -366,13 +366,8 @@ class _SnapPackaging:
         self._snap_meta.validate()
         _check_passthrough_duplicates(self._original_snapcraft_yaml)
 
-        common.env = self._project_config.snap_env()
-
-        try:
-            package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
-            snap_yaml = self._snap_meta.write_snap_yaml(path=package_snap_path)
-        finally:
-            common.reset_env()
+        package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
+        self._snap_meta.write_snap_yaml(path=package_snap_path)
 
     def setup_assets(self) -> None:
         # We do _setup_from_setup first since it is legacy and let the
@@ -426,6 +421,8 @@ class _SnapPackaging:
             meta_runner = os.path.join(
                 self._prime_dir, "snap", "command-chain", "snapcraft-runner"
             )
+
+            common.env = self._project_config.snap_env()
             assembled_env = common.assemble_env()
             assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
             assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
@@ -441,6 +438,8 @@ class _SnapPackaging:
                     )
                     print('exec "$@"', file=f)
                 os.chmod(meta_runner, 0o755)
+
+            common.reset_env()
             command_chain.append(os.path.relpath(meta_runner, self._prime_dir))
 
         return command_chain
