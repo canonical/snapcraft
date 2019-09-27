@@ -693,6 +693,13 @@ class FakeBaseEnvironment(fixtures.Fixture):
         mock_core_path.return_value = self.core_path
         self.addCleanup(patcher.stop)
 
+        self.content_dirs = set([])
+        mock_content_dirs = fixtures.MockPatch(
+            "snapcraft.project._project.Project._get_provider_content_dirs",
+            return_value=self.content_dirs,
+        )
+        self.useFixture(mock_content_dirs)
+
         # Create file to represent the linker so it is found
         linker_path = os.path.join(self.core_path, self._LINKER_FOR_ARCH[self._machine])
         os.makedirs(os.path.dirname(linker_path), exist_ok=True)
