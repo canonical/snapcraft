@@ -415,6 +415,7 @@ class _SnapPackaging:
         if (
             self._config_data["confinement"] == "classic"
             or not self._is_host_compatible_with_base
+            or not self._snap_meta.apps
         ):
             assembled_env = None
         else:
