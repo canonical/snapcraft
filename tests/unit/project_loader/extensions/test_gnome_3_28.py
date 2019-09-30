@@ -70,7 +70,13 @@ class ExtensionTest(ProjectLoaderBaseTest):
             Equals(
                 {
                     "command-chain": ["snap/command-chain/desktop-launch"],
-                    "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
+                    "plugs": [
+                        "desktop",
+                        "desktop-legacy",
+                        "gsettings",
+                        "wayland",
+                        "x11",
+                    ],
                 }
             ),
         )
