@@ -26,6 +26,7 @@ from snapcraft.storeapi import errors as store_errors
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from tests import unit
+from typing import List
 
 
 def _fake_error_response(status_code):
@@ -808,3 +809,77 @@ class ErrorFormattingTestCase(unit.TestCase):
         self.assertThat(
             str(self.exception(**self.kwargs)), Equals(self.expected_message)
         )
+
+
+class StrangeExceptionSimple(errors.SnapcraftException):
+    def get_brief(self):
+        return "something's strange, in the neighborhood"
+
+    def get_resolution(self):
+        return "who you gonna call? ghostbusters!!"
+
+    def get_details(self):
+        return "i ain't afraid of no ghosts"
+
+    def get_docs_url(self):
+        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+
+class StrangeExceptionWithFormatting(errors.SnapcraftException):
+    def __init__(self, neighborhood: str, contact: str, ghosts: List[str]):
+        self._neighborhood = neighborhood
+        self._contact = contact
+        self._ghosts = ghosts
+
+    def get_brief(self):
+        return "something's strange, in the neighborhood of {}".format(
+            self._neighborhood
+        )
+
+    def get_resolution(self):
+        return "who you gonna call? {}!!".format(self._contact)
+
+    def get_details(self):
+        return "i ain't afraid of no ghosts: {}".format(self._ghosts)
+
+    def get_docs_url(self):
+        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+
+class SnapcraftExceptionTests(unit.TestCase):
+
+    scenarios = (
+        (
+            "StrangeExceptionSimple",
+            {
+                "exception": StrangeExceptionSimple,
+                "kwargs": {},
+                "expected_brief": "something's strange, in the neighborhood",
+                "expected_resolution": "who you gonna call? ghostbusters!!",
+                "expected_details": "i ain't afraid of no ghosts",
+                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+            },
+        ),
+        (
+            "StrangeExceptionWithFormatting",
+            {
+                "exception": StrangeExceptionWithFormatting,
+                "kwargs": {
+                    "neighborhood": "Times Square",
+                    "ghosts": ["slimer", "puft", "vigo"],
+                    "contact": "Janine Melnitz",
+                },
+                "expected_brief": "something's strange, in the neighborhood of Times Square",
+                "expected_resolution": "who you gonna call? Janine Melnitz!!",
+                "expected_details": "i ain't afraid of no ghosts: ['slimer', 'puft', 'vigo']",
+                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+            },
+        ),
+    )
+
+    def test_snapcraft_exception_handling(self):
+        exception = self.exception(**self.kwargs)
+        self.assertEquals(self.expected_brief, exception.get_brief())
+        self.assertEquals(self.expected_resolution, exception.get_resolution())
+        self.assertEquals(self.expected_details, exception.get_details())
+        self.assertEquals(self.expected_docs_url, exception.get_docs_url())

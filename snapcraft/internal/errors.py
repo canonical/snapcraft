@@ -13,19 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from subprocess import CalledProcessError
-from typing import Dict, List, Union
 
+from abc import ABC, abstractmethod
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
+from subprocess import CalledProcessError
+from typing import Dict, List, Union, Optional
 
 
 class SnapcraftError(Exception):
-    """Base class for all snapcraft exceptions.
-
-    :cvar fmt: A format string that daughter classes override
-
-    """
+    """DEPRECATED: Use SnapcraftException instead."""
 
     fmt = "Daughter classes should redefine this"
 
@@ -42,15 +39,38 @@ class SnapcraftError(Exception):
 
 
 class SnapcraftReportableError(SnapcraftError):
-    """Base class for all snapcraft exceptions that integrate with Sentry.
+    """DEPRECATED: Use SnapcraftException instead with reportable=True."""
 
-    An exception class inheriting from this will get a prompt to report
-    to sentry if raised and is handled by the exception handler on program
-    exit.
 
-    :cvar fmt: A format string that daughter classes override
+class SnapcraftException(Exception, ABC):
+    """Base class for Snapcraft Exceptions."""
 
-    """
+    @abstractmethod
+    def get_brief(self) -> str:
+        """Concise, single-line description of the error."""
+
+    @abstractmethod
+    def get_resolution(self) -> str:
+        """Concise suggestion for user to resolve error."""
+
+    def get_details(self) -> Optional[str]:
+        """Detailed technical information, if required for user to debug issue."""
+        return None
+
+    def get_docs_url(self) -> Optional[str]:
+        """Link to documentation on docs.snapcraft.io, if applicable."""
+        return None
+
+    def get_exit_code(self) -> int:
+        """Exit code to use when exiting snapcraft due to this exception."""
+        return 2
+
+    def get_reportable(self) -> bool:
+        """Defines if error is reportable (an exception trace should be shown)."""
+        return False
+
+    def __str__(self) -> str:
+        return self.get_brief()
 
 
 class MissingStateCleanError(SnapcraftError):
