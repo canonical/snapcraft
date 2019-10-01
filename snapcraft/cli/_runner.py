@@ -92,6 +92,10 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
+
+    # Payload information about argv
+    ctx.obj = dict(argv=sys.argv)
+
     # The default command
     if not ctx.invoked_subcommand:
         snap_command = lifecyclecli.commands["snap"]
