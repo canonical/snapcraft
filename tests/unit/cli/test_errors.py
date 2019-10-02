@@ -30,7 +30,12 @@ from testscenarios import multiply_scenarios
 import snapcraft.cli.echo
 import snapcraft.internal.errors
 from snapcraft.internal.build_providers.errors import ProviderExecError
-from snapcraft.cli._errors import exception_handler
+from snapcraft.cli._errors import (
+    exception_handler,
+    _get_exception_exit_code,
+    _is_reportable_error,
+    _print_exception_message,
+)
 from tests import fixture_setup, unit
 
 
@@ -43,6 +48,130 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
 
     def get_exit_code(self):
         return 123
+
+
+class TestSnapcraftException(snapcraft.internal.errors.SnapcraftException):
+    def __init__(self):
+        self._brief = ""
+        self._resolution = ""
+        self._details = super().get_details()
+        self._docs_url = super().get_docs_url()
+        self._reportable = super().get_reportable()
+        self._exit_code = super().get_exit_code()
+
+    def get_brief(self):
+        return self._brief
+
+    def get_resolution(self):
+        return self._resolution
+
+    def get_details(self):
+        return self._details
+
+    def get_docs_url(self):
+        return self._docs_url
+
+    def get_exit_code(self):
+        return self._exit_code
+
+    def get_reportable(self):
+        return self._reportable
+
+
+class TestSnapcraftExceptionHandling(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch("snapcraft.cli._errors.echo.error")
+        self.error_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_snapcraft_exception_format_all(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exception._resolution = "who you gonna call? ghostbusters!!"
+        exception._details = "i ain't afraid of no ghosts"
+        exception._docs_url = "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+        _print_exception_message(exception)
+        self.error_mock.assert_called_once_with(
+            """something's strange, in the neighborhood
+
+Recommended resolution:
+who you gonna call? ghostbusters!!
+
+Detailed information:
+i ain't afraid of no ghosts
+
+For more information, check out:
+https://docs.snapcraft.io/the-snapcraft-format/8337"""
+        )
+
+    def test_snapcraft_exception_minimal(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exception._resolution = ""
+        _print_exception_message(exception)
+        self.error_mock.assert_called_once_with(
+            """something's strange, in the neighborhood"""
+        )
+
+    def test_snapcraft_exception_minimal_with_resolution(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exception._resolution = "who you gonna call? ghostbusters!!"
+        _print_exception_message(exception)
+        self.error_mock.assert_called_once_with(
+            """something's strange, in the neighborhood
+
+Recommended resolution:
+who you gonna call? ghostbusters!!"""
+        )
+
+    def test_snapcraft_exception_minimal_with_resolution_and_url(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exception._resolution = "who you gonna call? ghostbusters!!"
+        exception._docs_url = "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+        _print_exception_message(exception)
+        self.error_mock.assert_called_once_with(
+            """something's strange, in the neighborhood
+
+Recommended resolution:
+who you gonna call? ghostbusters!!
+
+For more information, check out:
+https://docs.snapcraft.io/the-snapcraft-format/8337"""
+        )
+
+    def test_snapcraft_exception_reportable(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exc_info = (snapcraft.internal.errors.SnapcraftException, exception, None)
+
+        # Test default (is false).
+        self.assertFalse(_is_reportable_error(exc_info))
+
+        # Test false.
+        exception._reportable = False
+        self.assertFalse(_is_reportable_error(exc_info))
+
+        # Test true.
+        exception._reportable = True
+        self.assertTrue(_is_reportable_error(exc_info))
+
+    def test_snapcraft_exception_exit_code(self):
+        exception = TestSnapcraftException()
+        exception._brief = "something's strange, in the neighborhood"
+        exception._resolution = "who you gonna call? ghostbusters!!"
+
+        # Test default.
+        self.assertEquals(2, _get_exception_exit_code(exception))
+
+        # Test override.
+        exception._exit_code = 50
+        self.assertEquals(50, _get_exception_exit_code(exception))
 
 
 class ErrorsBaseTestCase(unit.TestCase):
