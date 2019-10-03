@@ -68,7 +68,7 @@ class ProviderImpl(Provider):
         """Fake provider check."""
 
     @classmethod
-    def setup_provider(cls) -> None:
+    def setup_provider(cls, *, echoer=None) -> None:
         """Fake provider setup."""
 
     @classmethod
