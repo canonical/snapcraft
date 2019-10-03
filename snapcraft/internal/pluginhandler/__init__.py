@@ -813,7 +813,7 @@ class PluginHandler:
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
-        core_path = common.get_core_path(self._base)
+        core_path = common.get_installed_snap_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
         self._soname_cache.reset_except_root(self.primedir)

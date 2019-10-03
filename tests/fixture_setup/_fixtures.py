@@ -688,7 +688,7 @@ class FakeBaseEnvironment(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         self.core_path = self.useFixture(fixtures.TempDir()).path
-        patcher = mock.patch("snapcraft.internal.common.get_core_path")
+        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
         mock_core_path = patcher.start()
         mock_core_path.return_value = self.core_path
         self.addCleanup(patcher.stop)
