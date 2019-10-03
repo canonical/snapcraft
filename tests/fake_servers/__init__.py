@@ -27,7 +27,7 @@ import pymacaroons
 try:
     from snapcraft import yaml_utils
 except ImportError:
-    import yaml as yaml_utils
+    import yaml as yaml_utils  # type: ignore
 
 logger = logging.getLogger(__name__)
 

@@ -533,12 +533,12 @@ class FakeAptCachePackage:
             return "{}={}".format(self.name, self.version)
 
     @property
-    def version(self):
-        return self._version
-
-    @property
     def is_auto_removable(self):
         return self.marked_install and self.is_auto_installed
+
+    @property
+    def version(self):
+        return self._version
 
     @version.setter
     def version(self, version):

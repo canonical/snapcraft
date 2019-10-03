@@ -39,7 +39,7 @@ from tests.subprocess_utils import call, call_with_output
 try:
     from snapcraft import yaml_utils
 except ImportError:
-    import yaml as yaml_utils
+    import yaml as yaml_utils  # type: ignore
 
 
 class TempCWD(fixtures.Fixture):
