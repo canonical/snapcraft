@@ -31,6 +31,7 @@ import tests
 from . import CommandBaseTestCase
 
 
+# TODO migrate to FakeStoreCommandsBaseTestCase
 class PushCommandBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
@@ -111,7 +112,52 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_without_login_must_ask(self):
-        result = self.run_command(["push", self.snap_file])
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
+
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        mock_tracker.track.return_value = {
+            "code": "ready_to_release",
+            "processed": True,
+            "can_release": True,
+            "url": "/fake/url",
+            "revision": 9,
+        }
+        self.fake_store_upload = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "upload",
+            side_effect=[
+                storeapi.errors.InvalidCredentialsError("error"),
+                mock_tracker,
+            ],
+        )
+        self.useFixture(self.fake_store_upload)
+
+        result = self.run_command(
+            ["push", self.snap_file], input="\n\n\n\nuser@example.com\nsecret\n"
+        )
+
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )

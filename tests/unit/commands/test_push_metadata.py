@@ -109,7 +109,40 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assert_expected_metadata_calls(force=False)
 
     def test_push_metadata_without_login_must_ask(self):
-        result = self.run_command(["push-metadata", self.snap_file])
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
+
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        self.fake_store_push_metadata = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "push_metadata",
+            side_effect=[storeapi.errors.InvalidCredentialsError("error"), None],
+        )
+        self.useFixture(self.fake_store_push_metadata)
+
+        result = self.run_command(
+            ["push-metadata", self.snap_file], input="user@example.com\nsecret\n"
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )

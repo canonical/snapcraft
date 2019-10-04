@@ -105,7 +105,10 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(str(raised), Contains("format must be name=revision"))
 
     def test_validate_without_login_must_ask(self):
-        result = self.run_command(["validate", "core", "core=3", "test-snap=4"])
+        result = self.run_command(
+            ["validate", "core", "core=3", "test-snap=4"],
+            input="dummy\ntest correct password\n",
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
