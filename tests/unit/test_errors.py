@@ -826,7 +826,7 @@ class StrangeExceptionSimple(errors.SnapcraftException):
 
 
 class StrangeExceptionWithFormatting(errors.SnapcraftException):
-    def __init__(self, neighborhood: str, contact: str, ghosts: List[str]):
+    def __init__(self, neighborhood: str, contact: str, ghosts: List[str]) -> None:
         self._neighborhood = neighborhood
         self._contact = contact
         self._ghosts = ghosts
