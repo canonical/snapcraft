@@ -101,7 +101,7 @@ class CrystalPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = []
+        expected_build_properties = ["crystal-buildflags"]
         resulting_build_properties = crystal.CrystalPlugin.get_build_properties()
 
         self.assertThat(
@@ -126,6 +126,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
+            crystal_buildflags = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -137,6 +138,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
+            crystal_buildflags = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -165,10 +167,46 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         for b in binaries:
             self.assertThat(os.path.join(plugin.installdir, "bin", b), FileExists())
 
+    def test_build_flags(self):
+        class Options:
+            source = "dir"
+            crystal_channel = "latest/stable"
+            crystal_buildflags = ["-Dpreview_mt"]
+
+        plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
+
+        # fake binaries being built
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.ElfFile", side_effect=MockElfFile
+            )
+        )
+        binaries = ["foo", "bar"]
+        bin_dir = os.path.join(plugin.builddir, "bin")
+        os.makedirs(bin_dir)
+        for b in binaries:
+            open(os.path.join(bin_dir, b), "w").close()
+
+        plugin.build()
+
+        self.fake_run.mock.assert_has_calls(
+            [
+                mock.call(["shards", "install", "--production"], cwd=plugin.builddir),
+                mock.call(
+                    ["shards", "build", "--production", "-Dpreview_mt"],
+                    cwd=plugin.builddir,
+                ),
+            ]
+        )
+        self.assertThat(self.fake_run.mock.call_count, Equals(2))
+        for b in binaries:
+            self.assertThat(os.path.join(plugin.installdir, "bin", b), FileExists())
+
     def test_build_no_targets(self):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
+            crystal_buildflags = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -193,6 +231,7 @@ class CrystalPluginUnsupportedBase(unit.TestCase):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
+            crystal_buildflags = []
 
         self.options = Options()
 
