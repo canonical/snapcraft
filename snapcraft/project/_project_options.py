@@ -215,6 +215,20 @@ class ProjectOptions:
 
         self._set_machine(target_deb_arch)
 
+    def _get_content_snaps(self) -> Set[str]:
+        """Temporary shim for unit tests using ProjectOptions
+        where Project is really required.  Will be removed in
+        future convergence work.
+        """
+        return set()
+
+    def _get_provider_content_dirs(self) -> Set[str]:
+        """Temporary shim for unit tests using ProjectOptions
+        where Project is really required.  Will be removed in
+        future convergence work.
+        """
+        return set()
+
     def is_static_base(self, base: str) -> bool:
         """Return True if a base that is intended to be static is used.
 
