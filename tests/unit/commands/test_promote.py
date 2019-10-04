@@ -14,22 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest import mock
-
 from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-class PromoteCommandTestCase(CommandBaseTestCase):
+class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch.object(storeapi.StoreClient, "get_snap_status")
-        self.mock_status = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.mock_status.return_value = {
+        self.fake_store_status.mock.return_value = {
             "channel_map_tree": {
                 "latest": {
                     "16": {
@@ -58,9 +52,6 @@ class PromoteCommandTestCase(CommandBaseTestCase):
                 }
             }
         }
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        self.mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
 
     def test_upload_without_snap_must_raise_exception(self):
         result = self.run_command(["promote"])
@@ -105,7 +96,7 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         )
 
     def test_promote_confirm_yes(self):
-        self.mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["candidate"],
             "channel_map_tree": {
                 "latest": {
@@ -139,7 +130,7 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         result = self.run_command(
             [
                 "promote",
-                "test-snap",
+                "snap-test",
                 "--from-channel",
                 "beta",
                 "--to-channel",
@@ -149,10 +140,12 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.mock_release.assert_called_once_with("test-snap", "2", ["candidate"])
+        self.fake_store_release.mock.assert_called_once_with(
+            "snap-test", "2", ["candidate"]
+        )
 
     def test_promote_yes_option(self):
-        self.mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["candidate"],
             "channel_map_tree": {
                 "latest": {
@@ -186,7 +179,7 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         result = self.run_command(
             [
                 "promote",
-                "test-snap",
+                "snap-test",
                 "--from-channel",
                 "beta",
                 "--to-channel",
@@ -196,13 +189,15 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.mock_release.assert_called_once_with("test-snap", "2", ["candidate"])
+        self.fake_store_release.mock.assert_called_once_with(
+            "snap-test", "2", ["candidate"]
+        )
 
     def test_promote_confirm_no(self):
         result = self.run_command(
             [
                 "promote",
-                "test-snap",
+                "snap-test",
                 "--from-channel",
                 "beta",
                 "--to-channel",
@@ -212,4 +207,4 @@ class PromoteCommandTestCase(CommandBaseTestCase):
         )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.mock_release.assert_not_called()
+        self.fake_store_release.mock.assert_not_called()

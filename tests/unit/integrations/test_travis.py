@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -172,23 +172,20 @@ class TravisSuccessfulTestCase(unit.TestCase):
         with open(".travis.yml", "w") as fd:
             fd.write(content)
 
+    @mock.patch("snapcraft.cli.echo.prompt")
     @mock.patch("subprocess.check_output")
     @mock.patch("subprocess.check_call")
-    @mock.patch("builtins.input")
-    @mock.patch("getpass.getpass")
     @mock.patch.object(storeapi.StoreClient, "login")
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     def test_enable_successfully(
         self,
         mock_get_account_information,
         mock_login,
-        mock_getpass,
-        mock_input,
         mock_check_call,
         mock_check_output,
+        mock_prompt,
     ):
-        mock_input.side_effect = ["sample.person@canonical.com", "123456"]
-        mock_getpass.return_value = "secret"
+        mock_prompt.side_effect = ["sample.person@canonical.com", "secret", "123456"]
         mock_login.side_effect = [
             storeapi.errors.StoreTwoFactorAuthenticationRequired(),
             None,
@@ -283,23 +280,20 @@ class TravisSuccessfulTestCase(unit.TestCase):
             ),
         )  # noqa TODO this type of test should not be done
 
+    @mock.patch("snapcraft.cli.echo.prompt")
     @mock.patch("subprocess.check_output")
     @mock.patch("subprocess.check_call")
-    @mock.patch("builtins.input")
-    @mock.patch("getpass.getpass")
     @mock.patch.object(storeapi.StoreClient, "login")
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     def test_refresh_successfully(
         self,
         mock_get_account_information,
         mock_login,
-        mock_getpass,
-        mock_input,
         mock_check_call,
         mock_check_output,
+        mock_prompt,
     ):
-        mock_input.side_effect = ["sample.person@canonical.com", "123456"]
-        mock_getpass.return_value = "secret"
+        mock_prompt.side_effect = ["sample.person@canonical.com", "secret", "123456"]
         mock_login.side_effect = [
             storeapi.errors.StoreTwoFactorAuthenticationRequired(),
             None,

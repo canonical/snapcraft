@@ -13,42 +13,35 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from unittest import mock
+
+import fixtures
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import CommandBaseTestCase, get_sample_key, mock_snap_output
+from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 
-class CreateKeyTestCase(CommandBaseTestCase):
-    @mock.patch("subprocess.check_call")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_create_key_snapd_not_installed(
-        self, mock_installed, mock_check_output, mock_check_call
-    ):
-        mock_installed.return_value = False
+class CreateKeyTestCase(FakeStoreCommandsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_check_call = fixtures.MockPatch("subprocess.check_call")
+        self.useFixture(self.fake_check_call)
+
+    def test_create_key_snapd_not_installed(self):
+        self.fake_package_installed.mock.return_value = False
 
         raised = self.assertRaises(
             storeapi.errors.MissingSnapdError, self.run_command, ["create-key"]
         )
 
         self.assertThat(str(raised), Contains("The snapd package is not installed."))
+        self.fake_package_installed.mock.assert_called_with("snapd")
+        self.fake_check_output.mock.assert_not_called()
+        self.fake_check_call.mock.assert_not_called()
 
-        mock_installed.assert_called_with("snapd")
-        self.assertThat(mock_check_output.call_count, Equals(0))
-        self.assertThat(mock_check_call.call_count, Equals(0))
-
-    @mock.patch("subprocess.check_call")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_create_key_already_exists(
-        self, mock_installed, mock_check_output, mock_check_call
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-
+    def test_create_key_already_exists(self):
         raised = self.assertRaises(
             storeapi.errors.KeyAlreadyRegisteredError, self.run_command, ["create-key"]
         )
@@ -57,29 +50,18 @@ class CreateKeyTestCase(CommandBaseTestCase):
             str(raised), Equals("You have already registered a key named 'default'")
         )
 
-    @mock.patch("subprocess.check_call")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_create_key_already_registered(
-        self,
-        mock_installed,
-        mock_check_output,
-        mock_get_account_information,
-        mock_check_call,
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-        mock_get_account_information.return_value = {
-            "account_id": "abcd",
-            "account_keys": [
-                {
-                    "name": "new-key",
-                    "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
-                }
-            ],
-        }
-
+    def test_create_key_already_registered(self):
+        self.fake_store_account_info.mock.side_effect = [
+            {
+                "account_id": "abcd",
+                "account_keys": [
+                    {
+                        "name": "new-key",
+                        "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
+                    }
+                ],
+            }
+        ]
         raised = self.assertRaises(
             storeapi.errors.KeyAlreadyRegisteredError,
             self.run_command,
@@ -89,38 +71,21 @@ class CreateKeyTestCase(CommandBaseTestCase):
         self.assertThat(
             str(raised), Equals("You have already registered a key named 'new-key'")
         )
-        self.assertThat(mock_check_call.call_count, Equals(0))
+        self.fake_check_call.mock.assert_not_called()
 
-    @mock.patch("subprocess.check_call")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_create_key_successfully(
-        self,
-        mock_installed,
-        mock_check_output,
-        mock_get_account_information,
-        mock_check_call,
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-        mock_get_account_information.return_value = {
-            "account_id": "abcd",
-            "account_keys": [
-                {
-                    "name": "old-key",
-                    "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
-                }
-            ],
-        }
+    def test_create_key(self):
+        self.fake_store_account_info.mock.side_effect = [
+            {
+                "account_id": "abcd",
+                "account_keys": [
+                    {
+                        "name": "old-key",
+                        "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
+                    }
+                ],
+            }
+        ]
 
         result = self.run_command(["create-key", "new-key"])
 
         self.assertThat(result.exit_code, Equals(0))
-        mock_check_call.assert_called_once_with(["snap", "create-key", "new-key"])
-
-    def test_create_key_without_login_must_ask(self):
-        result = self.run_command(["create-key", "new-key"])
-        self.assertThat(
-            result.output, Contains("You are required to login before continuing.")
-        )

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,9 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import fixtures
 import json
 import os
+import subprocess
 from textwrap import dedent
 
 from click.testing import CliRunner
@@ -43,8 +45,13 @@ def get_sample_key(name):
     raise KeyError(name)
 
 
-def mock_snap_output(command, *args, **kwargs):
-    if command == ["snap", "keys", "--json"]:
+original_check_output = subprocess.check_output
+
+
+def mock_check_output(command, *args, **kwargs):
+    if command[0].endswith("unsquashfs"):
+        return original_check_output(command, *args, **kwargs)
+    elif command == ["snap", "keys", "--json"]:
         return json.dumps(_sample_keys)
     elif command[:2] == ["snap", "export-key"]:
         if not command[2].startswith("--account="):
@@ -63,6 +70,8 @@ def mock_snap_output(command, *args, **kwargs):
         ).format(
             account_id=account_id, name=name, sha3_384=get_sample_key(name)["sha3-384"]
         )
+    elif command == ["snap", "create-key", "new-key"]:
+        pass
     else:
         raise AssertionError("Unhandled command: {}".format(command))
 
@@ -124,3 +133,69 @@ class StoreCommandsBaseTestCase(CommandBaseTestCase):
         self.fake_store = fixture_setup.FakeStore()
         self.useFixture(self.fake_store)
         self.client = storeapi.StoreClient()
+
+
+class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
+
+        self.fake_store_register = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient, "register"
+        )
+        self.useFixture(self.fake_store_register)
+
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        self.fake_store_status = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient, "snap_status", return_value=dict()
+        )
+        self.useFixture(self.fake_store_status)
+
+        self.fake_store_revisions = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient, "snap_revisions", return_value=dict()
+        )
+        self.useFixture(self.fake_store_revisions)
+
+        self.fake_store_release = fixtures.MockPatchObject(
+            storeapi.StoreClient, "release"
+        )
+        self.useFixture(self.fake_store_release)
+
+        self.fake_store_register_key = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient, "register_key"
+        )
+        self.useFixture(self.fake_store_register_key)
+
+        # Mock the snap command
+        self.fake_check_output = fixtures.MockPatch(
+            "subprocess.check_output", side_effect=mock_check_output
+        )
+        self.useFixture(self.fake_check_output)
+
+        # Pretend that the snap command is available
+        self.fake_package_installed = fixtures.MockPatch(
+            "snapcraft.internal.repo.Repo.is_package_installed", return_value=True
+        )
+        self.useFixture(self.fake_package_installed)
