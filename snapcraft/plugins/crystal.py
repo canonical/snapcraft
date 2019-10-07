@@ -28,7 +28,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The Snap Store channel to install Crystal from.
     - crystal-buildflags
       (list of strings)
-      Flags to use during shards build.
+      Flags to use during shards build. Default is '--production'.
 """
 
 import os
