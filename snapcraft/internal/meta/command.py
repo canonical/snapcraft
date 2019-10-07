@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import os
 import re
 import shlex
@@ -25,7 +26,29 @@ from . import errors
 from ._utils import _executable_is_valid
 from snapcraft.internal import common
 
+
+logger = logging.getLogger(__name__)
 _COMMAND_PATTERN = re.compile("^[A-Za-z0-9. _#:$-][A-Za-z0-9/. _#:$-]*$")
+_FMT_COMMAND_FROM_BASE = (
+    "The command {!r} was not found in the prime directory, it has been "
+    "changed to {!r}."
+)
+_FMT_SNAP_STRIP = (
+    "Stripped '$SNAP/' from command {!r}. "
+    "Relative paths from the prime are required by snapd."
+)
+_FMT_SNAPD_WRAPPER = (
+    "A shell wrapper will be generated for command {!r} as it does not conform "
+    "with the command pattern expected by snapd. Commands must be relative to "
+    "the prime directory and can only consist of alphanumeric characters, "
+    "spaces, and the following special characters: / . _ # : $ -"
+)
+_FMT_COMMAND_CHANGED = (
+    "Command {!r} has been changed to {!r} to conform with the "
+    "command pattern expected by snapd. Commands must be relative to "
+    "the prime directory and can only consist of alphanumeric characters, "
+    "spaces, and the following special characters: / . _ # : $ -"
+)
 
 
 def _get_shebang_from_file(file_path: str) -> List[str]:
@@ -157,6 +180,7 @@ class Command:
     def __init__(self, *, app_name: str, command_name: str, command: str) -> None:
         self._app_name = app_name
         self._command_name = command_name
+        self.original_command = command
         self.command = command
         self.wrapped_command: Optional[str] = None
         self.massaged_command: Optional[str] = None
@@ -195,9 +219,24 @@ class Command:
         if self.requires_wrapper:
             if not can_use_wrapper:
                 raise errors.InvalidAppCommandFormatError(self.command, self._app_name)
+            if self.original_command.startswith("$SNAP"):
+                logger.warning(_FMT_SNAP_STRIP.format(self.original_command))
+            if self.command.startswith("/") and not self.original_command.startswith(
+                "/"
+            ):
+                logger.warning(
+                    _FMT_COMMAND_FROM_BASE.format(self.original_command, self.command)
+                )
+            if not _COMMAND_PATTERN.match(self.command):
+                logger.warning(_FMT_SNAPD_WRAPPER.format(self.command))
             self.wrapped_command = self.command
             self.command = self.wrapped_command_name
             return self.command
+
+        if self.command != self.original_command:
+            logger.warning(
+                _FMT_COMMAND_CHANGED.format(self.original_command, self.command)
+            )
 
         command_parts = shlex.split(self.command)
         command_path = os.path.join(prime_dir, command_parts[0])
