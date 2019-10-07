@@ -55,7 +55,7 @@ class CrystalPlugin(snapcraft.BasePlugin):
             "minitems": 1,
             "uniqueItems": True,
             "items": {"type": "string"},
-            "default": [],
+            "default": ["--production"],
         }
         schema["required"] = ["source"]
 
