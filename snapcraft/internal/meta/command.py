@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import os
 import re
 import shlex
@@ -25,7 +26,21 @@ from . import errors
 from ._utils import _executable_is_valid
 from snapcraft.internal import common
 
+
+logger = logging.getLogger(__name__)
 _COMMAND_PATTERN = re.compile("^[A-Za-z0-9. _#:$-][A-Za-z0-9/. _#:$-]*$")
+_FMT_COMMAND_SNAP_STRIP = "Stripped '$SNAP/' from command {!r}."
+_FMT_COMMAND_ROOT = (
+    "The command {!r} was not found in the prime directory, it has been "
+    "changed to {!r}."
+)
+_FMT_SNAPD_WRAPPER = (
+    "A shell wrapper will be generated for command {!r} as it does not conform "
+    "with the command pattern expected by the runtime. "
+    "Commands must be relative to the prime directory and can only consist "
+    "of alphanumeric characters, spaces, and the following special characters: "
+    "/ . _ # : $ -"
+)
 
 
 def _get_shebang_from_file(file_path: str) -> List[str]:
@@ -105,6 +120,10 @@ def _massage_command(*, command: str, prime_dir: str) -> str:
     # command_parts holds the lexical split of a command entry.
     # posix is set to False to respect the quoting of variables.
     command_parts = shlex.split(command, posix=False)
+    # Make a note now that $SNAP if found this path will not make it into the
+    # resulting command entry.
+    if command_parts[0].startswith("$SNAP/"):
+        logger.warning(_FMT_COMMAND_SNAP_STRIP.format(command))
     # command_path is the absolute path to the real command (command_parts[0]),
     # used to verify that the executable is valid and potentially extract a
     # shebang.
@@ -143,6 +162,7 @@ def _massage_command(*, command: str, prime_dir: str) -> str:
     # If not in the prime directory, add as is as it is pointing to the root
     # (most likely part of the base for this snap).
     else:
+        logger.warning(_FMT_COMMAND_ROOT.format(command, command_path))
         command_parts[0] = command_path
 
     return " ".join(command_parts)
@@ -196,15 +216,16 @@ class Command:
             if not can_use_wrapper:
                 raise errors.InvalidAppCommandFormatError(self.command, self._app_name)
             self.wrapped_command = self.command
+            if not _COMMAND_PATTERN.match(self.command):
+                logger.warning(_FMT_SNAPD_WRAPPER.format(self.command))
             self.command = self.wrapped_command_name
-            return self.command
-
-        command_parts = shlex.split(self.command)
-        command_path = os.path.join(prime_dir, command_parts[0])
-        if not _executable_is_valid(command_path):
-            raise errors.InvalidAppCommandNotExecutable(
-                command=self.command, app_name=self._app_name
-            )
+        else:
+            command_parts = shlex.split(self.command)
+            command_path = os.path.join(prime_dir, command_parts[0])
+            if not _executable_is_valid(command_path):
+                raise errors.InvalidAppCommandNotExecutable(
+                    command=self.command, app_name=self._app_name
+                )
 
         return self.command
 
