@@ -12,7 +12,7 @@ systems:
   - ubuntu-18.04-armhf
 
 environment:
-  SNAP_DIR: ../snaps/glib-hello
+  SNAP_DIR: ../snaps/gtk3-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -32,11 +32,11 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft
 
-  sudo snap install glib-hello_*.snap --dangerous
-  [ "$(glib-hello)" = "hello world" ]
+  sudo snap install gtk3-hello_*.snap --dangerous
+  [ "$(gtk3-hello)" = "hello world" ]
 
   # Verify that the extension command chain went through the proper setup procedure
-  snap_user_data="$HOME/snap/glib-hello/current"
+  snap_user_data="$HOME/snap/gtk3-hello/current"
   [ -d "$snap_user_data/.config" ]
   [ -d "$snap_user_data/.local" ]
   [ -h "$snap_user_data/.themes" ]
