@@ -30,7 +30,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft
+  output="$(snapcraft)"
 
   sudo snap install gtk3-hello_*.snap --dangerous
   [ "$(gtk3-hello)" = "hello world" ]
@@ -43,3 +43,13 @@ execute: |
 
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+  # Verify content snap was installed for dependency checks.
+  sudo snap list gnome-3-28-1804
+  sudo snap list gtk-common-themes
+
+  # Verify all dependencies were found.
+  if echo "$output" | grep -q "part is missing libraries"; then
+    echo "failed to find content snaps' libraries"
+    exit 1
+  fi
