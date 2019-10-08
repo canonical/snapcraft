@@ -64,7 +64,10 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(expected_output))
 
     def test_gated_without_login_must_ask(self):
-        result = self.run_command(["gated", "not-found"])
+        result = self.run_command(
+            ["gated", "test-snap-with-no-validations"],
+            input="dummy\ntest correct password\n",
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )

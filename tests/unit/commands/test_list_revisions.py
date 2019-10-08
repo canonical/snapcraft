@@ -16,19 +16,18 @@
 
 import logging
 from textwrap import dedent
-from unittest import mock
 
 import fixtures
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from tests import fixture_setup
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-class RevisionsCommandBaseTestCase(CommandBaseTestCase):
+class RevisionsCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
+
         self.expected = [
             {
                 "series": ["16"],
@@ -65,15 +64,23 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_revisions_without_login_must_ask(self):
-        result = self.run_command([self.command_name, "snap-test"])
+        self.fake_store_account_info.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+        ]
+        self.fake_store_revisions.mock.return_value = self.expected
+
+        result = self.run_command(
+            [self.command_name, "snap-test"], input="user@example.com\nsecret\n"
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_with_3rd_party_snap(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_revisions_with_3rd_party_snap(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -84,10 +91,7 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             str(raised), Equals("Snap 'snap-test' was not found in '16' series.")
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_with_3rd_party_snap_by_arch(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_revisions_with_3rd_party_snap_by_arch(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -99,10 +103,7 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             Equals("Snap 'snap-test' for 'arm64' was not found in '16' series."),
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_with_3rd_party_snap_by_series(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_revisions_with_3rd_party_snap_by_series(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -113,11 +114,7 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             str(raised), Equals("Snap 'snap-test' was not found in '18' series.")
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_by_unknown_arch(self, mock_account_api, mock_revisions):
-        mock_revisions.return_value = {}
-
+    def test_revisions_by_unknown_arch(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -129,11 +126,7 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             Equals("Snap 'snap-test' for 'some-arch' was not found in '16' series."),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_by_unknown_series(self, mock_account_api, mock_revisions):
-        mock_revisions.return_value = {}
-
+    def test_revisions_by_unknown_series(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -145,10 +138,8 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             Equals("Snap 'snap-test' was not found in 'some-series' series."),
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions(self, mock_account_api, mock_revisions):
-        mock_revisions.return_value = self.expected
+    def test_revisions(self):
+        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command([self.command_name, "snap-test"])
 
@@ -164,15 +155,12 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
                 )
             ),
         )  # noqa
-        mock_revisions.assert_called_once_with("snap-test", "16", None)
+        self.fake_store_revisions.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", None
+        )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_by_arch(self, mock_account_api, mock_revisions):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
-        mock_revisions.return_value = [
+    def test_revisions_by_arch(self):
+        self.fake_store_revisions.mock.return_value = [
             rev for rev in self.expected if rev["arch"] == "amd64"
         ]
 
@@ -188,13 +176,13 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""
                 )
             ),
-        )  # noqa
-        mock_revisions.assert_called_once_with("snap-test", "16", "amd64")
+        )
+        self.fake_store_revisions.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", "amd64"
+        )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_revisions_by_series(self, mock_account_api, mock_revisions):
-        mock_revisions.return_value = self.expected
+    def test_revisions_by_series(self):
+        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command([self.command_name, "snap-test", "--series=16"])
 
@@ -210,21 +198,23 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
                 )
             ),
         )  # noqa
-        mock_revisions.assert_called_once_with("snap-test", "16", None)
+        self.fake_store_revisions.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", None
+        )
 
 
 class DeprecatedHistoryCommandTestCase(RevisionsCommandBaseTestCase):
-    @mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_history_with_deprecation_message(self, mock_account_api, mock_revisions):
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+    def test_history_with_deprecation_message(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command(["history", "snap-test"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
-            self.fake_logger.output,
+            fake_logger.output,
             Contains(
                 "DEPRECATED: The 'history' command has been replaced by "
                 "'list-revisions'."

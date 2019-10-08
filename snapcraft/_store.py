@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import getpass
 import hashlib
 import json
 import logging
@@ -127,7 +126,7 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
         if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_TOS_URL
-            choice = input(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
+            choice = echo.prompt(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
             if choice in {"y", "Y"}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
@@ -179,9 +178,9 @@ def _try_login(
         )
         if not config_fd:
             print()
-            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
+            echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
     except storeapi.errors.StoreTwoFactorAuthenticationRequired:
-        one_time_password = input("Second-factor auth: ")
+        one_time_password = echo.prompt("Second-factor auth")
         store.login(
             email,
             password,
@@ -215,16 +214,19 @@ def login(
     password = ""
 
     if not config_fd:
-        print(
-            "Enter your Ubuntu One e-mail address and password.\n"
+        echo.wrapped("Enter your Ubuntu One e-mail address and password.")
+        echo.wrapped(
             "If you do not have an Ubuntu One account, you can create one "
             "at https://snapcraft.io/account"
         )
-        email = input("Email: ")
-        if os.environ.get("SNAPCRAFT_TEST_INPUT"):
-            password = input("Password: ")
+        email = echo.prompt("Email")
+        if os.getenv("SNAPCRAFT_TEST_INPUT"):
+            # Integration tests do not work well with hidden input.
+            echo.warning("Password will be visible.")
+            hide_input = False
         else:
-            password = getpass.getpass("Password: ")
+            hide_input = True
+        password = echo.prompt("Password", hide_input=hide_input)
 
     try:
         _try_login(
@@ -361,7 +363,7 @@ def _select_key(keys):
         print()
         while True:
             try:
-                keynum = int(input("Key number: ")) - 1
+                keynum = int(echo.prompt("Key number: ")) - 1
             except ValueError:
                 continue
             if keynum >= 0 and keynum < len(keys):
