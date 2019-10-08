@@ -34,6 +34,59 @@ from snapcraft.internal import common, errors, repo
 logger = logging.getLogger(__name__)
 
 
+def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
+    """Return a set of resolved library mappings using specified library paths.
+
+    Returns a dictionary of mappings of soname -> soname_path.
+    If library is not resolved, the soname itself is the soname_path.
+    """
+
+    libraries: Dict[str, str] = dict()
+
+    env = os.environ.copy()
+    env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
+
+    try:
+        # ldd output sample:
+        # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
+        # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
+        # libmissing.so.2 => not found
+        ldd_lines = (
+            subprocess.check_output(["ldd", path], env=env).decode().splitlines()
+        )
+    except subprocess.CalledProcessError:
+        logger.warning("Unable to determine library dependencies for {!r}".format(path))
+        return libraries
+
+    for line in ldd_lines:
+        # First match against libraries that are found.
+        # We know this because of the address (0x...).
+        match = re.match(r"\t(.*) => (.*) \(0x", line)
+        if match:
+            soname = match.group(1)
+            soname_path = match.group(2)
+            libraries[soname] = soname_path
+            continue
+
+        # Now find those not found, or not providing the address...
+        match = re.match(r"\t(.*) => (.*)", line)
+        if match:
+            soname = match.group(1)
+            soname_path = match.group(2)
+            if soname_path.startswith("/") and os.path.exists(soname_path):
+                # Checks out.
+                libraries[soname] = soname_path
+            else:
+                # Doesn't check out - use the soname.
+                libraries[soname] = soname
+            continue
+
+        # Ignore the rest... (linux-vdso.so, ld-linux.so).
+        continue
+
+    return libraries
+
+
 class NeededLibrary:
     """Represents an ELF library version."""
 
@@ -339,7 +392,6 @@ class ElfFile:
             soname_cache = SonameCache()
 
         logger.debug("Getting dependencies for {!r}".format(self.path))
-        ldd_out = []  # type: List[str]
 
         search_paths = [root_path, *content_dirs, core_base_path]
 
@@ -347,47 +399,25 @@ class ElfFile:
         for path in search_paths:
             ld_library_paths.extend(common.get_library_paths(path, arch_triplet))
 
-        # Set environment for ldd with LD_LIBRARY_PATH.
-        env = os.environ.copy()
-        env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
-
-        try:
-            # ldd output sample:
-            # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
-            # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-            ldd_out = (
-                subprocess.check_output(["ldd", self.path], env=env)
-                .decode()
-                .split("\n")
-            )
-        except subprocess.CalledProcessError:
-            logger.warning(
-                "Unable to determine library dependencies for {!r}".format(self.path)
-            )
-            return set()
-        ldd_out_split = [l.split() for l in ldd_out]
-        libs = set()
-        for ldd_line in ldd_out_split:
-            if len(ldd_line) > 2:
-                libs.add(
-                    Library(
-                        soname=ldd_line[0],
-                        soname_path=ldd_line[2],
-                        search_paths=search_paths,
-                        core_base_path=core_base_path,
-                        arch=self.arch,
-                        soname_cache=soname_cache,
-                    )
+        libraries = ldd(self.path, ld_library_paths)
+        for soname, soname_path in libraries.items():
+            self.dependencies.add(
+                Library(
+                    soname=soname,
+                    soname_path=soname_path,
+                    search_paths=search_paths,
+                    core_base_path=core_base_path,
+                    arch=self.arch,
+                    soname_cache=soname_cache,
                 )
+            )
 
-        self.dependencies = libs
-
-        # Return a set useful only for fetching libraries from the host
-        library_paths = set()  # type: Set[str]
-        for l in libs:
-            if os.path.exists(l.path) and not l.in_base_snap:
-                library_paths.add(l.path)
-        return library_paths
+        # Return the set of dependency paths, minus those found in the base.
+        dependencies: Set[str] = set()
+        for library in self.dependencies:
+            if not library.in_base_snap:
+                dependencies.add(library.path)
+        return dependencies
 
 
 class Patcher:

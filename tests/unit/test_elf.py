@@ -108,6 +108,22 @@ class TestInvalidElf(unit.TestCase):
         self.assertThat(elf_files, Equals(set()))
 
 
+class TestMissingLibraries(TestElfBase):
+    def test_get_libraries_missing_libs(self):
+        elf_file = self.fake_elf["fake_elf-with-missing-libs"]
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet=self.arch_triplet,
+            content_dirs=self.content_dirs,
+        )
+
+        self.assertThat(
+            libs,
+            Equals(set([self.fake_elf.root_libraries["foo.so.1"], "missing.so.2"])),
+        )
+
+
 class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
