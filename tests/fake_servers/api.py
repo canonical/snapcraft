@@ -463,9 +463,31 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
         name = request.json_body["name"]
         if name == "test-snap-unregistered":
-            payload = b""
+            payload = json.dumps(
+                {
+                    "error_list": [
+                        {
+                            "code": "resource-not-found",
+                            "message": "the snap name does not exist",
+                        }
+                    ]
+                }
+            ).encode()
             response_code = 404
-            content_type = "text/plain"
+            content_type = "application/json"
+        elif name == "test-snap-forbidden":
+            payload = json.dumps(
+                {
+                    "error_list": [
+                        {
+                            "code": "resource-forbidden",
+                            "message": "not allowed to publish this snap name",
+                        }
+                    ]
+                }
+            ).encode()
+            response_code = 403
+            content_type = "application/json"
         else:
             response_code = 202
             content_type = "application/json"

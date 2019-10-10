@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2018 Canonical Ltd
+# Copyright 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -154,12 +154,16 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
     def test_unregistered_snap_must_raise_exception(self):
         class MockResponse:
             status_code = 404
-            error_list = [
-                {
-                    "code": "resource-not-found",
-                    "message": "Snap not found for name=basic",
-                }
-            ]
+
+            def json(self):
+                return dict(
+                    error_list=[
+                        {
+                            "code": "resource-not-found",
+                            "message": "Snap not found for name=basic",
+                        }
+                    ]
+                )
 
         patcher = mock.patch.object(storeapi.StoreClient, "push_precheck")
         mock_precheck = patcher.start()
@@ -174,11 +178,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Contains(
-                "You are not the publisher or allowed to push revisions for this "
-                "snap. To become the publisher, run `snapcraft register "
-                "basic` and try to push again."
-            ),
+            Contains("This snap is not registered. Register the snap and try again."),
         )
 
     def test_forced(self):
