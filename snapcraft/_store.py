@@ -616,11 +616,10 @@ def push(snap_filename, release_channels=None):
                 "Error generating delta: {}\n"
                 "Falling back to pushing full snap...".format(str(e))
             )
-        except storeapi.errors.StorePushError as e:
-            store_error = e.error_list[0].get("message")
+        except storeapi.errors.StorePushError as push_error:
             logger.warning(
                 "Unable to push delta to store: {}\n"
-                "Falling back to pushing full snap...".format(store_error)
+                "Falling back to pushing full snap...".format(push_error.error_list)
             )
 
     if result is None:

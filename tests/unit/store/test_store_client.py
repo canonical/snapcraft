@@ -941,10 +941,23 @@ class UploadTestCase(StoreTestCase):
         )
         self.assertThat(
             str(raised),
+            Equals("This snap is not registered. Register the snap and try again."),
+        )
+
+    def test_push_forbidden_snap(self):
+        self.client.login("dummy", "test correct password")
+        raised = self.assertRaises(
+            errors.StorePushError,
+            self.client.upload,
+            "test-snap-forbidden",
+            self.snap_path,
+        )
+        self.assertThat(
+            str(raised),
             Equals(
                 "You are not the publisher or allowed to push revisions for "
-                "this snap. To become the publisher, run `snapcraft register "
-                "test-snap-unregistered` and try to push again."
+                "this snap. Ensure you are logged in with the proper account "
+                "and try again."
             ),
         )
 
