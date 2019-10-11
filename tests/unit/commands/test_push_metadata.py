@@ -55,7 +55,9 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "description": "Description of the most simple snap",
             "summary": "Summary of the most simple snap",
         }
-        self.mock_metadata.assert_called_once_with("basic", text_metadata, force)
+        self.mock_metadata.assert_called_once_with(
+            snap_name="basic", metadata=text_metadata, force=force
+        )
         # binary metadata
         args, _ = self.mock_binary_metadata.call_args
         self.assertEqual(args[0], "basic")

@@ -24,9 +24,8 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from functools import wraps
 from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO
+from typing import Any, Dict, Iterable, List, Optional, TextIO, TYPE_CHECKING
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -40,6 +39,10 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+
+
+if TYPE_CHECKING:
+    from snapcraft.storeapi._status_tracker import StatusTracker
 
 
 logger = logging.getLogger(__name__)
@@ -251,17 +254,16 @@ def login(
     return True
 
 
-def _login_wrapper(instance, method):
-    @wraps(method)
-    def wrapped(*args, **kwargs):
+def _login_wrapper(method):
+    def login_decorator(self, *args, **kwargs):
         try:
-            return method(*args, **kwargs)
+            return method(self, *args, **kwargs)
         except storeapi.errors.InvalidCredentialsError:
             print("You are required to login before continuing.")
-            login(store=instance)
-            return method(*args, **kwargs)
+            login(store=self)
+            return method(self, *args, **kwargs)
 
-    return wrapped
+    return login_decorator
 
 
 class StoreClientCLI(storeapi.StoreClient):
@@ -291,23 +293,69 @@ class StoreClientCLI(storeapi.StoreClient):
     #      during upload into this class using click.
     # TODO use an instance of this class directly from snapcraft.cli.store
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @_login_wrapper
+    def close_channels(
+        self, *, snap_id: str, channel_names: List[str]
+    ) -> Dict[str, Any]:
+        return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
-        # Dynamically decorate methods that require to be logged in.
-        # This decorated logic can be replaced by proper decorated method
-        # definitions as the methods in this module are implemented within
-        # this class.
-        for method_name in [
-            "close_channels",
-            "get_account_information",
-            "push_metadata",
-            "push_precheck",
-            "register",
-            "release",
-            "upload",
-        ]:
-            setattr(self, method_name, _login_wrapper(self, getattr(self, method_name)))
+    @_login_wrapper
+    def get_account_information(self) -> Dict[str, Any]:
+        return super().get_account_information()
+
+    @_login_wrapper
+    def push_precheck(self, *, snap_name: str) -> None:
+        return super().push_precheck(snap_name=snap_name)
+
+    @_login_wrapper
+    def push_metadata(
+        self, *, snap_name: str, metadata: Dict[str, str], force: bool
+    ) -> Dict[str, Any]:
+        return super().push_metadata(
+            snap_name=snap_name, metadata=metadata, force=force
+        )
+
+    @_login_wrapper
+    def register(
+        self,
+        *,
+        snap_name: str,
+        is_private: bool = False,
+        store_id: Optional[str] = None,
+    ) -> None:
+        super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
+
+    @_login_wrapper
+    def release(
+        self, *, snap_name: str, revision: str, channels: List[str]
+    ) -> Dict[str, Any]:
+        return super().release(
+            snap_name=snap_name, revision=revision, channels=channels
+        )
+
+    @_login_wrapper
+    def upload(
+        self,
+        *,
+        snap_name: str,
+        snap_filename: str,
+        built_at: Optional[str] = None,
+        channels: Optional[List[str]] = None,
+        delta_format: Optional[str] = None,
+        source_hash: Optional[str] = None,
+        target_hash: Optional[str] = None,
+        delta_hash: Optional[str] = None,
+    ) -> "StatusTracker":
+        return super().upload(
+            snap_name=snap_name,
+            snap_filename=snap_filename,
+            built_at=built_at,
+            channels=channels,
+            delta_format=delta_format,
+            source_hash=source_hash,
+            target_hash=target_hash,
+            delta_hash=delta_hash,
+        )
 
 
 def list_registered():
@@ -469,7 +517,9 @@ def register_key(name):
 
 def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:
     logger.info("Registering {}.".format(snap_name))
-    StoreClientCLI().register(snap_name, is_private=is_private, store_id=store_id)
+    StoreClientCLI().register(
+        snap_name=snap_name, is_private=is_private, store_id=store_id
+    )
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
@@ -560,8 +610,8 @@ def push_metadata(snap_filename, force):
 
     # hit the server
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name)
-    store_client.push_metadata(snap_name, metadata, force)
+    store_client.push_precheck(snap_name=snap_name)
+    store_client.push_metadata(snap_name=snap_name, metadata=metadata, force=force)
     with _get_icon_from_snap_file(snap_filename) as icon:
         metadata = {"icon": icon}
         store_client.push_binary_metadata(snap_name, metadata, force)
@@ -588,7 +638,7 @@ def push(snap_filename, release_channels=None):
         "Run push precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name)
+    store_client.push_precheck(snap_name=snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
 
@@ -648,7 +698,10 @@ def _push_snap(
     channels: Optional[List[str]],
 ) -> Dict[str, Any]:
     tracker = store_client.upload(
-        snap_name, snap_filename, built_at=built_at, channels=channels
+        snap_name=snap_name,
+        snap_filename=snap_filename,
+        built_at=built_at,
+        channels=channels,
     )
     result = tracker.track()
     tracker.raise_for_code()
@@ -685,8 +738,8 @@ def _push_delta(
     try:
         logger.debug("Pushing delta {!r}.".format(delta_filename))
         delta_tracker = store_client.upload(
-            snap_name,
-            delta_filename,
+            snap_name=snap_name,
+            snap_filename=delta_filename,
             built_at=built_at,
             channels=channels,
             delta_format=delta_format,
@@ -748,7 +801,9 @@ def _get_text_for_channel(channel):
 
 
 def release(snap_name, revision, release_channels):
-    channels = StoreClientCLI().release(snap_name, revision, release_channels)
+    channels = StoreClientCLI().release(
+        snap_name=snap_name, revision=revision, channels=release_channels
+    )
     channel_map_tree = channels.get("channel_map_tree", {})
 
     # This does not look good in green so we print instead
@@ -812,7 +867,9 @@ def close(snap_name, channel_names):
             snap_name, snap_series
         ) from e
 
-    closed_channels, c_m_tree = store_client.close_channels(snap_id, channel_names)
+    closed_channels, c_m_tree = store_client.close_channels(
+        snap_id=snap_id, channel_names=channel_names
+    )
 
     tabulated_status = _tabulated_channel_map_tree(c_m_tree)
     print(tabulated_status)

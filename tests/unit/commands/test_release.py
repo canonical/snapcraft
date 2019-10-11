@@ -66,7 +66,9 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 )
             ),
         )
-        self.fake_store_release.mock.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
     def test_release_snap_with_lts_channel(self):
         self.fake_store_release.mock.return_value = {
@@ -108,7 +110,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )
         self.fake_store_release.mock.assert_called_once_with(
-            "nil-snap", "19", ["2.1/beta"]
+            snap_name="nil-snap", revision="19", channels=["2.1/beta"]
         )
 
     def test_release_snap_with_branch(self):
@@ -159,7 +161,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )  # noqa
         self.fake_store_release.mock.assert_called_once_with(
-            "nil-snap", "20", ["stable/hotfix1"]
+            snap_name="nil-snap", revision="20", channels=["stable/hotfix1"]
         )
 
     def test_release_snap_opens_more_than_one_channel(self):
@@ -201,7 +203,9 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 )
             ),
         )  # noqa
-        self.fake_store_release.mock.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
     def test_release_with_bad_channel_info(self):
         self.fake_store_release.mock.return_value = {
@@ -228,7 +232,9 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-        self.fake_store_release.mock.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
         # output will include the channel with no info, but there will be a log
         # in error alerting the problem
