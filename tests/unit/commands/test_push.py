@@ -17,7 +17,6 @@
 import os
 from unittest import mock
 
-import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
@@ -28,17 +27,30 @@ from snapcraft.storeapi.errors import (
     StoreUploadError,
 )
 import tests
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-# TODO migrate to FakeStoreCommandsBaseTestCase
-class PushCommandBaseTestCase(CommandBaseTestCase):
+class PushCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.storeapi.StoreClient.push_precheck")
-        self.mock_precheck = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.fake_store_status.mock.return_value = {
+            "amd64": [
+                {
+                    "info": "specific",
+                    "version": "1.0-amd64",
+                    "channel": "stable",
+                    "revision": 2,
+                },
+                {
+                    "info": "specific",
+                    "version": "1.1-amd64",
+                    "channel": "beta",
+                    "revision": 4,
+                },
+                {"info": "tracking", "channel": "edge"},
+            ]
+        }
 
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
@@ -53,30 +65,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_push_a_snap(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
         # Upload
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(["push", self.snap_file])
-        self.assertThat(result.exit_code, Equals(0))
+        result = self.run_command(["push", self.snap_file])
 
+        self.assertThat(result.exit_code, Equals(0))
         self.assertRegexpMatches(
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
-        mock_upload.assert_called_once_with(
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
             built_at=None,
@@ -88,33 +84,18 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_with_started_at(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
         snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap-with-started-at.snap"
         )
 
         # Upload
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(["push", snap_file])
-        self.assertThat(result.exit_code, Equals(0))
+        result = self.run_command(["push", snap_file])
 
+        self.assertThat(result.exit_code, Equals(0))
         self.assertRegexpMatches(
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
-        mock_upload.assert_called_once_with(
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=snap_file,
             built_at="2019-05-07T19:25:53.939041Z",
@@ -126,47 +107,10 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_without_login_must_ask(self):
-        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
-        self.useFixture(self.fake_store_login)
-
-        self.fake_store_account_info = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient,
-            "get_account_information",
-            return_value={
-                "account_id": "abcd",
-                "account_keys": list(),
-                "snaps": {
-                    "16": {
-                        "snap-test": {
-                            "snap-id": "snap-test-snap-id",
-                            "status": "Approved",
-                            "private": False,
-                            "since": "2016-12-12T01:01Z",
-                            "price": "0",
-                        }
-                    }
-                },
-            },
-        )
-        self.useFixture(self.fake_store_account_info)
-
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        self.fake_store_upload = fixtures.MockPatchObject(
-            storeapi.StoreClient,
-            "upload",
-            side_effect=[
-                storeapi.errors.InvalidCredentialsError("error"),
-                mock_tracker,
-            ],
-        )
-        self.useFixture(self.fake_store_upload)
+        self.fake_store_push_precheck.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            None,
+        ]
 
         result = self.run_command(
             ["push", self.snap_file], input="\n\n\n\nuser@example.com\nsecret\n"
@@ -178,6 +122,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
     def test_push_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push", "test-unexisting-snap"])
+
         self.assertThat(result.exit_code, Equals(2))
 
     def test_push_invalid_snap_must_raise_exception(self):
@@ -207,7 +152,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
                     ]
                 )
 
-        self.mock_precheck.side_effect = StorePushError("basic", MockResponse())
+        self.fake_store_push_precheck.mock.side_effect = StorePushError(
+            "basic", MockResponse()
+        )
 
         raised = self.assertRaises(
             storeapi.errors.StorePushError, self.run_command, ["push", self.snap_file]
@@ -225,38 +172,22 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             text = "stub error"
             reason = "stub reason"
 
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.side_effect = StoreUploadError(MockResponse())
+        self.fake_store_upload.mock.side_effect = StoreUploadError(MockResponse())
 
         self.assertRaises(
             storeapi.errors.StoreUploadError, self.run_command, ["push", self.snap_file]
         )
 
     def test_upload_raises_deprecation_warning(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
         # Upload
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(["upload", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
-        mock_upload.assert_called_once_with(
+        self.assertThat(
+            result.output, Contains("DEPRECATED: Use 'push' instead of 'upload'")
+        )
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
             built_at=None,
@@ -268,30 +199,12 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_and_release_a_snap(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
-        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
-
         # Upload
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(["push", self.snap_file, "--release", "beta"])
+        result = self.run_command(["push", self.snap_file, "--release", "beta"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
-        mock_upload.assert_called_once_with(
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
             built_at=None,
@@ -303,33 +216,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_and_release_a_snap_to_N_channels(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
-        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
-
         # Upload
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(
-                ["push", self.snap_file, "--release", "edge,beta,candidate"]
-            )
+        result = self.run_command(
+            ["push", self.snap_file, "--release", "edge,beta,candidate"]
+        )
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
-
-        mock_upload.assert_called_once_with(
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
             built_at=None,
@@ -341,27 +235,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_push_displays_humanized_message(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
-        self.useFixture(fixtures.MockPatch("snapcraft._store.status"))
-
-        with mock.patch(
-            "snapcraft.storeapi._status_tracker.StatusTracker"
-        ) as mock_tracker:
-            result = self.run_command(
-                ["push", self.snap_file, "--release", "edge,beta,candidate"]
-            )
+        result = self.run_command(
+            ["push", self.snap_file, "--release", "edge,beta,candidate"]
+        )
 
         self.assertThat(
             result.output,
@@ -379,30 +255,19 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         self.latest_snap_revision = 8
         self.new_snap_revision = self.latest_snap_revision + 1
 
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
+        self.mock_tracker.track.return_value = {
             "code": "ready_to_release",
             "processed": True,
             "can_release": True,
             "url": "/fake/url",
             "revision": self.new_snap_revision,
         }
-        patcher = mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-        mock_release = patcher.start()
-        mock_release.return_value = [self.latest_snap_revision]
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        self.mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.mock_upload.return_value = mock_tracker
 
     def test_push_revision_cached_with_experimental_deltas(self):
         # Upload
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
-        self.assertThat(result.exit_code, Equals(0))
+        result = self.run_command(["push", self.snap_file])
 
+        self.assertThat(result.exit_code, Equals(0))
         snap_cache = os.path.join(
             BaseDirectory.xdg_cache_home,
             "snapcraft",
@@ -419,50 +284,27 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     def test_push_revision_uses_available_delta(self):
         # Push
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
 
         # Push again
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        _, kwargs = self.mock_upload.call_args
+        _, kwargs = self.fake_store_upload.mock.call_args
         self.assertThat(kwargs.get("delta_format"), Equals("xdelta3"))
 
     def test_push_with_delta_generation_failure_falls_back(self):
-        # Upload
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
-        self.assertThat(result.exit_code, Equals(0))
-
-        # Raise exception in delta upload
-        patcher = mock.patch("snapcraft._store._push_delta")
-        mock_push_delta = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_push_delta.side_effect = StoreDeltaApplicationError(
-            "There has been a problem while processing a snap delta."
-        )
-
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
-
         # Upload and ensure fallback is called
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+        with mock.patch(
+            "snapcraft._store._push_delta",
+            side_effect=StoreDeltaApplicationError("error"),
+        ):
             result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
-        mock_upload.assert_called_once_with(
+        self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
             built_at=None,
@@ -475,36 +317,24 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     def test_push_with_delta_upload_failure_falls_back(self):
         # Upload
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
 
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            "code": "ready_to_release",
-            "processed": True,
-            "can_release": True,
-            "url": "/fake/url",
-            "revision": 9,
-        }
         result = {
             "code": "processing_upload_delta_error",
             "errors": [{"message": "Delta service failed to apply delta within 60s"}],
         }
-        mock_tracker.raise_for_code.side_effect = [
+        self.mock_tracker.raise_for_code.side_effect = [
             storeapi.errors.StoreReviewError(result=result),
             None,
         ]
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
 
         # Upload and ensure fallback is called
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
-        mock_upload.assert_has_calls(
+        self.fake_store_upload.mock.assert_has_calls(
             [
                 mock.call(
                     snap_name="basic",
@@ -516,8 +346,6 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
                 ),
-                mock.call().track(),
-                mock.call().raise_for_code(),
                 mock.call(
                     snap_name="basic",
                     snap_filename=self.snap_file,
@@ -528,53 +356,38 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
                     source_hash=None,
                     target_hash=None,
                 ),
-                mock.call().track(),
-                mock.call().raise_for_code(),
             ]
         )
 
     def test_push_with_disabled_delta_falls_back(self):
         # Upload
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
 
-        original_upload = storeapi.StoreClient.upload
-        called = False
+        class _FakeResponse:
+            status_code = 501
 
-        def _fake_upload(*args, **kwargs):
-            nonlocal called
-            if called:
-                return original_upload(*args, **kwargs)
-            else:
-                called = True
-
-                class _FakeResponse:
-                    status_code = 501
-
-                    def json(self):
-                        return {
-                            "error_list": [
-                                {
-                                    "code": "feature-disabled",
-                                    "message": "The delta upload support is currently disabled.",
-                                }
-                            ]
+            def json(self):
+                return {
+                    "error_list": [
+                        {
+                            "code": "feature-disabled",
+                            "message": "The delta upload support is currently disabled.",
                         }
+                    ]
+                }
 
-                raise storeapi.errors.StoreServerError(_FakeResponse())
-
-        patcher = mock.patch.object(
-            storeapi.StoreClient, "upload", side_effect=_fake_upload
-        )
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.fake_store_upload.mock.side_effect = [
+            storeapi.errors.StoreServerError(_FakeResponse()),
+            self.mock_tracker,
+        ]
 
         # Upload and ensure fallback is called
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["push", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
-        mock_upload.assert_has_calls(
+        self.fake_store_upload.mock.assert_has_calls(
             [
                 mock.call(
                     snap_name="basic",
@@ -627,24 +440,13 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
     def test_push_revision_prune_snap_cache(self):
         snap_revision = 9
 
-        patcher = mock.patch.object(storeapi.StoreClient, "get_snap_revisions")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = [snap_revision]
-
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
+        self.mock_tracker.track.return_value = {
             "code": "ready_to_release",
             "processed": True,
             "can_release": True,
             "url": "/fake/url",
             "revision": snap_revision,
         }
-
-        patcher = mock.patch.object(storeapi.StoreClient, "upload")
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_upload.return_value = mock_tracker
 
         deb_arch = "amd64"
 
@@ -663,8 +465,8 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
             open(os.path.join(snap_cache, cached_snap), "a").close()
 
         # Upload
-        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["push", self.snap_file])
+
         self.assertThat(result.exit_code, Equals(0))
 
         real_cached_snap = os.path.join(
