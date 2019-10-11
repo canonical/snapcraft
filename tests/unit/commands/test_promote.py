@@ -141,7 +141,7 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            "snap-test", "2", ["candidate"]
+            snap_name="snap-test", revision="2", channels=["candidate"]
         )
 
     def test_promote_yes_option(self):
@@ -190,7 +190,7 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            "snap-test", "2", ["candidate"]
+            snap_name="snap-test", revision="2", channels=["candidate"]
         )
 
     def test_promote_confirm_no(self):
