@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 from textwrap import dedent
+from unittest import mock
 
 from click.testing import CliRunner
 
@@ -49,7 +50,7 @@ original_check_output = subprocess.check_output
 
 
 def mock_check_output(command, *args, **kwargs):
-    if command[0].endswith("unsquashfs"):
+    if command[0].endswith("unsquashfs") or command[0].endswith("xdelta3"):
         return original_check_output(command, *args, **kwargs)
     elif command == ["snap", "keys", "--json"]:
         return json.dumps(_sample_keys)
@@ -161,7 +162,14 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                             "private": False,
                             "since": "2016-12-12T01:01Z",
                             "price": "0",
-                        }
+                        },
+                        "basic": {
+                            "snap-id": "basic-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        },
                     }
                 },
             },
@@ -188,7 +196,26 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_register_key)
 
-        # Mock the snap command
+        # Uploading
+        self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        self.mock_tracker.track.return_value = {
+            "code": "ready_to_release",
+            "processed": True,
+            "can_release": True,
+            "url": "/fake/url",
+            "revision": 9,
+        }
+        self.fake_store_push_precheck = fixtures.MockPatchObject(
+            storeapi.StoreClient, "push_precheck"
+        )
+        self.useFixture(self.fake_store_push_precheck)
+
+        self.fake_store_upload = fixtures.MockPatchObject(
+            storeapi.StoreClient, "upload", return_value=self.mock_tracker
+        )
+        self.useFixture(self.fake_store_upload)
+
+        # Mock the snap command, pass through a select few.
         self.fake_check_output = fixtures.MockPatch(
             "subprocess.check_output", side_effect=mock_check_output
         )
