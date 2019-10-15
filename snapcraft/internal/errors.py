@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shlex
+
 from abc import ABC, abstractmethod
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
@@ -522,7 +524,7 @@ class SnapcraftPluginCommandError(SnapcraftError):
         self, *, command: Union[List, str], part_name: str, exit_code: int
     ) -> None:
         if isinstance(command, list):
-            command = " ".join(command)
+            command = " ".join([shlex.quote(c) for c in command])
         super().__init__(command=command, part_name=part_name, exit_code=exit_code)
 
 
