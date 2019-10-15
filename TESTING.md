@@ -60,7 +60,7 @@ In order to run these tests suites, first you will need to set up your developme
 
 Then, you'll need a few more dependencies:
 
-    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion
+    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion shellcheck
 
 ### Running the tests
 

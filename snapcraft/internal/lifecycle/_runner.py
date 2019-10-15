@@ -22,13 +22,14 @@ from snapcraft import config
 from snapcraft.internal import (
     common,
     errors,
-    meta,
     pluginhandler,
     project_loader,
     repo,
     states,
     steps,
 )
+from snapcraft.internal.meta._snap_packaging import create_snap_packaging
+
 from ._status_cache import StatusCache
 
 
@@ -65,6 +66,9 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
+    content_snaps = project_config.project._get_content_snaps()
+    required_snaps = project_config.build_snaps | content_snaps
+
     if common.is_process_container():
         installed_snaps = []  # type: List[str]
         logger.warning(
@@ -73,12 +77,12 @@ def execute(
                 "is running inside docker or podman container: {}.\n"
                 "Please ensure the environment is properly setup before continuing.\n"
                 "Ignore this message if the appropriate measures have already been taken".format(
-                    ", ".join(project_config.build_snaps)
+                    ", ".join(required_snaps)
                 )
             )
         )
     else:
-        installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
+        installed_snaps = repo.snaps.install_snaps(required_snaps)
 
     try:
         global_state = states.GlobalState.load(
@@ -305,7 +309,7 @@ class _Executor:
 
     def _create_meta(self, step: steps.Step, part_names: Sequence[str]) -> None:
         if step == steps.PRIME and part_names == self.config.part_names:
-            meta.create_snap_packaging(self.config)
+            create_snap_packaging(self.config)
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()

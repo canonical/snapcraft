@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +18,7 @@ import os
 import fixtures
 import shutil
 
-from testtools.matchers import Equals, Contains, FileContains, FileExists, Not
+from testtools.matchers import Equals, Contains, FileContains, FileExists
 
 from tests import integration
 
@@ -33,14 +33,6 @@ class SignBuildTestCase(integration.StoreTestCase):
         self.project = "basic"
         self.snap_path = "{}_0.1_all.snap".format(self.project)
         self.snap_build_path = "{}-build".format(self.snap_path)
-
-    def test_unsuccessful_sign_build_no_login(self):
-        self.run_snapcraft("snap", self.project)
-        self.assertThat(self.snap_path, FileExists())
-
-        status = self.sign_build(self.snap_path, local=True, expect_success=False)
-        self.assertThat(status, Equals(2))
-        self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_local(self):
         self.addCleanup(self.logout)
@@ -64,14 +56,6 @@ class SignBuildTestCase(integration.StoreTestCase):
         self.assertThat(
             snap_build_path, FileContains(matcher=Contains("type: snap-build"))
         )
-
-    def test_unsuccessful_sign_build_push_no_login(self):
-        self.run_snapcraft("snap", self.project)
-        self.assertThat(self.snap_path, FileExists())
-
-        status = self.sign_build(self.snap_path, expect_success=False)
-        self.assertThat(status, Equals(2))
-        self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_push(self):
         if not self.is_store_fake():

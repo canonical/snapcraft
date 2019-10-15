@@ -24,6 +24,7 @@ import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins import cmake
 from tests import fixture_setup, unit
+from typing import Any, Dict, List, Tuple
 
 
 class CMakeBaseTest(unit.TestCase):
@@ -198,7 +199,7 @@ class CMakeTest(CMakeBaseTest):
 
 class CMakeBuildTest(CMakeBaseTest):
 
-    scenarios = (
+    scenarios: List[Tuple[str, Dict[str, Any]]] = [
         ("no snaps", dict(build_snaps=[], expected_root_paths=[])),
         (
             "one build snap",
@@ -232,7 +233,7 @@ class CMakeBuildTest(CMakeBaseTest):
                 ],
             ),
         ),
-    )
+    ]
 
     def setUp(self):
         super().setUp()

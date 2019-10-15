@@ -123,6 +123,7 @@ def _fake_elffile_extract(self, path):
         "fake_elf-2.26",
         "fake_elf-bad-ldd",
         "fake_elf-with-core-libs",
+        "fake_elf-with-missing-libs",
         "fake_elf-bad-patchelf",
     ]:
         glibc = elf.NeededLibrary(name="libc.so.6")
@@ -271,6 +272,9 @@ class FakeElf(fixtures.Fixture):
             ),
             "fake_elf-with-core-libs": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-with-core-libs")
+            ),
+            "fake_elf-with-missing-libs": elf.ElfFile(
+                path=os.path.join(self.root_path, "fake_elf-with-missing-libs")
             ),
             "fake_elf-with-execstack": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-with-execstack")
@@ -533,12 +537,12 @@ class FakeAptCachePackage:
             return "{}={}".format(self.name, self.version)
 
     @property
-    def version(self):
-        return self._version
-
-    @property
     def is_auto_removable(self):
         return self.marked_install and self.is_auto_installed
+
+    @property
+    def version(self):
+        return self._version
 
     @version.setter
     def version(self, version):

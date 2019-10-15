@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,12 +32,6 @@ class GatedTestCase(integration.StoreTestCase):
         self.login()
         validations = [("snap-1", "3"), ("snap-2", "5")]
         self.assertThat(self.gated("core", validations), Equals(0))
-
-    def test_gated_no_login_failure(self):
-        self.assertThat(
-            self.gated("core", expected_output='Have you run "snapcraft login'),
-            Equals(2),
-        )
 
     def test_gated_unknown_snap_failure(self):
         self.addCleanup(self.logout)

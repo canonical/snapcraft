@@ -39,7 +39,7 @@ from tests.subprocess_utils import call, call_with_output
 try:
     from snapcraft import yaml_utils
 except ImportError:
-    import yaml as yaml_utils
+    import yaml as yaml_utils  # type: ignore
 
 
 class TempCWD(fixtures.Fixture):
@@ -688,10 +688,17 @@ class FakeBaseEnvironment(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         self.core_path = self.useFixture(fixtures.TempDir()).path
-        patcher = mock.patch("snapcraft.internal.common.get_core_path")
+        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
         mock_core_path = patcher.start()
         mock_core_path.return_value = self.core_path
         self.addCleanup(patcher.stop)
+
+        self.content_dirs = set([])
+        mock_content_dirs = fixtures.MockPatch(
+            "snapcraft.project._project.Project._get_provider_content_dirs",
+            return_value=self.content_dirs,
+        )
+        self.useFixture(mock_content_dirs)
 
         # Create file to represent the linker so it is found
         linker_path = os.path.join(self.core_path, self._LINKER_FOR_ARCH[self._machine])

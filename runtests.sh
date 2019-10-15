@@ -36,7 +36,7 @@ run_static_tests() {
     python3 -m flake8 .
 
     echo "Running mypy"
-    mypy --python-version 3.6 -p snapcraft
+    mypy .
 
     echo "Running codespell"
     codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py" -q4

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,11 +22,6 @@ from tests import integration
 
 
 class ChannelClosingTestCase(integration.StoreTestCase):
-    def test_missing_login(self):
-        expected = 'run "snapcraft login"'
-        status = self.close("basic", "beta", expected=expected)
-        self.assertThat(status, Equals(2))
-
     def test_missing_permission(self):
         self.addCleanup(self.logout)
         self.login()

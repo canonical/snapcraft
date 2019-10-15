@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import textwrap
 
 from testtools.matchers import Contains, Equals
@@ -62,11 +63,11 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         )
         self.assertThat(result.output, Contains(expected_output))
 
-    def test_no_login(self):
-        raised = self.assertRaises(
-            snapcraft.storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["gated", "notfound"],
+    def test_gated_without_login_must_ask(self):
+        result = self.run_command(
+            ["gated", "test-snap-with-no-validations"],
+            input="dummy\ntest correct password\n",
         )
-
-        self.assertThat(str(raised), Contains("Invalid credentials"))
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )

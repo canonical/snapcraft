@@ -31,6 +31,7 @@ import tests
 from . import CommandBaseTestCase
 
 
+# TODO migrate to FakeStoreCommandsBaseTestCase
 class PushCommandBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
@@ -76,7 +77,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
         mock_upload.assert_called_once_with(
-            "basic", self.snap_file, built_at=None, channels=[]
+            snap_name="basic",
+            snap_filename=self.snap_file,
+            built_at=None,
+            channels=[],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
     def test_push_with_started_at(self):
@@ -107,17 +115,66 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             self.fake_logger.output, r"Revision 9 of 'basic' created\."
         )
         mock_upload.assert_called_once_with(
-            "basic", snap_file, built_at="2019-05-07T19:25:53.939041Z", channels=[]
+            snap_name="basic",
+            snap_filename=snap_file,
+            built_at="2019-05-07T19:25:53.939041Z",
+            channels=[],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
-    def test_push_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["push", self.snap_file],
+    def test_push_without_login_must_ask(self):
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
+
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        mock_tracker.track.return_value = {
+            "code": "ready_to_release",
+            "processed": True,
+            "can_release": True,
+            "url": "/fake/url",
+            "revision": 9,
+        }
+        self.fake_store_upload = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "upload",
+            side_effect=[
+                storeapi.errors.InvalidCredentialsError("error"),
+                mock_tracker,
+            ],
+        )
+        self.useFixture(self.fake_store_upload)
+
+        result = self.run_command(
+            ["push", self.snap_file], input="\n\n\n\nuser@example.com\nsecret\n"
         )
 
-        self.assertThat(str(raised), Contains("Invalid credentials"))
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )
 
     def test_push_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push", "test-unexisting-snap"])
@@ -139,12 +196,16 @@ class PushCommandTestCase(PushCommandBaseTestCase):
     def test_push_unregistered_snap_must_raise_exception(self):
         class MockResponse:
             status_code = 404
-            error_list = [
-                {
-                    "code": "resource-not-found",
-                    "message": "Snap not found for name=basic",
-                }
-            ]
+
+            def json(self):
+                return dict(
+                    error_list=[
+                        {
+                            "code": "resource-not-found",
+                            "message": "Snap not found for name=basic",
+                        }
+                    ]
+                )
 
         self.mock_precheck.side_effect = StorePushError("basic", MockResponse())
 
@@ -154,11 +215,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Contains(
-                "You are not the publisher or allowed to push revisions for this "
-                "snap. To become the publisher, run `snapcraft register "
-                "basic` and try to push again."
-            ),
+            Contains("This snap is not registered. Register the snap and try again."),
         )
 
     def test_push_with_updown_error(self):
@@ -200,7 +257,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
         mock_upload.assert_called_once_with(
-            "basic", self.snap_file, built_at=None, channels=[]
+            snap_name="basic",
+            snap_filename=self.snap_file,
+            built_at=None,
+            channels=[],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
     def test_push_and_release_a_snap(self):
@@ -228,7 +292,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
         mock_upload.assert_called_once_with(
-            "basic", self.snap_file, built_at=None, channels=["beta"]
+            snap_name="basic",
+            snap_filename=self.snap_file,
+            built_at=None,
+            channels=["beta"],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
     def test_push_and_release_a_snap_to_N_channels(self):
@@ -259,10 +330,14 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
 
         mock_upload.assert_called_once_with(
-            "basic",
-            self.snap_file,
+            snap_name="basic",
+            snap_filename=self.snap_file,
             built_at=None,
             channels=["edge", "beta", "candidate"],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
     def test_push_displays_humanized_message(self):
@@ -388,7 +463,14 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             result = self.run_command(["push", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         mock_upload.assert_called_once_with(
-            "basic", self.snap_file, built_at=None, channels=[]
+            snap_name="basic",
+            snap_filename=self.snap_file,
+            built_at=None,
+            channels=[],
+            delta_format=None,
+            delta_hash=None,
+            source_hash=None,
+            target_hash=None,
         )
 
     def test_push_with_delta_upload_failure_falls_back(self):
@@ -425,18 +507,27 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         mock_upload.assert_has_calls(
             [
                 mock.call(
-                    "basic",
-                    mock.ANY,
+                    snap_name="basic",
+                    snap_filename=mock.ANY,
+                    built_at=None,
+                    channels=[],
                     delta_format="xdelta3",
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
-                    built_at=None,
-                    channels=[],
                 ),
                 mock.call().track(),
                 mock.call().raise_for_code(),
-                mock.call("basic", self.snap_file, built_at=None, channels=[]),
+                mock.call(
+                    snap_name="basic",
+                    snap_filename=self.snap_file,
+                    built_at=None,
+                    channels=[],
+                    delta_format=None,
+                    delta_hash=None,
+                    source_hash=None,
+                    target_hash=None,
+                ),
                 mock.call().track(),
                 mock.call().raise_for_code(),
             ]
@@ -451,10 +542,10 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         original_upload = storeapi.StoreClient.upload
         called = False
 
-        def _fake_upload(self, *args, **kwargs):
+        def _fake_upload(*args, **kwargs):
             nonlocal called
             if called:
-                return original_upload(self, *args, **kwargs)
+                return original_upload(*args, **kwargs)
             else:
                 called = True
 
@@ -486,16 +577,25 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         mock_upload.assert_has_calls(
             [
                 mock.call(
-                    "basic",
-                    mock.ANY,
+                    snap_name="basic",
+                    snap_filename=mock.ANY,
+                    built_at=None,
+                    channels=[],
                     delta_format="xdelta3",
                     delta_hash=mock.ANY,
                     source_hash=mock.ANY,
                     target_hash=mock.ANY,
+                ),
+                mock.call(
+                    snap_name="basic",
+                    snap_filename=self.snap_file,
                     built_at=None,
                     channels=[],
+                    delta_format=None,
+                    delta_hash=None,
+                    source_hash=None,
+                    target_hash=None,
                 ),
-                mock.call("basic", self.snap_file, built_at=None, channels=[]),
             ]
         )
 

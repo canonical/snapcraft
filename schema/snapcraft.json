@@ -622,7 +622,8 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
-                                    "gnome-3-28"
+                                    "gnome-3-28",
+                                    "kde-neon"
                                 ]
                             }
                         }
