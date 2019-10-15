@@ -16,14 +16,14 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.internal.project_loader._extensions.gnome_3_28 import Gnome_3_28Extension
+from snapcraft.internal.project_loader._extensions.gnome_3_28 import ExtensionImpl
 
 from .. import ProjectLoaderBaseTest
 
 
-class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
+class ExtensionTest(ProjectLoaderBaseTest):
     def test_extension(self):
-        gnome_extension = Gnome_3_28Extension(
+        gnome_extension = ExtensionImpl(
             extension_name="gnome-3.28", yaml_data=dict(base="core18")
         )
 
@@ -70,7 +70,13 @@ class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
             Equals(
                 {
                     "command-chain": ["snap/command-chain/desktop-launch"],
-                    "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
+                    "plugs": [
+                        "desktop",
+                        "desktop-legacy",
+                        "gsettings",
+                        "wayland",
+                        "x11",
+                    ],
                 }
             ),
         )
@@ -90,10 +96,9 @@ class Gnome_3_28_ExtensionTest(ProjectLoaderBaseTest):
         )
 
     def test_supported_bases(self):
-        self.assertThat(Gnome_3_28Extension.get_supported_bases(), Equals(("core18",)))
+        self.assertThat(ExtensionImpl.get_supported_bases(), Equals(("core18",)))
 
     def test_supported_confinement(self):
         self.assertThat(
-            Gnome_3_28Extension.get_supported_confinement(),
-            Equals(("strict", "devmode")),
+            ExtensionImpl.get_supported_confinement(), Equals(("strict", "devmode"))
         )

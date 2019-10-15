@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,22 +15,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import subprocess
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
-from tests import unit, skip
-from tests.subprocess_utils import call
+from tests import unit
 
 
 # LP: #1733584
 class TestSubversion(unit.sources.SourceTestCase):  # type: ignore
     def setUp(self):
-
         super().setUp()
+
         patcher = mock.patch("snapcraft.sources.Subversion._get_source_details")
         self.mock_get_source_details = patcher.start()
         self.mock_get_source_details.return_value = ""
@@ -136,53 +135,46 @@ class TestSubversion(unit.sources.SourceTestCase):  # type: ignore
         self.assertThat(raised.exit_code, Equals(1))
 
 
-class SubversionBaseTestCase(unit.TestCase):
-    def rm_dir(self, dir):
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
+def get_side_effect(original_call):
+    def side_effect(cmd, *args, **kwargs):
+        if len(cmd) > 1 and cmd[1] == "info":
+            return "mock-commit".encode()
+        elif cmd[0] == "svn":
+            return
+        return original_call(cmd, *args, **kwargs)
 
-    def clean_dir(self, dir):
-        self.rm_dir(dir)
-        os.mkdir(dir)
-        self.addCleanup(self.rm_dir, dir)
-
-    def clone_repo(self, repo, tree):
-        self.clean_dir(tree)
-        call(["svn", "checkout", "file://{}/{}".format(os.getcwd(), repo), tree])
-
-    def add_file(self, filename, body, message):
-        with open(filename, "w") as fp:
-            fp.write(body)
-
-        call(["svn", "add", filename])
-        call(["svn", "commit", "-m", message])
+    return side_effect
 
 
-class SubversionDetailsTestCase(SubversionBaseTestCase):
+class SubversionDetailsTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.repo_tree = "svn-repo"
         self.working_tree = "svn-test"
         self.source_dir = "svn-checkout"
-        self.clean_dir(self.repo_tree)
-        self.clean_dir(self.working_tree)
-        call(["svnadmin", "create", self.repo_tree])
-        self.clone_repo(self.repo_tree, self.working_tree)
-        os.chdir(self.working_tree)
-        self.add_file("testing", "test body", "test message")
+
         self.expected_commit = "1"
 
-        os.chdir("..")
+        self.fake_check_output = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output",
+                side_effect=get_side_effect(subprocess.check_output),
+            )
+        )
+        self.fake_check_call = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_call",
+                side_effect=get_side_effect(subprocess.check_call),
+            )
+        )
 
-        self.svn = sources.Subversion(self.repo_tree, self.source_dir, silent=True)
-        self.svn.pull()
-
-        self.source_details = self.svn._get_source_details()
-
-    @skip.skip_unless_codename(
-        ["xenial", "bionic"], "only supported where bases are defined"
-    )
     def test_svn_details_commit(self):
-        self.assertThat(
-            self.source_details["source-commit"], Equals(self.expected_commit)
+        svn = sources.Subversion(self.repo_tree, self.source_dir, silent=True)
+        svn.pull()
+
+        source_details = svn._get_source_details()
+        self.assertThat(source_details["source-commit"], Equals("mock-commit"))
+
+        self.fake_check_call.mock.assert_called_once_with(
+            ["svn", "checkout", "svn-repo", "svn-checkout"], stderr=-3, stdout=-3
         )

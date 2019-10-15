@@ -156,3 +156,45 @@ class InvalidDesktopFileError(errors.SnapcraftError):
 
     def __init__(self, filename: str, message: str) -> None:
         super().__init__(filename=filename, message=message)
+
+
+class PrimedCommandNotFoundError(errors.SnapcraftError):
+    fmt = (
+        "Failed to generate snap metadata: "
+        "Specified command {command!r} was not found.\n"
+        "Verify the command is correct and for a more "
+        "deterministic outcome, specify the relative path "
+        "to the command from the prime directory."
+    )
+
+    def __init__(self, command: str) -> None:
+        super().__init__(command=command)
+
+
+class ShebangNotFoundError(Exception):
+    """Internal exception for when a shebang is not found."""
+
+
+class ShebangInRoot(Exception):
+    """Internal exception for when a shebang is part of the root."""
+
+
+class SlotValidationError(errors.SnapcraftError):
+    fmt = "failed to validate slot={slot_name}: {message}"
+
+    def __init__(self, *, slot_name: str, message: str) -> None:
+        super().__init__(slot_name=slot_name, message=message)
+
+
+class PlugValidationError(errors.SnapcraftError):
+    fmt = "failed to validate plug={plug_name}: {message}"
+
+    def __init__(self, *, plug_name: str, message: str) -> None:
+        super().__init__(plug_name=plug_name, message=message)
+
+
+class HookValidationError(errors.SnapcraftError):
+    fmt = "failed to validate hook={hook_name}: {message}"
+
+    def __init__(self, *, hook_name: str, message: str) -> None:
+        super().__init__(hook_name=hook_name, message=message)

@@ -183,7 +183,7 @@ class ExtensionsCommandTest(CommandBaseTestCase):
 
 
 def _test1_extension_fixture():
-    class Test1Extension(Extension):
+    class ExtensionImpl(Extension):
         """This is the Test1 extension.
 
         It does stuff.
@@ -203,11 +203,11 @@ def _test1_extension_fixture():
             self.part_snippet = {"after": ["extension-part"]}
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test1", Test1Extension)
+    return fixture_setup.FakeExtension("test1", ExtensionImpl)
 
 
 def _test2_extension_fixture():
-    class Test2Extension(Extension):
+    class ExtensionImpl(Extension):
         """This is the Test2 extension.
 
         It does other stuff.
@@ -226,11 +226,11 @@ def _test2_extension_fixture():
             self.part_snippet = {"after": ["extension-part"]}
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test2", Test2Extension)
+    return fixture_setup.FakeExtension("test2", ExtensionImpl)
 
 
 def _test3_extension_fixture():
-    class Test3Extension(Extension):
+    class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16", "core18")
@@ -243,11 +243,11 @@ def _test3_extension_fixture():
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test3", Test3Extension)
+    return fixture_setup.FakeExtension("test3", ExtensionImpl)
 
 
 def _test4_extension_fixture():
-    class Test4Extension(Extension):
+    class ExtensionImpl(Extension):
         @staticmethod
         def get_supported_bases() -> Tuple[str, ...]:
             return ("core16", "core18")
@@ -260,4 +260,4 @@ def _test4_extension_fixture():
             super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("_test4", Test4Extension)
+    return fixture_setup.FakeExtension("_test4", ExtensionImpl)

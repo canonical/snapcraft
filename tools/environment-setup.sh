@@ -15,7 +15,7 @@ fi
 
 # Create the container
 if ! lxc info snapcraft-dev >/dev/null 2>&1; then
-    lxc init ubuntu:16.04 snapcraft-dev
+    lxc init ubuntu:18.04 snapcraft-dev
 fi
 if ! lxc config get snapcraft-dev raw.idmap | grep -q "both $UID 1000"; then
     lxc config set snapcraft-dev raw.idmap "both $UID 1000"
@@ -41,7 +41,6 @@ lxc exec snapcraft-dev -- apt install --yes \
     libxslt-dev \
     libyaml-dev \
     make \
-    p7zip-full \
     patchelf \
     python3-dev \
     python3-pip \

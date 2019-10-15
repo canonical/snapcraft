@@ -155,9 +155,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             apt.apt_pkg.config.find_file("Dir::Etc::TrustedParts"),
         )
 
-        patcher = mock.patch("multiprocessing.cpu_count")
+        patcher = mock.patch("os.sched_getaffinity")
         self.cpu_count = patcher.start()
-        self.cpu_count.return_value = 2
+        self.cpu_count.return_value = {1, 2}
         self.addCleanup(patcher.stop)
 
         # We do not want the paths to affect every test we have.

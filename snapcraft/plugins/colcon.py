@@ -27,6 +27,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       List of colcon packages to build. If not specified, all packages in the
       workspace will be built. If set to an empty list ([]), no packages will
       be built, which could be useful if you only want ROS debs in the snap.
+    - colcon-packages-ignore:
+      (list of strings)
+      List of colcon packages to ignore. If not specified or set to an empty
+      list ([]), no packages will be ignored.
     - colcon-source-space:
       (string)
       The source space containing colcon packages (defaults to 'src').
@@ -178,6 +182,14 @@ class ColconPlugin(snapcraft.BasePlugin):
             "default": [],
         }
 
+        schema["properties"]["colcon-packages-ignore"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+
         schema["required"] = ["source"]
 
         return schema
@@ -196,6 +208,7 @@ class ColconPlugin(snapcraft.BasePlugin):
             "colcon-cmake-args",
             "colcon-catkin-cmake-args",
             "colcon-ament-cmake-args",
+            "colcon-packages-ignore",
         ]
 
     @property
@@ -621,6 +634,11 @@ class ColconPlugin(snapcraft.BasePlugin):
             # Specify the packages to be built
             colconcmd.append("--packages-select")
             colconcmd.extend(self._packages)
+
+        if self.options.colcon_packages_ignore:
+            colconcmd.extend(
+                ["--packages-ignore"] + self.options.colcon_packages_ignore
+            )
 
         # Don't clutter the real ROS workspace-- use the Snapcraft build
         # directory

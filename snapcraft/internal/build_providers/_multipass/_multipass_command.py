@@ -73,6 +73,31 @@ class MultipassCommand:
         )
 
     @classmethod
+    def _wait_for_multipass_ready(cls, *, echoer):
+        echoer.wrapped("Waiting for multipass...")
+        retry_count = 20
+        while retry_count:
+            try:
+                output = subprocess.check_output([cls.provider_cmd, "version"]).decode()
+            except subprocess.CalledProcessError:
+                output = ""
+            except FileNotFoundError:
+                raise SnapcraftEnvironmentError(
+                    "multipass not found - please check that it can be found in the configured PATH"
+                )
+
+            # if multipassd is in the version information, it means the service is up
+            # and we can carry on
+            if "multipassd" in output:
+                break
+
+            retry_count -= 1
+            sleep(1)
+
+        # No need to worry about getting to this point by exhausting our retry count,
+        # the rest of the stack will handle the error appropriately.
+
+    @classmethod
     def setup_multipass(cls, *, echoer, platform: str) -> None:
         if platform == "linux":
             repo.snaps.install_snaps(["multipass/latest/beta"])
@@ -93,21 +118,7 @@ class MultipassCommand:
             )
 
         # wait for multipassd to be available
-        echoer.wrapped("Waiting for multipass...")
-        retry_count = 20
-        while retry_count:
-            try:
-                output = subprocess.check_output(["multipass", "version"]).decode()
-            except subprocess.CalledProcessError:
-                output = ""
-            # if multipassd is in the version information, it means the service is up
-            # and we can carry on
-            if "multipassd" in output:
-                break
-            retry_count -= 1
-            sleep(1)
-        # No need to worry about getting to this point by exhausting our retry count,
-        # the rest of the stack will handle the error appropriately.
+        cls._wait_for_multipass_ready(echoer=echoer)
 
     def __init__(self, *, platform: str) -> None:
         """Initialize a MultipassCommand instance.

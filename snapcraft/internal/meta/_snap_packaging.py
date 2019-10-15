@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import collections
 import contextlib
 import itertools
 import logging
@@ -34,29 +33,10 @@ from snapcraft.internal import common, errors, project_loader
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.meta import desktop, errors as meta_errors, _manifest, _version
-
+from snapcraft.internal.meta import errors as meta_errors, _manifest, _version
+from snapcraft.internal.meta.snap import Snap
 
 logger = logging.getLogger(__name__)
-
-
-_MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
-
-_OPTIONAL_PACKAGE_KEYS = [
-    "architectures",
-    "assumes",
-    "confinement",
-    "environment",
-    "epoch",
-    "grade",
-    "hooks",
-    "layout",
-    "license",
-    "plugs",
-    "slots",
-    "title",
-    "type",
-]
 
 
 # From snapd's snap/validate.go, appContentWhitelist, with a slight modification: don't
@@ -88,12 +68,12 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     # Update default values
     _update_yaml_with_defaults(project_config.data, project_config.validator.schema)
 
-    # Ensure the YAML contains all required keywords before continuing to
-    # use it to generate the snap.yaml.
-    _ensure_required_keywords(project_config.data)
-
     packaging = _SnapPackaging(project_config, extracted_metadata)
+    packaging.cleanup()
     packaging.validate_common_ids()
+    packaging.finalize_snap_meta_commands()
+    packaging.finalize_snap_meta_command_chains()
+    packaging.finalize_snap_meta_version()
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -292,22 +272,35 @@ def _update_yaml_with_defaults(config_data, schema):
             app["adapter"] = "full"
 
 
-def _ensure_required_keywords(config_data):
-    # Verify that all mandatory keys have been satisfied
-    missing_keys = []  # type: List[str]
-    for key in _MANDATORY_PACKAGE_KEYS:
-        if key not in config_data:
-            missing_keys.append(key)
+def _check_passthrough_duplicates_section(yaml: Dict[str, Any]) -> None:
+    # Any value already in the original dictionary must
+    # not be specified in passthrough at the same time.
+    if "passthrough" not in yaml:
+        return
 
-    if missing_keys:
-        raise meta_errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
+    passthrough = yaml["passthrough"]
+    duplicates = list(yaml.keys() & passthrough.keys())
+    if duplicates:
+        raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
+
+
+def _check_passthrough_duplicates(snap_yaml: Dict[str, Any]) -> None:
+    """Check passthrough properties for duplicate keys.
+
+    Passthrough options may override assumed/extracted configuration,
+    so this check must be done on the original YAML."""
+
+    for section in ["apps", "hooks"]:
+        if section not in snap_yaml:
+            continue
+
+        for value in snap_yaml[section].values():
+            _check_passthrough_duplicates_section(value)
+
+    _check_passthrough_duplicates_section(snap_yaml)
 
 
 class _SnapPackaging:
-    @property
-    def meta_dir(self) -> str:
-        return self._meta_dir
-
     def __init__(
         self,
         project_config: _config.Config,
@@ -318,54 +311,92 @@ class _SnapPackaging:
         self._snapcraft_yaml_path = project_config.project.info.snapcraft_yaml_file_path
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
+
         self._arch_triplet = project_config.project.arch_triplet
         self._global_state_file = project_config.project._get_global_state_file_path()
         self._is_host_compatible_with_base = (
             project_config.project.is_host_compatible_with_base
         )
-        self._meta_dir = os.path.join(self._prime_dir, "meta")
+        self.meta_dir = os.path.join(self._prime_dir, "meta")
+        self.meta_gui_dir = os.path.join(self.meta_dir, "gui")
         self._config_data = project_config.data.copy()
         self._original_snapcraft_yaml = project_config.project.info.get_raw_snapcraft()
-        self._meta_runner = os.path.join(
-            self._prime_dir, "snap", "command-chain", "snapcraft-runner"
-        )
 
         self._install_path_pattern = re.compile(
             r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))
         )
 
-        os.makedirs(self._meta_dir, exist_ok=True)
+        os.makedirs(self.meta_dir, exist_ok=True)
 
-    def write_snap_yaml(self) -> str:
-        common.env = self._project_config.snap_env()
+        # TODO: create_snap_packaging managles config data, so we create
+        # a new private instance of snap_meta.  Longer term, this needs
+        # to converge with project's snap_meta.
+        self._snap_meta = Snap.from_dict(project_config.data)
 
-        try:
-            # Only generate the meta command chain if there are apps that need it
-            if self._config_data.get("apps", None):
-                self._generate_command_chain()
+    def cleanup(self):
+        if os.path.exists(self.meta_gui_dir):
+            for f in os.listdir(self.meta_gui_dir):
+                if os.path.splitext(f)[1] == ".desktop":
+                    os.remove(os.path.join(self.meta_gui_dir, f))
 
-            package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
-            snap_yaml = self._compose_snap_yaml()
+    def finalize_snap_meta_commands(self) -> None:
+        for app_name, app in self._snap_meta.apps.items():
+            app.prime_commands(
+                base=self._project_config.project.info.base, prime_dir=self._prime_dir
+            )
 
-            with open(package_snap_path, "w") as f:
-                yaml_utils.dump(snap_yaml, stream=f)
+    def finalize_snap_meta_command_chains(self) -> None:
+        prepend_command_chain = self._generate_command_chain()
+        for app_name, app in self._snap_meta.apps.items():
+            app.prepend_command_chain = prepend_command_chain
 
-            return snap_yaml
-        finally:
-            common.reset_env()
+    def finalize_snap_meta_version(self) -> None:
+        # Reparse the version, the order should stick.
+        version = self._config_data["version"]
+        version_script = self._config_data.get("version-script")
+
+        if version_script:
+            # Deprecation warning for use of version-script.
+            handle_deprecation_notice("dn10")
+
+        self._snap_meta.version = _version.get_version(version, version_script)
+
+    def write_snap_yaml(self) -> None:
+        # Ensure snap meta is valid before writing.
+        self._snap_meta.validate()
+        _check_passthrough_duplicates(self._original_snapcraft_yaml)
+
+        package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
+        self._snap_meta.write_snap_yaml(path=package_snap_path)
 
     def setup_assets(self) -> None:
         # We do _setup_from_setup first since it is legacy and let the
         # declarative items take over.
         self._setup_gui()
 
+        # Extracted metadata (e.g. from the AppStream) can override the
+        # icon location.
+        if self._extracted_metadata:
+            icon_path = self._extracted_metadata.get_icon()
+        else:
+            icon_path = None
+
+        snap_name = self._project_config.project.info.name
+        for app_name, app in self._snap_meta.apps.items():
+            app.write_command_wrappers(prime_dir=self._prime_dir)
+            app.write_application_desktop_file(
+                snap_name=snap_name,
+                prime_dir=self._prime_dir,
+                gui_dir=self.meta_gui_dir,
+                icon_path=icon_path,
+            )
+            app.validate_command_chain_executables(self._prime_dir)
+
         if "icon" in self._config_data:
             # TODO: use developer.ubuntu.com once it has updated documentation.
             icon_ext = self._config_data["icon"].split(os.path.extsep)[-1]
-            icon_dir = os.path.join(self.meta_dir, "gui")
-            icon_path = os.path.join(icon_dir, "icon.{}".format(icon_ext))
-            if not os.path.exists(icon_dir):
-                os.mkdir(icon_dir)
+            icon_path = os.path.join(self.meta_gui_dir, "icon.{}".format(icon_ext))
+            os.makedirs(self.meta_gui_dir, exist_ok=True)
             if os.path.exists(icon_path):
                 os.unlink(icon_path)
             file_utils.link_or_copy(self._config_data["icon"], icon_path)
@@ -377,22 +408,29 @@ class _SnapPackaging:
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
 
-    def _generate_command_chain(self):
+    def _generate_command_chain(self) -> List[str]:
+        command_chain = list()
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
         if (
             self._config_data["confinement"] == "classic"
             or not self._is_host_compatible_with_base
+            or not self._snap_meta.apps
         ):
             assembled_env = None
         else:
+            meta_runner = os.path.join(
+                self._prime_dir, "snap", "command-chain", "snapcraft-runner"
+            )
+
+            common.env = self._project_config.snap_env()
             assembled_env = common.assemble_env()
             assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
             assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
 
             if assembled_env:
-                os.makedirs(os.path.dirname(self._meta_runner), exist_ok=True)
-                with open(self._meta_runner, "w") as f:
+                os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
+                with open(meta_runner, "w") as f:
                     print("#!/bin/sh", file=f)
                     print(assembled_env, file=f)
                     print(
@@ -400,7 +438,12 @@ class _SnapPackaging:
                         file=f,
                     )
                     print('exec "$@"', file=f)
-                os.chmod(self._meta_runner, 0o755)
+                os.chmod(meta_runner, 0o755)
+
+            common.reset_env()
+            command_chain.append(os.path.relpath(meta_runner, self._prime_dir))
+
+        return command_chain
 
     def _record_manifest_and_source_snapcraft_yaml(self):
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
@@ -426,7 +469,7 @@ class _SnapPackaging:
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
 
         snap_dir_iter = itertools.product([prime_snap_dir], ["hooks"])
-        meta_dir_iter = itertools.product([self._meta_dir], ["hooks", "gui"])
+        meta_dir_iter = itertools.product([self.meta_dir], ["hooks", "gui"])
 
         for origin in itertools.chain(snap_dir_iter, meta_dir_iter):
             src_dir = os.path.join(snap_assets_dir, origin[1])
@@ -445,7 +488,7 @@ class _SnapPackaging:
                     # Ensure that the hook is executable in meta/hooks, this is a moot
                     # point considering the prior link_or_copy call, but is technically
                     # correct and allows for this operation to take place only once.
-                    if origin[0] == self._meta_dir and origin[1] == "hooks":
+                    if origin[0] == self.meta_dir and origin[1] == "hooks":
                         _prepare_hook(destination)
 
         self._record_manifest_and_source_snapcraft_yaml()
@@ -476,59 +519,11 @@ class _SnapPackaging:
         handle_deprecation_notice("dn3")
 
         gui_src = os.path.join(setup_dir, "gui")
-        gui_dst = os.path.join(self.meta_dir, "gui")
         if os.path.exists(gui_src):
             for f in os.listdir(gui_src):
-                if not os.path.exists(gui_dst):
-                    os.mkdir(gui_dst)
-                shutil.copy2(os.path.join(gui_src, f), gui_dst)
-
-    def _compose_snap_yaml(self):
-        """Create a new dictionary from config_data to obtain snap.yaml.
-
-        Missing key exceptions will be raised if config_data does not contain
-        all the _MANDATORY_PACKAGE_KEYS, config_data can be validated against
-        the snapcraft schema.
-
-        Keys that are in _OPTIONAL_PACKAGE_KEYS are ignored if not there.
-        """
-        snap_yaml = collections.OrderedDict()
-
-        for key_name in _MANDATORY_PACKAGE_KEYS:
-            snap_yaml[key_name] = self._config_data[key_name]
-
-        # If the base is core in snapcraft.yaml we do not set it in
-        # snap.yaml LP: #1819290
-        if "base" in self._config_data and self._config_data["base"] != "core":
-            snap_yaml["base"] = self._config_data["base"]
-
-        # Reparse the version, the order should stick.
-        version = self._config_data["version"]
-        version_script = self._config_data.get("version-script")
-
-        if version_script:
-            # Deprecation warning for use of version-script.
-            handle_deprecation_notice("dn10")
-
-        snap_yaml["version"] = _version.get_version(version, version_script)
-
-        for key_name in _OPTIONAL_PACKAGE_KEYS:
-            if key_name in self._config_data:
-                snap_yaml[key_name] = self._config_data[key_name]
-
-        if "apps" in self._config_data:
-            _verify_app_paths(basedir=self._prime_dir, apps=self._config_data["apps"])
-            snap_yaml["apps"] = self._wrap_apps(self._config_data["apps"])
-            self._render_socket_modes(snap_yaml["apps"])
-            self._validate_command_chain(snap_yaml["apps"])
-
-        self._process_passthrough_properties(snap_yaml)
-        assumes = _determine_assumes(self._config_data)
-        if assumes:
-            # Sorting for consistent results (order doesn't matter)
-            snap_yaml["assumes"] = sorted(set(snap_yaml.get("assumes", [])) | assumes)
-
-        return snap_yaml
+                if not os.path.exists(self.meta_gui_dir):
+                    os.mkdir(self.meta_gui_dir)
+                shutil.copy2(os.path.join(gui_src, f), self.meta_gui_dir)
 
     def _write_wrap_exe(self, wrapexec, wrappath, shebang=None, args=None, cwd=None):
         if args:
@@ -587,154 +582,6 @@ class _SnapPackaging:
 
         return os.path.relpath(wrappath, self._prime_dir)
 
-    def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
-        apps = copy.deepcopy(apps)
-        gui_dir = os.path.join(self.meta_dir, "gui")
-        if not os.path.exists(gui_dir):
-            os.mkdir(gui_dir)
-        for f in os.listdir(gui_dir):
-            if os.path.splitext(f)[1] == ".desktop":
-                os.remove(os.path.join(gui_dir, f))
-        for app_name, app in apps.items():
-            adapter = project_loader.Adapter[app.pop("adapter").upper()]
-            if adapter == project_loader.Adapter.LEGACY:
-                self._wrap_app(app_name, app)
-            elif adapter == project_loader.Adapter.FULL:
-                self._add_command_chain_to_app(app_name, app)
-            self._generate_desktop_file(app_name, app)
-        return apps
-
-    def _add_command_chain_to_app(self, app_name, app):
-        # First, validate the commands. Without a wrapper, we're bound by snapd's
-        # restrictions. No quotes, and the first string must be a relative path from
-        # the root of the snap.
-        commands = (app[k] for k in ("command", "stop-command") if k in app)
-        for command in commands:
-            if not _APP_COMMAND_PATTERN.match(command):
-                raise meta_errors.InvalidAppCommandFormatError(command, app_name)
-
-            command_without_args = command.split()[0]
-            binary_path = os.path.join(self._prime_dir, command_without_args)
-            is_executable = False
-            try:
-                mode = os.stat(binary_path).st_mode
-                is_executable = (
-                    mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH
-                )
-            except FileNotFoundError:
-                raise meta_errors.InvalidAppCommandNotFound(
-                    command_without_args, app_name
-                )
-
-            if not is_executable:
-                raise meta_errors.InvalidAppCommandNotExecutable(
-                    command_without_args, app_name
-                )
-
-        # Finally, assuming there is a meta runner, add it to the BEGINNING of the
-        # command chain. This is to ensure all subsequent commands in the chain get
-        # a valid environment.
-        if os.path.isfile(self._meta_runner):
-            app["command-chain"] = [
-                os.path.relpath(self._meta_runner, self._prime_dir)
-            ] + app.get("command-chain", [])
-
-    def _wrap_app(self, name, app):
-        cmds = (k for k in ("command", "stop-command") if k in app)
-        for k in cmds:
-            try:
-                new_command = self._wrap_exe(app[k], "{}-{}".format(k, name))
-            except FileNotFoundError:
-                raise meta_errors.InvalidAppCommandNotFound(
-                    command=app[k], app_name=app
-                )
-            except meta_errors.CommandError as e:
-                raise meta_errors.InvalidAppCommandError(str(e), name)
-
-            if os.path.isfile(self._meta_runner):
-                snap_runner = os.path.relpath(self._meta_runner, self._prime_dir)
-                new_command = "{} $SNAP/{}".format(snap_runner, new_command)
-            app[k] = new_command
-
-    def _generate_desktop_file(self, name, app):
-        # Extracted metadata (e.g. from the AppStream) can override the
-        # icon location.
-        if self._extracted_metadata:
-            icon_path = self._extracted_metadata.get_icon()
-        else:
-            icon_path = None
-
-        desktop_file_name = app.pop("desktop", "")
-        if desktop_file_name:
-            desktop_file = desktop.DesktopFile(
-                snap_name=self._config_data["name"],
-                app_name=name,
-                filename=desktop_file_name,
-                prime_dir=self._prime_dir,
-            )
-            desktop_file.write(
-                gui_dir=os.path.join(self.meta_dir, "gui"), icon_path=icon_path
-            )
-
-    def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
-        for app in apps.values():
-            sockets = app.get("sockets", {})
-            for socket in sockets.values():
-                mode = socket.get("socket-mode")
-                if mode is not None:
-                    socket["socket-mode"] = yaml_utils.OctInt(mode)
-
-    def _validate_command_chain(self, apps: Dict[str, Any]) -> None:
-        for app_name, app in apps.items():
-            for item in app.get("command-chain", []):
-                executable_path = os.path.join(self._prime_dir, item)
-
-                # command-chain entries must always be relative to the root of the snap,
-                # i.e. PATH is not used.
-                if not _executable_is_valid(executable_path):
-                    raise meta_errors.InvalidCommandChainError(item, app_name)
-
-    def _process_passthrough_properties(self, snap_yaml: Dict[str, Any]) -> None:
-        passthrough_applied = False
-
-        for section in ["apps", "hooks"]:
-            if section in self._config_data:
-                for name, value in snap_yaml[section].items():
-                    if self._apply_passthrough(
-                        value,
-                        value.pop("passthrough", {}),
-                        self._original_snapcraft_yaml[section][name],
-                    ):
-                        passthrough_applied = True
-
-        if self._apply_passthrough(
-            snap_yaml,
-            self._config_data.get("passthrough", {}),
-            self._original_snapcraft_yaml,
-        ):
-            passthrough_applied = True
-
-        if passthrough_applied:
-            logger.warn(
-                "The 'passthrough' property is being used to "
-                "propagate experimental properties to snap.yaml "
-                "that have not been validated."
-            )
-
-    def _apply_passthrough(
-        self,
-        section: Dict[str, Any],
-        passthrough: Dict[str, Any],
-        original: collections.OrderedDict,
-    ) -> bool:
-        # Any value already in the original dictionary must
-        # not be specified in passthrough at the same time.
-        duplicates = list(original.keys() & passthrough.keys())
-        if duplicates:
-            raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
-        section.update(passthrough)
-        return bool(passthrough)
-
     def validate_common_ids(self) -> None:
         if (
             not self._extracted_metadata
@@ -755,19 +602,6 @@ class _SnapPackaging:
                 )
 
 
-def _determine_assumes(yaml_data: Dict[str, Any]) -> Set[str]:
-    # Order doesn't really matter, but we don't want duplicates, so use a set
-    assumes = set()
-
-    # Check to see if any apps use the "full" adapter, which requires command-chain
-    for app in yaml_data.get("apps", dict()).values():
-        adapter = project_loader.Adapter[app["adapter"].upper()]
-        if adapter == project_loader.Adapter.FULL:
-            assumes.add("command-chain")
-
-    return assumes
-
-
 def _find_bin(binary, basedir):
     # If it doesn't exist it might be in the path
     logger.debug("Checking that {!r} is in the $PATH".format(binary))
@@ -781,22 +615,3 @@ def _prepare_hook(hook_path):
     # Ensure hook is executable
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         os.chmod(hook_path, 0o755)
-
-
-def _verify_app_paths(basedir, apps):
-    for app in apps:
-        path_entries = [i for i in ("desktop", "completer") if i in apps[app]]
-        for path_entry in path_entries:
-            file_path = os.path.join(basedir, apps[app][path_entry])
-            if not os.path.exists(file_path):
-                raise errors.SnapcraftPathEntryError(
-                    app=app, key=path_entry, value=file_path
-                )
-
-
-def _executable_is_valid(path: str) -> bool:
-    with contextlib.suppress(FileNotFoundError):
-        mode = os.stat(path).st_mode
-        return bool(mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH)
-
-    return False

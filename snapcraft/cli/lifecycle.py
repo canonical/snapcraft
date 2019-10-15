@@ -280,6 +280,7 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@click.pass_context
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
     "--use-lxd",
@@ -294,8 +295,8 @@ def pack(directory, output, **kwargs):
     help="Forces snapcraft to try and use the current host to clean.",
 )
 @click.option("--unprime", is_flag=True, required=False, hidden=True)
-@click.option("--step", required=False, hidden=True)
-def clean(parts, use_lxd, destructive_mode, unprime, step):
+@click.option("--step", "-s", required=False, hidden=True)
+def clean(ctx, parts, use_lxd, destructive_mode, unprime, step):
     """Remove a part's assets.
 
     \b
@@ -305,7 +306,8 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     """
     # This option is only valid in legacy.
     if step:
-        raise click.BadOptionUsage("--step", "no such option: --step")
+        option = "--step" if "--step" in ctx.obj["argv"] else "-s"
+        raise click.BadOptionUsage(option, "no such option: {}".format(option))
 
     build_environment = get_build_environment(
         use_lxd=use_lxd, destructive_mode=destructive_mode

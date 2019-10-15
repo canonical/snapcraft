@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2018 Canonical Ltd
+# Copyright 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -55,7 +55,9 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "description": "Description of the most simple snap",
             "summary": "Summary of the most simple snap",
         }
-        self.mock_metadata.assert_called_once_with("basic", text_metadata, force)
+        self.mock_metadata.assert_called_once_with(
+            snap_name="basic", metadata=text_metadata, force=force
+        )
         # binary metadata
         args, _ = self.mock_binary_metadata.call_args
         self.assertEqual(args[0], "basic")
@@ -108,14 +110,44 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("The metadata has been pushed"))
         self.assert_expected_metadata_calls(force=False)
 
-    def test_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["push-metadata", self.snap_file],
-        )
+    def test_push_metadata_without_login_must_ask(self):
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
 
-        self.assertThat(str(raised), Contains("Invalid credentials"))
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        self.fake_store_push_metadata = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "push_metadata",
+            side_effect=[storeapi.errors.InvalidCredentialsError("error"), None],
+        )
+        self.useFixture(self.fake_store_push_metadata)
+
+        result = self.run_command(
+            ["push-metadata", self.snap_file], input="user@example.com\nsecret\n"
+        )
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )
 
     def test_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(["push-metadata", "test-unexisting-snap"])
@@ -124,12 +156,16 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
     def test_unregistered_snap_must_raise_exception(self):
         class MockResponse:
             status_code = 404
-            error_list = [
-                {
-                    "code": "resource-not-found",
-                    "message": "Snap not found for name=basic",
-                }
-            ]
+
+            def json(self):
+                return dict(
+                    error_list=[
+                        {
+                            "code": "resource-not-found",
+                            "message": "Snap not found for name=basic",
+                        }
+                    ]
+                )
 
         patcher = mock.patch.object(storeapi.StoreClient, "push_precheck")
         mock_precheck = patcher.start()
@@ -144,11 +180,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Contains(
-                "You are not the publisher or allowed to push revisions for this "
-                "snap. To become the publisher, run `snapcraft register "
-                "basic` and try to push again."
-            ),
+            Contains("This snap is not registered. Register the snap and try again."),
         )
 
     def test_forced(self):

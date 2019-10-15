@@ -87,9 +87,9 @@ def run_output(cmd: List[str], **kwargs) -> str:
         return output.decode("latin-1", "surrogateescape").strip()
 
 
-def get_core_path(base):
-    """Returns the path to the core base snap."""
-    return os.path.join(os.path.sep, "snap", base, "current")
+def get_installed_snap_path(snap_name: str):
+    """Returns the path to the currently installed snap."""
+    return os.path.join(os.path.sep, "snap", snap_name, "current")
 
 
 def format_snap_name(snap, *, allow_empty_version: bool = False) -> str:
@@ -268,6 +268,16 @@ def format_output_in_columns(
         result_output.append(sep.join(candidate_output[i]))
 
     return result_output
+
+
+def get_bin_paths(*, root: str, existing_only=True) -> List[str]:
+    paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
+    rooted_paths = (os.path.join(root, p) for p in paths)
+
+    if existing_only:
+        return [p for p in rooted_paths if os.path.exists(p)]
+    else:
+        return list(rooted_paths)
 
 
 def get_include_paths(root, arch_triplet):

@@ -463,9 +463,31 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
         name = request.json_body["name"]
         if name == "test-snap-unregistered":
-            payload = b""
+            payload = json.dumps(
+                {
+                    "error_list": [
+                        {
+                            "code": "resource-not-found",
+                            "message": "the snap name does not exist",
+                        }
+                    ]
+                }
+            ).encode()
             response_code = 404
-            content_type = "text/plain"
+            content_type = "application/json"
+        elif name == "test-snap-forbidden":
+            payload = json.dumps(
+                {
+                    "error_list": [
+                        {
+                            "code": "resource-forbidden",
+                            "message": "not allowed to publish this snap name",
+                        }
+                    ]
+                }
+            ).encode()
+            response_code = 403
+            content_type = "application/json"
         else:
             response_code = 202
             content_type = "application/json"
@@ -1101,6 +1123,29 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             "channel_map_tree": {
                 "latest": {
                     "16": {
+                        "all": [
+                            {"info": "none", "channel": "stable"},
+                            {"info": "none", "channel": "candidate"},
+                            {
+                                "info": "specific",
+                                "version": "1.1-amd64",
+                                "channel": "beta",
+                                "revision": 6,
+                            },
+                            {
+                                "info": "specific",
+                                "version": "1.0-i386",
+                                "channel": "edge",
+                                "revision": 3,
+                            },
+                            {
+                                "info": "branch",
+                                "version": "1.1-i386",
+                                "channel": "edge/test",
+                                "revision": 9,
+                                "expires_at": "2019-05-30T01:17:06.465504",
+                            },
+                        ],
                         "i386": [
                             {"info": "none", "channel": "stable"},
                             {"info": "none", "channel": "candidate"},

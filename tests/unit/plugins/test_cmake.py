@@ -24,6 +24,7 @@ import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins import cmake
 from tests import fixture_setup, unit
+from typing import Any, Dict, List, Tuple
 
 
 class CMakeBaseTest(unit.TestCase):
@@ -122,6 +123,23 @@ class CMakeTest(CMakeBaseTest):
             ]
         )
 
+    def test_build_disable_parallel(self):
+        self.options.disable_parallel = True
+
+        plugin = cmake.CMakePlugin("test-part", self.options, self.project)
+        os.makedirs(plugin.builddir)
+        plugin.build()
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["cmake", "--build", ".", "--", "-j1"],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                )
+            ]
+        )
+
     def test_build_environment(self):
         plugin = cmake.CMakePlugin("test-part", self.options, self.project)
         os.makedirs(plugin.builddir)
@@ -181,7 +199,7 @@ class CMakeTest(CMakeBaseTest):
 
 class CMakeBuildTest(CMakeBaseTest):
 
-    scenarios = (
+    scenarios: List[Tuple[str, Dict[str, Any]]] = [
         ("no snaps", dict(build_snaps=[], expected_root_paths=[])),
         (
             "one build snap",
@@ -215,7 +233,7 @@ class CMakeBuildTest(CMakeBaseTest):
                 ],
             ),
         ),
-    )
+    ]
 
     def setUp(self):
         super().setUp()

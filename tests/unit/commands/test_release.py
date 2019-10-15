@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from textwrap import dedent
-from unittest import mock
-
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-class ReleaseCommandTestCase(CommandBaseTestCase):
+class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
     def test_upload_without_snap_must_raise_exception(self):
         result = self.run_command(["release"])
 
@@ -30,10 +28,7 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_release_snap(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["beta"],
             "channel_map_tree": {
                 "latest": {
@@ -71,13 +66,12 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )
-        mock_release.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
     def test_release_snap_with_lts_channel(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["2.1/beta"],
             "channel_map_tree": {
                 "2.1": {
@@ -115,13 +109,12 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )
-        mock_release.assert_called_once_with("nil-snap", "19", ["2.1/beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["2.1/beta"]
+        )
 
     def test_release_snap_with_branch(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["stable/hotfix1"],
             "channel_map_tree": {
                 "2.1": {
@@ -167,13 +160,12 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )  # noqa
-        mock_release.assert_called_once_with("nil-snap", "20", ["stable/hotfix1"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="20", channels=["stable/hotfix1"]
+        )
 
     def test_release_snap_opens_more_than_one_channel(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "opened_channels": ["stable", "beta", "edge"],
             "channel_map_tree": {
                 "latest": {
@@ -211,13 +203,12 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )  # noqa
-        mock_release.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
     def test_release_with_bad_channel_info(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "release")
-        mock_release = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_release.return_value = {
+        self.fake_store_release.mock.return_value = {
             "channel_map_tree": {
                 "latest": {
                     "16": {
@@ -241,7 +232,9 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-        mock_release.assert_called_once_with("nil-snap", "19", ["beta"])
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap", revision="19", channels=["beta"]
+        )
 
         # output will include the channel with no info, but there will be a log
         # in error alerting the problem
@@ -265,11 +258,34 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
             ),
         )
 
-    def test_release_without_login_must_raise_exception(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["release", "nil-snap", "19", "beta"],
-        )
+    def test_release_without_login_must_ask(self):
+        self.fake_store_release.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            {
+                "opened_channels": ["beta"],
+                "channel_map_tree": {
+                    "latest": {
+                        "16": {
+                            "amd64": [
+                                {"channel": "stable", "info": "none"},
+                                {"channel": "candidate", "info": "none"},
+                                {
+                                    "revision": 19,
+                                    "channel": "beta",
+                                    "version": "0",
+                                    "info": "specific",
+                                },
+                                {"channel": "edge", "info": "tracking"},
+                            ]
+                        }
+                    }
+                },
+            },
+        ]
 
-        self.assertThat(str(raised), Contains("Invalid credentials"))
+        result = self.run_command(
+            ["release", "nil-snap", "19", "beta"], input="user@example.com\nsecret\n"
+        )
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )

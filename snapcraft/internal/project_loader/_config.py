@@ -26,6 +26,7 @@ from typing import Set  # noqa: F401
 from snapcraft import project, formatting_utils
 from snapcraft.internal import common, deprecations, repo, states, steps
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.meta.snap import Snap
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
@@ -209,6 +210,11 @@ class Config:
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
         self.data = self._expand_env(snapcraft_yaml)
+
+        self.data["architectures"] = _process_architectures(
+            self.data.get("architectures"), project.deb_arch
+        )
+
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
@@ -222,12 +228,12 @@ class Config:
         if self.data.get("version") == "git":
             self.build_tools.add("git")
 
+        # XXX: Resetting snap_meta due to above mangling of data.
+        # Convergence to operating on snap_meta will remove this requirement...
+        project._snap_meta = Snap.from_dict(self.data)
+
         # Always add the base for building for non os and base snaps
-        if project.info.base is None and project.info.type in (
-            "app",
-            "gadget",
-            "kernel",
-        ):
+        if project.info.base is None and project.info.type in ("app", "gadget"):
             raise SnapcraftEnvironmentError(
                 "A base is required for snaps of type {!r}.".format(project.info.type)
             )
@@ -246,10 +252,6 @@ class Config:
             validator=self.validator,
             build_snaps=self.build_snaps,
             build_tools=self.build_tools,
-        )
-
-        self.data["architectures"] = _process_architectures(
-            self.data.get("architectures"), project.deb_arch
         )
 
     def _ensure_no_duplicate_app_aliases(self):

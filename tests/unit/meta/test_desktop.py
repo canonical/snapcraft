@@ -26,18 +26,41 @@ from tests import unit
 
 class DesktopExecTest(unit.TestCase):
     scenarios = (
-        ("snap name != app name", dict(app_name="bar", expected_exec="foo.bar")),
-        ("snap name == app name", dict(app_name="foo", expected_exec="foo")),
+        (
+            "snap name != app name",
+            dict(app_name="bar", app_args="", expected_exec="foo.bar"),
+        ),
+        (
+            "snap name != app name",
+            dict(app_name="bar", app_args="--arg", expected_exec="foo.bar --arg"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="", expected_exec="foo"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="--arg", expected_exec="foo --arg"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="--arg %U", expected_exec="foo --arg %U"),
+        ),
+        (
+            "snap name == app name",
+            dict(app_name="foo", app_args="%U", expected_exec="foo %U"),
+        ),
     )
 
     def setUp(self):
         super().setUp()
         self.snap_name = "foo"
         self.desktop_file_path = "app.desktop"
+        self.exec = " ".join(["in-snap-exe", self.app_args])
 
         with open(self.desktop_file_path, "w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
-            print("Exec=in-snap-exe", file=desktop_file)
+            print("Exec={}".format(self.exec), file=desktop_file)
 
         self.expected_desktop_file = "{}.desktop".format(self.app_name)
 
@@ -57,7 +80,7 @@ class DesktopExecTest(unit.TestCase):
                 dedent(
                     """\
             [Desktop Entry]
-            Exec={} %U
+            Exec={}
 
         """
                 ).format(self.expected_exec)
@@ -118,11 +141,53 @@ class DesktopIconTest(unit.TestCase):
                 dedent(
                     """\
             [Desktop Entry]
-            Exec=foo %U
+            Exec=foo
             Icon={}
 
         """.format(
                         self.expected_icon
+                    )
+                )
+            ),
+        )
+
+    def test_generate_desktop_file_multisection(self):
+        with open(self.desktop_file_path, "w") as desktop_file:
+            print("[Desktop Entry]", file=desktop_file)
+            print("Exec=in-snap-exe", file=desktop_file)
+            print("Icon={}".format(self.icon), file=desktop_file)
+            print("[Desktop Entry Two]", file=desktop_file)
+            print("Exec=in-snap-exe2", file=desktop_file)
+            print("Icon={}".format(self.icon), file=desktop_file)
+
+        d = DesktopFile(
+            snap_name=self.snap_name,
+            app_name=self.app_name,
+            filename=self.desktop_file_path,
+            prime_dir=self.path,
+        )
+
+        try:
+            d.write(icon_path=self.icon_path, gui_dir=".")
+        except AttributeError:
+            d.write(gui_dir=".")
+
+        self.assertThat(self.expected_desktop_file, FileExists())
+        self.assertThat(
+            self.expected_desktop_file,
+            FileContains(
+                dedent(
+                    """\
+            [Desktop Entry]
+            Exec=foo
+            Icon={}
+
+            [Desktop Entry Two]
+            Exec=foo
+            Icon={}
+
+        """.format(
+                        self.expected_icon, self.expected_icon
                     )
                 )
             ),

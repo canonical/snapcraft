@@ -1,7 +1,10 @@
-#!/bin/sh -e
+#!/bin/sh
+
+set -e
+set -x
 
 # Restore patched files
-PYTHON_PACKAGE_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/"
+PYTHON_PACKAGE_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/"
 [ -f "patched/ctypes/__init__.py.orig" ] && mv "patched/ctypes/__init__.py.orig" "$PYTHON_PACKAGE_PATH/ctypes/__init__.py"
 
 # Apply patches
@@ -12,4 +15,4 @@ patch -s -b "$PYTHON_PACKAGE_PATH/ctypes/__init__.py" patches/ctypes_init.diff
 mkdir -p patched/ctypes
 [ -f "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" ] && mv "$PYTHON_PACKAGE_PATH/ctypes/__init__.py.orig" patched/ctypes
 
-sed -i "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+sed -i "$SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/site.py" -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'

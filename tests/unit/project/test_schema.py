@@ -303,14 +303,15 @@ class ValidTypesTest(ValidationBaseTest):
     def test_valid_types(self):
         data = self.data.copy()
         data["type"] = self.type_
-        if self.type_ in ("base", "snapd"):
+        if self.type_ in ("base", "kernel", "snapd"):
             data.pop("base")
         Validator(data).validate()
 
 
 _BASE_TYPE_MSG = (
-    "must be one of 'base: <base> and type: <app|gadget|kernel> (without a build-base)' "
-    "or 'type: <base|snapd> (without a base)'"
+    "must be one of base: <base> and type: <app|gadget> (without a build-base), "
+    "base: bare (with a build-base), "
+    "or type: <base|kernel|snapd> (without a base)"
 )
 _TYPE_ENUM_TMPL = (
     "The 'type' property does not match the required schema: '{}' is not one of "
@@ -368,6 +369,13 @@ class CombinedBaseTypeTest(ValidationBaseTest):
         data = self.data.copy()
         data.pop("base")
         data["type"] = "base"
+        data["build-base"] = "fake-base"
+
+        Validator(data).validate()
+
+    def test_build_base_and_base_bare(self):
+        data = self.data.copy()
+        data["base"] = "bare"
         data["build-base"] = "fake-base"
 
         Validator(data).validate()
