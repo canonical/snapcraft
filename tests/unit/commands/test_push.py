@@ -138,7 +138,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
         self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
-    def test_push_unregistered_snap_must_raise_exception(self):
+    def test_push_unregistered_snap_must_ask(self):
         class MockResponse:
             status_code = 404
 
@@ -152,9 +152,40 @@ class PushCommandTestCase(PushCommandBaseTestCase):
                     ]
                 )
 
-        self.fake_store_push_precheck.mock.side_effect = StorePushError(
-            "basic", MockResponse()
+        self.fake_store_push_precheck.mock.side_effect = [
+            StorePushError("basic", MockResponse()),
+            None,
+        ]
+
+        result = self.run_command(["push", self.snap_file], input="y\n")
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains("You are required to register this snap before continuing. "),
         )
+        self.fake_store_register.mock.assert_called_once_with(
+            "basic", is_private=False, series="16", store_id=None
+        )
+
+    def test_push_unregistered_snap_must_raise_exception_if_not_registering(self):
+        class MockResponse:
+            status_code = 404
+
+            def json(self):
+                return dict(
+                    error_list=[
+                        {
+                            "code": "resource-not-found",
+                            "message": "Snap not found for name=basic",
+                        }
+                    ]
+                )
+
+        self.fake_store_push_precheck.mock.side_effect = [
+            StorePushError("basic", MockResponse()),
+            None,
+        ]
 
         raised = self.assertRaises(
             storeapi.errors.StorePushError, self.run_command, ["push", self.snap_file]
@@ -164,6 +195,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             str(raised),
             Contains("This snap is not registered. Register the snap and try again."),
         )
+        self.fake_store_register.mock.assert_not_called()
 
     def test_push_with_updown_error(self):
         # We really don't know of a reason why this would fail

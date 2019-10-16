@@ -266,6 +266,28 @@ def _login_wrapper(method):
     return login_decorator
 
 
+def _register_wrapper(method):
+    def register_decorator(self, *args, snap_name: str, **kwargs):
+        try:
+            return method(self, *args, snap_name=snap_name, **kwargs)
+        except storeapi.errors.StorePushError as push_error:
+            if "resource-not-found" not in push_error.error_list:
+                raise
+            echo.wrapped(
+                "You are required to register this snap before continuing. "
+                "Refer to 'snapcraft help register' for more options."
+            )
+            if echo.confirm(
+                "Would you like to register {!r} with the Snap Store?".format(snap_name)
+            ):
+                self.register(snap_name=snap_name)
+                return method(self, *args, snap_name=snap_name, **kwargs)
+            else:
+                raise
+
+    return register_decorator
+
+
 class StoreClientCLI(storeapi.StoreClient):
     """A CLI friendly StoreClient implementation."""
 
@@ -304,10 +326,12 @@ class StoreClientCLI(storeapi.StoreClient):
         return super().get_account_information()
 
     @_login_wrapper
+    @_register_wrapper
     def push_precheck(self, *, snap_name: str) -> None:
         return super().push_precheck(snap_name=snap_name)
 
     @_login_wrapper
+    @_register_wrapper
     def push_metadata(
         self, *, snap_name: str, metadata: Dict[str, str], force: bool
     ) -> Dict[str, Any]:
@@ -334,6 +358,7 @@ class StoreClientCLI(storeapi.StoreClient):
         )
 
     @_login_wrapper
+    @_register_wrapper
     def upload(
         self,
         *,

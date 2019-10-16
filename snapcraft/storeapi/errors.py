@@ -367,20 +367,19 @@ class StorePushError(StoreError):
         except (AttributeError, JSONDecodeError):
             response_json = {"error_list": list()}
 
-        error_list = StoreErrorList(error_list=response_json.pop("error_list"))
+        self.error_list = StoreErrorList(error_list=response_json.pop("error_list"))
 
-        if "resource-forbidden" in error_list:
+        if "resource-forbidden" in self.error_list:
             self.fmt = self.__FMT_NOT_OWNER
-        elif "resource-not-found" in error_list:
+        elif "resource-not-found" in self.error_list:
             self.fmt = self.__FMT_NOT_REGISTERED
         else:
-            self.fmt = "Received:\n{!s}".format(error_list)
+            self.fmt = "Received:\n{!s}".format(self.error_list)
 
         super().__init__(
             response=response,
             snap_name=snap_name,
             status_code=response.status_code,
-            error_list=error_list,
             **response_json
         )
 
