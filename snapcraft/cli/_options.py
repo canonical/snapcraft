@@ -83,6 +83,7 @@ _PROVIDER_OPTIONS = [
     dict(
         param_decls="--provider",
         envvar="SNAPCRAFT_BUILD_ENVIRONMENT",
+        show_envvar=False,
         help="Build provider to use.",
         metavar="[{}]".format("|".join(_SUPPORTED_PROVIDERS)),
         type=click.Choice(_SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS),
