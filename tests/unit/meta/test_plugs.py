@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+
+from testtools.matchers import Is
+
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.plugs import Plug, ContentPlug
 from tests import unit
@@ -98,3 +101,12 @@ class ContentPlugTests(unit.TestCase):
         self.assertEqual(plug_dict["content"], plug.content)
         self.assertEqual(plug_dict["target"], plug.target)
         self.assertEqual(plug_provider, plug.provider)
+
+    def test_basic_from_dict_no_default(self):
+        plug_dict = OrderedDict(
+            {"interface": "content", "content": "content", "target": "target"}
+        )
+        plug_name = "plug-test"
+        plug = ContentPlug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
+
+        self.assertThat(plug.provider, Is(None))
