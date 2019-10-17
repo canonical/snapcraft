@@ -110,7 +110,10 @@ class ContentPlug(Plug):
         self._content = content
 
     @property
-    def provider(self) -> str:
+    def provider(self) -> Optional[str]:
+        if self._default_provider is None:
+            return None
+
         if ":" in self._default_provider:
             return self._default_provider.split(":")[0]
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -68,7 +68,13 @@ class Project(ProjectOptions):
 
     def _get_content_snaps(self) -> Set[str]:
         """Return the set of content snaps from snap_meta."""
-        return set([x.provider for x in self._snap_meta.get_content_plugs()])
+        return set(
+            [
+                x.provider
+                for x in self._snap_meta.get_content_plugs()
+                if x.provider is not None
+            ]
+        )
 
     def _get_provider_content_dirs(self) -> Set[str]:
         """Return the set installed provider content directories."""
