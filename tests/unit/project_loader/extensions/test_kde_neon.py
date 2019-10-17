@@ -32,12 +32,22 @@ class ExtensionTest(ProjectLoaderBaseTest):
             Equals(
                 {
                     "plugs": {
+                        "icon-themes": {
+                            "interface": "content",
+                            "target": "$SNAP/data-dir/icons",
+                            "default-provider": "gtk-common-themes",
+                        },
+                        "sound-themes": {
+                            "interface": "content",
+                            "target": "$SNAP/data-dir/sounds",
+                            "default-provider": "gtk-common-themes",
+                        },
                         "kde-frameworks-5-plug": {
                             "content": "kde-frameworks-5-core18-all",
                             "interface": "content",
                             "target": "$SNAP/kf5",
                             "default-provider": "kde-frameworks-5-core18",
-                        }
+                        },
                     },
                     "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
                 }

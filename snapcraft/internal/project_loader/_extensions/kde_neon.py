@@ -30,8 +30,22 @@ class ExtensionImpl(Extension):
     This extension makes it easy to assemble KDE based applications
     using the Neon stack.
 
-    The version of Neon used is dependent on the base used to create
-    the snap.
+    It configures each application with the following plugs:
+
+    \b
+    - Common Icon Themes.
+    - Common Sound Themes.
+    - The Qt5 and KDE Frameworks runtime libraries and utilities.
+
+    For easier desktop integration, it also configures each application
+    entry with these additional plugs:
+
+    \b
+    - desktop (https://snapcraft.io/docs/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
+    - gsettings (https://snapcraft.io/docs/gsettings-interface)
+    - wayland (https://snapcraft.io/docs/wayland-interface)
+    - x11 (https://snapcraft.io/docs/x11-interface)
     """
 
     @staticmethod
@@ -48,12 +62,22 @@ class ExtensionImpl(Extension):
         platform_snap = _PLATFORM_SNAP[yaml_data.get("base")]
         self.root_snippet = {
             "plugs": {
+                "icon-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/icons",
+                    "default-provider": "gtk-common-themes",
+                },
+                "sound-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/sounds",
+                    "default-provider": "gtk-common-themes",
+                },
                 "kde-frameworks-5-plug": {
                     "content": "kde-frameworks-5-core18-all",
                     "interface": "content",
                     "default-provider": platform_snap,
                     "target": "$SNAP/kf5",
-                }
+                },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
         }
