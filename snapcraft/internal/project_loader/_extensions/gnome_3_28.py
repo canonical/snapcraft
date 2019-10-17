@@ -35,7 +35,7 @@ class ExtensionImpl(Extension):
     \b
     - GTK3 Themes.
     - Common Icon Themes.
-    - Common Sound Themes
+    - Common Sound Themes.
     - The GNOME runtime libraries and utilities corresponding to 3.28.
 
     For easier desktop integration, it also configures each application
