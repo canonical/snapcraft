@@ -29,13 +29,68 @@ class SetupPyTestCase(unit.TestCase):
 
     metadata = [
         (
-            "description",
-            dict(params=dict(version=None, description="test-description")),
+            "summary",
+            {
+                "params": [
+                    {
+                        "key": "description",
+                        "param_name": "summary",
+                        "value": "test-summary",
+                        "expect": "test-summary",
+                    }
+                ]
+            },
         ),
-        ("version", dict(params=dict(version="test-version", description=None))),
         (
-            "key and version",
-            dict(params=dict(description="test-description", version="test-version")),
+            "description",
+            {
+                "params": [
+                    {
+                        "key": "long_description",
+                        "param_name": "description",
+                        "value": "test-description",
+                        "expect": "test-description",
+                    }
+                ]
+            },
+        ),
+        (
+            "version",
+            {
+                "params": [
+                    {
+                        "key": "version",
+                        "param_name": "version",
+                        "value": "test-version",
+                        "expect": "test-version",
+                    }
+                ]
+            },
+        ),
+        (
+            "summary, description and version",
+            {
+                "params": [
+                    {
+                        "key": "description",
+                        "param_name": "summary",
+                        "value": "test-summary",
+                        "expect": "test-summary",
+                    },
+                    {
+                        "key": "long_description",
+                        "param_name": "description",
+                        "value": "test-description",
+                        "expect": "test-description",
+                    },
+                    {
+                        "key": "version",
+                        "param_name": "version",
+                        "value": "test-version",
+                        "expect": "test-version",
+                    },
+                ]
+            },
         ),
     ]
 
@@ -65,8 +120,12 @@ class SetupPyTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        params = ['    {}="{}",'.format(k, v) for k, v in self.params.items() if v]
-
+        params = [
+            '    {}="{}",'.format(p["key"], p["value"])
+            for p in self.params
+            if p["value"]
+        ]
+        print("params:::" + str(params))
         fmt = dict(
             params="\n".join(params),
             import_statement=self.import_statement,
@@ -91,7 +150,8 @@ class SetupPyTestCase(unit.TestCase):
             )
 
     def test_info_extraction(self):
-        expected = ExtractedMetadata(**self.params)
+        kwargs = {p["param_name"]: p["expect"] for p in self.params}
+        expected = ExtractedMetadata(**kwargs)
         actual = setuppy.extract("setup.py", workdir=".")
         self.assertThat(str(actual), Equals(str(expected)))
         self.assertThat(actual, Equals(expected))

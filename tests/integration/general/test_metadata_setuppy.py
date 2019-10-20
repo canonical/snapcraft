@@ -36,7 +36,8 @@ class SetupPyMetadataTestCase(integration.TestCase):
                 setup(
                     name='hello-world',
                     version='test-setuppy-version',
-                    description='test-setuppy-description',
+                    description='test-setuppy-summary',
+                    long_description='test-setuppy-description',
                     author='Canonical LTD',
                     author_email='snapcraft@lists.snapcraft.io',
                     scripts=['hello']
@@ -63,6 +64,7 @@ class SetupPyMetadataTestCase(integration.TestCase):
 
         self.assertThat(snap_yaml["version"], Equals("test-setuppy-version"))
         self.assertThat(snap_yaml["description"], Equals("test-setuppy-description"))
+        self.assertThat(snap_yaml["summary"], Equals("test-setuppy-summary"))
 
     def test_all_metadata_from_yaml(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(

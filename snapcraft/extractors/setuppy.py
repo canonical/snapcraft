@@ -56,6 +56,7 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
                 raise _errors.SetupPyImportError(path=relpath, error=str(e)) from e
 
     version = params.get("version")
-    description = params.get("description")
+    summary = params.get("description")
+    description = params.get("long_description")
 
-    return ExtractedMetadata(version=version, description=description)
+    return ExtractedMetadata(version=version, summary=summary, description=description)
