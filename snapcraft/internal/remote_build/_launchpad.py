@@ -25,12 +25,11 @@ import urllib.parse
 
 from lazr import restfulclient
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple
 from xdg import BaseDirectory
 from . import errors
 
 import snapcraft
-from snapcraft.config import Config
 from snapcraft.internal.sources._git import Git
 from snapcraft.project import Project
 
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 class LaunchpadClient:
     """Launchpad remote builder operations."""
 
-    def __init__(self, *, project: Project, build_id: str, user: Optional[str]) -> None:
+    def __init__(self, *, project: Project, build_id: str, user: str) -> None:
         if not Git.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
@@ -62,30 +61,8 @@ class LaunchpadClient:
 
         os.makedirs(self._data_dir, mode=0o700, exist_ok=True)
         self._credentials = os.path.join(self._data_dir, "credentials")
-        self._load_snapcraft_config()
 
-        # Save user to snapcraft config, if specified.
-        if user is not None:
-            self._user = user
-            self._update_snapcraft_config()
-
-        if self._user is None:
-            raise errors.NoLaunchpadUsernameError
-
-    def _load_snapcraft_config(self):
-        self._config = Config()
-        self._config.load()
-        escaped_user = self._config.get("username", section_name="Launchpad")
-        if escaped_user:
-            self._user = urllib.parse.unquote(escaped_user)
-        else:
-            self._user = None
-
-    def _update_snapcraft_config(self):
-        self._config.load()
-        escaped_user = urllib.parse.quote(self._user).replace("%", "%%")
-        self._config.set("username", escaped_user, section_name="Launchpad")
-        self._config.save()
+        self._user = user
 
     def login(self) -> None:
         self._lp = Launchpad.login_with(

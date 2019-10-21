@@ -72,7 +72,12 @@ def remotecli():
     help="Package all sources to send to remote builder, not just local sources.",
 )
 @click.option(
-    "--user", metavar="<username>", nargs=1, required=False, help="Launchpad username."
+    "--user",
+    metavar="<username>",
+    nargs=1,
+    required=True,
+    help="Launchpad username.",
+    prompt="Launchpad username",
 )
 def remote_build(
     recover: int,
@@ -100,11 +105,11 @@ def remote_build(
 
     \b
     Examples:
-        snapcraft remote-build
-        snapcraft remote-build --arch=all
-        snapcraft remote-build --arch=amd64,armhf
-        snapcraft remote-build --recover 47860738
-        snapcraft remote-build --status 47860738
+        snapcraft remote-build --user <user>
+        snapcraft remote-build --user <user> --arch=all
+        snapcraft remote-build --user <user> --arch=amd64,armhf
+        snapcraft remote-build --user <user> --recover 47860738
+        snapcraft remote-build --user <user> --status 47860738
     """
     if not accept_public_upload:
         raise errors.AcceptPublicUploadError()
