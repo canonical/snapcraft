@@ -121,6 +121,31 @@ class SnapsImpl(FakeLaunchpadObject):
         return self.new_mock(*args, **kw)
 
 
+class GitImpl(FakeLaunchpadObject):
+    def __init__(self):
+        self.issueAccessToken_mock = mock.Mock(return_value="access-token")
+        self.lp_delete_mock = mock.Mock()
+
+    def issueAccessToken(self, *args, **kw):
+        return self.issueAccessToken_mock(*args, **kw)
+
+    def lp_delete(self, *args, **kw):
+        return self.lp_delete_mock(*args, **kw)
+
+
+class GitRepositoriesImpl(FakeLaunchpadObject):
+    def __init__(self):
+        self._git = GitImpl()
+        self.new_mock = mock.Mock(return_value=self._git)
+        self.getByPath_mock = mock.Mock(return_value=self._git)
+
+    def getByPath(self, *args, **kw):
+        return self.getByPath_mock(*args, **kw)
+
+    def new(self, *args, **kw):
+        return self.new_mock(*args, **kw)
+
+
 class DistImpl(FakeLaunchpadObject):
     def __init__(self):
         self.main_archive = "main_archive"
@@ -130,6 +155,7 @@ class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
         self.login_mock = mock.Mock()
         self.load_mock = mock.Mock()
+        self.git_repositories = GitRepositoriesImpl()
         self.snaps = SnapsImpl()
         self.people = {"user": "/~user"}
         self.distributions = {"ubuntu": DistImpl()}
@@ -154,7 +180,7 @@ class LaunchpadTestCase(unit.TestCase):
     @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
     def test_login(self, mock_login):
         self.lpc.login()
-        self.assertThat(self.lpc._user, Equals("user"))
+        self.assertThat(self.lpc.user, Equals("user"))
         mock_login.assert_called_with(
             "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
@@ -166,13 +192,27 @@ class LaunchpadTestCase(unit.TestCase):
     @mock.patch("launchpadlib.launchpad.Launchpad")
     def test_create_snap(self, mock_lp):
         self.lpc._lp = LaunchpadImpl()
-        self.lpc.create_snap("git+ssh://repo", ["arch1", "arch2"])
+        self.lpc.create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
             auto_build_pocket="Updates",
             git_path="master",
-            git_repository_url="https://repo",
+            git_repository_url="https://user@git.launchpad.net/~user/+git/id/",
+            name="id",
+            owner="/~user",
+        )
+
+    def test_create_snap_with_archs(self):
+        self.lpc._lp = LaunchpadImpl()
+        self.lpc.architectures = ["arch1", "arch2"]
+        self.lpc.create_snap()
+        self.lpc._lp.snaps.new_mock.assert_called_with(
+            auto_build=False,
+            auto_build_archive="/ubuntu/+archive/primary",
+            auto_build_pocket="Updates",
+            git_path="master",
+            git_repository_url="https://user@git.launchpad.net/~user/+git/id/",
             name="id",
             owner="/~user",
             processors=["/+processors/arch1", "/+processors/arch2"],
@@ -232,6 +272,7 @@ class LaunchpadTestCase(unit.TestCase):
         open("test_i386.txt.gz", "w").close()
         open("test_i386.txt.gz.1", "w").close()
         self.lpc._lp = LaunchpadImpl()
+
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
@@ -298,21 +339,23 @@ class LaunchpadTestCase(unit.TestCase):
         self.lpc._gitify_repository(repo_dir)
         self.assertTrue(os.path.exists(os.path.join(repo_dir, ".git")))
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("snapcraft.internal.sources.Git.push", return_value=None)
-    def test_push_source_tree(self, mock_push, mock_lp):
+    def test_push_source_tree(self, mock_push):
+        self.lpc._lp = LaunchpadImpl()
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
         self.lpc.push_source_tree(repo_dir)
         mock_push.assert_called_with(
-            "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
+            "https://user:access-token@git.launchpad.net/~user/+git/id/",
+            "HEAD:master",
+            force=True,
         )
 
     @mock.patch(
         "snapcraft.internal.sources.Git.push",
         side_effect=SnapcraftPullError(
-            command="git push HEAD:master URL", exit_code=128
+            command="git push HEAD:master https://user:access-token@url", exit_code=128
         ),
     )
     def test_push_source_tree_error(self, mock_push):
@@ -329,9 +372,13 @@ class LaunchpadTestCase(unit.TestCase):
         )
         self.assertThat(
             raised.get_details(),
-            Equals("Command 'git push HEAD:master URL' failed with exit code 128."),
+            Equals(
+                "Command 'git push HEAD:master https://user:<token>@url' failed with exit code 128."
+            ),
         )
 
         mock_push.assert_called_with(
-            "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
+            "https://user:access-token@git.launchpad.net/~user/+git/id/",
+            "HEAD:master",
+            force=True,
         )
