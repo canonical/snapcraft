@@ -189,8 +189,7 @@ class LaunchpadTestCase(unit.TestCase):
             version="devel",
         )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_create_snap(self, mock_lp):
+    def test_create_snap(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
@@ -218,26 +217,23 @@ class LaunchpadTestCase(unit.TestCase):
             processors=["/+processors/arch1", "/+processors/arch2"],
         )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_delete_snap(self, mock_lp):
+    def test_delete_snap(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.delete_snap()
         self.lpc._lp.snaps.getByName_mock.assert_called_with(name="id", owner="/~user")
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_start_build(self, mock_lp):
+    def test_start_build(self):
         self.lpc._lp = LaunchpadImpl()
         num = self.lpc.start_build()
         self.assertThat(num, Equals("1234"))
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch(
         "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(
             status="Failed", error_message="snapcraft.yaml not found..."
         ),
     )
-    def test_start_build_error(self, mock_rb, mock_lp):
+    def test_start_build_error(self, mock_rb):
         self.lpc._lp = LaunchpadImpl()
 
         raised = self.assertRaises(
@@ -245,12 +241,11 @@ class LaunchpadTestCase(unit.TestCase):
         )
         self.assertThat(str(raised), Contains("snapcraft.yaml not found..."))
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch(
         "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
-    def test_start_build_error_timeout(self, mock_rb, mock_lp):
+    def test_start_build_error_timeout(self, mock_rb):
         self.lpc._lp = LaunchpadImpl()
         raised = self.assertRaises(
             errors.RemoteBuilderNotReadyError,
@@ -260,15 +255,13 @@ class LaunchpadTestCase(unit.TestCase):
         )
         self.assertThat(str(raised), Contains("is not ready"))
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_recover_build(self, mock_lp):
+    def test_recover_build(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.recover_build(1234)
         self.assertThat(self.lpc._lp.load_mock.call_count, Equals(2))
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
-    def test_monitor_build(self, mock_download_file, mock_lp):
+    def test_monitor_build(self, mock_download_file):
         open("test_i386.txt.gz", "w").close()
         open("test_i386.txt.gz.1", "w").close()
         self.lpc._lp = LaunchpadImpl()
@@ -283,15 +276,12 @@ class LaunchpadTestCase(unit.TestCase):
             ]
         )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     @mock.patch(
         "tests.unit.remote_build.test_launchpad.BuildImpl.getFileUrls", return_value=[]
     )
     @mock.patch("logging.Logger.error")
-    def test_monitor_build_error(
-        self, mock_log, mock_urls, mock_download_file, mock_lp
-    ):
+    def test_monitor_build_error(self, mock_log, mock_urls, mock_download_file):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
@@ -302,8 +292,7 @@ class LaunchpadTestCase(unit.TestCase):
             "Build failed for arch amd64. Log file is 'test_amd64.txt.gz'."
         )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_get_build_status(self, mock_lp):
+    def test_get_build_status(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.start_build()
         build_status = self.lpc.get_build_status()
@@ -330,8 +319,7 @@ class LaunchpadTestCase(unit.TestCase):
         )
         return project
 
-    @mock.patch("launchpadlib.launchpad.Launchpad")
-    def test_git_repository_creation(self, mock_lp):
+    def test_git_repository_creation(self):
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
