@@ -18,6 +18,7 @@ import click
 import os
 import uuid
 
+from snapcraft.project import Project
 from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, InfoFile, errors
 from snapcraft.formatting_utils import humanize_list
 from typing import List
@@ -150,12 +151,6 @@ def remote_build(
     lp = LaunchpadClient(project=project, build_id=build_id, user=user)
     lp.login()
 
-    # Pull/update sources for project.
-    worktree_dir = os.path.join(remote_dir, "worktree")
-    wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
-    repo_dir = wt.prepare_repository()
-    url = lp.push_source_tree(repo_dir)
-
     if status:
         # Show build status
         lp.recover_build(status)
@@ -167,36 +162,57 @@ def remote_build(
         lp.recover_build(recover)
         _monitor_build(lp)
     else:
-        # If build architectures not set in snapcraft.yaml, let the user override
-        # Launchpad defaults using --arch.
-        project_architectures = _get_project_architectures(project)
-        if project_architectures and arch:
-            raise click.BadOptionUsage(
-                "Cannot use --arch, architecture list is already set in snapcraft.yaml."
-            )
-        archs = _choose_architectures(project_architectures, arch)
-
-        # Sanity check for build architectures
-        _check_supported_architectures(archs)
-
-        # Create build recipe
-        # (delete any existing snap to remove leftovers from previous builds)
-        lp.delete_snap()
-        lp.create_snap(url, archs)
-
-        targets = " for {}".format(humanize_list(archs, "and", "{}")) if archs else ""
-        echo.info(
-            "Building package{}. This may take some time to finish.".format(targets)
-        )
-
-        # Start building
-        req_number = lp.start_build()
-        echo.info(
-            "If interrupted, resume with: 'snapcraft remote-build --recover {}'".format(
-                req_number
-            )
+        _start_build(
+            lp=lp,
+            project=project,
+            arch=arch,
+            package_all_sources=package_all_sources,
+            remote_dir=remote_dir,
         )
         _monitor_build(lp)
+
+
+def _start_build(
+    *,
+    lp: LaunchpadClient,
+    project: Project,
+    arch: str,
+    package_all_sources: bool,
+    remote_dir: str
+) -> None:
+    # Pull/update sources for project.
+    worktree_dir = os.path.join(remote_dir, "worktree")
+    wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
+    repo_dir = wt.prepare_repository()
+    url = lp.push_source_tree(repo_dir)
+
+    # If build architectures not set in snapcraft.yaml, let the user override
+    # Launchpad defaults using --arch.
+    project_architectures = _get_project_architectures(project)
+    if project_architectures and arch:
+        raise click.BadOptionUsage(
+            "Cannot use --arch, architecture list is already set in snapcraft.yaml."
+        )
+    archs = _choose_architectures(project_architectures, arch)
+
+    # Sanity check for build architectures
+    _check_supported_architectures(archs)
+
+    # Create build recipe
+    # (delete any existing snap to remove leftovers from previous builds)
+    lp.delete_snap()
+    lp.create_snap(url, archs)
+
+    targets = " for {}".format(humanize_list(archs, "and", "{}")) if archs else ""
+    echo.info("Building package{}. This may take some time to finish.".format(targets))
+
+    # Start building
+    req_number = lp.start_build()
+    echo.info(
+        "If interrupted, resume with: 'snapcraft remote-build --recover {}'".format(
+            req_number
+        )
+    )
 
 
 def _monitor_build(lp: LaunchpadClient) -> None:
