@@ -24,8 +24,9 @@ import urllib.error
 import urllib.parse
 
 from lazr import restfulclient
+from lazr.restfulclient.resource import Entry
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Sequence, Tuple, Optional
 from xdg import BaseDirectory
 from . import errors
 
@@ -44,28 +45,72 @@ logger = logging.getLogger(__name__)
 class LaunchpadClient:
     """Launchpad remote builder operations."""
 
-    def __init__(self, *, project: Project, build_id: str, user: str) -> None:
+    def __init__(
+        self,
+        *,
+        project: Project,
+        build_id: str,
+        user: str,
+        architectures: Optional[List[str]] = None,
+        git_branch: str = "master",
+        core18_channel: str = "stable",
+        snapcraft_channel: str = "edge",
+    ) -> None:
         if not Git.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
 
-        self._id = build_id
-        self._core18_channel = "stable"
-        self._snapcraft_channel = "edge"
-        self._name = project.info.name
-        self._waiting = []  # type: List[str]
-        self._data_dir = os.path.join(
-            BaseDirectory.save_data_path("snapcraft"), "launchpad"
-        )
-        self._cache_dir = os.path.join(
-            BaseDirectory.save_cache_path("snapcraft"), "launchpad"
-        )
+        self._snap_name = project.info.name
+        self._build_id = build_id
 
-        os.makedirs(self._data_dir, mode=0o700, exist_ok=True)
+        self.architectures = architectures
+        self.user = user
+
+        self._lp_name = build_id
+        self._lp_git_branch = git_branch
+
+        self._core18_channel = core18_channel
+        self._snapcraft_channel = snapcraft_channel
+
+        self._cache_dir = self._create_cache_directory()
+        self._data_dir = self._create_data_directory()
         self._credentials = os.path.join(self._data_dir, "credentials")
 
-        self._user = user
+        self._lp: Launchpad = None
+        self._waiting = []  # type: List[str]
 
-    def login(self) -> None:
+    @property
+    def architectures(self) -> Sequence[str]:
+        return self._architectures
+
+    @architectures.setter
+    def architectures(self, architectures: Sequence[str]) -> None:
+        if architectures:
+            self._lp_processors = ["/+processors/" + a for a in architectures]
+        else:
+            self._lp_processors = None
+
+        self._architectures = architectures
+
+    @property
+    def user(self) -> str:
+        return self._lp_user
+
+    @user.setter
+    def user(self, user: str) -> None:
+        self._lp_user = user
+        self._lp_owner = f"/~{user}"
+
+    def _create_data_directory(self) -> str:
+        data_dir = BaseDirectory.save_data_path("snapcraft", "provider", "launchpad")
+        os.makedirs(data_dir, mode=0o700, exist_ok=True)
+        return data_dir
+
+    def _create_cache_directory(self) -> str:
+        cache_dir = BaseDirectory.save_cache_path("snapcraft", "provider", "launchpad")
+        os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+        return cache_dir
+
+    def login(self) -> Launchpad:
         self._lp = Launchpad.login_with(
             "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
@@ -74,39 +119,80 @@ class LaunchpadClient:
             version="devel",
         )
 
-    def create_snap(self, repository: str, archs: List[str]) -> None:
-        """Create a snap recipe."""
-        logger.debug("Create snap for {}".format(self._id))
-        # TODO: remove this after launchpad infrastructure is ready (LP #1827679)
-        url = repository.replace("git+ssh://", "https://")
-        snap = {
-            "name": self._id,
-            "owner": "/~" + self._user,
-            "git_repository_url": url,
-            "git_path": "master",
-            "auto_build": False,
-            "auto_build_archive": "/ubuntu/+archive/primary",
-            "auto_build_pocket": "Updates",
-        }
+    def get_git_repo_path(self) -> str:
+        return f"~{self._lp_user}/+git/{self._lp_name}"
 
-        if archs:
-            snap["processors"] = ["/+processors/" + arch for arch in archs]
+    def get_git_https_url(self, token: Optional[str] = None) -> str:
+        if token:
+            return f"https://{self._lp_user}:{token}@git.launchpad.net/~{self._lp_user}/+git/{self._lp_name}/"
+        else:
+            return f"https://{self._lp_user}@git.launchpad.net/~{self._lp_user}/+git/{self._lp_name}/"
 
-        self._lp.snaps.new(**snap)
+    def create_git_repository(self, force=False) -> Entry:
+        """Create git repository."""
+        if force:
+            self.delete_git_repository()
+
+        logger.debug(
+            f"creating git repo: name={self._lp_name}, owner={self._lp_owner}, target={self._lp_owner}"
+        )
+        return self._lp.git_repositories.new(
+            name=self._lp_name, owner=self._lp_owner, target=self._lp_owner
+        )
+
+    def delete_git_repository(self) -> None:
+        """Delete git repository."""
+        git_path = self.get_git_repo_path()
+        git_repo = self._lp.git_repositories.getByPath(path=git_path)
+
+        # git_repositories.getByPath returns None if git repo does not exist.
+        if git_repo is None:
+            return
+
+        git_repo.lp_delete()
+
+    def create_snap(self, force=False) -> Entry:
+        """Create a snap recipe. Use force=true to replace existing snap."""
+        git_url = self.get_git_https_url()
+
+        if force:
+            self.delete_snap()
+
+        optional_kwargs = dict()
+        if self._lp_processors:
+            optional_kwargs["processors"] = self._lp_processors
+
+        return self._lp.snaps.new(
+            name=self._lp_name,
+            owner=self._lp_owner,
+            git_repository_url=git_url,
+            git_path=self._lp_git_branch,
+            auto_build=False,
+            auto_build_archive="/ubuntu/+archive/primary",
+            auto_build_pocket="Updates",
+            **optional_kwargs,
+        )
 
     def delete_snap(self) -> None:
         """Remove a snap recipe and all associated files."""
         try:
-            snap = self._lp.snaps.getByName(name=self._id, owner="/~" + self._user)
-            snap.lp_delete()
+            # snaps.getByName raises NotFound if snap not does not exist.
+            lp_snap = self._lp.snaps.getByName(name=self._lp_name, owner=self._lp_owner)
         except restfulclient.errors.NotFound:
-            pass
+            return
+
+        lp_snap.lp_delete()
+
+    def cleanup(self) -> None:
+        """Delete snap and git repository from launchpad."""
+        self.delete_snap()
+        self.delete_git_repository()
 
     def start_build(self, timeout: int = 5, attempts: int = 5) -> int:
         """Initiate a new snap build."""
-        owner = self._lp.people[self._user]
+        snap = self.create_snap(force=True)
         dist = self._lp.distributions["ubuntu"]
-        snap = self._lp.snaps.getByName(name=self._id, owner=owner)
+
         snap_build_request = snap.requestBuilds(
             archive=dist.main_archive,
             channels={
@@ -132,19 +218,19 @@ class LaunchpadClient:
 
         # Build request failed.
         if snap_build_request.status == "Failed":
-            self.delete_snap()
+            self.cleanup()
             raise errors.RemoteBuilderError(
                 builder_error=snap_build_request.error_message
             )
 
         # Timed out.
         if snap_build_request.status == "Pending":
-            self.delete_snap()
+            self.cleanup()
             raise errors.RemoteBuilderNotReadyError()
 
         # Shouldn't end up here.
         if snap_build_request.status != "Completed":
-            self.delete_snap()
+            self.cleanup()
             raise errors.RemoteBuilderError(
                 builder_error="Unknown builder error - reported status: {}".format(
                     snap_build_request.status
@@ -153,7 +239,7 @@ class LaunchpadClient:
 
         # Shouldn't end up here either.
         if not snap_build_request.builds.entries:
-            self.delete_snap()
+            self.cleanup()
             raise errors.RemoteBuilderError(
                 builder_error="Unknown builder error - no build entries found."
             )
@@ -168,14 +254,14 @@ class LaunchpadClient:
     def recover_build(self, req_number: int) -> None:
         """Prepare internal state to monitor an existing build."""
         url = "https://api.launchpad.net/devel/~{}/+snap/{}/+build-request/{}".format(
-            self._user, self._id, req_number
+            self._lp_user, self._lp_name, req_number
         )
 
         try:
             request = self._lp.load(url)
         except restfulclient.errors.NotFound:
             raise errors.RemoteBuildNotFoundError(
-                name=self._name, req_number=req_number
+                name=self._snap_name, req_number=req_number
             )
 
         logger.debug("Request URL: {}".format(request))
@@ -251,7 +337,7 @@ class LaunchpadClient:
 
     def _get_logfile_name(self, build: Dict[str, Any]) -> str:
         arch = build["arch_tag"]
-        log_name = name = "{}_{}.txt.gz".format(self._name, arch)
+        log_name = name = "{}_{}.txt.gz".format(self._snap_name, arch)
         number = 1
         while os.path.isfile(log_name):
             log_name = "{}.{}".format(name, number)
@@ -298,17 +384,19 @@ class LaunchpadClient:
     def push_source_tree(self, repo_dir: str) -> str:
         """Push source tree to launchpad, returning URL."""
         git_handler = self._gitify_repository(repo_dir)
+        lp_repo = self.create_git_repository(force=True)
+        token = lp_repo.issueAccessToken()
 
-        url = "git+ssh://{user}@git.launchpad.net/~{user}/+git/{id}/".format(
-            user=self._user, id=self._id
-        )
+        url = self.get_git_https_url(token=token)
+        stripped_url = self.get_git_https_url(token="<token>")
 
-        logger.info("Sending data to remote builder... ({})".format(url))
+        logger.info(f"Sending data to remote builder... ({stripped_url})")
 
         try:
-            git_handler.push(url, "HEAD:master", force=True)
+            git_handler.push(url, f"HEAD:{self._lp_git_branch}", force=True)
         except SnapcraftPullError as error:
-            command = error.command  # type: ignore
+            # Strip token from command.
+            command = error.command.replace(token, "<token>")  # type: ignore
             exit_code = error.exit_code  # type: ignore
             raise errors.LaunchpadGitPushError(command=command, exit_code=exit_code)
 

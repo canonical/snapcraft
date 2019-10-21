@@ -167,7 +167,7 @@ def _start_build(
     worktree_dir = BaseDirectory.save_data_path("snapcraft", "remote-build", build_id)
     wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
     repo_dir = wt.prepare_repository()
-    url = lp.push_source_tree(repo_dir)
+    lp.push_source_tree(repo_dir)
 
     # If build architectures not set in snapcraft.yaml, let the user override
     # Launchpad defaults using --arch.
@@ -184,7 +184,7 @@ def _start_build(
     # Create build recipe
     # (delete any existing snap to remove leftovers from previous builds)
     lp.delete_snap()
-    lp.create_snap(url, archs)
+    lp.create_snap()
 
     targets = " for {}".format(humanize_list(archs, "and", "{}")) if archs else ""
     echo.info("Building package{}. This may take some time to finish.".format(targets))
