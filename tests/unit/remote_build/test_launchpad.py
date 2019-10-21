@@ -18,6 +18,7 @@ import os
 import snapcraft
 import textwrap
 
+from snapcraft.internal.sources.errors import SnapcraftPullError
 from snapcraft.internal.remote_build import LaunchpadClient, errors
 from testtools.matchers import Equals, Contains
 from tests import unit
@@ -304,6 +305,33 @@ class LaunchpadTestCase(unit.TestCase):
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
         self.lpc.push_source_tree(repo_dir)
+        mock_push.assert_called_with(
+            "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
+        )
+
+    @mock.patch(
+        "snapcraft.internal.sources.Git.push",
+        side_effect=SnapcraftPullError(
+            command="git push HEAD:master URL", exit_code=128
+        ),
+    )
+    def test_push_source_tree_error(self, mock_push):
+        self.lpc._lp = LaunchpadImpl()
+        source_testdir = self.useFixture(TestDir())
+        source_testdir.create_file("foo")
+        repo_dir = source_testdir.path
+
+        raised = self.assertRaises(
+            errors.LaunchpadGitPushError, self.lpc.push_source_tree, repo_dir
+        )
+        self.assertThat(
+            raised.get_brief(), Equals("Failed to push sources to Launchpad.")
+        )
+        self.assertThat(
+            raised.get_details(),
+            Equals("Command 'git push HEAD:master URL' failed with exit code 128."),
+        )
+
         mock_push.assert_called_with(
             "git+ssh://user@git.launchpad.net/~user/+git/id/", "HEAD:master", force=True
         )
