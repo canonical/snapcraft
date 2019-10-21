@@ -87,8 +87,11 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
     # if there are no launchables, use the appstream id to take into
     # account the legacy appstream definitions
-    if common_id and common_id.endswith(".desktop") and not desktop_file_ids:
-        desktop_file_ids.append(common_id)
+    if common_id and not desktop_file_ids:
+        if common_id.endswith(".desktop"):
+            desktop_file_ids.append(common_id)
+        else:
+            desktop_file_ids.append(common_id + ".desktop")
 
     for desktop_file_id in desktop_file_ids:
         desktop_file_path = _desktop_file_id_to_path(desktop_file_id, workdir=workdir)

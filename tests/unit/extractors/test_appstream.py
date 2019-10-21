@@ -557,6 +557,26 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
             extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
         )
 
+    def test_appstream_no_desktop_suffix(self):
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                <?xml version="1.0" encoding="UTF-8"?>
+                <component type="desktop">
+                  <id>com.example.test-app</id>
+                </component>"""
+                )
+            )
+
+        _create_desktop_file(self.desktop_file_path)
+
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
+
+        self.assertThat(
+            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
+        )
+
 
 class AppstreamMultipleLaunchableTestCase(unit.TestCase):
     def test_appstream_with_multiple_launchables(self):
