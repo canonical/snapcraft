@@ -16,7 +16,10 @@
 
 from typing import List, Sequence  # noqa: F401
 
-from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
+from snapcraft.internal.errors import (
+    SnapcraftException,
+    SnapcraftError as _SnapcraftError,
+)
 
 
 class RemoteBuildBaseError(_SnapcraftError):
@@ -126,3 +129,18 @@ class AcceptPublicUploadError(RemoteBuildBaseError):
         "Remote build needs explicit acknowledgement that data sent to build servers "
         "is public.\nIn non-interactive runs, please use option --accept-public-upload."
     )
+
+
+class LaunchpadGitPushError(SnapcraftException):
+    def __init__(self, *, command: str, exit_code: int) -> None:
+        self._command = command
+        self._exit_code = exit_code
+
+    def get_brief(self) -> str:
+        return "Failed to push sources to Launchpad."
+
+    def get_details(self) -> str:
+        return f"Command {self._command!r} failed with exit code {self._exit_code!r}."
+
+    def get_resolution(self) -> str:
+        return "Verify connectivity to https://git.launchpad.net and retry build."

@@ -30,6 +30,7 @@ from xdg import BaseDirectory
 from . import errors
 
 import snapcraft
+from snapcraft.internal.sources.errors import SnapcraftPullError
 from snapcraft.internal.sources._git import Git
 from snapcraft.project import Project
 
@@ -303,5 +304,12 @@ class LaunchpadClient:
         )
 
         logger.info("Sending data to remote builder... ({})".format(url))
-        git_handler.push(url, "HEAD:master", force=True)
+
+        try:
+            git_handler.push(url, "HEAD:master", force=True)
+        except SnapcraftPullError as error:
+            command = error.command  # type: ignore
+            exit_code = error.exit_code  # type: ignore
+            raise errors.LaunchpadGitPushError(command=command, exit_code=exit_code)
+
         return url
