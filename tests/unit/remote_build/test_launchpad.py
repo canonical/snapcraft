@@ -39,13 +39,12 @@ class FakeLaunchpadObject:
         return self.__getattribute__(key)
 
 
-class BuildImpl:
+class BuildImpl(FakeLaunchpadObject):
     def __init__(self):
-        self.getFileUrls_mock = mock.Mock()
+        self.getFileUrls_mock = mock.Mock(return_value=["url_for/snap_file_i386.snap"])
 
     def getFileUrls(self, *args, **kw):
-        self.getFileUrls_mock(*args, **kw)
-        return ["url_for/snap_file_i386.snap"]
+        return self.getFileUrls_mock(*args, **kw)
 
 
 class SnapBuildEntryImpl(FakeLaunchpadObject):
@@ -96,37 +95,38 @@ class SnapBuildReqImpl(FakeLaunchpadObject):
         pass
 
 
-class SnapImpl:
+class SnapImpl(FakeLaunchpadObject):
     def __init__(self):
-        self.requestBuilds_mock = mock.Mock()
-        self.requestBuilds_impl = SnapBuildReqImpl()
+        self._req = SnapBuildReqImpl()
         self.lp_delete_mock = mock.Mock()
+        self.requestBuilds_mock = mock.Mock(return_value=self._req)
+
+    def lp_delete(self, *args, **kw):
+        return self.lp_delete_mock(*args, **kw)
 
     def requestBuilds(self, *args, **kw):
-        self.requestBuilds_mock(*args, **kw)
-        return self.requestBuilds_impl
-
-    def lp_delete(self):
-        self.lp_delete_mock()
+        return self.requestBuilds_mock(*args, **kw)
 
 
-class SnapsImpl:
+class SnapsImpl(FakeLaunchpadObject):
     def __init__(self):
-        self.new = mock.Mock()
-        self.getByName_mock = mock.Mock()
-        self.snap = SnapImpl()
+        self._snap = SnapImpl()
+        self.getByName_mock = mock.Mock(return_value=self._snap)
+        self.new_mock = mock.Mock(return_value=self._snap)
 
     def getByName(self, *args, **kw):
-        self.getByName_mock(*args, **kw)
-        return self.snap
+        return self.getByName_mock(*args, **kw)
+
+    def new(self, *args, **kw):
+        return self.new_mock(*args, **kw)
 
 
-class DistImpl:
+class DistImpl(FakeLaunchpadObject):
     def __init__(self):
         self.main_archive = "main_archive"
 
 
-class LaunchpadImpl:
+class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
         self.login_mock = mock.Mock()
         self.load_mock = mock.Mock()
@@ -167,7 +167,7 @@ class LaunchpadTestCase(unit.TestCase):
     def test_create_snap(self, mock_lp):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.create_snap("git+ssh://repo", ["arch1", "arch2"])
-        self.lpc._lp.snaps.new.assert_called_with(
+        self.lpc._lp.snaps.new_mock.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
             auto_build_pocket="Updates",
