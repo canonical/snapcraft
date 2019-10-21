@@ -15,11 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
-import os
-import uuid
 
 from snapcraft.project import Project
-from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, InfoFile, errors
+from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, errors
 from snapcraft.formatting_utils import humanize_list
 from typing import List
 from xdg import BaseDirectory
@@ -127,25 +125,10 @@ def remote_build(
     if base is None:
         raise errors.BaseRequiredError()
 
-    remote_dir = os.path.join(
-        BaseDirectory.save_data_path("snapcraft"),
-        "projects",
-        project.info.name,
-        "remote-build",
-    )
-
-    remote_info = InfoFile(os.path.join(remote_dir, "remote.yaml"))
-    remote_info.load()
-    provider = "launchpad"
-    if "id" in remote_info:
-        build_id = remote_info["id"]
-        if "provider" in remote_info:
-            provider = remote_info["provider"]
-    else:
-        build_id = "snapcraft-{}-{}".format(project.info.name, uuid.uuid4().hex)
-        remote_info["id"] = build_id
-        remote_info["provider"] = provider
-        remote_info.save()
+    # Use a hash of current working directory to distinguish between other
+    # potential project builds occurring in parallel elsewhere.
+    project_hash = project._get_project_directory_hash()
+    build_id = f"snapcraft-{project.info.name}-{project_hash}"
 
     # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
     lp = LaunchpadClient(project=project, build_id=build_id, user=user)
@@ -166,8 +149,8 @@ def remote_build(
             lp=lp,
             project=project,
             arch=arch,
+            build_id=build_id,
             package_all_sources=package_all_sources,
-            remote_dir=remote_dir,
         )
         _monitor_build(lp)
 
@@ -177,11 +160,11 @@ def _start_build(
     lp: LaunchpadClient,
     project: Project,
     arch: str,
+    build_id: str,
     package_all_sources: bool,
-    remote_dir: str
 ) -> None:
     # Pull/update sources for project.
-    worktree_dir = os.path.join(remote_dir, "worktree")
+    worktree_dir = BaseDirectory.save_data_path("snapcraft", "remote-build", build_id)
     wt = WorkTree(worktree_dir, project, package_all_sources=package_all_sources)
     repo_dir = wt.prepare_repository()
     url = lp.push_source_tree(repo_dir)
