@@ -21,7 +21,6 @@ from unittest import mock
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
-from snapcraft.internal import errors
 from snapcraft.plugins import make
 from tests import unit
 
@@ -276,22 +275,3 @@ class MakePluginTestCase(unit.TestCase):
                 ),
             ]
         )
-
-    def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: make-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
-
-        raised = self.assertRaises(
-            errors.PluginBaseError, make.MakePlugin, "test-part", self.options, project
-        )
-
-        self.assertThat(raised.part_name, Equals("test-part"))
-        self.assertThat(raised.base, Equals("unsupported-base"))
