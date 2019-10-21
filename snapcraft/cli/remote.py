@@ -114,8 +114,7 @@ def remote_build(
         raise errors.AcceptPublicUploadError()
 
     echo.warning(
-        "snapcraft remote-build is offered as a preview. Authentication and transport "
-        "mechanisms will change in future releases. Use with caution in scripts."
+        "snapcraft remote-build is experimental and is subject to change - use with caution."
     )
 
     project = get_project()
