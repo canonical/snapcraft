@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -113,7 +113,13 @@ class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):
             dict(name="multipass", channel="beta", revision="10")
         ]
         self.fake_snapd.find_result = [
-            dict(multipass=dict(channels={"latest/beta": dict(confinement="classic")}))
+            dict(
+                multipass=dict(
+                    channel="beta",
+                    type="app",
+                    channels={"latest/beta": dict(confinement="classic")},
+                )
+            )
         ]
         MultipassCommand.setup_multipass(platform="linux", echoer=self.echoer_mock)
 

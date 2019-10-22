@@ -19,8 +19,7 @@ import logging
 import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
-from typing import Sequence
-from typing import List  # noqa: F401
+from typing import List, Sequence, Set, Union
 from urllib import parse
 
 import requests_unixsocket
@@ -276,7 +275,7 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
         snap_pkg.download(directory=directory)
 
 
-def install_snaps(snaps_list):
+def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
     """Install snaps of the format <snap-name>/<channel>.
 
     :return: a list of "name=revision" for the snaps installed.
@@ -284,6 +283,17 @@ def install_snaps(snaps_list):
     snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
+
+        # Allow bases to be installed from non stable channels.
+        snap_pkg_channel = snap_pkg.get_store_snap_info()["channel"]
+        snap_pkg_type = snap_pkg.get_store_snap_info()["type"]
+        if snap_pkg_channel != "stable" and snap_pkg_type == "base":
+            snap_pkg = SnapPackage(
+                "{snap_name}/latest/{channel}".format(
+                    snap_name=snap_pkg.name, channel=snap_pkg_channel
+                )
+            )
+
         if not snap_pkg.installed and not snap_pkg.is_valid():
             raise errors.SnapUnavailableError(
                 snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
