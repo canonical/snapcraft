@@ -264,6 +264,11 @@ def create_similar_directory(source: str, destination: str) -> None:
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
 
+    # Windows does not have "os.chown" implementation and copystat
+    # is unlikely to be useful, so just bail after creating directory.
+    if sys.platform == "win32":
+        return
+
     try:
         os.chown(destination, uid, gid, follow_symlinks=False)
     except PermissionError as exception:
