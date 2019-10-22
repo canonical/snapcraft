@@ -111,7 +111,12 @@ if sys.platform == "linux":
         "snap": Snap,
         "": Local,
     }
+elif sys.platform == "win32":
+    from ._git import Git  # noqa
+    from ._local import Local  # noqa
+    from ._tar import Tar  # noqa
 
+    _source_handler = {"git": Git, "local": Local, "tar": Tar, "": Local}
 
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
