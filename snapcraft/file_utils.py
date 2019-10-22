@@ -423,8 +423,9 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
 
 
 def _remove_readonly(func, path, excinfo):
-    """Try setting file to writeable if error occurs.
-    Known to be required on Windows."""
+    # Try setting file to writeable if error occurs during rmtree.
+    # Known to be required on Windows where file is not "writeable",
+    # but it is owned by the user (who can set file permissions).
     os.chmod(path, stat.S_IWRITE)
     func(path)
 

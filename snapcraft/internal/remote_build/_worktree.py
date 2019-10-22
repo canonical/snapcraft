@@ -25,6 +25,7 @@ from copy import deepcopy
 import snapcraft
 import snapcraft.internal.sources
 from snapcraft import yaml_utils
+from snapcraft.file_utils import rmtree
 from snapcraft.project import Project
 from snapcraft.internal.meta import _version
 from snapcraft.internal.remote_build import errors
@@ -68,7 +69,7 @@ class WorkTree:
         # Initialize clean repo to ship to remote builder.
         self._repo_dir = os.path.join(self._base_dir, "repo")
         if os.path.exists(self._repo_dir):
-            shutil.rmtree(self._repo_dir)
+            rmtree(self._repo_dir)
 
         self._repo_sources_dir = os.path.join(self._repo_dir, "sources")
         self._repo_snap_dir = os.path.join(self._repo_dir, "snap")
@@ -174,7 +175,7 @@ class WorkTree:
 
         # Remove existing cache directory (if exists)
         if os.path.exists(download_dir):
-            shutil.rmtree(download_dir, ignore_errors=True)
+            rmtree(download_dir)
 
         # Pull sources, but create directory first if part
         # is configured to use the `dump` plugin.
@@ -263,7 +264,7 @@ class WorkTree:
 
             # Remove existing assets, and update copy.
             if os.path.exists(self._repo_snap_dir):
-                shutil.rmtree(self._repo_snap_dir, ignore_errors=True)
+                rmtree(self._repo_snap_dir)
             shutil.copytree(assets_dir, self._repo_snap_dir)
         else:
             os.makedirs(self._repo_snap_dir, exist_ok=True)
