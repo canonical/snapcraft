@@ -15,13 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from collections import OrderedDict
+from textwrap import dedent
+from unittest import mock
+
+from testtools.matchers import Equals
+
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.snap import Snap
 from tests import unit
-from textwrap import dedent
-from unittest import mock
 
 
 class SnapTests(unit.TestCase):
@@ -31,7 +33,7 @@ class SnapTests(unit.TestCase):
     This applies even for verifying YAMLs, which are (now) ordered."""
 
     def test_empty(self):
-        snap_dict = OrderedDict({})
+        snap_dict = OrderedDict({"grade": "stable"})
 
         snap = Snap()
 
@@ -42,15 +44,55 @@ class SnapTests(unit.TestCase):
 
         snap = Snap.from_dict(snap_dict=snap_dict)
 
-        self.assertEqual(snap_dict, snap.to_dict())
+        self.assertEqual(OrderedDict({"grade": "stable"}), snap.to_dict())
 
     def test_missing_keys(self):
-        snap_dict = OrderedDict({"name": "snap-test"})
+        snap_dict = OrderedDict({"name": "snap-test", "grade": "stable"})
 
         snap = Snap.from_dict(snap_dict=snap_dict)
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertRaises(errors.MissingSnapcraftYamlKeysError, snap.validate)
+
+    def test_grade_devel_statisfies_required_grade(self):
+        self.fake_snapd.snaps_result = [
+            {"name": "fake-base", "channel": "edge", "revision": "fake-revision"}
+        ]
+
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "base": "fake-base",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "devel",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+
+        snap.validate()
+
+    def test_grade_stable_but_devel_required(self):
+        self.fake_snapd.snaps_result = [
+            {"name": "fake-base", "channel": "edge", "revision": "fake-revision"}
+        ]
+
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "base": "fake-base",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "stable",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+
+        self.assertRaises(errors.GradeDevelRequiredError, snap.validate)
 
     def test_simple(self):
         snap_dict = OrderedDict(
@@ -59,6 +101,7 @@ class SnapTests(unit.TestCase):
                 "version": "snap-version",
                 "summary": "snap-summary",
                 "description": "snap-description",
+                "grade": "stable",
             }
         )
 
@@ -80,6 +123,7 @@ class SnapTests(unit.TestCase):
                 "summary": "snap-summary",
                 "description": "snap-description",
                 "passthrough": {"otherkey": "othervalue"},
+                "grade": "stable",
             }
         )
 
@@ -362,6 +406,7 @@ class SnapTests(unit.TestCase):
                 "summary": "snap-summary",
                 "description": "snap-description",
                 "base": "core",
+                "grade": "devel",
             }
         )
 
@@ -386,6 +431,7 @@ class SnapTests(unit.TestCase):
                 "summary": "snap-summary",
                 "description": "snap-description",
                 "base": "core18",
+                "grade": "devel",
             }
         )
 
@@ -401,3 +447,33 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertTrue("base" in written_snap_yaml)
+
+
+class SnapDefaultGradeTest(unit.TestCase):
+    scenarios = (
+        ("base on stable", dict(base_channel="stable", expected_grade="stable")),
+        ("base on candidate", dict(base_channel="candidate", expected_grade="devel")),
+        ("base on beta", dict(base_channel="beta", expected_grade="devel")),
+        ("base on edge", dict(base_channel="edge", expected_grade="devel")),
+        ("base not here ", dict(base_channel=None, expected_grade="stable")),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        if self.base_channel:
+            self.fake_base = "fake-base"
+            self.fake_snapd.snaps_result = [
+                {
+                    "name": self.fake_base,
+                    "channel": self.base_channel,
+                    "revision": "fake-revision",
+                }
+            ]
+        else:
+            self.fake_base = None
+
+    def test_default_grade(self):
+        snap = Snap.from_dict(dict(base=self.fake_base))
+
+        self.assertThat(snap.to_dict()["grade"], Equals(self.expected_grade))

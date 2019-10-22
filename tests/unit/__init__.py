@@ -187,16 +187,26 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # Make sure snap installation does the right thing
         self.fake_snapd.installed_snaps = [
-            dict(name="core16", channel="latest/stable", revision="10"),
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core16", channel="stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
         ]
         self.fake_snapd.snaps_result = [
-            dict(name="core16", channel="latest/stable", revision="10"),
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core16", channel="stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
         ]
         self.fake_snapd.find_result = [
-            dict(core16=dict(channels={"latest/stable": dict(confinement="strict")})),
-            dict(core18=dict(channels={"latest/stable": dict(confinement="strict")})),
+            dict(
+                core16=dict(
+                    channel="stable",
+                    channels={"latest/stable": dict(confinement="strict")},
+                )
+            ),
+            dict(
+                core18=dict(
+                    channel="stable",
+                    channels={"latest/stable": dict(confinement="strict")},
+                )
+            ),
         ]
         self.fake_snapd.snap_details_func = None
 

@@ -309,7 +309,7 @@ class ValidTypesTest(ValidationBaseTest):
 
 
 _BASE_TYPE_MSG = (
-    "must be one of base: <base> and type: <app|gadget> (without a build-base), "
+    "must be one of base: <base> and type: <app|gadget>, "
     "base: bare (with a build-base), "
     "or type: <base|kernel|snapd> (without a base)"
 )
@@ -361,9 +361,7 @@ class CombinedBaseTypeTest(ValidationBaseTest):
         data = self.data.copy()
         data["build-base"] = "fake-base"
 
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        self.assertThat(raised.message, Equals(_BASE_TYPE_MSG), message=data)
+        Validator(data).validate()
 
     def test_build_base_and_type_base(self):
         data = self.data.copy()

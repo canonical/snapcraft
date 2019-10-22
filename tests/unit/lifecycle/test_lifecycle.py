@@ -573,7 +573,7 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         )
 
         self.fake_snapd.snaps_result = [
-            dict(name="core18", channel="latest/stable", revision="10")
+            dict(name="core18", channel="stable", revision="10")
         ]
 
         self.useFixture(FakeOsRelease())
@@ -634,7 +634,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
         self.fake_snapd.snaps_result = [
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
             dict(name="test-snap-1", revision="test-snap-1-revision"),
             dict(name="test-snap-2", revision="test-snap-2-revision"),
         ]

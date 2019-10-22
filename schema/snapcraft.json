@@ -886,7 +886,7 @@
                     ]
                 },
                 {
-                    "usage": "base: <base> and type: <app|gadget> (without a build-base)",
+                    "usage": "base: <base> and type: <app|gadget>",
                     "properties": {
                         "type": {
                             "enum": [
@@ -900,13 +900,6 @@
                             "required": [
                                 "base"
                             ]
-                        },
-                        {
-                            "not":{
-                                "required": [
-                                    "build-base"
-                                ]
-                            }
                         }
                     ]
                 },
