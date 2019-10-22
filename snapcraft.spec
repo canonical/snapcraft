@@ -1,17 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
+datas = [
+        ("extensions", os.path.join("share", "snapcraft", "extensions")),
+        ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
+        ("schema", os.path.join("share", "snapcraft", "schema")),
+    ]
+datas += collect_data_files("lazr.restfulclient")
+datas += collect_data_files("lazr.uri")
+datas += collect_data_files("wadllib")
 
 a = Analysis(
     ["snapcraft\\cli\\__main__.py"],
     pathex=[],
     binaries=[],
-    datas=[
-        ("extensions", os.path.join("share", "snapcraft", "extensions")),
-        ("keyrings", os.path.join("share", "snapcraft", "keyrings")),
-        ("schema", os.path.join("share", "snapcraft", "schema")),
-    ],
+    datas=datas,
     hiddenimports=[
         "cffi",
         "click",
