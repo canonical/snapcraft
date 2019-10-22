@@ -230,6 +230,9 @@ class SnapPackage:
                 snap_name=self.name, snap_channel=self.channel
             )
 
+        # Now that the snap is installed, invalidate the data we had on it.
+        self._is_installed = None
+
     def refresh(self):
         """Refreshes a snap onto a channel on the system."""
         snap_refresh_cmd = []
@@ -247,6 +250,9 @@ class SnapPackage:
             raise errors.SnapRefreshError(
                 snap_name=self.name, snap_channel=self.channel
             )
+
+        # Now that the snap is refreshed, invalidate the data we had on it.
+        self._is_installed = None
 
 
 def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
@@ -288,7 +294,6 @@ def install_snaps(snaps_list):
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
 
-        snap_pkg = SnapPackage(snap)
         snaps_installed.append(
             "{}={}".format(snap_pkg.name, snap_pkg.get_local_snap_info()["revision"])
         )
