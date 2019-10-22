@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+import gzip
 import logging
 import os
 import shutil
@@ -316,7 +317,7 @@ class LaunchpadClient:
             if not snap_name.endswith("_{}.snap".format(arch)):
                 continue
             try:
-                self._download_file(url, snap_name)
+                self._download_file(url=url, dst=snap_name)
                 logger.info("Snapped {}".format(snap_name))
             except urllib.error.HTTPError as e:
                 logger.error("Snap download error: {}: {}".format(e, snap_name))
@@ -335,26 +336,34 @@ class LaunchpadClient:
         finally:
             self._waiting.remove(arch)
 
-    def _get_logfile_name(self, build: Dict[str, Any]) -> str:
-        arch = build["arch_tag"]
-        log_name = name = "{}_{}.txt.gz".format(self._snap_name, arch)
-        number = 1
+    def _get_logfile_name(self, arch: str) -> str:
+        n = 0
+        base_name = "{}_{}".format(self._snap_name, arch)
+        log_name = f"{base_name}.txt"
+
         while os.path.isfile(log_name):
-            log_name = "{}.{}".format(name, number)
-            number += 1
+            n += 1
+            log_name = f"{base_name}.{n}.txt"
+
         return log_name
 
     def _download_log(self, build: Dict[str, Any]) -> str:
         url = build["build_log_url"]
         logger.debug("Build log url: {}".format(url))
-        log_name = self._get_logfile_name(build)
-        self._download_file(url, log_name)
+        arch = build["arch_tag"]
+        log_name = self._get_logfile_name(arch)
+        self._download_file(url=url, dst=log_name, gunzip=True)
         return log_name
 
-    def _download_file(self, url: str, name: str) -> None:
-        logger.debug("Download snap from {!r}".format(url))
-        with urllib.request.urlopen(url) as response, open(name, "wb") as snapfile:
-            shutil.copyfileobj(response, snapfile)  # type: ignore
+    def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
+        logger.debug("Downloading file from {!r}".format(url))
+        with urllib.request.urlopen(url) as response:
+            # Wrap response with gzipfile if gunzip is requested.
+            if gunzip:
+                response = gzip.GzipFile(fileobj=response)  # type: ignore
+
+            with open(dst, "wb") as f_dst:
+                shutil.copyfileobj(response, f_dst)  # type: ignore
 
     def _gitify_repository(self, repo_dir: str) -> Git:
         """Git-ify source repository tree.
