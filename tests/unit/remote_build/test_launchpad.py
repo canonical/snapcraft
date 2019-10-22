@@ -262,17 +262,21 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
-        open("test_i386.txt.gz", "w").close()
-        open("test_i386.txt.gz.1", "w").close()
+        open("test_i386.txt", "w").close()
+        open("test_i386.1.txt", "w").close()
         self.lpc._lp = LaunchpadImpl()
 
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
             [
-                mock.call("url_for/build_log_file_1", "test_i386.txt.gz.2"),
-                mock.call("url_for/snap_file_i386.snap", "snap_file_i386.snap"),
-                mock.call("url_for/build_log_file_2", "test_amd64.txt.gz"),
+                mock.call(
+                    url="url_for/build_log_file_1", gunzip=True, dst="test_i386.2.txt"
+                ),
+                mock.call(url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"),
+                mock.call(
+                    url="url_for/build_log_file_2", gunzip=True, dst="test_amd64.txt"
+                ),
             ]
         )
 
@@ -286,10 +290,14 @@ class LaunchpadTestCase(unit.TestCase):
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
-            [mock.call("url_for/build_log_file_2", "test_amd64.txt.gz")]
+            [
+                mock.call(
+                    url="url_for/build_log_file_2", gunzip=True, dst="test_amd64.txt"
+                )
+            ]
         )
         mock_log.assert_called_with(
-            "Build failed for arch amd64. Log file is 'test_amd64.txt.gz'."
+            "Build failed for arch amd64. Log file is 'test_amd64.txt'."
         )
 
     def test_get_build_status(self):
