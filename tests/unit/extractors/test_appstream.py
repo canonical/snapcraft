@@ -91,6 +91,16 @@ class AppstreamTestCase(unit.TestCase):
                     "expect": "test-id",
                 },
             ),
+            (
+                "title",
+                {
+                    "key": "name",
+                    "attributes": {},
+                    "param_name": "title",
+                    "value": "test-title",
+                    "expect": "test-title",
+                },
+            ),
         ],
         [
             ("metainfo", {"file_extension": "metainfo.xml"}),
@@ -456,6 +466,77 @@ class AppstreamTest(unit.TestCase):
                 )
             ),
         )
+
+    def test_appstream_multilang_title(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <name>Foliate</name>
+            <name xml:lang="id_ID">Foliate_id</name>
+            <name xml:lang="pt_BR">Foliate_pt</name>
+            <name xml:lang="ru_RU">Foliate_ru</name>
+            <name xml:lang="nl_NL">Foliate_nl</name>
+            <name xml:lang="fr_FR">Foliate_fr</name>
+            <name xml:lang="cs_CS">Foliate_cs</name>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_title(), Equals("Foliate"))
+
+    def test_appstream_release(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <releases>
+                <release version="1.5.3" date="2019-07-25">
+                <description>
+                    <ul>
+                    <li>Fixed Flatpak version not being able to open .mobi, .azw, and .azw3 files</li>
+                    <li>Improved Wiktionary lookup, now with links and example sentences</li>
+                    <li>Improved popover footnote extraction and formatting</li>
+                    <li>Added option to export annotations to BibTeX</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.2" date="2019-07-19">
+                <description>
+                    <ul>
+                    <li>Fixed table of contents navigation not working with some books</li>
+                    <li>Fixed not being able to zoom images with Kindle books</li>
+                    <li>Fixed not being able to open books with .epub3 filename extension</li>
+                    <li>Fixed temporary directory not being cleaned after closing</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.1" date="2019-07-17">
+                <description>
+                    <ul>
+                    <li>Fixed F9 shortcut not working</li>
+                    <li>Updated translations</li>
+                    </ul>
+                </description>
+                </release>
+            </releases>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_version(), Equals("1.5.3"))
 
 
 class AppstreamUnhandledFileTestCase(unit.TestCase):

@@ -82,6 +82,8 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
     common_id = _get_value_from_xml_element(dom, "id")
     summary = _get_value_from_xml_element(dom, "summary")
     description = _get_value_from_xml_element(dom, "description")
+    title = _get_value_from_xml_element(dom, "name")
+    version = _get_latest_release_from_nodes(dom.findall("releases/release"))
 
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
@@ -99,8 +101,10 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
 
     return ExtractedMetadata(
         common_id=common_id,
+        title=title,
         summary=summary,
         description=description,
+        version=version,
         icon=icon,
         desktop_file_paths=desktop_file_paths,
     )
@@ -134,6 +138,13 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
         return node.text.strip()
     else:
         return None
+
+
+def _get_latest_release_from_nodes(nodes) -> Optional[str]:
+    for node in nodes:
+        if "version" in node.attrib:
+            return node.attrib["version"]
+    return None
 
 
 def _get_desktop_file_ids_from_nodes(nodes) -> List[str]:
