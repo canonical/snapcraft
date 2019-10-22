@@ -249,16 +249,12 @@ def _update_yaml_with_defaults(config_data, schema):
     # necessary. Defaults are taken from the schema. Technically these are the
     # only two optional keywords currently WITH defaults, but we don't want to
     # risk setting something that we add later on accident.
-    for key in ("confinement", "grade"):
-        if key not in config_data:
-            with contextlib.suppress(KeyError):
-                default = schema[key]["default"]
-                config_data[key] = default
-                logger.warn(
-                    "{!r} property not specified: defaulting to {!r}".format(
-                        key, default
-                    )
-                )
+    if "confinement" not in config_data:
+        default = schema["confinement"]["default"]
+        config_data["confinement"] = default
+        logger.warning(
+            f"'confinement' property not specified: defaulting to {default!r}"
+        )
 
     # Set default adapter
     app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][
@@ -313,7 +309,6 @@ class _SnapPackaging:
         self._parts_dir = project_config.project.parts_dir
 
         self._arch_triplet = project_config.project.arch_triplet
-        self._global_state_file = project_config.project._get_global_state_file_path()
         self._is_host_compatible_with_base = (
             project_config.project.is_host_compatible_with_base
         )

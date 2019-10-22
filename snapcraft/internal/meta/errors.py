@@ -198,3 +198,14 @@ class HookValidationError(errors.SnapcraftError):
 
     def __init__(self, *, hook_name: str, message: str) -> None:
         super().__init__(hook_name=hook_name, message=message)
+
+
+class GradeDevelRequiredError(errors.SnapcraftException):
+    def __init__(self, *, set_grade: str) -> None:
+        self.set_grade = set_grade
+
+    def get_brief(self) -> str:
+        return f"Snap 'grade' was set to {self.set_grade!r} but must be 'devel'."
+
+    def get_resolution(self) -> str:
+        return "Set 'grade' to 'devel' or use a stable base for this snap."

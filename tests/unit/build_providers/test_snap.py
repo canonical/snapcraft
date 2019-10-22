@@ -53,6 +53,13 @@ class SnapInjectionTest(unit.TestCase):
                 "revision": "123",
             },
             {
+                "name": "core18",
+                "confinement": "strict",
+                "id": "2kkibb",
+                "channel": "stable",
+                "revision": "123",
+            },
+            {
                 "name": "snapcraft",
                 "confinement": "classic",
                 "id": "3lljuR",
