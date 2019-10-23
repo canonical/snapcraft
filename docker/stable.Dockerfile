@@ -1,9 +1,12 @@
 FROM ubuntu:xenial as builder
 
 # Grab dependencies
-RUN apt update
-RUN apt dist-upgrade --yes
-RUN apt install --yes curl jq squashfs-tools
+RUN apt-get update
+RUN apt-get dist-upgrade --yes
+RUN apt-get install --yes \
+      curl \
+      jq \
+      squashfs-tools
 
 # Grab the core snap from the stable channel and unpack it in the proper place
 RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/core' | jq '.download_url' -r) --output core.snap
@@ -30,7 +33,7 @@ COPY --from=builder /snap/snapcraft /snap/snapcraft
 COPY --from=builder /snap/bin/snapcraft /snap/bin/snapcraft
 
 # Generate locale
-RUN apt update && apt dist-upgrade --yes && apt install --yes sudo locales && locale-gen en_US.UTF-8
+RUN apt-get update && apt-get dist-upgrade --yes && apt-get install --yes sudo locales && locale-gen en_US.UTF-8
 
 # Set the proper environment
 ENV LANG="en_US.UTF-8"
