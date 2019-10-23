@@ -70,7 +70,7 @@ class Project(ProjectOptions):
     def _get_project_directory_hash(self) -> str:
         m = hashlib.sha1()
         m.update(self._project_dir.encode())
-        return m.hexdigest()
+        return m.hexdigest()[:6]
 
     def _get_content_snaps(self) -> Set[str]:
         """Return the set of content snaps from snap_meta."""
