@@ -111,14 +111,25 @@ class LaunchpadClient:
         os.makedirs(cache_dir, mode=0o700, exist_ok=True)
         return cache_dir
 
+    def _lp_load_url(self, url: str) -> Entry:
+        """Load Launchpad url with a retry in case the connection is lost."""
+        try:
+            return self._lp.load(url)
+        except ConnectionResetError:
+            self.login()
+            return self._lp.load(url)
+
     def login(self) -> Launchpad:
-        self._lp = Launchpad.login_with(
-            "snapcraft remote-build {}".format(snapcraft.__version__),
-            "production",
-            self._cache_dir,
-            credentials_file=self._credentials,
-            version="devel",
-        )
+        try:
+            self._lp = Launchpad.login_with(
+                "snapcraft remote-build {}".format(snapcraft.__version__),
+                "production",
+                self._cache_dir,
+                credentials_file=self._credentials,
+                version="devel",
+            )
+        except (ConnectionRefusedError, TimeoutError):
+            raise errors.LaunchpadHttpsError()
 
     def get_git_repo_path(self) -> str:
         return f"~{self._lp_user}/+git/{self._lp_name}"
@@ -259,14 +270,14 @@ class LaunchpadClient:
         )
 
         try:
-            request = self._lp.load(url)
+            request = self._lp_load_url(url)
         except restfulclient.errors.NotFound:
             raise errors.RemoteBuildNotFoundError(
                 name=self._snap_name, req_number=req_number
             )
 
         logger.debug("Request URL: {}".format(request))
-        builds = self._lp.load(request.builds_collection_link)
+        builds = self._lp_load_url(request.builds_collection_link)
         self._waiting = [build["arch_tag"] for build in builds.entries]
         self._builds_collection_link = request.builds_collection_link
 
@@ -275,7 +286,7 @@ class LaunchpadClient:
         logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
         while len(self._waiting):
             time.sleep(interval)
-            builds = self._lp.load(self._builds_collection_link)
+            builds = self._lp_load_url(self._builds_collection_link)
             if not builds.entries:
                 break
 
@@ -291,7 +302,7 @@ class LaunchpadClient:
 
     def get_build_status(self) -> List[Tuple[str, str]]:
         status = []  # type: List[Tuple[str, str]]
-        builds = self._lp.load(self._builds_collection_link)
+        builds = self._lp_load_url(self._builds_collection_link)
         for build in builds.entries:
             arch = build["arch_tag"]
             build_state = build["buildstate"]
@@ -301,7 +312,7 @@ class LaunchpadClient:
 
     def _process_success(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
-        snap_build = self._lp.load(build["self_link"])
+        snap_build = self._lp_load_url(build["self_link"])
         urls = snap_build.getFileUrls()
         logger.debug("Success urls: {}".format(urls))
         if not urls:

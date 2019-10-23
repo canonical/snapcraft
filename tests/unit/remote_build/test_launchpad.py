@@ -153,8 +153,8 @@ class DistImpl(FakeLaunchpadObject):
 
 class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
-        self.login_mock = mock.Mock()
-        self.load_mock = mock.Mock()
+        self._login_mock = mock.Mock()
+        self._load_mock = mock.Mock()
         self.git_repositories = GitRepositoriesImpl()
         self.snaps = SnapsImpl()
         self.people = {"user": "/~user"}
@@ -162,13 +162,16 @@ class LaunchpadImpl(FakeLaunchpadObject):
         self.rbi = SnapBuildReqImpl()
 
     def load(self, url: str, *args, **kw):
-        self.load_mock(url, *args, **kw)
+        self._load_mock(url, *args, **kw)
         if "/+build-request/" in url:
             return SnapBuildReqImpl()
         elif "http://build_self_link_1" in url:
             return BuildImpl()
         else:
             return self.rbi.builds
+
+    def login(self):
+        return self._login_mock()
 
 
 class LaunchpadTestCase(unit.TestCase):
@@ -188,6 +191,34 @@ class LaunchpadTestCase(unit.TestCase):
             credentials_file=mock.ANY,
             version="devel",
         )
+
+    @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
+    def test_login_connection_issues(self, mock_login):
+        mock_login.side_effect = ConnectionRefusedError()
+        self.assertRaises(errors.LaunchpadHttpsError, self.lpc.login)
+        mock_login.side_effect = TimeoutError()
+        self.assertRaises(errors.LaunchpadHttpsError, self.lpc.login)
+
+    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient.login")
+    def test_load_connection_issues(self, mock_login):
+        self.lpc._lp = LaunchpadImpl()
+
+        # ConnectionRefusedError should surface.
+        self.lpc._lp._load_mock.side_effect = ConnectionRefusedError
+        self.assertRaises(ConnectionRefusedError, self.lpc._lp_load_url, "foo")
+
+        # Load URL should work OK after single connection reset.
+        self.lpc._lp._load_mock.side_effect = [ConnectionResetError, None]
+        self.lpc._lp_load_url(url="foo")
+        mock_login.assert_called()
+
+        # Load URL should fail with two connection resets.
+        self.lpc._lp._load_mock.side_effect = [
+            ConnectionResetError,
+            ConnectionResetError,
+        ]
+        self.assertRaises(ConnectionResetError, self.lpc._lp_load_url, "foo")
+        mock_login.assert_called()
 
     def test_create_snap(self):
         self.lpc._lp = LaunchpadImpl()
@@ -258,7 +289,7 @@ class LaunchpadTestCase(unit.TestCase):
     def test_recover_build(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.recover_build(1234)
-        self.assertThat(self.lpc._lp.load_mock.call_count, Equals(2))
+        self.assertThat(self.lpc._lp._load_mock.call_count, Equals(2))
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):

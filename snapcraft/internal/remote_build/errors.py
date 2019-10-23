@@ -144,3 +144,11 @@ class LaunchpadGitPushError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Verify connectivity to https://git.launchpad.net and retry build."
+
+
+class LaunchpadHttpsError(SnapcraftException):
+    def get_brief(self) -> str:
+        return "Failed to connect to Launchpad API service."
+
+    def get_resolution(self) -> str:
+        return "Verify connectivity to https://api.launchpad.net and retry build."
