@@ -81,9 +81,7 @@ class ExtensionImpl(Extension):
                 platform_snap: {
                     "interface": "content",
                     "target": "$SNAP/gnome-platform",
-                    "default-provider": "{snap}".format(
-                        snap=platform_snap
-                    ),
+                    "default-provider": "{snap}".format(snap=platform_snap),
                 },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
