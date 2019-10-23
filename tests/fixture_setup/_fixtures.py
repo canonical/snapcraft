@@ -598,19 +598,24 @@ class SnapcraftYaml(fixtures.Fixture):
     def update_part(self, name, data):
         part = {name: data}
         self.data["parts"].update(part)
+        self.write_snapcraft_yaml()
 
     def update_app(self, name, data):
         app = {name: data}
         self.data["apps"].update(app)
+        self.write_snapcraft_yaml()
 
-    def _setUp(self):
-        super()._setUp()
+    def write_snapcraft_yaml(self):
         self.snapcraft_yaml_file_path = os.path.join(
             self.path, "snap", "snapcraft.yaml"
         )
         os.makedirs(os.path.join(self.path, "snap"), exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as snapcraft_yaml_file:
             yaml_utils.dump(self.data, stream=snapcraft_yaml_file)
+
+    def _setUp(self):
+        super()._setUp()
+        self.write_snapcraft_yaml()
 
 
 class SharedCache(fixtures.Fixture):

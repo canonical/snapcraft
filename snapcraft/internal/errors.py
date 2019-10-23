@@ -18,7 +18,15 @@ from abc import ABC, abstractmethod
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
 from subprocess import CalledProcessError
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from snapcraft.internal.pluginhandler._dirty_report import DirtyReport
+    from snapcraft.internal.pluginhandler._outdated_report import OutdatedReport
+
+
+# Commonly used resolution message to clean and retry build.
+CLEAN_RESOLUTION = "Run `snapcraft clean` and retry build."
 
 
 class SnapcraftError(Exception):
@@ -73,91 +81,105 @@ class SnapcraftException(Exception, ABC):
         return self.get_brief()
 
 
-class MissingStateCleanError(SnapcraftError):
-    fmt = (
-        "Failed to clean: "
-        "Missing state for {step.name!r}. "
-        "To clean the project, run `snapcraft clean`."
-    )
+class SnapcraftReportableException(SnapcraftException, ABC):
+    """Helper class for reportable Snapcraft Exceptions."""
 
-    def __init__(self, step):
-        super().__init__(step=step)
+    def get_reportable(self) -> bool:
+        return True
 
 
-class StepOutdatedError(SnapcraftError):
+class MissingStateCleanError(SnapcraftException):
+    def __init__(self, step: steps.Step) -> None:
+        self.step = step
 
-    fmt = (
-        "Failed to reuse files from previous run: "
-        "The {step.name!r} step of {part!r} is out of date:\n"
-        "{report}"
-        "To continue, clean that part's {step.name!r} step by running "
-        "`snapcraft clean {parts_names} -s {step.name}`."
-    )
+    def get_brief(self) -> str:
+        return f"Failed to clean for step {self.step.name!r}."
 
+    def get_resolution(self) -> str:
+        return CLEAN_RESOLUTION
+
+
+class StepOutdatedError(SnapcraftException):
     def __init__(
-        self, *, step, part, dirty_report=None, outdated_report=None, dependents=None
-    ):
+        self,
+        *,
+        step: steps.Step,
+        part: str,
+        dirty_report: "DirtyReport" = None,
+        outdated_report: "OutdatedReport" = None,
+    ) -> None:
+        self.step = step
+        self.part = part
+        self.parts_names = part
+        self.dirty_report = dirty_report
+        self.outdated_report = outdated_report
+        self.report = self._consolidate_reports()
+
+    def _consolidate_reports(self) -> str:
         messages = []
 
-        if dirty_report:
-            messages.append(dirty_report.get_report())
+        if self.dirty_report:
+            messages.append(self.dirty_report.get_report())
 
-        if outdated_report:
-            messages.append(outdated_report.get_report())
+        if self.outdated_report:
+            messages.append(self.outdated_report.get_report())
 
-        if dependents:
-            humanized_dependents = formatting_utils.humanize_list(dependents, "and")
-            pluralized_dependents = formatting_utils.pluralize(
-                dependents, "depends", "depend"
-            )
-            messages.append(
-                "The {0!r} step for {1!r} needs to be run again, "
-                "but {2} {3} on it.\n".format(
-                    step.name, part, humanized_dependents, pluralized_dependents
-                )
-            )
-            parts_names = ["{!s}".format(d) for d in sorted(dependents)]
-        else:
-            parts_names = [part]
+        return "".join(messages)
 
-        super().__init__(
-            step=step,
-            part=part,
-            report="".join(messages),
-            parts_names=" ".join(parts_names),
-        )
+    def get_brief(self) -> str:
+        return "Failed to reuse files from previous run."
+
+    def get_resolution(self) -> str:
+        return CLEAN_RESOLUTION
+
+    def get_details(self) -> Optional[str]:
+        # If non-empty string, return report (otherwise None).
+        if self.report:
+            return self.report
+
+        return None
 
 
-class SnapcraftEnvironmentError(SnapcraftError):
+class SnapcraftEnvironmentError(SnapcraftException):
+    """DEPRECATED: Too generic, create (or re-use) a tailored one."""
+
     # FIXME This exception is too generic.
     # https://bugs.launchpad.net/snapcraft/+bug/1734231
     # --elopio - 20171123
 
-    fmt = "{message}"
+    def __init__(self, message: str) -> None:
+        self.message = message
 
-    def __init__(self, message):
-        super().__init__(message=message)
+    def get_brief(self) -> str:
+        return self.message
 
-
-class SnapcraftDataDirectoryMissingError(SnapcraftReportableError):
-    fmt = (
-        "Cannot find snapcraft's data files required for proper operation.\n"
-        "Please re-install snapcraft or verify installation is correct."
-    )
+    def get_resolution(self) -> str:
+        return ""
 
 
-class SnapcraftMissingLinkerInBaseError(SnapcraftError):
+class SnapcraftDataDirectoryMissingError(SnapcraftReportableException):
+    def get_brief(self) -> str:
+        return "Cannot find snapcraft's data files."
 
-    fmt = (
-        "Cannot find the linker to use for the target base {base!r}.\n"
-        "Please verify that the linker exists at the expected path "
-        "{linker_path!r} and try again. If the linker does not exist "
-        "contact the author of the base (run `snap info {base}` to get "
-        "information for this base)."
-    )
+    def get_resolution(self) -> str:
+        return "Re-install snapcraft or verify installation is correct."
 
-    def __init__(self, *, base, linker_path):
-        super().__init__(base=base, linker_path=linker_path)
+
+class SnapcraftMissingLinkerInBaseError(SnapcraftException):
+    def __init__(self, *, base: str, linker_path: str) -> None:
+        self.base = base
+        self.linker_path = linker_path
+
+    def get_brief(self) -> str:
+        return f"Cannot find the linker to use for the target base {self.base!r}."
+
+    def get_resolution(self) -> str:
+        return (
+            f"Verify that the linker exists at the expected path "
+            f"{self.linker_path!r} and try again. If the linker "
+            f"does not exist contact the author of the base (run "
+            f"`snap info {self.base}` to get information for this base)."
+        )
 
 
 class IncompatibleBaseError(SnapcraftError):

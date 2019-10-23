@@ -28,6 +28,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         self,
         *,
         common_id: str = "",
+        title: str = "",
         summary: str = "",
         description: str = "",
         version: str = "",
@@ -39,6 +40,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
 
         :param str: common_id: The common identifier across multiple packaging
             formats
+        :param str title: Extracted title
         :param str summary: Extracted summary
         :param str description: Extracted description
         :param str version: Extracted version
@@ -52,6 +54,8 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
 
         if common_id:
             self._data["common_id"] = common_id
+        if title:
+            self._data["title"] = title
         if summary:
             self._data["summary"] = summary
         if description:
@@ -86,6 +90,15 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         """
         common_id = self._data.get("common_id")
         return str(common_id) if common_id else None
+
+    def get_title(self) -> str:
+        """Return extracted title.
+
+        :returns: Extracted title
+        :rtype: str
+        """
+        title = self._data.get("title")
+        return str(title) if title else None
 
     def get_summary(self) -> str:
         """Return extracted summary.

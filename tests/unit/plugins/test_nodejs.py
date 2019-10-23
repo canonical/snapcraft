@@ -268,31 +268,7 @@ class NodePluginTest(NodePluginBaseTest):
 
         plugin.pull()
 
-        self.run_mock.assert_has_calls([])
-
-        expected_env = dict(PATH=os.path.join(plugin._npm_dir, "bin"))
-        if self.http_proxy is not None:
-            expected_env["http_proxy"] = self.http_proxy
-        if self.https_proxy is not None:
-            expected_env["https_proxy"] = self.https_proxy
         if self.package_manager == "npm":
-            expected_run_calls = [
-                mock.call(
-                    [self.get_npm_cmd(plugin), "install"],
-                    cwd=plugin.sourcedir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    [self.get_npm_cmd(plugin), "pack"],
-                    cwd=plugin.sourcedir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    [self.get_npm_cmd(plugin), "install"],
-                    cwd=os.path.join(plugin.sourcedir, "package"),
-                    env=expected_env,
-                ),
-            ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
                 mock.call().download(),
@@ -301,24 +277,6 @@ class NodePluginTest(NodePluginBaseTest):
                 ),
             ]
         else:
-            cmd = [self.get_yarn_cmd(plugin)]
-            if self.http_proxy is not None:
-                cmd.extend(["--proxy", self.http_proxy])
-            if self.https_proxy is not None:
-                cmd.extend(["--https-proxy", self.https_proxy])
-            expected_run_calls = [
-                mock.call(cmd + ["install"], cwd=plugin.sourcedir, env=expected_env),
-                mock.call(
-                    cmd + ["pack", "--filename", "test-nodejs-1.0.tgz"],
-                    cwd=plugin.sourcedir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    cmd + ["install"],
-                    cwd=os.path.join(plugin.sourcedir, "package"),
-                    env=expected_env,
-                ),
-            ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
                 mock.call().download(),
@@ -332,7 +290,6 @@ class NodePluginTest(NodePluginBaseTest):
                 ),
             ]
 
-        self.run_mock.assert_has_calls(expected_run_calls)
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
     def test_build(self):
@@ -352,7 +309,7 @@ class NodePluginTest(NodePluginBaseTest):
         if self.package_manager == "npm":
             expected_run_calls = [
                 mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--offline", "--prod"],
+                    [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
                     cwd=plugin.builddir,
                     env=expected_env,
                 ),
@@ -362,16 +319,18 @@ class NodePluginTest(NodePluginBaseTest):
                     env=expected_env,
                 ),
                 mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--offline", "--prod"],
+                    [
+                        self.get_npm_cmd(plugin),
+                        "install",
+                        "--unsafe-perm",
+                        "--offline",
+                        "--prod",
+                    ],
                     cwd=os.path.join(plugin.builddir, "package"),
                     env=expected_env,
                 ),
             ]
             expected_tar_calls = [
-                mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
                 mock.call("test-nodejs-1.0.tgz", plugin.builddir),
                 mock.call().provision(os.path.join(plugin.builddir, "package")),
             ]
@@ -382,11 +341,7 @@ class NodePluginTest(NodePluginBaseTest):
             if self.https_proxy is not None:
                 cmd.extend(["--https-proxy", self.https_proxy])
             expected_run_calls = [
-                mock.call(
-                    cmd + ["install", "--offline", "--prod"],
-                    cwd=plugin.builddir,
-                    env=expected_env,
-                ),
+                mock.call(cmd + ["install"], cwd=plugin.builddir, env=expected_env),
                 mock.call(
                     cmd + ["pack", "--filename", "test-nodejs-1.0.tgz"],
                     cwd=plugin.builddir,
@@ -399,14 +354,6 @@ class NodePluginTest(NodePluginBaseTest):
                 ),
             ]
             expected_tar_calls = [
-                mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
-                mock.call("https://yarnpkg.com/latest.tar.gz", plugin._npm_dir),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
                 mock.call("test-nodejs-1.0.tgz", plugin.builddir),
                 mock.call().provision(os.path.join(plugin.builddir, "package")),
             ]
@@ -430,7 +377,7 @@ class NodePluginTest(NodePluginBaseTest):
         if self.package_manager == "npm":
             expected_run_calls = [
                 mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--offline", "--prod"],
+                    [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
                     cwd=os.path.join(plugin.builddir),
                     env=mock.ANY,
                 ),
@@ -440,7 +387,13 @@ class NodePluginTest(NodePluginBaseTest):
                     env=mock.ANY,
                 ),
                 mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--offline", "--prod"],
+                    [
+                        self.get_npm_cmd(plugin),
+                        "install",
+                        "--unsafe-perm",
+                        "--offline",
+                        "--prod",
+                    ],
                     cwd=os.path.join(plugin.builddir, "package"),
                     env=mock.ANY,
                 ),
@@ -452,11 +405,7 @@ class NodePluginTest(NodePluginBaseTest):
             if self.https_proxy is not None:
                 cmd.extend(["--https-proxy", self.https_proxy])
             expected_run_calls = [
-                mock.call(
-                    cmd + ["install", "--offline", "--prod"],
-                    cwd=plugin.builddir,
-                    env=mock.ANY,
-                ),
+                mock.call(cmd + ["install"], cwd=plugin.builddir, env=mock.ANY),
                 mock.call(
                     cmd + ["pack", "--filename", "org-name-1.0.tgz"],
                     cwd=plugin.builddir,

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import hashlib
 import os
 from datetime import datetime
 
@@ -65,6 +66,11 @@ class Project(ProjectOptions):
         # Ideally everywhere wold converge to operating on snap_meta, and ww
         # would only need to initialize it once (properly).
         self._snap_meta = Snap()
+
+    def _get_project_directory_hash(self) -> str:
+        m = hashlib.sha1()
+        m.update(self._project_dir.encode())
+        return m.hexdigest()
 
     def _get_content_snaps(self) -> Set[str]:
         """Return the set of content snaps from snap_meta."""

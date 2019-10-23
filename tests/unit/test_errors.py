@@ -39,200 +39,6 @@ class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
         (
-            "MissingStateCleanError",
-            {
-                "exception": errors.MissingStateCleanError,
-                "kwargs": {"step": steps.PULL},
-                "expected_message": (
-                    "Failed to clean: "
-                    "Missing state for 'pull'. "
-                    "To clean the project, run `snapcraft clean`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dependents",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dependents": ["test-dependent"],
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'pull' step for 'test-part' needs to be run again, "
-                    "but 'test-dependent' depends on it.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-dependent -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dirty_properties",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        dirty_properties=["test-property1", "test-property2"]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'test-property1' and 'test-property2' part properties "
-                    "appear to have changed.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dirty_project_options",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        dirty_project_options=["test-option"]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'test-option' project option appears to have changed.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError changed_dependencies",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        changed_dependencies=[
-                            pluginhandler.Dependency(
-                                part_name="another-part", step=steps.PULL
-                            )
-                        ]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "A dependency has changed: 'another-part'\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError multiple changed_dependencies",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        changed_dependencies=[
-                            pluginhandler.Dependency(
-                                part_name="another-part1", step=steps.PULL
-                            ),
-                            pluginhandler.Dependency(
-                                part_name="another-part2", step=steps.PULL
-                            ),
-                        ]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "Some dependencies have changed: 'another-part1' and "
-                    "'another-part2'\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError previous step updated",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.STAGE,
-                    "part": "test-part",
-                    "outdated_report": pluginhandler.OutdatedReport(
-                        previous_step_modified=steps.BUILD
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'stage' step of 'test-part' is out of date:\n"
-                    "The 'build' step has run more recently.\n"
-                    "To continue, clean that part's "
-                    "'stage' step by running "
-                    "`snapcraft clean test-part -s stage`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError source updated",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "outdated_report": pluginhandler.OutdatedReport(
-                        source_updated=True
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The source has changed on disk.\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "SnapcraftEnvironmentError",
-            {
-                "exception": errors.SnapcraftEnvironmentError,
-                "kwargs": {"message": "test-message"},
-                "expected_message": "test-message",
-            },
-        ),
-        (
-            "SnapcraftMissingLinkerInBaseError",
-            {
-                "exception": errors.SnapcraftMissingLinkerInBaseError,
-                "kwargs": {
-                    "base": "core18",
-                    "linker_path": "/snap/core18/current/lib64/ld-linux.so.2",
-                },
-                "expected_message": (
-                    "Cannot find the linker to use for the target base 'core18'.\n"
-                    "Please verify that the linker exists at the expected path "
-                    "'/snap/core18/current/lib64/ld-linux.so.2' and try again. If "
-                    "the linker does not exist contact the author of the base "
-                    "(run `snap info core18` to get information for this "
-                    "base)."
-                ),
-            },
-        ),
-        (
             "IncompatibleBaseError",
             {
                 "exception": errors.IncompatibleBaseError,
@@ -858,6 +664,7 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_resolution": "who you gonna call? ghostbusters!!",
                 "expected_details": "i ain't afraid of no ghosts",
                 "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_reportable": False,
             },
         ),
         (
@@ -873,6 +680,177 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_resolution": "who you gonna call? Janine Melnitz!!",
                 "expected_details": "i ain't afraid of no ghosts: ['slimer', 'puft', 'vigo']",
                 "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "MissingStateCleanError",
+            {
+                "exception": errors.MissingStateCleanError,
+                "kwargs": {"step": steps.PULL},
+                "expected_brief": "Failed to clean for step 'pull'.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError dirty_properties",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        dirty_properties=["test-property1", "test-property2"]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'test-property1' and 'test-property2' part properties appear to have changed.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError dirty_project_options",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        dirty_project_options=["test-option"]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'test-option' project option appears to have changed.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError changed_dependencies",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        changed_dependencies=[
+                            pluginhandler.Dependency(
+                                part_name="another-part", step=steps.PULL
+                            )
+                        ]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "A dependency has changed: 'another-part'\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError multiple changed_dependencies",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        changed_dependencies=[
+                            pluginhandler.Dependency(
+                                part_name="another-part1", step=steps.PULL
+                            ),
+                            pluginhandler.Dependency(
+                                part_name="another-part2", step=steps.PULL
+                            ),
+                        ]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "Some dependencies have changed: 'another-part1' and 'another-part2'\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError previous step updated",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.STAGE,
+                    "part": "test-part",
+                    "outdated_report": pluginhandler.OutdatedReport(
+                        previous_step_modified=steps.BUILD
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'build' step has run more recently.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError source updated",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "outdated_report": pluginhandler.OutdatedReport(
+                        source_updated=True
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The source has changed on disk.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "SnapcraftEnvironmentError",
+            {
+                "exception": errors.SnapcraftEnvironmentError,
+                "kwargs": {"message": "test-message"},
+                "expected_brief": "test-message",
+                "expected_resolution": "",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "SnapcraftDataDirectoryMissingError",
+            {
+                "exception": errors.SnapcraftDataDirectoryMissingError,
+                "kwargs": {},
+                "expected_brief": "Cannot find snapcraft's data files.",
+                "expected_resolution": "Re-install snapcraft or verify installation is correct.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": True,
+            },
+        ),
+        (
+            "SnapcraftMissingLinkerInBaseError",
+            {
+                "exception": errors.SnapcraftMissingLinkerInBaseError,
+                "kwargs": {
+                    "base": "core18",
+                    "linker_path": "/snap/core18/current/lib64/ld-linux.so.2",
+                },
+                "expected_brief": "Cannot find the linker to use for the target base 'core18'.",
+                "expected_resolution": "Verify that the linker exists at the expected path '/snap/core18/current/lib64/ld-linux.so.2' and try again. If the linker does not exist contact the author of the base (run `snap info core18` to get information for this base).",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
             },
         ),
     )
@@ -883,3 +861,4 @@ class SnapcraftExceptionTests(unit.TestCase):
         self.assertEquals(self.expected_resolution, exception.get_resolution())
         self.assertEquals(self.expected_details, exception.get_details())
         self.assertEquals(self.expected_docs_url, exception.get_docs_url())
+        self.assertEquals(self.expected_reportable, exception.get_reportable())
