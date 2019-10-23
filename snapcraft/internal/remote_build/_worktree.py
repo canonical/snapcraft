@@ -16,6 +16,7 @@
 
 import logging
 import os
+import pathlib
 import shutil
 import subprocess
 
@@ -145,7 +146,10 @@ class WorkTree:
         os.makedirs(os.path.split(archive_path)[0], exist_ok=True)
         command = ["tar", "czf", archive_path, "-C", source_path, "."]
         subprocess.check_call(command)
-        return os.path.relpath(archive_path, self._repo_dir)
+        relpath = os.path.relpath(archive_path, self._repo_dir)
+
+        # Ensure Linux path formatting is used.
+        return pathlib.Path(relpath).as_posix()
 
     def _pull_source(self, part_name: str, source: str, selector=None) -> str:
         """Pull source_url for part to source_dir. Returns source.
