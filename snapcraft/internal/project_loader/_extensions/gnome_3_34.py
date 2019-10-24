@@ -66,18 +66,24 @@ class ExtensionImpl(Extension):
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
+                    "default-provider": "gtk-common-themes",
                 },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
+                    "default-provider": "gtk-common-themes",
                 },
                 platform_snap: {
                     "interface": "content",
                     "target": "$SNAP/gnome-platform",
+                    "default-provider": "{snap}".format(
+                        snap=platform_snap
+                    ),
                 },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
