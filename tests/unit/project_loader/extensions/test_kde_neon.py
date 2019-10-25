@@ -36,7 +36,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                             "content": "kde-frameworks-5-core18-all",
                             "interface": "content",
                             "target": "$SNAP/kf5",
-                            "default-provider": "kde-frameworks-5-core18:kde-frameworks-5-core18-slot",
+                            "default-provider": "kde-frameworks-5-core18",
                         }
                     },
                     "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},

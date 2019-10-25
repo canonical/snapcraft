@@ -51,9 +51,7 @@ class ExtensionImpl(Extension):
                 "kde-frameworks-5-plug": {
                     "content": "kde-frameworks-5-core18-all",
                     "interface": "content",
-                    "default-provider": "{}:kde-frameworks-5-core18-slot".format(
-                        platform_snap
-                    ),
+                    "default-provider": platform_snap,
                     "target": "$SNAP/kf5",
                 }
             },
