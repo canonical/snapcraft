@@ -117,7 +117,7 @@ prepend_dir XDG_DATA_DIRS "$SNAP_USER_DATA"
 
 # Set XDG_DATA_HOME to local path
 export XDG_DATA_HOME="$SNAP_USER_DATA/.local/share"
-mkdir -p "$XDG_DATA_HOME"
+ensure_dir_exists "$XDG_DATA_HOME"
 
 # Workaround for GLib < 2.53.2 not searching for schemas in $XDG_DATA_HOME:
 #   https://bugzilla.gnome.org/show_bug.cgi?id=741335
@@ -129,11 +129,11 @@ if [[ -d "$SNAP_USER_DATA/.cache" && ! -e "$XDG_CACHE_HOME" ]]; then
   # the .cache directory used to be stored under $SNAP_USER_DATA, migrate it
   mv "$SNAP_USER_DATA/.cache" "$SNAP_USER_COMMON/"
 fi
-mkdir -p "$XDG_CACHE_HOME"
+ensure_dir_exists "$XDG_CACHE_HOME"
 
 # Create $XDG_RUNTIME_DIR if not exists (to be removed when LP: #1656340 is fixed)
 # shellcheck disable=SC2174
-[ -n "$XDG_RUNTIME_DIR" ] && mkdir -p "$XDG_RUNTIME_DIR" -m 700
+[ -n "$XDG_RUNTIME_DIR" ] && ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
@@ -424,6 +424,6 @@ done
 # create symbolic link to ibus socket path for ibus to look up its socket files
 # (see comments #3 and #6 on https://launchpad.net/bugs/1580463)
 IBUS_CONFIG_PATH="$XDG_CONFIG_HOME/ibus"
-mkdir -p "$IBUS_CONFIG_PATH"
+ensure_dir_exists "$IBUS_CONFIG_PATH"
 [ -d "$IBUS_CONFIG_PATH/bus" ] && rm -rf "$IBUS_CONFIG_PATH/bus"
 ln -sfn "$REALHOME/.config/ibus/bus" "$IBUS_CONFIG_PATH"
