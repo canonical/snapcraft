@@ -393,6 +393,11 @@ if [ "$needs_update" = true ]; then
   rm -rf "$XDG_DATA_HOME/icons"
   mkdir -p "$XDG_DATA_HOME/icons"
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
+    # The runtime and theme content snaps should already contain icon caches
+    # so we skip them to optimise app start time.
+    if [[ "${data_dirs_array[$i]}" == "$SNAP/data-dir" || "${data_dirs_array[$i]}" == "$SNAP_DESKTOP_RUNTIME/"* ]]; then
+      continue
+    fi  
     for theme in "${data_dirs_array[$i]}"/icons/*; do
       if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
         theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
