@@ -286,15 +286,23 @@ class Provider(abc.ABC):
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
         )
+
+        # Note that snap injection order is important.
+        # If the build base is core, we do not need to inject snapd.
+        # Check for None as this build can be driven from a non snappy enabled
+        # system, so we may find ourselves in a situation where the base is not
+        # set like on OSX or Windows.
+        build_base = self.project.info.get_build_base()
+        if build_base is not None and build_base != "core":
+            snap_injector.add(snap_name="snapd")
+
+        # Prevent injecting core18 twice.
+        if build_base is not None and build_base != "core18":
+            snap_injector.add(snap_name=build_base)
+
         # Inject snapcraft
         snap_injector.add(snap_name="core18")
         snap_injector.add(snap_name="snapcraft")
-
-        # This build can be driven from a non snappy enabled system, so we may
-        # find ourself in a situation where the base is not set like on OSX or
-        # Windows.
-        if self.project.info.get_build_base() is not None:
-            snap_injector.add(snap_name=self.project.info.get_build_base())
 
         snap_injector.apply()
 
