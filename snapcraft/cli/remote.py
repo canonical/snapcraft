@@ -105,8 +105,8 @@ def remote_build(
     \b
     Examples:
         snapcraft remote-build --user <user>
-        snapcraft remote-build --user <user> --arch=all
-        snapcraft remote-build --user <user> --arch=amd64,armhf
+        snapcraft remote-build --user <user> --arch=amd64
+        snapcraft remote-build --user <user> --arch=amd64,arm64,armhf,i386,ppc64el,s390x
         snapcraft remote-build --user <user> --recover 47860738
         snapcraft remote-build --user <user> --status 47860738
     """
@@ -232,8 +232,6 @@ def _determine_architectures(project: Project, user_specified_arch: str):
 
     if project_architectures:
         archs = project_architectures
-    elif user_specified_arch == "all":
-        archs = _SUPPORTED_ARCHS
     elif user_specified_arch:
         archs = user_specified_arch.split(",")
     else:
