@@ -128,9 +128,12 @@ def remote_build(
     # potential project builds occurring in parallel elsewhere.
     project_hash = project._get_project_directory_hash()
     build_id = f"snapcraft-{project.info.name}-{project_hash}"
+    architectures = _determine_architectures(project, arch)
 
     # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
-    lp = LaunchpadClient(project=project, build_id=build_id, user=user)
+    lp = LaunchpadClient(
+        project=project, build_id=build_id, user=user, architectures=architectures
+    )
     lp.login()
 
     if status:
@@ -168,25 +171,10 @@ def _start_build(
     repo_dir = wt.prepare_repository()
     lp.push_source_tree(repo_dir)
 
-    # If build architectures not set in snapcraft.yaml, let the user override
-    # Launchpad defaults using --arch.
-    project_architectures = _get_project_architectures(project)
-    if project_architectures and arch:
-        raise click.BadOptionUsage(
-            "Cannot use --arch, architecture list is already set in snapcraft.yaml."
-        )
-    archs = _choose_architectures(project_architectures, arch)
-
-    # Sanity check for build architectures
-    _check_supported_architectures(archs)
-
     # Create build recipe
     # (delete any existing snap to remove leftovers from previous builds)
     lp.delete_snap()
     lp.create_snap()
-
-    targets = " for {}".format(humanize_list(archs, "and", "{}")) if archs else ""
-    echo.info("Building package{}. This may take some time to finish.".format(targets))
 
     # Start building
     req_number = lp.start_build()
@@ -198,7 +186,13 @@ def _start_build(
 
 
 def _monitor_build(lp: LaunchpadClient) -> None:
+    target_list = humanize_list(lp.architectures, "and", "{}")
+    echo.info(
+        f"Building snap package for {target_list}. This may take some time to finish."
+    )
+
     lp.monitor_build()
+
     echo.info("Build complete.")
     lp.delete_snap()
 
@@ -212,17 +206,6 @@ def _check_supported_architectures(archs: List[str]) -> None:
         raise errors.UnsupportedArchitectureError(archs=unsupported_archs)
 
 
-def _choose_architectures(project_architectures: List[str], arch: str) -> List[str]:
-    if project_architectures:
-        archs = project_architectures
-    elif arch == "all":
-        archs = _SUPPORTED_ARCHS
-    else:
-        archs = arch.split(",") if arch else []
-
-    return archs
-
-
 def _get_project_architectures(project) -> List[str]:
     archs = []
     if project.info.architectures:
@@ -234,4 +217,29 @@ def _get_project_architectures(project) -> List[str]:
                     archs.extend(new_arch)
                 else:
                     archs.append(new_arch)
+
+    return archs
+
+
+def _determine_architectures(project: Project, user_specified_arch: str):
+    # If build architectures not set in snapcraft.yaml, let the user override
+    # Launchpad defaults using --arch.
+    project_architectures = _get_project_architectures(project)
+    if project_architectures and user_specified_arch:
+        raise click.BadOptionUsage(
+            "Cannot use --arch, architecture list is already set in snapcraft.yaml."
+        )
+
+    if project_architectures:
+        archs = project_architectures
+    elif user_specified_arch == "all":
+        archs = _SUPPORTED_ARCHS
+    elif user_specified_arch:
+        archs = user_specified_arch.split(",")
+    else:
+        archs = []
+
+    # Sanity check for build architectures
+    _check_supported_architectures(archs)
+
     return archs
