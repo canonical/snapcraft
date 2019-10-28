@@ -161,7 +161,6 @@ def push(snap_file, release):
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
     click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
-    channel_list = []
     if release:
         channel_list = release.split(",")
         click.echo(
@@ -169,6 +168,8 @@ def push(snap_file, release):
             "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
+    else:
+        channel_list = None
 
     snapcraft.push(snap_file, channel_list)
 
