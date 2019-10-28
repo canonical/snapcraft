@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -54,6 +54,7 @@ be preferred instead and no interpreter would be brought in through
 
 import collections
 import contextlib
+import logging
 import os
 import re
 from shutil import which
@@ -67,6 +68,9 @@ from snapcraft.common import isurl
 from snapcraft.internal import errors, mangling
 from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
+
+
+logger = logging.getLogger(__name__)
 
 
 class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
@@ -241,7 +245,9 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         with simple_env_bzr(os.path.join(self.installdir, "bin")):
             # Install the packages that have already been downloaded
-            installed_pipy_packages = self._install_project()
+            self._install_project()
+
+        installed_pipy_packages = self._pip.list()
 
         requirements = self._get_list_of_packages_from_property(
             self.options.requirements
@@ -365,36 +371,49 @@ class PythonPlugin(snapcraft.BasePlugin):
         if wheels:
             self._install_wheels(wheels)
 
-        if setup_py_dir is not None:
-            self._pip.download(
+        # Return early if there is no setup_py_dir to process.
+        if setup_py_dir is None:
+            return
+
+        # Or if there is no setup.py
+        setup_py_path = os.path.join(setup_py_dir, "setup.py")
+        if not os.path.exists(setup_py_path):
+            return
+
+        # Try to first install the local python package with the packages
+        # collected above. If there are any missing packages, like those
+        # that come from an install_requires that did not make it into
+        # the python-packages entry nor requirements, then fallback to
+        # allowing network connections, but do not allow upgrading.
+        try:
+            self._pip.install(
                 [],
                 setup_py_dir=setup_py_dir,
                 constraints=constraints,
-                requirements=set(),
                 process_dependency_links=self.options.process_dependency_links,
+                upgrade=True,
             )
-            wheels = self._pip.wheel(
+        except errors.SnapcraftCommandError:
+            logger.warning(
+                "Not all dependencies where satisfied with python-packages or requirements. "
+                "Resorting to fetching from PyPI."
+            )
+            self._pip.install(
                 [],
                 setup_py_dir=setup_py_dir,
                 constraints=constraints,
-                requirements=set(),
                 process_dependency_links=self.options.process_dependency_links,
+                upgrade=False,
+                no_index=False,
             )
 
-            if wheels:
-                self._install_wheels(wheels)
-
-            setup_py_path = os.path.join(setup_py_dir, "setup.py")
-            if os.path.exists(setup_py_path):
-                # pbr and others don't work using `pip install .`
-                # LP: #1670852
-                # There is also a chance that this setup.py is distutils based
-                # in which case we will rely on the `pip install .` ran before
-                #  this.
-                with contextlib.suppress(SnapcraftPluginCommandError):
-                    self._setup_tools_install(setup_py_path)
-
-        return self._pip.list()
+        # pbr and others don't work using `pip install .`
+        # LP: #1670852
+        # There is also a chance that this setup.py is distutils based
+        # in which case we will rely on the `pip install .` ran before
+        #  this.
+        with contextlib.suppress(SnapcraftPluginCommandError):
+            self._setup_tools_install(setup_py_path)
 
     def _setup_tools_install(self, setup_file):
         command = [
