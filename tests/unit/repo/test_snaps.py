@@ -641,6 +641,15 @@ class SnapPackageLifecycleTest(unit.TestCase):
             ["fake-snap/non-existent/edge"],
         )
 
+    def test_install_snaps_refresh_to_invalid_channel(self):
+        self.fake_snapd.find_result = [
+            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
+        ]
+
+        self.assertRaises(
+            errors.SnapUnavailableError, snaps.install_snaps, "fake-snap/strict/stable"
+        )
+
 
 class InstalledSnapsTestCase(unit.TestCase):
     def test_get_installed_snaps(self):
