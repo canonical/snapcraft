@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+from datetime import datetime
 import gzip
 import logging
 import os
@@ -22,12 +22,12 @@ import shutil
 import time
 import urllib.request
 import urllib.error
-import urllib.parse
 
 from lazr import restfulclient
 from lazr.restfulclient.resource import Entry
 from launchpadlib.launchpad import Launchpad
-from typing import Any, Dict, List, Sequence, Tuple, Optional
+from typing import Any, Dict, List, Sequence, Optional
+from urllib.parse import unquote, urlsplit
 from xdg import BaseDirectory
 from . import errors
 
@@ -41,6 +41,40 @@ _LP_SUCCESS_STATUS = "Successfully built"
 _LP_FAIL_STATUS = "Failed to build"
 
 logger = logging.getLogger(__name__)
+
+
+def _is_build_pending(build: Dict[str, Any]) -> bool:
+    # Possible values according to API documentation:
+    # - "Needs building"
+    # - "Successfully built"
+    # - "Failed to build"
+    # - "Dependency wait"
+    # - "Chroot problem"
+    # - "Build for superseded Source"
+    # - "Currently building"
+    # - "Failed to upload"
+    # - "Uploading build"
+    # - "Cancelling build"
+    # - "Cancelled build"
+    if _is_build_status_success(build) or _is_build_status_failure(build):
+        return False
+
+    return True
+
+
+def _is_build_status_success(build: Dict[str, Any]) -> bool:
+    build_state = build["buildstate"]
+    return build_state == "Successfully built"
+
+
+def _is_build_status_failure(build: Dict[str, Any]) -> bool:
+    build_state = build["buildstate"]
+    return build_state in ["Failed to build", "Cancelled build"]
+
+
+def _get_url_basename(url: str):
+    path = urlsplit(url).path
+    return unquote(path).split("/")[-1]
 
 
 class LaunchpadClient:
@@ -111,6 +145,45 @@ class LaunchpadClient:
         os.makedirs(cache_dir, mode=0o700, exist_ok=True)
         return cache_dir
 
+    def _fetch_artifacts(self, snap: Entry) -> None:
+        """Fetch build arftifacts (logs and snaps)."""
+        builds = self._get_builds(snap)
+
+        logger.debug("Downloading artifacts...")
+        for build in builds:
+            self._download_snap(build)
+            self._download_log(build)
+
+    def _get_builds_collection_entry(self, snap: Entry) -> Optional[Entry]:
+        logger.debug("Fetching builds collection information from Launchpad...")
+        url = snap.builds_collection_link
+        return self._lp_load_url(url)
+
+    def _get_builds(self, snap: Entry) -> List[Dict[str, Any]]:
+        bc = self._get_builds_collection_entry(snap)
+        if bc is None:
+            return []
+
+        return bc.entries
+
+    def _get_snap(self) -> Optional[Entry]:
+        try:
+            return self._lp.snaps.getByName(name=self._lp_name, owner=self._lp_owner)
+        except restfulclient.errors.NotFound:
+            return None
+
+    def _issue_build_request(self, snap: Entry) -> Entry:
+        dist = self._lp.distributions["ubuntu"]
+        archive = dist.main_archive
+        return snap.requestBuilds(
+            archive=archive,
+            channels={
+                "core18": self._core18_channel,
+                "snapcraft": self._snapcraft_channel,
+            },
+            pocket="Updates",
+        )
+
     def _lp_load_url(self, url: str) -> Entry:
         """Load Launchpad url with a retry in case the connection is lost."""
         try:
@@ -118,6 +191,49 @@ class LaunchpadClient:
         except ConnectionResetError:
             self.login()
             return self._lp.load(url)
+
+    def _wait_for_build_request_acceptance(
+        self, build_request: Entry, timeout=30
+    ) -> None:
+        # Not be be confused with the actual build(s), this is
+        # ensuring that Launchpad accepts the build request.
+
+        while timeout > 0 and build_request.status == "Pending":
+            logger.debug("Waiting on Launchpad build request...")
+            logger.debug(
+                f"status={build_request.status} error={build_request.error_message}"
+            )
+            time.sleep(1)
+
+            # Refresh status.
+            build_request.lp_refresh()
+            timeout -= 1
+
+        if build_request.status == "Failed":
+            # Build request failed.
+            self.cleanup()
+            raise errors.RemoteBuilderError(builder_error=build_request.error_message)
+        elif build_request.status == "Pending":
+            # Timed out.
+            self.cleanup()
+            raise errors.RemoteBuilderNotReadyError()
+        elif build_request.status != "Completed":
+            # Shouldn't end up here.
+            self.cleanup()
+            raise errors.RemoteBuilderError(
+                builder_error="Unknown builder error - reported status: {}".format(
+                    build_request.status
+                )
+            )
+        elif not build_request.builds.entries:
+            # Shouldn't end up here either.
+            self.cleanup()
+            raise errors.RemoteBuilderError(
+                builder_error="Unknown builder error - no build entries found."
+            )
+
+        build_number = _get_url_basename(build_request.self_link)
+        logger.debug(f"Build request accepted: {build_number}")
 
     def login(self) -> Launchpad:
         try:
@@ -140,10 +256,10 @@ class LaunchpadClient:
         else:
             return f"https://{self._lp_user}@git.launchpad.net/~{self._lp_user}/+git/{self._lp_name}/"
 
-    def create_git_repository(self, force=False) -> Entry:
+    def _create_git_repository(self, force=False) -> Entry:
         """Create git repository."""
         if force:
-            self.delete_git_repository()
+            self._delete_git_repository()
 
         logger.debug(
             f"creating git repo: name={self._lp_name}, owner={self._lp_owner}, target={self._lp_owner}"
@@ -152,7 +268,7 @@ class LaunchpadClient:
             name=self._lp_name, owner=self._lp_owner, target=self._lp_owner
         )
 
-    def delete_git_repository(self) -> None:
+    def _delete_git_repository(self) -> None:
         """Delete git repository."""
         git_path = self.get_git_repo_path()
         git_repo = self._lp.git_repositories.getByPath(path=git_path)
@@ -161,18 +277,22 @@ class LaunchpadClient:
         if git_repo is None:
             return
 
+        logger.debug("Deleting source repository from Launchpad...")
         git_repo.lp_delete()
 
-    def create_snap(self, force=False) -> Entry:
+    def _create_snap(self, force=False) -> Entry:
         """Create a snap recipe. Use force=true to replace existing snap."""
         git_url = self.get_git_https_url()
 
         if force:
-            self.delete_snap()
+            self._delete_snap()
 
         optional_kwargs = dict()
         if self._lp_processors:
             optional_kwargs["processors"] = self._lp_processors
+
+        logger.debug("Registering snap job on Launchpad...")
+        logger.debug(f"url=https://launchpad.net{self._lp_owner}/+snap/{self._lp_name}")
 
         return self._lp.snaps.new(
             name=self._lp_name,
@@ -185,167 +305,64 @@ class LaunchpadClient:
             **optional_kwargs,
         )
 
-    def delete_snap(self) -> None:
-        """Remove a snap recipe and all associated files."""
-        try:
-            # snaps.getByName raises NotFound if snap not does not exist.
-            lp_snap = self._lp.snaps.getByName(name=self._lp_name, owner=self._lp_owner)
-        except restfulclient.errors.NotFound:
+    def _delete_snap(self) -> None:
+        """Remove snap info and all associated files."""
+        snap = self._get_snap()
+        if snap is None:
             return
 
-        lp_snap.lp_delete()
+        logger.debug("Removing snap job from Launchpad...")
+        snap.lp_delete()
 
     def cleanup(self) -> None:
         """Delete snap and git repository from launchpad."""
-        self.delete_snap()
-        self.delete_git_repository()
+        self._delete_snap()
+        self._delete_git_repository()
 
-    def start_build(self, timeout: int = 5, attempts: int = 5) -> int:
-        """Initiate a new snap build."""
-        snap = self.create_snap(force=True)
-        dist = self._lp.distributions["ubuntu"]
+    def start_build(self, timeout=30) -> None:
+        """Start build with specified timeout (seconds)."""
+        snap = self._create_snap(force=True)
 
-        snap_build_request = snap.requestBuilds(
-            archive=dist.main_archive,
-            channels={
-                "core18": self._core18_channel,
-                "snapcraft": self._snapcraft_channel,
-            },
-            pocket="Updates",
-        )
-        logger.debug("Request URL: {}".format(snap_build_request))
-
-        while attempts > 0 and snap_build_request.status == "Pending":
-            logger.debug(
-                "Build request: status={} error={}".format(
-                    snap_build_request.status, snap_build_request.error_message
-                )
-            )
-
-            time.sleep(timeout)
-
-            # Refresh status.
-            snap_build_request.lp_refresh()
-            attempts -= 1
-
-        # Build request failed.
-        if snap_build_request.status == "Failed":
-            self.cleanup()
-            raise errors.RemoteBuilderError(
-                builder_error=snap_build_request.error_message
-            )
-
-        # Timed out.
-        if snap_build_request.status == "Pending":
-            self.cleanup()
-            raise errors.RemoteBuilderNotReadyError()
-
-        # Shouldn't end up here.
-        if snap_build_request.status != "Completed":
-            self.cleanup()
-            raise errors.RemoteBuilderError(
-                builder_error="Unknown builder error - reported status: {}".format(
-                    snap_build_request.status
-                )
-            )
-
-        # Shouldn't end up here either.
-        if not snap_build_request.builds.entries:
-            self.cleanup()
-            raise errors.RemoteBuilderError(
-                builder_error="Unknown builder error - no build entries found."
-            )
-
-        self._waiting = [
-            build["arch_tag"] for build in snap_build_request.builds.entries
-        ]
-        self._builds_collection_link = snap_build_request.builds_collection_link
-        build_number = snap_build_request.self_link.rsplit("/", 1)[-1]
-        return build_number
-
-    def recover_build(self, req_number: int) -> None:
-        """Prepare internal state to monitor an existing build."""
-        url = "https://api.launchpad.net/devel/~{}/+snap/{}/+build-request/{}".format(
-            self._lp_user, self._lp_name, req_number
-        )
-
-        try:
-            request = self._lp_load_url(url)
-        except restfulclient.errors.NotFound:
-            raise errors.RemoteBuildNotFoundError(
-                name=self._snap_name, req_number=req_number
-            )
-
-        logger.debug("Request URL: {}".format(request))
-        builds = self._lp_load_url(request.builds_collection_link)
-        self._waiting = [build["arch_tag"] for build in builds.entries]
-        self._builds_collection_link = request.builds_collection_link
+        logger.debug("Issuing build request on Launchpad...")
+        build_request = self._issue_build_request(snap)
+        self._wait_for_build_request_acceptance(build_request, timeout=timeout)
 
     def monitor_build(self, interval: int = _LP_POLL_INTERVAL) -> None:
         """Check build progress, and download artifacts when ready."""
-        logger.debug("Monitoring builds: {}".format(" ".join(self._waiting)))
-        while len(self._waiting):
-            time.sleep(interval)
-            builds = self._lp_load_url(self._builds_collection_link)
-            if not builds.entries:
+        snap = self._get_snap()
+
+        while True:
+            builds = self._get_builds(snap)
+            pending = False
+            timestamp = str(datetime.now())
+            logger.info(f"Build status as of {timestamp}:")
+            for build in builds:
+                state = build["buildstate"]
+                arch = build["arch_tag"]
+                logger.info(f"\tarch={arch}\tstate={state}")
+
+                if _is_build_pending(build):
+                    pending = True
+
+            if pending is False:
                 break
 
-            for build in builds.entries:
-                arch = build["arch_tag"]
-                build_state = build["buildstate"]
-                logger.debug("{} state: {}".format(arch, build_state))
-                if arch in self._waiting:
-                    if build_state == _LP_SUCCESS_STATUS:
-                        self._process_success(build)
-                    elif build_state == _LP_FAIL_STATUS:
-                        self._process_fail(build)
+            time.sleep(interval)
 
-    def get_build_status(self) -> List[Tuple[str, str]]:
-        status = []  # type: List[Tuple[str, str]]
-        builds = self._lp_load_url(self._builds_collection_link)
-        for build in builds.entries:
+        # Build is complete - download build artifacts.
+        self._fetch_artifacts(snap)
+
+    def get_build_status(self) -> Dict[str, str]:
+        """Get status of builds."""
+        snap = self._get_snap()
+        builds = self._get_builds(snap)
+        build_status: Dict[str, str] = dict()
+        for build in builds:
+            state = build["buildstate"]
             arch = build["arch_tag"]
-            build_state = build["buildstate"]
-            status.append((arch, build_state))
+            build_status[arch] = state
 
-        return status
-
-    def _process_success(self, build: Dict[str, Any]) -> None:
-        arch = build["arch_tag"]
-        snap_build = self._lp_load_url(build["self_link"])
-        urls = snap_build.getFileUrls()
-        logger.debug("Success urls: {}".format(urls))
-        if not urls:
-            logger.error("Snap file not available for arch {}.".format(arch))
-            self._waiting.remove(arch)
-            return
-
-        self._download_log(build)
-
-        for url in urls:
-            snap_name = url.rsplit("/", 1)[-1]
-            # Sanity check
-            if not snap_name.endswith("_{}.snap".format(arch)):
-                continue
-            try:
-                self._download_file(url=url, dst=snap_name)
-                logger.info("Snapped {}".format(snap_name))
-            except urllib.error.HTTPError as e:
-                logger.error("Snap download error: {}: {}".format(e, snap_name))
-
-        self._waiting.remove(arch)
-
-    def _process_fail(self, build: Dict[str, Any]) -> None:
-        try:
-            arch = build["arch_tag"]
-            log_name = self._download_log(build)
-            logger.error(
-                "Build failed for arch {}. Log file is {!r}.".format(arch, log_name)
-            )
-        except urllib.error.HTTPError as e:
-            logger.error("Log file download error ({}): {}".format(arch, e))
-        finally:
-            self._waiting.remove(arch)
+        return build_status
 
     def _get_logfile_name(self, arch: str) -> str:
         n = 0
@@ -358,23 +375,48 @@ class LaunchpadClient:
 
         return log_name
 
-    def _download_log(self, build: Dict[str, Any]) -> str:
+    def _download_log(self, build: Dict[str, Any]) -> None:
         url = build["build_log_url"]
-        logger.debug("Build log url: {}".format(url))
         arch = build["arch_tag"]
         log_name = self._get_logfile_name(arch)
         self._download_file(url=url, dst=log_name, gunzip=True)
-        return log_name
+
+        logger.info(f"Build log available at {log_name!r}")
+        if _is_build_status_failure(build):
+            logger.error(f"Build failed for arch {arch!r}.")
 
     def _download_file(self, *, url: str, dst: str, gunzip: bool = False) -> None:
-        logger.debug("Downloading file from {!r}".format(url))
-        with urllib.request.urlopen(url) as response:
-            # Wrap response with gzipfile if gunzip is requested.
-            if gunzip:
-                response = gzip.GzipFile(fileobj=response)  # type: ignore
+        # TODO: consolidate with, and use indicators.download_requests_stream
+        logger.debug(f"Downloading: {url}")
+        try:
+            with urllib.request.urlopen(url) as response:
+                # Wrap response with gzipfile if gunzip is requested.
+                if gunzip:
+                    response = gzip.GzipFile(fileobj=response)  # type: ignore
+                with open(dst, "wb") as f_dst:
+                    shutil.copyfileobj(response, f_dst)  # type: ignore
+        except urllib.error.HTTPError as e:
+            logger.error(f"Error downloading {url}: {e.reason}")
 
-            with open(dst, "wb") as f_dst:
-                shutil.copyfileobj(response, f_dst)  # type: ignore
+    def _download_snap(self, build: Dict[str, Any]) -> None:
+        arch = build["arch_tag"]
+        snap_build = self._lp_load_url(build["self_link"])
+        urls = snap_build.getFileUrls()
+
+        if not urls:
+            logger.error(f"Snap file not available for arch {arch!r}.")
+            return
+
+        for url in urls:
+            snap_name = _get_url_basename(url)
+
+            # Sanity check file name.
+            if not snap_name.endswith("_{}.snap".format(arch)):
+                logger.info("Skipping unknown artifact: {url}")
+                continue
+
+            self._download_file(url=url, dst=snap_name)
+            logger.info("Snapped {}".format(snap_name))
 
     def _gitify_repository(self, repo_dir: str) -> Git:
         """Git-ify source repository tree.
@@ -392,7 +434,7 @@ class LaunchpadClient:
                 git_handler.add(f)
 
         # Commit files.
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         git_handler.commit(
             "snapcraft commit\n\nversion: {}\ntimestamp: {}\n".format(
                 snapcraft.__version__, timestamp
@@ -401,16 +443,21 @@ class LaunchpadClient:
 
         return git_handler
 
+    def has_outstanding_build(self) -> bool:
+        """Check if there is an existing build configured on Launchpad."""
+        snap = self._get_snap()
+        return snap is not None
+
     def push_source_tree(self, repo_dir: str) -> str:
-        """Push source tree to launchpad, returning URL."""
+        """Push source tree to Launchpad, returning URL."""
         git_handler = self._gitify_repository(repo_dir)
-        lp_repo = self.create_git_repository(force=True)
+        lp_repo = self._create_git_repository(force=True)
         token = lp_repo.issueAccessToken()
 
         url = self.get_git_https_url(token=token)
         stripped_url = self.get_git_https_url(token="<token>")
 
-        logger.info(f"Sending data to remote builder... ({stripped_url})")
+        logger.info(f"Sending build data to Launchpad... ({stripped_url})")
 
         try:
             git_handler.push(url, f"HEAD:{self._lp_git_branch}", force=True)

@@ -34,22 +34,8 @@ def remotecli():
 
 
 @remotecli.command("remote-build")
-@click.option(
-    "--recover",
-    metavar="<build-number>",
-    type=int,
-    nargs=1,
-    required=False,
-    help="Recover interrupted remote build.",
-)
-@click.option(
-    "--status",
-    metavar="<build-number>",
-    type=int,
-    nargs=1,
-    required=False,
-    help="Display remote build status.",
-)
+@click.option("--recover", is_flag=True, help="Recover interrupted build.")
+@click.option("--status", is_flag=True, help="Display remote build status.")
 @click.option(
     "--arch",
     metavar="<arch-list>",
@@ -136,14 +122,30 @@ def remote_build(
     lp.login()
 
     if status:
-        # Show build status
-        lp.recover_build(status)
-        for arch, build_status in lp.get_build_status():
-            echo.info("{}: {}".format(arch, build_status))
+        _print_status(lp)
     elif recover:
-        # Recover from interrupted build
-        echo.info("Recover build {}...".format(recover))
-        lp.recover_build(recover)
+        # Recover from interrupted build.
+        if not lp.has_outstanding_build():
+            echo.info("No build found.")
+            return
+
+        echo.info("Recovering build...")
+        _monitor_build(lp)
+    elif lp.has_outstanding_build():
+        # There was a previous build that hasn't finished.
+        # Recover from interrupted build.
+        echo.info("Found previously started build.")
+        _print_status(lp)
+
+        if not echo.confirm("Do you wish to recover this build?", default=True):
+            _clean_build(lp)
+            _start_build(
+                lp=lp,
+                project=project,
+                arch=arch,
+                build_id=build_id,
+                package_all_sources=package_all_sources,
+            )
         _monitor_build(lp)
     else:
         _start_build(
@@ -154,6 +156,21 @@ def remote_build(
             package_all_sources=package_all_sources,
         )
         _monitor_build(lp)
+
+
+def _clean_build(lp: LaunchpadClient):
+    echo.info("Cleaning existing builds and artifacts...")
+    lp.cleanup()
+    echo.info("Done.")
+
+
+def _print_status(lp: LaunchpadClient):
+    if lp.has_outstanding_build():
+        build_status = lp.get_build_status()
+        for arch, status in build_status.items():
+            echo.info(f"Build status for arch {arch}: {status}")
+    else:
+        echo.info("No build found.")
 
 
 def _start_build(
@@ -170,18 +187,9 @@ def _start_build(
     repo_dir = wt.prepare_repository()
     lp.push_source_tree(repo_dir)
 
-    # Create build recipe
-    # (delete any existing snap to remove leftovers from previous builds)
-    lp.delete_snap()
-    lp.create_snap()
-
-    # Start building
-    req_number = lp.start_build()
-    echo.info(
-        "If interrupted, resume with: 'snapcraft remote-build --recover {}'".format(
-            req_number
-        )
-    )
+    # Start building.
+    lp.start_build()
+    echo.info("If interrupted, resume with: 'snapcraft remote-build --recover'")
 
 
 def _monitor_build(lp: LaunchpadClient) -> None:
@@ -193,7 +201,7 @@ def _monitor_build(lp: LaunchpadClient) -> None:
     lp.monitor_build()
 
     echo.info("Build complete.")
-    lp.delete_snap()
+    lp.cleanup()
 
 
 def _check_supported_architectures(archs: List[str]) -> None:

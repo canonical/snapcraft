@@ -83,23 +83,23 @@ class SnapBuildReqImpl(FakeLaunchpadObject):
         error_message="",
         self_link="http://request_self_link/1234",
         builds_collection_link="http://builds_collection_link",
-        builds=SnapBuildsImpl(),
     ):
         self.status = status
         self.error_message = error_message
         self.self_link = self_link
         self.builds_collection_link = builds_collection_link
-        self.builds = builds
+        self.builds = SnapBuildsImpl()
 
     def lp_refresh(self):
         pass
 
 
 class SnapImpl(FakeLaunchpadObject):
-    def __init__(self):
+    def __init__(self, builds_collection_link="http://builds_collection_link"):
         self._req = SnapBuildReqImpl()
         self.lp_delete_mock = mock.Mock()
         self.requestBuilds_mock = mock.Mock(return_value=self._req)
+        self.builds_collection_link = builds_collection_link
 
     def lp_delete(self, *args, **kw):
         return self.lp_delete_mock(*args, **kw)
@@ -155,23 +155,25 @@ class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
         self._login_mock = mock.Mock()
         self._load_mock = mock.Mock()
+        self._rbi = SnapBuildReqImpl()
+        self._bi = BuildImpl()
+
         self.git_repositories = GitRepositoriesImpl()
         self.snaps = SnapsImpl()
         self.people = {"user": "/~user"}
         self.distributions = {"ubuntu": DistImpl()}
-        self.rbi = SnapBuildReqImpl()
+        self.rbi = self._rbi
 
     def load(self, url: str, *args, **kw):
         self._load_mock(url, *args, **kw)
         if "/+build-request/" in url:
-            return SnapBuildReqImpl()
+            return self._rbi
         elif "http://build_self_link_1" in url:
-            return BuildImpl()
+            return self._bi
+        elif "http://build_self_link_2" in url:
+            return self._bi
         else:
-            return self.rbi.builds
-
-    def login(self):
-        return self._login_mock()
+            return self._rbi.builds
 
 
 class LaunchpadTestCase(unit.TestCase):
@@ -222,7 +224,7 @@ class LaunchpadTestCase(unit.TestCase):
 
     def test_create_snap(self):
         self.lpc._lp = LaunchpadImpl()
-        self.lpc.create_snap()
+        self.lpc._create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
@@ -236,7 +238,7 @@ class LaunchpadTestCase(unit.TestCase):
     def test_create_snap_with_archs(self):
         self.lpc._lp = LaunchpadImpl()
         self.lpc.architectures = ["arch1", "arch2"]
-        self.lpc.create_snap()
+        self.lpc._create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
             auto_build=False,
             auto_build_archive="/ubuntu/+archive/primary",
@@ -250,13 +252,12 @@ class LaunchpadTestCase(unit.TestCase):
 
     def test_delete_snap(self):
         self.lpc._lp = LaunchpadImpl()
-        self.lpc.delete_snap()
+        self.lpc._delete_snap()
         self.lpc._lp.snaps.getByName_mock.assert_called_with(name="id", owner="/~user")
 
     def test_start_build(self):
         self.lpc._lp = LaunchpadImpl()
-        num = self.lpc.start_build()
-        self.assertThat(num, Equals("1234"))
+        self.lpc.start_build()
 
     @mock.patch(
         "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
@@ -267,9 +268,7 @@ class LaunchpadTestCase(unit.TestCase):
     def test_start_build_error(self, mock_rb):
         self.lpc._lp = LaunchpadImpl()
 
-        raised = self.assertRaises(
-            errors.RemoteBuilderError, self.lpc.start_build, timeout=0, attempts=1
-        )
+        raised = self.assertRaises(errors.RemoteBuilderError, self.lpc.start_build)
         self.assertThat(str(raised), Contains("snapcraft.yaml not found..."))
 
     @mock.patch(
@@ -279,17 +278,9 @@ class LaunchpadTestCase(unit.TestCase):
     def test_start_build_error_timeout(self, mock_rb):
         self.lpc._lp = LaunchpadImpl()
         raised = self.assertRaises(
-            errors.RemoteBuilderNotReadyError,
-            self.lpc.start_build,
-            timeout=0,
-            attempts=1,
+            errors.RemoteBuilderNotReadyError, self.lpc.start_build, timeout=0
         )
         self.assertThat(str(raised), Contains("is not ready"))
-
-    def test_recover_build(self):
-        self.lpc._lp = LaunchpadImpl()
-        self.lpc.recover_build(1234)
-        self.assertThat(self.lpc._lp._load_mock.call_count, Equals(2))
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
@@ -301,10 +292,10 @@ class LaunchpadTestCase(unit.TestCase):
         self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
             [
+                mock.call(url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"),
                 mock.call(
                     url="url_for/build_log_file_1", gunzip=True, dst="test_i386.2.txt"
                 ),
-                mock.call(url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"),
                 mock.call(
                     url="url_for/build_log_file_2", gunzip=True, dst="test_amd64.txt"
                 ),
@@ -327,9 +318,7 @@ class LaunchpadTestCase(unit.TestCase):
                 )
             ]
         )
-        mock_log.assert_called_with(
-            "Build failed for arch amd64. Log file is 'test_amd64.txt'."
-        )
+        mock_log.assert_called_with("Build failed for arch 'amd64'.")
 
     def test_get_build_status(self):
         self.lpc._lp = LaunchpadImpl()
@@ -337,7 +326,7 @@ class LaunchpadTestCase(unit.TestCase):
         build_status = self.lpc.get_build_status()
         self.assertThat(
             build_status,
-            Equals([("i386", "Successfully built"), ("amd64", "Failed to build")]),
+            Equals({"i386": "Successfully built", "amd64": "Failed to build"}),
         )
 
     def _make_snapcraft_project(self):
