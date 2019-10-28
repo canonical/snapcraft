@@ -130,7 +130,6 @@ def remote_build(
     build_id = f"snapcraft-{project.info.name}-{project_hash}"
     architectures = _determine_architectures(project, arch)
 
-    # TODO: change login strategy after launchpad infrastructure is ready (LP #1827679)
     lp = LaunchpadClient(
         project=project, build_id=build_id, user=user, architectures=architectures
     )
