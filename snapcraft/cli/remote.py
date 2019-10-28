@@ -237,7 +237,8 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     elif user_specified_arch:
         archs = user_specified_arch.split(",")
     else:
-        archs = []
+        # Default to typical snapcraft behavior (build for host).
+        archs = [project.deb_arch]
 
     # Sanity check for build architectures
     _check_supported_architectures(archs)
