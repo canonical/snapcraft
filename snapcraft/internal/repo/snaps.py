@@ -213,6 +213,11 @@ class SnapPackage:
 
     def install(self):
         """Installs the snap onto the system."""
+        if not self.is_valid():
+            raise errors.SnapUnavailableError(
+                snap_name=self.name, snap_channel=self.channel
+            )
+
         snap_install_cmd = []
         if _snap_command_requires_sudo():
             snap_install_cmd = ["sudo"]
@@ -234,6 +239,11 @@ class SnapPackage:
 
     def refresh(self):
         """Refreshes a snap onto a channel on the system."""
+        if not self.is_valid():
+            raise errors.SnapUnavailableError(
+                snap_name=self.name, snap_channel=self.channel
+            )
+
         snap_refresh_cmd = []
         if _snap_command_requires_sudo():
             snap_refresh_cmd = ["sudo"]
@@ -292,11 +302,6 @@ def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
                 "{snap_name}/latest/{channel}".format(
                     snap_name=snap_pkg.name, channel=snap_pkg_channel
                 )
-            )
-
-        if not snap_pkg.installed and not snap_pkg.is_valid():
-            raise errors.SnapUnavailableError(
-                snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
             )
 
         if not snap_pkg.installed:
