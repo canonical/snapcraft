@@ -391,17 +391,8 @@ class LaunchpadTestCase(unit.TestCase):
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
 
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.LaunchpadGitPushError, self.lpc.push_source_tree, repo_dir
-        )
-        self.assertThat(
-            raised.get_brief(), Equals("Failed to push sources to Launchpad.")
-        )
-        self.assertThat(
-            raised.get_details(),
-            Equals(
-                "Command 'git push HEAD:master https://user:<token>@url' failed with exit code 128."
-            ),
         )
 
         mock_push.assert_called_with(
