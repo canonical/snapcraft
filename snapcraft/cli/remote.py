@@ -34,6 +34,7 @@ def remotecli():
 
 
 @remotecli.command("remote-build")
+@click.option("--clean", is_flag=True, help="Clean existing build, then exit.")
 @click.option("--recover", is_flag=True, help="Recover interrupted build.")
 @click.option("--status", is_flag=True, help="Display remote build status.")
 @click.option(
@@ -65,6 +66,7 @@ def remotecli():
     prompt="Launchpad username",
 )
 def remote_build(
+    clean: bool,
     recover: int,
     status: int,
     user: str,
@@ -95,6 +97,7 @@ def remote_build(
         snapcraft remote-build --user <user> --arch=amd64,arm64,armhf,i386,ppc64el,s390x
         snapcraft remote-build --user <user> --recover 47860738
         snapcraft remote-build --user <user> --status 47860738
+        snapcraft remote-build --user <user> --clean
     """
     if not accept_public_upload:
         raise errors.AcceptPublicUploadError()
@@ -123,6 +126,8 @@ def remote_build(
 
     if status:
         _print_status(lp)
+    elif clean:
+        _clean_build(lp)
     elif recover:
         # Recover from interrupted build.
         if not lp.has_outstanding_build():
@@ -159,7 +164,7 @@ def remote_build(
 
 
 def _clean_build(lp: LaunchpadClient):
-    echo.info("Cleaning existing builds and artifacts...")
+    echo.info("Cleaning...")
     lp.cleanup()
     echo.info("Done.")
 
