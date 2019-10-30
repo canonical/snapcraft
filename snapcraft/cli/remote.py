@@ -37,12 +37,12 @@ def remotecli():
 @click.option("--recover", is_flag=True, help="Recover interrupted build.")
 @click.option("--status", is_flag=True, help="Display remote build status.")
 @click.option(
-    "--arch",
+    "--build-on",
     metavar="<arch-list>",
     type=str,
     nargs=1,
     required=False,
-    help="Set architectures to build.",
+    help="Set architectures to build on.",
 )
 @click.option(
     "--accept-public-upload",
@@ -68,7 +68,7 @@ def remote_build(
     recover: int,
     status: int,
     user: str,
-    arch: str,
+    build_on: str,
     accept_public_upload: bool,
     package_all_sources: bool,
     echoer=echo,
@@ -80,8 +80,7 @@ def remote_build(
     the local filesystem.
 
     If not specified in the snapcraft.yaml file, the list of architectures to build
-    can be set using the --arch option. If both are specified, the architectures listed
-    in snapcraft.yaml take precedence.
+    can be set using the --build-on option. If both are specified, an error will occur.
 
     Interrupted remote builds can be resumed using the --recover option, followed by
     the build number informed when the remote build was originally dispatched. The
@@ -91,8 +90,8 @@ def remote_build(
     \b
     Examples:
         snapcraft remote-build --user <user>
-        snapcraft remote-build --user <user> --arch=amd64
-        snapcraft remote-build --user <user> --arch=amd64,arm64,armhf,i386,ppc64el,s390x
+        snapcraft remote-build --user <user> --build-on=amd64
+        snapcraft remote-build --user <user> --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
         snapcraft remote-build --user <user> --recover 47860738
         snapcraft remote-build --user <user> --status 47860738
     """
@@ -114,7 +113,7 @@ def remote_build(
     # potential project builds occurring in parallel elsewhere.
     project_hash = project._get_project_directory_hash()
     build_id = f"snapcraft-{project.info.name}-{project_hash}"
-    architectures = _determine_architectures(project, arch)
+    architectures = _determine_architectures(project, build_on)
 
     lp = LaunchpadClient(
         project=project, build_id=build_id, user=user, architectures=architectures
@@ -142,7 +141,6 @@ def remote_build(
             _start_build(
                 lp=lp,
                 project=project,
-                arch=arch,
                 build_id=build_id,
                 package_all_sources=package_all_sources,
             )
@@ -151,7 +149,6 @@ def remote_build(
         _start_build(
             lp=lp,
             project=project,
-            arch=arch,
             build_id=build_id,
             package_all_sources=package_all_sources,
         )
@@ -174,12 +171,7 @@ def _print_status(lp: LaunchpadClient):
 
 
 def _start_build(
-    *,
-    lp: LaunchpadClient,
-    project: Project,
-    arch: str,
-    build_id: str,
-    package_all_sources: bool,
+    *, lp: LaunchpadClient, project: Project, build_id: str, package_all_sources: bool
 ) -> None:
     # Pull/update sources for project.
     worktree_dir = BaseDirectory.save_data_path("snapcraft", "remote-build", build_id)
@@ -230,11 +222,11 @@ def _get_project_architectures(project) -> List[str]:
 
 def _determine_architectures(project: Project, user_specified_arch: str):
     # If build architectures not set in snapcraft.yaml, let the user override
-    # Launchpad defaults using --arch.
+    # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
     if project_architectures and user_specified_arch:
         raise click.BadOptionUsage(
-            "Cannot use --arch, architecture list is already set in snapcraft.yaml."
+            "Cannot use --build-on, architecture list is already set in snapcraft.yaml."
         )
 
     if project_architectures:
