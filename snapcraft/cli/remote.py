@@ -45,31 +45,31 @@ def remotecli():
     help="Set architectures to build on.",
 )
 @click.option(
-    "--accept-public-upload",
+    "--launchpad-accept-public-upload",
     is_flag=True,
     prompt="All data sent to remote builders is public. Are you sure you want to continue?",
     help="Acknowledge that uploaded code is public.",
     cls=PromptOption,
 )
 @click.option(
-    "--package-all-sources",
-    is_flag=True,
-    help="Package all sources to send to remote builder, not just local sources.",
-)
-@click.option(
-    "--user",
+    "--launchpad-user",
     metavar="<username>",
     nargs=1,
     required=True,
     help="Launchpad username.",
     prompt="Launchpad username",
 )
+@click.option(
+    "--package-all-sources",
+    is_flag=True,
+    help="Package all sources to send to remote builder, not just local sources.",
+)
 def remote_build(
     recover: int,
     status: int,
-    user: str,
     build_on: str,
-    accept_public_upload: bool,
+    launchpad_accept_public_upload: bool,
+    launchpad_user: str,
     package_all_sources: bool,
     echoer=echo,
 ) -> None:
@@ -89,13 +89,13 @@ def remote_build(
 
     \b
     Examples:
-        snapcraft remote-build --user <user>
-        snapcraft remote-build --user <user> --build-on=amd64
-        snapcraft remote-build --user <user> --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
-        snapcraft remote-build --user <user> --recover 47860738
-        snapcraft remote-build --user <user> --status 47860738
+        snapcraft remote-build --launchpad-user <user>
+        snapcraft remote-build --launchpad-user <user> --build-on=amd64
+        snapcraft remote-build --launchpad-user <user> --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
+        snapcraft remote-build --launchpad-user <user> --recover 47860738
+        snapcraft remote-build --launchpad-user <user> --status 47860738
     """
-    if not accept_public_upload:
+    if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
 
     echo.warning(
@@ -116,7 +116,10 @@ def remote_build(
     architectures = _determine_architectures(project, build_on)
 
     lp = LaunchpadClient(
-        project=project, build_id=build_id, user=user, architectures=architectures
+        project=project,
+        build_id=build_id,
+        user=launchpad_user,
+        architectures=architectures,
     )
     lp.login()
 
