@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import os
 import functools
@@ -29,6 +30,7 @@ import snapcraft
 from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
+from ._review import review_snap
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -171,6 +173,7 @@ def push(snap_file, release):
     else:
         channel_list = None
 
+    review_snap(snap_file=snap_file)
     snapcraft.push(snap_file, channel_list)
 
 

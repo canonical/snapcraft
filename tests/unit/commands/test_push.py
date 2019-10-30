@@ -17,10 +17,12 @@
 import os
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 from xdg import BaseDirectory
 
 from snapcraft import file_utils, storeapi, internal
+from snapcraft.internal import review_tools
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
     StorePushError,
@@ -56,6 +58,16 @@ class PushCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
         )
 
+        self.fake_review_tools_run = fixtures.MockPatch(
+            "snapcraft.internal.review_tools.run"
+        )
+        self.useFixture(self.fake_review_tools_run)
+
+        self.fake_review_tools_is_available = fixtures.MockPatch(
+            "snapcraft.internal.review_tools.is_available", return_value=False
+        )
+        self.useFixture(self.fake_review_tools_is_available)
+
 
 class PushCommandTestCase(PushCommandBaseTestCase):
     def test_push_without_snap_must_raise_exception(self):
@@ -81,6 +93,63 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             delta_hash=None,
             source_hash=None,
             target_hash=None,
+        )
+
+    def test_review_tools_not_available(self):
+        result = self.run_command(["push", self.snap_file])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains(
+                "Install the review-tools from the Snap Store for enhanced "
+                "checks before uploading this snap"
+            ),
+        )
+        self.fake_review_tools_run.mock.assert_not_called()
+
+    def test_push_a_snap_review_tools_run_success(self):
+        self.fake_review_tools_is_available.mock.return_value = True
+
+        result = self.run_command(["push", self.snap_file])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.fake_review_tools_run.mock.assert_called_once_with(
+            snap_filename=self.snap_file
+        )
+
+    def test_push_a_snap_review_tools_run_fail(self):
+        self.fake_review_tools_is_available.mock.return_value = True
+        self.fake_review_tools_run.mock.side_effect = review_tools.errors.ReviewError(
+            {
+                "snap.v2_functional": {"error": {}, "warn": {}},
+                "snap.v2_security": {
+                    "error": {
+                        "security-snap-v2:security_issue": {
+                            "text": "(NEEDS REVIEW) security message."
+                        }
+                    },
+                    "warn": {},
+                },
+                "snap.v2_lint": {"error": {}, "warn": {}},
+            }
+        )
+
+        result = self.run_command(["push", self.snap_file])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains(
+                "Review Tools did not fully pass for this snap.\n"
+                "Specific measures might need to be taken on the Snap Store before "
+                "this snap can be fully accepted.\n"
+                "Security Issues:\n"
+                "- (NEEDS REVIEW) security message"
+            ),
+        )
+        self.fake_review_tools_run.mock.assert_called_once_with(
+            snap_filename=self.snap_file
         )
 
     def test_push_with_started_at(self):
