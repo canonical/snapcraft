@@ -59,6 +59,7 @@ packages = [
     "snapcraft.internal.project_loader._extensions",
     "snapcraft.internal.remote_build",
     "snapcraft.internal.repo",
+    "snapcraft.internal.review_tools",
     "snapcraft.internal.sources",
     "snapcraft.internal.states",
     "snapcraft.project",
