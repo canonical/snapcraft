@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-buildnil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,10 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Dict, List, Type
+from typing import List, Optional, Type
+
+from mypy_extensions import TypedDict
 
 from snapcraft import yaml_utils
 from snapcraft.internal.states._state import State
+
+
+StateDict = TypedDict(
+    "StateDict",
+    {
+        "build-packages": List[str],
+        "build-snaps": List[str],
+        "required-grade": Optional[str],
+    },
+)
 
 
 class GlobalState(State):
@@ -53,9 +65,19 @@ class GlobalState(State):
         new_snaps = [b for b in build_snaps if b not in current_build_snaps]
         self.assets["build-snaps"] = current_build_snaps + new_snaps
 
-    def __init__(self, *, assets: Dict[str, List[str]] = None) -> None:
+    def get_required_grade(self) -> Optional[str]:
+        return self.assets.get("required-grade")
+
+    def set_required_grade(self, required_grade: str) -> None:
+        self.assets["required-grade"] = required_grade
+
+    def __init__(self, *, assets: Optional[StateDict] = None) -> None:
         super().__init__()
         if assets is None:
-            self.assets = dict()  # type: Dict[str, List[str]]
+            self.assets: StateDict = {
+                "build-packages": [],
+                "build-snaps": [],
+                "required-grade": None,
+            }
         else:
             self.assets = assets
