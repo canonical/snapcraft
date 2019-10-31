@@ -41,6 +41,7 @@ from snapcraft.project import Project
 from snapcraft.project import errors as project_errors
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
+from snapcraft.internal import states
 from tests import unit, fixture_setup
 
 
@@ -1250,6 +1251,45 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
                 fake_logger.output,
                 Contains("'grade' property not specified: defaulting to 'stable'"),
             )
+
+
+class RequiredGradeTest(CreateBaseTestCase):
+    def test_defaults_from_schema(self):
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
+
+    def test_stable_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
+        )
+
+        global_state = states.GlobalState()
+        global_state.set_required_grade("stable")
+        global_state.save(filepath=global_state_path)
+
+        self.config_data["grade"] = "stable"
+
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
+
+    def test_stable_but_devel_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
+        )
+
+        global_state = states.GlobalState()
+        global_state.set_required_grade("devel")
+        global_state.save(filepath=global_state_path)
+
+        self.config_data["grade"] = "stable"
+
+        self.assertRaises(meta_errors.GradeDevelRequiredError, self.generate_meta_yaml)
 
 
 class CommonIdTestCase(CreateBaseTestCase):
