@@ -32,7 +32,14 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
+from snapcraft.internal import (
+    errors,
+    pluginhandler,
+    lifecycle,
+    project_loader,
+    states,
+    steps,
+)
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
 from tests import fixture_setup
@@ -430,6 +437,52 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
                 )
             ),
         )
+
+
+class GlobalStateTest(LifecycleTestBase):
+    def setUp(self):
+        super().setUp()
+
+        self.project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                parts:
+                  test-part:
+                    plugin: nil
+                """
+            )
+        )
+
+        self.global_state_filepath = (
+            self.project_config.project._get_global_state_file_path()
+        )
+
+    def test_stable_grade_for_stable_base(self):
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        global_state = states.GlobalState.load(filepath=self.global_state_filepath)
+        self.assertThat(global_state.get_required_grade(), Equals("stable"))
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+
+    def test_stable_grade_for_non_stable_base(self):
+        self.fake_storeapi_get_info.mock.side_effect = snapcraft.storeapi.errors.SnapNotFoundError(
+            name="core18"
+        )
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        global_state = states.GlobalState.load(filepath=self.global_state_filepath)
+        self.assertThat(global_state.get_required_grade(), Equals("devel"))
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+
+    def test_grade_not_queried_for_if_already_set(self):
+        # Set the grade
+        global_state = states.GlobalState()
+        global_state.set_required_grade("devel")
+        global_state.save(filepath=self.global_state_filepath)
+
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        self.fake_storeapi_get_info.mock.assert_not_called()
 
 
 class CleanTestCase(LifecycleTestBase):
