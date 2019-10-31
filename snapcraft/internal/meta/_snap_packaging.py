@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional, Set  # noqa
 from snapcraft import file_utils, formatting_utils, yaml_utils
 from snapcraft import shell_utils, extractors
 from snapcraft.project import _schema
-from snapcraft.internal import common, errors, project_loader
+from snapcraft.internal import common, errors, project_loader, states
 from snapcraft.internal.project_loader import _config
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -65,8 +65,18 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     validator = _schema.Validator(project_config.data)
     validator.validate(source="properties")
 
+    # Get the required grade if the global state file exists.
+    if os.path.exists(project_config.project._get_global_state_file_path()):
+        required_grade = states.GlobalState.load(
+            filepath=project_config.project._get_global_state_file_path()
+        ).get_required_grade()
+    else:
+        required_grade = None
+
     # Update default values
-    _update_yaml_with_defaults(project_config.data, project_config.validator.schema)
+    _update_yaml_with_defaults(
+        project_config.data, project_config.validator.schema, required_grade
+    )
 
     packaging = _SnapPackaging(project_config, extracted_metadata)
     packaging.cleanup()
@@ -244,7 +254,7 @@ def _desktop_file_exists(app_name: str) -> bool:
         return False
 
 
-def _update_yaml_with_defaults(config_data, schema):
+def _update_yaml_with_defaults(config_data, schema, required_grade: str) -> None:
     # Ensure that grade and confinement have their defaults applied, if
     # necessary. Defaults are taken from the schema. Technically these are the
     # only two optional keywords currently WITH defaults, but we don't want to
@@ -255,6 +265,17 @@ def _update_yaml_with_defaults(config_data, schema):
         logger.warning(
             f"'confinement' property not specified: defaulting to {default!r}"
         )
+
+    # Set the grade (or validate).
+    if "grade" not in config_data:
+        if required_grade is None:
+            grade = schema["grade"]["default"]
+        else:
+            grade = required_grade
+        logger.warning(f"'grade' property not specified: defaulting to {grade!r}.")
+        config_data["grade"] = grade
+    elif config_data["grade"] == "stable" and required_grade == "devel":
+        raise meta_errors.GradeDevelRequiredError(set_grade=config_data["grade"])
 
     # Set default adapter
     app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][

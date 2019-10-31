@@ -16,18 +16,17 @@
 
 import logging
 import os
-
 from collections import OrderedDict
 from copy import deepcopy
-from snapcraft.internal import common, repo
+from typing import Dict, Set, Sequence, List, Any
+
+from snapcraft import yaml_utils
+from snapcraft.internal import common
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.application import Application
 from snapcraft.internal.meta.hooks import Hook
 from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from snapcraft.internal.meta.slots import ContentSlot, Slot
-
-from snapcraft import yaml_utils
-from typing import Dict, Set, Sequence, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +77,6 @@ class Snap:
         self.passthrough: Dict[str, Any] = dict()
         self.layout: Dict[str, Any] = dict()
 
-        self.__required_grade: Optional[str] = None
-
     @classmethod
     def from_file(cls, snap_yaml_path: str) -> "Snap":
         with open(snap_yaml_path, "r") as f:
@@ -128,28 +125,6 @@ class Snap:
 
         return provider_dirs
 
-    def _get_required_grade(self) -> str:
-        # Take into account loading from snap.yaml, those can be baseless (core),
-        # or the case of working with types of snap that do not require a base.
-        if self.base is None:
-            return "stable"
-
-        if self.__required_grade is not None:
-            return self.__required_grade
-
-        base_snap_pkg = repo.snaps.SnapPackage(self.base)
-        if base_snap_pkg.get_local_snap_info()["channel"] == "stable":
-            self.__required_grade = "stable"
-        else:
-            self.__required_grade = "devel"
-
-        return self.__required_grade
-
-    def _validate_grade(self) -> None:
-        """Verify that the grade is properly set."""
-        if self.grade == "stable" and self._get_required_grade() == "devel":
-            raise errors.GradeDevelRequiredError(set_grade=self.grade)
-
     def _validate_required_keys(self) -> None:
         """Verify that all mandatory keys have been satisfied."""
         missing_keys: List[str] = []
@@ -166,7 +141,6 @@ class Snap:
     def validate(self) -> None:
         """Validate snap, raising exception on error."""
         self._validate_required_keys()
-        self._validate_grade()
 
         for app in self.apps.values():
             app.validate()
@@ -243,8 +217,7 @@ class Snap:
         self._ensure_command_chain_assumption()
 
         for key in _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS:
-            # Skip unset fields except the ones we can update with defaults.
-            if self.__dict__[key] is None and key != "grade":
+            if self.__dict__[key] is None:
                 continue
 
             # Skip fields that are empty lists/dicts.
@@ -283,15 +256,6 @@ class Snap:
                 snap_dict[key] = dict()
                 for name, slot in sorted(self.slots.items()):
                     snap_dict[key][name] = slot.to_dict()
-            elif key == "grade":
-                if self.grade is None:
-                    required_grade = self._get_required_grade()
-                    logger.warning(
-                        f"'grade' property not specified: defaulting to {required_grade!r}."
-                    )
-                    snap_dict[key] = required_grade
-                else:
-                    snap_dict[key] = self.grade
             else:
                 snap_dict[key] = deepcopy(self.__dict__[key])
 
