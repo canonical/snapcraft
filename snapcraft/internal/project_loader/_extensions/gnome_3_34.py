@@ -86,7 +86,10 @@ class ExtensionImpl(Extension):
                     ),
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+                "GTK_USE_PORTALS": "1"
+            },
             "layout": {
                 "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
