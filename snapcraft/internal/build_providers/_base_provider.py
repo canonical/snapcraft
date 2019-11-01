@@ -16,6 +16,8 @@
 
 import abc
 import os
+import logging
+import shlex
 import shutil
 import sys
 from textwrap import dedent
@@ -28,6 +30,9 @@ from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
 from snapcraft import yaml_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_platform() -> str:
@@ -334,6 +339,17 @@ class Provider(abc.ABC):
 
         return cloud_user_data_filepath
 
+    def _get_env_command(self) -> Sequence[str]:
+        """Get command sequence for `env` with configured flags."""
+
+        env_list = ["env"]
+
+        # Configure SNAPCRAFT_HAS_TTY.
+        has_tty = str(sys.stdout.isatty())
+        env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
+
+        return env_list
+
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
         if base == "core18" and provider_base is None:
@@ -350,6 +366,10 @@ class Provider(abc.ABC):
 
         with open(filepath) as info_file:
             return yaml_utils.load(info_file)
+
+    def _log_run(self, command: Sequence[str]) -> None:
+        cmd_string = " ".join([shlex.quote(c) for c in command])
+        logger.debug(f"Running: {cmd_string}")
 
     def _save_info(self, **data: Dict[str, Any]) -> None:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")

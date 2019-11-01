@@ -130,9 +130,14 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        logger.debug("Running {}".format(" ".join(command)))
+        env_command = self._get_env_command()
+
         # TODO: use pylxd
-        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"] + list(command)
+        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         try:
             if hide_output:
                 output = subprocess.check_output(cmd)
