@@ -83,10 +83,15 @@ class Multipass(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
-        command = ["sudo", "-i", "env", has_tty] + list(command)
+        env_command = self._get_env_command()
+
+        cmd = ["sudo", "-i"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         return self._multipass_cmd.execute(
-            instance_name=self.instance_name, command=command, hide_output=hide_output
+            instance_name=self.instance_name, command=cmd, hide_output=hide_output
         )
 
     def _get_disk_image(self) -> str:

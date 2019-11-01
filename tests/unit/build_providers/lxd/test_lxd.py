@@ -177,6 +177,8 @@ class LXDInitTest(LXDBaseTest):
                         "exec",
                         self.instance_name,
                         "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
                         "cloud-init",
                         "status",
                         "--wait",
@@ -188,6 +190,8 @@ class LXDInitTest(LXDBaseTest):
                         "exec",
                         self.instance_name,
                         "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
                         "snapcraft",
                         "refresh",
                     ]
@@ -315,7 +319,15 @@ class LXDLaunchedTest(LXDBaseTest):
         self.instance.shell()
 
         self.check_call_mock.assert_called_once_with(
-            ["/snap/bin/lxc", "exec", "snapcraft-project-name", "--", "/bin/bash"]
+            [
+                "/snap/bin/lxc",
+                "exec",
+                "snapcraft-project-name",
+                "--",
+                "env",
+                "SNAPCRAFT_HAS_TTY=False",
+                "/bin/bash",
+            ]
         )
 
     def test_mount_project(self):
@@ -336,7 +348,16 @@ class LXDLaunchedTest(LXDBaseTest):
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(2))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
         self.check_output_mock.assert_called_once_with(
-            ["/snap/bin/lxc", "exec", self.instance_name, "--", "printenv", "HOME"]
+            [
+                "/snap/bin/lxc",
+                "exec",
+                self.instance_name,
+                "--",
+                "env",
+                "SNAPCRAFT_HAS_TTY=False",
+                "printenv",
+                "HOME",
+            ]
         )
 
     def test_mount_prime_directory(self):
@@ -359,7 +380,16 @@ class LXDLaunchedTest(LXDBaseTest):
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(2))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
         self.check_output_mock.assert_called_once_with(
-            ["/snap/bin/lxc", "exec", self.instance_name, "--", "printenv", "HOME"]
+            [
+                "/snap/bin/lxc",
+                "exec",
+                self.instance_name,
+                "--",
+                "env",
+                "SNAPCRAFT_HAS_TTY=False",
+                "printenv",
+                "HOME",
+            ]
         )
 
     def test_run(self):
@@ -371,6 +401,8 @@ class LXDLaunchedTest(LXDBaseTest):
                 "exec",
                 "snapcraft-project-name",
                 "--",
+                "env",
+                "SNAPCRAFT_HAS_TTY=False",
                 "ls",
                 "/root/project",
             ]
@@ -453,7 +485,13 @@ class SetupLXDTest(LXDBaseTest):
             dict(name="lxd", channel="stable", revision="10")
         ]
         self.fake_snapd.find_result = [
-            dict(lxd=dict(channels={"latest/stable": dict(confinement="strict")}))
+            dict(
+                lxd=dict(
+                    channel="stable",
+                    type="app",
+                    channels={"latest/stable": dict(confinement="strict")},
+                )
+            )
         ]
 
     def test_install(self):
