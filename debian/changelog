@@ -1,3 +1,19 @@
+snapcraft (3.9.1) bionic; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ci: switch to travis workspaces
+  * states: add support for required-grade in global state
+  * lifecycle: store the required grade depending on the base
+  * meta: move grade setting logic back to snap_packaging
+
+  [ Chris Patterson ]
+  * yaml_utils: move project_info's _load_yaml to yaml_utils
+  * yaml_utils: introduce a couple of unit tests for load_yaml_file
+  * remote-build: rename `--arch` to `--build-on`
+  * remote-build: prepend 'launchpad' to 'user' and 'accept-public-upload'
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 01 Nov 2019 17:57:43 +0000
+
 snapcraft (3.9) bionic; urgency=medium
 
   [ Sergio Schvezov ]
