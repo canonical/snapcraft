@@ -22,6 +22,7 @@ import click
 
 from . import echo
 from ._command import SnapcraftProjectCommand
+from ._config import enable_snapcraft_config_file
 from ._options import add_build_options, get_build_environment, get_project
 from snapcraft.internal import (
     build_providers,
@@ -151,6 +152,7 @@ def lifecyclecli(ctx, **kwargs):
 
 
 @lifecyclecli.command()
+@enable_snapcraft_config_file()
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
@@ -162,6 +164,7 @@ def init():
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @click.pass_context
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -178,6 +181,7 @@ def pull(ctx, parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -193,6 +197,7 @@ def build(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -208,6 +213,7 @@ def stage(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -223,6 +229,7 @@ def prime(parts, **kwargs):
 
 
 @lifecyclecli.command("try")
+@enable_snapcraft_config_file()
 @add_build_options()
 def try_command(**kwargs):
     """Try a snap on the host, priming if necessary.
@@ -240,6 +247,7 @@ def try_command(**kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -280,6 +288,7 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @click.pass_context
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 @click.option(
