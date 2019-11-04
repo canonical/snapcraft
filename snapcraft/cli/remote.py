@@ -22,6 +22,7 @@ from snapcraft.formatting_utils import humanize_list
 from typing import List
 from xdg import BaseDirectory
 from . import echo
+from ._config import enable_snapcraft_config_file
 from ._options import get_project, PromptOption
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
@@ -34,6 +35,7 @@ def remotecli():
 
 
 @remotecli.command("remote-build")
+@enable_snapcraft_config_file()
 @click.option("--recover", is_flag=True, help="Recover interrupted build.")
 @click.option("--status", is_flag=True, help="Display remote build status.")
 @click.option(
