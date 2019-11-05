@@ -485,9 +485,9 @@ class PluginHandler:
     def mark_pull_done(self):
         pull_properties = self.plugin.get_pull_properties()
 
-        # Add the annotated list of build packages
-        part_build_packages = self._part_properties.get("build-packages", [])
-        part_build_snaps = self._part_properties.get("build-snaps", [])
+        # Add the processed list of build packages and snaps.
+        part_build_packages = self._grammar_processor.get_build_packages()
+        part_build_snaps = self._grammar_processor.get_build_snaps()
 
         # Extract any requested metadata available in the source directory
         metadata = snapcraft.extractors.ExtractedMetadata()

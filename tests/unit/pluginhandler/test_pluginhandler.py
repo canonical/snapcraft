@@ -977,6 +977,45 @@ class StateBaseTestCase(unit.TestCase):
         self.addCleanup(patcher.stop)
 
 
+class PullStateTestCase(StateBaseTestCase):
+    def test_pull_build_packages_without_grammar_properties(self):
+        self.handler = self.load_part(
+            "test_part", part_properties={"build-packages": ["package1"]}
+        )
+        self.handler.mark_pull_done()
+        state = self.handler.get_pull_state()
+
+        self.assertTrue(type(state) is states.PullState)
+        self.assertThat(state.assets.get("build-packages"), Equals({"package1"}))
+
+    def test_pull_build_packages_with_grammar_properties(self):
+        self.handler = self.load_part(
+            "test_part",
+            part_properties={
+                "build-packages": [
+                    {"on amd64": ["package1"]},
+                    {"on i386": ["package2"]},
+                    "package3",
+                ],
+                "build-snaps": [
+                    {"on amd64": ["snap1"]},
+                    {"on i386": ["snap2"]},
+                    "snap3",
+                ],
+            },
+        )
+        self.handler.mark_pull_done()
+        state = self.handler.get_pull_state()
+
+        self.assertTrue(type(state) is states.PullState)
+        self.assertThat(
+            state.assets.get("build-packages"), Equals(set(["package1", "package3"]))
+        )
+        self.assertThat(
+            state.assets.get("build-snaps"), Equals(set(["snap1", "snap3"]))
+        )
+
+
 class StateTestCase(StateBaseTestCase):
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state(self, repo_mock):
