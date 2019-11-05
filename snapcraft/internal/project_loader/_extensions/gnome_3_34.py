@@ -118,7 +118,7 @@ class ExtensionImpl(Extension):
         }
 
         self.parts = {
-            "gnome-extension": {
+            "gnome-3-34-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
