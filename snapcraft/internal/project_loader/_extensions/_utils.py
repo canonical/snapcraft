@@ -161,12 +161,16 @@ def _apply_extension(
                 part_definition.get(property_name), property_value
             )
 
+        # Stores the extension's list of part_snippets in each part
+        parts[part_name] = part_definition
+
     # Finally, add any parts specified in the extension
     for part_name, part_definition in extension.parts.items():
         # If a extension part name clashes with a part that already exists, error.
         if part_name in parts:
             raise errors.ExtensionPartConflictError(extension_name, part_name)
 
+        # Stores the extension's list of parts in the parts section
         parts[part_name] = part_definition
 
 
