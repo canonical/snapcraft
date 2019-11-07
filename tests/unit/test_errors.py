@@ -853,6 +853,18 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_reportable": False,
             },
         ),
+        (
+            "XAttributeTooLongError",
+            {
+                "exception": errors.XAttributeTooLongError,
+                "kwargs": {"path": "/tmp/foo", "key": "foo", "value": "bar"},
+                "expected_brief": "Unable to write extended attribute as the key and/or value is too long.",
+                "expected_resolution": "This issue is generally resolved by addressing/truncating the data source of the long data value. In some cases, the filesystem being used will limit the allowable size.",
+                "expected_details": "Failed to write attribute to /tmp/foo:\nkey='foo' value='bar'",
+                "expected_docs_url": None,
+                "expected_reportable": True,
+            },
+        ),
     )
 
     def test_snapcraft_exception_handling(self):

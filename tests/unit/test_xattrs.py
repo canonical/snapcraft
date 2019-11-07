@@ -19,6 +19,7 @@ import sys
 from testtools.matchers import Equals
 from unittest import mock
 
+from snapcraft.internal.errors import XAttributeTooLongError
 from snapcraft.internal import xattrs
 from tests import unit
 
@@ -47,6 +48,26 @@ class TestXattrs(unit.TestCase):
             xattrs.write_origin_stage_package(self.test_file, package)
             result = xattrs.read_origin_stage_package(self.test_file)
             self.assertThat(result, Equals(package))
+        else:
+            self.assertRaises(
+                RuntimeError, xattrs.write_origin_stage_package, self.test_file, package
+            )
+
+    def test_write_origin_stage_package_long(self):
+        package = "a" * 100000
+        if sys.platform == "linux":
+            result = xattrs.read_origin_stage_package(self.test_file)
+            self.assertThat(result, Equals(None))
+
+            self.assertRaises(
+                XAttributeTooLongError,
+                xattrs.write_origin_stage_package,
+                self.test_file,
+                package,
+            )
+
+            result = xattrs.read_origin_stage_package(self.test_file)
+            self.assertThat(result, Equals(None))
         else:
             self.assertRaises(
                 RuntimeError, xattrs.write_origin_stage_package, self.test_file, package
