@@ -29,6 +29,7 @@ class PrimeState(PartState):
         part_properties=None,
         project=None,
         scriptlet_metadata=None,
+        primed_stage_packages=None,
     ):
         super().__init__(part_properties, project)
 
@@ -39,6 +40,9 @@ class PrimeState(PartState):
         self.directories = directories
         self.dependency_paths = set()
         self.scriptlet_metadata = scriptlet_metadata
+        self.primed_stage_packages = primed_stage_packages
+        if self.primed_stage_packages is None:
+            self.primed_stage_packages = set()
 
         if dependency_paths:
             self.dependency_paths = dependency_paths

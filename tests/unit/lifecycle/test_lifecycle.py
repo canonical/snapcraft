@@ -607,17 +607,16 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
-        original_check_call = subprocess.check_call
-
-        def _fake_dpkg_deb(command, *args, **kwargs):
-            if "dpkg-deb" not in command:
-                return original_check_call(command, *args, **kwargs)
-
-        check_call_patcher = mock.patch(
-            "subprocess.check_call", side_effect=_fake_dpkg_deb
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.repo._deb.Ubuntu._extract_deb_name_version",
+                return_value="test-1.0",
+            )
         )
-        check_call_patcher.start()
-        self.addCleanup(check_call_patcher.stop)
+
+        self.useFixture(
+            fixtures.MockPatch("snapcraft.internal.repo._deb.Ubuntu._extract_deb")
+        )
 
         self.fake_apt_cache = fixture_setup.FakeAptCache()
         self.useFixture(self.fake_apt_cache)
@@ -675,6 +674,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -734,6 +734,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -795,6 +796,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -858,6 +860,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -922,6 +925,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -989,6 +993,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - git=testversion
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1049,6 +1054,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - test-package=test-version
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1113,6 +1119,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - test-provider-package=test-version
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1167,6 +1174,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1230,6 +1238,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               fingerprint: test-fingerprint
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1306,6 +1315,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )

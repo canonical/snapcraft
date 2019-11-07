@@ -23,10 +23,11 @@ import os
 import re
 import shutil
 import stat
-from typing import List
+
+from typing import List, Set
 
 from snapcraft import file_utils
-from snapcraft.internal import mangling
+from snapcraft.internal import mangling, xattrs
 from . import errors
 
 
@@ -216,6 +217,23 @@ class BaseRepo:
         self._fix_artifacts(unpackdir)
         self._fix_xml_tools(unpackdir)
         self._fix_shebangs(unpackdir)
+
+    def _mark_origin_stage_package(
+        self, sources_dir: str, stage_package: str
+    ) -> Set[str]:
+        """Mark all files in sources_dir as coming from stage_package."""
+        file_list = set()
+        for (root, dirs, files) in os.walk(sources_dir):
+            for file_name in files:
+                file_path = os.path.join(root, file_name)
+
+                # Mark source.
+                xattrs.write_origin_stage_package(file_path, stage_package)
+
+                file_path = os.path.relpath(root, sources_dir)
+                file_list.add(file_path)
+
+        return file_list
 
     def _remove_useless_files(self, unpackdir):
         """Remove files that aren't useful or will clash with other parts."""

@@ -24,6 +24,7 @@ from collections import OrderedDict
 from textwrap import dedent
 from unittest.mock import call, Mock, MagicMock, patch
 
+import fixtures
 from testtools.matchers import Contains, Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
@@ -975,6 +976,12 @@ class StateBaseTestCase(unit.TestCase):
         self.get_elf_files_mock = patcher.start()
         self.get_elf_files_mock.return_value = frozenset()
         self.addCleanup(patcher.stop)
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.xattrs.read_origin_stage_package", return_value=None
+            )
+        )
 
 
 class PullStateTestCase(StateBaseTestCase):
@@ -2200,7 +2207,7 @@ class IsOutdatedTest(unit.TestCase):
         os.utime(target, (access_time, modified_time + 1))
 
     def test_prime_is_outdated(self):
-        self.handler.mark_prime_done(set(), set(), set())
+        self.handler.mark_prime_done(set(), set(), set(), set())
         self.assertFalse(
             self.handler.is_outdated(steps.PRIME),
             "Prime step was unexpectedly outdated",
