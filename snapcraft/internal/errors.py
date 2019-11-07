@@ -685,3 +685,26 @@ class SnapDataExtractionError(SnapcraftError):
 
 class ProjectNotFoundError(SnapcraftReportableError):
     fmt = "Failed to find project files."
+
+
+class XAttributeTooLongError(SnapcraftReportableException):
+    def __init__(self, *, key: str, value: str, path: str) -> None:
+        self._key = key
+        self._value = value
+        self._path = path
+
+    def get_brief(self) -> str:
+        return "Unable to write extended attribute as the key and/or value is too long."
+
+    def get_details(self) -> str:
+        return (
+            f"Failed to write attribute to {self._path}:\n"
+            f"key={self._key!r} value={self._value!r}"
+        )
+
+    def get_resolution(self) -> str:
+        return (
+            "This issue is generally resolved by addressing/truncating "
+            "the data source of the long data value. In some cases, the "
+            "filesystem being used will limit the allowable size."
+        )
