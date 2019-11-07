@@ -52,13 +52,13 @@ def _read_snapcraft_xattr(path: str, snapcraft_key: str) -> Optional[str]:
     return value.decode().strip()
 
 
-def _write_snapcraft_xattr(path: str, snapcraft_key: str, value: str) -> Optional[str]:
+def _write_snapcraft_xattr(path: str, snapcraft_key: str, value: str) -> None:
     if sys.platform != "linux":
         raise RuntimeError("xattr support only available for Linux")
 
     # Extended attributes do not apply to symlinks.
     if os.path.islink(path):
-        return None
+        return
 
     key = _get_snapcraft_xattr_key(snapcraft_key)
 

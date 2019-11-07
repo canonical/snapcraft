@@ -28,7 +28,7 @@ from typing import cast, Dict, List, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
-from snapcraft.internal import common, elf, errors, repo, sources, states, steps
+from snapcraft.internal import common, elf, errors, repo, sources, states, steps, xattrs
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
@@ -800,7 +800,16 @@ class PluginHandler:
         # Only mark this step done if _do_prime() didn't run, in which case
         # we have no files, directories, or dependency paths to track.
         if self.is_clean(steps.PRIME):
-            self.mark_prime_done(set(), set(), set())
+            self.mark_prime_done(set(), set(), set(), set())
+
+    def _get_primed_stage_packages(self, snap_files: Set[str]) -> Set[str]:
+        primed_stage_packages: Set[str] = set()
+        for snap_file in snap_files:
+            snap_file = os.path.join(self.primedir, snap_file)
+            stage_package = xattrs.read_origin_stage_package(snap_file)
+            if stage_package:
+                primed_stage_packages.add(stage_package)
+        return primed_stage_packages
 
     def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
@@ -811,7 +820,10 @@ class PluginHandler:
         else:
             dependency_paths = set()
 
-        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+        primed_stage_packages = self._get_primed_stage_packages(snap_files)
+        self.mark_prime_done(
+            snap_files, snap_dirs, dependency_paths, primed_stage_packages
+        )
 
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
@@ -863,7 +875,9 @@ class PluginHandler:
 
         return dependency_paths
 
-    def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
+    def mark_prime_done(
+        self, snap_files, snap_dirs, dependency_paths, primed_stage_packages
+    ):
         self.mark_done(
             steps.PRIME,
             states.PrimeState(
@@ -873,6 +887,7 @@ class PluginHandler:
                 self._part_properties,
                 self._project_options,
                 self._scriptlet_metadata[steps.PRIME],
+                primed_stage_packages,
             ),
         )
 
