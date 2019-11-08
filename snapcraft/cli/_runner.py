@@ -36,7 +36,7 @@ from .extensions import extensioncli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
 from .ci import cicli
 from ._command_group import SnapcraftGroup
-from ._options import add_build_options
+from ._options import add_build_options, add_provider_options
 from ._errors import exception_handler
 
 
@@ -66,6 +66,7 @@ command_groups = [
 )
 @click.pass_context
 @add_build_options(hidden=True)
+@add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""

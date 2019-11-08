@@ -18,10 +18,10 @@ import os
 
 import click
 
-from . import env
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
-from snapcraft.internal import errors
+from snapcraft.internal import common, errors
+from typing import Tuple
 
 
 class PromptOption(click.Option):
@@ -65,49 +65,126 @@ _BUILD_OPTIONS = [
         is_flag=True,
         help="Shells into the environment after the step has run.",
     ),
+]
+
+_SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
+_HIDDEN_PROVIDERS = ["managed-host"]
+_PROVIDER_OPTIONS = [
     dict(
         param_decls="--destructive-mode",
         is_flag=True,
-        help="Forces snapcraft to try and use the current host to build.",
+        help="Forces snapcraft to try and use the current host to build (implies `--provider=host`).",
     ),
     dict(
         param_decls="--use-lxd",
         is_flag=True,
-        help="Forces snapcraft to use LXD to build.",
+        help="Forces snapcraft to use LXD to build (implies `--provider=lxd`).",
+    ),
+    dict(
+        param_decls="--provider",
+        envvar="SNAPCRAFT_BUILD_ENVIRONMENT",
+        help="Build provider to use.",
+        metavar="[{}]".format("|".join(_SUPPORTED_PROVIDERS)),
+        type=click.Choice(_SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS),
     ),
 ]
 
 
+def _add_options(options, func, hidden):
+    for option in reversed(options):
+        # Pop param_decls option to prevent exception further on down the
+        # line for: `got multiple values for keyword argument`.
+        option = option.copy()
+        param_decls = option.pop("param_decls")
+        click_option = click.option(param_decls, **option, hidden=hidden)
+        func = click_option(func)
+    return func
+
+
 def add_build_options(hidden=False):
     def _add_build_options(func):
-        for build_option in reversed(_BUILD_OPTIONS):
-            # Pop param_decls option to prevent exception further on down the
-            # line for: `got multiple values for keyword argument`.
-            build_option = build_option.copy()
-            param_decls = build_option.pop("param_decls")
-            option = click.option(param_decls, **build_option, hidden=hidden)
-            func = option(func)
-        return func
+        return _add_options(_BUILD_OPTIONS, func, hidden)
 
     return _add_build_options
 
 
-def get_build_environment(**kwargs):
-    force_use_lxd = kwargs.get("use_lxd")
-    force_destructive_mode = kwargs.get("destructive_mode")
+def add_provider_options(hidden=False):
+    def _add_provider_options(func):
+        return _add_options(_PROVIDER_OPTIONS, func, hidden)
 
-    if force_destructive_mode and force_use_lxd:
-        raise click.BadOptionUsage(
-            "--destructive-mode",
-            "--use-lxd and --destructive-mode cannot be used together.",
+    return _add_provider_options
+
+
+def _sanity_check_build_environment_flags(**kwargs):
+    provider = kwargs.get("provider")
+    use_lxd = kwargs.get("use_lxd")
+    destructive_mode = kwargs.get("destructive_mode")
+    env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+
+    if destructive_mode and use_lxd:
+        raise click.BadArgumentUsage(
+            "--use-lxd and --destructive-mode cannot be used together."
         )
-    elif force_use_lxd:
-        provider = "lxd"
-    elif force_destructive_mode:
+
+    # Specifying --provider=host requires the use of --destructive-mode.
+    # SNAPCRAFT_BUILD_ENVIRONMENT=host does not.
+    if provider == "host" and not destructive_mode and not env_provider:
+        raise click.BadArgumentUsage(
+            "--provider=host requires --destructive-mode to acknowledge side effects"
+        )
+
+    # Remaining checks are for conflicts when --provider is specified.
+    if not provider:
+        return
+
+    if env_provider and env_provider != provider:
+        raise click.BadArgumentUsage(
+            "mismatch between --provider={} and SNAPCRAFT_BUILD_ENVIRONMENT={}".format(
+                provider, env_provider
+            )
+        )
+
+    if use_lxd and provider != "lxd":
+        raise click.BadArgumentUsage(
+            "--use-lxd cannot be used with --provider={}".format(provider)
+        )
+
+    if destructive_mode and provider != "host":
+        raise click.BadArgumentUsage(
+            "--destructive-mode cannot be used with --provider={}".format(provider)
+        )
+
+
+def get_build_environment(
+    skip_sanity_checks: bool = False, **kwargs
+) -> Tuple[str, bool]:
+    """Get build provider and determine if running as managed instance."""
+
+    # Sanity checks may be skipped for the purpose of checking legacy.
+    if not skip_sanity_checks:
+        _sanity_check_build_environment_flags(**kwargs)
+
+    provider = kwargs.get("provider")
+
+    if not provider:
+        if kwargs.get("use_lxd"):
+            provider = "lxd"
+        elif kwargs.get("destructive_mode"):
+            provider = "host"
+        elif common.is_process_container():
+            provider = "host"
+        else:
+            # Default is multipass.
+            provider = "multipass"
+
+    # Handle special case for managed-host.
+    if provider == "managed-host":
         provider = "host"
+        is_managed_host = True
     else:
-        provider = None
-    return env.BuilderEnvironmentConfig(force_provider=provider)
+        is_managed_host = False
+
+    return provider, is_managed_host
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):

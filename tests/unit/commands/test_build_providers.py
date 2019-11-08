@@ -28,6 +28,159 @@ from tests import fixture_setup
 from tests.unit.build_providers import ProviderImpl
 
 
+class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        # Use "clean" step for testing provider handling.
+        self.step = "clean"
+
+        # Don't actually run clean - we only want to test the command
+        # line interface flag parsing.
+        self.useFixture(fixtures.MockPatch("snapcraft.internal.lifecycle.clean"))
+
+        # tests.unit.TestCase sets SNAPCRAFT_BUILD_ENVIRONMENT to host.
+        # These build provider tests will want to set this explicitly.
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", None)
+        )
+
+        self.mock_get_provider_for = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.build_providers.get_provider_for",
+                return_value=ProviderImpl,
+            )
+        ).mock
+
+        # Tests need to dictate this (or not).
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.is_process_container", return_value=False
+            )
+        )
+
+        self.useFixture(fixture_setup.FakeMultipass())
+
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, base="core")
+        snapcraft_yaml.update_part("part1", dict(plugin="nil"))
+        self.useFixture(snapcraft_yaml)
+
+
+class AssortedBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
+    def test_host_container(self):
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.is_process_container", return_value=True
+            )
+        )
+        result = self.run_command([self.step])
+
+        # Mock get_provider_for not called when using "host".
+        self.mock_get_provider_for.assert_not_called()
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_use_lxd(self):
+        result = self.run_command([self.step, "--use-lxd"])
+
+        self.mock_get_provider_for.assert_called_once_with("lxd")
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_destructive_mode(self):
+        result = self.run_command([self.step, "--destructive-mode"])
+
+        # Mock get_provider_for not called when using "host".
+        self.mock_get_provider_for.assert_not_called()
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_host_build_env(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+
+        result = self.run_command([self.step])
+
+        self.mock_get_provider_for.assert_not_called()
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_invalid_clean_provider_build_env(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "invalid")
+        )
+
+        result = self.run_command([self.step])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_clean_provider_build_arg(self):
+        result = self.run_command([self.step, "--provider", "invalid"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_combo_lxd_destructive(self):
+        result = self.run_command([self.step, "--use-lxd", "--destructive-mode"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_combo_use_lxd_mismatch(self):
+        result = self.run_command([self.step, "--use-lxd", "--provider", "host"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_combo_destructive_mode_mismatch(self):
+        result = self.run_command(
+            [self.step, "--destructive-mode", "--provider", "lxd"]
+        )
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_host_without_destructive_mode(self):
+        result = self.run_command([self.step, "--provider", "host"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+    def test_invalid_mismatch(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "multipass")
+        )
+
+        result = self.run_command([self.step, "--provider", "host"])
+
+        self.assertThat(result.exit_code, Equals(2))
+
+
+class ValidBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
+    scenarios = [
+        ("default", dict(env=None, arg=None, result="multipass")),
+        ("host_env", dict(env="host", arg=None, result="host")),
+        ("host_arg", dict(env=None, arg="host", result="host")),
+        ("host_both", dict(env="host", arg="host", result="host")),
+        ("lxd_env", dict(env="lxd", arg=None, result="lxd")),
+        ("lxd_arg", dict(env=None, arg="lxd", result="lxd")),
+        ("lxd_both", dict(env="lxd", arg="lxd", result="lxd")),
+        ("multipass_env", dict(env="multipass", arg=None, result="multipass")),
+        ("multipass_arg", dict(env=None, arg="multipass", result="multipass")),
+        ("multipass_both", dict(env="multipass", arg="multipass", result="multipass")),
+    ]
+
+    def test_valid_clean_providers(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", self.env)
+        )
+
+        if self.result == "host":
+            result = self.run_command(
+                [self.step, "--provider", self.arg, "--destructive-mode"]
+            )
+
+            self.mock_get_provider_for.assert_not_called()
+        else:
+            result = self.run_command([self.step, "--provider", self.arg])
+
+            self.mock_get_provider_for.assert_called_once_with(self.result)
+
+        self.assertThat(result.exit_code, Equals(0))
+
+
 class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
