@@ -204,7 +204,11 @@ class Snap:
             elif key in _MANDATORY_PACKAGE_KEYS:
                 snap.__dict__[key] = snap_dict[key]
             elif key in _OPTIONAL_PACKAGE_KEYS:
-                snap.__dict__[key] = snap_dict[key]
+                if key == "assumes":
+                    # Treat `assumes` as a set, not as a list.
+                    snap.__dict__[key] = set(snap_dict[key])
+                else:
+                    snap.__dict__[key] = snap_dict[key]
             else:
                 logger.debug("ignoring or passing through unknown key: {}".format(key))
                 continue
