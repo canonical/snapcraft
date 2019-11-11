@@ -177,6 +177,20 @@ class CreateTestCase(CreateBaseTestCase):
         )
         self.assertThat(y["assumes"], Equals(["feature1", "feature2"]))
 
+    def test_create_meta_command_chain_with_assumes(self):
+        self.config_data["assumes"] = ["feature1", "feature2"]
+        self.config_data["apps"] = {"app": {"command": "foo", "command-chain": ["bar"]}}
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "bar"), executable=True)
+
+        y = self.generate_meta_yaml()
+        self.assertTrue(
+            "assumes" in y, 'Expected "assumes" property to be copied into snap.yaml'
+        )
+        self.assertThat(
+            y["assumes"], Equals(sorted(["feature1", "feature2", "command-chain"]))
+        )
+
     def test_create_gadget_meta_with_gadget_yaml(self):
         gadget_yaml = "stub entry: stub value"
         _create_file("gadget.yaml", content=gadget_yaml)

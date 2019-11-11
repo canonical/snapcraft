@@ -156,7 +156,7 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["description"], snap.description)
         self.assertEqual(snap_dict["apps"]["test-app"], snap.apps["test-app"].to_dict())
         self.assertEqual(snap_dict["architectures"], snap.architectures)
-        self.assertEqual(snap_dict["assumes"], snap.assumes)
+        self.assertEqual(set(snap_dict["assumes"]), snap.assumes)
         self.assertEqual(snap_dict["base"], snap.base)
         self.assertEqual(snap_dict["environment"], snap.environment)
         self.assertEqual(snap_dict["license"], snap.license)
@@ -246,7 +246,7 @@ class SnapTests(unit.TestCase):
             snap.apps["test-app"].to_dict(),
         )
         self.assertEqual(["amd64"], snap.architectures)
-        self.assertEqual(["snapd2.39"], snap.assumes)
+        self.assertEqual({"snapd2.39"}, snap.assumes)
         self.assertEqual("core18", snap.base)
         self.assertEqual("classic", snap.confinement)
         self.assertEqual("devel", snap.grade)
