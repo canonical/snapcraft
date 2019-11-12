@@ -20,7 +20,7 @@ import subprocess
 import sys
 import urllib.parse
 import warnings
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from .._base_provider import Provider
 from .._base_provider import errors
@@ -229,8 +229,20 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             )
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self.echoer.warning(
             "The LXD provider is offered as a technology preview for early adopters.\n"
             "The command line interface, container names or lifecycle handling may "

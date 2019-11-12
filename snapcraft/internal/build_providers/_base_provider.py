@@ -88,7 +88,14 @@ class Provider(abc.ABC):
 
     _INSTANCE_PROJECT_DIR = "~/project"
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
         self.project = project
         self.echoer = echoer
         self._is_ephemeral = is_ephemeral
@@ -110,6 +117,10 @@ class Provider(abc.ABC):
             project.info.name,
             self._get_provider_name(),
         )
+
+        if build_provider_flags is None:
+            build_provider_flags = dict()
+        self.build_provider_flags = build_provider_flags.copy()
 
     def __enter__(self):
         try:
