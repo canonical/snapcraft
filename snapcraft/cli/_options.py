@@ -259,3 +259,16 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
         is_managed_host=is_managed_host,
     )
     return project
+
+
+def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
+    """Set build environment flags in snapcraft process."""
+
+    # Snapcraft plugins currently check for environment variables,
+    # e.g. http_proxy and https_proxy.  Ensure they are set if configured.
+    for key, value in build_provider_flags.items():
+        if value is None:
+            if key in os.environ:
+                os.environ.pop(key)
+        else:
+            os.environ[key] = str(value)
