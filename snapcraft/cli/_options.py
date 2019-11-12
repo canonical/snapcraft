@@ -18,6 +18,7 @@ import os
 import sys
 
 import click
+from typing import Dict, List
 
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
@@ -148,10 +149,10 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
     # change defaults, so they are safe to ignore due to filtering
     # in get_build_provider_flags().
     for option in _PROVIDER_OPTIONS:
-        key = option["param_decls"]
-        supported_providers = option["supported_providers"]
-        unsupported = build_provider not in supported_providers  # type: ignore
-        if key in sys.argv and unsupported:
+        key: str = option["param_decls"]  # type: ignore
+        supported_providers: List[str] = option["supported_providers"]  # type: ignore
+
+        if key in sys.argv and build_provider not in supported_providers:
             raise click.BadArgumentUsage(
                 f"{key} cannot be used with build provider {build_provider!r}"
             )
@@ -178,6 +179,45 @@ def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
         _sanity_check_build_provider_flags(provider, **kwargs)
 
     return provider
+
+
+def _param_decls_to_kwarg(key: str) -> str:
+    """Format a param_decls to keyword argument name."""
+
+    # Drop leading "--".
+    key = key.replace("--", "", 1)
+
+    # Convert dashes to underscores.
+    return key.replace("-", "_")
+
+
+def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
+    """Get configured options applicable to build_provider."""
+
+    build_provider_flags: Dict[str, str] = dict()
+
+    # Should not happen - developer safety check.
+    if build_provider not in _ALL_PROVIDERS:
+        raise RuntimeError(f"Invalid build provider: {build_provider}")
+
+    for option in _PROVIDER_OPTIONS:
+        key: str = option["param_decls"]  # type: ignore
+        supported_providers: List[str] = option["supported_providers"]  # type: ignore
+
+        # Skip --provider option.
+        if key == "--provider":
+            continue
+
+        # Skip options that do not apply to configured provider.
+        if build_provider not in supported_providers:
+            continue
+
+        # Add option, if set.
+        key_formatted = _param_decls_to_kwarg(key)
+        if key_formatted in kwargs:
+            build_provider_flags[key_formatted] = kwargs[key_formatted]
+
+    return build_provider_flags
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
