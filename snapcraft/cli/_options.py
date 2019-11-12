@@ -115,7 +115,7 @@ def add_provider_options(hidden=False):
     return _add_provider_options
 
 
-def _sanity_check_build_provider_flags(**kwargs):
+def _sanity_check_build_provider_flags(**kwargs) -> None:
     provider = kwargs.get("provider")
     use_lxd = kwargs.get("use_lxd")
     destructive_mode = kwargs.get("destructive_mode")
