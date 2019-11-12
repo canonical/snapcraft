@@ -130,7 +130,7 @@ class Multipass(Provider):
         mountpoint: str,
         dev_or_path: str,
         uid_map: Dict[str, str] = None,
-        gid_map: Dict[str, str] = None
+        gid_map: Dict[str, str] = None,
     ) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.mount(
@@ -145,8 +145,20 @@ class Multipass(Provider):
         destination = "{}:{}".format(self.instance_name, destination)
         self._multipass_cmd.copy_files(source=source, destination=destination)
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self._multipass_cmd = MultipassCommand(platform=sys.platform)
         self._instance_info = None  # type: InstanceInfo
 
