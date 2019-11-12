@@ -75,7 +75,7 @@ class MesonPlugin(snapcraft.BasePlugin):
         self.mesonbuilddir = os.path.join(self.builddir, self.snapbuildname)
 
     def _setup_base_tools(self, base):
-        if base in ("core", "core16", "core18"):
+        if base in ("core", "core16", "core18", "core20"):
             self.build_packages.append("python3-pip")
             self.build_packages.append("python3-setuptools")
             self.build_packages.append("python3-wheel")
