@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 
 import click
 
@@ -68,16 +69,19 @@ _BUILD_OPTIONS = [
 
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
+_ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS = [
     dict(
         param_decls="--destructive-mode",
         is_flag=True,
         help="Forces snapcraft to try and use the current host to build (implies `--provider=host`).",
+        supported_providers=["host", "managed-host"],
     ),
     dict(
         param_decls="--use-lxd",
         is_flag=True,
         help="Forces snapcraft to use LXD to build (implies `--provider=lxd`).",
+        supported_providers=["lxd"],
     ),
     dict(
         param_decls="--provider",
@@ -85,7 +89,8 @@ _PROVIDER_OPTIONS = [
         show_envvar=False,
         help="Build provider to use.",
         metavar="[{}]".format("|".join(_SUPPORTED_PROVIDERS)),
-        type=click.Choice(_SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS),
+        type=click.Choice(_ALL_PROVIDERS),
+        supported_providers=_ALL_PROVIDERS,
     ),
 ]
 
@@ -96,6 +101,11 @@ def _add_options(options, func, hidden):
         # line for: `got multiple values for keyword argument`.
         option = option.copy()
         param_decls = option.pop("param_decls")
+
+        # Pop supported_providers option because it is snapcraft-only.
+        if "supported_providers" in option:
+            option.pop("supported_providers")
+
         click_option = click.option(param_decls, **option, hidden=hidden)
         func = click_option(func)
     return func
@@ -115,52 +125,40 @@ def add_provider_options(hidden=False):
     return _add_provider_options
 
 
-def _sanity_check_build_provider_flags(**kwargs) -> None:
-    provider = kwargs.get("provider")
-    use_lxd = kwargs.get("use_lxd")
+def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
     destructive_mode = kwargs.get("destructive_mode")
     env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
 
-    if destructive_mode and use_lxd:
-        raise click.BadArgumentUsage(
-            "--use-lxd and --destructive-mode cannot be used together."
-        )
-
     # Specifying --provider=host requires the use of --destructive-mode.
     # SNAPCRAFT_BUILD_ENVIRONMENT=host does not.
-    if provider == "host" and not destructive_mode and not env_provider:
+    if build_provider == "host" and not destructive_mode and not env_provider:
         raise click.BadArgumentUsage(
             "--provider=host requires --destructive-mode to acknowledge side effects"
         )
 
-    # Remaining checks are for conflicts when --provider is specified.
-    if not provider:
-        return
-
-    if env_provider and env_provider != provider:
+    if env_provider and env_provider != build_provider:
         raise click.BadArgumentUsage(
             "mismatch between --provider={} and SNAPCRAFT_BUILD_ENVIRONMENT={}".format(
-                provider, env_provider
+                build_provider, env_provider
             )
         )
 
-    if use_lxd and provider != "lxd":
-        raise click.BadArgumentUsage(
-            "--use-lxd cannot be used with --provider={}".format(provider)
-        )
-
-    if destructive_mode and provider != "host":
-        raise click.BadArgumentUsage(
-            "--destructive-mode cannot be used with --provider={}".format(provider)
-        )
+    # Error if any sys.argv params are for unsupported providers.
+    # Values from environment variables and configuration files only
+    # change defaults, so they are safe to ignore due to filtering
+    # in get_build_provider_flags().
+    for option in _PROVIDER_OPTIONS:
+        key = option["param_decls"]
+        supported_providers = option["supported_providers"]
+        unsupported = build_provider not in supported_providers  # type: ignore
+        if key in sys.argv and unsupported:
+            raise click.BadArgumentUsage(
+                f"{key} cannot be used with build provider {build_provider!r}"
+            )
 
 
 def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
     """Get build provider and determine if running as managed instance."""
-
-    # Sanity checks may be skipped for the purpose of checking legacy.
-    if not skip_sanity_checks:
-        _sanity_check_build_provider_flags(**kwargs)
 
     provider = kwargs.get("provider")
 
@@ -174,6 +172,10 @@ def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
         else:
             # Default is multipass.
             provider = "multipass"
+
+    # Sanity checks may be skipped for the purpose of checking legacy.
+    if not skip_sanity_checks:
+        _sanity_check_build_provider_flags(provider, **kwargs)
 
     return provider
 
