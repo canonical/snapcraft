@@ -26,7 +26,7 @@ from ._config import enable_snapcraft_config_file
 from ._options import (
     add_build_options,
     add_provider_options,
-    get_build_environment,
+    get_build_provider,
     get_project,
 )
 from snapcraft.internal import (
@@ -62,12 +62,14 @@ def _execute(  # noqa: C901
     # Cleanup any previous errors.
     _clean_provider_error()
 
-    build_provider, is_managed_host = get_build_environment(**kwargs)
+    build_provider = get_build_provider(**kwargs)
+    is_managed_host = build_provider == "managed-host"
+
     project = get_project(is_managed_host=is_managed_host, **kwargs)
 
     conduct_project_sanity_check(project)
 
-    if build_provider == "host":
+    if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
@@ -317,7 +319,8 @@ def clean(ctx, parts, unprime, step, **kwargs):
         option = "--step" if "--step" in ctx.obj["argv"] else "-s"
         raise click.BadOptionUsage(option, "no such option: {}".format(option))
 
-    build_provider, is_managed_host = get_build_environment(**kwargs)
+    build_provider = get_build_provider(**kwargs)
+    is_managed_host = build_provider == "managed-host"
 
     try:
         project = get_project(is_managed_host=is_managed_host)
@@ -328,7 +331,7 @@ def clean(ctx, parts, unprime, step, **kwargs):
     if unprime and not is_managed_host:
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
-    if build_provider == "host":
+    if build_provider in ["host", "managed-host"]:
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
