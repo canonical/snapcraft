@@ -21,7 +21,6 @@ import click
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
 from snapcraft.internal import common, errors
-from typing import Tuple
 
 
 class PromptOption(click.Option):
@@ -116,7 +115,7 @@ def add_provider_options(hidden=False):
     return _add_provider_options
 
 
-def _sanity_check_build_environment_flags(**kwargs):
+def _sanity_check_build_provider_flags(**kwargs):
     provider = kwargs.get("provider")
     use_lxd = kwargs.get("use_lxd")
     destructive_mode = kwargs.get("destructive_mode")
@@ -156,14 +155,12 @@ def _sanity_check_build_environment_flags(**kwargs):
         )
 
 
-def get_build_environment(
-    skip_sanity_checks: bool = False, **kwargs
-) -> Tuple[str, bool]:
+def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
     """Get build provider and determine if running as managed instance."""
 
     # Sanity checks may be skipped for the purpose of checking legacy.
     if not skip_sanity_checks:
-        _sanity_check_build_environment_flags(**kwargs)
+        _sanity_check_build_provider_flags(**kwargs)
 
     provider = kwargs.get("provider")
 
@@ -178,14 +175,7 @@ def get_build_environment(
             # Default is multipass.
             provider = "multipass"
 
-    # Handle special case for managed-host.
-    if provider == "managed-host":
-        provider = "host"
-        is_managed_host = True
-    else:
-        is_managed_host = False
-
-    return provider, is_managed_host
+    return provider
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
