@@ -26,7 +26,9 @@ from ._config import enable_snapcraft_config_file
 from ._options import (
     add_build_options,
     add_provider_options,
+    apply_host_provider_flags,
     get_build_provider,
+    get_build_provider_flags,
     get_project,
 )
 from snapcraft.internal import (
@@ -66,10 +68,12 @@ def _execute(  # noqa: C901
     is_managed_host = build_provider == "managed-host"
 
     project = get_project(is_managed_host=is_managed_host, **kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
 
     conduct_project_sanity_check(project)
 
     if build_provider in ["host", "managed-host"]:
+        apply_host_provider_flags(build_provider_flags)
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
@@ -90,7 +94,9 @@ def _execute(  # noqa: C901
             else:
                 raise provider_error
 
-        with build_provider_class(project=project, echoer=echo) as instance:
+        with build_provider_class(
+            project=project, echoer=echo, build_provider_flags=build_provider_flags
+        ) as instance:
             instance.mount_project()
             try:
                 if shell:
@@ -320,6 +326,7 @@ def clean(ctx, parts, unprime, step, **kwargs):
         raise click.BadOptionUsage(option, "no such option: {}".format(option))
 
     build_provider = get_build_provider(**kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
     is_managed_host = build_provider == "managed-host"
 
     try:
@@ -332,12 +339,15 @@ def clean(ctx, parts, unprime, step, **kwargs):
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     if build_provider in ["host", "managed-host"]:
+        apply_host_provider_flags(build_provider_flags)
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
         build_provider_class = build_providers.get_provider_for(build_provider)
         if parts:
-            with build_provider_class(project=project, echoer=echo) as instance:
+            with build_provider_class(
+                project=project, echoer=echo, build_provider_flags=build_provider_flags
+            ) as instance:
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
