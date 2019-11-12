@@ -93,6 +93,20 @@ _PROVIDER_OPTIONS = [
         type=click.Choice(_ALL_PROVIDERS),
         supported_providers=_ALL_PROVIDERS,
     ),
+    dict(
+        param_decls="--http-proxy",
+        metavar="<http-proxy>",
+        help="HTTP proxy for host build environments.",
+        envvar="http_proxy",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls="--https-proxy",
+        metavar="<https-proxy>",
+        help="HTTPS proxy for host build environments.",
+        envvar="https_proxy",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
 ]
 
 
