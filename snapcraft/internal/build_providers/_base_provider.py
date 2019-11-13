@@ -350,6 +350,16 @@ class Provider(abc.ABC):
         has_tty = str(sys.stdout.isatty())
         env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
 
+        # Pass through configurable environment variables.
+        for key in ["http_proxy", "https_proxy"]:
+            value = self.build_provider_flags.get(key)
+            if not value:
+                continue
+
+            # Ensure item is treated as string and append it.
+            value = str(value)
+            env_list.append(f"{key}={value}")
+
         return env_list
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
