@@ -145,8 +145,15 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
     env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
 
     # Specifying --provider=host requires the use of --destructive-mode.
-    # SNAPCRAFT_BUILD_ENVIRONMENT=host does not.
-    if build_provider == "host" and not destructive_mode and not env_provider:
+    # Exceptions include:
+    # (1) SNAPCRAFT_BUILD_ENVIRONMENT=host.
+    # (2) Running inside of a container.
+    if (
+        build_provider == "host"
+        and not env_provider == "host"
+        and not destructive_mode
+        and not common.is_process_container()
+    ):
         raise click.BadArgumentUsage(
             "--provider=host requires --destructive-mode to acknowledge side effects"
         )
@@ -165,7 +172,6 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
     for option in _PROVIDER_OPTIONS:
         key: str = option["param_decls"]  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
-
         if key in sys.argv and build_provider not in supported_providers:
             raise click.BadArgumentUsage(
                 f"{key} cannot be used with build provider {build_provider!r}"
