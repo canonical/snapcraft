@@ -89,7 +89,8 @@ class CommandBaseTestCase(unit.TestCase):
             fixtures.MockPatch("snapcraft.cli.echo.is_tty_connected", return_value=True)
         )
 
-        return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
+        with mock.patch("sys.argv", args):
+            return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
