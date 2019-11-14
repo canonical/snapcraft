@@ -206,6 +206,9 @@ class Provider(abc.ABC):
         target = (self._get_home_directory() / "project").as_posix()
         self._mount(self.project._project_dir, target)
 
+        if self.build_provider_flags.get("bind_ssh"):
+            self._mount_ssh()
+
     def _mount_prime_directory(self) -> bool:
         """Mount the host prime directory into the provider.
 
@@ -217,6 +220,12 @@ class Provider(abc.ABC):
 
         self._mount(self.project.prime_dir, target)
         return False
+
+    def _mount_ssh(self) -> None:
+        """Mount ~/.ssh to target."""
+        src = (pathlib.Path.home() / ".ssh").as_posix()
+        target = (self._get_home_directory() / ".ssh").as_posix()
+        self._mount(src, target)
 
     def expose_prime(self) -> None:
         """Provider steps needed to expose the prime directory to the host.

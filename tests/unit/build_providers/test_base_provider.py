@@ -16,6 +16,7 @@
 
 import contextlib
 import os
+import pathlib
 from textwrap import dedent
 from unittest.mock import call, patch, Mock
 
@@ -102,6 +103,34 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.mount_mock.assert_called_once_with(
             self.project.prime_dir, "/root/prime"
+        )
+
+    @patch("pathlib.Path.home", return_value=pathlib.Path("/home/user"))
+    def test_bind_ssh(self, mock_home):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        # False.
+        provider.build_provider_flags = dict(bind_ssh=False)
+        provider.mount_project()
+        provider.mount_mock.assert_has_calls(
+            [call(self.project._project_dir, "/root/project")]
+        )
+
+        # Not present.
+        provider.build_provider_flags = dict()
+        provider.mount_project()
+        provider.mount_mock.assert_has_calls(
+            [call(self.project._project_dir, "/root/project")]
+        )
+
+        # True.
+        provider.build_provider_flags = dict(bind_ssh=True)
+        provider.mount_project()
+        provider.mount_mock.assert_has_calls(
+            [
+                call(self.project._project_dir, "/root/project"),
+                call("/home/user/.ssh", "/root/.ssh"),
+            ]
         )
 
     def test_ensure_base_same_base(self):
