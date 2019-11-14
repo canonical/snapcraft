@@ -49,8 +49,11 @@ def remotecli():
 @click.option(
     "--launchpad-accept-public-upload",
     is_flag=True,
-    prompt="All data sent to remote builders is public. Are you sure you want to continue?",
-    help="Acknowledge that uploaded code is public.",
+    prompt=(
+        "All data sent to remote builders will be publicly available. "
+        "Are you sure you want to continue?"
+    ),
+    help="Acknowledge that uploaded code will be publicly available.",
     cls=PromptOption,
 )
 @click.option(
