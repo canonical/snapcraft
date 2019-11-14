@@ -44,7 +44,6 @@ class ProviderImpl(Provider):
         self.push_file_mock = mock.Mock()
         self.create_mock = mock.Mock()
         self.destroy_mock = mock.Mock()
-        self.mount_project_mock = mock.Mock()
         self.mount_prime_mock = mock.Mock()
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
@@ -109,8 +108,6 @@ class ProviderImpl(Provider):
     def _get_home_directory(self) -> pathlib.Path:
         return pathlib.Path("/root")
 
-    def mount_project(self):
-        self.mount_project_mock("mount-project")
 
     def _mount_prime_directory(self):
         self.mount_prime_mock("mount-prime")

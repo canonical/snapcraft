@@ -319,30 +319,6 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
 
-    def mount_project(self) -> None:
-        if self._PROJECT_DEVICE_NAME in self._container.devices:
-            return
-
-        # Resolve the home directory
-        home_dir = (
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
-        )
-
-        self._container.sync()
-
-        self._container.devices[self._PROJECT_DEVICE_NAME] = {
-            "type": "disk",
-            "source": self.project._project_dir,
-            "path": os.path.join(home_dir, "project"),
-        }
-
-        try:
-            self._container.save(wait=True)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderMountError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            ) from lxd_api_error
-
     def _mount_prime_directory(self) -> bool:
         if self._PROJECT_EXPORTED_PRIME_NAME in self._container.devices:
             return True
