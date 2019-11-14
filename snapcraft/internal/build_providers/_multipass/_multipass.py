@@ -197,6 +197,24 @@ class Multipass(Provider):
         if self._is_ephemeral:
             self.clean_project()
 
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+        return self._instance_info.is_mounted(target)
+
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+        if self._is_mounted(target):
+            # Nothing to do if already mounted.
+            return
+
+        target = "{}:{}".format(self.instance_name, target)
+        uid_map = {str(os.getuid()): "0"}
+        gid_map = {str(os.getgid()): "0"}
+
+        self._multipass_cmd.mount(
+            source=host_source, target=target, uid_map=uid_map, gid_map=gid_map
+        )
+
     def mount_project(self) -> None:
         # Resolve the home directory
         home_dir = (
