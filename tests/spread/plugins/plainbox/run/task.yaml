@@ -2,6 +2,7 @@ summary: Build and run a basic checkbox snap
 
 environment:
   SNAP_DIR: ../snaps/checkbox
+  LANG: en_US.UTF-8
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
