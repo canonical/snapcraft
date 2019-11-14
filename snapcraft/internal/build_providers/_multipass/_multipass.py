@@ -129,19 +129,6 @@ class Multipass(Provider):
 
         self._multipass_cmd.start(instance_name=self.instance_name)
 
-    def __mount(
-        self,
-        *,
-        mountpoint: str,
-        dev_or_path: str,
-        uid_map: Dict[str, str] = None,
-        gid_map: Dict[str, str] = None,
-    ) -> None:
-        target = "{}:{}".format(self.instance_name, mountpoint)
-        self._multipass_cmd.mount(
-            source=dev_or_path, target=target, uid_map=uid_map, gid_map=gid_map
-        )
-
     def _umount(self, *, mountpoint: str) -> None:
         mount = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.umount(mount=mount)
