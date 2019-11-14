@@ -16,6 +16,7 @@
 
 import abc
 import os
+import pathlib
 import logging
 import shlex
 import shutil
@@ -126,6 +127,8 @@ class Provider(abc.ABC):
         if build_provider_flags is None:
             build_provider_flags = dict()
         self.build_provider_flags = build_provider_flags.copy()
+
+        self._cached_home_directory: pathlib.Path = None
 
     def __enter__(self):
         try:
@@ -361,6 +364,16 @@ class Provider(abc.ABC):
             env_list.append(f"{key}={value}")
 
         return env_list
+
+    def _get_home_directory(self) -> pathlib.Path:
+        """Get user's home directory path."""
+        if self._cached_home_directory is not None:
+            return self._cached_home_directory
+
+        self._cached_home_directory = pathlib.Path(
+            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
+        )
+        return self._cached_home_directory
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info

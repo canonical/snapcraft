@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 from typing import Optional
 from unittest import mock
 
@@ -100,6 +101,9 @@ class ProviderImpl(Provider):
 
     def destroy(self):
         self.destroy_mock("destroy")
+
+    def _get_home_directory(self) -> pathlib.Path:
+        return pathlib.Path("/root")
 
     def mount_project(self):
         self.mount_project_mock("mount-project")
