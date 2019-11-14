@@ -107,7 +107,6 @@ class ProviderImpl(Provider):
     def _get_home_directory(self) -> pathlib.Path:
         return pathlib.Path("/root")
 
-
     def clean_project(self):
         self.clean_project_mock()
 
