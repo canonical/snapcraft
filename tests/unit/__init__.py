@@ -155,9 +155,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             apt.apt_pkg.config.find_file("Dir::Etc::TrustedParts"),
         )
 
-        patcher = mock.patch("multiprocessing.cpu_count")
+        patcher = mock.patch("os.sched_getaffinity")
         self.cpu_count = patcher.start()
-        self.cpu_count.return_value = 2
+        self.cpu_count.return_value = {1, 2}
         self.addCleanup(patcher.stop)
 
         # We do not want the paths to affect every test we have.
@@ -187,16 +187,26 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # Make sure snap installation does the right thing
         self.fake_snapd.installed_snaps = [
-            dict(name="core16", channel="latest/stable", revision="10"),
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core16", channel="stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
         ]
         self.fake_snapd.snaps_result = [
-            dict(name="core16", channel="latest/stable", revision="10"),
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core16", channel="stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
         ]
         self.fake_snapd.find_result = [
-            dict(core16=dict(channels={"latest/stable": dict(confinement="strict")})),
-            dict(core18=dict(channels={"latest/stable": dict(confinement="strict")})),
+            dict(
+                core16=dict(
+                    channel="stable",
+                    channels={"latest/stable": dict(confinement="strict")},
+                )
+            ),
+            dict(
+                core18=dict(
+                    channel="stable",
+                    channels={"latest/stable": dict(confinement="strict")},
+                )
+            ),
         ]
         self.fake_snapd.snap_details_func = None
 
@@ -224,6 +234,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG")
         )
         self.useFixture(fixture_setup.FakeSnapcraftctl())
+
+        # Don't let host SNAPCRAFT_BUILD_INFO variable leak into tests
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO"))
 
     def make_snapcraft_yaml(self, content, encoding="utf-8", location=""):
         snap_dir = os.path.join(location, "snap")

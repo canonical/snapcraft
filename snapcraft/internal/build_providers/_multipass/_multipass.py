@@ -83,10 +83,15 @@ class Multipass(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
-        command = ["sudo", "-i", "env", has_tty] + list(command)
+        env_command = self._get_env_command()
+
+        cmd = ["sudo", "-i"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         return self._multipass_cmd.execute(
-            instance_name=self.instance_name, command=command, hide_output=hide_output
+            instance_name=self.instance_name, command=cmd, hide_output=hide_output
         )
 
     def _get_disk_image(self) -> str:
@@ -130,7 +135,7 @@ class Multipass(Provider):
         mountpoint: str,
         dev_or_path: str,
         uid_map: Dict[str, str] = None,
-        gid_map: Dict[str, str] = None
+        gid_map: Dict[str, str] = None,
     ) -> None:
         target = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.mount(
@@ -145,8 +150,20 @@ class Multipass(Provider):
         destination = "{}:{}".format(self.instance_name, destination)
         self._multipass_cmd.copy_files(source=source, destination=destination)
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self._multipass_cmd = MultipassCommand(platform=sys.platform)
         self._instance_info = None  # type: InstanceInfo
 

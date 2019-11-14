@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import os
 import functools
@@ -29,6 +30,7 @@ import snapcraft
 from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
+from ._review import review_snap
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -161,14 +163,17 @@ def push(snap_file, release):
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
     click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
-    channel_list = []
     if release:
         channel_list = release.split(",")
         click.echo(
-            "After pushing, an attempt will be made to release to {}"
+            "After pushing, the resulting snap revision will be released to "
+            "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
+    else:
+        channel_list = None
 
+    review_snap(snap_file=snap_file)
     snapcraft.push(snap_file, channel_list)
 
 
@@ -294,13 +299,14 @@ def promote(snap_name, from_channel, to_channel, yes):
 
     if parsed_from_channel == parsed_to_channel:
         raise click.BadOptionUsage(
-            "--from-channel and --to-channel cannot be the same."
+            "--to-channel", "--from-channel and --to-channel cannot be the same."
         )
     elif parsed_from_channel.risk == "edge" and parsed_from_channel.branch is None:
         raise click.BadOptionUsage(
+            "--from-channel",
             "{!r} is not a valid set value for --from-channel.".format(
                 parsed_from_channel
-            )
+            ),
         )
 
     store = storeapi.StoreClient()

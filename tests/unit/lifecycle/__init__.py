@@ -31,6 +31,51 @@ class LifecycleTestBase(unit.TestCase):
         self.useFixture(self.fake_logger)
         self.project_options = snapcraft.ProjectOptions()
 
+        # Avoid unnecessary calls to info.
+        channel_map = []
+        for arch in ("amd64", "i386", "s390x", "arm64", "armhf", "ppc64el"):
+            channel_map.append(
+                {
+                    "channel": {
+                        "architecture": arch,
+                        "name": "stable",
+                        "released-at": "2019-10-15T13:54:06.800280+00:00",
+                        "risk": "stable",
+                        "track": "latest",
+                    },
+                    "confinement": "strict",
+                    "download": {
+                        "deltas": [],
+                        "sha3-384": "64d232d6bfa65be14d7f8d84e952d4e372e12021e2c3dbaf70cf2af5e78bf51c4baf9c9107dd6db815064636b781bda6",
+                        "size": 57151488,
+                        "url": "https://api.snapcraft.io/api/v1/snaps/download/CSO04Jhav2yK0uz97cr0ipQRyqg0qQL6_1223.snap",
+                    },
+                    "revision": 1223,
+                }
+            )
+        info = {
+            "channel-map": channel_map,
+            "default-track": None,
+            "name": "core18",
+            "snap": {
+                "name": "core18",
+                "publisher": {
+                    "display-name": "Canonical",
+                    "id": "canonical",
+                    "username": "canonical",
+                    "validation": "verified",
+                },
+                "snap-id": "CSO04Jhav2yK0uz97cr0ipQRyqg0qQL6",
+            },
+            "snap-id": "CSO04Jhav2yK0uz97cr0ipQRyqg0qQL6",
+        }
+        self.fake_storeapi_get_info = fixtures.MockPatch(
+            "snapcraft.storeapi._snap_index_client.SnapIndexClient.get_info",
+            return_value=snapcraft.storeapi.info.SnapInfo(info),
+        )
+
+        self.useFixture(self.fake_storeapi_get_info)
+
     def make_snapcraft_project(self, parts, snap_type=""):
         yaml = textwrap.dedent(
             """\

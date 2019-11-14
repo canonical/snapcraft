@@ -17,8 +17,8 @@
 import logging
 import subprocess
 
+from . import errors
 from snapcraft import shell_utils
-from snapcraft.internal.meta import _errors
 from snapcraft.internal import sources
 
 
@@ -32,9 +32,9 @@ def get_version(version: str, version_script: str = None) -> str:
         try:
             new_version = shell_utils.run_script(version_script).strip()
             if not new_version:
-                raise _errors.CommandError("The version-script produced no output")
+                raise errors.CommandError("The version-script produced no output")
         except subprocess.CalledProcessError as e:
-            raise _errors.CommandError(
+            raise errors.CommandError(
                 "The version-script failed to run (exit code {})".format(e.returncode)
             )
     # we want to whitelist what we support here.

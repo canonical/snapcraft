@@ -16,6 +16,8 @@
 
 import abc
 import os
+import logging
+import shlex
 import shutil
 import sys
 from textwrap import dedent
@@ -28,6 +30,9 @@ from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
 from snapcraft import yaml_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_platform() -> str:
@@ -88,7 +93,14 @@ class Provider(abc.ABC):
 
     _INSTANCE_PROJECT_DIR = "~/project"
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
         self.project = project
         self.echoer = echoer
         self._is_ephemeral = is_ephemeral
@@ -110,6 +122,10 @@ class Provider(abc.ABC):
             project.info.name,
             self._get_provider_name(),
         )
+
+        if build_provider_flags is None:
+            build_provider_flags = dict()
+        self.build_provider_flags = build_provider_flags.copy()
 
     def __enter__(self):
         try:
@@ -156,7 +172,9 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: Sequence[str]) -> Optional[bytes]:
+    def _run(
+        self, command: Sequence[str], hide_output: bool = False
+    ) -> Optional[bytes]:
         """Run a command on the instance."""
 
     @abc.abstractmethod
@@ -286,15 +304,23 @@ class Provider(abc.ABC):
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
         )
-        # Inject snapcraft
-        snap_injector.add(snap_name="core")
-        snap_injector.add(snap_name="snapcraft")
 
-        # This build can be driven from a non snappy enabled system, so we may
-        # find ourself in a situation where the base is not set like on OSX or
-        # Windows.
-        if self.project.info.get_build_base() is not None:
-            snap_injector.add(snap_name=self.project.info.get_build_base())
+        # Note that snap injection order is important.
+        # If the build base is core, we do not need to inject snapd.
+        # Check for None as this build can be driven from a non snappy enabled
+        # system, so we may find ourselves in a situation where the base is not
+        # set like on OSX or Windows.
+        build_base = self.project.info.get_build_base()
+        if build_base is not None and build_base != "core":
+            snap_injector.add(snap_name="snapd")
+
+        # Prevent injecting core18 twice.
+        if build_base is not None and build_base != "core18":
+            snap_injector.add(snap_name=build_base)
+
+        # Inject snapcraft
+        snap_injector.add(snap_name="core18")
+        snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
 
@@ -315,6 +341,27 @@ class Provider(abc.ABC):
 
         return cloud_user_data_filepath
 
+    def _get_env_command(self) -> Sequence[str]:
+        """Get command sequence for `env` with configured flags."""
+
+        env_list = ["env"]
+
+        # Configure SNAPCRAFT_HAS_TTY.
+        has_tty = str(sys.stdout.isatty())
+        env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
+
+        # Pass through configurable environment variables.
+        for key in ["http_proxy", "https_proxy"]:
+            value = self.build_provider_flags.get(key)
+            if not value:
+                continue
+
+            # Ensure item is treated as string and append it.
+            value = str(value)
+            env_list.append(f"{key}={value}")
+
+        return env_list
+
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
         if base == "core18" and provider_base is None:
@@ -331,6 +378,10 @@ class Provider(abc.ABC):
 
         with open(filepath) as info_file:
             return yaml_utils.load(info_file)
+
+    def _log_run(self, command: Sequence[str]) -> None:
+        cmd_string = " ".join([shlex.quote(c) for c in command])
+        logger.debug(f"Running: {cmd_string}")
 
     def _save_info(self, **data: Dict[str, Any]) -> None:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")

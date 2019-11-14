@@ -18,21 +18,39 @@ import logging
 from typing import List  # noqa: F401
 from typing import Sequence
 
-from snapcraft import config
+from snapcraft import config, storeapi
 from snapcraft.internal import (
     common,
     errors,
-    meta,
     pluginhandler,
     project_loader,
     repo,
     states,
     steps,
 )
+from snapcraft.internal.meta._snap_packaging import create_snap_packaging
+
 from ._status_cache import StatusCache
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_required_grade(*, base: str, arch: str) -> str:
+    # Some types of snap do not require a base.
+    if base is None:
+        return "stable"
+
+    # This will make a request over the network.
+    # We use storeapi instead of repo.snaps so this can work under Docker
+    # and related environments.
+    try:
+        base_info = storeapi.StoreClient().cpi.get_info(base)
+        base_info.get_channel_mapping(risk="stable", arch=arch)
+    except storeapi.errors.SnapNotFoundError:
+        return "devel"
+    else:
+        return "stable"
 
 
 def execute(
@@ -65,20 +83,23 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
-    if common.is_docker_instance():
+    content_snaps = project_config.project._get_content_snaps()
+    required_snaps = project_config.build_snaps | content_snaps
+
+    if common.is_process_container():
         installed_snaps = []  # type: List[str]
         logger.warning(
             (
                 "The following snaps are required but not installed as snapcraft "
-                "is running inside docker: {}.\n"
+                "is running inside docker or podman container: {}.\n"
                 "Please ensure the environment is properly setup before continuing.\n"
                 "Ignore this message if the appropriate measures have already been taken".format(
-                    ", ".join(project_config.build_snaps)
+                    ", ".join(required_snaps)
                 )
             )
         )
     else:
-        installed_snaps = repo.snaps.install_snaps(project_config.build_snaps)
+        installed_snaps = repo.snaps.install_snaps(required_snaps)
 
     try:
         global_state = states.GlobalState.load(
@@ -88,6 +109,14 @@ def execute(
         global_state = states.GlobalState()
     global_state.append_build_packages(installed_packages)
     global_state.append_build_snaps(installed_snaps)
+    # Let's not call out to the Snap Store if we do not need to.
+    if global_state.get_required_grade() is None:
+        global_state.set_required_grade(
+            _get_required_grade(
+                base=project_config.project.info.base,
+                arch=project_config.project.deb_arch,
+            )
+        )
     global_state.save(filepath=project_config.project._get_global_state_file_path())
 
     executor = _Executor(project_config)
@@ -305,7 +334,7 @@ class _Executor:
 
     def _create_meta(self, step: steps.Step, part_names: Sequence[str]) -> None:
         if step == steps.PRIME and part_names == self.config.part_names:
-            meta.create_snap_packaging(self.config)
+            create_snap_packaging(self.config)
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()

@@ -21,6 +21,7 @@ import logging
 import re
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from typing import Pattern, Callable, Generator, List
@@ -197,12 +198,12 @@ def link_or_copy_tree(
     """
 
     if not os.path.isdir(source_tree):
-        raise NotADirectoryError("{!r} is not a directory".format(source_tree))
+        raise SnapcraftEnvironmentError("{!r} is not a directory".format(source_tree))
 
     if not os.path.isdir(destination_tree) and (
         os.path.exists(destination_tree) or os.path.islink(destination_tree)
     ):
-        raise NotADirectoryError(
+        raise SnapcraftEnvironmentError(
             "Cannot overwrite non-directory {!r} with directory "
             "{!r}".format(destination_tree, source_tree)
         )
@@ -264,17 +265,17 @@ def create_similar_directory(source: str, destination: str) -> None:
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
 
+    # Windows does not have "os.chown" implementation and copystat
+    # is unlikely to be useful, so just bail after creating directory.
+    if sys.platform == "win32":
+        return
+
     try:
         os.chown(destination, uid, gid, follow_symlinks=False)
     except PermissionError as exception:
         logger.debug("Unable to chown {}: {}".format(destination, exception))
 
     shutil.copystat(source, destination, follow_symlinks=False)
-
-
-def executable_exists(path: str) -> bool:
-    """Return True if 'path' exists and is readable and executable."""
-    return os.path.exists(path) and os.access(path, os.R_OK | os.X_OK)
 
 
 @contextmanager
@@ -419,3 +420,16 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     filename_relpath = os.path.relpath(filename_abspath, base_directory)
 
     return filename_relpath
+
+
+def _remove_readonly(func, path, excinfo):
+    # Try setting file to writeable if error occurs during rmtree.
+    # Known to be required on Windows where file is not "writeable",
+    # but it is owned by the user (who can set file permissions).
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def rmtree(path: str) -> None:
+    """Cross-platform rmtree implementation."""
+    shutil.rmtree(path, onerror=_remove_readonly)

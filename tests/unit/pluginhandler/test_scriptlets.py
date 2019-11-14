@@ -16,7 +16,9 @@
 
 import contextlib
 import functools
+import os
 import subprocess
+import textwrap
 
 import testtools
 from testtools.matchers import Equals
@@ -24,8 +26,61 @@ from testscenarios.scenarios import multiply_scenarios
 from unittest import mock
 
 from snapcraft.internal import errors
+from snapcraft import yaml_utils
 
 from tests import unit
+from tests.unit.commands import CommandBaseTestCase
+
+
+class ScriptletCommandsTestCase(CommandBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.make_snapcraft_yaml(
+            textwrap.dedent(
+                """\
+                name: my-snap-name
+                base: core18
+                summary: summary
+                description: description
+
+                adopt-info: my-part
+                confinement: devmode
+
+                parts:
+                    my-part:
+                        plugin: dump
+                        source: src
+                        override-pull: |
+                            snapcraftctl pull
+                            snapcraftctl set-grade devel
+                            version="$(cat version.txt)"
+                            snapcraftctl set-version "$version"
+                """
+            )
+        )
+
+        os.mkdir("src")
+        open(os.path.join("src", "version.txt"), "w").write("v1.0")
+
+    def test_scriptlet_after_repull(self):
+        self.run_command(["prime"])
+
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
+            y = yaml_utils.load(f)
+
+        self.assertThat(y["grade"], Equals("devel"))
+        self.assertThat(y["version"], Equals("v1.0"))
+
+        # modifying source file (src/version.txt) will trigger re-pull
+        open(os.path.join("src", "version.txt"), "w").write("v2.0")
+        self.run_command(["prime"])
+
+        with open(os.path.join("prime", "meta", "snap.yaml")) as f:
+            z = yaml_utils.load(f)
+
+        self.assertThat(z["grade"], Equals("devel"))
+        self.assertThat(z["version"], Equals("v2.0"))
 
 
 class ScriptletSetterTestCase(unit.TestCase):

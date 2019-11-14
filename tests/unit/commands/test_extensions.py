@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import textwrap
+from typing import Tuple
 
 from unittest import mock
 from testtools.matchers import Equals
@@ -182,57 +183,81 @@ class ExtensionsCommandTest(CommandBaseTestCase):
 
 
 def _test1_extension_fixture():
-    class Test1Extension(Extension):
+    class ExtensionImpl(Extension):
         """This is the Test1 extension.
 
         It does stuff.
         """
 
-        supported_bases = ("core16",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.app_snippet = {"environment": {"EXTENSION_NAME": "test1"}}
             self.part_snippet = {"after": ["extension-part"]}
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test1", Test1Extension)
+    return fixture_setup.FakeExtension("test1", ExtensionImpl)
 
 
 def _test2_extension_fixture():
-    class Test2Extension(Extension):
+    class ExtensionImpl(Extension):
         """This is the Test2 extension.
 
         It does other stuff.
         """
 
-        supported_bases = ("core16",)
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16",)
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.part_snippet = {"after": ["extension-part"]}
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test2", Test2Extension)
+    return fixture_setup.FakeExtension("test2", ExtensionImpl)
 
 
 def _test3_extension_fixture():
-    class Test3Extension(Extension):
-        supported_bases = ("core16", "core18")
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16", "core18")
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("test3", Test3Extension)
+    return fixture_setup.FakeExtension("test3", ExtensionImpl)
 
 
 def _test4_extension_fixture():
-    class Test4Extension(Extension):
-        supported_bases = ("core16", "core18")
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core16", "core18")
 
-        def __init__(self, yaml_data):
-            super().__init__(yaml_data)
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
             self.parts = {"extension-part": {"plugin": "nil"}}
 
-    return fixture_setup.FakeExtension("_test4", Test4Extension)
+    return fixture_setup.FakeExtension("_test4", ExtensionImpl)

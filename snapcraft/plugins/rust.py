@@ -182,12 +182,14 @@ class RustPlugin(snapcraft.BasePlugin):
             "i386": "i686-{}-{}",
             "amd64": "x86_64-{}-{}",
             "ppc64el": "powerpc64le-{}-{}",
+            "s390x": "s390x-{}-{}",
         }
         rust_target = targets.get(self.project.deb_arch)
         if not rust_target:
             raise errors.SnapcraftEnvironmentError(
-                "{!r} is not supported as a target architecture when "
-                "cross-compiling with the rust plugin".format(self.project.deb_arch)
+                "{!r} is not supported as a target architecture ".format(
+                    self.project.deb_arch
+                )
             )
         return rust_target.format("unknown-linux", "gnu")
 

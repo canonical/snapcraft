@@ -24,8 +24,15 @@ from snapcraft.internal.build_providers._base_provider import Provider
 
 
 class ProviderImpl(Provider):
-    def __init__(self, *, project, echoer, is_ephemeral=False):
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self, *, project, echoer, is_ephemeral=False, build_provider_flags=None
+    ):
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
 
         self.run_mock = mock.Mock()
         self.launch_mock = mock.Mock()
@@ -68,7 +75,7 @@ class ProviderImpl(Provider):
         """Fake provider check."""
 
     @classmethod
-    def setup_provider(cls) -> None:
+    def setup_provider(cls, *, echoer=None) -> None:
         """Fake provider setup."""
 
     @classmethod

@@ -34,7 +34,7 @@ _XSLT = """\
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="text"/>
 <xsl:output omit-xml-declaration="yes" indent="yes"/>
-<xsl:strip-space  elements="*"/>
+<xsl:strip-space elements="*"/>
 
 <xsl:template match="@* | node()">
     <xsl:copy>
@@ -42,16 +42,21 @@ _XSLT = """\
     </xsl:copy>
 </xsl:template>
 
-<xsl:template match="p" xml:space="preserve">
-<xsl:value-of select="." />
+<xsl:template match="p">
+<xsl:value-of select="normalize-space(text())" />
+    <xsl:for-each select="ul/li[not(@xml:lang)] | ul/li[@xml:lang = en]">
+<xsl:text>&#xA;</xsl:text>
+<xsl:text>- </xsl:text>
+<xsl:value-of select="text()" />
+    </xsl:for-each>
 <xsl:text>&#xA;</xsl:text>
 <xsl:text>&#xA;</xsl:text>
 </xsl:template>
 
-<xsl:template match="ul">
+<xsl:template match="//ul">
     <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
 <xsl:text>- </xsl:text>
-<xsl:value-of select="." />
+<xsl:value-of select="text()" />
 <xsl:text>&#xA;</xsl:text>
     </xsl:for-each>
 </xsl:template>
@@ -77,13 +82,18 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
     common_id = _get_value_from_xml_element(dom, "id")
     summary = _get_value_from_xml_element(dom, "summary")
     description = _get_value_from_xml_element(dom, "description")
+    title = _get_value_from_xml_element(dom, "name")
+    version = _get_latest_release_from_nodes(dom.findall("releases/release"))
 
     desktop_file_paths = []
     desktop_file_ids = _get_desktop_file_ids_from_nodes(dom.findall("launchable"))
     # if there are no launchables, use the appstream id to take into
     # account the legacy appstream definitions
-    if common_id and common_id.endswith(".desktop") and not desktop_file_ids:
-        desktop_file_ids.append(common_id)
+    if common_id and not desktop_file_ids:
+        if common_id.endswith(".desktop"):
+            desktop_file_ids.append(common_id)
+        else:
+            desktop_file_ids.append(common_id + ".desktop")
 
     for desktop_file_id in desktop_file_ids:
         desktop_file_path = _desktop_file_id_to_path(desktop_file_id, workdir=workdir)
@@ -94,8 +104,10 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
 
     return ExtractedMetadata(
         common_id=common_id,
+        title=title,
         summary=summary,
         description=description,
+        version=version,
         icon=icon,
         desktop_file_paths=desktop_file_paths,
     )
@@ -125,10 +137,17 @@ def _get_xslt():
 
 def _get_value_from_xml_element(tree, key) -> Optional[str]:
     node = tree.find(key)
-    if node is not None:
+    if node is not None and node.text:
         return node.text.strip()
     else:
         return None
+
+
+def _get_latest_release_from_nodes(nodes) -> Optional[str]:
+    for node in nodes:
+        if "version" in node.attrib:
+            return node.attrib["version"]
+    return None
 
 
 def _get_desktop_file_ids_from_nodes(nodes) -> List[str]:

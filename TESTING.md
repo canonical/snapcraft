@@ -60,7 +60,7 @@ In order to run these tests suites, first you will need to set up your developme
 
 Then, you'll need a few more dependencies:
 
-    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion
+    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion shellcheck
 
 ### Running the tests
 
@@ -97,19 +97,19 @@ For example:
   * To run only the unit tests in the test_nodejs module:
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs
+    python3 -m unittest tests.unit.plugins.test_nodejs
     ```
 
-  * To run only the unit tests in the NodePluginTestCase:
+  * To run only the unit tests in the NodePluginTest:
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase
+    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest
     ```
 
-  * To run only the unit test named test_pull_executes_npm_run_commands:
+  * To run only the unit test named test_pull
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase.test_pull_executes_npm_run_commands
+    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest.test_pull
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:

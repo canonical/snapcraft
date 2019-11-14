@@ -18,7 +18,7 @@ import contextlib
 import os
 import json
 from collections import OrderedDict
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, Set, TYPE_CHECKING
 
 import snapcraft
 from snapcraft.internal import errors, os_release, steps
@@ -50,21 +50,30 @@ def annotate_snapcraft(project: "Project", data: Dict[str, Any]) -> Dict[str, An
         manifest["image-info"] = image_info_dict
 
     global_state = GlobalState.load(filepath=project._get_global_state_file_path())
-    manifest["build-packages"] = global_state.get_build_packages()
-    manifest["build-snaps"] = global_state.get_build_snaps()
+    manifest["build-packages"] = sorted(global_state.get_build_packages())
+    manifest["build-snaps"] = sorted(global_state.get_build_snaps())
 
     for part in data["parts"]:
         state_dir = os.path.join(project.parts_dir, part, "state")
         pull_state = get_state(state_dir, steps.PULL)
-        manifest["parts"][part]["build-packages"] = pull_state.assets.get(
-            "build-packages", []
+        manifest["parts"][part]["build-packages"] = sorted(
+            pull_state.assets.get("build-packages", [])
         )
-        manifest["parts"][part]["stage-packages"] = pull_state.assets.get(
-            "stage-packages", []
+        manifest["parts"][part]["stage-packages"] = sorted(
+            pull_state.assets.get("stage-packages", [])
         )
         source_details = pull_state.assets.get("source-details", {})
         if source_details:
             manifest["parts"][part].update(source_details)
         build_state = get_state(state_dir, steps.BUILD)
         manifest["parts"][part].update(build_state.assets)
+
+    # Assemble all primed stage packages into a single list...
+    primed_stage_packages: Set[str] = set()
+    for part in data["parts"]:
+        state_dir = os.path.join(project.parts_dir, part, "state")
+        prime_state = get_state(state_dir, steps.PRIME)
+        primed_stage_packages |= prime_state.primed_stage_packages
+    manifest["primed-stage-packages"] = sorted(primed_stage_packages)
+
     return manifest

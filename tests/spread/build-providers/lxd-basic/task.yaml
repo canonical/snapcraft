@@ -10,6 +10,10 @@ prepare: |
 
 restore: |
   cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   snapcraft clean --use-lxd
   rm -f ./*.snap
 
@@ -19,6 +23,9 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft --use-lxd
   sudo snap install make-hello_*.snap --dangerous

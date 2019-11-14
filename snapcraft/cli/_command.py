@@ -20,7 +20,7 @@ import sys
 
 import click
 
-from ._options import get_build_environment, get_project
+from ._options import get_build_provider, get_project
 from snapcraft.internal import common, errors
 
 
@@ -53,8 +53,9 @@ class SnapcraftProjectCommand(click.Command):
 
     def _is_legacy(self) -> bool:
         try:
-            build_environment = get_build_environment()
-            project = get_project(is_managed_host=build_environment.is_managed_host)
+            build_provider = get_build_provider(skip_sanity_checks=True)
+            is_managed_host = build_provider == "managed-host"
+            project = get_project(is_managed_host=is_managed_host)
         except Exception:
             # If we cannot load the project, we assume we are in non legacy
             # where the error should be properly handled.
@@ -65,6 +66,8 @@ class SnapcraftProjectCommand(click.Command):
             return False
         # Building a base is not legacy.
         elif project.info.type == "base":
+            return False
+        elif project.info.build_base is not None:
             return False
         # A project with no base set is legacy.
         elif project.info.base is None:

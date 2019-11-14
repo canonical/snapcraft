@@ -81,6 +81,7 @@ class CatkinPluginBaseTest(unit.TestCase):
             recursive_rosinstall = False
             build_attributes = []
             catkin_ros_master_uri = "http://localhost:11311"
+            disable_parallel = False
 
         self.properties = props()
         self.ros_distro = "kinetic"
@@ -1320,12 +1321,18 @@ class BuildTestCase(CatkinPluginBaseTest):
             "debug with catkin-cmake-args",
             {"build_attributes": ["debug"], "catkin_cmake_args": ["-DFOO"]},
         ),
+        (
+            "release without catkin-cmake-args single threaded",
+            {"build_attributes": [], "catkin_cmake_args": [], "disable_parallel": True},
+        ),
     ]
 
     def setUp(self):
         super().setUp()
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.catkin_cmake_args = self.catkin_cmake_args
+        if hasattr(self, "disable_parallel"):
+            self.properties.disable_parallel = self.disable_parallel
 
     @mock.patch.object(catkin.CatkinPlugin, "run")
     @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
@@ -1351,6 +1358,7 @@ class BuildTestCase(CatkinPluginBaseTest):
         # quite fragile)
         build_attributes = self.build_attributes
         catkin_cmake_args = self.catkin_cmake_args
+        disable_parallel = self.properties.disable_parallel
 
         class check_build_command:
             def __eq__(self, args):
@@ -1369,6 +1377,12 @@ class BuildTestCase(CatkinPluginBaseTest):
                     args_valid = re.match(
                         ".*--cmake-args.*{}".format(re.escape(expected_args)), command
                     )
+                if disable_parallel:
+                    args_parallel_build_count = re.match(".*-j1", command)
+                else:
+                    args_parallel_build_count = re.match(
+                        ".*-j{}".format(plugin.parallel_build_count), command
+                    )
                 return (
                     args_valid
                     and build_type_valid
@@ -1381,6 +1395,7 @@ class BuildTestCase(CatkinPluginBaseTest):
                         os.path.join(plugin.builddir, plugin.options.source_space)
                     )
                     in command
+                    and args_parallel_build_count
                 )
 
         bashrun_mock.assert_called_with(check_build_command())

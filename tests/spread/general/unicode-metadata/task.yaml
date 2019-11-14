@@ -1,7 +1,9 @@
 summary: "Test that unicode in metadata still looks good once dumped"
 
 # We currently only have core18 on a stable channel
-systems: [ubuntu-18*]
+systems:
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
 
 prepare: |
   apt-get install diffutils

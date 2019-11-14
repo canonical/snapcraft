@@ -798,6 +798,9 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # the ROS distro.
         catkincmd.extend(["--install-space", self.rosdir])
 
+        # Specify the number of workers
+        catkincmd.append("-j{}".format(self.parallel_build_count))
+
         # All the arguments that follow are meant for CMake
         catkincmd.append("--cmake-args")
 

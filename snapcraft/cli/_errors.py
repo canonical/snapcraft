@@ -85,11 +85,15 @@ def _is_connected_to_tty() -> bool:
 
 
 def _is_reportable_error(exc_info) -> bool:
+    # SnapcraftException has explicit `repotable` attribute.
+    if isinstance(exc_info[1], errors.SnapcraftException):
+        return exc_info[1].get_reportable()
+
     # Report non-snapcraft errors.
     if not issubclass(exc_info[0], errors.SnapcraftError):
         return True
 
-    # Report snapcraft 'reportable' errors.
+    # Report SnapcraftReportableError errors.
     if issubclass(exc_info[0], errors.SnapcraftReportableError):
         return True
 
@@ -143,16 +147,33 @@ def _handle_sentry_submission(exc_info) -> None:
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
 
 
-def _print_exception_message(exc_info, debug) -> None:
-    click.echo(_MSG_TRACEBACK_PRINT)
+def _print_snapcraft_exception_message(exception: errors.SnapcraftException):
+    parts = [exception.get_brief()]
 
-    # Print exception in exc_info[1].
-    message = str(exc_info[1])
-    echo.error(message)
+    resolution = exception.get_resolution()
+    if resolution:
+        parts.extend(["", "Recommended resolution:", resolution])
+
+    details = exception.get_details()
+    if details:
+        parts.extend(["", "Detailed information:", details])
+
+    docs_url = exception.get_docs_url()
+    if docs_url:
+        parts.extend(["", "For more information, check out:", docs_url])
+
+    echo.error("\n".join(parts))
+
+
+def _print_exception_message(exception: Exception) -> None:
+    if isinstance(exception, errors.SnapcraftException):
+        _print_snapcraft_exception_message(exception)
+    else:
+        echo.error(str(exception))
 
 
 def _process_exception(exc_info, debug, trace_filepath):
-    _print_exception_message(exc_info, debug)
+    _print_exception_message(exc_info[1])
 
     if _is_printable_traceback(exc_info, debug):
         _print_trace_output(exc_info)
@@ -186,6 +207,9 @@ def _process_outer_exception(exc_info, debug):
         # No traceback found, this must be captured and processed.
         # If reportable or debug is enabled, capture trace file.
         if _is_reportable_error(exc_info) or debug:
+            # Only show this message for reportable errors.
+            click.echo(_MSG_TRACEBACK_PRINT)
+
             _process_exception(exc_info, debug, trace_filepath)
         else:
             _process_exception(exc_info, debug, None)
@@ -195,6 +219,17 @@ def _process_outer_exception(exc_info, debug):
 
     # This is a reportable error, let the user know where to find the trace.
     click.echo(_MSG_TRACEBACK_LOCATION.format(trace_filepath))
+
+
+def _get_exception_exit_code(exception: Exception):
+    if isinstance(exception, errors.SnapcraftException):
+        return exception.get_exit_code()
+
+    if isinstance(exception, errors.SnapcraftError):
+        return exception.get_exit_code()
+
+    # If non-snapcraft error, exit code defaults to 1.
+    return 1
 
 
 def exception_handler(  # noqa: C901
@@ -230,12 +265,7 @@ def exception_handler(  # noqa: C901
 
         - Use exit code from snapcraft error (if available), otherwise 1.
     """
-    exit_code = 1
-
-    # If SnapcraftError, use defined exit code.
-    if issubclass(exception_type, errors.SnapcraftError):
-        exit_code = exception.get_exit_code()
-
+    exit_code = _get_exception_exit_code(exception)
     exc_info = (exception_type, exception, exception_traceback)
 
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":

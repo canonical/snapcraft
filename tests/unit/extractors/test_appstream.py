@@ -91,6 +91,16 @@ class AppstreamTestCase(unit.TestCase):
                     "expect": "test-id",
                 },
             ),
+            (
+                "title",
+                {
+                    "key": "name",
+                    "attributes": {},
+                    "param_name": "title",
+                    "value": "test-title",
+                    "expect": "test-title",
+                },
+            ),
         ],
         [
             ("metainfo", {"file_extension": "metainfo.xml"}),
@@ -370,6 +380,164 @@ class AppstreamTest(unit.TestCase):
             ),
         )
 
+    def test_appstream_with_ul_in_p(self):
+        file_name = "snapcraft.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <name xml:lang="tr">Çizim</name>
+              <name xml:lang="pt_BR">Drawing</name>
+              <summary>A drawing application for the GNOME desktop</summary>
+              <summary xml:lang="pt_BR">Uma aplicacao de desenho para o ambiente GNOME</summary>
+              <summary xml:lang="nl">Een tekenprogramma voor de GNOME-werkomgeving</summary>
+              <description>
+                <p>"Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.</p>
+                <p xml:lang="pt_BR">"Drawing" e um simples editor de imagens, que suporta arquivos PNG,JPEG e BMP</p>
+                <p xml:lang="nl">"Tekenen" is een eenvoudige afbeeldingsbewerker, met ondersteuning voor PNG, JPEG en BMP.</p>
+                <p xml:lang="fr">"Dessin" est un éditeur d'images basique, qui supporte les fichiers de type PNG, JPEG ou BMP.</p>
+                <p>It allows you to draw or edit pictures with tools such as:
+                  <ul>
+                    <li>Pencil (with various options)</li>
+                    <li xml:lang="pt_BR">Lápis (Com varias opções)</li>
+                    <li xml:lang="nl">Potlood (verschillende soorten)</li>
+                    <li xml:lang="fr">Crayon (avec diverses options)</li>
+                    <li>Selection (cut/copy/paste/drag/…)</li>
+                    <li xml:lang="tr">Seçim (kes/kopyala/yapıştır/sürükle /…)</li>
+                    <li xml:lang="ru">Выделение (вырезать/копировать/вставить/перетащить/…)</li>
+                    <li xml:lang="pt_BR">Seleção (cortar/copiar/colar/arrastar/…)</li>
+                    <li xml:lang="nl">Selectie (knippen/kopiëren/plakken/verslepen/...)</li>
+                    <li xml:lang="it">Selezione (taglia/copia/incolla/trascina/…)</li>
+                    <li xml:lang="he">בחירה (חתיכה/העתקה/הדבקה/גרירה/...)</li>
+                    <li xml:lang="fr">Sélection (copier/coller/déplacer/…)</li>
+                    <li xml:lang="es">Selección (cortar/copiar/pegar/arrastrar/…)</li>
+                    <li xml:lang="de_DE">Auswahl (Ausschneiden/Kopieren/Einfügen/Ziehen/...)</li>
+                    <li>Line, Arc (with various options)</li>
+                    <li xml:lang="pt_BR">Linha, Arco (com varias opcoes)</li>
+                    <li xml:lang="nl">Lijn, Boog (verschillende soorten)</li>
+                    <li xml:lang="fr">Trait, Arc (avec diverses options)</li>
+                    <li>Shapes (rectangle, circle, polygon, …)</li>
+                    <li xml:lang="pt_BR">Formas (retângulo, circulo, polígono, …)</li>
+                    <li xml:lang="nl">Vormen (vierkant, cirkel, veelhoek, ...)</li>
+                    <li xml:lang="fr">Formes (rectangle, cercle, polygone, …)</li>
+                    <li>Text insertion</li>
+                    <li xml:lang="pt_BR">Inserção de texto</li>
+                    <li xml:lang="nl">Tekst invoeren</li>
+                    <li xml:lang="fr">Insertion de texte</li>
+                    <li>Resizing, cropping, rotating</li>
+                    <li xml:lang="pt_BR">Redimencionar, cortar, rotacionar</li>
+                    <li xml:lang="nl">Afmetingen wijzigen, bijsnijden, draaien</li>
+                    <li xml:lang="fr">Redimensionnement, rognage, rotation</li>
+                  </ul>
+                </p>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_summary(),
+            Equals("A drawing application for the GNOME desktop"),
+        )
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+                "Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.
+
+                It allows you to draw or edit pictures with tools such as:
+                - Pencil (with various options)
+                - Selection (cut/copy/paste/drag/…)
+                - Line, Arc (with various options)
+                - Shapes (rectangle, circle, polygon, …)
+                - Text insertion
+                - Resizing, cropping, rotating"""
+                )
+            ),
+        )
+
+    def test_appstream_multilang_title(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <name>Foliate</name>
+            <name xml:lang="id_ID">Foliate_id</name>
+            <name xml:lang="pt_BR">Foliate_pt</name>
+            <name xml:lang="ru_RU">Foliate_ru</name>
+            <name xml:lang="nl_NL">Foliate_nl</name>
+            <name xml:lang="fr_FR">Foliate_fr</name>
+            <name xml:lang="cs_CS">Foliate_cs</name>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_title(), Equals("Foliate"))
+
+    def test_appstream_release(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <releases>
+                <release version="1.5.3" date="2019-07-25">
+                <description>
+                    <ul>
+                    <li>Fixed Flatpak version not being able to open .mobi, .azw, and .azw3 files</li>
+                    <li>Improved Wiktionary lookup, now with links and example sentences</li>
+                    <li>Improved popover footnote extraction and formatting</li>
+                    <li>Added option to export annotations to BibTeX</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.2" date="2019-07-19">
+                <description>
+                    <ul>
+                    <li>Fixed table of contents navigation not working with some books</li>
+                    <li>Fixed not being able to zoom images with Kindle books</li>
+                    <li>Fixed not being able to open books with .epub3 filename extension</li>
+                    <li>Fixed temporary directory not being cleaned after closing</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.1" date="2019-07-17">
+                <description>
+                    <ul>
+                    <li>Fixed F9 shortcut not working</li>
+                    <li>Updated translations</li>
+                    </ul>
+                </description>
+                </release>
+            </releases>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_version(), Equals("1.5.3"))
+
 
 class AppstreamUnhandledFileTestCase(unit.TestCase):
     def test_unhandled_file_test_case(self):
@@ -458,6 +626,26 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component type="desktop">
                   <id>com.example.test-app.desktop</id>
+                </component>"""
+                )
+            )
+
+        _create_desktop_file(self.desktop_file_path)
+
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
+
+        self.assertThat(
+            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
+        )
+
+    def test_appstream_no_desktop_suffix(self):
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                <?xml version="1.0" encoding="UTF-8"?>
+                <component type="desktop">
+                  <id>com.example.test-app</id>
                 </component>"""
                 )
             )

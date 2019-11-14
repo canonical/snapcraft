@@ -59,8 +59,8 @@ class ProvidesTest(unit.TestCase):
         file1_path = os.path.join(self.project.prime_dir, "file1")
         file2_path = os.path.join(self.project.prime_dir, "file2")
 
-        self.part1.mark_prime_done({"file1"}, set(), set())
-        self.part2.mark_prime_done({"file2"}, set(), set())
+        self.part1.mark_prime_done({"file1"}, set(), set(), set())
+        self.part2.mark_prime_done({"file2"}, set(), set(), set())
 
         open(file1_path, "w").close()
         open(file2_path, "w").close()

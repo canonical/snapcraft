@@ -15,17 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 
 import click
+from typing import Dict, List
 
-from . import env
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
-
-
-class HiddenOption(click.Option):
-    def get_help_record(self, ctx):
-        pass
+from snapcraft.internal import common, errors
 
 
 class PromptOption(click.Option):
@@ -48,62 +45,209 @@ class PromptOption(click.Option):
         )
 
 
-_BUILD_OPTION_NAMES = [
-    "--target-arch",
-    "--debug",
-    "--shell",
-    "--shell-after",
-    "--destructive-mode",
-    "--use-lxd",
+_BUILD_OPTIONS = [
+    dict(
+        param_decls="--target-arch",
+        metavar="<arch>",
+        help="Target architecture to cross compile to",
+    ),
+    dict(
+        param_decls="--debug",
+        is_flag=True,
+        help="Shells into the environment if the build fails.",
+    ),
+    dict(
+        param_decls="--shell",
+        is_flag=True,
+        help="Shells into the environment in lieu of the step to run.",
+    ),
+    dict(
+        param_decls="--shell-after",
+        is_flag=True,
+        help="Shells into the environment after the step has run.",
+    ),
 ]
 
-_BUILD_OPTIONS = [
-    dict(metavar="<arch>", help="Target architecture to cross compile to"),
-    dict(is_flag=True, help="Shells into the environment if the build fails."),
-    dict(is_flag=True, help="Shells into the environment in lieu of the step to run."),
-    dict(is_flag=True, help="Shells into the environment after the step has run."),
+_SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
+_HIDDEN_PROVIDERS = ["managed-host"]
+_ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
+_PROVIDER_OPTIONS = [
     dict(
-        is_flag=True, help="Forces snapcraft to try and use the current host to build."
+        param_decls="--destructive-mode",
+        is_flag=True,
+        help="Forces snapcraft to try and use the current host to build (implies `--provider=host`).",
+        supported_providers=["host", "managed-host"],
     ),
-    dict(is_flag=True, help="Forces snapcraft to use LXD to build."),
+    dict(
+        param_decls="--use-lxd",
+        is_flag=True,
+        help="Forces snapcraft to use LXD to build (implies `--provider=lxd`).",
+        supported_providers=["lxd"],
+    ),
+    dict(
+        param_decls="--provider",
+        envvar="SNAPCRAFT_BUILD_ENVIRONMENT",
+        show_envvar=False,
+        help="Build provider to use.",
+        metavar="[{}]".format("|".join(_SUPPORTED_PROVIDERS)),
+        type=click.Choice(_ALL_PROVIDERS),
+        supported_providers=_ALL_PROVIDERS,
+    ),
+    dict(
+        param_decls="--http-proxy",
+        metavar="<http-proxy>",
+        help="HTTP proxy for host build environments.",
+        envvar="http_proxy",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls="--https-proxy",
+        metavar="<https-proxy>",
+        help="HTTPS proxy for host build environments.",
+        envvar="https_proxy",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
 ]
+
+
+def _add_options(options, func, hidden):
+    for option in reversed(options):
+        # Pop param_decls option to prevent exception further on down the
+        # line for: `got multiple values for keyword argument`.
+        option = option.copy()
+        param_decls = option.pop("param_decls")
+
+        # Pop supported_providers option because it is snapcraft-only.
+        if "supported_providers" in option:
+            option.pop("supported_providers")
+
+        click_option = click.option(param_decls, **option, hidden=hidden)
+        func = click_option(func)
+    return func
 
 
 def add_build_options(hidden=False):
     def _add_build_options(func):
-        for name, params in zip(
-            reversed(_BUILD_OPTION_NAMES), reversed(_BUILD_OPTIONS)
-        ):
-            option = click.option(
-                name, **params, cls=HiddenOption if hidden else click.Option
-            )
-            func = option(func)
-        return func
+        return _add_options(_BUILD_OPTIONS, func, hidden)
 
     return _add_build_options
 
 
-def get_build_environment(**kwargs):
-    force_use_lxd = kwargs.get("use_lxd")
-    force_destructive_mode = kwargs.get("destructive_mode")
+def add_provider_options(hidden=False):
+    def _add_provider_options(func):
+        return _add_options(_PROVIDER_OPTIONS, func, hidden)
 
-    if force_destructive_mode and force_use_lxd:
-        raise click.BadOptionUsage(
-            "--use-lxd and --destructive-mode cannot be used together."
+    return _add_provider_options
+
+
+def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
+    destructive_mode = kwargs.get("destructive_mode")
+    env_provider = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT")
+
+    # Specifying --provider=host requires the use of --destructive-mode.
+    # Exceptions include:
+    # (1) SNAPCRAFT_BUILD_ENVIRONMENT=host.
+    # (2) Running inside of a container.
+    if (
+        build_provider == "host"
+        and not env_provider == "host"
+        and not destructive_mode
+        and not common.is_process_container()
+    ):
+        raise click.BadArgumentUsage(
+            "--provider=host requires --destructive-mode to acknowledge side effects"
         )
-    elif force_use_lxd:
-        provider = "lxd"
-    elif force_destructive_mode:
-        provider = "host"
-    else:
-        provider = None
-    return env.BuilderEnvironmentConfig(force_provider=provider)
+
+    if env_provider and env_provider != build_provider:
+        raise click.BadArgumentUsage(
+            "mismatch between --provider={} and SNAPCRAFT_BUILD_ENVIRONMENT={}".format(
+                build_provider, env_provider
+            )
+        )
+
+    # Error if any sys.argv params are for unsupported providers.
+    # Values from environment variables and configuration files only
+    # change defaults, so they are safe to ignore due to filtering
+    # in get_build_provider_flags().
+    for option in _PROVIDER_OPTIONS:
+        key: str = option["param_decls"]  # type: ignore
+        supported_providers: List[str] = option["supported_providers"]  # type: ignore
+        if key in sys.argv and build_provider not in supported_providers:
+            raise click.BadArgumentUsage(
+                f"{key} cannot be used with build provider {build_provider!r}"
+            )
+
+
+def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
+    """Get build provider and determine if running as managed instance."""
+
+    provider = kwargs.get("provider")
+
+    if not provider:
+        if kwargs.get("use_lxd"):
+            provider = "lxd"
+        elif kwargs.get("destructive_mode"):
+            provider = "host"
+        elif common.is_process_container():
+            provider = "host"
+        else:
+            # Default is multipass.
+            provider = "multipass"
+
+    # Sanity checks may be skipped for the purpose of checking legacy.
+    if not skip_sanity_checks:
+        _sanity_check_build_provider_flags(provider, **kwargs)
+
+    return provider
+
+
+def _param_decls_to_kwarg(key: str) -> str:
+    """Format a param_decls to keyword argument name."""
+
+    # Drop leading "--".
+    key = key.replace("--", "", 1)
+
+    # Convert dashes to underscores.
+    return key.replace("-", "_")
+
+
+def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
+    """Get configured options applicable to build_provider."""
+
+    build_provider_flags: Dict[str, str] = dict()
+
+    # Should not happen - developer safety check.
+    if build_provider not in _ALL_PROVIDERS:
+        raise RuntimeError(f"Invalid build provider: {build_provider}")
+
+    for option in _PROVIDER_OPTIONS:
+        key: str = option["param_decls"]  # type: ignore
+        supported_providers: List[str] = option["supported_providers"]  # type: ignore
+
+        # Skip --provider option.
+        if key == "--provider":
+            continue
+
+        # Skip options that do not apply to configured provider.
+        if build_provider not in supported_providers:
+            continue
+
+        # Add option, if set.
+        key_formatted = _param_decls_to_kwarg(key)
+        if key_formatted in kwargs:
+            build_provider_flags[key_formatted] = kwargs[key_formatted]
+
+    return build_provider_flags
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
     # We need to do this here until we can get_snapcraft_yaml as part of Project.
     if is_managed_host:
-        os.chdir(os.path.expanduser(os.path.join("~", "project")))
+        try:
+            os.chdir(os.path.expanduser(os.path.join("~", "project")))
+        except FileNotFoundError:
+            # No project found (fresh environment).
+            raise errors.ProjectNotFoundError()
 
     snapcraft_yaml_file_path = get_snapcraft_yaml()
 
@@ -121,3 +265,16 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
         is_managed_host=is_managed_host,
     )
     return project
+
+
+def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
+    """Set build environment flags in snapcraft process."""
+
+    # Snapcraft plugins currently check for environment variables,
+    # e.g. http_proxy and https_proxy.  Ensure they are set if configured.
+    for key, value in build_provider_flags.items():
+        if value is None:
+            if key in os.environ:
+                os.environ.pop(key)
+        else:
+            os.environ[key] = str(value)

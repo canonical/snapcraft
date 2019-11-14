@@ -24,6 +24,7 @@ import tempfile
 from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
+import elftools.common.exceptions
 from pkg_resources import parse_version
 
 from snapcraft import file_utils
@@ -31,6 +32,59 @@ from snapcraft.internal import common, errors, repo
 
 
 logger = logging.getLogger(__name__)
+
+
+def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
+    """Return a set of resolved library mappings using specified library paths.
+
+    Returns a dictionary of mappings of soname -> soname_path.
+    If library is not resolved, the soname itself is the soname_path.
+    """
+
+    libraries: Dict[str, str] = dict()
+
+    env = os.environ.copy()
+    env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
+
+    try:
+        # ldd output sample:
+        # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
+        # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
+        # libmissing.so.2 => not found
+        ldd_lines = (
+            subprocess.check_output(["ldd", path], env=env).decode().splitlines()
+        )
+    except subprocess.CalledProcessError:
+        logger.warning("Unable to determine library dependencies for {!r}".format(path))
+        return libraries
+
+    for line in ldd_lines:
+        # First match against libraries that are found.
+        # We know this because of the address (0x...).
+        match = re.match(r"\t(.*) => (.*) \(0x", line)
+        if match:
+            soname = match.group(1)
+            soname_path = match.group(2)
+            libraries[soname] = soname_path
+            continue
+
+        # Now find those not found, or not providing the address...
+        match = re.match(r"\t(.*) => (.*)", line)
+        if match:
+            soname = match.group(1)
+            soname_path = match.group(2)
+            if soname_path.startswith("/") and os.path.exists(soname_path):
+                # Checks out.
+                libraries[soname] = soname_path
+            else:
+                # Doesn't check out - use the soname.
+                libraries[soname] = soname
+            continue
+
+        # Ignore the rest... (linux-vdso.so, ld-linux.so).
+        continue
+
+    return libraries
 
 
 class NeededLibrary:
@@ -108,35 +162,23 @@ class Library:
         self,
         *,
         soname: str,
-        path: str,
-        root_path: str,
+        soname_path: str,
+        search_paths: List[str],
         core_base_path: str,
         arch: ElfArchitectureTuple,
         soname_cache: SonameCache
     ) -> None:
+
         self.soname = soname
+        self.soname_path = soname_path
+        self.search_paths = search_paths
+        self.core_base_path = core_base_path
+        self.arch = arch
+        self.soname_cache = soname_cache
 
-        # We need to always look for the soname inside root first,
-        # and after exhausting all options look in core_base_path.
-        if path.startswith(root_path):
-            self.path = path
-        else:
-            self.path = _crawl_for_path(
-                soname=soname,
-                root_path=root_path,
-                core_base_path=core_base_path,
-                arch=arch,
-                soname_cache=soname_cache,
-            )
+        # Resolve path, if possible.
+        self.path = self._crawl_for_path()
 
-        if not self.path and path.startswith(core_base_path):
-            self.path = path
-
-        # Required for libraries on the host and the fetching mechanism
-        if not self.path:
-            self.path = path
-
-        # self.path has the correct resulting path.
         if self.path.startswith(core_base_path):
             self.in_base_snap = True
         else:
@@ -145,44 +187,48 @@ class Library:
         logger.debug(
             "{soname} with original path {original_path} found on {path} in base: {in_base}".format(
                 soname=soname,
-                original_path=path,
+                original_path=soname_path,
                 path=self.path,
                 in_base=self.in_base_snap,
             )
         )
 
+    def _update_soname_cache(self, resolved_path: str) -> None:
+        self.soname_cache[self.arch, self.soname] = resolved_path
 
-def _crawl_for_path(
-    *,
-    soname: str,
-    root_path: str,
-    core_base_path: str,
-    arch: ElfArchitectureTuple,
-    soname_cache: SonameCache
-) -> str:
-    # Speed things up and return what was already found once.
-    if (arch, soname) in soname_cache:
-        return soname_cache[arch, soname]
+    def _is_valid_elf(self, resolved_path: str) -> bool:
+        return (
+            os.path.exists(resolved_path)
+            and ElfFile.is_elf(resolved_path)
+            and ElfFile(path=resolved_path).arch == self.arch
+        )
 
-    logger.debug("Crawling to find soname {!r}".format(soname))
-    for path in (root_path, core_base_path):
-        if not os.path.exists(path):
-            continue
-        for root, directories, files in os.walk(path):
-            for file_name in files:
-                if file_name == soname:
-                    file_path = os.path.join(root, file_name)
-                    if ElfFile.is_elf(file_path):
-                        # We found a match by name, anyway. Let's verify that
-                        # the architecture is the one we want.
-                        elf_file = ElfFile(path=file_path)
-                        if elf_file.arch == arch:
-                            soname_cache[arch, soname] = file_path
-                            return file_path
+    def _crawl_for_path(self) -> str:
+        # Speed things up and return what was already found once.
+        if (self.arch, self.soname) in self.soname_cache:
+            return self.soname_cache[self.arch, self.soname]
 
-    # If not found we cache it too
-    soname_cache[arch, soname] = None
-    return None
+        logger.debug("Crawling to find soname {!r}".format(self.soname))
+
+        if self._is_valid_elf(self.soname_path):
+            self._update_soname_cache(self.soname_path)
+            return self.soname_path
+
+        for path in self.search_paths:
+            if not os.path.exists(path):
+                continue
+            for root, directories, files in os.walk(path):
+                if self.soname not in files:
+                    continue
+
+                file_path = os.path.join(root, self.soname)
+                if self._is_valid_elf(file_path):
+                    self._update_soname_cache(file_path)
+                    return file_path
+
+        # Required for libraries on the host and the fetching mechanism.
+        self._update_soname_cache(self.soname_path)
+        return self.soname_path
 
 
 # Old versions of pyelftools return bytes rather than strings for
@@ -336,7 +382,12 @@ class ElfFile:
         return version_required
 
     def load_dependencies(
-        self, root_path: str, core_base_path: str, soname_cache: SonameCache = None
+        self,
+        root_path: str,
+        core_base_path: str,
+        content_dirs: Set[str],
+        arch_triplet: str,
+        soname_cache: SonameCache = None,
     ) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
@@ -355,40 +406,32 @@ class ElfFile:
             soname_cache = SonameCache()
 
         logger.debug("Getting dependencies for {!r}".format(self.path))
-        ldd_out = []  # type: List[str]
-        try:
-            # ldd output sample:
-            # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
-            # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-            ldd_out = common.run_output(["ldd", self.path]).split("\n")
-        except subprocess.CalledProcessError:
-            logger.warning(
-                "Unable to determine library dependencies for {!r}".format(self.path)
-            )
-            return set()
-        ldd_out_split = [l.split() for l in ldd_out]
-        libs = set()
-        for ldd_line in ldd_out_split:
-            if len(ldd_line) > 2:
-                libs.add(
-                    Library(
-                        soname=ldd_line[0],
-                        path=ldd_line[2],
-                        root_path=root_path,
-                        core_base_path=core_base_path,
-                        arch=self.arch,
-                        soname_cache=soname_cache,
-                    )
+
+        search_paths = [root_path, *content_dirs, core_base_path]
+
+        ld_library_paths: List[str] = list()
+        for path in search_paths:
+            ld_library_paths.extend(common.get_library_paths(path, arch_triplet))
+
+        libraries = ldd(self.path, ld_library_paths)
+        for soname, soname_path in libraries.items():
+            self.dependencies.add(
+                Library(
+                    soname=soname,
+                    soname_path=soname_path,
+                    search_paths=search_paths,
+                    core_base_path=core_base_path,
+                    arch=self.arch,
+                    soname_cache=soname_cache,
                 )
+            )
 
-        self.dependencies = libs
-
-        # Return a set useful only for fetching libraries from the host
-        library_paths = set()  # type: Set[str]
-        for l in libs:
-            if os.path.exists(l.path) and not l.in_base_snap:
-                library_paths.add(l.path)
-        return library_paths
+        # Return the set of dependency paths, minus those found in the base.
+        dependencies: Set[str] = set()
+        for library in self.dependencies:
+            if not library.in_base_snap:
+                dependencies.add(library.path)
+        return dependencies
 
 
 class Patcher:
@@ -580,12 +623,20 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
         if os.path.islink(path):
             logger.debug("Skipped link {!r} while finding dependencies".format(path))
             continue
-        # Finally, make sure this is actually an ELF file
-        if ElfFile.is_elf(path):
+
+        # Ignore if file does not have ELF header.
+        if not ElfFile.is_elf(path):
+            continue
+
+        try:
             elf_file = ElfFile(path=path)
-            # if we have dyn symbols we are dynamic
-            if elf_file.needed:
-                elf_files.add(elf_file)
+        except elftools.common.exceptions.ELFError:
+            # Ignore invalid ELF files.
+            continue
+
+        # If ELF has dynamic symbols, add it.
+        if elf_file.needed:
+            elf_files.add(elf_file)
 
     return frozenset(elf_files)
 

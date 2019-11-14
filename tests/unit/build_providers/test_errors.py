@@ -360,10 +360,34 @@ class ErrorFormattingTest(unit.TestCase):
             "ProviderCommunicationError",
             dict(
                 exception=errors.ProviderCommunicationError,
-                kwargs=dict(provider_name="multipass"),
+                kwargs=dict(provider_name="multipass", message="failed to foo"),
                 expected_message=(
                     "An error occurred when trying to communicate with the "
-                    "'multipass' provider."
+                    "'multipass' provider: failed to foo."
+                ),
+            ),
+        ),
+        (
+            "ProviderMultipassDownloadFailed",
+            dict(
+                exception=errors.ProviderMultipassDownloadFailed,
+                kwargs=dict(message="failed to foo"),
+                expected_message=(
+                    "Failed to download Multipass: 'failed to foo'\n"
+                    "Please install manually. You can find the latest release at:\n"
+                    "https://multipass.run"
+                ),
+            ),
+        ),
+        (
+            "ProviderMultipassInstallationFailed",
+            dict(
+                exception=errors.ProviderMultipassInstallationFailed,
+                kwargs=dict(message="failed to foo"),
+                expected_message=(
+                    "Failed to install Multipass: 'failed to foo'\n"
+                    "Please install manually. You can find the latest release at:\n"
+                    "https://multipass.run"
                 ),
             ),
         ),

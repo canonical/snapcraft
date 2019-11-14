@@ -24,11 +24,11 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import cast, Dict, List, Set, Sequence
+from typing import cast, Dict, List, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
-from snapcraft.internal import common, elf, errors, repo, sources, states, steps
+from snapcraft.internal import common, elf, errors, repo, sources, states, steps, xattrs
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
@@ -39,6 +39,9 @@ from ._runner import Runner
 from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._outdated_report import OutdatedReport
+
+if TYPE_CHECKING:
+    from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,7 @@ class PluginHandler:
         *,
         plugin,
         part_properties,
-        project_options,
+        project_options: "Project",
         part_schema,
         definitions_schema,
         stage_packages_repo,
@@ -63,11 +66,11 @@ class PluginHandler:
         confinement,
         snap_type,
         soname_cache
-    ):
+    ) -> None:
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(part_properties, part_schema)
-        self.stage_packages = []
+        self.stage_packages: List[str] = list()
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
@@ -85,7 +88,7 @@ class PluginHandler:
         self._prime_state = None  # type: states.PrimeState
 
         self._project_options = project_options
-        self.deps = []
+        self.deps: List[str] = list()
 
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
@@ -106,9 +109,9 @@ class PluginHandler:
         )
 
         # Scriptlet data is a dict of dicts for each step
-        self._scriptlet_metadata = collections.defaultdict(
-            snapcraft.extractors.ExtractedMetadata
-        )
+        self._scriptlet_metadata: Dict[
+            steps.Step, snapcraft.extractors.ExtractedMetadata
+        ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
             sourcedir=self.plugin.sourcedir,
@@ -126,6 +129,7 @@ class PluginHandler:
         )
 
         self._migrate_state_file()
+        self._current_step = None  # type: steps.Step
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
@@ -187,9 +191,9 @@ class PluginHandler:
         except errors.ScriptletDuplicateDataError as e:
             raise errors.ScriptletDuplicateFieldError("grade", e.other_step)
 
-    def _set_scriptlet_metadata(self, metadata: snapcraft.extractors.ExtractedMetadata):
-        step = self.next_step()
-
+    def _check_scriplet_metadata_dupe(
+        self, metadata: snapcraft.extractors.ExtractedMetadata, step: steps.Step
+    ):
         # First, ensure the metadata set here doesn't conflict with metadata
         # already set for this step
         conflicts = metadata.overlap(self._scriptlet_metadata[step])
@@ -209,6 +213,18 @@ class PluginHandler:
                         step, other_step, list(conflicts)
                     )
 
+    def _set_scriptlet_metadata(self, metadata: snapcraft.extractors.ExtractedMetadata):
+        try:
+            step = self.next_step()
+            self._check_scriplet_metadata_dupe(metadata, step)
+        except errors.NoNextStepError:
+            # We've already run through all the steps, don't bother to
+            # check for duplication as it is not really necessary and
+            # _check_scriplet_metadata_dupe() assumes that all steps
+            # haven't already executed.  Determine the current step
+            # as saved by _do_runner_step().
+            step = self._current_step
+
         self._scriptlet_metadata[step].update(metadata)
 
     def makedirs(self):
@@ -222,6 +238,11 @@ class PluginHandler:
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
+
+    def _do_runner_step(self, step: steps.Step):
+        self.makedirs()
+        self._current_step = step
+        return getattr(self._runner, "{}".format(step.name))()
 
     def _migrate_state_file(self):
         # In previous versions of Snapcraft, the state directory was a file.
@@ -438,8 +459,7 @@ class PluginHandler:
         elif os.path.isdir(self.plugin.sourcedir):
             shutil.rmtree(self.plugin.sourcedir)
 
-        self.makedirs()
-        self._runner.pull()
+        self._do_runner_step(steps.PULL)
         self.mark_pull_done()
 
     def check_pull(self):
@@ -453,6 +473,7 @@ class PluginHandler:
         return None
 
     def update_pull(self):
+        self._do_runner_step(steps.PULL)
         self.source_handler.update()
         self.mark_pull_done()
 
@@ -464,9 +485,9 @@ class PluginHandler:
     def mark_pull_done(self):
         pull_properties = self.plugin.get_pull_properties()
 
-        # Add the annotated list of build packages
-        part_build_packages = self._part_properties.get("build-packages", [])
-        part_build_snaps = self._part_properties.get("build-snaps", [])
+        # Add the processed list of build packages and snaps.
+        part_build_packages = self._grammar_processor.get_build_packages()
+        part_build_snaps = self._grammar_processor.get_build_snaps()
 
         # Extract any requested metadata available in the source directory
         metadata = snapcraft.extractors.ExtractedMetadata()
@@ -575,7 +596,7 @@ class PluginHandler:
         self._do_build(update=True)
 
     def _do_build(self, *, update=False):
-        self._runner.build()
+        self._do_runner_step(steps.BUILD)
 
         # Organize the installed files as requested. We do this in the build step for
         # two reasons:
@@ -675,8 +696,8 @@ class PluginHandler:
 
         return {
             "uname": uname,
-            "installed-packages": repo.Repo.get_installed_packages(),
-            "installed-snaps": repo.snaps.get_installed_snaps(),
+            "installed-packages": sorted(repo.Repo.get_installed_packages()),
+            "installed-snaps": sorted(repo.snaps.get_installed_snaps()),
         }
 
     def clean_build(self):
@@ -719,8 +740,7 @@ class PluginHandler:
         _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
 
     def stage(self, force=False):
-        self.makedirs()
-        self._runner.stage()
+        self._do_runner_step(steps.STAGE)
 
         # Only mark this step done if _do_stage() didn't run, in which case
         # we have no directories or files to track.
@@ -775,13 +795,21 @@ class PluginHandler:
         self.mark_cleaned(steps.STAGE)
 
     def prime(self, force=False) -> None:
-        self.makedirs()
-        self._runner.prime()
+        self._do_runner_step(steps.PRIME)
 
         # Only mark this step done if _do_prime() didn't run, in which case
         # we have no files, directories, or dependency paths to track.
         if self.is_clean(steps.PRIME):
-            self.mark_prime_done(set(), set(), set())
+            self.mark_prime_done(set(), set(), set(), set())
+
+    def _get_primed_stage_packages(self, snap_files: Set[str]) -> Set[str]:
+        primed_stage_packages: Set[str] = set()
+        for snap_file in snap_files:
+            snap_file = os.path.join(self.primedir, snap_file)
+            stage_package = xattrs.read_origin_stage_package(snap_file)
+            if stage_package:
+                primed_stage_packages.add(stage_package)
+        return primed_stage_packages
 
     def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
@@ -792,25 +820,36 @@ class PluginHandler:
         else:
             dependency_paths = set()
 
-        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+        primed_stage_packages = self._get_primed_stage_packages(snap_files)
+        self.mark_prime_done(
+            snap_files, snap_dirs, dependency_paths, primed_stage_packages
+        )
 
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
-        core_path = common.get_core_path(self._base)
+        core_path = common.get_installed_snap_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
         self._soname_cache.reset_except_root(self.primedir)
+
+        # Determine content directories.
+        content_dirs = self._project_options._get_provider_content_dirs()
+
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(
                     root_path=self.primedir,
                     core_base_path=core_path,
+                    content_dirs=content_dirs,
+                    arch_triplet=self._project_options.arch_triplet,
                     soname_cache=self._soname_cache,
                 )
             )
 
-        dependency_paths = self._handle_dependencies(all_dependencies)
+        dependency_paths = self._handle_dependencies(
+            all_dependencies=all_dependencies, content_dirs=content_dirs
+        )
 
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
@@ -824,7 +863,6 @@ class PluginHandler:
         else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
-                plugin=self.plugin,
                 project=self._project_options,
                 confinement=self._confinement,
                 core_base=self._base,
@@ -837,7 +875,9 @@ class PluginHandler:
 
         return dependency_paths
 
-    def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
+    def mark_prime_done(
+        self, snap_files, snap_dirs, dependency_paths, primed_stage_packages
+    ):
         self.mark_done(
             steps.PRIME,
             states.PrimeState(
@@ -847,6 +887,7 @@ class PluginHandler:
                 self._part_properties,
                 self._project_options,
                 self._scriptlet_metadata[steps.PRIME],
+                primed_stage_packages,
             ),
         )
 
@@ -880,19 +921,29 @@ class PluginHandler:
         # part.
         _clean_migrated_files(primed_files, primed_directories, shared_directory)
 
-    def _handle_dependencies(self, all_dependencies: Set[str]):
+    def _handle_dependencies(
+        self, *, all_dependencies: Set[str], content_dirs: Set[str]
+    ):
         # Split the necessary dependencies into their corresponding location.
         # We'll only track the part and staged dependencies, since they should have
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
-        (in_part, staged, primed, system) = _split_dependencies(
-            all_dependencies, self.plugin.installdir, self.stagedir, self.primedir
-        )
-        part_dependency_paths = {os.path.dirname(d) for d in in_part}
-        staged_dependency_paths = {os.path.dirname(d) for d in staged}
+        dirs = [self.plugin.installdir, self.stagedir, self.primedir, *content_dirs]
+
+        dependencies = _split_dependencies(all_dependencies, dirs)
+        dependency_paths: Set[str] = set()
+
+        part_dependencies = dependencies.get(self.plugin.installdir)
+        part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
+
+        stage_dependencies = dependencies.get(self.stagedir)
+        staged_dependency_paths = {os.path.dirname(d) for d in stage_dependencies}
+
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
-        resolver = MissingDependencyResolver(elf_files=system)
+        missing_set: Set[str] = dependencies.get("/", set())
+        missing_list: List[str] = sorted(list(missing_set))
+        resolver = MissingDependencyResolver(elf_files=missing_list)
         resolver.print_resolutions(
             part_name=self.name,
             stage_packages_exist=self._part_properties.get("stage-packages"),
@@ -960,47 +1011,42 @@ class PluginHandler:
             self.clean_pull()
 
 
-def _split_dependencies(dependencies, installdir, stagedir, primedir):
+def _find_directory(file_path: str, dirs: Set[str]):
+    """Finds which of the dirs (if any) file_path is found in.
+
+    Returns tuple (directory, relative_file_path)."""
+    fp_stripped = file_path.lstrip("/")
+
+    for d in dirs:
+        # Check if directory is encoded explicitly in file path.
+        if file_path.startswith(d):
+            return d, os.path.relpath(file_path, d)
+
+        # Check if file exists relative to directory.
+        if os.path.exists(os.path.join(d, fp_stripped)):
+            return d, fp_stripped
+
+    # Must be on host or missing.
+    return "/", fp_stripped
+
+
+def _split_dependencies(dependencies, dependency_dirs) -> Dict[str, Set[str]]:
     """Split dependencies into their corresponding location.
 
-    Return a tuple of sets for each location.
+    Return a dict (keys = matching directories, values = relpath of matches).
     """
 
-    part_dependencies = set()
-    staged_dependencies = set()
-    primed_dependencies = set()
-    system_dependencies = set()
+    # Initialize deps for system/host and search directories.
+    deps: Dict[str, Set[str]] = dict()
+    deps["/"] = set()
+    for dep_dir in dependency_dirs:
+        deps[dep_dir] = set()
 
     for file_path in dependencies:
-        if file_path.startswith(installdir):
-            part_dependencies.add(os.path.relpath(file_path, installdir))
-        elif file_path.startswith(stagedir):
-            staged_dependencies.add(os.path.relpath(file_path, stagedir))
-        elif file_path.startswith(primedir):
-            primed_dependencies.add(os.path.relpath(file_path, primedir))
-        else:
-            file_path = file_path.lstrip("/")
+        dep_dir, dep_path = _find_directory(file_path, dependency_dirs)
+        deps[dep_dir].add(dep_path)
 
-            # This was a dependency that was resolved to be on the system.
-            # However, it's possible that this library is actually included in
-            # the snap and we just missed it because it's in a non-standard
-            # path. Let's make sure it isn't already in the part, stage dir, or
-            # prime dir. If so, add it to that set.
-            if os.path.exists(os.path.join(installdir, file_path)):
-                part_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(stagedir, file_path)):
-                staged_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(primedir, file_path)):
-                primed_dependencies.add(file_path)
-            else:
-                system_dependencies.add(file_path)
-
-    return (
-        part_dependencies,
-        staged_dependencies,
-        primed_dependencies,
-        system_dependencies,
-    )
+    return deps
 
 
 def _expand_part_properties(part_properties, part_schema):

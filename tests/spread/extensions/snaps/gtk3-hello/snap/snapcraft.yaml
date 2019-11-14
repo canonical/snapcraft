@@ -1,0 +1,17 @@
+name: gtk3-hello
+version: "1.0"
+summary: test the gnome extension
+description: This is a basic gtk snap
+
+grade: devel
+confinement: strict
+
+apps:
+  gtk3-hello:
+    command: bin/gtk3-hello
+    extensions: [gnome-3-28]
+
+parts:
+  project:
+    plugin: cmake
+    source: .

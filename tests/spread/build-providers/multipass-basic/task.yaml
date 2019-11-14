@@ -5,12 +5,18 @@ environment:
   SNAP_DIR: ../snaps/make-hello
 
 prepare: |
+  snap list multipass || snap install --classic --beta multipass
+
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
   cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   snapcraft clean
   rm -f ./*.snap
 
@@ -21,7 +27,7 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  # Ensure that snapcraft uses build VMs
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft

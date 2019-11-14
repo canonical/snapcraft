@@ -20,9 +20,7 @@ import subprocess
 import sys
 import urllib.parse
 import warnings
-from typing import Optional, Sequence
-
-import pylxd
+from typing import Dict, Optional, Sequence
 
 from .._base_provider import Provider
 from .._base_provider import errors
@@ -30,6 +28,11 @@ from ._images import get_image_source
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
+# LXD is only supported on Linux and causes issues when imported on Windows.
+# We conditionally import it and rely on ensure_provider() to check OS before
+# using pylxd.
+if sys.platform == "linux":
+    import pylxd
 
 logger = logging.getLogger(__name__)
 # Filter out attribute setting warnings for properties that exist in LXD operations
@@ -127,9 +130,14 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        logger.debug("Running {}".format(" ".join(command)))
+        env_command = self._get_env_command()
+
         # TODO: use pylxd
-        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"] + list(command)
+        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         try:
             if hide_output:
                 output = subprocess.check_output(cmd)
@@ -226,8 +234,20 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             )
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self.echoer.warning(
             "The LXD provider is offered as a technology preview for early adopters.\n"
             "The command line interface, container names or lifecycle handling may "
@@ -236,7 +256,15 @@ class LXD(Provider):
         # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
         lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
         endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
-        self._lxd_client = pylxd.Client(endpoint=endpoint)
+        try:
+            self._lxd_client = pylxd.Client(endpoint=endpoint)
+        except pylxd.client.exceptions.ClientConnectionFailed:
+            raise errors.ProviderCommunicationError(
+                provider_name=self._get_provider_name(),
+                message="cannot connect to the LXD socket ({!r}).".format(
+                    lxd_socket_path
+                ),
+            )
         self._container = None  # type: Optional[pylxd.models.container.Container]
 
     def create(self) -> None:

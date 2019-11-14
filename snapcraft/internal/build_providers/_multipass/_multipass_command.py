@@ -17,8 +17,11 @@
 import logging
 import shutil
 import subprocess
+
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
+
+from ._windows import windows_reload_multipass_path_env, windows_install_multipass
 
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
@@ -46,6 +49,11 @@ class MultipassCommand:
 
     @classmethod
     def ensure_multipass(cls, platform: str) -> None:
+        if platform == "win32":
+            # Reload path env just in case multipass was installed without
+            # launching a new command prompt / shell.
+            windows_reload_multipass_path_env()
+
         if shutil.which(cls.provider_cmd):
             return
 
@@ -53,14 +61,41 @@ class MultipassCommand:
             prompt_installable = True
         elif platform == "linux" and shutil.which("snap"):
             prompt_installable = True
+        elif platform == "win32":
+            prompt_installable = True
         else:
             prompt_installable = False
 
         raise errors.ProviderNotFound(
             provider=cls.provider_name,
             prompt_installable=prompt_installable,
-            error_message="https://github.com/CanonicalLtd/multipass/releases",
+            error_message="https://multipass.run",
         )
+
+    @classmethod
+    def _wait_for_multipass_ready(cls, *, echoer):
+        echoer.wrapped("Waiting for multipass...")
+        retry_count = 20
+        while retry_count:
+            try:
+                output = subprocess.check_output([cls.provider_cmd, "version"]).decode()
+            except subprocess.CalledProcessError:
+                output = ""
+            except FileNotFoundError:
+                raise SnapcraftEnvironmentError(
+                    "multipass not found - please check that it can be found in the configured PATH"
+                )
+
+            # if multipassd is in the version information, it means the service is up
+            # and we can carry on
+            if "multipassd" in output:
+                break
+
+            retry_count -= 1
+            sleep(1)
+
+        # No need to worry about getting to this point by exhausting our retry count,
+        # the rest of the stack will handle the error appropriately.
 
     @classmethod
     def setup_multipass(cls, *, echoer, platform: str) -> None:
@@ -75,27 +110,15 @@ class MultipassCommand:
                     "Verify your homebrew installation and try again.\n"
                     "Alternatively, manually install multipass by running 'brew cask install multipass'."
                 )
+        elif platform == "win32":
+            windows_install_multipass(echoer)
         else:
             raise EnvironmentError(
                 "Setting up multipass for {!r} is not supported.".format(platform)
             )
 
         # wait for multipassd to be available
-        echoer.wrapped("Waiting for multipass...")
-        retry_count = 20
-        while retry_count:
-            try:
-                output = subprocess.check_output(["multipass", "version"]).decode()
-            except subprocess.CalledProcessError:
-                output = ""
-            # if multipassd is in the version information, it means the service is up
-            # and we can carry on
-            if "multipassd" in output:
-                break
-            retry_count -= 1
-            sleep(1)
-        # No need to worry about getting to this point by exhausting our retry count,
-        # the rest of the stack will handle the error appropriately.
+        cls._wait_for_multipass_ready(echoer=echoer)
 
     def __init__(self, *, platform: str) -> None:
         """Initialize a MultipassCommand instance.

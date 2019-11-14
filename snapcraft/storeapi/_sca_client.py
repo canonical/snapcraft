@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+from typing import List, Optional
 
 import requests
 from simplejson.scanner import JSONDecodeError
@@ -128,7 +129,9 @@ class SCAClient(Client):
         delta_hash=None,
         source_hash=None,
         target_hash=None,
-    ):
+        built_at=None,
+        channels: Optional[List[str]] = None,
+    ) -> StatusTracker:
         data = {
             "name": snap_name,
             "series": constants.DEFAULT_SERIES,
@@ -141,6 +144,10 @@ class SCAClient(Client):
             data["delta_hash"] = delta_hash
             data["source_hash"] = source_hash
             data["target_hash"] = target_hash
+        if built_at is not None:
+            data["built_at"] = built_at
+        if channels is not None:
+            data["channels"] = channels
         auth = _macaroon_auth(self.conf)
         response = self.post(
             "snap-push/",

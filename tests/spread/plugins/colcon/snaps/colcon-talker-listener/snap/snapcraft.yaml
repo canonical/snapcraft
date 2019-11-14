@@ -11,6 +11,8 @@ apps:
   colcon-talker-listener:
     command: opt/ros/dashing/bin/ros2 launch listener_py talk_and_listen.launch.py
     plugs: [network, network-bind]
+    environment:
+      PYTHONUNBUFFERED: 1
 
   ros2:
     command: opt/ros/dashing/bin/ros2

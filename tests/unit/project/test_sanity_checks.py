@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,19 +21,27 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.project._sanity_checks import (
-    conduct_project_sanity_check,
-    conduct_environment_sanity_check,
-)
-from snapcraft.project import errors, _schema
+from snapcraft.project._sanity_checks import conduct_project_sanity_check
 
-from tests import unit
+from tests import fixture_setup, unit
 
 
 class ProjectSanityChecksTest(unit.TestCase):
     scenarios = [
-        ("managed", dict(is_managed_host=True)),
-        ("unmanaged", dict(is_managed_host=False)),
+        ("managed", dict(is_managed_host=True, snap_asset_dir="snap")),
+        ("unmanaged", dict(is_managed_host=False, snap_asset_dir="snap")),
+        (
+            "managed build-aux",
+            dict(
+                is_managed_host=True, snap_asset_dir=os.path.join("build-aux", "snap")
+            ),
+        ),
+        (
+            "unmanaged build-aux",
+            dict(
+                is_managed_host=False, snap_asset_dir=os.path.join("build-aux", "snap")
+            ),
+        ),
     ]
 
     def setUp(self):
@@ -51,39 +59,39 @@ class ProjectSanityChecksTest(unit.TestCase):
         self.assert_check_passes()
 
     def test_snapcraft_yaml(self):
-        os.makedirs("snap")
-        open(os.path.join("snap", "snapcraft.yaml"), "w").close()
+        os.makedirs(self.snap_asset_dir)
+        open(os.path.join(self.snap_asset_dir, "snapcraft.yaml"), "w").close()
         self.assert_check_passes()
 
     def test_global_state(self):
-        state_dir = os.path.join("snap", ".snapcraft")
+        state_dir = os.path.join(self.snap_asset_dir, ".snapcraft")
         os.makedirs(state_dir)
         open(os.path.join(state_dir, "state"), "w").close()
         self.assert_check_passes()
 
     def test_icons(self):
-        gui_dir = os.path.join("snap", "gui")
+        gui_dir = os.path.join(self.snap_asset_dir, "gui")
         os.makedirs(gui_dir)
         open(os.path.join(gui_dir, "icon.png"), "w").close()
         open(os.path.join(gui_dir, "another-icon.svg"), "w").close()
         self.assert_check_passes()
 
     def test_plugin(self):
-        plugins_dir = os.path.join("snap", "plugins")
+        plugins_dir = os.path.join(self.snap_asset_dir, "plugins")
         os.makedirs(plugins_dir)
         open(os.path.join(plugins_dir, "plugin1.py"), "w").close()
         open(os.path.join(plugins_dir, "data-file"), "w").close()
         self.assert_check_passes()
 
     def test_hooks(self):
-        plugins_dir = os.path.join("snap", "hooks")
+        plugins_dir = os.path.join(self.snap_asset_dir, "hooks")
         os.makedirs(plugins_dir)
         open(os.path.join(plugins_dir, "configure"), "w").close()
         open(os.path.join(plugins_dir, "random-hook-2"), "w").close()
         self.assert_check_passes()
 
     def test_local(self):
-        local_dir = os.path.join("snap", "local")
+        local_dir = os.path.join(self.snap_asset_dir, "local")
         local_subdir = os.path.join(local_dir, "subdir")
         os.makedirs(local_subdir)
         open(os.path.join(local_dir, "file1"), "w").close()
@@ -91,10 +99,10 @@ class ProjectSanityChecksTest(unit.TestCase):
         self.assert_check_passes()
 
     def test_unexpected_things(self):
-        dir1 = os.path.join("snap", "dir1")
-        dir2 = os.path.join("snap", "dir2")
-        gui_dir = os.path.join("snap", "gui")
-        state_dir = os.path.join("snap", ".snapcraft")
+        dir1 = os.path.join(self.snap_asset_dir, "dir1")
+        dir2 = os.path.join(self.snap_asset_dir, "dir2")
+        gui_dir = os.path.join(self.snap_asset_dir, "gui")
+        state_dir = os.path.join(self.snap_asset_dir, ".snapcraft")
         fake_plugins_dir = os.path.join(dir1, "plugins")
         fake_hooks_dir = os.path.join(dir1, "hooks")
         fake_gui_dir = os.path.join(dir2, "gui")
@@ -116,93 +124,34 @@ class ProjectSanityChecksTest(unit.TestCase):
         self.assertThat(
             self.fake_logger.output,
             Equals(
-                "The snap/ directory is meant specifically for snapcraft, but it "
-                "contains the following non-snapcraft-related paths, which is "
-                "unsupported and will cause unexpected behavior:\n"
-                "- .snapcraft/baz\n"
-                "- dir1\n"
-                "- dir1/foo\n"
-                "- dir1/hooks\n"
-                "- dir1/plugins\n"
-                "- dir2\n"
-                "- dir2/bar\n"
-                "- dir2/gui\n"
-                "- dir2/local\n"
-                "- gui/icon.jpg\n\n"
-                "If you must store these files within the snap/ directory, move them "
-                "to snap/local/, which is ignored by snapcraft.\n"
+                (
+                    "The {snap_asset_dir!r} directory is meant specifically for snapcraft, but it "
+                    "contains the following non-snapcraft-related paths, which is "
+                    "unsupported and will cause unexpected behavior:\n"
+                    "- .snapcraft/baz\n"
+                    "- dir1\n"
+                    "- dir1/foo\n"
+                    "- dir1/hooks\n"
+                    "- dir1/plugins\n"
+                    "- dir2\n"
+                    "- dir2/bar\n"
+                    "- dir2/gui\n"
+                    "- dir2/local\n"
+                    "- gui/icon.jpg\n\n"
+                    "If you must store these files within the {snap_asset_dir!r} directory, move them "
+                    "to '{snap_asset_dir}/local', which is ignored by snapcraft.\n"
+                ).format(snap_asset_dir=self.snap_asset_dir)
             ),
         )
 
     def run_check(self):
-        project = snapcraft.project.Project(is_managed_host=self.is_managed_host)
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            os.path.dirname(self.snap_asset_dir)
+        )
+        snapcraft_yaml.update_part("fake", dict(plugin="nil"))
+        self.useFixture(snapcraft_yaml)
+        project = snapcraft.project.Project(
+            is_managed_host=self.is_managed_host,
+            snapcraft_yaml_file_path=snapcraft_yaml.snapcraft_yaml_file_path,
+        )
         conduct_project_sanity_check(project)
-
-
-class EnvironmentSanityChecksTest(unit.TestCase):
-    def test_command_chain_with_none_adapter(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {"command-chain": ["test-command-chain"], "adapter": "none"}
-            }
-        }
-
-        try:
-            conduct_environment_sanity_check(
-                project, yaml_data, _schema.Validator().schema
-            )
-        except Exception:
-            self.fail("No exception was expected")
-
-    def test_command_chain_with_full_adapter(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {"command-chain": ["test-command-chain"], "adapter": "full"}
-            }
-        }
-
-        try:
-            conduct_environment_sanity_check(
-                project, yaml_data, _schema.Validator().schema
-            )
-        except Exception:
-            self.fail("No exception was expected")
-
-    # FIXME: This test should fail once the default adapter changes to "full", just
-    # remove it
-    def test_command_chain_without_adapter_raises(self):
-        project = snapcraft.project.Project()
-        yaml_data = {"apps": {"test-app": {"command-chain": ["test-command-chain"]}}}
-
-        raised = self.assertRaises(
-            errors.CommandChainWithLegacyAdapterError,
-            conduct_environment_sanity_check,
-            project,
-            yaml_data,
-            _schema.Validator().schema,
-        )
-
-        self.assertThat(raised.app_name, Equals("test-app"))
-
-    def test_command_chain_with_legacy_adapter_raises(self):
-        project = snapcraft.project.Project()
-        yaml_data = {
-            "apps": {
-                "test-app": {
-                    "command-chain": ["test-command-chain"],
-                    "adapter": "legacy",
-                }
-            }
-        }
-
-        raised = self.assertRaises(
-            errors.CommandChainWithLegacyAdapterError,
-            conduct_environment_sanity_check,
-            project,
-            yaml_data,
-            _schema.Validator().schema,
-        )
-
-        self.assertThat(raised.app_name, Equals("test-app"))

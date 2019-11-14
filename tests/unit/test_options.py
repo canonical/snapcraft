@@ -180,7 +180,7 @@ class NativeOptionsTestCase(unit.TestCase):
                     options.get_core_dynamic_linker("core"),
                     Equals(
                         os.path.join(
-                            common.get_core_path("core"),
+                            common.get_installed_snap_path("core"),
                             self.expected_core_dynamic_linker,
                         )
                     ),

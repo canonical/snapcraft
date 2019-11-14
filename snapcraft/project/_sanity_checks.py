@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,15 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import logging
 import os
 import re
-from typing import Any, Dict
 
 from snapcraft.project import Project
-from snapcraft.internal import project_loader
-from . import errors
 
 logger = logging.getLogger(__name__)
 
@@ -48,23 +44,10 @@ def conduct_project_sanity_check(project: Project) -> None:
     if project.info is not None:
         project.info.validate_raw_snapcraft()
 
-    snap_dir_path = os.path.join(project._project_dir, "snap")
+    snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):
+        # TODO: move this check to the ProjectInfo class.
         _check_snap_dir(snap_dir_path)
-
-
-def conduct_environment_sanity_check(
-    project: Project, yaml_data: Dict[str, Any], schema: Dict[str, Any]
-) -> None:
-    """Sanity check the build environment and expanded YAML.
-
-    :param snapcraft.Project project: Project settings
-    :param dict yaml_data: Validated YAML, with extensions applied
-    """
-    # Never modify the YAML data
-    yaml_data = copy.deepcopy(yaml_data)
-
-    _verify_command_chain_only_full_adapter(yaml_data, schema)
 
 
 def _check_snap_dir(snap_dir_path: str) -> None:
@@ -76,14 +59,17 @@ def _check_snap_dir(snap_dir_path: str) -> None:
                 unexpected_paths.add(path)
 
     if unexpected_paths:
-        logger.warn(
-            "The snap/ directory is meant specifically for snapcraft, but it contains "
+        snap_dir_relpath = os.path.relpath(snap_dir_path, os.getcwd())
+        logger.warning(
+            "The {snap_dir!r} directory is meant specifically for snapcraft, but it contains "
             "the following non-snapcraft-related paths, which is unsupported and will "
             "cause unexpected behavior:"
-            "\n- {}\n\n"
-            "If you must store these files within the snap/ directory, move them to "
-            "snap/local/, which is ignored by snapcraft.".format(
-                "\n- ".join(sorted(unexpected_paths))
+            "\n- {unexpected_files}\n\n"
+            "If you must store these files within the {snap_dir!r} directory, move them to "
+            "{snap_dir_local!r}, which is ignored by snapcraft.".format(
+                snap_dir=snap_dir_relpath,
+                snap_dir_local=os.path.join(snap_dir_relpath, "local"),
+                unexpected_files="\n- ".join(sorted(unexpected_paths)),
             )
         )
 
@@ -93,22 +79,3 @@ def _snap_dir_path_expected(path: str) -> bool:
         if pattern.match(path):
             return True
     return False
-
-
-def _verify_command_chain_only_full_adapter(
-    yaml_data: Dict[str, Any], schema: Dict[str, Any]
-) -> None:
-    # Determine the default adapter
-    app_schema = schema["apps"]["patternProperties"]["^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$"][
-        "properties"
-    ]
-    default_adapter = app_schema["adapter"]["default"]
-
-    # Loop through all apps
-    for app_name, app_definition in yaml_data.get("apps", dict()).items():
-        # Verify that, if command-chain is used, the "full" adapter is also used
-        if "command-chain" in app_definition:
-            adapter_string = app_definition.get("adapter", default_adapter)
-            adapter = project_loader.Adapter[adapter_string.upper()]
-            if adapter == project_loader.Adapter.LEGACY:
-                raise errors.CommandChainWithLegacyAdapterError(app_name)

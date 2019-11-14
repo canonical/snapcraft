@@ -39,12 +39,6 @@ class DeltaGenerationTooBigError(SnapcraftError):
     fmt = "delta saving is less than {delta_min_percentage}%."
 
 
-class DeltaFormatError(SnapcraftError):
-    """A delta format must be set."""
-
-    fmt = "delta_format must be set in subclass!"
-
-
 class DeltaFormatOptionError(SnapcraftError):
     """A delta format option is not in the defined list."""
 
@@ -52,16 +46,3 @@ class DeltaFormatOptionError(SnapcraftError):
         "delta_format must be a option in {format_options_list}.\n"
         "for now delta_format={delta_format!r}"
     )
-
-
-class DeltaToolError(SnapcraftError):
-    """A delta tool executable error"""
-
-    fmt = "Cannot find the executable delta tool {delta_tool!r}."
-
-    def __init__(self, **kwargs):
-        # if no parameter passed, use the following error message instead
-        if len(kwargs) == 0:
-            self.fmt = "delta_tool_path must be set in subclass!"
-
-        super().__init__(**kwargs)

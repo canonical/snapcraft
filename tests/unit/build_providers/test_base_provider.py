@@ -194,6 +194,46 @@ class BaseProviderTest(BaseProviderBaseTest):
             ["snapcraft", "clean", "part1", "part2"]
         )
 
+    def test_passthrough_environment_flags_empty(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.build_provider_flags = dict()
+
+        results = provider._get_env_command()
+
+        self.assertThat(results, Equals(["env", "SNAPCRAFT_HAS_TTY=False"]))
+
+    def test_passthrough_environment_flags_non_string(self):
+        # Set http_proxy to a bool even though it doesn't make sense...
+        # This is to verify non-strings are treated as strings OK for environ.
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.build_provider_flags = dict(http_proxy=True)
+
+        results = provider._get_env_command()
+
+        self.assertThat(
+            results, Equals(["env", "SNAPCRAFT_HAS_TTY=False", "http_proxy=True"])
+        )
+
+    def test_passthrough_environment_flags_all(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.build_provider_flags = dict(
+            http_proxy="http://127.0.0.1:8080", https_proxy="http://127.0.0.1:8080"
+        )
+
+        results = provider._get_env_command()
+
+        self.assertThat(
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "http_proxy=http://127.0.0.1:8080",
+                    "https_proxy=http://127.0.0.1:8080",
+                ]
+            ),
+        )
+
 
 class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
     def test_setup_snapcraft(self):
@@ -211,12 +251,13 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
-                call(snap_name="snapcraft"),
+                call(snap_name="snapd"),
                 call(snap_name="core16"),
+                call(snap_name="core18"),
+                call(snap_name="snapcraft"),
             ]
         )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(4))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_ephemeral_setup_snapcraft(self):
@@ -236,9 +277,27 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
-                call(snap_name="snapcraft"),
+                call(snap_name="snapd"),
                 call(snap_name="core16"),
+                call(snap_name="core18"),
+                call(snap_name="snapcraft"),
+            ]
+        )
+        self.assertThat(self.snap_injector_mock().add.call_count, Equals(4))
+        self.snap_injector_mock().apply.assert_called_once_with()
+
+    def test_setup_snapcraft_with_core(self):
+        self.project.info.base = "core"
+        self.project.info.confinement = "classic"
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_snapcraft()
+
+        self.snap_injector_mock().add.assert_has_calls(
+            [
+                call(snap_name="core"),
+                call(snap_name="core18"),
+                call(snap_name="snapcraft"),
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
@@ -253,9 +312,9 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
-                call(snap_name="snapcraft"),
+                call(snap_name="snapd"),
                 call(snap_name="core18"),
+                call(snap_name="snapcraft"),
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
@@ -280,9 +339,9 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
-                call(snap_name="snapcraft"),
+                call(snap_name="snapd"),
                 call(snap_name="core18"),
+                call(snap_name="snapcraft"),
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
@@ -304,7 +363,7 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             inject_from_host=False,
         )
         self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core"), call(snap_name="snapcraft")]
+            [call(snap_name="core18"), call(snap_name="snapcraft")]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()
@@ -327,9 +386,9 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.snap_injector_mock().add.assert_has_calls(
             [
-                call(snap_name="core"),
-                call(snap_name="snapcraft"),
+                call(snap_name="snapd"),
                 call(snap_name="core18"),
+                call(snap_name="snapcraft"),
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))

@@ -4,6 +4,9 @@ environment:
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
+  # Generate manifest when building snaps.
+  SNAPCRAFT_BUILD_INFO: "1"
+
   # This variable can be set to either "deb" or "snap". It defaults to "snap".
   SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
 
@@ -35,7 +38,7 @@ backends:
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
-          workers: 8
+          workers: 12
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
           workers: 18
@@ -44,7 +47,7 @@ backends:
     type: adhoc
     allocate: |
       echo "Allocating ad-hoc $SPREAD_SYSTEM"
-      if [ -z "${ADT_ARTIFACTS}" ]; then
+      if [ -z "${ADT_ARTIFACTS:-}" ]; then
         FATAL "adhoc only works inside autopkgtest"
         exit 1
       fi
@@ -121,10 +124,14 @@ prepare: |
       exit 1
   fi
 
+  # Exit now if we are preparing for unit tests.
+  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "none" ]; then
+      exit 0
+  fi
+
   apt-get install -y snapd
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-      snap install --classic --beta multipass
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
@@ -158,10 +165,64 @@ prepare: |
     exit 1
   fi
 
+debug: |
+  journalctl -xe
+
 restore-each: |
   "$TOOLS_DIR"/restore.sh
 
+debug-each: |
+  journalctl -xe
+
 suites:
+ # Unit tests
+ tests/spread/unit/:
+   summary: unit tests for snapcraft
+   manual: true
+   systems:
+   - ubuntu-18*
+   prepare: |
+     apt-get update
+     apt-get install --yes \
+       git \
+       libapt-pkg-dev \
+       libffi-dev \
+       libnacl-dev \
+       libsodium-dev \
+       libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
+       libyaml-dev \
+       python3-venv \
+       python3-yaml \
+       python3.6-dev \
+       rpm2cpio \
+       squashfs-tools \
+       xdelta3
+     apt-mark auto \
+       git \
+       libapt-pkg-dev \
+       libffi-dev \
+       libnacl-dev \
+       libsodium-dev \
+       libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
+       libyaml-dev \
+       python3-venv \
+       python3-yaml \
+       python3.6-dev \
+       rpm2cpio \
+       squashfs-tools \
+       xdelta3
+     pyvenv "$HOME/venv/snapcraft"
+     # shellcheck source=/dev/null
+     source "$HOME/venv/snapcraft/bin/activate"
+     pip install --upgrade pip
+     pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt codecov
+   recover: |
+     rm -rf ~/venv
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
@@ -276,24 +337,29 @@ suites:
    kill-timeout: 180m
  tests/spread/plugins/rust/:
    summary: tests of snapcraft's Rust plugin
-   # Keep this 18.04 only for now as it is the only stable base.
    systems:
    - ubuntu-18.04
    - ubuntu-18.04-64
    - ubuntu-18.04-amd64
    - ubuntu-18.04-i386
    - ubuntu-18.04-armhf
+   - ubuntu-18.04-s390x
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
    - ubuntu-16.04-i386
    - ubuntu-16.04-armhf
+   - ubuntu-16.04-s390x
  tests/spread/plugins/scons/:
    summary: tests of snapcraft's SCons plugin
  tests/spread/plugins/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
  tests/spread/plugins/waf/:
    summary: tests of snapcraft's Waf plugin
+
+# Extensions tests
+ tests/spread/extensions/:
+   summary: tests of snapcraft's extensions
 
 # Legacy tests
  tests/spread/legacy/:

@@ -1,7 +1,10 @@
 summary: stage-snaps
 
 # We currently only have core18 on a stable channel
-systems: [ubuntu-18*]
+systems:
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
+  - ubuntu-18.04-i386
 
 environment:
   STAGE_SNAPS/default: "hello"

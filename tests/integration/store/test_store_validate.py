@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -59,16 +59,6 @@ class ValidateTestCase(integration.StoreTestCase):
         self.assertThat(
             self.validate(
                 "core", ["core=foo"], expected_error="format must be name=revision"
-            ),
-            Equals(2),
-        )
-
-    def test_validate_no_login_failure(self):
-        self.assertThat(
-            self.validate(
-                "core",
-                ["core=3", "test-snap=4"],
-                expected_error='Have you run "snapcraft login"',
             ),
             Equals(2),
         )

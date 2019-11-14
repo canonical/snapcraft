@@ -19,7 +19,7 @@ from http.client import responses
 import logging
 from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
-from typing import List  # noqa
+from typing import Dict, List
 
 from . import channels
 from . import status
@@ -43,6 +43,32 @@ class StoreError(SnapcraftError):
         with contextlib.suppress(KeyError, AttributeError):
             logger.debug("Store error response: {}".format(kwargs["response"].__dict__))
         super().__init__(**kwargs)
+
+
+class StoreErrorList:
+    def __str__(self) -> str:
+        error_list: List[str] = list()
+        for error in self._error_list:
+            error_list.append("- {}: {}".format(error["code"], error["message"]))
+        return "\n".join(error_list).strip()
+
+    def __repr__(self) -> str:
+        return "<StoreErrorList: {}>".format(
+            " ".join((e.get("code") for e in self._error_list))
+        )
+
+    def __contains__(self, error_code: str) -> bool:
+        return any((error.get("code") == error_code for error in self._error_list))
+
+    def __getitem__(self, error_code: str) -> Dict[str, str]:
+        for error in self._error_list:
+            if error.get("code") == error_code:
+                return error
+
+        raise KeyError(error_code)
+
+    def __init__(self, error_list: List[Dict[str, str]]) -> None:
+        self._error_list = error_list
 
 
 class InvalidCredentialsError(StoreError):
@@ -326,26 +352,29 @@ class StoreUploadError(StoreError):
 class StorePushError(StoreError):
 
     __FMT_NOT_REGISTERED = (
-        "You are not the publisher or allowed to push revisions for this "
-        "snap. To become the publisher, run `snapcraft register {snap_name}` "
-        "and try to push again."
+        "This snap is not registered. Register the snap and try again."
     )
 
-    fmt = "Received {status_code!r}: {text!r}"
+    __FMT_NOT_OWNER = (
+        "You are not the publisher or allowed to push revisions for this "
+        "snap. Ensure you are logged in with the proper account and try "
+        "again."
+    )
 
     def __init__(self, snap_name, response):
         try:
             response_json = response.json()
         except (AttributeError, JSONDecodeError):
-            response_json = {}
+            response_json = {"error_list": list()}
 
-        if response.status_code == 404:
+        self.error_list = StoreErrorList(error_list=response_json.pop("error_list"))
+
+        if "resource-forbidden" in self.error_list:
+            self.fmt = self.__FMT_NOT_OWNER
+        elif "resource-not-found" in self.error_list:
             self.fmt = self.__FMT_NOT_REGISTERED
-        elif response.status_code == 401 or response.status_code == 403:
-            try:
-                response_json["text"] = response.text
-            except AttributeError:
-                response_json["text"] = "error while pushing"
+        else:
+            self.fmt = "Received:\n{!s}".format(self.error_list)
 
         super().__init__(
             response=response,
@@ -407,6 +436,7 @@ class StoreServerError(StoreError):
         action = "The operational status of the Snap Store can be checked at {}".format(
             _STORE_STATUS_URL
         )
+        self.response = response
 
         super().__init__(
             response=response,

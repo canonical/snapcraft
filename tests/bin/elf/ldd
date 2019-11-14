@@ -14,6 +14,12 @@ _LDD_OUT = {
         'barsnap.so.2 => {CORE_PATH}/barsnap.so.2 (0xbeef)',
         '/lib/baz.so.2 (0x1234)',
     ],
+    'fake_elf-with-missing-libs': [
+        'foo.so.1 => /lib/foo.so.1 (0xdead)',
+        'missing.so.2 => not found',
+        'barsnap.so.2 => {CORE_PATH}/barsnap.so.2 (0xbeef)',
+        '/lib/baz.so.2 (0x1234)',
+    ],
 }
 
 

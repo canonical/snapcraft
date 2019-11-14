@@ -25,7 +25,8 @@ from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
 from snapcraft.internal import common, deprecations, repo, states, steps
-from snapcraft.project._sanity_checks import conduct_environment_sanity_check
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.meta.snap import Snap
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
@@ -209,6 +210,11 @@ class Config:
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
         self.data = self._expand_env(snapcraft_yaml)
+
+        self.data["architectures"] = _process_architectures(
+            self.data.get("architectures"), project.deb_arch
+        )
+
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
@@ -222,21 +228,23 @@ class Config:
         if self.data.get("version") == "git":
             self.build_tools.add("git")
 
+        # XXX: Resetting snap_meta due to above mangling of data.
+        # Convergence to operating on snap_meta will remove this requirement...
+        project._snap_meta = Snap.from_dict(self.data)
+
         # Always add the base for building for non os and base snaps
-        if project.info.base is not None and project.info.type != "base":
+        if project.info.base is None and project.info.type in ("app", "gadget"):
+            raise SnapcraftEnvironmentError(
+                "A base is required for snaps of type {!r}.".format(project.info.type)
+            )
+        if project.info.base is not None:
             # If the base is already installed by other means, skip its installation.
             # But, we should always add it when in a docker environment so
             # the creator of said docker image is aware that it is required.
-            if common.is_docker_instance() or not repo.snaps.SnapPackage.is_snap_installed(
+            if common.is_process_container() or not repo.snaps.SnapPackage.is_snap_installed(
                 project.info.base
             ):
                 self.build_snaps.add(project.info.base)
-        elif project.info.type != "base":
-            # This exception is here to help with porting issues with bases. In normal
-            # executions, when no base is set, the legacy snapcraft will be executed.
-            raise RuntimeError(
-                "A base is required for {!r} snaps.".format(project.info.type)
-            )
 
         self.parts = PartsConfig(
             parts=self.data,
@@ -245,12 +253,6 @@ class Config:
             build_snaps=self.build_snaps,
             build_tools=self.build_tools,
         )
-
-        self.data["architectures"] = _process_architectures(
-            self.data.get("architectures"), project.deb_arch
-        )
-
-        conduct_environment_sanity_check(self.project, self.data, self.validator.schema)
 
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names

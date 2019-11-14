@@ -21,12 +21,12 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors, pluginhandler, steps
-from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 from tests import unit
+from typing import List
 
 
 def _fake_error_response(status_code):
@@ -38,200 +38,6 @@ def _fake_error_response(status_code):
 class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
-        (
-            "MissingStateCleanError",
-            {
-                "exception": errors.MissingStateCleanError,
-                "kwargs": {"step": steps.PULL},
-                "expected_message": (
-                    "Failed to clean: "
-                    "Missing state for 'pull'. "
-                    "To clean the project, run `snapcraft clean`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dependents",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dependents": ["test-dependent"],
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'pull' step for 'test-part' needs to be run again, "
-                    "but 'test-dependent' depends on it.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-dependent -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dirty_properties",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        dirty_properties=["test-property1", "test-property2"]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'test-property1' and 'test-property2' part properties "
-                    "appear to have changed.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError dirty_project_options",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        dirty_project_options=["test-option"]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The 'test-option' project option appears to have changed.\n"
-                    "To continue, clean that part's 'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError changed_dependencies",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        changed_dependencies=[
-                            pluginhandler.Dependency(
-                                part_name="another-part", step=steps.PULL
-                            )
-                        ]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "A dependency has changed: 'another-part'\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError multiple changed_dependencies",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "dirty_report": pluginhandler.DirtyReport(
-                        changed_dependencies=[
-                            pluginhandler.Dependency(
-                                part_name="another-part1", step=steps.PULL
-                            ),
-                            pluginhandler.Dependency(
-                                part_name="another-part2", step=steps.PULL
-                            ),
-                        ]
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "Some dependencies have changed: 'another-part1' and "
-                    "'another-part2'\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError previous step updated",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.STAGE,
-                    "part": "test-part",
-                    "outdated_report": pluginhandler.OutdatedReport(
-                        previous_step_modified=steps.BUILD
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'stage' step of 'test-part' is out of date:\n"
-                    "The 'build' step has run more recently.\n"
-                    "To continue, clean that part's "
-                    "'stage' step by running "
-                    "`snapcraft clean test-part -s stage`."
-                ),
-            },
-        ),
-        (
-            "StepOutdatedError source updated",
-            {
-                "exception": errors.StepOutdatedError,
-                "kwargs": {
-                    "step": steps.PULL,
-                    "part": "test-part",
-                    "outdated_report": pluginhandler.OutdatedReport(
-                        source_updated=True
-                    ),
-                },
-                "expected_message": (
-                    "Failed to reuse files from previous run: "
-                    "The 'pull' step of 'test-part' is out of date:\n"
-                    "The source has changed on disk.\n"
-                    "To continue, clean that part's "
-                    "'pull' step by running "
-                    "`snapcraft clean test-part -s pull`."
-                ),
-            },
-        ),
-        (
-            "SnapcraftEnvironmentError",
-            {
-                "exception": errors.SnapcraftEnvironmentError,
-                "kwargs": {"message": "test-message"},
-                "expected_message": "test-message",
-            },
-        ),
-        (
-            "SnapcraftMissingLinkerInBaseError",
-            {
-                "exception": errors.SnapcraftMissingLinkerInBaseError,
-                "kwargs": {
-                    "base": "core18",
-                    "linker_path": "/snap/core18/current/lib64/ld-linux.so.2",
-                },
-                "expected_message": (
-                    "Cannot find the linker to use for the target base 'core18'.\n"
-                    "Please verify that the linker exists at the expected path "
-                    "'/snap/core18/current/lib64/ld-linux.so.2' and try again. If "
-                    "the linker does not exist contact the author of the base "
-                    "(run `snap info core18` to get information for this "
-                    "base)."
-                ),
-            },
-        ),
         (
             "IncompatibleBaseError",
             {
@@ -261,82 +67,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "{'test-file'}. "
                     "Edit the `snapcraft.yaml` to make sure that the files "
                     "included in `prime` are also included in `stage`."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandError",
-            {
-                "exception": errors.InvalidAppCommandError,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not exist or is not executable.\n"
-                    "Ensure that 'test-command' is installed with the correct path."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandNotFound",
-            {
-                "exception": errors.InvalidAppCommandNotFound,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not exist.\n"
-                    "Ensure that 'test-command' is installed with the correct path."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandNotExecutable",
-            {
-                "exception": errors.InvalidAppCommandNotExecutable,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' is not executable."
-                ),
-            },
-        ),
-        (
-            "InvalidAppCommandFormatError",
-            {
-                "exception": errors.InvalidAppCommandFormatError,
-                "kwargs": {"command": "test-command", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The specified command 'test-command' defined in the app "
-                    "'test-app' does not match the pattern expected by snapd.\n"
-                    "The command must consist only of alphanumeric characters, spaces, "
-                    "and the following special characters: / . _ # : $ -"
-                ),
-            },
-        ),
-        (
-            "InvalidCommandChainError",
-            {
-                "exception": errors.InvalidCommandChainError,
-                "kwargs": {"item": "test-chain", "app_name": "test-app"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The command-chain item 'test-chain' defined in the app 'test-app' "
-                    "does not exist or is not executable.\n"
-                    "Ensure that 'test-chain' is relative to the prime directory."
-                ),
-            },
-        ),
-        (
-            "InvalidDesktopFileError",
-            {
-                "exception": errors.InvalidDesktopFileError,
-                "kwargs": {"filename": "test-file", "message": "test-message"},
-                "expected_message": (
-                    "Failed to generate desktop file: "
-                    "Invalid desktop file 'test-file': test-message."
                 ),
             },
         ),
@@ -514,57 +244,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "Failed to parse container image info: "
                     "SNAPCRAFT_IMAGE_INFO is not a valid JSON string: "
                     "test-image-info"
-                ),
-            },
-        ),
-        # meta errors.
-        (
-            "AdoptedPartMissingError",
-            {
-                "exception": meta_errors.AdoptedPartMissingError,
-                "kwargs": {"part": "test-part"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "'adopt-info' refers to a part named 'test-part', but it is "
-                    "not defined in the 'snapcraft.yaml' file."
-                ),
-            },
-        ),
-        (
-            "AdoptedPartNotParsingInfo",
-            {
-                "exception": meta_errors.AdoptedPartNotParsingInfo,
-                "kwargs": {"part": "test-part"},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "'adopt-info' refers to part 'test-part', but that part is "
-                    "lacking the 'parse-info' property."
-                ),
-            },
-        ),
-        (
-            "MissingSnapcraftYamlKeysError",
-            {
-                "exception": meta_errors.MissingSnapcraftYamlKeysError,
-                "kwargs": {"keys": ["test-key1", "test-key2"]},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "Missing required key(s) in snapcraft.yaml: "
-                    "'test-key1' and 'test-key2'. Either specify the missing "
-                    "key(s), or use 'adopt-info' to get them from a part."
-                ),
-            },
-        ),
-        (
-            "AmbiguousPassthroughKeyError",
-            {
-                "exception": meta_errors.AmbiguousPassthroughKeyError,
-                "kwargs": {"keys": ["key1", "key2"]},
-                "expected_message": (
-                    "Failed to generate snap metadata: "
-                    "The following keys are specified in their regular location "
-                    "as well as in passthrough: 'key1' and 'key2'. "
-                    "Remove duplicate keys."
                 ),
             },
         ),
@@ -936,3 +615,262 @@ class ErrorFormattingTestCase(unit.TestCase):
         self.assertThat(
             str(self.exception(**self.kwargs)), Equals(self.expected_message)
         )
+
+
+class StrangeExceptionSimple(errors.SnapcraftException):
+    def get_brief(self):
+        return "something's strange, in the neighborhood"
+
+    def get_resolution(self):
+        return "who you gonna call? ghostbusters!!"
+
+    def get_details(self):
+        return "i ain't afraid of no ghosts"
+
+    def get_docs_url(self):
+        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+
+class StrangeExceptionWithFormatting(errors.SnapcraftException):
+    def __init__(self, neighborhood: str, contact: str, ghosts: List[str]) -> None:
+        self._neighborhood = neighborhood
+        self._contact = contact
+        self._ghosts = ghosts
+
+    def get_brief(self):
+        return "something's strange, in the neighborhood of {}".format(
+            self._neighborhood
+        )
+
+    def get_resolution(self):
+        return "who you gonna call? {}!!".format(self._contact)
+
+    def get_details(self):
+        return "i ain't afraid of no ghosts: {}".format(self._ghosts)
+
+    def get_docs_url(self):
+        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+
+
+class SnapcraftExceptionTests(unit.TestCase):
+
+    scenarios = (
+        (
+            "StrangeExceptionSimple",
+            {
+                "exception": StrangeExceptionSimple,
+                "kwargs": {},
+                "expected_brief": "something's strange, in the neighborhood",
+                "expected_resolution": "who you gonna call? ghostbusters!!",
+                "expected_details": "i ain't afraid of no ghosts",
+                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StrangeExceptionWithFormatting",
+            {
+                "exception": StrangeExceptionWithFormatting,
+                "kwargs": {
+                    "neighborhood": "Times Square",
+                    "ghosts": ["slimer", "puft", "vigo"],
+                    "contact": "Janine Melnitz",
+                },
+                "expected_brief": "something's strange, in the neighborhood of Times Square",
+                "expected_resolution": "who you gonna call? Janine Melnitz!!",
+                "expected_details": "i ain't afraid of no ghosts: ['slimer', 'puft', 'vigo']",
+                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "MissingStateCleanError",
+            {
+                "exception": errors.MissingStateCleanError,
+                "kwargs": {"step": steps.PULL},
+                "expected_brief": "Failed to clean for step 'pull'.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError dirty_properties",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        dirty_properties=["test-property1", "test-property2"]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'test-property1' and 'test-property2' part properties appear to have changed.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError dirty_project_options",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        dirty_project_options=["test-option"]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'test-option' project option appears to have changed.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError changed_dependencies",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        changed_dependencies=[
+                            pluginhandler.Dependency(
+                                part_name="another-part", step=steps.PULL
+                            )
+                        ]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "A dependency has changed: 'another-part'\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError multiple changed_dependencies",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "dirty_report": pluginhandler.DirtyReport(
+                        changed_dependencies=[
+                            pluginhandler.Dependency(
+                                part_name="another-part1", step=steps.PULL
+                            ),
+                            pluginhandler.Dependency(
+                                part_name="another-part2", step=steps.PULL
+                            ),
+                        ]
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "Some dependencies have changed: 'another-part1' and 'another-part2'\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError previous step updated",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.STAGE,
+                    "part": "test-part",
+                    "outdated_report": pluginhandler.OutdatedReport(
+                        previous_step_modified=steps.BUILD
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The 'build' step has run more recently.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "StepOutdatedError source updated",
+            {
+                "exception": errors.StepOutdatedError,
+                "kwargs": {
+                    "step": steps.PULL,
+                    "part": "test-part",
+                    "outdated_report": pluginhandler.OutdatedReport(
+                        source_updated=True
+                    ),
+                },
+                "expected_brief": "Failed to reuse files from previous run.",
+                "expected_resolution": "Run `snapcraft clean` and retry build.",
+                "expected_details": "The source has changed on disk.\n",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "SnapcraftEnvironmentError",
+            {
+                "exception": errors.SnapcraftEnvironmentError,
+                "kwargs": {"message": "test-message"},
+                "expected_brief": "test-message",
+                "expected_resolution": "",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "SnapcraftDataDirectoryMissingError",
+            {
+                "exception": errors.SnapcraftDataDirectoryMissingError,
+                "kwargs": {},
+                "expected_brief": "Cannot find snapcraft's data files.",
+                "expected_resolution": "Re-install snapcraft or verify installation is correct.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": True,
+            },
+        ),
+        (
+            "SnapcraftMissingLinkerInBaseError",
+            {
+                "exception": errors.SnapcraftMissingLinkerInBaseError,
+                "kwargs": {
+                    "base": "core18",
+                    "linker_path": "/snap/core18/current/lib64/ld-linux.so.2",
+                },
+                "expected_brief": "Cannot find the linker to use for the target base 'core18'.",
+                "expected_resolution": "Verify that the linker exists at the expected path '/snap/core18/current/lib64/ld-linux.so.2' and try again. If the linker does not exist contact the author of the base (run `snap info core18` to get information for this base).",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "XAttributeTooLongError",
+            {
+                "exception": errors.XAttributeTooLongError,
+                "kwargs": {"path": "/tmp/foo", "key": "foo", "value": "bar"},
+                "expected_brief": "Unable to write extended attribute as the key and/or value is too long.",
+                "expected_resolution": "This issue is generally resolved by addressing/truncating the data source of the long data value. In some cases, the filesystem being used will limit the allowable size.",
+                "expected_details": "Failed to write attribute to /tmp/foo:\nkey='foo' value='bar'",
+                "expected_docs_url": None,
+                "expected_reportable": True,
+            },
+        ),
+    )
+
+    def test_snapcraft_exception_handling(self):
+        exception = self.exception(**self.kwargs)
+        self.assertEquals(self.expected_brief, exception.get_brief())
+        self.assertEquals(self.expected_resolution, exception.get_resolution())
+        self.assertEquals(self.expected_details, exception.get_details())
+        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
+        self.assertEquals(self.expected_reportable, exception.get_reportable())
