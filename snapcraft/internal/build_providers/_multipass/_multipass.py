@@ -129,7 +129,7 @@ class Multipass(Provider):
 
         self._multipass_cmd.start(instance_name=self.instance_name)
 
-    def _mount(
+    def __mount(
         self,
         *,
         mountpoint: str,
@@ -206,7 +206,7 @@ class Multipass(Provider):
 
         # multipass keeps the mount active, so check if it is there first.
         if not self._instance_info.is_mounted(project_mountpoint):
-            self._mount(
+            self.__mount(
                 mountpoint=project_mountpoint,
                 dev_or_path=self.project._project_dir,
                 uid_map={str(os.getuid()): "0"},
@@ -222,7 +222,7 @@ class Multipass(Provider):
         if self._instance_info.is_mounted(prime_mountpoint):
             return True
 
-        self._mount(
+        self.__mount(
             mountpoint=prime_mountpoint,
             dev_or_path=self.project.prime_dir,
             uid_map={str(os.getuid()): "0"},
