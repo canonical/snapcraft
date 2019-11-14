@@ -100,7 +100,9 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.expose_prime()
 
-        provider.mount_prime_mock.assert_called_once_with("mount-prime")
+        provider.mount_mock.assert_called_once_with(
+            self.project.prime_dir, "/root/prime"
+        )
 
     def test_ensure_base_same_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
