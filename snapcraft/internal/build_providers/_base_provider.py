@@ -193,6 +193,14 @@ class Provider(abc.ABC):
         """Push a file into the instance."""
 
     @abc.abstractmethod
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+
+    @abc.abstractmethod
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+
+    @abc.abstractmethod
     def mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
