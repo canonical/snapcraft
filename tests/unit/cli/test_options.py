@@ -37,12 +37,27 @@ class TestProviderOptions(unit.TestCase):
             ),
         ),
         ("lxd empty", dict(provider="lxd", kwargs=dict())),
+        (
+            "lxd apt mirror",
+            dict(
+                provider="lxd",
+                kwargs=dict(apt_mirror="http://de.archive.ubuntu.com/ubuntu"),
+            ),
+        ),
+        ("lxd bind ssh true", dict(provider="lxd", kwargs=dict(bind_ssh=True))),
+        ("lxd bind ssh false", dict(provider="lxd", kwargs=dict(bind_ssh=False))),
         ("lxd http proxy", dict(provider="lxd", kwargs=dict(http_proxy="1.1.1.1"))),
         ("lxd https proxy", dict(provider="lxd", kwargs=dict(https_proxy="1.1.1.1"))),
         (
             "lxd all",
             dict(
-                provider="lxd", kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1")
+                provider="lxd",
+                kwargs=dict(
+                    apt_mirror="http://de.archive.ubuntu.com/ubuntu",
+                    bind_ssh=True,
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                ),
             ),
         ),
         ("managed-host empty", dict(provider="managed-host", kwargs=dict())),
@@ -63,6 +78,21 @@ class TestProviderOptions(unit.TestCase):
         ),
         ("multipass empty", dict(provider="multipass", kwargs=dict())),
         (
+            "multipass apt mirror",
+            dict(
+                provider="multipass",
+                kwargs=dict(apt_mirror="http://de.archive.ubuntu.com/ubuntu"),
+            ),
+        ),
+        (
+            "multipass bind ssh true",
+            dict(provider="multipass", kwargs=dict(bind_ssh=True)),
+        ),
+        (
+            "multipass bind ssh false",
+            dict(provider="multipass", kwargs=dict(bind_ssh=False)),
+        ),
+        (
             "multipass http proxy",
             dict(provider="multipass", kwargs=dict(http_proxy="1.1.1.1")),
         ),
@@ -74,7 +104,12 @@ class TestProviderOptions(unit.TestCase):
             "multipass all",
             dict(
                 provider="multipass",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    apt_mirror="http://de.archive.ubuntu.com/ubuntu",
+                    bind_ssh=True,
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                ),
             ),
         ),
     ]

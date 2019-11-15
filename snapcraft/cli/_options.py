@@ -94,6 +94,15 @@ _PROVIDER_OPTIONS = [
         supported_providers=_ALL_PROVIDERS,
     ),
     dict(
+        param_decls="--apt-mirror",
+        metavar="<apt-mirror>",
+        help="Override primary apt-mirror for supported build environments. "
+        "Must be configured on initial creation of build environment. "
+        "If environment is already initialized, you may purge it using "
+        "`snapcraft clean`.",
+        supported_providers=["lxd", "multipass"],
+    ),
+    dict(
         param_decls="--http-proxy",
         metavar="<http-proxy>",
         help="HTTP proxy for host build environments.",
