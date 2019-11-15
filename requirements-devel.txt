@@ -1,5 +1,5 @@
 codespell==1.12.0
-coverage==4.1
+coverage==4.5.4
 flake8==3.7.9
 pyflakes==2.0.0
 fixtures==3.0.0
