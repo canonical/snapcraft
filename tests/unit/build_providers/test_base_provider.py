@@ -475,6 +475,64 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
             ),
         )
 
+    def test_get_with_mirror(self):
+        build_provider_flags = dict(apt_mirror="http://de.archive.ubuntu.com/ubuntu")
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags=build_provider_flags,
+        )
+        os.makedirs(provider.provider_project_dir)
+
+        cloud_data_filepath = provider._get_cloud_user_data(
+            timezone="America/Argentina/Cordoba"
+        )
+        self.assertThat(
+            cloud_data_filepath,
+            FileContains(
+                dedent(
+                    """\
+            #cloud-config
+            manage_etc_hosts: true
+            package_update: false
+            growpart:
+                mode: growpart
+                devices: ["/"]
+                ignore_growroot_disabled: false
+            runcmd:
+            - ["ln", "-s", "../usr/share/zoneinfo/America/Argentina/Cordoba", "/etc/localtime"]
+            write_files:
+                - path: /root/.bashrc
+                  permissions: 0644
+                  content: |
+                    export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
+                    export PS1="\h \$(/bin/_snapcraft_prompt)# "
+                    export PATH=/snap/bin:$PATH
+                - path: /bin/_snapcraft_prompt
+                  permissions: 0755
+                  content: |
+                    #!/bin/bash
+                    if [[ "$PWD" =~ ^$HOME.* ]]; then
+                        path="${PWD/#$HOME/\ ..}"
+                        if [[ "$path" == " .." ]]; then
+                            ps1=""
+                        else
+                            ps1="$path"
+                        fi
+                    else
+                        ps1="$PWD"
+                    fi
+                    echo -n $ps1
+
+            apt:
+                primary:
+                    - arches: [default]
+                      uri: http://de.archive.ubuntu.com/ubuntu
+        """  # noqa: W605
+                )
+            ),
+        )
+
 
 class GetTzDataTest(unit.TestCase):
     def test_path_found(self):

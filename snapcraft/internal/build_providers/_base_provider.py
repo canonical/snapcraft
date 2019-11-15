@@ -89,6 +89,15 @@ _CLOUD_USER_DATA_TMPL = dedent(
     """  # noqa: W605
 )
 
+_CLOUD_USER_DATA_APT_MIRROR_TMPL = dedent(
+    """
+    apt:
+        primary:
+            - arches: [default]
+              uri: {primary_mirror}
+    """
+)
+
 
 class Provider(abc.ABC):
 
@@ -351,7 +360,13 @@ class Provider(abc.ABC):
         snap_injector.apply()
 
     def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
-        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+        config = _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
+
+        mirror = self.build_provider_flags.get("apt_mirror")
+        if mirror:
+            config += _CLOUD_USER_DATA_APT_MIRROR_TMPL.format(primary_mirror=mirror)
+
+        return config
 
     def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
         cloud_user_data_filepath = os.path.join(
