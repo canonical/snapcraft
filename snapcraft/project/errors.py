@@ -16,6 +16,7 @@
 
 import contextlib
 from collections import OrderedDict
+from typing import Dict, List
 
 from snapcraft import formatting_utils
 from snapcraft.internal.errors import SnapcraftError

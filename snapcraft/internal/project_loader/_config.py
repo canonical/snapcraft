@@ -21,7 +21,7 @@ import os.path
 import re
 
 import jsonschema
-from typing import Set  # noqa: F401
+from typing import List, Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
 from snapcraft.internal import common, deprecations, repo, states, steps
