@@ -8,6 +8,7 @@ description: |
     into Snappy.
 adopt-info: snapcraft
 confinement: classic
+license: GPL-3.0
 assumes:
   - snapd2.39
 
