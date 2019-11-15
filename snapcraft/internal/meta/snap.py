@@ -129,7 +129,7 @@ class Snap:
         """Verify that all mandatory keys have been satisfied."""
         missing_keys: List[str] = []
         for key in _MANDATORY_PACKAGE_KEYS:
-            if key is "version" and self.adopt_info:
+            if key == "version" and self.adopt_info:
                 continue
 
             if not self.__dict__[key]:
