@@ -1,7 +1,7 @@
 codespell==1.16.0
 coverage==4.5.4
 flake8==3.7.9
-pyflakes==2.0.0
+pyflakes==2.1.1
 fixtures==3.0.0
 mccabe==0.6.1
 mypy==0.590
