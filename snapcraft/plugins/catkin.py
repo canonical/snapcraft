@@ -79,7 +79,7 @@ import re
 import shutil
 import subprocess
 import textwrap
-from typing import List
+from typing import List, Set
 
 import snapcraft
 from snapcraft.plugins import _ros

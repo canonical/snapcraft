@@ -25,7 +25,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-from typing import List, Optional, Sequence, Set
+from typing import Dict, List, Optional, Sequence, Set
 
 import snapcraft
 from snapcraft import file_utils
