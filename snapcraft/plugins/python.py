@@ -58,7 +58,7 @@ import os
 import re
 from shutil import which
 from textwrap import dedent
-from typing import List, Set
+from typing import List, Optional, Set
 
 import requests
 
@@ -264,7 +264,7 @@ class PythonPlugin(snapcraft.BasePlugin):
             install_dir=self.installdir,
         )
 
-    def _find_file(self, *, filename: str) -> str:
+    def _find_file(self, *, filename: str) -> Optional[str]:
         # source-subdir defaults to ''
         for basepath in [self.builddir, self.sourcedir]:
             if basepath == self.sourcedir:
