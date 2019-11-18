@@ -56,11 +56,11 @@ class Slot:
         """Return applicable Slot instance from dictionary properties."""
 
         # If we explicitly support the type, use it instead.
-        interface = slot_dict.get("interface")
-
-        if interface in SLOT_MAPPINGS:
-            slot_class = SLOT_MAPPINGS.get(interface)
-            return slot_class.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+        interface = slot_dict.get("interface", None)
+        if interface is not None:
+            slot_class = SLOT_MAPPINGS.get(interface, None)
+            if slot_class is not None:
+                return slot_class.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
         # Handle the general case.
         slot = Slot(slot_name=slot_name)
