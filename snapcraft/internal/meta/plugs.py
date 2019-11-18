@@ -136,7 +136,8 @@ class ContentPlug(Plug):
                 message="`interface={}` is invalid for content slot".format(interface),
             )
 
-        if "target" not in plug_dict:
+        target = plug_dict.get("target", None)
+        if target is None:
             raise PlugValidationError(
                 plug_name=plug_name, message="`target` is required for content slot"
             )
@@ -144,7 +145,7 @@ class ContentPlug(Plug):
         return ContentPlug(
             plug_name=plug_name,
             content=plug_dict.get("content", None),
-            target=plug_dict.get("target"),
+            target=target,
             default_provider=plug_dict.get("default-provider", None),
         )
 
