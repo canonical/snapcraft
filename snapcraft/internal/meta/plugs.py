@@ -55,9 +55,10 @@ class Plug:
         """Create plug from dictionary."""
 
         interface = plug_dict.get("interface", None)
-        if interface in PLUG_MAPPINGS:
-            plug_class = PLUG_MAPPINGS.get(interface)
-            return plug_class.from_dict(plug_dict=plug_dict, plug_name=plug_name)
+        if interface is not None:
+            plug_class = PLUG_MAPPINGS.get(interface, None)
+            if plug_class is not None:
+                return plug_class.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
         # Handle the general case.
         plug = Plug(plug_name=plug_name)
