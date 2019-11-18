@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Set, TYPE_CHECKING
+from typing import Optional, Set, TYPE_CHECKING
 
 from .errors import ToStatementSyntaxError
 from . import typing
@@ -50,7 +50,7 @@ class ToStatement(Statement):
         self,
         *,
         to: str,
-        body: typing.Grammar,
+        body: Optional[typing.Grammar],
         processor: "GrammarProcessor",
         call_stack: typing.CallStack = None
     ) -> None:
@@ -104,11 +104,11 @@ def _extract_to_clause_selectors(to: str) -> Set[str]:
     """
 
     match = _SELECTOR_PATTERN.match(to)
+    if match is None:
+        raise ToStatementSyntaxError(to, message="selectors are missing")
 
     try:
         selector_group = match.group(1)
-    except AttributeError:
-        raise ToStatementSyntaxError(to, message="selectors are missing")
     except IndexError:
         raise ToStatementSyntaxError(to)
 
