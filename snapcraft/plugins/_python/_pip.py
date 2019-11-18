@@ -51,7 +51,10 @@ def _process_common_args(
 
 
 def _process_package_args(
-    *, packages: Sequence[str], requirements: Sequence[str], setup_py_dir: str
+    *,
+    packages: Optional[Sequence[str]],
+    requirements: Optional[Sequence[str]],
+    setup_py_dir: Optional[str]
 ) -> List[str]:
     args = []
     if requirements:
