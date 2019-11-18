@@ -233,8 +233,11 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
     if project_architectures and user_specified_arch:
-        raise click.BadOptionUsage(
-            "Cannot use --build-on, architecture list is already set in snapcraft.yaml."
+        # TODO: remove "ignore" after mypy uprev due to a
+        # false positive that's fixed in newer mypy.
+        raise click.BadOptionUsage(  # type: ignore
+            "--build-on",
+            "Cannot use --build-on, architecture list is already set in snapcraft.yaml.",
         )
 
     if project_architectures:
