@@ -18,7 +18,7 @@ import logging
 import os
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Dict, Set, Sequence, List, Any
+from typing import Any, Dict, List, Set, Sequence, Optional
 
 from snapcraft import yaml_utils
 from snapcraft.internal import common
@@ -55,21 +55,21 @@ class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
     def __init__(self) -> None:
-        self.adopt_info: str = None
-        self.base: str = None
-        self.name: str = None
-        self.version: str = None
-        self.summary: str = None
-        self.description: str = None
+        self.adopt_info: Optional[str] = None
+        self.base: Optional[str] = None
+        self.name: Optional[str] = None
+        self.version: Optional[str] = None
+        self.summary: Optional[str] = None
+        self.description: Optional[str] = None
         self.architectures: Sequence[str] = list()
         self.assumes: Set[str] = set()
-        self.confinement: str = None
+        self.confinement: Optional[str] = None
         self.environment: Dict[str, Any] = dict()
         self.epoch: Any = None
-        self.grade: str = None
-        self.license: str = None
-        self.title: str = None
-        self.type: str = None
+        self.grade: Optional[str] = None
+        self.license: Optional[str] = None
+        self.title: Optional[str] = None
+        self.type: Optional[str] = None
         self.plugs: Dict[str, Plug] = dict()
         self.slots: Dict[str, Slot] = dict()
         self.apps: Dict[str, Application] = dict()
