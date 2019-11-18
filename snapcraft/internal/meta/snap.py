@@ -113,12 +113,15 @@ class Snap:
         for plug in self.get_content_plugs():
             # Get matching slot provider for plug.
             provider = plug.provider
+            if not provider:
+                continue
+
             provider_path = common.get_installed_snap_path(provider)
             yaml_path = os.path.join(provider_path, "meta", "snap.yaml")
 
             snap = Snap.from_file(yaml_path)
             for slot in snap.get_content_slots():
-                slot_installed_path = common.get_installed_snap_path(plug.provider)
+                slot_installed_path = common.get_installed_snap_path(provider)
                 provider_dirs |= slot.get_content_dirs(
                     installed_path=slot_installed_path
                 )
