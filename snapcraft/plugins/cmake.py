@@ -35,7 +35,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 import snapcraft
 from snapcraft.internal import errors
@@ -56,7 +56,7 @@ class _Flag:
         parts = flag.split("=")
         self.name = parts[0]
         try:
-            self.value = parts[1]
+            self.value: Optional[str] = parts[1]
         except IndexError:
             self.value = None
 
