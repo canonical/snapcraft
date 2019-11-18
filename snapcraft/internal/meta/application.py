@@ -51,35 +51,35 @@ class Application:
         """
         self._app_name = app_name
 
-        self._app_properties = app_properties
-        if self._app_properties is None:
-            self._app_properties: Dict[str, Any] = dict()
+        self._app_properties: Dict[str, Any] = dict()
+        if app_properties:
+            self._app_properties = app_properties
 
         self.adapter = adapter
         self.desktop = desktop
 
-        self.command_chain = command_chain
-        if self.command_chain is None:
-            self.command_chain: List[str] = list()
+        self.command_chain: List[str] = list()
+        if command_chain:
+            self.command_chain = command_chain
 
-        self.prepend_command_chain = prepend_command_chain
-        if self.prepend_command_chain is None:
-            self.prepend_command_chain: List[str] = list()
+        self.prepend_command_chain: List[str] = list()
+        if prepend_command_chain:
+            self.prepend_command_chain = prepend_command_chain
 
-        self.commands = commands
-        if self.commands is None:
-            self.commands: Dict[str, Command] = dict()
+        self.commands: Dict[str, Command] = dict()
+        if commands:
+            self.commands = commands
 
-        self.passthrough = passthrough
-        if self.passthrough is None:
-            self.passthrough: Dict[str, Any] = dict()
+        self.passthrough: Dict[str, Any] = dict()
+        if passthrough:
+            self.passthrough = passthrough
 
     @property
     def app_name(self) -> str:
         """Read-only to ensure consistency with Snap dictionary mappings."""
         return self._app_name
 
-    def can_use_wrapper(self, base: str) -> bool:
+    def can_use_wrapper(self, base: Optional[str]) -> bool:
         """Return if an wrapper should be allowed for app entries."""
         # Force use of no wrappers when command-chain is set.
         if self.command_chain:
@@ -96,10 +96,10 @@ class Application:
 
         return True
 
-    def _massage_commands(self, *, base: str) -> bool:
+    def _massage_commands(self, *, base: Optional[str]) -> bool:
         return base in _MASSAGED_BASES
 
-    def prime_commands(self, *, base: str, prime_dir: str) -> None:
+    def prime_commands(self, *, base: Optional[str], prime_dir: str) -> None:
         can_use_wrapper = self.can_use_wrapper(base)
         massage_command = self._massage_commands(base=base)
         for command in self.commands.values():

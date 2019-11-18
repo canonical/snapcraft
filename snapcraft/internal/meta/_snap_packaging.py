@@ -219,7 +219,9 @@ def _icon_file_exists() -> bool:
         return False
 
 
-def _get_app_name_from_common_id(config_data: Dict[str, Any], common_id: str) -> str:
+def _get_app_name_from_common_id(
+    config_data: Dict[str, Any], common_id: str
+) -> Optional[str]:
     """Get the snap app name with a common-id.
 
     :params dict config_data: Project values defined in snapcraft.yaml.
@@ -254,7 +256,9 @@ def _desktop_file_exists(app_name: str) -> bool:
         return False
 
 
-def _update_yaml_with_defaults(config_data, schema, required_grade: str) -> None:
+def _update_yaml_with_defaults(
+    config_data, schema, required_grade: Optional[str]
+) -> None:
     # Ensure that grade and confinement have their defaults applied, if
     # necessary. Defaults are taken from the schema. Technically these are the
     # only two optional keywords currently WITH defaults, but we don't want to
@@ -321,7 +325,7 @@ class _SnapPackaging:
     def __init__(
         self,
         project_config: _config.Config,
-        extracted_metadata: _metadata.ExtractedMetadata,
+        extracted_metadata: Optional[_metadata.ExtractedMetadata],
     ) -> None:
         self._project_config = project_config
         self._extracted_metadata = extracted_metadata
@@ -392,10 +396,9 @@ class _SnapPackaging:
 
         # Extracted metadata (e.g. from the AppStream) can override the
         # icon location.
+        icon_path: Optional[str] = None
         if self._extracted_metadata:
             icon_path = self._extracted_metadata.get_icon()
-        else:
-            icon_path = None
 
         snap_name = self._project_config.project.info.name
         for app_name, app in self._snap_meta.apps.items():
