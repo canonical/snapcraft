@@ -296,7 +296,7 @@ class ElfFile:
             )
 
             for segment in elf.iter_segments():
-                if segment["p_type"] == "PT_DYNAMIC":
+                if isinstance(segment, elftools.elf.dynamic.DynamicSegment):
                     is_dynamic = True
                     for tag in segment.iter_tags("DT_NEEDED"):
                         needed = _ensure_str(tag.needed)
@@ -309,9 +309,9 @@ class ElfFile:
                     mode = segment["p_flags"]
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
-                elif segment["p_type"] == "PT_INTERP":
+                elif isinstance(segment, elftools.elf.segments.InterpSegment):
                     interp = segment.get_interp_name()
-                elif segment["p_type"] == "PT_NOTE":
+                elif isinstance(segment, elftools.elf.segments.NoteSegment):
                     for note in segment.iter_notes():
                         if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
                             build_id = _ensure_str(note.n_desc)
