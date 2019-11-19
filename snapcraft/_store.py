@@ -160,7 +160,7 @@ def _try_login(
     email: str,
     password: str,
     *,
-    store: storeapi.StoreClient = None,
+    store: storeapi.StoreClient,
     save: bool = True,
     packages: Iterable[Dict[str, str]] = None,
     acls: Iterable[str] = None,
@@ -202,7 +202,7 @@ def _try_login(
 
 def login(
     *,
-    store: storeapi.StoreClient = None,
+    store: storeapi.StoreClient,
     packages: Iterable[Dict[str, str]] = None,
     save: bool = True,
     acls: Iterable[str] = None,
