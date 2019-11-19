@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob, iglob
-from typing import cast, Dict, List, Set, Sequence, TYPE_CHECKING
+from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
@@ -82,10 +82,10 @@ class PluginHandler:
         if not self._source:
             self._source = part_schema["source"].get("default")
 
-        self._pull_state = None  # type: states.PullState
-        self._build_state = None  # type: states.BuildState
-        self._stage_state = None  # type: states.StageState
-        self._prime_state = None  # type: states.PrimeState
+        self._pull_state: Optional[states.PullState] = None
+        self._build_state: Optional[states.BuildState] = None
+        self._stage_state: Optional[states.StageState] = None
+        self._prime_state: Optional[states.PrimeState] = None
 
         self._project_options = project_options
         self.deps: List[str] = list()
@@ -129,7 +129,7 @@ class PluginHandler:
         )
 
         self._migrate_state_file()
-        self._current_step = None  # type: steps.Step
+        self._current_step: Optional[steps.Step] = None
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
@@ -304,7 +304,7 @@ class PluginHandler:
 
         return self.get_outdated_report(step) is not None
 
-    def get_outdated_report(self, step: steps.Step) -> OutdatedReport:
+    def get_outdated_report(self, step: steps.Step) -> Optional[OutdatedReport]:
         """Return an OutdatedReport class describing why the step is outdated.
 
         A step is considered to be outdated if an earlier step in the lifecycle
@@ -341,7 +341,7 @@ class PluginHandler:
 
         return self.get_dirty_report(step) is not None
 
-    def get_dirty_report(self, step: steps.Step) -> DirtyReport:
+    def get_dirty_report(self, step: steps.Step) -> Optional[DirtyReport]:
         """Return a DirtyReport class describing why the step is dirty.
 
         A step is considered to be dirty if either YAML properties used by it
