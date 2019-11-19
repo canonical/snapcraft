@@ -27,14 +27,14 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
     def __init__(
         self,
         *,
-        common_id: str = "",
-        title: str = "",
-        summary: str = "",
-        description: str = "",
-        version: str = "",
-        grade: str = "",
-        icon: str = "",
-        desktop_file_paths: List[str] = None
+        common_id: Optional[str] = None,
+        title: Optional[str] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
+        version: Optional[str] = None,
+        grade: Optional[str] = None,
+        icon: Optional[str] = None,
+        desktop_file_paths: Optional[List[str]] = None
     ) -> None:
         """Create a new ExtractedMetadata instance.
 
