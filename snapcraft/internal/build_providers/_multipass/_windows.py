@@ -141,7 +141,7 @@ def _fetch_installer_url() -> str:
 
     try:
         data = resp.json()
-    except simplejson.scanner.JSONDecodeError():
+    except simplejson.scanner.JSONDecodeError:
         raise ProviderMultipassDownloadFailed(
             "failed to fetch valid release data from {}".format(
                 _MULTIPASS_RELEASES_API_URL
