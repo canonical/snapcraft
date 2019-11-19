@@ -57,12 +57,12 @@ class Statement:
         self._body = body
         self._processor = processor
         self._check_primitives = check_primitives
-        self._else_bodies = []  # type: List[typing.Grammar]
+        self._else_bodies: List[Optional[typing.Grammar]] = []
 
         self.__processed_body = None  # type: Set[str]
         self.__processed_else = None  # type: Set[str]
 
-    def add_else(self, else_body: typing.Grammar) -> None:
+    def add_else(self, else_body: Optional[typing.Grammar]) -> None:
         """Add an 'else' clause to the statement.
 
         :param list else_body: The body of an 'else' clause.
