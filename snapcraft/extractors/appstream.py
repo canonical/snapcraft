@@ -238,10 +238,11 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     x_entries = (e.split("x") for e in entries if "x" in e)
     sized_entries = (e[0] for e in x_entries if e[0] == e[1])
     sizes = {}
-    for icon_size in sized_entries:
+    for icon_size_entry in sized_entries:
         with contextlib.suppress(ValueError):
-            sizes[int(icon_size)] = "{0}x{0}".format(icon_size)
+            sizes[int(icon_size_entry)] = "{0}x{0}".format(icon_size_entry)
 
+    icon_size = None
     if sizes:
         size = max(sizes.items(), key=operator.itemgetter(1))[0]
         icon_size = sizes[size]
@@ -249,8 +250,6 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     elif "scalable" in entries:
         icon_size = "scalable"
         suffixes = [".svg", ".svgz"]
-    else:
-        icon_size = None
 
     icon_path = None
     if icon_size:
