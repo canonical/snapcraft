@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 from snapcraft import yaml_utils
 
@@ -82,7 +82,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         if common_id:
             self.common_id_list.append(common_id)
 
-    def get_common_id(self) -> str:
+    def get_common_id(self) -> Optional[str]:
         """Return extracted common_id.
 
         :returns: Extracted common_id
@@ -91,7 +91,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         common_id = self._data.get("common_id")
         return str(common_id) if common_id else None
 
-    def get_title(self) -> str:
+    def get_title(self) -> Optional[str]:
         """Return extracted title.
 
         :returns: Extracted title
@@ -100,7 +100,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         title = self._data.get("title")
         return str(title) if title else None
 
-    def get_summary(self) -> str:
+    def get_summary(self) -> Optional[str]:
         """Return extracted summary.
 
         :returns: Extracted summary
@@ -109,7 +109,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         summary = self._data.get("summary")
         return str(summary) if summary else None
 
-    def get_description(self) -> str:
+    def get_description(self) -> Optional[str]:
         """Return extracted description.
 
         :returns: Extracted description
@@ -118,7 +118,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         description = self._data.get("description")
         return str(description) if description else None
 
-    def get_version(self) -> str:
+    def get_version(self) -> Optional[str]:
         """Return extracted version.
 
         :returns: Extracted version
@@ -127,7 +127,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         version = self._data.get("version")
         return str(version) if version else None
 
-    def get_grade(self) -> str:
+    def get_grade(self) -> Optional[str]:
         """Return extracted grade.
 
         :returns: Extracted grade
@@ -136,7 +136,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         grade = self._data.get("grade")
         return str(grade) if grade else None
 
-    def get_icon(self) -> str:
+    def get_icon(self) -> Optional[str]:
         """Return extracted icon.
 
         :returns: Extracted icon
@@ -145,7 +145,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         icon = self._data.get("icon")
         return str(icon) if icon else None
 
-    def get_desktop_file_paths(self) -> List[str]:
+    def get_desktop_file_paths(self) -> Optional[List[str]]:
         """Return extracted desktop files paths.
 
         :returns: Extracted desktop files paths
