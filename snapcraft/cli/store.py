@@ -83,14 +83,15 @@ def storecli():
 def _human_readable_acls(store: storeapi.StoreClient) -> str:
     acl = store.acl()
     snap_names = []
-    if acl["snap_ids"]:
-        for snap_id in acl["snap_ids"]:
+    snap_ids = acl["snap_ids"]
+    if snap_ids:
+        for snap_id in snap_ids:
             snap_names.append(store.get_snap_name_for_id(snap_id))
     acl["snap_names"] = snap_names
 
-    human_readable_acl = {
+    human_readable_acl: Dict[str, Union[str, List[str], None]] = {
         "expires": str(acl["expires"])
-    }  # type: Dict[str, Union[str, List[str]]]
+    }
 
     for key in ("snap_names", "channels", "permissions"):
         human_readable_acl[key] = acl[key]
