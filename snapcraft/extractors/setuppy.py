@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from importlib.abc import Loader
 import importlib.util
 import logging
 from typing import Dict  # noqa: F401
@@ -46,10 +47,16 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata:
         with patch("distutils.core.setup") as distutils_mock:
             setuptools_mock.side_effect = _fake_setup
             distutils_mock.side_effect = _fake_setup
+
+            # Should never happen, but ensure spec.loader is set.
+            loader = spec.loader
+            if loader is None or not isinstance(loader, Loader):
+                raise RuntimeError("Invalid spec loader")
+
             # This would really fail during the use of the plugin
             # but let's be cautious and add the proper guards.
             try:
-                spec.loader.exec_module(setuppy)
+                loader.exec_module(setuppy)
             except SystemExit:
                 raise _errors.SetupPyFileParseError(path=relpath)
             except ImportError as e:
