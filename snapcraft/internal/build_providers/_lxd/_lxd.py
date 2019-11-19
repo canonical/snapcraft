@@ -376,7 +376,7 @@ class LXD(Provider):
             raise errors.ProviderFileCopyError(
                 provider_name=self._get_provider_name(),
                 error_message=(
-                    "Container is not running, the current state is: {!r]. "
+                    "Container is not running, the current state is: {!r}. "
                     "Ensure it has not been modified by external factors and try again"
                 ).format(self._container.status),
             )
