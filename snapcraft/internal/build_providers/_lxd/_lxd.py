@@ -138,12 +138,12 @@ class LXD(Provider):
         cmd.extend(command)
         self._log_run(cmd)
 
+        output = None
         try:
             if hide_output:
                 output = subprocess.check_output(cmd)
             else:
-                # output here will be None, and that is OK.
-                output = subprocess.check_call(cmd)
+                subprocess.check_call(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderExecError(
                 provider_name=self._get_provider_name(),
