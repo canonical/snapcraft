@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set, Optional
 
 from snapcraft import project
 from .errors import GrammarSyntaxError
@@ -86,9 +86,9 @@ class GrammarProcessor:
         if call_stack is None:
             call_stack = []
 
-        primitives = set()  # type: Set[str]
+        primitives: Set[str] = set()
         statements = _StatementCollection()
-        statement = None  # type: Statement
+        statement: Optional[Statement] = None
 
         for section in grammar:
             if isinstance(section, str):
@@ -116,7 +116,7 @@ class GrammarProcessor:
     def _parse_dict(
         self,
         section: Dict[str, Any],
-        statement: Statement,
+        statement: Optional[Statement],
         statements: "_StatementCollection",
         call_stack: typing.CallStack,
     ):
@@ -128,12 +128,14 @@ class GrammarProcessor:
             if not isinstance(value, list):
                 value = {value}
 
-            if _ON_TO_CLAUSE_PATTERN.match(key):
+            on_to_clause_match = _ON_TO_CLAUSE_PATTERN.match(key)
+            on_clause_match = _ON_CLAUSE_PATTERN.match(key)
+            if on_to_clause_match:
                 # We've come across the beginning of a compound statement
                 # with both 'on' and 'to'.
 
                 # First, extract each statement's part of the string
-                on, to = _ON_TO_CLAUSE_PATTERN.match(key).groups()
+                on, to = on_to_clause_match.groups()
 
                 # Now create a list of statements, in order
                 compound_statements = [
@@ -153,7 +155,7 @@ class GrammarProcessor:
                     call_stack=call_stack,
                 )
 
-            elif _ON_CLAUSE_PATTERN.match(key):
+            elif on_clause_match:
                 # We've come across the beginning of an 'on' statement.
                 # That means any previous statement we found is complete.
                 # The first time through this may be None, but the
@@ -192,7 +194,7 @@ class GrammarProcessor:
         return statement
 
 
-def _handle_else(statement: Statement, else_body: typing.Grammar):
+def _handle_else(statement: Optional[Statement], else_body: Optional[typing.Grammar]):
     """Add else body to current statement.
 
     :param statement: The currently-active statement. If None it will be
@@ -203,12 +205,12 @@ def _handle_else(statement: Statement, else_body: typing.Grammar):
                                      statement.
     """
 
-    try:
-        statement.add_else(else_body)
-    except AttributeError:
+    if statement is None:
         raise GrammarSyntaxError(
             "'else' doesn't seem to correspond to an 'on' or 'try'"
         )
+
+    statement.add_else(else_body)
 
 
 class _StatementCollection:
@@ -217,7 +219,7 @@ class _StatementCollection:
     def __init__(self) -> None:
         self._statements = []  # type: List[Statement]
 
-    def add(self, statement: Statement) -> None:
+    def add(self, statement: Optional[Statement]) -> None:
         """Add new statement to collection.
 
         :param statement: New statement.
