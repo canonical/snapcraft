@@ -125,6 +125,40 @@ class LXD(Provider):
     def _get_is_snap_injection_capable(cls) -> bool:
         return True
 
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
+        self.echoer.warning(
+            "The LXD provider is offered as a technology preview for early adopters.\n"
+            "The command line interface, container names or lifecycle handling may "
+            "change in upcoming releases."
+        )
+        # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
+        lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
+        endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
+        try:
+            self._lxd_client: pylxd.Client = pylxd.Client(endpoint=endpoint)
+        except pylxd.client.exceptions.ClientConnectionFailed:
+            raise errors.ProviderCommunicationError(
+                provider_name=self._get_provider_name(),
+                message="cannot connect to the LXD socket ({!r}).".format(
+                    lxd_socket_path
+                ),
+            )
+
+        self._container: Optional[pylxd.models.container.Container] = None
+
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
@@ -221,6 +255,10 @@ class LXD(Provider):
                 ) from lxd_api_error
 
     def _push_file(self, *, source: str, destination: str) -> None:
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         self._ensure_container_running()
 
         # TODO: better handling of larger files.
@@ -233,39 +271,6 @@ class LXD(Provider):
             raise errors.ProviderFileCopyError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             )
-
-    def __init__(
-        self,
-        *,
-        project,
-        echoer,
-        is_ephemeral: bool = False,
-        build_provider_flags: Dict[str, str] = None,
-    ) -> None:
-        super().__init__(
-            project=project,
-            echoer=echoer,
-            is_ephemeral=is_ephemeral,
-            build_provider_flags=build_provider_flags,
-        )
-        self.echoer.warning(
-            "The LXD provider is offered as a technology preview for early adopters.\n"
-            "The command line interface, container names or lifecycle handling may "
-            "change in upcoming releases."
-        )
-        # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
-        lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
-        endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
-        try:
-            self._lxd_client = pylxd.Client(endpoint=endpoint)
-        except pylxd.client.exceptions.ClientConnectionFailed:
-            raise errors.ProviderCommunicationError(
-                provider_name=self._get_provider_name(),
-                message="cannot connect to the LXD socket ({!r}).".format(
-                    lxd_socket_path
-                ),
-            )
-        self._container = None  # type: Optional[pylxd.models.container.Container]
 
     def create(self) -> None:
         """Create the LXD instance and setup the build environment."""
@@ -295,11 +300,19 @@ class LXD(Provider):
 
     def _is_mounted(self, target: str) -> bool:
         """Query if there is a mount at target mount point."""
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         name = self._get_mount_name(target)
         return name in self._container.devices
 
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         if self._is_mounted(target):
             # Nothing to do if already mounted.
             return
@@ -329,6 +342,10 @@ class LXD(Provider):
         return was_cleaned
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         self._ensure_container_running()
 
         # TODO: better handling of larger files.
@@ -350,6 +367,10 @@ class LXD(Provider):
         self._run(command=["/bin/bash"])
 
     def _ensure_container_running(self) -> None:
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         self._container.sync()
         if self._container.status.lower() != "running":
             raise errors.ProviderFileCopyError(
