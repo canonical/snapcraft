@@ -933,11 +933,13 @@ class PluginHandler:
         dependencies = _split_dependencies(all_dependencies, dirs)
         dependency_paths: Set[str] = set()
 
-        part_dependencies = dependencies.get(self.plugin.installdir)
+        part_dependencies: Set[str] = dependencies.get(self.plugin.installdir, set())
         part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
 
-        stage_dependencies = dependencies.get(self.stagedir)
-        staged_dependency_paths = {os.path.dirname(d) for d in stage_dependencies}
+        stage_dependencies = dependencies.get(self.stagedir, set())
+        staged_dependency_paths: Set[str] = {
+            os.path.dirname(d) for d in stage_dependencies
+        }
 
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
