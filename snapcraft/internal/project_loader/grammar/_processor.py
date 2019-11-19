@@ -69,7 +69,7 @@ class GrammarProcessor:
 
     def process(
         self, *, grammar: typing.Grammar = None, call_stack: typing.CallStack = None
-    ):
+    ) -> Set[str]:
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
