@@ -128,7 +128,7 @@ class Provider(abc.ABC):
             build_provider_flags = dict()
         self.build_provider_flags = build_provider_flags.copy()
 
-        self._cached_home_directory: pathlib.Path = None
+        self._cached_home_directory: Optional[pathlib.Path] = None
 
     def __enter__(self):
         try:
@@ -393,10 +393,21 @@ class Provider(abc.ABC):
         if self._cached_home_directory is not None:
             return self._cached_home_directory
 
-        self._cached_home_directory = pathlib.Path(
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
-        )
-        return self._cached_home_directory
+        command = ["printenv", "HOME"]
+        run_output = self._run(command=command, hide_output=True)
+
+        # Shouldn't happen, but due to _run()'s return type as being Optional,
+        # we need to check for it anyways for mypy.
+        if not run_output:
+            provider_name = self._get_provider_name()
+            raise errors.ProviderExecError(
+                provider_name=provider_name, command=command, exit_code=2
+            )
+
+        cached_home_directory = pathlib.Path(run_output.decode().strip())
+
+        self._cached_home_directory = cached_home_directory
+        return cached_home_directory
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
