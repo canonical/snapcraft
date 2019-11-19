@@ -85,6 +85,9 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
     snap_names = []
     snap_ids = acl["snap_ids"]
     if snap_ids:
+        if not isinstance(snap_ids, list):
+            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
+
         for snap_id in snap_ids:
             snap_names.append(store.get_snap_name_for_id(snap_id))
     acl["snap_names"] = snap_names
