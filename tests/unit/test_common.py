@@ -33,7 +33,7 @@ class CommonTestCase(unit.TestCase):
         self.assertTrue(common.isurl("bzr://"))
         self.assertFalse(common.isurl("./"))
         self.assertFalse(common.isurl("/foo"))
-        self.assertFalse(common.isurl("/fo:o"))
+        self.assertFalse(common.isurl("/foo:o"))
 
 
 class CommonMigratedTestCase(unit.TestCase):
