@@ -14,7 +14,7 @@ tests. Some other rules are only socially enforced during code reviews.
 ## black
 
 This code base adheres to black[2].
-You can `snap install black --edge` to install the linter and formatter onto your host.
+You can `snap install black --beta --devmode` to install the linter and formatter onto your host.
 
 ## Multiline strings
 
