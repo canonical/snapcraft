@@ -32,7 +32,7 @@ To work inside this environment, run:
 lxc exec snapcraft-dev -- sudo -iu ubuntu bash
 ```
 
-> Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
+Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
 ### Testing
 
