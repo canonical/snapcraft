@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 from snapcraft.internal import errors
 
@@ -23,7 +23,7 @@ class Step:
     def __init__(self, name: str, clean_if_dirty: bool) -> None:
         self.name = name
         self.clean_if_dirty = clean_if_dirty
-        self.__order = None  # type: int
+        self.__order: Optional[int] = None
 
     @property
     def _order(self) -> int:
@@ -34,13 +34,13 @@ class Step:
                 raise errors.InvalidStepError(self.name)
         return self.__order
 
-    def previous_step(self) -> "Step":
+    def previous_step(self) -> Optional["Step"]:
         if self._order > 0:
             return STEPS[self._order - 1]
         else:
             return None
 
-    def next_step(self) -> "Step":
+    def next_step(self) -> Optional["Step"]:
         try:
             return STEPS[self._order + 1]
         except IndexError:
