@@ -19,42 +19,42 @@ parts:
     c:
         plugin: nil
         after: [root]
-    aa:
+    a-a:
         plugin: nil
         after: [a]
-    ab:
+    a-b:
         plugin: nil
         after: [a]
-    ac:
+    a-c:
         plugin: nil
         after: [a]
-    ba:
+    b-a:
         plugin: nil
         after: [b]
-    bb:
+    b-b:
         plugin: nil
         after: [b]
-    bc:
+    b-c:
         plugin: nil
         after: [b]
-    ca:
+    c-a:
         plugin: nil
         after: [c]
-    cb:
+    c-b:
         plugin: nil
         after: [c]
-    cc:
+    c-c:
         plugin: nil
         after: [c]
     x:
         plugin: nil
-        after: [aa, ba, ca]
+        after: [a-a, b-a, c-a]
     y:
         plugin: nil
-        after: [ab, bb, cb]
+        after: [a-b, b-b, c-b]
     z:
         plugin: nil
-        after: [ac, bc, cc]
+        after: [a-c, b-c, c-c]
     last:
         plugin: nil
         after: [x, y, z]
