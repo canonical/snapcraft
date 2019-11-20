@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from typing import Dict  # noqa: F401
+from typing import Dict, Optional  # noqa: F401
 
 
 _ID_TO_UBUNTU_CODENAME = {
@@ -26,7 +26,7 @@ _ID_TO_UBUNTU_CODENAME = {
 }
 
 
-def get_version_codename() -> str:
+def get_version_codename() -> Optional[str]:
     """Return the OS version codename
 
     This first tries to use the VERSION_CODENAME. If that's missing, it
