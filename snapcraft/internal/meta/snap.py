@@ -260,54 +260,106 @@ class Snap:
     def from_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":
         snap_dict = deepcopy(snap_dict)
 
-        snap = Snap()
+        # Using pop() so we can catch if we *miss* fields
+        # with whatever remains in the dictionary.
+        adopt_info = snap_dict.pop("adopt-info", None)
+        architectures = snap_dict.pop("architectures", None)
 
-        if "passthrough" in snap_dict:
-            snap.passthrough = snap_dict.pop("passthrough")
+        # Process apps into Applications.
+        apps: Dict[str, Application] = dict()
+        apps_dict = snap_dict.pop("apps", None)
+        if apps_dict:
+            for app_name, app_dict in apps_dict.items():
+                app = Application.from_dict(app_dict=app_dict, app_name=app_name)
+                apps[app_name] = app
 
-        for key in snap_dict:
-            if key == "plugs":
-                for plug_name, plug_object in snap_dict[key].items():
-                    plug = Plug.from_object(
-                        plug_object=plug_object, plug_name=plug_name
-                    )
-                    snap.plugs[plug_name] = plug
-            elif key == "slots":
-                for slot_name, slot_object in snap_dict[key].items():
-                    slot = Slot.from_object(
-                        slot_object=slot_object, slot_name=slot_name
-                    )
-                    snap.slots[slot_name] = slot
-            elif key == "apps":
-                for app_name, app_dict in snap_dict[key].items():
-                    app = Application.from_dict(app_dict=app_dict, app_name=app_name)
-                    snap.apps[app_name] = app
-            elif key == "hooks":
-                for hook_name, hook_dict in snap_dict[key].items():
-                    hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
-                    snap.hooks[hook_name] = hook
-            elif key == "system-usernames":
-                for user_name, user_object in snap_dict[key].items():
-                    system_username = SystemUser.from_object(
-                        user_object=user_object, user_name=user_name
-                    )
-                    snap.system_usernames[user_name] = system_username
-            elif key in _MANDATORY_PACKAGE_KEYS:
-                snap.__dict__[key] = snap_dict[key]
-            elif key in _OPTIONAL_PACKAGE_KEYS:
-                if key == "assumes":
-                    # Treat `assumes` as a set, not as a list.
-                    snap.__dict__[key] = set(snap_dict[key])
-                else:
-                    snap.__dict__[key] = snap_dict[key]
-            else:
-                logger.debug("ignoring or passing through unknown key: {}".format(key))
-                continue
+        # Treat `assumes` as a set, not as a list.
+        assumes = set(snap_dict.pop("assumes", set()))
 
-        if "adopt-info" in snap_dict:
-            snap.adopt_info = snap_dict["adopt-info"]
+        base = snap_dict.pop("base", None)
+        confinement = snap_dict.pop("confinement", None)
+        description = snap_dict.pop("description", None)
+        environment = snap_dict.pop("environment", None)
+        epoch = snap_dict.pop("epoch", None)
+        grade = snap_dict.pop("grade", None)
 
-        return snap
+        # Process hooks into Hooks.
+        hooks: Dict[str, Hook] = dict()
+        hooks_dict = snap_dict.pop("hooks", None)
+        if hooks_dict:
+            for hook_name, hook_dict in hooks_dict.items():
+                # This can happen, but should be moved into Hook.from_object().
+                if hook_dict is None:
+                    continue
+
+                hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+                hooks[hook_name] = hook
+
+        layout = snap_dict.pop("layout", None)
+        license = snap_dict.pop("license", None)
+        name = snap_dict.pop("name", None)
+        passthrough = snap_dict.pop("passthrough", None)
+
+        # Process plugs into Plugs.
+        plugs: Dict[str, Plug] = dict()
+        plugs_dict = snap_dict.pop("plugs", None)
+        if plugs_dict:
+            for plug_name, plug_object in plugs_dict.items():
+                plug = Plug.from_object(plug_object=plug_object, plug_name=plug_name)
+                plugs[plug_name] = plug
+
+        # Process slots into Slots.
+        slots: Dict[str, Slot] = dict()
+        slots_dict = snap_dict.pop("slots", None)
+        if slots_dict:
+            for slot_name, slot_object in slots_dict.items():
+                slot = Slot.from_object(slot_object=slot_object, slot_name=slot_name)
+                slots[slot_name] = slot
+
+        summary = snap_dict.pop("summary", None)
+
+        # Process sytemusers into SystemUsers.
+        system_usernames: Dict[str, SystemUser] = dict()
+        system_usernames_dict = snap_dict.pop("system-usernames", None)
+        if system_usernames_dict:
+            for user_name, user_object in system_usernames_dict.items():
+                system_username = SystemUser.from_object(
+                    user_object=user_object, user_name=user_name
+                )
+                system_usernames[user_name] = system_username
+
+        title = snap_dict.pop("title", None)
+        type = snap_dict.pop("type", None)
+        version = snap_dict.pop("version", None)
+
+        # Report unhandled keys.
+        for key, value in snap_dict.items():
+            logger.debug(f"ignoring or passing through unknown {key}={value}")
+
+        return Snap(
+            adopt_info=adopt_info,
+            architectures=architectures,
+            apps=apps,
+            assumes=assumes,
+            base=base,
+            confinement=confinement,
+            description=description,
+            environment=environment,
+            epoch=epoch,
+            grade=grade,
+            hooks=hooks,
+            layout=layout,
+            license=license,
+            name=name,
+            passthrough=passthrough,
+            plugs=plugs,
+            slots=slots,
+            summary=summary,
+            system_usernames=system_usernames,
+            title=title,
+            type=type,
+            version=version,
+        )
 
     def to_dict(self):  # noqa: C901
         snap_dict = OrderedDict()
