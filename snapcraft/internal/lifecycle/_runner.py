@@ -15,8 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import List  # noqa: F401
-from typing import Sequence
+from typing import List, Optional, Sequence
 
 from snapcraft import config, storeapi
 from snapcraft.internal import (
@@ -36,7 +35,7 @@ from ._status_cache import StatusCache
 logger = logging.getLogger(__name__)
 
 
-def _get_required_grade(*, base: str, arch: str) -> str:
+def _get_required_grade(*, base: Optional[str], arch: str) -> str:
     # Some types of snap do not require a base.
     if base is None:
         return "stable"
@@ -87,7 +86,7 @@ def execute(
     required_snaps = project_config.build_snaps | content_snaps
 
     if common.is_process_container():
-        installed_snaps = []  # type: List[str]
+        installed_snaps: List[str] = []
         logger.warning(
             (
                 "The following snaps are required but not installed as snapcraft "
