@@ -47,5 +47,5 @@ class HookTestCase(integration.TestCase):
         # Assert that the configure hook doesn't have a wrapper
         self.assertThat(
             os.path.join(self.prime_dir, "meta", "hooks", "configure"),
-            Not(FileContains(matcher=Contains("exec".format(hook)))),
+            Not(FileContains(matcher=Contains("exec"))),
         )
