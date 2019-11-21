@@ -180,7 +180,9 @@ class LaunchpadTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self._project = self._make_snapcraft_project()
-        self.lpc = LaunchpadClient(project=self._project, build_id="id", user="user")
+        self.lpc = LaunchpadClient(
+            project=self._project, build_id="id", user="user", architectures=[]
+        )
 
     @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
     def test_login(self, mock_login):
