@@ -61,6 +61,7 @@ class Snap:
         architectures: Optional[Sequence[str]] = None,
         assumes: Optional[Set[str]] = None,
         base: Optional[str] = None,
+        build_base: Optional[str] = None,
         confinement: Optional[str] = None,
         description: Optional[str] = None,
         environment: Optional[Dict[str, Any]] = None,
@@ -93,6 +94,7 @@ class Snap:
             self.assumes = assumes
 
         self.base = base
+        self._build_base = build_base
         self.confinement = confinement
         self.description = description
 
@@ -130,6 +132,25 @@ class Snap:
         self.title = title
         self.type = type
         self.version = version
+
+    @property
+    def build_base(self) -> str:
+        if self._build_base:
+            return self._build_base
+        elif self.type == "base":
+            if not self.name:
+                # Should never happen under normal circumstances...
+                raise errors.BuildBaseMissingNameError()
+            return self.name
+        elif self.base:
+            return self.base
+        else:
+            # Should never happen under normal circumstances...
+            raise errors.BuildBaseUnknownError()
+
+    @build_base.setter
+    def build_base(self, build_base: str) -> None:
+        self._build_base = build_base
 
     @classmethod
     def from_file(cls, snap_yaml_path: str) -> "Snap":
@@ -249,6 +270,7 @@ class Snap:
         assumes = set(snap_dict.pop("assumes", set()))
 
         base = snap_dict.pop("base", None)
+        build_base = snap_dict.pop("build-base", None)
         confinement = snap_dict.pop("confinement", None)
         description = snap_dict.pop("description", None)
         environment = snap_dict.pop("environment", None)
@@ -295,6 +317,7 @@ class Snap:
             apps=apps,
             assumes=assumes,
             base=base,
+            build_base=build_base,
             confinement=confinement,
             description=description,
             environment=environment,
@@ -350,6 +373,9 @@ class Snap:
         if self.base:
             snap_dict["base"] = self.base
 
+        if self._build_base:
+            snap_dict["build-base"] = self._build_base
+
         if self.confinement:
             snap_dict["confinement"] = self.confinement
 
@@ -401,6 +427,9 @@ class Snap:
         # snap.yaml LP: #1819290
         if self.base == "core":
             snap_dict.pop("base")
+
+        # Do not write build-base.
+        snap_dict.pop("build-base", None)
 
         with open(path, "w") as f:
             yaml_utils.dump(snap_dict, stream=f)

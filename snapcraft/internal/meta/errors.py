@@ -209,3 +209,19 @@ class GradeDevelRequiredError(errors.SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Set 'grade' to 'devel' or use a stable base for this snap."
+
+
+class BuildBaseUnknownError(errors.SnapcraftException):
+    def get_brief(self) -> str:
+        return f"Snap 'build-base' is undefined."
+
+    def get_resolution(self) -> str:
+        return "Set 'base' or 'build-base' for this snap."
+
+
+class BuildBaseMissingNameError(errors.SnapcraftException):
+    def get_brief(self) -> str:
+        return f"Snap 'name' is undefined for type 'base'."
+
+    def get_resolution(self) -> str:
+        return "Set 'name' for this snap."

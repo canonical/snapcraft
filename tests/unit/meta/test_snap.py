@@ -131,6 +131,7 @@ class SnapTests(unit.TestCase):
                 "architectures": ["all"],
                 "assumes": ["command-chain"],
                 "base": "core",
+                "build-base": "core",
                 "confinement": "strict",
                 "environment": {"TESTING": "1"},
                 "epoch": 0,
@@ -158,6 +159,7 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["architectures"], snap.architectures)
         self.assertEqual(set(snap_dict["assumes"]), snap.assumes)
         self.assertEqual(snap_dict["base"], snap.base)
+        self.assertEqual(snap_dict["build-base"], snap.build_base)
         self.assertEqual(snap_dict["environment"], snap.environment)
         self.assertEqual(snap_dict["license"], snap.license)
         self.assertEqual(
