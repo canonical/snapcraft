@@ -54,28 +54,82 @@ _OPTIONAL_PACKAGE_KEYS = [
 class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
-    def __init__(self) -> None:
-        self.adopt_info: Optional[str] = None
-        self.base: Optional[str] = None
-        self.name: Optional[str] = None
-        self.version: Optional[str] = None
-        self.summary: Optional[str] = None
-        self.description: Optional[str] = None
-        self.architectures: Sequence[str] = list()
-        self.assumes: Set[str] = set()
-        self.confinement: Optional[str] = None
-        self.environment: Dict[str, Any] = dict()
-        self.epoch: Any = None
-        self.grade: Optional[str] = None
-        self.license: Optional[str] = None
-        self.title: Optional[str] = None
-        self.type: Optional[str] = None
-        self.plugs: Dict[str, Plug] = dict()
-        self.slots: Dict[str, Slot] = dict()
+    def __init__(
+        self,
+        adopt_info: Optional[str] = None,
+        apps: Optional[Dict[str, Application]] = None,
+        architectures: Optional[Sequence[str]] = None,
+        assumes: Optional[Set[str]] = None,
+        base: Optional[str] = None,
+        confinement: Optional[str] = None,
+        description: Optional[str] = None,
+        environment: Optional[Dict[str, Any]] = None,
+        epoch: Any = None,
+        grade: Optional[str] = None,
+        hooks: Optional[Dict[str, Hook]] = None,
+        layout: Optional[Dict[str, Any]] = None,
+        license: Optional[str] = None,
+        name: Optional[str] = None,
+        passthrough: Optional[Dict[str, Any]] = None,
+        plugs: Optional[Dict[str, Plug]] = None,
+        slots: Optional[Dict[str, Slot]] = None,
+        summary: Optional[str] = None,
+        title: Optional[str] = None,
+        type: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> None:
+        self.adopt_info = adopt_info
+
         self.apps: Dict[str, Application] = dict()
+        if apps:
+            self.apps = apps
+
+        self.architectures: Sequence[str] = list()
+        if architectures:
+            self.architectures = architectures
+
+        self.assumes: Set[str] = set()
+        if assumes:
+            self.assumes = assumes
+
+        self.base = base
+        self.confinement = confinement
+        self.description = description
+
+        self.environment: Dict[str, Any] = dict()
+        if environment:
+            self.environment = environment
+
+        self.epoch = epoch
+        self.grade = grade
+
         self.hooks: Dict[str, Hook] = dict()
-        self.passthrough: Dict[str, Any] = dict()
+        if hooks:
+            self.hooks = hooks
+
         self.layout: Dict[str, Any] = dict()
+        if layout:
+            self.layout = layout
+
+        self.license = license
+        self.name = name
+
+        self.passthrough: Dict[str, Any] = dict()
+        if passthrough:
+            self.passthrough = passthrough
+
+        self.plugs: Dict[str, Plug] = dict()
+        if plugs:
+            self.plugs = plugs
+
+        self.slots: Dict[str, Slot] = dict()
+        if slots:
+            self.slots = slots
+
+        self.summary = summary
+        self.title = title
+        self.type = type
+        self.version = version
 
     @classmethod
     def from_file(cls, snap_yaml_path: str) -> "Snap":
