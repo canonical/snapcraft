@@ -86,7 +86,7 @@ class LaunchpadClient:
         project: Project,
         build_id: str,
         user: str,
-        architectures: Optional[List[str]] = None,
+        architectures: Sequence[str],
         git_branch: str = "master",
         core18_channel: str = "stable",
         snapcraft_channel: str = "edge",
@@ -119,10 +119,10 @@ class LaunchpadClient:
 
     @architectures.setter
     def architectures(self, architectures: Sequence[str]) -> None:
+        self._lp_processors: Optional[Sequence[str]] = None
+
         if architectures:
             self._lp_processors = ["/+processors/" + a for a in architectures]
-        else:
-            self._lp_processors = None
 
         self._architectures = architectures
 
