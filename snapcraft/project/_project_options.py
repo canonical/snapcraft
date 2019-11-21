@@ -18,8 +18,7 @@ import logging
 import os
 import platform
 import sys
-from contextlib import suppress
-from typing import List, Set  # noqa: F401
+from typing import Set
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
@@ -250,15 +249,19 @@ class ProjectOptions:
                   build host, else it returns False.
         :rtype: bool
         """
-        codename = None  # type: str
-        with suppress(errors.OsReleaseCodenameError):
+        try:
             codename = os_release.OsRelease().version_codename()
-            logger.debug("Running on {!r}".format(codename))
+        except errors.OsReleaseCodenameError:
+            return False
 
-        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(base)  # type: str
-        compatible_hosts = _HOST_COMPATIBILITY.get(
-            build_host_for_base, []
-        )  # type: List[str]
+        logger.debug("Running on {!r}".format(codename))
+
+        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(base)
+        if build_host_for_base is None:
+            return False
+
+        compatible_hosts = _HOST_COMPATIBILITY.get(build_host_for_base, [])
+
         return codename in compatible_hosts
 
     # This is private to not make the API public given that base
