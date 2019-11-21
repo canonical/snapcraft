@@ -324,48 +324,70 @@ class Snap:
         # Ensure command-chain is in assumes, if required.
         self._ensure_command_chain_assumption()
 
-        for key in _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS:
-            if self.__dict__[key] is None:
-                continue
+        if self.name is not None:
+            snap_dict["name"] = self.name
 
-            # Skip fields that are empty lists/dicts.
-            if (
-                key
-                in [
-                    "apps",
-                    "architectures",
-                    "assumes",
-                    "environment",
-                    "hooks",
-                    "layout",
-                    "plugs",
-                    "slots",
-                ]
-                and not self.__dict__[key]
-            ):
-                continue
+        if self.version is not None:
+            snap_dict["version"] = self.version
 
-            # Sort where possible for consistency.
-            if key == "apps":
-                snap_dict[key] = dict()
-                for name, app in sorted(self.apps.items()):
-                    snap_dict[key][name] = app.to_dict()
-            elif key == "assumes":
-                snap_dict[key] = sorted(set(self.assumes))
-            elif key == "hooks":
-                snap_dict[key] = dict()
-                for name, hook in sorted(self.hooks.items()):
-                    snap_dict[key][name] = hook.to_dict()
-            elif key == "plugs":
-                snap_dict[key] = dict()
-                for name, plug in sorted(self.plugs.items()):
-                    snap_dict[key][name] = plug.to_dict()
-            elif key == "slots":
-                snap_dict[key] = dict()
-                for name, slot in sorted(self.slots.items()):
-                    snap_dict[key][name] = slot.to_dict()
-            else:
-                snap_dict[key] = deepcopy(self.__dict__[key])
+        if self.summary is not None:
+            snap_dict["summary"] = self.summary
+
+        if self.description is not None:
+            snap_dict["description"] = self.description
+
+        if self.apps:
+            snap_dict["apps"] = OrderedDict()
+            for name, app in sorted(self.apps.items()):
+                snap_dict["apps"][name] = deepcopy(app.to_dict())
+
+        if self.architectures:
+            snap_dict["architectures"] = deepcopy(self.architectures)
+
+        if self.assumes:
+            snap_dict["assumes"] = sorted(set(deepcopy(self.assumes)))
+
+        if self.base is not None:
+            snap_dict["base"] = self.base
+
+        if self.confinement is not None:
+            snap_dict["confinement"] = self.confinement
+
+        if self.environment:
+            snap_dict["environment"] = self.environment
+
+        if self.epoch is not None:
+            snap_dict["epoch"] = self.epoch
+
+        if self.grade is not None:
+            snap_dict["grade"] = self.grade
+
+        if self.hooks:
+            snap_dict["hooks"] = OrderedDict()
+            for name, hook in sorted(self.hooks.items()):
+                snap_dict["hooks"][name] = deepcopy(hook.to_dict())
+
+        if self.layout:
+            snap_dict["layout"] = deepcopy(self.layout)
+
+        if self.license is not None:
+            snap_dict["license"] = self.license
+
+        if self.plugs:
+            snap_dict["plugs"] = OrderedDict()
+            for name, plug in sorted(self.plugs.items()):
+                snap_dict["plugs"][name] = deepcopy(plug.to_dict())
+
+        if self.slots:
+            snap_dict["slots"] = OrderedDict()
+            for name, slot in sorted(self.slots.items()):
+                snap_dict["slots"][name] = deepcopy(slot.to_dict())
+
+        if self.title is not None:
+            snap_dict["title"] = self.title
+
+        if self.type is not None:
+            snap_dict["type"] = self.type
 
         # Apply passthrough keys.
         snap_dict.update(deepcopy(self.passthrough))
