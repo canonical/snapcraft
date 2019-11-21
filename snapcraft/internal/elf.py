@@ -21,7 +21,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
+from typing import Dict, FrozenSet, List, Optional, Set, Sequence, Tuple, Union
 
 import elftools.elf.elffile
 import elftools.common.exceptions
@@ -108,9 +108,9 @@ SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
 if parse_version(elftools.__version__) >= parse_version("0.24"):
-    _DYNAMIC = ".dynamic"  # type: Union[str, bytes]
-    _GNU_VERSION_R = ".gnu.version_r"  # type: Union[str, bytes]
-    _INTERP = ".interp"  # type: Union[str, bytes]
+    _DYNAMIC: Union[str, bytes] = ".dynamic"
+    _GNU_VERSION_R: Union[str, bytes] = ".gnu.version_r"
+    _INTERP: Union[str, bytes] = ".interp"
 else:
     _DYNAMIC = b".dynamic"
     _GNU_VERSION_R = b".gnu.version_r"
@@ -270,7 +270,7 @@ class ElfFile:
         self.is_dynamic = elf_data[5]
 
     def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
-        arch = None  # type: ElfArchitectureTuple
+        arch: Optional[ElfArchitectureTuple] = None
         interp = str()
         soname = str()
         libs = dict()
