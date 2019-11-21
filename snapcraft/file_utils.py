@@ -24,8 +24,7 @@ import shutil
 import stat
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator, List
-from typing import Set  # noqa F401
+from typing import Pattern, Callable, Generator, List, Optional, Set
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
@@ -213,7 +212,7 @@ def link_or_copy_tree(
     destination_basename = os.path.basename(destination_tree)
 
     for root, directories, files in os.walk(source_tree, topdown=True):
-        ignored = set()  # type: Set[str]
+        ignored: Set[str] = set()
         if ignore is not None:
             ignored = set(ignore(root, directories + files))
 
@@ -346,8 +345,14 @@ def get_tool_path(command_name: str) -> str:
     :return: Path to command
     :rtype: str
     """
+    command_path: Optional[str] = None
+
     if common.is_snap():
-        command_path = _command_path_in_root(os.getenv("SNAP"), command_name)
+        snap_path = os.getenv("SNAP")
+        if snap_path is None:
+            raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
+
+        command_path = _command_path_in_root(snap_path, command_name)
     else:
         command_path = shutil.which(command_name)
 
