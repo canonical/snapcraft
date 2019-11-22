@@ -14,15 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
+from copy import deepcopy
 import hashlib
 import os
 from datetime import datetime
+from typing import Any, Optional, Set  # noqa: F401
 
+from snapcraft import yaml_utils
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
-from typing import Set
+from . import errors
 from ._project_options import ProjectOptions
 from ._project_info import ProjectInfo  # noqa: F401
+from ._schema import Validator
 
 
 class Project(ProjectOptions):
@@ -47,12 +52,15 @@ class Project(ProjectOptions):
 
         super().__init__(target_deb_arch, debug, work_dir=work_dir)
 
+        self._snapcraft_yaml_path = snapcraft_yaml_file_path
+
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
-            self.info = None  # type: ProjectInfo
-
+            self._raw_snapcraft: "OrderedDict[str, Any]" = OrderedDict()
+            self.info: Optional[ProjectInfo] = None
         else:
+            self._raw_snapcraft = self._load_raw_snapcraft()
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self._is_managed_host = is_managed_host
@@ -66,6 +74,26 @@ class Project(ProjectOptions):
         # Ideally everywhere wold converge to operating on snap_meta, and ww
         # would only need to initialize it once (properly).
         self._snap_meta = Snap()
+
+    def _load_raw_snapcraft(self) -> "OrderedDict[str, Any]":
+        raw_snapcraft = yaml_utils.load_yaml_file(self._snapcraft_yaml_path)
+
+        if "name" not in raw_snapcraft:
+            raise errors.YamlValidationError(
+                "'name' is a required property in {!r}".format(
+                    self._snapcraft_yaml_path
+                )
+            )
+
+        return raw_snapcraft
+
+    def get_raw_snapcraft(self) -> "OrderedDict[str, Any]":
+        return deepcopy(self._raw_snapcraft)
+
+    def validate_raw_snapcraft(self) -> None:
+        """Validate the snapcraft.yaml for this project."""
+        if self._raw_snapcraft is not None:
+            Validator(self._raw_snapcraft).validate()
 
     def _get_project_directory_hash(self) -> str:
         m = hashlib.sha1()
