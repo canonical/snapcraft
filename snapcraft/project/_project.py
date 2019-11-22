@@ -50,7 +50,7 @@ class Project(ProjectOptions):
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
-            self.info = None  # type: ProjectInfo
+            self.info: ProjectInfo = None
 
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
