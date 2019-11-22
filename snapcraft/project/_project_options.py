@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import multiprocessing
 import os
 import platform
 import sys
@@ -109,7 +108,7 @@ _HOST_COMPATIBILITY = {
     "xenial": ["trusty", "xenial"],
     "bionic": ["trusty", "xenial", "bionic"],
 }
-
+_STATIC_BASES = ["bare"]
 
 _LINKER_VERSION_FOR_BASE = {"core18": "2.27", "core": "2.23"}
 
@@ -133,13 +132,7 @@ def _get_platform_architecture():
 class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
-        build_count = 1
-        try:
-            build_count = multiprocessing.cpu_count()
-        except NotImplementedError:
-            logger.warning("Unable to determine CPU count; disabling parallel builds")
-
-        return build_count
+        return len(os.sched_getaffinity(0))
 
     @property
     def is_cross_compiling(self):
@@ -222,6 +215,28 @@ class ProjectOptions:
 
         self._set_machine(target_deb_arch)
 
+    def _get_content_snaps(self) -> Set[str]:
+        """Temporary shim for unit tests using ProjectOptions
+        where Project is really required.  Will be removed in
+        future convergence work.
+        """
+        return set()
+
+    def _get_provider_content_dirs(self) -> Set[str]:
+        """Temporary shim for unit tests using ProjectOptions
+        where Project is really required.  Will be removed in
+        future convergence work.
+        """
+        return set()
+
+    def is_static_base(self, base: str) -> bool:
+        """Return True if a base that is intended to be static is used.
+
+        Static bases require all their necessary components to live within
+        the snap.
+        """
+        return base in _STATIC_BASES
+
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.
 
@@ -270,7 +285,7 @@ class ProjectOptions:
         :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
             if a loop is found while resolving the real path to the linker.
         """
-        core_path = common.get_core_path(base)
+        core_path = common.get_installed_snap_path(base)
         dynamic_linker_path = os.path.join(
             core_path,
             self.__machine_info.get("core-dynamic-linker", "lib/ld-linux.so.2"),

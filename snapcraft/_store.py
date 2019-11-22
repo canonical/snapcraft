@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import getpass
 import hashlib
 import json
 import logging
@@ -26,7 +25,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Dict, Iterable, Optional, TextIO
+from typing import Any, Dict, Iterable, List, Optional, TextIO, TYPE_CHECKING
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -40,6 +39,10 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+
+
+if TYPE_CHECKING:
+    from snapcraft.storeapi._status_tracker import StatusTracker
 
 
 logger = logging.getLogger(__name__)
@@ -126,7 +129,7 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
         if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = _get_url_from_error(e) or storeapi.constants.UBUNTU_STORE_TOS_URL
-            choice = input(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
+            choice = echo.prompt(storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
             if choice in {"y", "Y"}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
@@ -163,7 +166,7 @@ def _try_login(
     acls: Iterable[str] = None,
     channels: Iterable[str] = None,
     expires: str = None,
-    config_fd: TextIO = None
+    config_fd: TextIO = None,
 ) -> None:
     try:
         store.login(
@@ -178,9 +181,9 @@ def _try_login(
         )
         if not config_fd:
             print()
-            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
+            echo.wrapped(storeapi.constants.TWO_FACTOR_WARNING)
     except storeapi.errors.StoreTwoFactorAuthenticationRequired:
-        one_time_password = input("Second-factor auth: ")
+        one_time_password = echo.prompt("Second-factor auth")
         store.login(
             email,
             password,
@@ -205,7 +208,7 @@ def login(
     acls: Iterable[str] = None,
     channels: Iterable[str] = None,
     expires: str = None,
-    config_fd: TextIO = None
+    config_fd: TextIO = None,
 ) -> bool:
     if not store:
         store = storeapi.StoreClient()
@@ -214,16 +217,19 @@ def login(
     password = ""
 
     if not config_fd:
-        print(
-            "Enter your Ubuntu One e-mail address and password.\n"
+        echo.wrapped("Enter your Ubuntu One e-mail address and password.")
+        echo.wrapped(
             "If you do not have an Ubuntu One account, you can create one "
             "at https://snapcraft.io/account"
         )
-        email = input("Email: ")
-        if os.environ.get("SNAPCRAFT_TEST_INPUT"):
-            password = input("Password: ")
+        email = echo.prompt("Email")
+        if os.getenv("SNAPCRAFT_TEST_INPUT"):
+            # Integration tests do not work well with hidden input.
+            echo.warning("Password will be visible.")
+            hide_input = False
         else:
-            password = getpass.getpass("Password: ")
+            hide_input = True
+        password = echo.prompt("Password", hide_input=hide_input)
 
     try:
         _try_login(
@@ -248,21 +254,139 @@ def login(
     return True
 
 
-@contextlib.contextmanager
-def _requires_login():
-    try:
-        yield
-    except storeapi.errors.InvalidCredentialsError:
-        logger.error("No valid credentials found." ' Have you run "snapcraft login"?')
-        raise
+def _login_wrapper(method):
+    def login_decorator(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except storeapi.errors.InvalidCredentialsError:
+            print("You are required to login before continuing.")
+            login(store=self)
+            return method(self, *args, **kwargs)
+
+    return login_decorator
+
+
+def _register_wrapper(method):
+    def register_decorator(self, *args, snap_name: str, **kwargs):
+        try:
+            return method(self, *args, snap_name=snap_name, **kwargs)
+        except storeapi.errors.StorePushError as push_error:
+            if "resource-not-found" not in push_error.error_list:
+                raise
+            echo.wrapped(
+                "You are required to register this snap before continuing. "
+                "Refer to 'snapcraft help register' for more options."
+            )
+            if echo.confirm(
+                "Would you like to register {!r} with the Snap Store?".format(snap_name)
+            ):
+                self.register(snap_name=snap_name)
+                return method(self, *args, snap_name=snap_name, **kwargs)
+            else:
+                raise
+
+    return register_decorator
+
+
+class StoreClientCLI(storeapi.StoreClient):
+    """A CLI friendly StoreClient implementation."""
+
+    # While not complete, the goal of this class is to orchestrate calls
+    # to the storeapi and provide a friendly CLI interface around those
+    # calls with regards to authentication and authorization, spinners or
+    # progressbars and credential configuration.
+    #
+    # Methods defined here shall also be folded into this class as new
+    # features are developed for them, but still provide a simple wrapper
+    # method around those methods for backwards compatibility.
+    #
+    # This class can be thought of and extension to snapcraft.cli.store.
+    # It just lives in snapcraft._store due to the convenience of the
+    # methods it is trying to replace. Considering this is a private module
+    # and this class is not exported, moving it to snapcraft.cli can take
+    # place.
+    #
+    # This is the list of items that needs to be tackled to get to there:
+    #
+    # TODO create an internal copy of snapcraft.storeapi
+    # TODO move configuration loading to this class and out of
+    #      snapcraft.storeapi.StoreClient
+    # TODO Move progressbar implementation out of snapcraft.storeapi used
+    #      during upload into this class using click.
+    # TODO use an instance of this class directly from snapcraft.cli.store
+
+    @_login_wrapper
+    def close_channels(
+        self, *, snap_id: str, channel_names: List[str]
+    ) -> Dict[str, Any]:
+        return super().close_channels(snap_id=snap_id, channel_names=channel_names)
+
+    @_login_wrapper
+    def get_account_information(self) -> Dict[str, Any]:
+        return super().get_account_information()
+
+    @_login_wrapper
+    @_register_wrapper
+    def push_precheck(self, *, snap_name: str) -> None:
+        return super().push_precheck(snap_name=snap_name)
+
+    @_login_wrapper
+    @_register_wrapper
+    def push_metadata(
+        self, *, snap_name: str, metadata: Dict[str, str], force: bool
+    ) -> Dict[str, Any]:
+        return super().push_metadata(
+            snap_name=snap_name, metadata=metadata, force=force
+        )
+
+    @_login_wrapper
+    def register(
+        self,
+        *,
+        snap_name: str,
+        is_private: bool = False,
+        store_id: Optional[str] = None,
+    ) -> None:
+        super().register(snap_name=snap_name, is_private=is_private, store_id=store_id)
+
+    @_login_wrapper
+    def release(
+        self, *, snap_name: str, revision: str, channels: List[str]
+    ) -> Dict[str, Any]:
+        return super().release(
+            snap_name=snap_name, revision=revision, channels=channels
+        )
+
+    @_login_wrapper
+    @_register_wrapper
+    def upload(
+        self,
+        *,
+        snap_name: str,
+        snap_filename: str,
+        built_at: Optional[str] = None,
+        channels: Optional[List[str]] = None,
+        delta_format: Optional[str] = None,
+        source_hash: Optional[str] = None,
+        target_hash: Optional[str] = None,
+        delta_hash: Optional[str] = None,
+    ) -> "StatusTracker":
+        return super().upload(
+            snap_name=snap_name,
+            snap_filename=snap_filename,
+            built_at=built_at,
+            channels=channels,
+            delta_format=delta_format,
+            source_hash=source_hash,
+            target_hash=target_hash,
+            delta_hash=delta_hash,
+        )
 
 
 def list_registered():
     series = storeapi.constants.DEFAULT_SERIES
 
-    store = storeapi.StoreClient()
-    with _requires_login():
-        account_info = store.get_account_information()
+    account_info = StoreClientCLI().get_account_information()
     snaps = [
         (
             name,
@@ -312,7 +436,7 @@ def _select_key(keys):
         print()
         while True:
             try:
-                keynum = int(input("Key number: ")) - 1
+                keynum = int(echo.prompt("Key number: ")) - 1
             except ValueError:
                 continue
             if keynum >= 0 and keynum < len(keys):
@@ -332,9 +456,7 @@ def list_keys():
     if not repo.Repo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("list-keys")
     keys = list(_get_usable_keys())
-    store = storeapi.StoreClient()
-    with _requires_login():
-        account_info = store.get_account_information()
+    account_info = StoreClientCLI().get_account_information()
     enabled_keys = {
         account_key["public-key-sha3-384"]
         for account_key in account_info["account_keys"]
@@ -372,9 +494,8 @@ def create_key(name):
         # some time in this obvious error case by not bothering to talk to
         # the store first.
         raise storeapi.errors.KeyAlreadyRegisteredError(name)
-    store = storeapi.StoreClient()
     try:
-        account_info = store.get_account_information()
+        account_info = StoreClientCLI().get_account_information()
         enabled_names = {
             account_key["name"] for account_key in account_info["account_keys"]
         }
@@ -402,16 +523,16 @@ def register_key(name):
     if not repo.Repo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("register-key")
     key = _maybe_prompt_for_key(name)
-    store = storeapi.StoreClient()
+    store_client = StoreClientCLI()
     try:
-        if not login(store=store, acls=["modify_account_key"], save=False):
+        if not login(store=store_client, acls=["modify_account_key"], save=False):
             raise storeapi.errors.LoginRequiredError()
     except storeapi.errors.StoreAuthenticationError as e:
         raise storeapi.errors.LoginRequiredError(str(e)) from e
     logger.info("Registering key ...")
-    account_info = store.get_account_information()
+    account_info = store_client.get_account_information()
     account_key_request = _export_key(key["name"], account_info["account_id"])
-    store.register_key(account_key_request)
+    store_client.register_key(account_key_request)
     logger.info(
         'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
             key["name"], key["sha3-384"]
@@ -421,9 +542,9 @@ def register_key(name):
 
 def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:
     logger.info("Registering {}.".format(snap_name))
-    store = storeapi.StoreClient()
-    with _requires_login():
-        store.register(snap_name, is_private=is_private, store_id=store_id)
+    StoreClientCLI().register(
+        snap_name=snap_name, is_private=is_private, store_id=store_id
+    )
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
@@ -456,9 +577,8 @@ def sign_build(snap_filename, key_name=None, local=False):
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
 
-    store = storeapi.StoreClient()
-    with _requires_login():
-        account_info = store.get_account_information()
+    store_client = StoreClientCLI()
+    account_info = store_client.get_account_information()
 
     try:
         authority_id = account_info["account_id"]
@@ -491,7 +611,7 @@ def sign_build(snap_filename, key_name=None, local=False):
         logger.info("Build assertion {} saved to disk.".format(snap_build_path))
 
     if not local:
-        store.push_snap_build(snap_id, snap_build_content.decode())
+        store_client.push_snap_build(snap_id, snap_build_content.decode())
         logger.info("Build assertion {} pushed to the Store.".format(snap_build_path))
 
 
@@ -514,13 +634,12 @@ def push_metadata(snap_filename, force):
     snap_name = snap_yaml["name"]
 
     # hit the server
-    store = storeapi.StoreClient()
-    with _requires_login():
-        store.push_precheck(snap_name)
-        store.push_metadata(snap_name, metadata, force)
-        with _get_icon_from_snap_file(snap_filename) as icon:
-            metadata = {"icon": icon}
-            store.push_binary_metadata(snap_name, metadata, force)
+    store_client = StoreClientCLI()
+    store_client.push_precheck(snap_name=snap_name)
+    store_client.push_metadata(snap_name=snap_name, metadata=metadata, force=force)
+    with _get_icon_from_snap_file(snap_filename) as icon:
+        metadata = {"icon": icon}
+        store_client.push_binary_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been pushed")
 
@@ -539,62 +658,90 @@ def push(snap_filename, release_channels=None):
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     built_at = snap_yaml.get("snapcraft-started-at")
-    store = storeapi.StoreClient()
 
     logger.debug(
         "Run push precheck and verify cached data for {!r}.".format(snap_filename)
     )
-    with _requires_login():
-        store.push_precheck(snap_name)
+    store_client = StoreClientCLI()
+    store_client.push_precheck(snap_name=snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
-    arch = "all"
 
-    with contextlib.suppress(KeyError):
-        arch = snap_yaml["architectures"][0]
+    try:
+        deb_arch = snap_yaml["architectures"][0]
+    except KeyError:
+        deb_arch = "all"
 
-    source_snap = snap_cache.get(deb_arch=arch)
+    source_snap = snap_cache.get(deb_arch=deb_arch)
     sha3_384_available = hasattr(hashlib, "sha3_384")
 
+    result: Dict[str, Any] = None
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(snap_name, snap_filename, source_snap, built_at)
+            result = _push_delta(
+                store_client,
+                snap_name=snap_name,
+                snap_filename=snap_filename,
+                source_snap=source_snap,
+                built_at=built_at,
+                channels=release_channels,
+            )
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
                 "Falling back to pushing full snap...".format(str(e))
             )
-            result = _push_snap(snap_name, snap_filename, built_at)
-        except storeapi.errors.StorePushError as e:
-            store_error = e.error_list[0].get("message")
+        except storeapi.errors.StorePushError as push_error:
             logger.warning(
                 "Unable to push delta to store: {}\n"
-                "Falling back to pushing full snap...".format(store_error)
+                "Falling back to pushing full snap...".format(push_error.error_list)
             )
-            result = _push_snap(snap_name, snap_filename, built_at)
-    else:
-        result = _push_snap(snap_name, snap_filename, built_at)
+
+    if result is None:
+        result = _push_snap(
+            store_client,
+            snap_name=snap_name,
+            snap_filename=snap_filename,
+            built_at=built_at,
+            channels=release_channels,
+        )
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
+    if release_channels:
+        status(snap_name, storeapi.constants.DEFAULT_SERIES, deb_arch)
 
     snap_cache.cache(snap_filename=snap_filename)
-    snap_cache.prune(deb_arch=arch, keep_hash=calculate_sha3_384(snap_filename))
-
-    if release_channels:
-        release(snap_name, result["revision"], release_channels)
+    snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
 
 
-def _push_snap(snap_name, snap_filename, built_at):
-    store = storeapi.StoreClient()
-    with _requires_login():
-        tracker = store.upload(snap_name, snap_filename, built_at=built_at)
+def _push_snap(
+    store_client,
+    *,
+    snap_name: str,
+    snap_filename: str,
+    built_at: str,
+    channels: Optional[List[str]],
+) -> Dict[str, Any]:
+    tracker = store_client.upload(
+        snap_name=snap_name,
+        snap_filename=snap_filename,
+        built_at=built_at,
+        channels=channels,
+    )
     result = tracker.track()
     tracker.raise_for_code()
     return result
 
 
-def _push_delta(snap_name, snap_filename, source_snap, built_at):
-    store = storeapi.StoreClient()
+def _push_delta(
+    store_client,
+    *,
+    snap_name: str,
+    snap_filename: str,
+    source_snap: str,
+    built_at: str,
+    channels: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     delta_format = "xdelta3"
     logger.debug("Found cached source snap {}.".format(source_snap))
     target_snap = os.path.join(os.getcwd(), snap_filename)
@@ -615,16 +762,16 @@ def _push_delta(snap_name, snap_filename, source_snap, built_at):
 
     try:
         logger.debug("Pushing delta {!r}.".format(delta_filename))
-        with _requires_login():
-            delta_tracker = store.upload(
-                snap_name,
-                delta_filename,
-                delta_format=delta_format,
-                source_hash=snap_hashes["source_hash"],
-                target_hash=snap_hashes["target_hash"],
-                delta_hash=snap_hashes["delta_hash"],
-                built_at=built_at,
-            )
+        delta_tracker = store_client.upload(
+            snap_name=snap_name,
+            snap_filename=delta_filename,
+            built_at=built_at,
+            channels=channels,
+            delta_format=delta_format,
+            source_hash=snap_hashes["source_hash"],
+            target_hash=snap_hashes["target_hash"],
+            delta_hash=snap_hashes["delta_hash"],
+        )
         result = delta_tracker.track()
         delta_tracker.raise_for_code()
     except storeapi.errors.StoreReviewError as e:
@@ -679,9 +826,9 @@ def _get_text_for_channel(channel):
 
 
 def release(snap_name, revision, release_channels):
-    store = storeapi.StoreClient()
-    with _requires_login():
-        channels = store.release(snap_name, revision, release_channels)
+    channels = StoreClientCLI().release(
+        snap_name=snap_name, revision=revision, channels=release_channels
+    )
     channel_map_tree = channels.get("channel_map_tree", {})
 
     # This does not look good in green so we print instead
@@ -735,19 +882,19 @@ def close(snap_name, channel_names):
     """Close one or more channels for the specific snap."""
     snap_series = storeapi.constants.DEFAULT_SERIES
 
-    store = storeapi.StoreClient()
-
-    with _requires_login():
-        info = store.get_account_information()
+    store_client = StoreClientCLI()
+    account_info = store_client.get_account_information()
 
     try:
-        snap_id = info["snaps"][snap_series][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][snap_series][snap_name]["snap-id"]
     except KeyError as e:
         raise storeapi.errors.StoreChannelClosingPermissionError(
             snap_name, snap_series
         ) from e
 
-    closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
+    closed_channels, c_m_tree = store_client.close_channels(
+        snap_id=snap_id, channel_names=channel_names
+    )
 
     tabulated_status = _tabulated_channel_map_tree(c_m_tree)
     print(tabulated_status)
@@ -769,8 +916,8 @@ def download(
     download_path: str,
     risk: str,
     track: Optional[str] = None,
-    except_hash=""
-):
+    except_hash="",
+) -> str:
     """Download snap from the store to download_path.
     :param str snap_name: The snap name to download.
     :param str risk: the channel risk get the snap from.
@@ -784,8 +931,7 @@ def download(
          hash.
     :returns: A sha3_384 of the file that was or would have been downloaded.
     """
-    store = storeapi.StoreClient()
-    return store.download(
+    return StoreClientCLI().download(
         snap_name,
         risk=risk,
         track=track,
@@ -796,10 +942,7 @@ def download(
 
 
 def status(snap_name, series, arch):
-    store = storeapi.StoreClient()
-
-    with _requires_login():
-        status = store.get_snap_status(snap_name, series, arch)
+    status = StoreClientCLI().get_snap_status(snap_name, series, arch)
 
     channel_map_tree = status.get("channel_map_tree", {})
     # This does not look good in green so we print instead
@@ -818,10 +961,7 @@ def _get_text_for_current_channels(channels, current_channels):
 
 
 def revisions(snap_name, series, arch):
-    store = storeapi.StoreClient()
-
-    with _requires_login():
-        revisions = store.get_snap_revisions(snap_name, series, arch)
+    revisions = StoreClientCLI().get_snap_revisions(snap_name, series, arch)
 
     parsed_revisions = [
         (
@@ -844,10 +984,10 @@ def revisions(snap_name, series, arch):
 
 def gated(snap_name):
     """Print list of snaps gated by snap_name."""
-    store = storeapi.StoreClient()
+    store_client = StoreClientCLI()
+    account_info = store_client.get_account_information()
     # Get data for the gating snap
-    with _requires_login():
-        snaps = store.get_account_information().get("snaps", {})
+    snaps = account_info.get("snaps", {})
 
     release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
@@ -856,7 +996,7 @@ def gated(snap_name):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
-    validations = store.get_assertion(snap_id, endpoint="validations")
+    validations = store_client.get_assertion(snap_id, endpoint="validations")
 
     if validations:
         table_data = []
@@ -887,11 +1027,9 @@ def validate(snap_name, validations, revoke=False, key=None):
     # Check validations format
     _check_validations(validations)
 
-    store = storeapi.StoreClient()
-
     # Need the ID of the logged in user.
-    with _requires_login():
-        account_info = store.get_account_information()
+    store_client = StoreClientCLI()
+    account_info = store_client.get_account_information()
     authority_id = account_info["account_id"]
 
     # Get data for the gating snap
@@ -905,7 +1043,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     for validation in validations:
         gated_name, rev = validation.split("=", 1)
         echo.info("Getting details for {}".format(gated_name))
-        approved_data = store.cpi.get_info(gated_name)
+        approved_data = store_client.cpi.get_info(gated_name)
         assertion = {
             "type": "validation",
             "authority-id": authority_id,
@@ -926,7 +1064,7 @@ def validate(snap_name, validations, revoke=False, key=None):
         with open(fname, "wb") as f:
             f.write(assertion)
 
-        store.push_assertion(snap_id, assertion, endpoint="validations")
+        store_client.push_assertion(snap_id, assertion, endpoint="validations")
 
 
 validation_re = re.compile("^[^=]+=[0-9]+$")

@@ -6,6 +6,15 @@
 # shellcheck disable=SC2034
 START=$(date +%s.%N)
 
+# ensure_dir_exists calls `mkdir -p` if the given path is not a directory.
+# This speeds up execution time by avoiding unnecessary calls to mkdir.
+#
+# Usage: ensure_dir_exists <path> [<mkdir-options>]...
+#
+function ensure_dir_exists() {
+  [ -d "$1" ] ||  mkdir -p "$@"
+}
+
 declare -A PIDS
 function async_exec() {
   "$@" &
@@ -31,7 +40,7 @@ REALHOME=$(getent passwd $UID | cut -d ':' -f 6)
 
 # Set config folder to local path
 export XDG_CONFIG_HOME="$SNAP_USER_DATA/.config"
-mkdir -p "$XDG_CONFIG_HOME"
+ensure_dir_exists "$XDG_CONFIG_HOME"
 chmod 700 "$XDG_CONFIG_HOME"
 
 # If the user has modified their user-dirs settings, force an update

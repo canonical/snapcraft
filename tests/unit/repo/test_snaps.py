@@ -576,7 +576,13 @@ class SnapPackageLifecycleTest(unit.TestCase):
 
     def test_install_snaps_returns_revision(self):
         self.fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"latest/stable": {"confinement": "strict"}}}}
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
         ]
         self.fake_snapd.snaps_result = [
             {
@@ -589,6 +595,29 @@ class SnapPackageLifecycleTest(unit.TestCase):
         installed_snaps = snaps.install_snaps(["fake-snap"])
         self.assertThat(installed_snaps, Equals(["fake-snap=test-fake-snap-revision"]))
 
+    def test_install_snaps_non_stable_base(self):
+        self.fake_snapd.find_result = [
+            {
+                "fake-base-snap": {
+                    "channel": "beta",
+                    "type": "base",
+                    "channels": {"latest/beta": {"confinement": "strict"}},
+                }
+            }
+        ]
+        self.fake_snapd.snaps_result = [
+            {
+                "name": "fake-base-snap",
+                "channel": "beta",
+                "revision": "test-fake-base-snap-revision",
+            }
+        ]
+
+        installed_snaps = snaps.install_snaps(["fake-base-snap"])
+        self.assertThat(
+            installed_snaps, Equals(["fake-base-snap=test-fake-base-snap-revision"])
+        )
+
     def test_install_snaps_non_existent_snap(self):
         self.fake_snapd.find_code = 404
         self.assertRaises(
@@ -597,7 +626,13 @@ class SnapPackageLifecycleTest(unit.TestCase):
 
     def test_install_snaps_non_existent_channel(self):
         self.fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+            {
+                "fake-snap": {
+                    "channel": "stable",
+                    "type": "app",
+                    "channels": {"latest/stable": {"confinement": "strict"}},
+                }
+            }
         ]
 
         self.assertRaises(
@@ -606,43 +641,13 @@ class SnapPackageLifecycleTest(unit.TestCase):
             ["fake-snap/non-existent/edge"],
         )
 
-    def test_install_multiple_snaps(self):
+    def test_install_snaps_refresh_to_invalid_channel(self):
         self.fake_snapd.find_result = [
-            {"fake-snap": {"channels": {"classic/stable": {"confinement": "classic"}}}}
+            {"fake-snap": {"channels": {"strict/edge": {"confinement": "strict"}}}}
         ]
 
-        def snap_details(handler_instance, snap_name):
-            if snap_name == "fake-snap":
-                return (200, {"channel": "stable", "revision": "dummy"})
-            # XXX The query for the new-fake-snap details must fail the first
-            # time, but succeed the second.
-            elif snap_name == "new-fake-snap":
-                if not handler_instance._private_data["new_fake_snap_installed"]:
-                    handler_instance._private_data["new_fake_snap_installed"] = True
-                    return (404, {})
-                else:
-                    return (200, {"channel": "stable", "revision": "dummy"})
-
-        self.fake_snapd.snap_details_func = snap_details
-        snaps.install_snaps(["fake-snap/classic/stable", "new-fake-snap"])
-        self.assertThat(
-            self.fake_snap_command.calls,
-            Equals(
-                [
-                    ["snap", "whoami"],
-                    [
-                        "sudo",
-                        "snap",
-                        "refresh",
-                        "fake-snap",
-                        "--channel",
-                        "classic/stable",
-                        "--classic",
-                    ],
-                    ["snap", "whoami"],
-                    ["sudo", "snap", "install", "new-fake-snap"],
-                ]
-            ),
+        self.assertRaises(
+            errors.SnapUnavailableError, snaps.install_snaps, "fake-snap/strict/stable"
         )
 
 

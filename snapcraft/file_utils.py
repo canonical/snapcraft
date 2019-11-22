@@ -21,6 +21,7 @@ import logging
 import re
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from typing import Pattern, Callable, Generator, List
@@ -264,6 +265,11 @@ def create_similar_directory(source: str, destination: str) -> None:
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
 
+    # Windows does not have "os.chown" implementation and copystat
+    # is unlikely to be useful, so just bail after creating directory.
+    if sys.platform == "win32":
+        return
+
     try:
         os.chown(destination, uid, gid, follow_symlinks=False)
     except PermissionError as exception:
@@ -414,3 +420,16 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     filename_relpath = os.path.relpath(filename_abspath, base_directory)
 
     return filename_relpath
+
+
+def _remove_readonly(func, path, excinfo):
+    # Try setting file to writeable if error occurs during rmtree.
+    # Known to be required on Windows where file is not "writeable",
+    # but it is owned by the user (who can set file permissions).
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def rmtree(path: str) -> None:
+    """Cross-platform rmtree implementation."""
+    shutil.rmtree(path, onerror=_remove_readonly)

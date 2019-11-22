@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configparser
 import contextlib
 import logging
 import os
@@ -42,6 +41,7 @@ from snapcraft.project import Project
 from snapcraft.project import errors as project_errors
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
+from snapcraft.internal import states
 from tests import unit, fixture_setup
 
 
@@ -118,6 +118,9 @@ class CreateTestCase(CreateBaseTestCase):
 
     def test_create_meta_with_core_as_base(self):
         self.config_data["base"] = "core"
+        self.fake_snapd.snaps_result = [
+            dict(name="core", channel="stable", revision="10")
+        ]
 
         y = self.generate_meta_yaml()
 
@@ -173,6 +176,20 @@ class CreateTestCase(CreateBaseTestCase):
             "assumes" in y, 'Expected "assumes" property to be copied into snap.yaml'
         )
         self.assertThat(y["assumes"], Equals(["feature1", "feature2"]))
+
+    def test_create_meta_command_chain_with_assumes(self):
+        self.config_data["assumes"] = ["feature1", "feature2"]
+        self.config_data["apps"] = {"app": {"command": "foo", "command-chain": ["bar"]}}
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "bar"), executable=True)
+
+        y = self.generate_meta_yaml()
+        self.assertTrue(
+            "assumes" in y, 'Expected "assumes" property to be copied into snap.yaml'
+        )
+        self.assertThat(
+            y["assumes"], Equals(sorted(["feature1", "feature2", "command-chain"]))
+        )
 
     def test_create_gadget_meta_with_gadget_yaml(self):
         gadget_yaml = "stub entry: stub value"
@@ -295,17 +312,6 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertFalse("icon" in y, "icon found in snap.yaml {}".format(y))
 
-    def test_create_meta_with_sockets(self):
-        os.mkdir(self.prime_dir)
-        _create_file(os.path.join(self.prime_dir, "app.sh"))
-        sockets = {
-            "sock1": {"listen-stream": 8080},
-            "sock2": {"listen-stream": "$SNAP_COMMON/sock2", "socket-mode": 0o640},
-        }
-        self.config_data["apps"] = {"app": {"command": "app.sh", "sockets": sockets}}
-        y = self.generate_meta_yaml()
-        self.assertThat(y["apps"]["app"]["sockets"], Equals(sockets))
-
     def test_version_script(self):
         self.config_data["version-script"] = "echo 10.1-devel"
 
@@ -345,153 +351,6 @@ class CreateTestCase(CreateBaseTestCase):
             y["apps"]["app"]["command-chain"],
             Equals([os.path.join("snap", "command-chain", "snapcraft-runner"), "bar"]),
         )
-
-    def test_create_meta_with_app(self):
-        os.mkdir(self.prime_dir)
-        _create_file(os.path.join(self.prime_dir, "app.sh"))
-        self.config_data["apps"] = {
-            "app1": {"command": "app.sh"},
-            "app2": {"command": "app.sh", "plugs": ["network"]},
-            "app3": {"command": "app.sh", "plugs": ["network-server"]},
-            "app4": {
-                "command": "app.sh",
-                "plugs": ["network-server"],
-                "environment": {"XDG_SOMETHING": "$SNAP_USER_DATA", "LANG": "C"},
-            },
-            "app5": {"command": "app.sh", "common-id": "test-common-id"},
-            "app6": {"command": "app.sh", "autostart": "app6.desktop"},
-        }
-        self.config_data["plugs"] = {"network-server": {"interface": "network-bind"}}
-
-        y = self.generate_meta_yaml()
-
-        for app in ["app1", "app2", "app3"]:
-            app_wrapper_path = os.path.join(
-                self.prime_dir, "command-{}.wrapper".format(app)
-            )
-            self.assertTrue(
-                os.path.exists(app_wrapper_path),
-                "the wrapper for {!r} was not setup correctly".format(app),
-            )
-
-        expected = {
-            "architectures": ["amd64"],
-            "apps": {
-                "app1": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app1.wrapper"
-                },
-                "app2": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app2.wrapper",
-                    "plugs": ["network"],
-                },
-                "app3": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app3.wrapper",
-                    "plugs": ["network-server"],
-                },
-                "app4": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app4.wrapper",
-                    "plugs": ["network-server"],
-                    "environment": {"XDG_SOMETHING": "$SNAP_USER_DATA", "LANG": "C"},
-                },
-                "app5": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app5.wrapper",
-                    "common-id": "test-common-id",
-                },
-                "app6": {
-                    "command": "snap/command-chain/snapcraft-runner $SNAP/command-app6.wrapper",
-                    "autostart": "app6.desktop",
-                },
-            },
-            "description": "my description",
-            "summary": "my summary",
-            "name": "my-package",
-            "base": "core18",
-            "version": "1.0",
-            "confinement": "devmode",
-            "grade": "stable",
-            "environment": {"GLOBAL": "y"},
-            "plugs": {"network-server": {"interface": "network-bind"}},
-        }
-
-        self.assertThat(y, Equals(expected))
-
-    def test_create_meta_with_app_desktop_key(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        os.mkdir(self.prime_dir)
-        _create_file(os.path.join(self.prime_dir, "app.sh"))
-        _create_file(
-            os.path.join(self.prime_dir, "app1.desktop"),
-            content="[Desktop Entry]\nExec=app1.exe\nIcon=app1.png",
-        )
-        icon_dir = os.path.join(self.prime_dir, "usr", "share")
-        os.makedirs(icon_dir)
-        _create_file(os.path.join(icon_dir, "app2.png"))
-        _create_file(
-            os.path.join(self.prime_dir, "app2.desktop"),
-            content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
-        )
-        _create_file(os.path.join(icon_dir, "app3.png"))
-        _create_file(
-            os.path.join(self.prime_dir, "app3.desktop"),
-            content="[Desktop Entry]\nExec=app3.exe\nIcon=${SNAP}/usr/share/app3.png",
-        )
-        self.config_data["apps"] = {
-            "app1": {"command": "app.sh", "desktop": "app1.desktop"},
-            "app2": {"command": "app.sh", "desktop": "app2.desktop"},
-            "my-package": {"command": "app.sh", "desktop": "app3.desktop"},
-        }
-
-        self.generate_meta_yaml()
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "app1.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package.app1 %U"))
-        self.assertThat(contents[section].get("Icon"), Equals("app1.png"))
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "app2.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package.app2 %U"))
-        self.assertThat(
-            contents[section].get("Icon"), Equals("${SNAP}/usr/share/app2.png")
-        )
-
-        desktop_file = os.path.join(self.meta_dir, "gui", "my-package.desktop")
-        self.assertThat(desktop_file, FileExists())
-        contents = configparser.ConfigParser(interpolation=None)
-        contents.read(desktop_file)
-        section = "Desktop Entry"
-        self.assertTrue(section in contents)
-        self.assertThat(contents[section].get("Exec"), Equals("my-package %U"))
-        self.assertThat(
-            contents[section].get("Icon"), Equals("${SNAP}/usr/share/app3.png")
-        )
-        self.assertThat(
-            fake_logger.output,
-            Not(
-                Contains(
-                    "Icon {} specified in desktop file {} not found "
-                    "in prime directory".format(
-                        "${SNAP}/usr/share/app3.png", "app3.desktop"
-                    )
-                )
-            ),
-        )
-
-        snap_yaml = os.path.join("prime", "meta", "snap.yaml")
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app1.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app2.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: app3.desktop")))
-        self.assertThat(snap_yaml, Not(FileContains("desktop: my-package.desktop")))
 
 
 class StopModeTestCase(CreateBaseTestCase):
@@ -1382,77 +1241,6 @@ class CreateWithConfinementTestCase(CreateBaseTestCase):
             )
 
 
-class EnsureFilePathsTestCase(CreateBaseTestCase):
-
-    scenarios = [
-        (
-            "desktop",
-            dict(
-                filepath="usr/share/desktop/desktop.desktop",
-                content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
-                key="desktop",
-                actual_prime_dir="prime",
-            ),
-        ),
-        (
-            "desktop with other prime",
-            dict(
-                filepath="usr/share/desktop/desktop.desktop",
-                content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
-                key="desktop",
-                actual_prime_dir="other-prime",
-            ),
-        ),
-        (
-            "completer",
-            dict(
-                filepath="usr/share/completions/complete.sh",
-                content="#/bin/bash\n",
-                key="completer",
-                actual_prime_dir="prime",
-            ),
-        ),
-        (
-            "completer with other prime",
-            dict(
-                filepath="usr/share/completions/complete.sh",
-                content="#/bin/bash\n",
-                key="completer",
-                actual_prime_dir="other-prime",
-            ),
-        ),
-    ]
-
-    def test_file_path_entry(self):
-        self.config_data["apps"] = {
-            "app": {"command": 'echo "hello"', self.key: self.filepath}
-        }
-        _create_file(
-            os.path.join(self.actual_prime_dir, self.filepath), content=self.content
-        )
-
-        # If the path exists this should not fail
-        self.generate_meta_yaml(actual_prime_dir=self.actual_prime_dir)
-
-
-class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
-
-    scenarios = [
-        ("desktop", dict(filepath="usr/share/desktop/desktop.desktop", key="desktop")),
-        (
-            "completer",
-            dict(filepath="usr/share/completions/complete.sh", key="completer"),
-        ),
-    ]
-
-    def test_file_path_entry(self):
-        self.config_data["apps"] = {
-            "app": {"command": 'echo "hello"', self.key: self.filepath}
-        }
-
-        self.assertRaises(errors.SnapcraftPathEntryError, self.generate_meta_yaml)
-
-
 class CreateWithGradeTestCase(CreateBaseTestCase):
 
     scenarios = [(grade, dict(grade=grade)) for grade in ["", "stable", "devel"]]
@@ -1479,527 +1267,43 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
             )
 
 
-class BaseWrapTest(unit.TestCase):
-    def setUp(self):
-        super().setUp()
+class RequiredGradeTest(CreateBaseTestCase):
+    def test_defaults_from_schema(self):
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
 
-        snapcraft_yaml_file_path = "snapcraft.yaml"
-        self.snapcraft_yaml = {
-            "name": "test-snap",
-            "base": "core18",
-            "version": "test-version",
-            "summary": "test summary",
-            "description": "test description",
-            "confinement": "devmode",
-            "apps": {"app": {"command": "test-command", "adapter": "legacy"}},
-            "parts": {"part1": {"plugin": "nil"}},
-        }
-        with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml_utils.dump(self.snapcraft_yaml, stream=snapcraft_file)
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-        config = project_loader.load_config(project)
-        metadata = extractors.ExtractedMetadata()
-        # TODO move to use outer interface
-        self.packager = _snap_packaging._SnapPackaging(config, metadata)
-        self.packager._is_host_compatible_with_base = True
-
-
-class WrapAppTest(BaseWrapTest):
-    def test_app_not_found(self):
-        self.assertRaises(
-            meta_errors.InvalidAppCommandError,
-            self.packager._wrap_apps,
-            apps=dict(app=dict(command="test-command", adapter="legacy")),
+    def test_stable_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
         )
 
+        global_state = states.GlobalState()
+        global_state.set_required_grade("stable")
+        global_state.save(filepath=global_state_path)
 
-# TODO this needs more tests.
-class WrapExeTest(BaseWrapTest):
-    @patch("snapcraft.internal.common.assemble_env")
-    def test_wrapper(self, mock_assemble_env):
-        mock_assemble_env.return_value = "export PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
-            self.parts_dir
+        self.config_data["grade"] = "stable"
+
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
+
+    def test_stable_but_devel_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
         )
 
-        _create_file(
-            os.path.join(self.prime_dir, self.snapcraft_yaml["apps"]["app"]["command"])
-        )
+        global_state = states.GlobalState()
+        global_state.set_required_grade("devel")
+        global_state.save(filepath=global_state_path)
 
-        snap_yaml = self.packager.write_snap_yaml()
-        app_command = snap_yaml["apps"]["app"]["command"]
-        runner, wrapper = app_command.split(maxsplit=1)
+        self.config_data["grade"] = "stable"
 
-        runner_path = os.path.join(self.prime_dir, runner)
-        self.assertThat(
-            runner_path,
-            FileContains(
-                textwrap.dedent(
-                    """\
-                    #!/bin/sh
-                    export PATH=$SNAP/usr/bin:$SNAP/bin
-                    export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-                    exec "$@"
-                    """
-                )
-            ),
-        )
-
-        wrapper_path = os.path.join(self.prime_dir, os.path.relpath(wrapper, "$SNAP"))
-        self.assertThat(
-            wrapper_path,
-            FileContains(
-                textwrap.dedent(
-                    """\
-                    #!/bin/sh
-                    exec "$SNAP/test-command" "$@"
-                    """
-                )
-            ),
-        )
-
-    def test_no_runner_if_not_on_compatible_host_for_target_base(self):
-        self.packager._is_host_compatible_with_base = False
-
-        _create_file(
-            os.path.join(self.prime_dir, self.snapcraft_yaml["apps"]["app"]["command"])
-        )
-
-        snap_yaml = self.packager.write_snap_yaml()
-        wrapper = snap_yaml["apps"]["app"]["command"]
-
-        wrapper_path = os.path.join(self.prime_dir, wrapper)
-        self.assertThat(
-            wrapper_path,
-            FileContains(
-                textwrap.dedent(
-                    """\
-                    #!/bin/sh
-                    exec "$SNAP/test-command" "$@"
-                    """
-                )
-            ),
-        )
-
-    def test_no_runner_generated_if_no_apps(self):
-        snapcraft_yaml_file_path = "snapcraft.yaml"
-        snapcraft_yaml = {
-            "name": "test-snap",
-            "base": "core18",
-            "version": "test-version",
-            "summary": "test-summary",
-            "description": "test-description",
-            "confinement": "devmode",
-            "parts": {"part1": {"plugin": "nil"}},
-        }
-        with open(snapcraft_yaml_file_path, "w") as snapcraft_file:
-            yaml_utils.dump(snapcraft_yaml, stream=snapcraft_file)
-
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-        config = project_loader.load_config(project)
-        metadata = extractors.ExtractedMetadata()
-        packager = _snap_packaging._SnapPackaging(config, metadata)
-        packager._is_host_compatible_with_base = True
-
-        packager.write_snap_yaml()
-        self.assertThat(
-            os.path.join(project.prime_dir, "snap", "command-chain"), Not(DirExists())
-        )
-
-    @patch("snapcraft.internal.common.assemble_env")
-    def test_wrap_exe_writes_wrapper_with_basename(self, mock_assemble_env):
-        mock_assemble_env.return_value = "export PATH={0}/part1/install/usr/bin:{0}/part1/install/bin".format(
-            self.parts_dir
-        )
-
-        relative_exe_path = "test_relexepath"
-        _create_file(os.path.join(self.prime_dir, relative_exe_path))
-
-        relative_wrapper_path = self.packager._wrap_exe(
-            relative_exe_path, basename="new-name"
-        )
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        self.assertThat(relative_wrapper_path, Equals("new-name.wrapper"))
-
-        expected = "#!/bin/sh\n" 'exec "$SNAP/test_relexepath" "$@"\n'
-        self.assertThat(wrapper_path, FileContains(expected))
-
-    def test_snap_shebangs_extracted(self):
-        """Shebangs pointing to the snap's install dir get extracted.
-
-        If the exe has a shebang that points to the snap's install dir,
-        the wrapper script will execute it directly rather than relying
-        on the shebang.
-
-        The shebang needs to be an absolute path, and we don't know
-        in which directory the snap will be installed. Executing
-        it in the wrapper script allows us to use the $SNAP environment
-        variable.
-        """
-        relative_exe_path = "test_relexepath"
-        shebang_path = os.path.join(self.parts_dir, "testsnap", "install", "snap_exe")
-        exe_contents = "#!{}\n".format(shebang_path)
-        _create_file(
-            os.path.join(self.prime_dir, relative_exe_path), content=exe_contents
-        )
-
-        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        expected = "#!/bin/sh\n" 'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n'
-        self.assertThat(wrapper_path, FileContains(expected))
-
-        # The shebang wasn't changed, since we don't know what the
-        # path will be on the installed system.
-        self.assertThat(
-            os.path.join(self.prime_dir, relative_exe_path), FileContains(exe_contents)
-        )
-
-    def test_non_snap_shebangs_ignored(self):
-        """Shebangs not pointing to the snap's install dir are ignored.
-
-        If the shebang points to a system executable, there's no need to
-        interfere.
-        """
-        relative_exe_path = "test_relexepath"
-        exe_contents = "#!/bin/bash\necho hello\n"
-        _create_file(
-            os.path.join(self.prime_dir, relative_exe_path), content=exe_contents
-        )
-
-        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        expected = "#!/bin/sh\n" 'exec "$SNAP/test_relexepath" "$@"\n'
-        self.assertThat(wrapper_path, FileContains(expected))
-
-        self.assertThat(
-            os.path.join(self.prime_dir, relative_exe_path), FileContains(exe_contents)
-        )
-
-    def test_non_shebang_binaries_ignored(self):
-        """Native binaries are ignored.
-
-        If the executable is a native binary, and thus not have a
-        shebang, it's ignored.
-        """
-        relative_exe_path = "test_relexepath"
-        # Choose a content which can't be decoded with utf-8, to make
-        # sure no decoding errors happen.
-        exe_contents = b"\xf0\xf1"
-        path = os.path.join(self.prime_dir, relative_exe_path)
-        _create_file(path, content=exe_contents)
-
-        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        expected = "#!/bin/sh\n" 'exec "$SNAP/test_relexepath" "$@"\n'
-        self.assertThat(wrapper_path, FileContains(expected))
-
-        with open(path, "rb") as exe:
-            self.assertThat(exe.read(), Equals(exe_contents))
-
-    @patch("snapcraft.internal.common.run_output")
-    def test_exe_is_in_path(self, run_mock):
-        app_path = os.path.join(self.prime_dir, "bin", "app1")
-        _create_file(app_path)
-
-        relative_wrapper_path = self.packager._wrap_exe("app1")
-        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
-
-        expected = "#!/bin/sh\n" 'exec "app1" "$@"\n'
-        self.assertThat(wrapper_path, FileContains(expected))
-
-    @patch("snapcraft.internal.project_loader._config.Config.snap_env")
-    def test_command_does_not_exist(self, mock_snap_env):
-        mock_snap_env.return_value = [
-            "PATH={}/non-standard-bin:$PATH".format(self.prime_dir)
-        ]
-
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandError, self.packager.write_snap_yaml
-        )
-        self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    @patch("snapcraft.internal.project_loader._config.Config.snap_env")
-    def test_command_is_not_executable(self, mock_snap_env):
-        mock_snap_env.return_value = [
-            "PATH={}/non-standard-bin:$PATH".format(self.prime_dir)
-        ]
-
-        cmd_path = os.path.join(
-            self.prime_dir,
-            "non-standard-bin",
-            self.snapcraft_yaml["apps"]["app"]["command"],
-        )
-        _create_file(cmd_path)
-
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandError, self.packager.write_snap_yaml
-        )
-        self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    @patch("snapcraft.internal.project_loader._config.Config.snap_env")
-    def test_command_found(self, mock_snap_env):
-        mock_snap_env.return_value = [
-            "PATH={}/non-standard-bin:$PATH".format(self.prime_dir)
-        ]
-
-        cmd_path = os.path.join(
-            self.prime_dir,
-            "non-standard-bin",
-            self.snapcraft_yaml["apps"]["app"]["command"],
-        )
-        _create_file(cmd_path, executable=True)
-
-        snap_yaml = self.packager.write_snap_yaml()
-
-        self.assertThat(
-            snap_yaml["apps"],
-            Equals(
-                {
-                    "app": {
-                        "command": "snap/command-chain/snapcraft-runner $SNAP/command-app.wrapper"
-                    }
-                }
-            ),
-        )
-
-        self.assertThat(snap_yaml, Not(Contains("assumes")))
-
-
-class FullAdapterTest(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.snapcraft_yaml = {
-            "name": "test-snap",
-            "base": "core18",
-            "version": "test-version",
-            "summary": "test summary",
-            "description": "test description",
-            "confinement": "devmode",
-            "apps": {"app": {"command": "test-command", "adapter": "full"}},
-            "parts": {"my-part": {"plugin": "nil"}},
-        }
-
-    def _get_packager(self):
-        with open("snapcraft.yaml", "w") as f:
-            yaml_utils.dump(self.snapcraft_yaml, stream=f)
-
-        project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
-        config = project_loader.load_config(project)
-        metadata = extractors.ExtractedMetadata()
-        # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config, metadata)
-        packager._is_host_compatible_with_base = True
-
-        return packager
-
-    def test_invalid_command(self):
-        self.snapcraft_yaml["apps"]["app"]["command"] = "invalid'app"
-
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandFormatError,
-            self._get_packager().write_snap_yaml,
-        )
-        self.assertThat(raised.command, Equals("invalid'app"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_invalid_command_absolute_path(self):
-        self.snapcraft_yaml["apps"]["app"]["command"] = "/test-command"
-
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandFormatError,
-            self._get_packager().write_snap_yaml,
-        )
-        self.assertThat(raised.command, Equals("/test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_missing_command(self):
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
-        )
-        self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_missing_command_with_spaces(self):
-        self.snapcraft_yaml["apps"]["app"]["command"] = "test-command arg1 arg2"
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandNotFound, self._get_packager().write_snap_yaml
-        )
-        self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_non_executable_command(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=False)
-
-        raised = self.assertRaises(
-            meta_errors.InvalidAppCommandNotExecutable,
-            self._get_packager().write_snap_yaml,
-        )
-        self.assertThat(raised.command, Equals("test-command"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_command_chain_insertion(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner"]),
-        )
-
-        # The command itself should not be touched/rewritten at all
-        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
-
-        # The "command-chain" feature of snapd needs to be assumed
-        self.assertThat(y, Contains("assumes"))
-        self.expectThat(y["assumes"], Equals(["command-chain"]))
-
-    def test_command_with_spaces(self):
-        _create_file(
-            os.path.join(self.prime_dir, "bin", "test-command"), executable=True
-        )
-
-        self.snapcraft_yaml["apps"]["app"]["command"] = "bin/test-command arg1 arg2"
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner"]),
-        )
-
-        # The command itself should not be touched/rewritten at all
-        self.expectThat(
-            y["apps"]["app"]["command"], Equals("bin/test-command arg1 arg2")
-        )
-
-        # The "command-chain" feature of snapd needs to be assumed
-        self.assertThat(y, Contains("assumes"))
-        self.expectThat(y["assumes"], Equals(["command-chain"]))
-
-    def test_command_chain_insertion_is_at_beginning(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
-        _create_file(os.path.join(self.prime_dir, "existing-chain"), executable=True)
-
-        self.snapcraft_yaml["apps"]["app"]["command-chain"] = ["existing-chain"]
-
-        # Verify that the meta chain is added before anything in the YAML
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner", "existing-chain"]),
-        )
-
-        # The "command-chain" feature of snapd needs to be assumed
-        self.assertThat(y, Contains("assumes"))
-        self.expectThat(y["assumes"], Equals(["command-chain"]))
-
-    def test_command_chain_with_assumes(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
-        self.snapcraft_yaml["assumes"] = ["test-feature"]
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner"]),
-        )
-
-        # The command itself should not be touched/rewritten at all
-        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
-
-        # The "command-chain" feature of snapd needs to be assumed
-        self.assertThat(y, Contains("assumes"))
-        self.expectThat(y["assumes"], Equals(["command-chain", "test-feature"]))
-
-    def test_command_chain_with_assumes_no_duplicatation(self):
-        _create_file(os.path.join(self.prime_dir, "test-command"), executable=True)
-        self.snapcraft_yaml["assumes"] = ["command-chain"]
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(y["apps"]["app"], Contains("command-chain"))
-        self.expectThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner"]),
-        )
-
-        # The command itself should not be touched/rewritten at all
-        self.expectThat(y["apps"]["app"]["command"], Equals("test-command"))
-
-        # The "command-chain" feature of snapd needs to be assumed
-        self.assertThat(y, Contains("assumes"))
-        self.expectThat(y["assumes"], Equals(["command-chain"]))
-
-
-class CommandChainTest(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.snapcraft_yaml = {
-            "name": "test-snap",
-            "base": "core18",
-            "version": "test-version",
-            "summary": "test summary",
-            "description": "test description",
-            "confinement": "devmode",
-            "apps": {
-                "app": {
-                    "command": "test-command",
-                    "adapter": "full",
-                    "command-chain": ["test-chain"],
-                }
-            },
-            "parts": {"my-part": {"plugin": "nil"}},
-        }
-
-        cmd_path = os.path.join(self.prime_dir, "test-command")
-        _create_file(cmd_path, executable=True)
-
-    def _get_packager(self):
-        with open("snapcraft.yaml", "w") as f:
-            yaml_utils.dump(self.snapcraft_yaml, stream=f)
-
-        project = Project(snapcraft_yaml_file_path="snapcraft.yaml")
-        config = project_loader.load_config(project)
-        metadata = extractors.ExtractedMetadata()
-        # TODO move to use outer interface
-        packager = _snap_packaging._SnapPackaging(config, metadata)
-        packager._is_host_compatible_with_base = True
-
-        return packager
-
-    def test_missing_command_chain(self):
-        raised = self.assertRaises(
-            meta_errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
-        )
-        self.assertThat(raised.item, Equals("test-chain"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_non_executable_command_chain(self):
-        cmd_path = os.path.join(self.prime_dir, "test-chain")
-        _create_file(cmd_path, executable=False)
-        raised = self.assertRaises(
-            meta_errors.InvalidCommandChainError, self._get_packager().write_snap_yaml
-        )
-        self.assertThat(raised.item, Equals("test-chain"))
-        self.assertThat(raised.app_name, Equals("app"))
-
-    def test_proper_command_chain(self):
-        cmd_path = os.path.join(self.prime_dir, "test-chain")
-        _create_file(cmd_path, executable=True)
-
-        y = self._get_packager().write_snap_yaml()
-        self.assertThat(
-            y["apps"]["app"]["command-chain"],
-            Equals(["snap/command-chain/snapcraft-runner", "test-chain"]),
-        )
+        self.assertRaises(meta_errors.GradeDevelRequiredError, self.generate_meta_yaml)
 
 
 class CommonIdTestCase(CreateBaseTestCase):

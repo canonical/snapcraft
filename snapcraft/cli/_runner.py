@@ -30,12 +30,13 @@ from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
 from .inspect import inspectcli
+from .remote import remotecli
 from .help import helpcli
 from .extensions import extensioncli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
 from .ci import cicli
 from ._command_group import SnapcraftGroup
-from ._options import add_build_options
+from ._options import add_build_options, add_provider_options
 from ._errors import exception_handler
 
 
@@ -51,6 +52,7 @@ command_groups = [
     extensioncli,
     versioncli,
     inspectcli,
+    remotecli,
 ]
 
 
@@ -64,6 +66,7 @@ command_groups = [
 )
 @click.pass_context
 @add_build_options(hidden=True)
+@add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
@@ -92,6 +95,10 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
+
+    # Payload information about argv
+    ctx.obj = dict(argv=sys.argv)
+
     # The default command
     if not ctx.invoked_subcommand:
         snap_command = lifecyclecli.commands["snap"]

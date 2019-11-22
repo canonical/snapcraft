@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,12 +16,13 @@
 
 import os
 import subprocess
-
 from unittest import mock
+
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
-from tests import fixture_setup, unit
+from tests import unit
 
 
 # LP: #1733584
@@ -143,30 +144,79 @@ class TestBazaar(unit.sources.SourceTestCase):  # type: ignore
         self.assertThat(raised.exit_code, Equals(1))
 
 
+def get_side_effect(original_call):
+    def side_effect(cmd, *args, **kwargs):
+        if len(cmd) > 1 and cmd[1] == "revno":
+            return "mock-commit".encode()
+        elif cmd[0] == "bzr":
+            return
+        return original_call(cmd, *args, **kwargs)
+
+    return side_effect
+
+
 class BazaarDetailsTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.working_tree = "bzr-test"
-        self.bzr_repo = fixture_setup.BzrRepo(self.working_tree)
-        self.useFixture(self.bzr_repo)
-        self.source_dir = "bzr-checkout"
+        self.working_tree = "bzr-working-tree"
+        self.source_dir = "bzr-source-dir"
         os.mkdir(self.source_dir)
+        # Simulate that we have already branched code out.
+        os.mkdir(os.path.join(self.source_dir, ".bzr"))
 
-        self.bzr = sources.Bazaar(self.working_tree, self.source_dir, silent=True)
-        self.bzr.pull()
-
-        self.source_details = self.bzr._get_source_details()
+        self.fake_check_output = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output",
+                side_effect=get_side_effect(subprocess.check_output),
+            )
+        )
+        self.fake_check_call = self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_call",
+                side_effect=get_side_effect(subprocess.check_call),
+            )
+        )
 
     def test_bzr_details_commit(self):
-        self.assertThat(
-            self.source_details["source-commit"], Equals(self.bzr_repo.commit)
+        bzr = sources.Bazaar(self.working_tree, self.source_dir, silent=True)
+        bzr.pull()
+
+        source_details = bzr._get_source_details()
+
+        self.assertThat(source_details["source-commit"], Equals("mock-commit"))
+
+        self.fake_check_output.mock.assert_has_calls(
+            [
+                mock.call(["bzr", "revno", self.source_dir]),
+                mock.call(["bzr", "revno", self.source_dir]),
+            ]
+        )
+        self.fake_check_call.mock.assert_called_once_with(
+            ["bzr", "pull", self.working_tree, "-d", self.source_dir],
+            stderr=-3,
+            stdout=-3,
         )
 
     def test_bzr_details_tag(self):
-        self.bzr = sources.Bazaar(
-            self.working_tree, self.source_dir, source_tag="feature-tag", silent=True
+        bzr = sources.Bazaar(
+            self.working_tree, self.source_dir, source_tag="mock-tag", silent=True
         )
-        self.bzr.pull()
+        bzr.pull()
 
-        self.source_details = self.bzr._get_source_details()
-        self.assertThat(self.source_details["source-tag"], Equals("feature-tag"))
+        source_details = bzr._get_source_details()
+        self.assertThat(source_details["source-tag"], Equals("mock-tag"))
+
+        self.fake_check_output.mock.assert_not_called()
+        self.fake_check_call.mock.assert_called_once_with(
+            [
+                "bzr",
+                "pull",
+                "-r",
+                "tag:mock-tag",
+                self.working_tree,
+                "-d",
+                self.source_dir,
+            ],
+            stderr=-3,
+            stdout=-3,
+        )

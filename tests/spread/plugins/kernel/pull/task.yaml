@@ -1,4 +1,4 @@
-summary: Ensure the plugin can correcly pull.
+summary: Ensure the plugin can correctly pull.
 
 environment:
   SNAP_DIR: ../snaps/kernel-download

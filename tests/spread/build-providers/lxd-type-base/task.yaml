@@ -6,11 +6,17 @@ environment:
 restore: |
   cd "$SNAP_DIR"
 
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   snapcraft clean --use-lxd
   rm -f ./*.snap
 
 execute: |
   cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft pull --use-lxd
 

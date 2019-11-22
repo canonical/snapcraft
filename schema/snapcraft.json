@@ -622,7 +622,8 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
-                                    "gnome-3-28"
+                                    "gnome-3-28",
+                                    "kde-neon"
                                 ]
                             }
                         }
@@ -859,11 +860,12 @@
         {
             "anyOf": [
                 {
-                    "usage": "type: <base|snapd> (without a base)",
+                    "usage": "type: <base|kernel|snapd> (without a base)",
                     "properties": {
                         "type": {
                             "enum": [
                                 "base",
+                                "kernel",
                                 "snapd"
                             ]
                         }
@@ -884,13 +886,12 @@
                     ]
                 },
                 {
-                    "usage": "base: <base> and type: <app|gadget|kernel> (without a build-base)",
+                    "usage": "base: <base> and type: <app|gadget>",
                     "properties": {
                         "type": {
                             "enum": [
                                 "app",
-                                "gadget",
-                                "kernel"
+                                "gadget"
                             ]
                         }
                     },
@@ -899,14 +900,20 @@
                             "required": [
                                 "base"
                             ]
-                        },
-                        {
-                            "not":{
-                                "required": [
-                                    "build-base"
-                                ]
-                            }
                         }
+                    ]
+                },
+                {
+                    "usage": "base: bare (with a build-base)",
+                    "properties": {
+                        "base": {
+                            "enum": [
+                                "bare"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "build-base"
                     ]
                 }
             ]

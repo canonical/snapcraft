@@ -18,11 +18,14 @@ import os
 import logging
 import subprocess
 import tempfile
-from typing import List, Set
+from typing import List, Set, TYPE_CHECKING
 
-import snapcraft
 from snapcraft.internal import common, repo
 from snapcraft import formatting_utils
+
+if TYPE_CHECKING:
+    from snapcraft.project import Project
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +39,7 @@ class Rospack:
         rospack_path: str,
         ubuntu_sources: str,
         ubuntu_keyrings: List[str],
-        project: snapcraft.project.Project
+        project: "Project"
     ) -> None:
         """Create a new Rospack instance.
 

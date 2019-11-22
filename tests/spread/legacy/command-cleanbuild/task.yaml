@@ -1,6 +1,7 @@
 summary: cleanbuild backwards compatibility for valid yaml when no base is set
 
-systems: [ubuntu-16*]
+systems:
+  - ubuntu-16.04-64
 
 environment:
   SNAP_DIR: ../snaps/cleanbuild-no-base-valid-yaml

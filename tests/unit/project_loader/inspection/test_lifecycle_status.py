@@ -94,10 +94,10 @@ class LifecycleStatusTest(ProjectLoaderBaseTest):
         )
 
         # Now prime them both
-        self.part1.mark_prime_done(set(), set(), set())
+        self.part1.mark_prime_done(set(), set(), set(), set())
         self.part2.mark_build_done()
         self.part2.mark_stage_done(set(), set())
-        self.part2.mark_prime_done(set(), set(), set())
+        self.part2.mark_prime_done(set(), set(), set(), set())
 
         self.assertThat(
             inspection.lifecycle_status(self.config),

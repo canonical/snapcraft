@@ -147,8 +147,8 @@ class NodePlugin(snapcraft.BasePlugin):
         if self.options.nodejs_package_manager == "yarn":
             self._yarn_tar.download()
 
-        # do the install in the pull phase to download all dependencies.
-        self._install(rootdir=self.sourcedir)
+        # install node and yarn.
+        self._install_node_and_yarn(rootdir=self.sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
@@ -178,19 +178,27 @@ class NodePlugin(snapcraft.BasePlugin):
                 self._manifest["yarn-lock-contents"] = lock_file.read()
 
         # Get the names and versions of installed packages
-        installed_node_packages = self._get_installed_node_packages(self.installdir)
-        self._manifest["node-packages"] = [
-            "{}={}".format(name, installed_node_packages[name])
-            for name in installed_node_packages
-        ]
+        if self.options.nodejs_package_manager == "npm":
+            installed_node_packages = self._get_installed_node_packages(self.installdir)
+            self._manifest["node-packages"] = [
+                "{}={}".format(name, installed_node_packages[name])
+                for name in installed_node_packages
+            ]
+        # Skip this step if yarn is used, as it may produce different
+        # dependency trees than npm
+        else:
+            self._manifest["node-packages"] = []
 
-    def _install(self, rootdir):
+    def _install_node_and_yarn(self, rootdir):
         self._nodejs_tar.provision(self._npm_dir, clean_target=False, keep_tarball=True)
         if self.options.nodejs_package_manager == "yarn":
             self._yarn_tar.provision(
                 self._npm_dir, clean_target=False, keep_tarball=True
             )
+        # Check to see if package.json exists in pull step
+        self._get_package_json(rootdir)
 
+    def _install(self, rootdir):
         cmd = [os.path.join(self._npm_dir, "bin", self.options.nodejs_package_manager)]
 
         if self.options.nodejs_package_manager == "yarn":
@@ -200,9 +208,11 @@ class NodePlugin(snapcraft.BasePlugin):
                 cmd.extend(["--https-proxy", os.getenv("https_proxy")])
 
         flags = []
-        if rootdir == self.builddir:
-            flags = ["--offline", "--prod"]
 
+        if self.options.nodejs_package_manager == "npm":
+            flags.append("--unsafe-perm")
+
+        # Run once to download dependencies and run install scripts
         self.run(cmd + ["install"] + flags, rootdir)
 
         package_json = self._get_package_json(rootdir)
@@ -232,6 +242,9 @@ class NodePlugin(snapcraft.BasePlugin):
                 os.path.join(package_dir, "yarn.lock"),
             )
 
+        flags.append("--offline")
+        flags.append("--prod")
+
         self.run(cmd + ["install"] + flags, package_dir)
 
         return package_dir
@@ -250,6 +263,15 @@ class NodePlugin(snapcraft.BasePlugin):
             new_path = "{}:{}".format(npm_bin, env.get("PATH"))
         else:
             new_path = npm_bin
+
+        # npm has the behavior that, if it detects that SUDO_UID is set,
+        # it will then set the uid of some of its child processes (such as
+        # git when installing a package that specifies a git repository)
+        # to that of the sudoer, ignoring --unsafe-perm entirely.
+        # We have to unset SUDO_UID and SUDO_GID to prevent this.
+
+        env.pop("SUDO_UID", None)
+        env.pop("SUDO_GID", None)
 
         env["PATH"] = new_path
         return env

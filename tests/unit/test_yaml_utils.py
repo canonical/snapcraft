@@ -15,11 +15,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import os
 
 from testtools.matchers import Equals
 
 from snapcraft import yaml_utils
+from snapcraft.project.errors import YamlValidationError
 from tests import unit
+
+
+class YamlLoadTests(unit.TestCase):
+    def test_load_yaml_file(self):
+        path = os.path.join(self.path, "test.yaml")
+        with open(path, "w") as f:
+            f.write("foo: bar")
+
+        cfg = yaml_utils.load_yaml_file(path)
+
+        self.assertThat(cfg, Equals({"foo": "bar"}))
+
+    def test_load_yaml_file_bad_yaml(self):
+        path = os.path.join(self.path, "test.yaml")
+        with open(path, "w") as f:
+            # Note the missing newlines...
+            f.write("foo: bar")
+            f.write("a-b-c: xyz")
+
+        self.assertRaises(YamlValidationError, yaml_utils.load_yaml_file, path)
 
 
 class OctIntTest(unit.TestCase):

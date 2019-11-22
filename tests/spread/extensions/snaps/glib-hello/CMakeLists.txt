@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 2.6)
-project(glib-hello C)
-find_package(PkgConfig REQUIRED)
-pkg_search_module(GLIB REQUIRED glib-2.0)
-add_executable(hello hello.c)
-target_include_directories(hello PRIVATE ${GLIB_INCLUDE_DIRS})
-target_link_libraries(hello PRIVATE ${GLIB_LDFLAGS})
-install(TARGETS hello RUNTIME DESTINATION bin)

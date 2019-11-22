@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import hashlib
 import os
 from datetime import datetime
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.meta.snap import Snap
+from typing import Set
 from ._project_options import ProjectOptions
 from ._project_info import ProjectInfo  # noqa: F401
 
@@ -42,10 +45,13 @@ class Project(ProjectOptions):
         else:
             work_dir = project_dir
 
+        super().__init__(target_deb_arch, debug, work_dir=work_dir)
+
         # This here check is mostly for backwards compatibility with the
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
             self.info = None  # type: ProjectInfo
+
         else:
             self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
@@ -53,10 +59,32 @@ class Project(ProjectOptions):
         self._project_dir = project_dir
         self._work_dir = work_dir
 
-        super().__init__(target_deb_arch, debug, work_dir=work_dir)
-
         self.local_plugins_dir = self._get_local_plugins_dir()
         self._start_time = datetime.utcnow()
+
+        # XXX: (Re)set by Config because it mangles source data.
+        # Ideally everywhere wold converge to operating on snap_meta, and ww
+        # would only need to initialize it once (properly).
+        self._snap_meta = Snap()
+
+    def _get_project_directory_hash(self) -> str:
+        m = hashlib.sha1()
+        m.update(self._project_dir.encode())
+        return m.hexdigest()[:6]
+
+    def _get_content_snaps(self) -> Set[str]:
+        """Return the set of content snaps from snap_meta."""
+        return set(
+            [
+                x.provider
+                for x in self._snap_meta.get_content_plugs()
+                if x.provider is not None
+            ]
+        )
+
+    def _get_provider_content_dirs(self) -> Set[str]:
+        """Return the set installed provider content directories."""
+        return self._snap_meta.get_provider_content_directories()
 
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir

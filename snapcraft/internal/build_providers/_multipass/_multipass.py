@@ -83,10 +83,15 @@ class Multipass(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        has_tty = "SNAPCRAFT_HAS_TTY={}".format(sys.stdout.isatty())
-        command = ["sudo", "-i", "env", has_tty] + list(command)
+        env_command = self._get_env_command()
+
+        cmd = ["sudo", "-i"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         return self._multipass_cmd.execute(
-            instance_name=self.instance_name, command=command, hide_output=hide_output
+            instance_name=self.instance_name, command=cmd, hide_output=hide_output
         )
 
     def _get_disk_image(self) -> str:
@@ -124,19 +129,6 @@ class Multipass(Provider):
 
         self._multipass_cmd.start(instance_name=self.instance_name)
 
-    def _mount(
-        self,
-        *,
-        mountpoint: str,
-        dev_or_path: str,
-        uid_map: Dict[str, str] = None,
-        gid_map: Dict[str, str] = None
-    ) -> None:
-        target = "{}:{}".format(self.instance_name, mountpoint)
-        self._multipass_cmd.mount(
-            source=dev_or_path, target=target, uid_map=uid_map, gid_map=gid_map
-        )
-
     def _umount(self, *, mountpoint: str) -> None:
         mount = "{}:{}".format(self.instance_name, mountpoint)
         self._multipass_cmd.umount(mount=mount)
@@ -145,8 +137,20 @@ class Multipass(Provider):
         destination = "{}:{}".format(self.instance_name, destination)
         self._multipass_cmd.copy_files(source=source, destination=destination)
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self._multipass_cmd = MultipassCommand(platform=sys.platform)
         self._instance_info = None  # type: InstanceInfo
 
@@ -180,39 +184,23 @@ class Multipass(Provider):
         if self._is_ephemeral:
             self.clean_project()
 
-    def mount_project(self) -> None:
-        # Resolve the home directory
-        home_dir = (
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+        return self._instance_info.is_mounted(target)
+
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+        if self._is_mounted(target):
+            # Nothing to do if already mounted.
+            return
+
+        target = "{}:{}".format(self.instance_name, target)
+        uid_map = {str(os.getuid()): "0"}
+        gid_map = {str(os.getgid()): "0"}
+
+        self._multipass_cmd.mount(
+            source=host_source, target=target, uid_map=uid_map, gid_map=gid_map
         )
-        project_mountpoint = os.path.join(home_dir, "project")
-
-        # multipass keeps the mount active, so check if it is there first.
-        if not self._instance_info.is_mounted(project_mountpoint):
-            self._mount(
-                mountpoint=project_mountpoint,
-                dev_or_path=self.project._project_dir,
-                uid_map={str(os.getuid()): "0"},
-                gid_map={str(os.getgid()): "0"},
-            )
-
-    def _mount_prime_directory(self) -> bool:
-        # Resolve the home directory
-        home_dir = (
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
-        )
-        prime_mountpoint = os.path.join(home_dir, "prime")
-        if self._instance_info.is_mounted(prime_mountpoint):
-            return True
-
-        self._mount(
-            mountpoint=prime_mountpoint,
-            dev_or_path=self.project.prime_dir,
-            uid_map={str(os.getuid()): "0"},
-            gid_map={str(os.getgid()): "0"},
-        )
-
-        return False
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()

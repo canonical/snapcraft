@@ -229,7 +229,7 @@ class CondaPluginGetMinicondaSourceTest(CondaPluginBaseTest):
             conda_miniconda_version = self.miniconda_version
 
         plugin = conda.CondaPlugin("test-part", Options(), self.project)
-        source_script = plugin._get_miniconda_source()
+        source_script = plugin._get_miniconda_script()
 
         self.assertThat(source_script.source, Equals(self.expected_url))
         self.assertThat(source_script.source_checksum, Equals(self.expected_checksum))

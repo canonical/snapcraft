@@ -32,7 +32,14 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
+from snapcraft.internal import (
+    errors,
+    pluginhandler,
+    lifecycle,
+    project_loader,
+    states,
+    steps,
+)
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
 from tests import fixture_setup
@@ -432,6 +439,52 @@ class DirtyBuildScriptletTestCase(LifecycleTestBase):
         )
 
 
+class GlobalStateTest(LifecycleTestBase):
+    def setUp(self):
+        super().setUp()
+
+        self.project_config = self.make_snapcraft_project(
+            textwrap.dedent(
+                """\
+                parts:
+                  test-part:
+                    plugin: nil
+                """
+            )
+        )
+
+        self.global_state_filepath = (
+            self.project_config.project._get_global_state_file_path()
+        )
+
+    def test_stable_grade_for_stable_base(self):
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        global_state = states.GlobalState.load(filepath=self.global_state_filepath)
+        self.assertThat(global_state.get_required_grade(), Equals("stable"))
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+
+    def test_stable_grade_for_non_stable_base(self):
+        self.fake_storeapi_get_info.mock.side_effect = snapcraft.storeapi.errors.SnapNotFoundError(
+            name="core18"
+        )
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        global_state = states.GlobalState.load(filepath=self.global_state_filepath)
+        self.assertThat(global_state.get_required_grade(), Equals("devel"))
+        self.fake_storeapi_get_info.mock.assert_called_once_with("core18")
+
+    def test_grade_not_queried_for_if_already_set(self):
+        # Set the grade
+        global_state = states.GlobalState()
+        global_state.set_required_grade("devel")
+        global_state.save(filepath=self.global_state_filepath)
+
+        lifecycle.execute(steps.PULL, self.project_config)
+
+        self.fake_storeapi_get_info.mock.assert_not_called()
+
+
 class CleanTestCase(LifecycleTestBase):
     def test_clean_removes_global_state(self):
         project_config = self.make_snapcraft_project(
@@ -554,17 +607,16 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
-        original_check_call = subprocess.check_call
-
-        def _fake_dpkg_deb(command, *args, **kwargs):
-            if "dpkg-deb" not in command:
-                return original_check_call(command, *args, **kwargs)
-
-        check_call_patcher = mock.patch(
-            "subprocess.check_call", side_effect=_fake_dpkg_deb
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.repo._deb.Ubuntu._extract_deb_name_version",
+                return_value="test-1.0",
+            )
         )
-        check_call_patcher.start()
-        self.addCleanup(check_call_patcher.stop)
+
+        self.useFixture(
+            fixtures.MockPatch("snapcraft.internal.repo._deb.Ubuntu._extract_deb")
+        )
 
         self.fake_apt_cache = fixture_setup.FakeAptCache()
         self.useFixture(self.fake_apt_cache)
@@ -573,7 +625,7 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         )
 
         self.fake_snapd.snaps_result = [
-            dict(name="core18", channel="latest/stable", revision="10")
+            dict(name="core18", channel="stable", revision="10")
         ]
 
         self.useFixture(FakeOsRelease())
@@ -622,6 +674,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -634,7 +687,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
         self.fake_snapd.snaps_result = [
-            dict(name="core18", channel="latest/stable", revision="10"),
+            dict(name="core18", channel="stable", revision="10"),
             dict(name="test-snap-1", revision="test-snap-1-revision"),
             dict(name="test-snap-2", revision="test-snap-2-revision"),
         ]
@@ -681,6 +734,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -742,6 +796,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -805,6 +860,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -869,6 +925,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             architectures:
             - {}
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -936,6 +993,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - git=testversion
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -996,6 +1054,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - test-package=test-version
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1060,6 +1119,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-packages:
             - test-provider-package=test-version
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1114,6 +1174,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1177,6 +1238,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               fingerprint: test-fingerprint
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )
@@ -1253,6 +1315,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(RecordManifestBaseTestCase
             - {}
             build-packages: []
             build-snaps: []
+            primed-stage-packages: []
             """.format(
                 project_config.project.deb_arch
             )

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,17 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from textwrap import dedent
-from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-class StatusCommandTestCase(CommandBaseTestCase):
+class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
+
         self.expected = {
             "i386": [
                 {"info": "none", "channel": "stable"},
@@ -59,19 +59,25 @@ class StatusCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_status_with_no_permissions(self):
-        raised = self.assertRaises(
-            storeapi.errors.InvalidCredentialsError,
-            self.run_command,
-            ["status", "snap-test"],
+    def test_status_without_login_must_ask(self):
+        self.fake_store_account_info.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+        ]
+        self.fake_store_status.mock.return_value = {
+            "channel_map_tree": {"latest": {"16": self.expected}}
+        }
+
+        result = self.run_command(
+            ["status", "snap-test"], input="user@example.com\nsecret\n"
+        )
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
         )
 
-        self.assertThat(str(raised), Contains("Invalid credentials"))
-
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_with_3rd_party_snap(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_status_with_3rd_party_snap(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError, self.run_command, ["status", "snap-test"]
         )
@@ -80,10 +86,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
             str(raised), Equals("Snap 'snap-test' was not found in '16' series.")
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_with_3rd_party_snap_by_arch(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_status_with_3rd_party_snap_by_arch(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -95,10 +98,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
             Equals("Snap 'snap-test' for 'arm64' was not found in '16' series."),
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_with_3rd_party_snap_by_series(self, mock_account_api):
-        mock_account_api.return_value = {}
-
+    def test_status_with_3rd_party_snap_by_series(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -109,11 +109,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
             str(raised), Equals("Snap 'snap-test' was not found in '18' series.")
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_by_unknown_arch(self, mock_account_api, mock_status):
-        mock_status.return_value = {}
-
+    def test_status_by_unknown_arch(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -125,13 +121,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
             Equals("Snap 'snap-test' for 'some-arch' was not found in '16' series."),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_by_unknown_series(self, mock_account_api, mock_status):
-        mock_status.return_value = {}
-
-        mock_status.return_value = {}
-
+    def test_status_by_unknown_series(self):
         raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
@@ -143,10 +133,8 @@ class StatusCommandTestCase(CommandBaseTestCase):
             Equals("Snap 'snap-test' was not found in 'some-series' series."),
         )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status(self, mock_account_api, mock_status):
-        mock_status.return_value = {
+    def test_status(self):
+        self.fake_store_status.mock.return_value = {
             "channel_map_tree": {"latest": {"16": self.expected}}
         }
 
@@ -168,12 +156,12 @@ class StatusCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )
-        mock_status.assert_called_once_with("snap-test", "16", None)
+        self.fake_store_status.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", None
+        )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_by_arch(self, mock_account_api, mock_status):
-        mock_status.return_value = {
+    def test_status_by_arch(self):
+        self.fake_store_status.mock.return_value = {
             "channel_map_tree": {"latest": {"16": {"i386": self.expected["i386"]}}}
         }
 
@@ -192,12 +180,12 @@ class StatusCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )
-        mock_status.assert_called_once_with("snap-test", "16", "i386")
+        self.fake_store_status.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", "i386"
+        )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_by_series(self, mock_account_api, mock_status):
-        mock_status.return_value = {
+    def test_status_by_series(self):
+        self.fake_store_status.mock.return_value = {
             "channel_map_tree": {"latest": {"16": self.expected}}
         }
 
@@ -219,11 +207,11 @@ class StatusCommandTestCase(CommandBaseTestCase):
                 )
             ),
         )
-        mock_status.assert_called_once_with("snap-test", "16", None)
+        self.fake_store_status.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", None
+        )
 
-    @mock.patch.object(storeapi.StoreClient, "get_snap_status")
-    @mock.patch.object(storeapi.StoreClient, "get_account_information")
-    def test_status_including_branch(self, mock_account_api, mock_status):
+    def test_status_including_branch(self):
         expected = {
             "i386": [
                 {"info": "none", "channel": "stable"},
@@ -237,7 +225,9 @@ class StatusCommandTestCase(CommandBaseTestCase):
                 },
             ]
         }
-        mock_status.return_value = {"channel_map_tree": {"latest": {"16": expected}}}
+        self.fake_store_status.mock.return_value = {
+            "channel_map_tree": {"latest": {"16": expected}}
+        }
 
         result = self.run_command(["status", "snap-test"])
 
@@ -254,5 +244,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
             """
                 )
             ),
-        )  # noqa
-        mock_status.assert_called_once_with("snap-test", "16", None)
+        )
+        self.fake_store_status.mock.assert_called_once_with(
+            "snap-test-snap-id", "16", None
+        )

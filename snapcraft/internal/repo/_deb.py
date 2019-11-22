@@ -26,6 +26,7 @@ import stat
 import string
 import subprocess
 import sys
+import tempfile
 import urllib
 import urllib.request
 from typing import Dict, Set, List, Tuple  # noqa: F401
@@ -246,7 +247,7 @@ class _AptCache:
 
         return _get_local_sources_list()
 
-    def fetch_binary(self, *, package_candidate, destination: str) -> None:
+    def fetch_binary(self, *, package_candidate, destination: str) -> str:
         # This is a workaround for the overly verbose python-apt we use.
         # There is an unreleased patch which once released could replace
         # this code https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc  # noqa
@@ -556,14 +557,31 @@ class Ubuntu(BaseRepo):
 
         return pkg_list
 
+    def _extract_deb_name_version(self, deb_path: str) -> str:
+        try:
+            output = subprocess.check_output(
+                ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
+            )
+        except subprocess.CalledProcessError:
+            raise errors.UnpackError(deb_path)
+
+        return output.decode().strip()
+
+    def _extract_deb(self, deb_path: str, extract_dir: str) -> None:
+        """Extract deb and return `<package-name>=<version>`."""
+        try:
+            subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
+        except subprocess.CalledProcessError:
+            raise errors.UnpackError(deb_path)
+
     def unpack(self, unpackdir) -> None:
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, "*.deb"))
         for pkg in pkgs_abs_path:
-            # TODO needs elegance and error control
-            try:
-                subprocess.check_call(["dpkg-deb", "--extract", pkg, unpackdir])
-            except subprocess.CalledProcessError:
-                raise errors.UnpackError(pkg)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                self._extract_deb(pkg, temp_dir)
+                deb_name = self._extract_deb_name_version(pkg)
+                self._mark_origin_stage_package(temp_dir, deb_name)
+                file_utils.link_or_copy_tree(temp_dir, unpackdir)
         self.normalize(unpackdir)
 
     def _manifest_dep_names(self, apt_cache):

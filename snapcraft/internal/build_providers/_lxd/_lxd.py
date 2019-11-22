@@ -20,7 +20,7 @@ import subprocess
 import sys
 import urllib.parse
 import warnings
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from .._base_provider import Provider
 from .._base_provider import errors
@@ -130,9 +130,14 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        logger.debug("Running {}".format(" ".join(command)))
+        env_command = self._get_env_command()
+
         # TODO: use pylxd
-        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"] + list(command)
+        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
+        cmd.extend(env_command)
+        cmd.extend(command)
+        self._log_run(cmd)
+
         try:
             if hide_output:
                 output = subprocess.check_output(cmd)
@@ -229,8 +234,20 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             )
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
         self.echoer.warning(
             "The LXD provider is offered as a technology preview for early adopters.\n"
             "The command line interface, container names or lifecycle handling may "
@@ -259,21 +276,40 @@ class LXD(Provider):
         """Destroy the instance, trying to stop it first."""
         self._stop()
 
-    def mount_project(self) -> None:
-        if self._PROJECT_DEVICE_NAME in self._container.devices:
+    def _get_mount_name(self, target: str) -> str:
+        """Provide a formatted name for target mount point."""
+        home_dir = self._get_home_directory().as_posix()
+
+        # Special cases for compatibility.
+        if target == os.path.join(home_dir, "project"):
+            return self._PROJECT_DEVICE_NAME
+        elif target == os.path.join(home_dir, "prime"):
+            return self._PROJECT_EXPORTED_PRIME_NAME
+
+        # Replace home directory with "snapcraft".
+        name = target.replace(home_dir, "snapcraft", 1)
+
+        # Replace path separators with dashes.
+        name = name.replace("/", "-")
+        return name
+
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+        name = self._get_mount_name(target)
+        return name in self._container.devices
+
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+        if self._is_mounted(target):
+            # Nothing to do if already mounted.
             return
 
-        # Resolve the home directory
-        home_dir = (
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
-        )
-
+        name = self._get_mount_name(target)
         self._container.sync()
-
-        self._container.devices[self._PROJECT_DEVICE_NAME] = {
+        self._container.devices[name] = {
             "type": "disk",
-            "source": self.project._project_dir,
-            "path": os.path.join(home_dir, "project"),
+            "source": host_source,
+            "path": target,
         }
 
         try:
@@ -282,32 +318,6 @@ class LXD(Provider):
             raise errors.ProviderMountError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-
-    def _mount_prime_directory(self) -> bool:
-        if self._PROJECT_EXPORTED_PRIME_NAME in self._container.devices:
-            return True
-
-        # Resolve the home directory
-        home_dir = (
-            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
-        )
-
-        self._container.sync()
-
-        self._container.devices[self._PROJECT_EXPORTED_PRIME_NAME] = {
-            "type": "disk",
-            "source": os.path.join(self.project.prime_dir),
-            "path": os.path.join(home_dir, "prime"),
-        }
-
-        try:
-            self._container.save(wait=True)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderMountError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            ) from lxd_api_error
-
-        return False
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()

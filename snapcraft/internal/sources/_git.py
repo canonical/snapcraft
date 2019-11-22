@@ -25,6 +25,24 @@ from ._base import Base
 
 class Git(Base):
     @classmethod
+    def version(self):
+        """Get git version information."""
+        return (
+            subprocess.check_output(["git", "version"], stderr=subprocess.DEVNULL)
+            .decode(sys.getfilesystemencoding())
+            .strip()
+        )
+
+    @classmethod
+    def check_command_installed(cls) -> bool:
+        """Check if git is installed."""
+        try:
+            cls.version()
+        except FileNotFoundError:
+            return False
+        return True
+
+    @classmethod
     def generate_version(cls, *, source_dir=None):
         """Return the latest git tag from PWD or defined source_dir.
 
@@ -183,6 +201,44 @@ class Git(Base):
         else:
             self._clone_new()
         self.source_details = self._get_source_details()
+
+    def push(self, url, refspec, force=False):
+        if force:
+            self._run(
+                [self.command, "-C", self.source_dir, "push", "--force", url, refspec],
+                **self._call_kwargs
+            )
+        else:
+            self._run(
+                [self.command, "-C", self.source_dir, "push", url, refspec],
+                **self._call_kwargs
+            )
+
+    def init(self):
+        self._run([self.command, "-C", self.source_dir, "init"], **self._call_kwargs)
+
+    def add(self, file):
+        if file.startswith(self.source_dir):
+            file = os.path.relpath(file, self.source_dir)
+
+        self._run(
+            [self.command, "-C", self.source_dir, "add", file], **self._call_kwargs
+        )
+
+    def commit(self, message, author="snapcraft <snapcraft@snapcraft.local>"):
+        self._run(
+            [
+                self.command,
+                "-C",
+                self.source_dir,
+                "commit",
+                "--message",
+                message,
+                "--author",
+                author,
+            ],
+            **self._call_kwargs
+        )
 
     def _get_source_details(self):
         tag = self.source_tag

@@ -1,15 +1,14 @@
-name: glib-hello
+name: gtk3-hello
 version: "1.0"
 summary: test the gnome extension
-description: This is a basic gnome snap (*only* uses glib). It simply prints a hello world.
+description: This is a basic gtk snap
 
 grade: devel
 confinement: strict
-base: core18
 
 apps:
-  glib-hello:
-    command: bin/hello
+  gtk3-hello:
+    command: bin/gtk3-hello
     extensions: [gnome-3-28]
 
 parts:

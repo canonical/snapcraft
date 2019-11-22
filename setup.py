@@ -57,7 +57,9 @@ packages = [
     "snapcraft.internal.project_loader.grammar_processing",
     "snapcraft.internal.project_loader.inspection",
     "snapcraft.internal.project_loader._extensions",
+    "snapcraft.internal.remote_build",
     "snapcraft.internal.repo",
+    "snapcraft.internal.review_tools",
     "snapcraft.internal.sources",
     "snapcraft.internal.states",
     "snapcraft.project",
@@ -68,7 +70,7 @@ packages = [
 ]
 package_data = {"snapcraft.internal.repo": ["manifest.txt"]}
 license = "GPL v3"
-classifiers = (
+classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
@@ -80,7 +82,7 @@ classifiers = (
     "Programming Language :: Python :: 3.5",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
-)
+]
 
 # look/set what version we have
 changelog = "debian/changelog"

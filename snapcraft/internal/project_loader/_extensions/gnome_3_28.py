@@ -20,14 +20,33 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-
 _PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
 
 
-class Gnome_3_28Extension(Extension):
-    """The Gnome extension.
+class ExtensionImpl(Extension):
+    """This extension eases creation of snaps that integrate with GNOME 3.28
 
-    This extension is to be used by applications that require GTK+.
+    At build time it ensures the right build dependencies are setup and for
+    the runtime it ensures the application is run in an environment catered
+    for GNOME applications.
+
+    It configures each application with the following plugs:
+
+    \b
+    - GTK3 Themes.
+    - Common Icon Themes.
+    - Common Sound Themes.
+    - The GNOME runtime libraries and utilities corresponding to 3.28.
+
+    For easier desktop integration, it also configures each application
+    entry with these additional plugs:
+
+    \b
+    - desktop (https://snapcraft.io/docs/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
+    - gsettings (https://snapcraft.io/docs/gsettings-interface)
+    - wayland (https://snapcraft.io/docs/wayland-interface)
+    - x11 (https://snapcraft.io/docs/x11-interface)
     """
 
     @staticmethod
@@ -47,28 +66,27 @@ class Gnome_3_28Extension(Extension):
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes:gtk-3-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes:icon-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes:sound-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 platform_snap: {
                     "interface": "content",
                     "target": "$SNAP/gnome-platform",
-                    "default-provider": "{snap}:{slot}".format(
-                        snap=platform_snap, slot=platform_snap
-                    ),
+                    "default-provider": "{snap}".format(snap=platform_snap),
                 },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
             "layout": {
+                "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                 },
@@ -80,7 +98,7 @@ class Gnome_3_28Extension(Extension):
 
         self.app_snippet = {
             "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": ["desktop", "desktop-legacy", "wayland", "x11"],
+            "plugs": ["desktop", "desktop-legacy", "gsettings", "wayland", "x11"],
         }
 
         self.parts = {

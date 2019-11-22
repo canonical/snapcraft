@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,15 +23,6 @@ from tests import integration
 
 
 class StatusTestCase(integration.StoreTestCase):
-    def test_status_without_login(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ["status", "test-snap"]
-        )
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft ' 'login"?',
-            str(error.output),
-        )
-
     def test_status_with_login_wrong_snap(self):
         self.addCleanup(self.logout)
         self.login()
@@ -76,7 +67,12 @@ class StatusTestCase(integration.StoreTestCase):
         expected = dedent(
             """\
             Track    Arch    Channel    Version    Revision    Expires at
-            latest   amd64   stable     1.0-amd64  2
+            latest   all     stable     -          -
+                             candidate  -          -
+                             beta       1.1-amd64  6
+                             edge       1.0-i386   3
+                             edge/test  1.1-i386   9           2019-05-30T01:17:06.465504
+                     amd64   stable     1.0-amd64  2
                              candidate  -          -
                              beta       1.1-amd64  4
                              edge       ^          ^

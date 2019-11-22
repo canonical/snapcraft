@@ -16,6 +16,9 @@
 
 import abc
 import os
+import pathlib
+import logging
+import shlex
 import shutil
 import sys
 from textwrap import dedent
@@ -28,6 +31,9 @@ from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
 from snapcraft import yaml_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_platform() -> str:
@@ -88,7 +94,14 @@ class Provider(abc.ABC):
 
     _INSTANCE_PROJECT_DIR = "~/project"
 
-    def __init__(self, *, project, echoer, is_ephemeral: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        project,
+        echoer,
+        is_ephemeral: bool = False,
+        build_provider_flags: Dict[str, str] = None,
+    ) -> None:
         self.project = project
         self.echoer = echoer
         self._is_ephemeral = is_ephemeral
@@ -110,6 +123,12 @@ class Provider(abc.ABC):
             project.info.name,
             self._get_provider_name(),
         )
+
+        if build_provider_flags is None:
+            build_provider_flags = dict()
+        self.build_provider_flags = build_provider_flags.copy()
+
+        self._cached_home_directory: pathlib.Path = None
 
     def __enter__(self):
         try:
@@ -156,7 +175,9 @@ class Provider(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _run(self, command: Sequence[str]) -> Optional[bytes]:
+    def _run(
+        self, command: Sequence[str], hide_output: bool = False
+    ) -> Optional[bytes]:
         """Run a command on the instance."""
 
     @abc.abstractmethod
@@ -172,16 +193,39 @@ class Provider(abc.ABC):
         """Push a file into the instance."""
 
     @abc.abstractmethod
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+
+    @abc.abstractmethod
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+
     def mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
+        target = (self._get_home_directory() / "project").as_posix()
+        self._mount(self.project._project_dir, target)
 
-    @abc.abstractmethod
+        if self.build_provider_flags.get("bind_ssh"):
+            self._mount_ssh()
+
     def _mount_prime_directory(self) -> bool:
         """Mount the host prime directory into the provider.
 
         :returns: True if the prime directory was already mounted.
         """
+        target = (self._get_home_directory() / "prime").as_posix()
+        if self._is_mounted(target):
+            return True
+
+        self._mount(self.project.prime_dir, target)
+        return False
+
+    def _mount_ssh(self) -> None:
+        """Mount ~/.ssh to target."""
+        src = (pathlib.Path.home() / ".ssh").as_posix()
+        target = (self._get_home_directory() / ".ssh").as_posix()
+        self._mount(src, target)
 
     def expose_prime(self) -> None:
         """Provider steps needed to expose the prime directory to the host.
@@ -286,15 +330,23 @@ class Provider(abc.ABC):
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
         )
-        # Inject snapcraft
-        snap_injector.add(snap_name="core")
-        snap_injector.add(snap_name="snapcraft")
 
-        # This build can be driven from a non snappy enabled system, so we may
-        # find ourself in a situation where the base is not set like on OSX or
-        # Windows.
-        if self.project.info.get_build_base() is not None:
-            snap_injector.add(snap_name=self.project.info.get_build_base())
+        # Note that snap injection order is important.
+        # If the build base is core, we do not need to inject snapd.
+        # Check for None as this build can be driven from a non snappy enabled
+        # system, so we may find ourselves in a situation where the base is not
+        # set like on OSX or Windows.
+        build_base = self.project.info.get_build_base()
+        if build_base is not None and build_base != "core":
+            snap_injector.add(snap_name="snapd")
+
+        # Prevent injecting core18 twice.
+        if build_base is not None and build_base != "core18":
+            snap_injector.add(snap_name=build_base)
+
+        # Inject snapcraft
+        snap_injector.add(snap_name="core18")
+        snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
 
@@ -315,6 +367,37 @@ class Provider(abc.ABC):
 
         return cloud_user_data_filepath
 
+    def _get_env_command(self) -> Sequence[str]:
+        """Get command sequence for `env` with configured flags."""
+
+        env_list = ["env"]
+
+        # Configure SNAPCRAFT_HAS_TTY.
+        has_tty = str(sys.stdout.isatty())
+        env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
+
+        # Pass through configurable environment variables.
+        for key in ["http_proxy", "https_proxy"]:
+            value = self.build_provider_flags.get(key)
+            if not value:
+                continue
+
+            # Ensure item is treated as string and append it.
+            value = str(value)
+            env_list.append(f"{key}={value}")
+
+        return env_list
+
+    def _get_home_directory(self) -> pathlib.Path:
+        """Get user's home directory path."""
+        if self._cached_home_directory is not None:
+            return self._cached_home_directory
+
+        self._cached_home_directory = pathlib.Path(
+            self._run(command=["printenv", "HOME"], hide_output=True).decode().strip()
+        )
+        return self._cached_home_directory
+
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
         if base == "core18" and provider_base is None:
@@ -331,6 +414,10 @@ class Provider(abc.ABC):
 
         with open(filepath) as info_file:
             return yaml_utils.load(info_file)
+
+    def _log_run(self, command: Sequence[str]) -> None:
+        cmd_string = " ".join([shlex.quote(c) for c in command])
+        logger.debug(f"Running: {cmd_string}")
 
     def _save_info(self, **data: Dict[str, Any]) -> None:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")

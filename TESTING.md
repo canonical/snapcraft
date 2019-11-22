@@ -7,7 +7,7 @@ These are tests for features that are not possible to automate, or that the comp
 
 We try very hard to automate as much as possible and to keep the manual test suite as small as possible. Please do not add a manual test before discussing it with the team, and make sure that there are very good reasons not to automate it.
 
-When running manual tests against the production store, make sure to use the test user email account and the well-known test prefixes, since theses snaps will pollute the store. To register a user, use an email address like snapcraft-test+<your-user-name>-<unique-id>@canonical.com (e.g., snapcraft-test+elopio-123@canonical.com). This will send the confirmation email and any notifications to the inbox of snapcraft-test@canonical.com, and the snapcraft team has the password to access that inbox. To register a snap or anything else that has a name, like tracks, keys, etc., prefix the name with test-snapcraft and your name (e.g., test-snapcraft-snap-elopio-123, test-snapcraft-track-elopio-111).
+When running manual tests against the production store, make sure to use the test user email account and the well-known test prefixes, since these snaps will pollute the store. To register a user, use an email address like snapcraft-test+<your-user-name>-<unique-id>@canonical.com (e.g., snapcraft-test+elopio-123@canonical.com). This will send the confirmation email and any notifications to the inbox of snapcraft-test@canonical.com, and the snapcraft team has the password to access that inbox. To register a snap or anything else that has a name, like tracks, keys, etc., prefix the name with test-snapcraft and your name (e.g., test-snapcraft-snap-elopio-123, test-snapcraft-track-elopio-111).
 
 ### Staging server
 
@@ -60,7 +60,7 @@ In order to run these tests suites, first you will need to set up your developme
 
 Then, you'll need a few more dependencies:
 
-    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion
+    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion shellcheck
 
 ### Running the tests
 
@@ -97,19 +97,19 @@ For example:
   * To run only the unit tests in the test_nodejs module:
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs
+    python3 -m unittest tests.unit.plugins.test_nodejs
     ```
 
-  * To run only the unit tests in the NodePluginTestCase:
+  * To run only the unit tests in the NodePluginTest:
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase
+    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest
     ```
 
-  * To run only the unit test named test_pull_executes_npm_run_commands:
+  * To run only the unit test named test_pull
 
     ```
-    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase.test_pull_executes_npm_run_commands
+    python3 -m unittest tests.unit.plugins.test_nodejs.NodePluginTest.test_pull
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:

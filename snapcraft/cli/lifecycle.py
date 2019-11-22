@@ -16,13 +16,22 @@
 
 import logging
 import typing
+from typing import Optional
 import os
 
 import click
 
 from . import echo
 from ._command import SnapcraftProjectCommand
-from ._options import add_build_options, get_build_environment, get_project
+from ._config import enable_snapcraft_config_file
+from ._options import (
+    add_build_options,
+    add_provider_options,
+    apply_host_provider_flags,
+    get_build_provider,
+    get_build_provider_flags,
+    get_project,
+)
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -47,7 +56,7 @@ def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
-    output: str = None,
+    output: Optional[str] = None,
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
@@ -56,20 +65,22 @@ def _execute(  # noqa: C901
     # Cleanup any previous errors.
     _clean_provider_error()
 
-    build_environment = get_build_environment(**kwargs)
-    project = get_project(is_managed_host=build_environment.is_managed_host, **kwargs)
+    build_provider = get_build_provider(**kwargs)
+    is_managed_host = build_provider == "managed-host"
+
+    project = get_project(is_managed_host=is_managed_host, **kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
 
     conduct_project_sanity_check(project)
 
-    if build_environment.is_managed_host or build_environment.is_host:
+    if build_provider in ["host", "managed-host"]:
+        apply_host_provider_flags(build_provider_flags)
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
             _pack(project.prime_dir, output=output)
     else:
-        build_provider_class = build_providers.get_provider_for(
-            build_environment.provider
-        )
+        build_provider_class = build_providers.get_provider_for(build_provider)
         try:
             build_provider_class.ensure_provider()
         except build_providers.errors.ProviderNotFound as provider_error:
@@ -84,7 +95,9 @@ def _execute(  # noqa: C901
             else:
                 raise provider_error
 
-        with build_provider_class(project=project, echoer=echo) as instance:
+        with build_provider_class(
+            project=project, echoer=echo, build_provider_flags=build_provider_flags
+        ) as instance:
             instance.mount_project()
             try:
                 if shell:
@@ -123,7 +136,7 @@ def _execute(  # noqa: C901
     return project
 
 
-def _pack(directory: str, *, output: str) -> None:
+def _pack(directory: str, *, output: Optional[str]) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
 
@@ -145,12 +158,14 @@ def _retrieve_provider_error(instance) -> None:
 
 @click.group()
 @add_build_options()
+@add_provider_options()
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
     pass
 
 
 @lifecyclecli.command()
+@enable_snapcraft_config_file()
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
@@ -162,8 +177,10 @@ def init():
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @click.pass_context
 @add_build_options()
+@add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def pull(ctx, parts, **kwargs):
     """Download or retrieve artifacts defined for a part.
@@ -178,7 +195,9 @@ def pull(ctx, parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
+@add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
     """Build artifacts defined for a part.
@@ -193,7 +212,9 @@ def build(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
+@add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
     """Stage the part's built artifacts into the common staging area.
@@ -208,7 +229,9 @@ def stage(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
+@add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
     """Final copy and preparation for the snap.
@@ -223,7 +246,9 @@ def prime(parts, **kwargs):
 
 
 @lifecyclecli.command("try")
+@enable_snapcraft_config_file()
 @add_build_options()
+@add_provider_options()
 def try_command(**kwargs):
     """Try a snap on the host, priming if necessary.
 
@@ -240,7 +265,9 @@ def try_command(**kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
 @add_build_options()
+@add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
 def snap(directory, output, **kwargs):
@@ -280,22 +307,13 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
+@enable_snapcraft_config_file()
+@click.pass_context
+@add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
-@click.option(
-    "--use-lxd",
-    is_flag=True,
-    required=False,
-    help="Forces snapcraft to use LXD for this clean command.",
-)
-@click.option(
-    "--destructive-mode",
-    is_flag=True,
-    required=False,
-    help="Forces snapcraft to try and use the current host to clean.",
-)
 @click.option("--unprime", is_flag=True, required=False, hidden=True)
-@click.option("--step", required=False, hidden=True)
-def clean(parts, use_lxd, destructive_mode, unprime, step):
+@click.option("--step", "-s", required=False, hidden=True)
+def clean(ctx, parts, unprime, step, **kwargs):
     """Remove a part's assets.
 
     \b
@@ -305,30 +323,32 @@ def clean(parts, use_lxd, destructive_mode, unprime, step):
     """
     # This option is only valid in legacy.
     if step:
-        raise click.BadOptionUsage("--step", "no such option: --step")
+        option = "--step" if "--step" in ctx.obj["argv"] else "-s"
+        raise click.BadOptionUsage(option, "no such option: {}".format(option))
 
-    build_environment = get_build_environment(
-        use_lxd=use_lxd, destructive_mode=destructive_mode
-    )
+    build_provider = get_build_provider(**kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    is_managed_host = build_provider == "managed-host"
 
     try:
-        project = get_project(is_managed_host=build_environment.is_managed_host)
+        project = get_project(is_managed_host=is_managed_host)
     except errors.ProjectNotFoundError:
         # Fresh environment, nothing to clean.
         return
 
-    if unprime and not build_environment.is_managed_host:
+    if unprime and not is_managed_host:
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
-    if build_environment.is_managed_host or build_environment.is_host:
+    if build_provider in ["host", "managed-host"]:
+        apply_host_provider_flags(build_provider_flags)
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
-        build_provider_class = build_providers.get_provider_for(
-            build_environment.provider
-        )
+        build_provider_class = build_providers.get_provider_for(build_provider)
         if parts:
-            with build_provider_class(project=project, echoer=echo) as instance:
+            with build_provider_class(
+                project=project, echoer=echo, build_provider_flags=build_provider_flags
+            ) as instance:
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()

@@ -53,6 +53,13 @@ class SnapInjectionTest(unit.TestCase):
                 "revision": "123",
             },
             {
+                "name": "core18",
+                "confinement": "strict",
+                "id": "2kkibb",
+                "channel": "stable",
+                "revision": "123",
+            },
+            {
                 "name": "snapcraft",
                 "confinement": "classic",
                 "id": "3lljuR",
@@ -100,6 +107,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "ack", "/var/tmp/core.assert"]),
@@ -147,6 +155,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -210,6 +219,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "ack", "/var/tmp/core.assert"]),
@@ -264,6 +274,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -308,6 +319,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -346,6 +358,7 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -368,6 +381,7 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -452,6 +466,7 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "refresh", "--channel", "stable", "core"]),
@@ -482,6 +497,7 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),

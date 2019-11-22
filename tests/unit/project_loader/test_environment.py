@@ -22,7 +22,7 @@ from textwrap import dedent
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals, Not
+from testtools.matchers import Contains, Equals, GreaterThan, Not
 
 import snapcraft
 from snapcraft.internal import common
@@ -492,7 +492,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             ),
         )
 
-    @mock.patch("multiprocessing.cpu_count", return_value=42)
+    @mock.patch("os.sched_getaffinity", return_value=set(range(0, 42)))
     def test_parts_build_env_contains_parallel_build_count(self, cpu_mock):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
         part1 = [
@@ -540,6 +540,86 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         part = project_config.parts.get_part("part1")
         environment = project_config.parts.build_env_for_part(part)
         self.assertThat(environment, Contains('FOO="BAR"'))
+
+    def test_build_environment_can_depend_on_global_env(self):
+        self.useFixture(FakeOsRelease())
+
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            base: core
+
+            parts:
+              part1:
+                plugin: nil
+                build-environment:
+                  - PROJECT_NAME: $SNAPCRAFT_PROJECT_NAME
+        """
+        )
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+        part = project_config.parts.get_part("part1")
+        environment = project_config.parts.build_env_for_part(part)
+        snapcraft_definition_index = -1
+        build_environment_definition_index = -1
+        for index, variable in enumerate(environment):
+            if variable.startswith("SNAPCRAFT_PROJECT_NAME="):
+                snapcraft_definition_index = index
+            if variable.startswith("PROJECT_NAME="):
+                build_environment_definition_index = index
+
+        # Assert that each definition was found, and the global env came before the
+        # build environment
+        self.assertThat(snapcraft_definition_index, GreaterThan(-1))
+        self.assertThat(build_environment_definition_index, GreaterThan(-1))
+        self.assertThat(
+            build_environment_definition_index, GreaterThan(snapcraft_definition_index)
+        )
+
+    def test_build_environment_can_depend_on_part_env(self):
+        self.useFixture(FakeOsRelease())
+
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            base: core
+
+            parts:
+              part1:
+                plugin: nil
+                build-environment:
+                  - PART_INSTALL: $SNAPCRAFT_PART_INSTALL
+        """
+        )
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+        part = project_config.parts.get_part("part1")
+        environment = project_config.parts.build_env_for_part(part)
+        snapcraft_definition_index = -1
+        build_environment_definition_index = -1
+        for index, variable in enumerate(environment):
+            if variable.startswith("SNAPCRAFT_PART_INSTALL="):
+                snapcraft_definition_index = index
+            if variable.startswith("PART_INSTALL="):
+                build_environment_definition_index = index
+
+        # Assert that each definition was found, and the part env came before the
+        # build environment
+        self.assertThat(snapcraft_definition_index, GreaterThan(-1))
+        self.assertThat(build_environment_definition_index, GreaterThan(-1))
+        self.assertThat(
+            build_environment_definition_index, GreaterThan(snapcraft_definition_index)
+        )
 
     def test_build_environment_with_dependencies_does_not_leak(self):
         self.useFixture(FakeOsRelease())

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -56,7 +56,7 @@ class TestCase(testtools.TestCase):
         if package_type == "snap":
             self.snapcraft_command = "/snap/bin/snapcraft"
             self.patchelf_command = "/snap/snapcraft/current/bin/patchelf"
-            self.execstack_command = "/snap/snapcraft/current/usr/sbin/execstack"
+            self.execstack_command = "/snap/snapcraft/current/usr/bin/execstack"
         elif package_type == "deb":
             self.snapcraft_command = "/usr/bin/snapcraft"
             self.snapcraft_parser_command = "/usr/bin/snapcraft-parser"
@@ -460,12 +460,9 @@ class StoreTestCase(TestCase):
         return os.getenv("TEST_STORE") == "staging"
 
     def _conduct_login(self, process, email, password, expect_success) -> None:
-        process.expect_exact(
-            "Enter your Ubuntu One e-mail address and password." + os.linesep
-        )
         process.expect_exact("Email: ")
         process.sendline(email)
-        process.expect_exact("Password: ")
+        process.expect("Password: ")
         process.sendline(password)
         if expect_success:
             try:
@@ -475,6 +472,12 @@ class StoreTestCase(TestCase):
             except pexpect.exceptions.EOF:
                 self.fail(
                     "Login failed. Login error: {}".format(process.before.decode())
+                )
+            except pexpect.exceptions.TIMEOUT as pexpect_timeout:
+                self.fail(
+                    "Timed out waiting for string {!r} in stream:{} ".format(
+                        str(pexpect_timeout), process.before.decode()
+                    )
                 )
 
     def export_login(
