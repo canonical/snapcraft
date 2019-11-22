@@ -16,13 +16,13 @@
 
 import collections
 import contextlib
-from typing import Any, Dict, List, Set  # noqa: F401
+from typing import Any, Dict, List, Optional, Set
 
 from snapcraft.internal import errors, pluginhandler, steps
 import snapcraft.internal.project_loader._config as _config
 
-_DirtyReport = Dict[str, Dict[steps.Step, pluginhandler.DirtyReport]]
-_OutdatedReport = Dict[str, Dict[steps.Step, pluginhandler.OutdatedReport]]
+_DirtyReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.DirtyReport]]]
+_OutdatedReport = Dict[str, Dict[steps.Step, Optional[pluginhandler.OutdatedReport]]]
 
 
 class StatusCache:
@@ -101,7 +101,7 @@ class StatusCache:
 
     def get_dirty_report(
         self, part: pluginhandler.PluginHandler, step: steps.Step
-    ) -> pluginhandler.DirtyReport:
+    ) -> Optional[pluginhandler.DirtyReport]:
         """Obtain the dirty report for a given step of the given part.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -151,8 +151,6 @@ class StatusCache:
         # Get the dirty report from the PluginHandler. If it's dirty, we can
         # stop here
         self._dirty_reports[part.name][step] = part.get_dirty_report(step)
-        if self._dirty_reports[part.name][step]:
-            return
 
         # The dirty report from the PluginHandler only takes into account
         # properties specific to that part. If it's not dirty because of those,
