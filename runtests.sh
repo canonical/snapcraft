@@ -48,6 +48,10 @@ run_static_tests() {
 
     echo "Running shellcheck inside spread yaml"
     ./tools/spread-shellcheck.py spread.yaml tests/spread/
+
+    echo "Running isort"
+    # Ignore whitespace due to black formatting differences.
+    isort --ignore-whitespace --check
 }
 
 run_snapcraft_tests(){
