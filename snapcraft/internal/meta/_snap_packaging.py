@@ -340,7 +340,7 @@ class _SnapPackaging:
         self.meta_dir = os.path.join(self._prime_dir, "meta")
         self.meta_gui_dir = os.path.join(self.meta_dir, "gui")
         self._config_data = project_config.data.copy()
-        self._original_snapcraft_yaml = project_config.project.info.get_raw_snapcraft()
+        self._original_snapcraft_yaml = project_config.project.get_raw_snapcraft()
 
         self._install_path_pattern = re.compile(
             r"{}/[a-z0-9][a-z0-9+-]*/install".format(re.escape(self._parts_dir))

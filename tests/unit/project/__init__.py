@@ -30,13 +30,13 @@ class ProjectBaseTest(unit.TestCase):
 
     def assertValidationPasses(self, snapcraft_yaml):
         project = self.make_snapcraft_project(snapcraft_yaml)
-        project.info.validate_raw_snapcraft()
+        project.validate_raw_snapcraft()
 
-        return project.info.get_raw_snapcraft()
+        return project.get_raw_snapcraft()
 
     def assertValidationRaises(self, snapcraft_yaml):
         project = self.make_snapcraft_project(snapcraft_yaml)
 
         return self.assertRaises(
-            errors.YamlValidationError, project.info.validate_raw_snapcraft
+            errors.YamlValidationError, project.validate_raw_snapcraft
         )

@@ -50,15 +50,11 @@ class WorkTree:
         self._project = project
         self._package_all_sources = package_all_sources
 
-        # Get snapcraft yaml (as OrderedDict).
-        self._snapcraft_config = (
-            self._project.info.get_raw_snapcraft()
-        )  # type: OrderedDict
+        # Get snapcraft yaml.
+        self._snapcraft_config = self._project.get_raw_snapcraft()
 
         # Working copy.
-        self._prepared_snapcraft_config = (
-            self._project.info.get_raw_snapcraft()
-        )  # type: OrderedDict
+        self._prepared_snapcraft_config = self._project.get_raw_snapcraft()
 
         # Working tree base directory.
         self._base_dir = worktree_dir

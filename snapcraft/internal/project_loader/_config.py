@@ -202,7 +202,7 @@ class Config:
         self.project = project
 
         # raw_snapcraft_yaml is read only, create a new copy
-        snapcraft_yaml = apply_extensions(project.info.get_raw_snapcraft())
+        snapcraft_yaml = apply_extensions(project.get_raw_snapcraft())
 
         self.validator = Validator(snapcraft_yaml)
         self.validator.validate()

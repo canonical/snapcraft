@@ -79,9 +79,7 @@ def expand_extensions(**kwargs):
     """Display snapcraft.yaml with all extensions applied."""
 
     project = get_project(**kwargs)
-    yaml_with_extensions = project_loader.apply_extensions(
-        project.info.get_raw_snapcraft()
-    )
+    yaml_with_extensions = project_loader.apply_extensions(project.get_raw_snapcraft())
 
     # Loading the config applied all the extensions, so just dump it back out
     yaml_utils.dump(yaml_with_extensions, stream=sys.stdout)

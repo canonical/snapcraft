@@ -42,7 +42,7 @@ def conduct_project_sanity_check(project: Project) -> None:
     # This here check is mostly for backwards compatibility with the
     # rest of the code base.
     if project.info is not None:
-        project.info.validate_raw_snapcraft()
+        project.validate_raw_snapcraft()
 
     snap_dir_path = os.path.join(project._get_snapcraft_assets_dir())
     if os.path.isdir(snap_dir_path):
