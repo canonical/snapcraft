@@ -228,9 +228,9 @@ class Config:
         if self.data.get("version") == "git":
             self.build_tools.add("git")
 
-        # XXX: Resetting snap_meta due to above mangling of data.
-        # Convergence to operating on snap_meta will remove this requirement...
-        project._snap_meta = Snap.from_dict(self.data)
+        # XXX: Resetting project.info due to above mangling of data.
+        # Convergence to operating on project.info will remove this requirement...
+        project.info = Snap.from_dict(self.data)
 
         # Always add the base for building for non os and base snaps
         if project.info.base is None and project.info.type in ("app", "gadget"):

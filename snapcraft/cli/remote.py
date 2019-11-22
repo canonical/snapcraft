@@ -110,7 +110,7 @@ def remote_build(
     project = get_project()
 
     # TODO: use project.is_legacy() when available.
-    base = project.info.get_build_base()
+    base = project.info.build_base
     if base is None:
         raise errors.BaseRequiredError()
 

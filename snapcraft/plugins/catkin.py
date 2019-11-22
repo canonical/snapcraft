@@ -262,9 +262,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 ros_repo=ros_repo,
                 ubuntu_repo=ubuntu_repo,
                 security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
-                    self.project.info.get_build_base()
-                ],
+                codename=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.build_base],
             )
         )
 
@@ -275,7 +273,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        base = self.project.info.get_build_base()
+        base = self.project.info.build_base
         if base not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
@@ -492,9 +490,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             ros_distro=self._rosdistro,
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
-            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
-                self.project.info.get_build_base()
-            ],
+            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project.info.build_base],
             ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
             ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,

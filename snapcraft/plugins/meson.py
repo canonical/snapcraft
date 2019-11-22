@@ -69,7 +69,7 @@ class MesonPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._setup_base_tools(project.info.get_build_base())
+        self._setup_base_tools(project.info.build_base)
 
         self.snapbuildname = "snapbuild"
         self.mesonbuilddir = os.path.join(self.builddir, self.snapbuildname)

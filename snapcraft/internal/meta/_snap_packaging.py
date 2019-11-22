@@ -329,7 +329,7 @@ class _SnapPackaging:
     ) -> None:
         self._project_config = project_config
         self._extracted_metadata = extracted_metadata
-        self._snapcraft_yaml_path = project_config.project.info.snapcraft_yaml_file_path
+        self._snapcraft_yaml_path = project_config.project._snapcraft_yaml_path
         self._prime_dir = project_config.project.prime_dir
         self._parts_dir = project_config.project.parts_dir
 
@@ -350,7 +350,7 @@ class _SnapPackaging:
 
         # TODO: create_snap_packaging managles config data, so we create
         # a new private instance of snap_meta.  Longer term, this needs
-        # to converge with project's snap_meta.
+        # to converge with project's info.
         self._snap_meta = Snap.from_dict(project_config.data)
 
     def cleanup(self):
@@ -401,6 +401,10 @@ class _SnapPackaging:
             icon_path = self._extracted_metadata.get_icon()
 
         snap_name = self._project_config.project.info.name
+        if snap_name is None:
+            # Developer error if we ever got this far without a name...
+            raise RuntimeError("name is undefined")
+
         for app_name, app in self._snap_meta.apps.items():
             app.write_command_wrappers(prime_dir=self._prime_dir)
             app.write_application_desktop_file(

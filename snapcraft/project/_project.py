@@ -26,7 +26,6 @@ from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
 from . import errors
 from ._project_options import ProjectOptions
-from ._project_info import ProjectInfo  # noqa: F401
 from ._schema import Validator
 
 
@@ -58,10 +57,13 @@ class Project(ProjectOptions):
         # rest of the code base.
         if snapcraft_yaml_file_path is None:
             self._raw_snapcraft: "OrderedDict[str, Any]" = OrderedDict()
-            self.info: Optional[ProjectInfo] = None
+            self.info: Snap = Snap()
         else:
             self._raw_snapcraft = self._load_raw_snapcraft()
-            self.info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+            # XXX: (Re)set by Config because it mangles source data.
+            # Ideally everywhere wold converge to operating on same object and
+            # would only need to initialize it once (properly).
+            self.info = Snap.from_dict(self._raw_snapcraft)
 
         self._is_managed_host = is_managed_host
         self._project_dir = project_dir
@@ -69,11 +71,6 @@ class Project(ProjectOptions):
 
         self.local_plugins_dir = self._get_local_plugins_dir()
         self._start_time = datetime.utcnow()
-
-        # XXX: (Re)set by Config because it mangles source data.
-        # Ideally everywhere wold converge to operating on snap_meta, and ww
-        # would only need to initialize it once (properly).
-        self._snap_meta = Snap()
 
     def _load_raw_snapcraft(self) -> "OrderedDict[str, Any]":
         raw_snapcraft = yaml_utils.load_yaml_file(self._snapcraft_yaml_path)
@@ -101,25 +98,25 @@ class Project(ProjectOptions):
         return m.hexdigest()[:6]
 
     def _get_content_snaps(self) -> Set[str]:
-        """Return the set of content snaps from snap_meta."""
+        """Return the set of content snaps from snap info."""
         return set(
             [
                 x.provider
-                for x in self._snap_meta.get_content_plugs()
+                for x in self.info.get_content_plugs()
                 if x.provider is not None
             ]
         )
 
     def _get_provider_content_dirs(self) -> Set[str]:
         """Return the set installed provider content directories."""
-        return self._snap_meta.get_provider_content_directories()
+        return self.info.get_provider_content_directories()
 
     def _get_snapcraft_assets_dir(self) -> str:
         # Many test cases don't set the yaml file path and assume the default dir
-        if not self.info:
+        if not self._snapcraft_yaml_path:
             return os.path.join(self._project_dir, "snap")
 
-        if self.info.snapcraft_yaml_file_path.endswith(
+        if self._snapcraft_yaml_path.endswith(
             os.path.join("build-aux", "snap", "snapcraft.yaml")
         ):
             return os.path.join(self._project_dir, "build-aux", "snap")

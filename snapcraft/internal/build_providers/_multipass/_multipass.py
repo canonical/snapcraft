@@ -95,7 +95,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        return "snapcraft:{}".format(self.project.info.get_build_base())
+        return "snapcraft:{}".format(self.project.info.build_base)
 
     def _launch(self) -> None:
         cloud_user_data_filepath = self._get_cloud_user_data()

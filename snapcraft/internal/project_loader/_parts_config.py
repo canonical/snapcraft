@@ -170,9 +170,7 @@ class PartsConfig:
             if part_name not in self._part_names:
                 raise snapcraft.internal.errors.SnapcraftEnvironmentError(
                     "The part named {!r} is not defined in "
-                    "{!r}".format(
-                        part_name, self._project.info.snapcraft_yaml_file_path
-                    )
+                    "{!r}".format(part_name, self._project._snapcraft_yaml_path)
                 )
 
     def load_part(self, part_name, plugin_name, part_properties):

@@ -104,7 +104,7 @@ class GodepsPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._setup_base_tools(options.go_channel, project.info.get_build_base())
+        self._setup_base_tools(options.go_channel, project.info.build_base)
 
         self._gopath = os.path.join(self.partdir, "go")
         self._gopath_src = os.path.join(self._gopath, "src")

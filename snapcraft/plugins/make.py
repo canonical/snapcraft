@@ -89,9 +89,9 @@ class MakePlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        if project.info.get_build_base() not in ("core", "core16", "core18", "core20"):
+        if project.info.build_base not in ("core", "core16", "core18", "core20"):
             raise errors.PluginBaseError(
-                part_name=self.name, base=project.info.get_build_base()
+                part_name=self.name, base=project.info.build_base
             )
 
         self.build_packages.append("make")

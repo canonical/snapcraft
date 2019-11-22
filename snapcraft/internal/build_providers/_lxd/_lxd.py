@@ -156,7 +156,7 @@ class LXD(Provider):
     def _launch(self) -> None:
         config = {
             "name": self.instance_name,
-            "source": get_image_source(base=self.project.info.get_build_base()),
+            "source": get_image_source(base=self.project.info.build_base),
         }
 
         try:
