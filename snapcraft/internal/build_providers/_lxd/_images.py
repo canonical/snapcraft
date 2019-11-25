@@ -16,7 +16,7 @@
 
 from typing import Dict
 
-_BASE_IMAGE = dict(core="16.04", core16="16.04", core18="18.04")
+_BASE_IMAGE = dict(core="16.04", core16="16.04", core18="18.04", core20="20.04")
 
 
 def get_image_source(*, base: str) -> Dict[str, str]:
@@ -31,6 +31,12 @@ def get_image_source(*, base: str) -> Dict[str, str]:
         type="image",
         mode="pull",
         server="https://cloud-images.ubuntu.com/minimal/releases/",
+        protocol="simplestreams",
+        alias=_BASE_IMAGE[base],
+    ) if base != "core20" else dict( ## FIXME: HACK: remove if core20 is released
+        type="image",
+        mode="pull",
+        server="https://cloud-images.ubuntu.com/minimal/daily/focal/",
         protocol="simplestreams",
         alias=_BASE_IMAGE[base],
     )
