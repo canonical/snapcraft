@@ -185,12 +185,18 @@ class Snap:
     def _validate_required_keys(self) -> None:
         """Verify that all mandatory keys have been satisfied."""
         missing_keys: List[str] = []
-        for key in _MANDATORY_PACKAGE_KEYS:
-            if key == "version" and self.adopt_info:
-                continue
 
-            if not self.__dict__[key]:
-                missing_keys.append(key)
+        if not self.name:
+            missing_keys.append("name")
+
+        if not self.version and not self.adopt_info:
+            missing_keys.append("version")
+
+        if not self.summary:
+            missing_keys.append("summary")
+
+        if not self.description:
+            missing_keys.append("description")
 
         if missing_keys:
             raise errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
