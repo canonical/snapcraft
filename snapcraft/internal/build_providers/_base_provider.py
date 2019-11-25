@@ -411,7 +411,7 @@ class Provider(abc.ABC):
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
-        if base == "core18" and provider_base is None:
+        if base in ("core18", "core20") and provider_base is None:
             return False
         elif base != provider_base:
             return True
