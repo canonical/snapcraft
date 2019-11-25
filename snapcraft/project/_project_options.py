@@ -102,14 +102,15 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 _WINDOWS_TRANSLATIONS = {"AMD64": "x86_64"}
 
 
-_HOST_CODENAME_FOR_BASE = {"core18": "bionic", "core": "xenial"}
+_HOST_CODENAME_FOR_BASE = {"core20": "focal", "core18": "bionic", "core": "xenial"}
 _HOST_COMPATIBILITY = {
     "xenial": ["trusty", "xenial"],
     "bionic": ["trusty", "xenial", "bionic"],
+    "focal" : ["xenial", "bionic"] 
 }
 _STATIC_BASES = ["bare"]
 
-_LINKER_VERSION_FOR_BASE = {"core18": "2.27", "core": "2.23"}
+_LINKER_VERSION_FOR_BASE = {"core20": "2.33", "core18": "2.27", "core": "2.23"}
 
 
 def _get_platform_architecture():
