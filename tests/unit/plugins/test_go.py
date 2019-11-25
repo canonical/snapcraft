@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,8 @@ import jsonschema
 from textwrap import dedent
 from unittest import mock
 
-from testtools.matchers import Contains, Equals, HasLength, Not
+import fixtures
+from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors
 from snapcraft.project import Project
@@ -47,13 +48,22 @@ class GoPluginBaseTest(unit.TestCase):
             target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
         )
 
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        def fake_go_build(command, cwd, *args, **kwargs):
+            if command[0] == "go" and command[1] == "build":
+                # the package is -1
+                open(os.path.join(cwd, os.path.basename(command[-1])), "w").close()
 
-        patcher = mock.patch("snapcraft.internal.common.run_output")
-        self.run_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        fake_run = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.run", side_effect=fake_go_build
+            )
+        )
+        self.run_mock = fake_run.mock
+
+        fake_run_output = self.useFixture(
+            fixtures.MockPatch("snapcraft.internal.common.run_output")
+        )
+        self.run_output_mock = fake_run_output.mock
 
 
 class GoPluginPropertiesTest(unit.TestCase):
@@ -255,6 +265,10 @@ class GoPluginTest(GoPluginBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+    def assert_go_paths(self, plugin: go.GoPlugin) -> None:
+        self.assertThat(plugin._gopath, DirExists())
+        self.assertThat(plugin._gopath_src, DirExists())
+
     def test_pull_local_sources(self):
         class Options:
             source = "dir"
@@ -279,9 +293,7 @@ class GoPluginTest(GoPluginBaseTest):
             ]
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_no_local_source_with_go_packages(self):
         class Options:
@@ -306,9 +318,7 @@ class GoPluginTest(GoPluginBaseTest):
             ]
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_pull_with_local_sources_or_go_packages(self):
         class Options:
@@ -322,9 +332,7 @@ class GoPluginTest(GoPluginBaseTest):
 
         self.run_mock.assert_has_calls([])
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_build_with_local_sources(self):
         class Options:
@@ -341,7 +349,6 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
 
         self.run_mock.reset_mock()
@@ -356,16 +363,13 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "main")
         self.run_mock.assert_called_once_with(
-            ["go", "build", "-o", binary, "dir/pkg/main"],
-            cwd=plugin._gopath_src,
+            ["go", "build", "dir/pkg/main"],
+            cwd=os.path.join(plugin.installdir, "bin"),
             env=mock.ANY,
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_build_go_packages(self):
         class Options:
@@ -381,51 +385,18 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
-        # fake some binaries
-        binary = os.path.join(plugin._gopath_bin, "vet")
-        open(binary, "w").close()
 
         self.run_mock.reset_mock()
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ["go", "build", "-o", binary, plugin.options.go_packages[0]],
-            cwd=plugin._gopath_src,
+            ["go", "build", plugin.options.go_packages[0]],
+            cwd=os.path.join(plugin.installdir, "bin"),
             env=mock.ANY,
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
-        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
-        self.assertTrue(os.path.exists(vet_binary))
-
-    def test_build_with_no_local_sources_or_go_packages(self):
-        class Options:
-            source = ""
-            go_channel = "latest/stable"
-            go_packages = []
-            go_importpath = ""
-            go_buildtags = ""
-
-        plugin = go.GoPlugin("test-part", Options(), self.project)
-
-        os.makedirs(plugin.sourcedir)
-
-        plugin.pull()
-
-        os.makedirs(plugin._gopath_bin)
-        os.makedirs(plugin.builddir)
-
-        plugin.build()
-
-        self.run_mock.assert_has_calls([])
-
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_clean_build(self):
         class Options:
@@ -439,15 +410,12 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin._gopath_pkg)
         os.makedirs(plugin.builddir)
 
         plugin.build()
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
         plugin.clean_build()
 
@@ -492,7 +460,6 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
         self.run_output_mock.return_value = "github.com/snapcore/launcher main"
 
@@ -510,7 +477,6 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "launcher")
         self.run_mock.assert_has_calls(
             [
                 mock.call(
@@ -519,8 +485,8 @@ class GoPluginTest(GoPluginBaseTest):
                     env=mock.ANY,
                 ),
                 mock.call(
-                    ["go", "build", "-o", binary, "github.com/snapcore/launcher"],
-                    cwd=plugin._gopath_src,
+                    ["go", "build", "github.com/snapcore/launcher"],
+                    cwd=os.path.join(plugin.installdir, "bin"),
                     env=mock.ANY,
                 ),
             ]
@@ -531,6 +497,8 @@ class GoPluginTest(GoPluginBaseTest):
                 os.path.join(plugin._gopath_src, plugin.options.go_importpath)
             )
         )
+
+        self.assert_go_paths(plugin)
 
     def test_build_environment(self):
         class Options:
@@ -601,17 +569,9 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "main")
         self.run_mock.assert_called_once_with(
-            [
-                "go",
-                "build",
-                "-o",
-                binary,
-                "-tags=testbuildtag1,testbuildtag2",
-                "dir/pkg/main",
-            ],
-            cwd=plugin._gopath_src,
+            ["go", "build", "-tags=testbuildtag1,testbuildtag2", "dir/pkg/main"],
+            cwd=os.path.join(plugin.installdir, "bin"),
             env=mock.ANY,
         )
 
@@ -632,20 +592,17 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
-        # fake some binaries
-        binary = os.path.join(plugin._gopath_bin, "vet")
-        open(binary, "w").close()
 
         self.run_mock.reset_mock()
         plugin.build()
 
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls(
             [
                 mock.call(
-                    ["go", "build", "-o", binary, plugin.options.go_packages[0]],
-                    cwd=plugin._gopath_src,
+                    ["go", "build", plugin.options.go_packages[0]],
+                    cwd=os.path.join(plugin.installdir, "bin"),
                     env=mock.ANY,
                 ),
                 mock.call(
@@ -654,21 +611,15 @@ class GoPluginTest(GoPluginBaseTest):
                         "build",
                         "-ldflags",
                         "-linkmode=external",
-                        "-o",
-                        binary,
                         plugin.options.go_packages[0],
                     ],
-                    cwd=plugin._gopath_src,
+                    cwd=os.path.join(plugin.installdir, "bin"),
                     env=mock.ANY,
                 ),
             ]
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
-        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
-        self.assertTrue(os.path.exists(vet_binary))
+        self.assert_go_paths(plugin)
 
 
 class GoPluginSchemaValidationTest(unit.TestCase):

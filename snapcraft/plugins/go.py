@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -105,6 +105,8 @@ class GoPlugin(snapcraft.BasePlugin):
         self._setup_base_tools(options.go_channel, project.info.get_build_base())
         self._is_classic = project.info.confinement == "classic"
 
+        self._install_bin_dir = os.path.join(self.installdir, "bin")
+
         self._gopath = os.path.join(self.partdir, "go")
         self._gopath_src = os.path.join(self._gopath, "src")
         self._gopath_bin = os.path.join(self._gopath, "bin")
@@ -124,6 +126,7 @@ class GoPlugin(snapcraft.BasePlugin):
         # since we are not using -u the sources will stick to the
         # original checkout.
         super().pull()
+
         os.makedirs(self._gopath_src, exist_ok=True)
 
         if any(iglob("{}/**/*.go".format(self.sourcedir), recursive=True)):
@@ -165,38 +168,49 @@ class GoPlugin(snapcraft.BasePlugin):
         main_packages = [p[0] for p in packages_split if p[1] == "main"]
         return main_packages
 
+    def _build(self, *, package: str) -> None:
+        work_dir = self._install_bin_dir
+
+        build_cmd = ["go", "build"]
+        if self.options.go_buildtags:
+            build_cmd.extend(["-tags={}".format(",".join(self.options.go_buildtags))])
+
+        relink_cmd = build_cmd + ["-ldflags", "-linkmode=external"] + [package]
+        build_cmd = build_cmd + [package]
+
+        pre_build_files = os.listdir(work_dir)
+        self._run(build_cmd, cwd=work_dir)
+        post_build_files = os.listdir(work_dir)
+
+        new_files = set(post_build_files) - set(pre_build_files)
+        if len(new_files) != 1:
+            raise RuntimeError(f"Expected one binary to be built, found: {new_files!r}")
+        binary_path = os.path.join(work_dir, new_files.pop())
+
+        # Relink with system linker if executable is dynamic in order to be
+        # able to set rpath later on. This workaround can be removed after
+        # https://github.com/NixOS/patchelf/issues/146 is fixed.
+        if self._is_classic and elf.ElfFile(path=binary_path).is_dynamic:
+            self._run(relink_cmd, cwd=work_dir)
+
+    def _build_go_packages(self) -> None:
+        if self.options.go_packages:
+            packages = self.options.go_packages
+        else:
+            packages = self._get_local_main_packages()
+
+        for package in packages:
+            self._build(package=package)
+
     def build(self):
         super().build()
 
-        tags = []
-        if self.options.go_buildtags:
-            tags = ["-tags={}".format(",".join(self.options.go_buildtags))]
+        # Clear the installation before continuing.
+        if os.path.exists(self._install_bin_dir):
+            shutil.rmtree(self._install_bin_dir)
+        os.makedirs(self._install_bin_dir)
 
-        packages = self.options.go_packages
-        if not packages:
-            packages = self._get_local_main_packages()
-        for package in packages:
-            binary = os.path.join(self._gopath_bin, self._binary_name(package))
-            self._run(["go", "build", "-o", binary] + tags + [package])
-            # Relink with system linker if executable is dynamic in order to be
-            # able to set rpath later on. This workaround can be removed after
-            # https://github.com/NixOS/patchelf/issues/146 is fixed.
-            if self._is_classic and elf.ElfFile(path=binary).is_dynamic:
-                self._run(
-                    ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
-                    + tags
-                    + [package]
-                )
-
-        install_bin_path = os.path.join(self.installdir, "bin")
-        os.makedirs(install_bin_path, exist_ok=True)
-        for binary in os.listdir(self._gopath_bin):
-            binary_path = os.path.join(self._gopath_bin, binary)
-            shutil.copy2(binary_path, install_bin_path)
-
-    def _binary_name(self, package):
-        package = package.replace("/...", "")
-        return package.split("/")[-1]
+        self._build_go_packages()
 
     def clean_build(self):
         super().clean_build()
@@ -207,9 +221,13 @@ class GoPlugin(snapcraft.BasePlugin):
         if os.path.isdir(self._gopath_pkg):
             shutil.rmtree(self._gopath_pkg)
 
-    def _run(self, cmd, **kwargs):
+    def _run(self, cmd, cwd: str = None, **kwargs):
         env = self._build_environment()
-        return self.run(cmd, cwd=self._gopath_src, env=env, **kwargs)
+
+        if cwd is None:
+            cwd = self._gopath_src
+
+        return self.run(cmd, cwd=cwd, env=env, **kwargs)
 
     def _run_output(self, cmd, **kwargs):
         env = self._build_environment()
