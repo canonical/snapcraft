@@ -32,27 +32,6 @@ from snapcraft.internal.meta.system_user import SystemUser
 logger = logging.getLogger(__name__)
 
 
-_MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
-_OPTIONAL_PACKAGE_KEYS = [
-    "apps",
-    "architectures",
-    "assumes",
-    "base",
-    "confinement",
-    "environment",
-    "epoch",
-    "grade",
-    "hooks",
-    "layout",
-    "license",
-    "plugs",
-    "slots",
-    "system-usernames",
-    "title",
-    "type",
-]
-
-
 class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
