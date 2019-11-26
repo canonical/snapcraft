@@ -40,7 +40,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       This entry tells the checked out `source` to live within a certain path
       within `GOPATH`.
-      This is not needed and does not affect `go-packages`.
+      This entry is not required if `source` uses `go.mod`.
 
     - go-buildtags:
       (list of strings)
@@ -49,8 +49,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
+import re
 import shutil
 from glob import iglob
+from pkg_resources import parse_version
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import snapcraft
@@ -62,6 +64,20 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+_GO_MOD_REQUIRED_GO_VERSION = "1.13"
+
+
+class GoModRequiredVersionError(errors.SnapcraftException):
+    def __init__(self, *, go_version: str) -> None:
+        self._go_version = go_version
+
+    def get_brief(self) -> str:
+        return "Use of go.mod requires Go {!r} or greater, found: {!r}".format(
+            _GO_MOD_REQUIRED_GO_VERSION, self._go_version
+        )
+
+    def get_resolution(self) -> str:
+        return "Set go-channel to a newer version of Go and try again."
 
 
 def _get_cgo_ldflags(library_paths: List[str]) -> str:
@@ -113,13 +129,13 @@ class GoPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["go-packages", "go-buildtags"]
+        return ["go-packages", "go-buildtags", "go-channel"]
 
     @classmethod
     def get_pull_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ["go-packages"]
+        return ["go-packages", "go-channel"]
 
     def __init__(self, name: str, options, project: "Project") -> None:
         super().__init__(name, options, project)
@@ -134,6 +150,9 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_bin = os.path.join(self._gopath, "bin")
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
 
+        self._version_regex = re.compile(r"^go version go(.*) .*$")
+        self._go_version: Optional[str] = None
+
     def _setup_base_tools(self, go_channel: str, base: Optional[str]) -> None:
         if go_channel:
             self.build_snaps.append("go/{}".format(go_channel))
@@ -141,6 +160,31 @@ class GoPlugin(snapcraft.BasePlugin):
             self.build_packages.append("golang-go")
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
+
+    def _is_using_go_mod(self, cwd: str) -> bool:
+        if not os.path.exists(os.path.join(cwd, "go.mod")):
+            return False
+
+        if self._go_version is None:
+            go_version_cmd_output: str = self._run_output(["go", "version"])
+            version_match = self._version_regex.match(go_version_cmd_output)
+
+            if version_match is None:
+                raise RuntimeError(
+                    "Unable to parse go version output: {!r}".format(
+                        go_version_cmd_output
+                    )
+                )
+
+            self._go_version = version_match.group(1)
+
+        if parse_version(self._go_version) < parse_version(_GO_MOD_REQUIRED_GO_VERSION):
+            raise GoModRequiredVersionError(go_version=self._go_version)
+
+        return True
+
+    def _pull_go_mod(self) -> None:
+        self._run(["go", "mod", "download"], cwd=self.sourcedir)
 
     def _pull_go_packages(self) -> None:
         os.makedirs(self._gopath_src, exist_ok=True)
@@ -164,7 +208,10 @@ class GoPlugin(snapcraft.BasePlugin):
     def pull(self) -> None:
         super().pull()
 
-        self._pull_go_packages()
+        if self._is_using_go_mod(cwd=self.sourcedir):
+            return self._pull_go_mod()
+        else:
+            self._pull_go_packages()
 
     def clean_pull(self) -> None:
         super().clean_pull()
@@ -193,24 +240,31 @@ class GoPlugin(snapcraft.BasePlugin):
         main_packages = [p[0] for p in packages_split if p[1] == "main"]
         return main_packages
 
-    def _build(self, *, package: str) -> None:
-        work_dir = self._install_bin_dir
-
+    def _build(self, *, package: str = "") -> None:
         build_cmd = ["go", "build"]
+
         if self.options.go_buildtags:
             build_cmd.extend(["-tags={}".format(",".join(self.options.go_buildtags))])
 
-        relink_cmd = build_cmd + ["-ldflags", "-linkmode=external"] + [package]
-        build_cmd = build_cmd + [package]
+        relink_cmd = build_cmd + ["-ldflags", "-linkmode=external"]
 
-        pre_build_files = os.listdir(work_dir)
+        if self._is_using_go_mod(self.builddir) and not package:
+            work_dir = self.builddir
+            build_cmd.extend(["-o", self._install_bin_dir])
+            relink_cmd.extend(["-o", self._install_bin_dir])
+        else:
+            work_dir = self._install_bin_dir
+            build_cmd.append(package)
+            relink_cmd.append(package)
+
+        pre_build_files = os.listdir(self._install_bin_dir)
         self._run(build_cmd, cwd=work_dir)
-        post_build_files = os.listdir(work_dir)
+        post_build_files = os.listdir(self._install_bin_dir)
 
         new_files = set(post_build_files) - set(pre_build_files)
         if len(new_files) != 1:
             raise RuntimeError(f"Expected one binary to be built, found: {new_files!r}")
-        binary_path = os.path.join(work_dir, new_files.pop())
+        binary_path = os.path.join(self._install_bin_dir, new_files.pop())
 
         # Relink with system linker if executable is dynamic in order to be
         # able to set rpath later on. This workaround can be removed after
@@ -235,7 +289,10 @@ class GoPlugin(snapcraft.BasePlugin):
             shutil.rmtree(self._install_bin_dir)
         os.makedirs(self._install_bin_dir)
 
-        self._build_go_packages()
+        if self._is_using_go_mod(cwd=self.builddir):
+            self._build()
+        else:
+            self._build_go_packages()
 
     def clean_build(self) -> None:
         super().clean_build()

@@ -49,7 +49,11 @@ class GoPluginBaseTest(unit.TestCase):
         )
 
         def fake_go_build(command, cwd, *args, **kwargs):
-            if command[0] == "go" and command[1] == "build":
+            if command[0] == "go" and command[1] == "build" and "-o" in command:
+                open(
+                    os.path.join(command[command.index("-o") + 1], "binary"), "w"
+                ).close()
+            elif command[0] == "go" and command[1] == "build" and "-o" not in command:
                 # the package is -1
                 open(os.path.join(cwd, os.path.basename(command[-1])), "w").close()
 
@@ -226,7 +230,7 @@ class GoPluginPropertiesTest(unit.TestCase):
         self.assertNotIn("required", schema)
 
     def test_get_pull_properties(self):
-        expected_pull_properties = ["go-packages"]
+        expected_pull_properties = ["go-packages", "go-channel"]
         resulting_pull_properties = go.GoPlugin.get_pull_properties()
 
         self.assertThat(
@@ -237,7 +241,7 @@ class GoPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["go-packages", "go-buildtags"]
+        expected_build_properties = ["go-packages", "go-buildtags", "go-channel"]
         resulting_build_properties = go.GoPlugin.get_build_properties()
 
         self.assertThat(
@@ -294,6 +298,51 @@ class GoPluginTest(GoPluginBaseTest):
         )
 
         self.assert_go_paths(plugin)
+
+    def test_pull_go_mod(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        plugin.pull()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+    def test_go_mod_requires_newer_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go1.6.4 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        self.assertRaises(go.GoModRequiredVersionError, plugin.pull)
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_not_called()
 
     def test_no_local_source_with_go_packages(self):
         class Options:
@@ -575,6 +624,32 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
+    def test_build_go_mod(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, "go.mod"), "w").close()
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "build", "-o", plugin._install_bin_dir],
+            cwd=plugin.builddir,
+            env=mock.ANY,
+        )
+
     @mock.patch("snapcraft.internal.elf.ElfFile")
     def test_build_classic_dynamic_relink(self, mock_elffile):
         class Options:
@@ -620,6 +695,52 @@ class GoPluginTest(GoPluginBaseTest):
         )
 
         self.assert_go_paths(plugin)
+
+    @mock.patch("snapcraft.internal.elf.ElfFile")
+    def test_build_go_mod_classic_dynamic_relink(self, mock_elffile):
+        class Options:
+            source = ""
+            go_channel = "latest/stable"
+            go_packages = ["github.com/gotools/vet"]
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        mock_elffile.return_value = MockElfFile(path="foo")
+        self.project.info.confinement = "classic"
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, "go.mod"), "w").close()
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.assertThat(self.run_mock.call_count, Equals(2))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["go", "build", "-o", plugin._install_bin_dir],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    [
+                        "go",
+                        "build",
+                        "-ldflags",
+                        "-linkmode=external",
+                        "-o",
+                        plugin._install_bin_dir,
+                    ],
+                    cwd=plugin.builddir,
+                    env=mock.ANY,
+                ),
+            ]
+        )
 
 
 class GoPluginSchemaValidationTest(unit.TestCase):
