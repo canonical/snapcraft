@@ -18,7 +18,7 @@ import os
 import sys
 from typing import Optional
 
-from snapcraft.internal.errors import XAttributeTooLongError
+from snapcraft.internal.errors import XAttributeError, XAttributeTooLongError
 
 
 def _get_snapcraft_xattr_key(snapcraft_key: str) -> str:
@@ -42,8 +42,8 @@ def _read_snapcraft_xattr(path: str, snapcraft_key: str) -> Optional[str]:
         if error.errno == 61:
             return None
 
-        # Raise unknown variants of OSError as-is.
-        raise
+        # Chain unknown variants of OSError.
+        raise XAttributeError(action="read", key=key, path=path) from error
 
     return value.decode().strip()
 
@@ -66,15 +66,26 @@ def _write_snapcraft_xattr(path: str, snapcraft_key: str, value: str) -> None:
         if error.errno == 7:
             raise XAttributeTooLongError(path=path, key=key, value=value)
 
-        # Raise unknown variants of OSError as-is.
-        raise
+        # Chain unknown variants of OSError.
+        raise XAttributeError(action="write", key=key, path=path) from error
 
 
 def read_origin_stage_package(path: str) -> Optional[str]:
     """Read origin stage package."""
-    return _read_snapcraft_xattr(path, "origin_stage_package")
+    try:
+        return _read_snapcraft_xattr(path, "origin_stage_package")
+    except XAttributeError:
+        # Ignore error if origin stage package not required.
+        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+            raise
+        return None
 
 
 def write_origin_stage_package(path: str, value: str) -> None:
     """Write origin stage package."""
-    _write_snapcraft_xattr(path, "origin_stage_package", value)
+    try:
+        _write_snapcraft_xattr(path, "origin_stage_package", value)
+    except XAttributeError:
+        # Ignore error if origin stage package not required.
+        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+            raise
