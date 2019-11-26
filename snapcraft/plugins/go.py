@@ -120,15 +120,13 @@ class GoPlugin(snapcraft.BasePlugin):
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
-    def pull(self):
+    def _pull_go_packages(self) -> None:
+        os.makedirs(self._gopath_src, exist_ok=True)
+
         # use -d to only download (build will happen later)
         # use -t to also get the test-deps
         # since we are not using -u the sources will stick to the
         # original checkout.
-        super().pull()
-
-        os.makedirs(self._gopath_src, exist_ok=True)
-
         if any(iglob("{}/**/*.go".format(self.sourcedir), recursive=True)):
             go_package = self._get_local_go_package()
             go_package_path = os.path.join(self._gopath_src, go_package)
@@ -140,6 +138,11 @@ class GoPlugin(snapcraft.BasePlugin):
 
         for go_package in self.options.go_packages:
             self._run(["go", "get", "-t", "-d", go_package])
+
+    def pull(self):
+        super().pull()
+
+        self._pull_go_packages()
 
     def clean_pull(self):
         super().clean_pull()
