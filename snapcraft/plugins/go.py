@@ -51,10 +51,14 @@ import logging
 import os
 import shutil
 from glob import iglob
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import snapcraft
 from snapcraft import common
 from snapcraft.internal import elf, errors
+
+if TYPE_CHECKING:
+    from snapcraft.project import Project
 
 
 logger = logging.getLogger(__name__)
@@ -62,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 class GoPlugin(snapcraft.BasePlugin):
     @classmethod
-    def schema(cls):
+    def schema(cls) -> Dict[str, Any]:
         schema = super().schema()
         schema["properties"]["go-channel"] = {
             "type": "string",
@@ -88,18 +92,18 @@ class GoPlugin(snapcraft.BasePlugin):
         return schema
 
     @classmethod
-    def get_build_properties(cls):
+    def get_build_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return ["go-packages", "go-buildtags"]
 
     @classmethod
-    def get_pull_properties(cls):
+    def get_pull_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
         return ["go-packages"]
 
-    def __init__(self, name, options, project):
+    def __init__(self, name: str, options, project: "Project") -> None:
         super().__init__(name, options, project)
 
         self._setup_base_tools(options.go_channel, project.info.get_build_base())
@@ -112,7 +116,7 @@ class GoPlugin(snapcraft.BasePlugin):
         self._gopath_bin = os.path.join(self._gopath, "bin")
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
 
-    def _setup_base_tools(self, go_channel, base):
+    def _setup_base_tools(self, go_channel: str, base: Optional[str]) -> None:
         if go_channel:
             self.build_snaps.append("go/{}".format(go_channel))
         elif base in ("core", "core16", "core18"):
@@ -139,19 +143,19 @@ class GoPlugin(snapcraft.BasePlugin):
         for go_package in self.options.go_packages:
             self._run(["go", "get", "-t", "-d", go_package])
 
-    def pull(self):
+    def pull(self) -> None:
         super().pull()
 
         self._pull_go_packages()
 
-    def clean_pull(self):
+    def clean_pull(self) -> None:
         super().clean_pull()
 
         # Remove the gopath (if present)
         if os.path.exists(self._gopath):
             shutil.rmtree(self._gopath)
 
-    def _get_local_go_package(self):
+    def _get_local_go_package(self) -> str:
         if self.options.go_importpath:
             go_package = self.options.go_importpath
         else:
@@ -162,7 +166,7 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 
-    def _get_local_main_packages(self):
+    def _get_local_main_packages(self) -> List[str]:
         search_path = "./{}/...".format(self._get_local_go_package())
         packages = self._run_output(
             ["go", "list", "-f", "{{.ImportPath}} {{.Name}}", search_path]
@@ -205,7 +209,7 @@ class GoPlugin(snapcraft.BasePlugin):
         for package in packages:
             self._build(package=package)
 
-    def build(self):
+    def build(self) -> None:
         super().build()
 
         # Clear the installation before continuing.
@@ -215,7 +219,7 @@ class GoPlugin(snapcraft.BasePlugin):
 
         self._build_go_packages()
 
-    def clean_build(self):
+    def clean_build(self) -> None:
         super().clean_build()
 
         if os.path.isdir(self._gopath_bin):
@@ -224,7 +228,7 @@ class GoPlugin(snapcraft.BasePlugin):
         if os.path.isdir(self._gopath_pkg):
             shutil.rmtree(self._gopath_pkg)
 
-    def _run(self, cmd, cwd: str = None, **kwargs):
+    def _run(self, cmd: List[str], cwd: str = None, **kwargs) -> None:
         env = self._build_environment()
 
         if cwd is None:
@@ -232,16 +236,16 @@ class GoPlugin(snapcraft.BasePlugin):
 
         return self.run(cmd, cwd=cwd, env=env, **kwargs)
 
-    def _run_output(self, cmd, **kwargs):
+    def _run_output(self, cmd: List[str], **kwargs) -> str:
         env = self._build_environment()
         return self.run_output(cmd, cwd=self._gopath_src, env=env, **kwargs)
 
-    def _build_environment(self):
+    def _build_environment(self) -> Dict[str, str]:
         env = os.environ.copy()
         env["GOPATH"] = self._gopath
         env["GOBIN"] = self._gopath_bin
 
-        include_paths = []
+        include_paths: List[str] = []
         for root in [self.installdir, self.project.stage_dir]:
             include_paths.extend(
                 common.get_library_paths(root, self.project.arch_triplet)
@@ -263,5 +267,5 @@ class GoPlugin(snapcraft.BasePlugin):
                 env["GOARM"] = "7"
         return env
 
-    def enable_cross_compilation(self):
+    def enable_cross_compilation(self) -> None:
         pass
