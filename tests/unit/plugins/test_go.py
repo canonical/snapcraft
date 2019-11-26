@@ -761,3 +761,59 @@ class GoPluginCrossCompileTest(GoPluginBaseTest):
             if self.deb_arch == "armhf":
                 self.assertIn("GOARM", env)
                 self.assertThat(env["GOARM"], Equals("7"))
+
+
+class CGoLdFlagsTest(unit.TestCase):
+    scenarios = (
+        (
+            "none",
+            dict(cgo_ldflags_env="", library_paths=[], ldflags_env="", expected=""),
+        ),
+        (
+            "CGO_LDFLAGS",
+            dict(
+                cgo_ldflags_env="-lbar",
+                library_paths=[],
+                ldflags_env="",
+                expected="-lbar",
+            ),
+        ),
+        (
+            "Library Paths",
+            dict(
+                cgo_ldflags_env="",
+                library_paths=["part/part1/usr/lib", "stage/lib"],
+                ldflags_env="",
+                expected="-Lpart/part1/usr/lib -Lstage/lib",
+            ),
+        ),
+        (
+            "LDFLAGS",
+            dict(
+                cgo_ldflags_env="",
+                library_paths=[],
+                ldflags_env="-lfoo",
+                expected="-lfoo",
+            ),
+        ),
+        (
+            "all",
+            dict(
+                cgo_ldflags_env="-lbar",
+                library_paths=["part/part1/usr/lib", "stage/lib"],
+                ldflags_env="-lfoo",
+                expected="-lbar -Lpart/part1/usr/lib -Lstage/lib -lfoo",
+            ),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("CGO_LDFLAGS", self.cgo_ldflags_env)
+        )
+        self.useFixture(fixtures.EnvironmentVariable("LDFLAGS", self.ldflags_env))
+
+    def test_generated_cgo_ldflags(self):
+        self.assertThat(go._get_cgo_ldflags(self.library_paths), Equals(self.expected))

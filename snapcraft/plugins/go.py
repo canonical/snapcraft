@@ -64,6 +64,24 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _get_cgo_ldflags(library_paths: List[str]) -> str:
+    cgo_ldflags: List[str] = list()
+
+    existing_cgo_ldflags = os.getenv("CGO_LDFLAGS")
+    if existing_cgo_ldflags:
+        cgo_ldflags.append(existing_cgo_ldflags)
+
+    flags = common.combine_paths(library_paths, "-L", " ")
+    if flags:
+        cgo_ldflags.append(flags)
+
+    ldflags = os.getenv("LDFLAGS")
+    if ldflags:
+        cgo_ldflags.append(ldflags)
+
+    return " ".join(cgo_ldflags)
+
+
 class GoPlugin(snapcraft.BasePlugin):
     @classmethod
     def schema(cls) -> Dict[str, Any]:
@@ -245,16 +263,15 @@ class GoPlugin(snapcraft.BasePlugin):
         env["GOPATH"] = self._gopath
         env["GOBIN"] = self._gopath_bin
 
-        include_paths: List[str] = []
+        library_paths: List[str] = []
         for root in [self.installdir, self.project.stage_dir]:
-            include_paths.extend(
+            library_paths.extend(
                 common.get_library_paths(root, self.project.arch_triplet)
             )
 
-        flags = common.combine_paths(include_paths, "-L", " ")
-        env["CGO_LDFLAGS"] = "{} {} {}".format(
-            env.get("CGO_LDFLAGS", ""), flags, env.get("LDFLAGS", "")
-        )
+        cgo_ldflags = _get_cgo_ldflags(library_paths)
+        if cgo_ldflags:
+            env["CGO_LDFLAGS"] = cgo_ldflags
 
         if self.project.is_cross_compiling:
             env["CC"] = "{}-gcc".format(self.project.arch_triplet)
