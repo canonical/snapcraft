@@ -21,10 +21,6 @@ from typing import Optional
 from snapcraft.internal.errors import XAttributeTooLongError
 
 
-if sys.platform == "linux":
-    import xattr
-
-
 def _get_snapcraft_xattr_key(snapcraft_key: str) -> str:
     return f"user.snapcraft.{snapcraft_key}"
 
@@ -39,7 +35,7 @@ def _read_snapcraft_xattr(path: str, snapcraft_key: str) -> Optional[str]:
 
     key = _get_snapcraft_xattr_key(snapcraft_key)
     try:
-        value = xattr.getxattr(path, key)
+        value = os.getxattr(path, key)
     except OSError as error:
         # No label present with:
         # OSError: [Errno 61] No data available: b'<path>'
@@ -63,7 +59,7 @@ def _write_snapcraft_xattr(path: str, snapcraft_key: str, value: str) -> None:
     key = _get_snapcraft_xattr_key(snapcraft_key)
 
     try:
-        xattr.setxattr(path, key, value.encode())
+        os.setxattr(path, key, value.encode())
     except OSError as error:
         # Label is too long for filesystem:
         # OSError: [Errno 7] Argument list too long: b'<path>'
