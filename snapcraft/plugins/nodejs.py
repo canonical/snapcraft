@@ -168,6 +168,21 @@ class NodePlugin(snapcraft.BasePlugin):
             os.path.join(self._npm_dir, "bin", "node"),
             os.path.join(self.installdir, "bin", "node"),
         )
+        # Copy npm node_modules
+        link_or_copy_tree(
+            os.path.join(self._npm_dir, "lib", "node_modules", "npm"),
+            os.path.join(self.installdir, "lib", "node_modules", "npm"),
+        )
+        # Copy in the npm binary
+        link_or_copy(
+            os.path.join(self._npm_dir, "bin", "npm"),
+            os.path.join(self.installdir, "bin", "npm"),
+        )
+        # Copy in the npx binary
+        link_or_copy(
+            os.path.join(self._npm_dir, "bin", "npx"),
+            os.path.join(self.installdir, "bin", "npx"),
+        )
         # Create binary entries
         package_json = self._get_package_json(rootdir=self.builddir)
         _create_bins(package_json, self.installdir)
