@@ -85,7 +85,6 @@ class LaunchpadClient:
         *,
         project: Project,
         build_id: str,
-        user: str,
         architectures: Sequence[str],
         git_branch: str = "master",
         core18_channel: str = "stable",
@@ -98,7 +97,6 @@ class LaunchpadClient:
         self._build_id = build_id
 
         self.architectures = architectures
-        self.user = user
 
         self._lp_name = build_id
         self._lp_git_branch = git_branch
@@ -112,6 +110,8 @@ class LaunchpadClient:
 
         self._lp: Launchpad = None
         self._waiting = []  # type: List[str]
+
+        self.user = self._lp.me.name
 
     @property
     def architectures(self) -> Sequence[str]:
