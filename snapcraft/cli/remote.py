@@ -114,7 +114,6 @@ def remote_build(
     lp = LaunchpadClient(
         project=project, build_id=build_id, architectures=architectures
     )
-    lp.login()
 
     if status:
         _print_status(lp)
