@@ -109,8 +109,6 @@ class LaunchpadClient:
         self._credentials = os.path.join(self._data_dir, "credentials")
 
         self._lp: Launchpad = self.login()
-        self._waiting = []  # type: List[str]
-
         self.user = self._lp.me.name
 
     @property
