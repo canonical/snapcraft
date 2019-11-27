@@ -108,7 +108,7 @@ class LaunchpadClient:
         self._data_dir = self._create_data_directory()
         self._credentials = os.path.join(self._data_dir, "credentials")
 
-        self._lp: Launchpad = None
+        self._lp: Launchpad = self.login()
         self._waiting = []  # type: List[str]
 
         self.user = self._lp.me.name
@@ -189,7 +189,7 @@ class LaunchpadClient:
         try:
             return self._lp.load(url)
         except ConnectionResetError:
-            self.login()
+            self._lp = self.login()
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(
@@ -237,7 +237,7 @@ class LaunchpadClient:
 
     def login(self) -> Launchpad:
         try:
-            self._lp = Launchpad.login_with(
+            return Launchpad.login_with(
                 "snapcraft remote-build {}".format(snapcraft.__version__),
                 "production",
                 self._cache_dir,
