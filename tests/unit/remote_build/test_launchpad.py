@@ -151,6 +151,11 @@ class DistImpl(FakeLaunchpadObject):
         self.main_archive = "main_archive"
 
 
+class MeImpl(FakeLaunchpadObject):
+    def __init__(self):
+        self.name = "user"
+
+
 class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
         self._login_mock = mock.Mock()
@@ -163,6 +168,7 @@ class LaunchpadImpl(FakeLaunchpadObject):
         self.people = {"user": "/~user"}
         self.distributions = {"ubuntu": DistImpl()}
         self.rbi = self._rbi
+        self.me = MeImpl()
 
     def load(self, url: str, *args, **kw):
         self._load_mock(url, *args, **kw)
@@ -181,7 +187,7 @@ class LaunchpadTestCase(unit.TestCase):
         super().setUp()
         self._project = self._make_snapcraft_project()
         self.lpc = LaunchpadClient(
-            project=self._project, build_id="id", user="user", architectures=[]
+            project=self._project, build_id="id", architectures=[]
         )
 
     @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
