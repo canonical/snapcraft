@@ -362,7 +362,8 @@ class SnapInjector:
             return
 
         # Allow using snapd from the snapd snap to leverage newer snapd features.
-        self._enable_snapd_snap()
+        if any(s.snap_name == "snapd" for s in self._snaps):
+            self._enable_snapd_snap()
 
         # Disable refreshes so they do not interfere with installation ops.
         self._disable_and_wait_for_refreshes()
