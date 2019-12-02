@@ -457,6 +457,7 @@ class AppstreamTest(unit.TestCase):
                 "Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.
 
                 It allows you to draw or edit pictures with tools such as:
+
                 - Pencil (with various options)
                 - Selection (cut/copy/paste/drag/…)
                 - Line, Arc (with various options)
