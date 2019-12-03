@@ -65,6 +65,12 @@ _XSLT = """\
 </xsl:for-each>
 </xsl:template>
 
+<xsl:template match="em">
+<xsl:text>_</xsl:text>
+<xsl:apply-templates />
+<xsl:text>_</xsl:text>
+</xsl:template>
+
 </xsl:stylesheet>
 """
 
