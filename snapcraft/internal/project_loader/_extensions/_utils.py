@@ -139,6 +139,7 @@ def _apply_extension(
     # Apply the root components of the extension (if any)
     root_extension = extension.root_snippet
     for property_name, property_value in root_extension.items():
+
         yaml_data[property_name] = _apply_extension_property(
             yaml_data.get(property_name), property_value
         )
@@ -156,10 +157,10 @@ def _apply_extension(
     part_extension = extension.part_snippet
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
+
         for property_name, property_value in part_extension.items():
-            part_definition[property_name] = _apply_extension_property(
-                part_definition.get(property_name), property_value
-            )
+            
+            part_definition[property_name] = _apply_extension_property(part_definition.get(property_name), property_value)
 
         # Stores the extension's list of part_snippets in each part
         parts[part_name] = part_definition
@@ -175,10 +176,34 @@ def _apply_extension(
 
 
 def _apply_extension_property(existing_property: Any, extension_property: Any):
-    if existing_property:
+    if extension_property:
+
         # If the property is not scalar, merge them
         if isinstance(existing_property, list) and isinstance(extension_property, list):
-            return _merge_lists(existing_property, extension_property)
+           
+            # Additional check if the existing_property is a list of OrderedDicts
+            temp_list = []
+            seen = set()
+
+            # Safely recast each OrderedDict element of the list to a dict
+            for item in existing_property:
+                if isinstance(item, collections.OrderedDict):
+                    temp_list.append(dict(item))
+                existing_property = temp_list
+
+            # Keep track of user-defined values 
+            for dictitem in existing_property:
+                for key, value in dictitem.items():
+                    seen.add(key)
+
+            # Add any extension-defined values that the user has not defined
+            for dictitem in extension_property:
+                if isinstance(dictitem, dict):
+                    for key, value in dictitem.items():
+                        if key not in seen:
+                            seen.add(key)
+                            existing_property.append(dictitem)
+
         elif isinstance(existing_property, dict) and isinstance(
             extension_property, dict
         ):
@@ -188,22 +213,22 @@ def _apply_extension_property(existing_property: Any, extension_property: Any):
                 )
             return existing_property
         return existing_property
-
     return extension_property
 
 
 def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
     """Merge two lists while maintaining order and removing duplicates."""
+
     seen = set()  # type: Set[str]
     merged = list()  # type: List[str]
 
-    for item in list1 + list2:
+    for item in list1+list2:
+
         if item not in seen:
             seen.add(item)
             merged.append(item)
 
     return merged
-
 
 def _validate_extension_format(extension_names):
     if extension_names is not None:
