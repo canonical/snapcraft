@@ -49,12 +49,15 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             os.path.dirname(tests.__file__), "data", "test-snap-with-icon.snap"
         )
 
-    def assert_expected_metadata_calls(self, force=False):
+    def assert_expected_metadata_calls(self, force=False, optional_text_metadata=None):
         # text metadata
         text_metadata = {
             "description": "Description of the most simple snap",
             "summary": "Summary of the most simple snap",
         }
+        if optional_text_metadata is not None:
+            text_metadata.update(optional_text_metadata)
+
         self.mock_metadata.assert_called_once_with(
             snap_name="basic", metadata=text_metadata, force=force
         )
@@ -90,6 +93,30 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         )
         self.assertThat(result.output, Contains("The metadata has been pushed"))
         self.assert_expected_metadata_calls(force=False)
+
+    def test_with_license_and_title(self):
+        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.snap_file = os.path.join(
+            os.path.dirname(tests.__file__),
+            "data",
+            "test-snap-with-icon-license-title.snap",
+        )
+
+        # push metadata
+        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(["push-metadata", self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(
+            result.output, Not(Contains("Pushing metadata to the Store (force=False)"))
+        )
+        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assert_expected_metadata_calls(
+            force=False, optional_text_metadata={"title": "Basic", "license": "GPL-3.0"}
+        )
 
     def test_simple_debug(self):
         patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")

@@ -630,6 +630,13 @@ def push_metadata(snap_filename, force):
         "description": snap_yaml["description"],
     }
 
+    # followed by the non mandatory keys
+    if "license" in snap_yaml:
+        metadata["license"] = snap_yaml["license"]
+
+    if "title" in snap_yaml:
+        metadata["title"] = snap_yaml["title"]
+
     # other snap info
     snap_name = snap_yaml["name"]
 
