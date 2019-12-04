@@ -71,6 +71,10 @@ _XSLT = """\
 <xsl:text>_</xsl:text>
 </xsl:template>
 
+<xsl:template match="code">
+<xsl:apply-templates />
+</xsl:template>
+
 </xsl:stylesheet>
 """
 
