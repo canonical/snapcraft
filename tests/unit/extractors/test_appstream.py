@@ -592,6 +592,65 @@ class AppstreamTest(unit.TestCase):
             ),
         )
 
+    def test_appstream_code_tags_not_swallowed(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <description>
+                <p>Command Line Utility to <code>create snaps</code> quickly.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Ordered Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li><code>Build snaps</code>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+                <p>Unordered Features:</p>
+                <ul>
+                  <li><code>Build snaps</code>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ul>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+            Command Line Utility to create snaps quickly.
+
+            Ordered Features:
+
+            1. Build snaps.
+            2. Publish snaps to the store.
+
+            Unordered Features:
+
+            - Build snaps.
+            - Publish snaps to the store."""
+                )
+            ),
+        )
+
 
 class AppstreamUnhandledFileTestCase(unit.TestCase):
     def test_unhandled_file_test_case(self):
