@@ -724,3 +724,15 @@ class XAttributeTooLongError(SnapcraftReportableException):
             "the data source of the long data value. In some cases, the "
             "filesystem being used will limit the allowable size."
         )
+
+
+class CorruptedElfFileError(SnapcraftException):
+    def __init__(self, path: str, error: Exception) -> None:
+        self.path = path
+        self.message = str(error)
+
+    def get_brief(self) -> str:
+        return f"Unable to parse ELF file {self.path!r}: {self.message}"
+
+    def get_resolution(self) -> str:
+        return "Remove the suspect files from the snap using the `stage` or `prime` keywords."
