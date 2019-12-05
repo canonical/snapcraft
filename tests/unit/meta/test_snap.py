@@ -16,111 +16,274 @@
 
 import os
 from collections import OrderedDict
+from pathlib import Path
 from textwrap import dedent
-from unittest import mock
 
+import fixtures
+from testtools.matchers import Equals
+
+from snapcraft import yaml_utils
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.snap import Snap
 from tests import unit
 
 
+class SnapYamlTests(unit.TestCase):
+    # The YAMLs must be formatted and ordered as output
+    # from Snap.to_snap_yaml() to simplify checking and re-use
+    # the source YAML as the expected output YAML.
+    scenarios = [
+        (
+            "minimal",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: v1
+                summary: test-summary
+                description: test-description
+            """
+                )
+            ),
+        ),
+        (
+            "multiple-arches",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: '1.0'
+                summary: test-summary
+                description: test-description
+                architectures:
+                - i386
+                - amd64
+                """
+                )
+            ),
+        ),
+        (
+            "full",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test
+                version: v1
+                summary: test
+                description: test
+                apps:
+                  app1:
+                    command: app1
+                    extensions:
+                    - environment
+                  app2:
+                    command: app2
+                    extensions:
+                    - environment
+                architectures:
+                - all
+                assumes:
+                - command-chain
+                base: core18
+                confinement: strict
+                environment:
+                  TMPDIR: $XDG_RUNTIME_DIR
+                epoch: 0
+                grade: devel
+                hooks:
+                  test-hook:
+                    plugs:
+                    - network
+                layout:
+                  /target:
+                    bind: $SNAP/foo
+                license: GPL
+                plugs:
+                  test-plug:
+                    interface: nil
+                  test-plug2:
+                    interface: nil
+                slots:
+                  test-slot:
+                    interface: nil
+                  test-slot2:
+                    interface: nil
+                title: sometitle
+                type: base
+                """
+                )
+            ),
+        ),
+    ]
+
+    def test_scenarios(self):
+        snap_yaml_path = Path("snap.yaml")
+        open(snap_yaml_path, "w").write(self.yaml)
+        snap_yaml_dict = yaml_utils.load_yaml_file(snap_yaml_path)
+
+        # Create validated Snap object from snap.yaml.
+        snap = Snap.from_snap_yaml(snap_yaml_path)
+        snap.validate()
+
+        # Write snap.yaml from Snap object.
+        written_yaml_path = Path("out-snap.yaml")
+        snap.write_snap_yaml(written_yaml_path)
+
+        # Read written snap.yaml.
+        read_yaml = open(written_yaml_path).read()
+        read_yaml_dict = yaml_utils.load_yaml_file(written_yaml_path)
+
+        # The YAMLs objects should match.
+        self.assertThat(snap_yaml_dict, Equals(read_yaml_dict))
+
+        # The YAML files should match if formatted correctly above.
+        self.assertThat(read_yaml, Equals(self.yaml))
+
+
+class SnapcraftYamlTests(unit.TestCase):
+    # The YAMLs must be formatted and ordered as output
+    # from Snap.to_snapcraft_yaml() to simplify checking.
+    scenarios = [
+        (
+            "minimal",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: v1
+                summary: test-summary
+                description: test-description
+            """
+                )
+            ),
+        ),
+        (
+            "full",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test
+                version: v1
+                summary: test
+                description: test
+                apps:
+                  app1:
+                    command: app1
+                    extensions:
+                    - environment
+                  app2:
+                    command: app2
+                    extensions:
+                    - environment
+                architectures:
+                - all
+                assumes:
+                - command-chain
+                base: core
+                confinement: strict
+                environment:
+                  TMPDIR: $XDG_RUNTIME_DIR
+                epoch: 0
+                grade: devel
+                hooks:
+                  test-hook:
+                    plugs:
+                    - network
+                layout:
+                  /target:
+                    bind: $SNAP/foo
+                license: GPL
+                passthrough:
+                  somekey: somevalue
+                plugs:
+                  test-plug:
+                    interface: nil
+                  test-plug2:
+                    interface: nilgit dif
+                  test-slot:
+                    interface: nil
+                  test-slot2:
+                    interface: nil
+                title: sometitle
+                type: base
+                """
+                )
+            ),
+        ),
+    ]
+
+    def test_scenarios(self):
+        snapcraft_yaml_path = Path("snapcraft.yaml")
+        open(snapcraft_yaml_path, "w").write(self.yaml)
+        snapcraft_yaml_dict = yaml_utils.load_yaml_file(snapcraft_yaml_path)
+
+        # Create validated Snap object from snapcraft.yaml.
+        snap = Snap.from_snapcraft_yaml(snapcraft_yaml_path)
+        snap.validate()
+
+        # Write snapcraft.yaml from Snap object.
+        written_yaml_path = Path("out-snapcraft.yaml")
+        snap.write_snapcraft_yaml(written_yaml_path)
+
+        # Read written snapcraft.yaml.
+        read_yaml = open(written_yaml_path).read()
+        read_yaml_dict = yaml_utils.load_yaml_file(written_yaml_path)
+
+        # The YAMLs objects should match.
+        self.assertThat(snapcraft_yaml_dict, Equals(read_yaml_dict))
+
+        # The YAML files should match if formatted correctly above.
+        self.assertThat(read_yaml, Equals(self.yaml))
+
+
 class SnapTests(unit.TestCase):
-    """ Test the snaps.  Note that the ordering of ordereddicts must align
-    with Snap's ordering in to_dict().
+    def test_simple(self):
+        snap = Snap(
+            name="snap-test",
+            base="fake-base",
+            version="snap-version",
+            summary="snap-summary",
+            description="snap-description",
+            grade="stable",
+        )
 
-    This applies even for verifying YAMLs, which are (now) ordered."""
-
-    def test_empty(self):
-        snap_dict = OrderedDict()
-
-        snap = Snap()
-
-        self.assertEqual(snap_dict, snap.to_dict())
-
-    def test_empty_from_dict(self):
-        snap_dict = OrderedDict({})
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
-
-        self.assertEqual(snap_dict, snap.to_dict())
+        snap.validate()
+        self.assertEqual(False, snap.is_passthrough_enabled)
+        self.assertEqual("snap-test", snap.name)
+        self.assertEqual("snap-version", snap.version)
+        self.assertEqual("snap-summary", snap.summary)
+        self.assertEqual("snap-description", snap.description)
+        self.assertEqual("stable", snap.grade)
 
     def test_missing_keys(self):
-        snap_dict = OrderedDict({"name": "snap-test", "grade": "stable"})
+        snap = Snap(name="snap-test", grade="stable")
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
-
-        self.assertEqual(snap_dict, snap.to_dict())
         self.assertRaises(errors.MissingSnapcraftYamlKeysError, snap.validate)
 
-    def test_grade_devel_statisfies_required_grade(self):
-        self.fake_snapd.snaps_result = [
-            {"name": "fake-base", "channel": "edge", "revision": "fake-revision"}
-        ]
-
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "base": "fake-base",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "grade": "devel",
-            }
+    def test_snap_yaml_passthrough(self):
+        passthrough = {"passthrough-key": "passthrough-value"}
+        snap = Snap(
+            name="snap-test",
+            base="fake-base",
+            version="snap-version",
+            summary="snap-summary",
+            description="snap-description",
+            grade="stable",
+            passthrough=passthrough,
         )
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
 
         snap.validate()
 
-    def test_simple(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "grade": "stable",
-            }
+        transformed_dict = snap.to_snap_yaml_dict()
+
+        self.assertTrue(snap.is_passthrough_enabled)
+        self.assertThat(snap.passthrough, Equals(passthrough))
+        self.assertThat(
+            transformed_dict["passthrough-key"], Equals("passthrough-value")
         )
+        self.assertFalse("passthrough" in transformed_dict)
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
-        snap.validate()
-
-        self.assertEqual(snap_dict, snap.to_dict())
-        self.assertEqual(False, snap.is_passthrough_enabled)
-        self.assertEqual(snap_dict["name"], snap.name)
-        self.assertEqual(snap_dict["version"], snap.version)
-        self.assertEqual(snap_dict["summary"], snap.summary)
-        self.assertEqual(snap_dict["description"], snap.description)
-
-    def test_passthrough(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "passthrough": {"otherkey": "othervalue"},
-                "grade": "stable",
-            }
-        )
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
-        snap.validate()
-
-        transformed_dict = snap_dict.copy()
-        passthrough = transformed_dict.pop("passthrough")
-        transformed_dict.update(passthrough)
-
-        self.assertEqual(transformed_dict, snap.to_dict())
-        self.assertEqual(True, snap.is_passthrough_enabled)
-        self.assertEqual(passthrough, snap.passthrough)
-        self.assertEqual(snap_dict["name"], snap.name)
-        self.assertEqual(snap_dict["version"], snap.version)
-        self.assertEqual(snap_dict["summary"], snap.summary)
-        self.assertEqual(snap_dict["description"], snap.description)
-
-    def test_all_keys(self):
+    def test_all_keys_snapcraft_yaml_dict(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
@@ -130,7 +293,7 @@ class SnapTests(unit.TestCase):
                 "apps": {"test-app": {"command": "test-app"}},
                 "architectures": ["all"],
                 "assumes": ["command-chain"],
-                "base": "core",
+                "base": "core18",
                 "confinement": "strict",
                 "environment": {"TESTING": "1"},
                 "epoch": 0,
@@ -147,11 +310,11 @@ class SnapTests(unit.TestCase):
             }
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap.validate()
 
-        self.assertEqual(snap_dict, snap.to_dict())
-        self.assertEqual(False, snap.is_passthrough_enabled)
+        self.assertEqual(snap_dict, snap.to_snap_yaml_dict())
+        self.assertFalse(snap.is_passthrough_enabled)
         self.assertEqual(snap_dict["name"], snap.name)
         self.assertEqual(snap_dict["version"], snap.version)
         self.assertEqual(snap_dict["summary"], snap.summary)
@@ -191,10 +354,10 @@ class SnapTests(unit.TestCase):
             }
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap.validate()
 
-        self.assertEqual(True, snap.is_passthrough_enabled)
+        self.assertTrue(snap.is_passthrough_enabled)
 
     def test_is_passthrough_enabled_hook(self):
         snap_dict = OrderedDict(
@@ -207,94 +370,10 @@ class SnapTests(unit.TestCase):
             }
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap.validate()
 
-        self.assertEqual(True, snap.is_passthrough_enabled)
-
-    def test_from_file(self):
-        snap_yaml = dedent(
-            """
-            name: test-name
-            version: "1.0"
-            summary: test-summary
-            description: test-description
-            base: core18
-            architectures:
-            - amd64
-            assumes:
-            - snapd2.39
-            confinement: classic
-            grade: devel
-            apps:
-              test-app:
-                command: test-command
-                completer: test-completer
-        """
-        )
-
-        meta_path = os.path.join(self.path, "meta")
-        os.makedirs(meta_path)
-
-        snap_yaml_path = os.path.join(self.path, "meta", "snap.yaml")
-        open(snap_yaml_path, "w").write(snap_yaml)
-
-        snap = Snap.from_file(snap_yaml_path)
-        snap.validate()
-
-        self.assertEqual("test-name", snap.name)
-        self.assertEqual("1.0", snap.version)
-        self.assertEqual("test-summary", snap.summary)
-        self.assertEqual("test-description", snap.description)
-        self.assertEqual(
-            OrderedDict({"command": "test-command", "completer": "test-completer"}),
-            snap.apps["test-app"].to_dict(),
-        )
-        self.assertEqual(["amd64"], snap.architectures)
-        self.assertEqual({"snapd2.39"}, snap.assumes)
-        self.assertEqual("core18", snap.base)
-        self.assertEqual("classic", snap.confinement)
-        self.assertEqual("devel", snap.grade)
-
-    def test_to_file(self):
-        # Ordering matters for verifying the YAML.
-        snap_yaml = dedent(
-            """
-            name: test-name
-            version: '1.0'
-            summary: test-summary
-            description: test-description
-            apps:
-              test-app:
-                command: test-command
-                completer: test-completer
-            architectures:
-            - amd64
-            assumes:
-            - snapd2.39
-            base: core18
-            confinement: classic
-            grade: devel
-        """
-        )
-
-        meta_path = os.path.join(self.path, "meta")
-        os.makedirs(meta_path)
-
-        snap_yaml_path = os.path.join(self.path, "meta", "snap.yaml")
-        open(snap_yaml_path, "w").write(snap_yaml)
-
-        snap = Snap.from_file(snap_yaml_path)
-        snap.validate()
-
-        # Write snap yaml.
-        snap.write_snap_yaml(path=snap_yaml_path)
-
-        # Read snap yaml.
-        written_snap_yaml = open(snap_yaml_path, "r").read()
-
-        # Compare stripped versions (to remove leading/trailing newlines).
-        self.assertEqual(snap_yaml.strip(), written_snap_yaml.strip())
+        self.assertTrue(snap.is_passthrough_enabled)
 
     def test_get_provider_content_directories_no_plugs(self):
         snap = Snap()
@@ -339,18 +418,20 @@ class SnapTests(unit.TestCase):
         """
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap.validate()
 
-        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
-        mock_core_path = patcher.start()
-        mock_core_path.return_value = self.path
-        self.addCleanup(patcher.stop)
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.get_installed_snap_path",
+                return_value=self.path,
+            )
+        )
 
-        meta_path = os.path.join(self.path, "meta")
+        meta_path = Path(self.path, "meta")
         os.makedirs(meta_path)
 
-        snap_yaml_path = os.path.join(meta_path, "snap.yaml")
+        snap_yaml_path = Path(meta_path, "snap.yaml")
         open(snap_yaml_path, "w").write(meta_snap_yaml)
 
         expected_content_dirs = set(
@@ -375,7 +456,7 @@ class SnapTests(unit.TestCase):
             }
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap._ensure_command_chain_assumption()
         snap.validate()
 
@@ -393,40 +474,14 @@ class SnapTests(unit.TestCase):
             }
         )
 
-        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
         snap.validate()
 
         # Write snap yaml.
-        snap_yaml_path = os.path.join(self.path, "snap.yaml")
-        snap.write_snap_yaml(path=snap_yaml_path)
+        snap_yaml_path = Path(self.path, "snap.yaml")
+        snap.write_snap_yaml(snap_yaml_path)
 
         # Read snap yaml.
         written_snap_yaml = open(snap_yaml_path, "r").read()
 
-        self.assertEqual(snap_dict, snap.to_dict())
         self.assertFalse("base" in written_snap_yaml)
-
-    def test_write_snap_yaml_with_base_core18(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "snap-version",
-                "summary": "snap-summary",
-                "description": "snap-description",
-                "base": "core18",
-                "grade": "devel",
-            }
-        )
-
-        snap = Snap.from_dict(snap_dict=snap_dict)
-        snap.validate()
-
-        # Write snap yaml.
-        snap_yaml_path = os.path.join(self.path, "snap.yaml")
-        snap.write_snap_yaml(path=snap_yaml_path)
-
-        # Read snap yaml.
-        written_snap_yaml = open(snap_yaml_path, "r").read()
-
-        self.assertEqual(snap_dict, snap.to_dict())
-        self.assertTrue("base" in written_snap_yaml)

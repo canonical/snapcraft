@@ -230,7 +230,7 @@ class Config:
 
         # XXX: Resetting snap_meta due to above mangling of data.
         # Convergence to operating on snap_meta will remove this requirement...
-        project._snap_meta = Snap.from_dict(self.data)
+        project._snap_meta = Snap.from_snapcraft_yaml_dict(self.data)
 
         # Always add the base for building for non os and base snaps
         if project.info.base is None and project.info.type in ("app", "gadget"):
