@@ -41,6 +41,8 @@ _XSLT = """\
     </xsl:copy>
 </xsl:template>
 
+<xsl:template match="comment()"/>
+
 <xsl:template match="p">
 <xsl:text>&#xA;</xsl:text>
 <xsl:apply-templates />
