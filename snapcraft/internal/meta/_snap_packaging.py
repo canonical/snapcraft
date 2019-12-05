@@ -19,6 +19,7 @@ import contextlib
 import itertools
 import logging
 import os
+from pathlib import Path
 import re
 import shlex
 import shutil
@@ -351,7 +352,7 @@ class _SnapPackaging:
         # TODO: create_snap_packaging managles config data, so we create
         # a new private instance of snap_meta.  Longer term, this needs
         # to converge with project's snap_meta.
-        self._snap_meta = Snap.from_dict(project_config.data)
+        self._snap_meta = Snap.from_snapcraft_yaml_dict(project_config.data)
 
     def cleanup(self):
         if os.path.exists(self.meta_gui_dir):
@@ -386,8 +387,8 @@ class _SnapPackaging:
         self._snap_meta.validate()
         _check_passthrough_duplicates(self._original_snapcraft_yaml)
 
-        package_snap_path = os.path.join(self.meta_dir, "snap.yaml")
-        self._snap_meta.write_snap_yaml(path=package_snap_path)
+        package_snap_path = Path(self.meta_dir, "snap.yaml")
+        self._snap_meta.write_snap_yaml(package_snap_path)
 
     def setup_assets(self) -> None:
         # We do _setup_from_setup first since it is legacy and let the

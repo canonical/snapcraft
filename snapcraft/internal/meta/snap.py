@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-import os
 from collections import OrderedDict
 from copy import deepcopy
+import logging
+from pathlib import Path
 from typing import Any, Dict, List, Set, Sequence, Optional
 
 from snapcraft import yaml_utils
@@ -111,12 +111,6 @@ class Snap:
         self.type = type
         self.version = version
 
-    @classmethod
-    def from_file(cls, snap_yaml_path: str) -> "Snap":
-        with open(snap_yaml_path, "r") as f:
-            snap_dict = yaml_utils.load(f)
-            return cls.from_dict(snap_dict=snap_dict)
-
     @property
     def is_passthrough_enabled(self) -> bool:
         if self.passthrough:
@@ -151,9 +145,9 @@ class Snap:
                 continue
 
             provider_path = common.get_installed_snap_path(provider)
-            yaml_path = os.path.join(provider_path, "meta", "snap.yaml")
+            yaml_path = Path(provider_path, "meta", "snap.yaml")
 
-            snap = Snap.from_file(yaml_path)
+            snap = Snap.from_snap_yaml(yaml_path)
             for slot in snap.get_content_slots():
                 slot_installed_path = common.get_installed_snap_path(provider)
                 provider_dirs |= slot.get_content_dirs(
@@ -215,7 +209,7 @@ class Snap:
                 return
 
     @classmethod  # noqa: C901
-    def from_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":
+    def from_snapcraft_yaml_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":
         snap_dict = deepcopy(snap_dict)
 
         # Using pop() so we can catch if we *miss* fields
@@ -304,7 +298,100 @@ class Snap:
 
         return snap
 
-    def to_dict(self):  # noqa: C901
+    @classmethod  # noqa: C901
+    def from_snap_yaml(cls, path: Path) -> "Snap":
+        snap_dict = yaml_utils.load_yaml_file(path.as_posix())
+
+        # Using pop() so we can catch if we *miss* fields
+        # with whatever remains in the dictionary.
+        architectures = snap_dict.pop("architectures", None)
+
+        # Process apps into Applications.
+        apps: Dict[str, Application] = dict()
+        apps_dict = snap_dict.pop("apps", None)
+        if apps_dict is not None:
+            for app_name, app_dict in apps_dict.items():
+                app = Application.from_dict(app_dict=app_dict, app_name=app_name)
+                apps[app_name] = app
+
+        # Treat `assumes` as a set, not as a list.
+        assumes = set(snap_dict.pop("assumes", set()))
+
+        base = snap_dict.pop("base", None)
+        confinement = snap_dict.pop("confinement", None)
+        description = snap_dict.pop("description", None)
+        environment = snap_dict.pop("environment", None)
+        epoch = snap_dict.pop("epoch", None)
+        grade = snap_dict.pop("grade", None)
+
+        # Process hooks into Hooks.
+        hooks: Dict[str, Hook] = dict()
+        hooks_dict = snap_dict.pop("hooks", None)
+        if hooks_dict is not None:
+            for hook_name, hook_dict in hooks_dict.items():
+                hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+                hooks[hook_name] = hook
+
+        layout = snap_dict.pop("layout", None)
+        license = snap_dict.pop("license", None)
+        name = snap_dict.pop("name", None)
+        passthrough = snap_dict.pop("passthrough", None)
+
+        # Process plugs into Plugs.
+        plugs: Dict[str, Plug] = dict()
+        plugs_dict = snap_dict.pop("plugs", None)
+        if plugs_dict is not None:
+            for plug_name, plug_dict in plugs_dict.items():
+                plug = Plug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
+                plugs[plug_name] = plug
+
+        # Process slots into Slots.
+        slots: Dict[str, Slot] = dict()
+        slots_dict = snap_dict.pop("slots", None)
+        if slots_dict is not None:
+            for slot_name, slot_dict in slots_dict.items():
+                slot = Slot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+                slots[slot_name] = slot
+
+        summary = snap_dict.pop("summary", None)
+        title = snap_dict.pop("title", None)
+        type = snap_dict.pop("type", None)
+        version = snap_dict.pop("version", None)
+
+        snap = Snap(
+            architectures=architectures,
+            apps=apps,
+            assumes=assumes,
+            base=base,
+            confinement=confinement,
+            description=description,
+            environment=environment,
+            epoch=epoch,
+            grade=grade,
+            hooks=hooks,
+            layout=layout,
+            license=license,
+            name=name,
+            passthrough=passthrough,
+            plugs=plugs,
+            slots=slots,
+            summary=summary,
+            title=title,
+            type=type,
+            version=version,
+        )
+
+        for key, value in snap_dict.items():
+            logger.debug(f"ignoring or passing through unknown {key}={value}")
+
+        return snap
+
+    @classmethod
+    def from_snapcraft_yaml(cls, path: Path) -> "Snap":
+        snap_dict = yaml_utils.load_yaml_file(path.as_posix())
+        return cls.from_snapcraft_yaml_dict(snap_dict)
+
+    def to_snap_yaml_dict(self):  # noqa: C901
         snap_dict = OrderedDict()
 
         # Ensure command-chain is in assumes, if required.
@@ -333,7 +420,9 @@ class Snap:
         if self.assumes:
             snap_dict["assumes"] = sorted(set(deepcopy(self.assumes)))
 
-        if self.base is not None:
+        # If the base is core in snapcraft.yaml we do not set it in
+        # snap.yaml LP: #1819290
+        if self.base is not None and self.base != "core":
             snap_dict["base"] = self.base
 
         if self.confinement is not None:
@@ -379,14 +468,92 @@ class Snap:
         snap_dict.update(deepcopy(self.passthrough))
         return snap_dict
 
-    def write_snap_yaml(self, path: str) -> None:
-        """Write snap.yaml contents to specified path."""
-        snap_dict = self.to_dict()
+    def to_snapcraft_yaml_dict(self):  # noqa: C901
+        snap_dict = OrderedDict()
 
-        # If the base is core in snapcraft.yaml we do not set it in
-        # snap.yaml LP: #1819290
-        if self.base == "core":
-            snap_dict.pop("base")
+        if self.name is not None:
+            snap_dict["name"] = self.name
+
+        if self.version is not None:
+            snap_dict["version"] = self.version
+
+        if self.summary is not None:
+            snap_dict["summary"] = self.summary
+
+        if self.description is not None:
+            snap_dict["description"] = self.description
+
+        if self.adopt_info is not None:
+            snap_dict["adopt-info"] = self.adopt_info
+
+        if self.apps:
+            snap_dict["apps"] = OrderedDict()
+            for name, app in sorted(self.apps.items()):
+                snap_dict["apps"][name] = deepcopy(app.to_dict())
+
+        if self.architectures:
+            snap_dict["architectures"] = deepcopy(self.architectures)
+
+        if self.assumes:
+            snap_dict["assumes"] = sorted(set(deepcopy(self.assumes)))
+
+        if self.base is not None:
+            snap_dict["base"] = self.base
+
+        if self.confinement is not None:
+            snap_dict["confinement"] = self.confinement
+
+        if self.environment:
+            snap_dict["environment"] = self.environment
+
+        if self.epoch is not None:
+            snap_dict["epoch"] = self.epoch
+
+        if self.grade is not None:
+            snap_dict["grade"] = self.grade
+
+        if self.hooks:
+            snap_dict["hooks"] = OrderedDict()
+            for name, hook in sorted(self.hooks.items()):
+                snap_dict["hooks"][name] = deepcopy(hook.to_dict())
+
+        if self.layout:
+            snap_dict["layout"] = deepcopy(self.layout)
+
+        if self.license is not None:
+            snap_dict["license"] = self.license
+
+        if self.passthrough:
+            snap_dict["passthrough"] = self.passthrough
+
+        if self.plugs:
+            snap_dict["plugs"] = OrderedDict()
+            for name, plug in sorted(self.plugs.items()):
+                snap_dict["plugs"][name] = deepcopy(plug.to_dict())
+
+        if self.slots:
+            snap_dict["slots"] = OrderedDict()
+            for name, slot in sorted(self.slots.items()):
+                snap_dict["slots"][name] = deepcopy(slot.to_dict())
+
+        if self.title is not None:
+            snap_dict["title"] = self.title
+
+        if self.type is not None:
+            snap_dict["type"] = self.type
+
+        return snap_dict
+
+    def write_snap_yaml(self, path: Path) -> None:
+        """Write snap.yaml contents to specified path."""
+        snap_dict = self.to_snap_yaml_dict()
+
+        with open(path, "w") as f:
+            yaml_utils.dump(snap_dict, stream=f)
+
+    def write_snapcraft_yaml(self, path: Path) -> None:
+        """Write snapcraft.yaml contents to specified path."""
+        snap_dict = self.to_snapcraft_yaml_dict()
 
         with open(path, "w") as f:
             yaml_utils.dump(snap_dict, stream=f)
