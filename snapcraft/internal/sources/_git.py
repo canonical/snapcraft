@@ -232,6 +232,7 @@ class Git(Base):
                 "-C",
                 self.source_dir,
                 "commit",
+                "--no-gpg-sign",
                 "--message",
                 message,
                 "--author",
