@@ -261,7 +261,11 @@ class ElfFile:
         """
         self.path = path
         self.dependencies = set()  # type: Set[Library]
-        elf_data = self._extract(path)
+
+        try:
+            elf_data = self._extract(path)
+        except (UnicodeDecodeError, AttributeError) as exception:
+            raise errors.CorruptedElfFileError(path, exception)
         self.arch = elf_data[0]
         self.interp = elf_data[1]
         self.soname = elf_data[2]
@@ -618,6 +622,10 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
             elf_file = ElfFile(path=path)
         except elftools.common.exceptions.ELFError:
             # Ignore invalid ELF files.
+            continue
+        except errors.CorruptedElfFileError as exception:
+            # Log if the ELF file seems corrupted
+            logger.warning(exception.get_brief())
             continue
 
         # If ELF has dynamic symbols, add it.

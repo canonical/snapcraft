@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,7 +40,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       This entry tells the checked out `source` to live within a certain path
       within `GOPATH`.
-      This is not needed and does not affect `go-packages`.
+      This entry is not required if `source` uses `go.mod`.
 
     - go-buildtags:
       (list of strings)
@@ -49,20 +49,58 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import logging
 import os
+import re
 import shutil
 from glob import iglob
+from pkg_resources import parse_version
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import snapcraft
 from snapcraft import common
 from snapcraft.internal import elf, errors
 
+if TYPE_CHECKING:
+    from snapcraft.project import Project
+
 
 logger = logging.getLogger(__name__)
+_GO_MOD_REQUIRED_GO_VERSION = "1.13"
+
+
+class GoModRequiredVersionError(errors.SnapcraftException):
+    def __init__(self, *, go_version: str) -> None:
+        self._go_version = go_version
+
+    def get_brief(self) -> str:
+        return "Use of go.mod requires Go {!r} or greater, found: {!r}".format(
+            _GO_MOD_REQUIRED_GO_VERSION, self._go_version
+        )
+
+    def get_resolution(self) -> str:
+        return "Set go-channel to a newer version of Go and try again."
+
+
+def _get_cgo_ldflags(library_paths: List[str]) -> str:
+    cgo_ldflags: List[str] = list()
+
+    existing_cgo_ldflags = os.getenv("CGO_LDFLAGS")
+    if existing_cgo_ldflags:
+        cgo_ldflags.append(existing_cgo_ldflags)
+
+    flags = common.combine_paths(library_paths, "-L", " ")
+    if flags:
+        cgo_ldflags.append(flags)
+
+    ldflags = os.getenv("LDFLAGS")
+    if ldflags:
+        cgo_ldflags.append(ldflags)
+
+    return " ".join(cgo_ldflags)
 
 
 class GoPlugin(snapcraft.BasePlugin):
     @classmethod
-    def schema(cls):
+    def schema(cls) -> Dict[str, Any]:
         schema = super().schema()
         schema["properties"]["go-channel"] = {
             "type": "string",
@@ -88,29 +126,34 @@ class GoPlugin(snapcraft.BasePlugin):
         return schema
 
     @classmethod
-    def get_build_properties(cls):
+    def get_build_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["go-packages", "go-buildtags"]
+        return ["go-packages", "go-buildtags", "go-channel"]
 
     @classmethod
-    def get_pull_properties(cls):
+    def get_pull_properties(cls) -> List[str]:
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ["go-packages"]
+        return ["go-packages", "go-channel"]
 
-    def __init__(self, name, options, project):
+    def __init__(self, name: str, options, project: "Project") -> None:
         super().__init__(name, options, project)
 
         self._setup_base_tools(options.go_channel, project.info.get_build_base())
         self._is_classic = project.info.confinement == "classic"
+
+        self._install_bin_dir = os.path.join(self.installdir, "bin")
 
         self._gopath = os.path.join(self.partdir, "go")
         self._gopath_src = os.path.join(self._gopath, "src")
         self._gopath_bin = os.path.join(self._gopath, "bin")
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
 
-    def _setup_base_tools(self, go_channel, base):
+        self._version_regex = re.compile(r"^go version go(.*) .*$")
+        self._go_version: Optional[str] = None
+
+    def _setup_base_tools(self, go_channel: str, base: Optional[str]) -> None:
         if go_channel:
             self.build_snaps.append("go/{}".format(go_channel))
         elif base in ("core", "core16", "core18"):
@@ -118,14 +161,38 @@ class GoPlugin(snapcraft.BasePlugin):
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
-    def pull(self):
+    def _is_using_go_mod(self, cwd: str) -> bool:
+        if not os.path.exists(os.path.join(cwd, "go.mod")):
+            return False
+
+        if self._go_version is None:
+            go_version_cmd_output: str = self._run_output(["go", "version"])
+            version_match = self._version_regex.match(go_version_cmd_output)
+
+            if version_match is None:
+                raise RuntimeError(
+                    "Unable to parse go version output: {!r}".format(
+                        go_version_cmd_output
+                    )
+                )
+
+            self._go_version = version_match.group(1)
+
+        if parse_version(self._go_version) < parse_version(_GO_MOD_REQUIRED_GO_VERSION):
+            raise GoModRequiredVersionError(go_version=self._go_version)
+
+        return True
+
+    def _pull_go_mod(self) -> None:
+        self._run(["go", "mod", "download"], cwd=self.sourcedir)
+
+    def _pull_go_packages(self) -> None:
+        os.makedirs(self._gopath_src, exist_ok=True)
+
         # use -d to only download (build will happen later)
         # use -t to also get the test-deps
         # since we are not using -u the sources will stick to the
         # original checkout.
-        super().pull()
-        os.makedirs(self._gopath_src, exist_ok=True)
-
         if any(iglob("{}/**/*.go".format(self.sourcedir), recursive=True)):
             go_package = self._get_local_go_package()
             go_package_path = os.path.join(self._gopath_src, go_package)
@@ -138,14 +205,22 @@ class GoPlugin(snapcraft.BasePlugin):
         for go_package in self.options.go_packages:
             self._run(["go", "get", "-t", "-d", go_package])
 
-    def clean_pull(self):
+    def pull(self) -> None:
+        super().pull()
+
+        if self._is_using_go_mod(cwd=self.sourcedir):
+            return self._pull_go_mod()
+        else:
+            self._pull_go_packages()
+
+    def clean_pull(self) -> None:
         super().clean_pull()
 
         # Remove the gopath (if present)
         if os.path.exists(self._gopath):
             shutil.rmtree(self._gopath)
 
-    def _get_local_go_package(self):
+    def _get_local_go_package(self) -> str:
         if self.options.go_importpath:
             go_package = self.options.go_importpath
         else:
@@ -156,7 +231,7 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 
-    def _get_local_main_packages(self):
+    def _get_local_main_packages(self) -> List[str]:
         search_path = "./{}/...".format(self._get_local_go_package())
         packages = self._run_output(
             ["go", "list", "-f", "{{.ImportPath}} {{.Name}}", search_path]
@@ -165,40 +240,61 @@ class GoPlugin(snapcraft.BasePlugin):
         main_packages = [p[0] for p in packages_split if p[1] == "main"]
         return main_packages
 
-    def build(self):
+    def _build(self, *, package: str = "") -> None:
+        build_cmd = ["go", "build"]
+
+        if self.options.go_buildtags:
+            build_cmd.extend(["-tags={}".format(",".join(self.options.go_buildtags))])
+
+        relink_cmd = build_cmd + ["-ldflags", "-linkmode=external"]
+
+        if self._is_using_go_mod(self.builddir) and not package:
+            work_dir = self.builddir
+            build_cmd.extend(["-o", self._install_bin_dir])
+            relink_cmd.extend(["-o", self._install_bin_dir])
+        else:
+            work_dir = self._install_bin_dir
+            build_cmd.append(package)
+            relink_cmd.append(package)
+
+        pre_build_files = os.listdir(self._install_bin_dir)
+        self._run(build_cmd, cwd=work_dir)
+        post_build_files = os.listdir(self._install_bin_dir)
+
+        new_files = set(post_build_files) - set(pre_build_files)
+        if len(new_files) != 1:
+            raise RuntimeError(f"Expected one binary to be built, found: {new_files!r}")
+        binary_path = os.path.join(self._install_bin_dir, new_files.pop())
+
+        # Relink with system linker if executable is dynamic in order to be
+        # able to set rpath later on. This workaround can be removed after
+        # https://github.com/NixOS/patchelf/issues/146 is fixed.
+        if self._is_classic and elf.ElfFile(path=binary_path).is_dynamic:
+            self._run(relink_cmd, cwd=work_dir)
+
+    def _build_go_packages(self) -> None:
+        if self.options.go_packages:
+            packages = self.options.go_packages
+        else:
+            packages = self._get_local_main_packages()
+
+        for package in packages:
+            self._build(package=package)
+
+    def build(self) -> None:
         super().build()
 
-        tags = []
-        if self.options.go_buildtags:
-            tags = ["-tags={}".format(",".join(self.options.go_buildtags))]
+        # Clear the installation before continuing.
+        if os.path.exists(self._install_bin_dir):
+            shutil.rmtree(self._install_bin_dir)
+        os.makedirs(self._install_bin_dir)
 
-        packages = self.options.go_packages
-        if not packages:
-            packages = self._get_local_main_packages()
-        for package in packages:
-            binary = os.path.join(self._gopath_bin, self._binary_name(package))
-            self._run(["go", "build", "-o", binary] + tags + [package])
-            # Relink with system linker if executable is dynamic in order to be
-            # able to set rpath later on. This workaround can be removed after
-            # https://github.com/NixOS/patchelf/issues/146 is fixed.
-            if self._is_classic and elf.ElfFile(path=binary).is_dynamic:
-                self._run(
-                    ["go", "build", "-ldflags", "-linkmode=external", "-o", binary]
-                    + tags
-                    + [package]
-                )
+        if self._is_using_go_mod(cwd=self.builddir):
+            self._build()
+        else:
+            self._build_go_packages()
 
-        install_bin_path = os.path.join(self.installdir, "bin")
-        os.makedirs(install_bin_path, exist_ok=True)
-        for binary in os.listdir(self._gopath_bin):
-            binary_path = os.path.join(self._gopath_bin, binary)
-            shutil.copy2(binary_path, install_bin_path)
-
-    def _binary_name(self, package):
-        package = package.replace("/...", "")
-        return package.split("/")[-1]
-
-    def clean_build(self):
+    def clean_build(self) -> None:
         super().clean_build()
 
         if os.path.isdir(self._gopath_bin):
@@ -207,29 +303,32 @@ class GoPlugin(snapcraft.BasePlugin):
         if os.path.isdir(self._gopath_pkg):
             shutil.rmtree(self._gopath_pkg)
 
-    def _run(self, cmd, **kwargs):
+    def _run(self, cmd: List[str], cwd: str = None, **kwargs) -> None:
         env = self._build_environment()
-        return self.run(cmd, cwd=self._gopath_src, env=env, **kwargs)
 
-    def _run_output(self, cmd, **kwargs):
+        if cwd is None:
+            cwd = self._gopath_src
+
+        return self.run(cmd, cwd=cwd, env=env, **kwargs)
+
+    def _run_output(self, cmd: List[str], **kwargs) -> str:
         env = self._build_environment()
         return self.run_output(cmd, cwd=self._gopath_src, env=env, **kwargs)
 
-    def _build_environment(self):
+    def _build_environment(self) -> Dict[str, str]:
         env = os.environ.copy()
         env["GOPATH"] = self._gopath
         env["GOBIN"] = self._gopath_bin
 
-        include_paths = []
+        library_paths: List[str] = []
         for root in [self.installdir, self.project.stage_dir]:
-            include_paths.extend(
+            library_paths.extend(
                 common.get_library_paths(root, self.project.arch_triplet)
             )
 
-        flags = common.combine_paths(include_paths, "-L", " ")
-        env["CGO_LDFLAGS"] = "{} {} {}".format(
-            env.get("CGO_LDFLAGS", ""), flags, env.get("LDFLAGS", "")
-        )
+        cgo_ldflags = _get_cgo_ldflags(library_paths)
+        if cgo_ldflags:
+            env["CGO_LDFLAGS"] = cgo_ldflags
 
         if self.project.is_cross_compiling:
             env["CC"] = "{}-gcc".format(self.project.arch_triplet)
@@ -242,5 +341,5 @@ class GoPlugin(snapcraft.BasePlugin):
                 env["GOARM"] = "7"
         return env
 
-    def enable_cross_compilation(self):
+    def enable_cross_compilation(self) -> None:
         pass

@@ -687,6 +687,22 @@ class ProjectNotFoundError(SnapcraftReportableError):
     fmt = "Failed to find project files."
 
 
+class XAttributeError(SnapcraftReportableException):
+    def __init__(self, *, action: str, key: str, path: str) -> None:
+        self._action = action
+        self._key = key
+        self._path = path
+
+    def get_brief(self) -> str:
+        return f"Unable to {self._action} extended attribute."
+
+    def get_details(self) -> str:
+        return f"Failed to {self._action} attribute {self._key!r} on {self._path!r}."
+
+    def get_resolution(self) -> str:
+        return "Check that your filesystem supports extended attributes."
+
+
 class XAttributeTooLongError(SnapcraftReportableException):
     def __init__(self, *, key: str, value: str, path: str) -> None:
         self._key = key
@@ -698,7 +714,7 @@ class XAttributeTooLongError(SnapcraftReportableException):
 
     def get_details(self) -> str:
         return (
-            f"Failed to write attribute to {self._path}:\n"
+            f"Failed to write attribute to {self._path!r}:\n"
             f"key={self._key!r} value={self._value!r}"
         )
 
@@ -708,3 +724,15 @@ class XAttributeTooLongError(SnapcraftReportableException):
             "the data source of the long data value. In some cases, the "
             "filesystem being used will limit the allowable size."
         )
+
+
+class CorruptedElfFileError(SnapcraftException):
+    def __init__(self, path: str, error: Exception) -> None:
+        self.path = path
+        self.message = str(error)
+
+    def get_brief(self) -> str:
+        return f"Unable to parse ELF file {self.path!r}: {self.message}"
+
+    def get_resolution(self) -> str:
+        return "Remove the suspect files from the snap using the `stage` or `prime` keywords."
