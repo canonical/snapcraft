@@ -196,10 +196,11 @@ class ColconPluginTest(ColconPluginTestBase):
         self.assertThat(colcon_packages["default"], Equals("crystal"))
 
         enum = colcon_packages["enum"]
-        self.assertThat(enum, HasLength(3))
+        self.assertThat(enum, HasLength(4))
         self.assertThat(enum, Contains("bouncy"))
         self.assertThat(enum, Contains("crystal"))
         self.assertThat(enum, Contains("dashing"))
+        self.assertThat(enum, Contains("eloquent"))
 
     def test_schema_colcon_packages(self):
         schema = colcon.ColconPlugin.schema()
