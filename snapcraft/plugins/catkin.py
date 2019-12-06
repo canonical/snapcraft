@@ -79,7 +79,7 @@ import re
 import shutil
 import subprocess
 import textwrap
-from typing import List, Set
+from typing import List, Set, TYPE_CHECKING
 
 import snapcraft
 from snapcraft.plugins import _ros
@@ -87,7 +87,8 @@ from snapcraft.plugins import _python
 from snapcraft import common, file_utils, formatting_utils, repo
 from snapcraft.internal import errors, mangling
 
-from snapcraft.project import Project
+if TYPE_CHECKING:
+    from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
