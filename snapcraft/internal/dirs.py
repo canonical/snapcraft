@@ -20,8 +20,8 @@ import site
 import sys
 
 
-def _find_windows_data_dir(topdir):
-    # On Windows we need to search for data directory:
+def _find_data_dir(topdir):
+    # In some instances we need to search for data directory:
     #
     # Option (a) - Running with pip install --user.
     # > topdir=C:\Users\chris\AppData\Roaming\Python\Python37\site-packages
@@ -103,10 +103,10 @@ def setup_dirs() -> None:
         common.set_keyringsdir(os.path.join(parent_dir, "keyrings"))
         common.set_legacy_snapcraft_dir(os.path.join(snap_path, "legacy_snapcraft"))
 
-    elif sys.platform == "win32":
+    elif sys.platform == "win32" or (site.USER_BASE and topdir.startswith(site.USER_BASE + os.sep)):
         common.set_plugindir(os.path.join(topdir, "snapcraft", "plugins"))
 
-        data_dir = _find_windows_data_dir(topdir)
+        data_dir = _find_data_dir(topdir)
         common.set_schemadir(os.path.join(data_dir, "schema"))
         common.set_extensionsdir(os.path.join(data_dir, "extensions"))
         common.set_keyringsdir(os.path.join(data_dir, "keyrings"))

@@ -29,7 +29,17 @@ quote()
 # SNAPCRAFT_INTERPRETER is specified, use that one instead.
 python3_command="${SNAPCRAFT_INTERPRETER:-$(command -v python3)}"
 
-snapcraftctl_command="$python3_command -I -c '
+# Is snapcraft installed in the user base? In that case, we can't use -I and
+# must settle on only -E
+parent_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)/"
+user_base_dir="$("$python3_command" -c 'import site; print(site.USER_BASE)')/"
+if [ "${parent_dir##$user_base_dir}" != "$parent_dir" ]; then
+    python_args="-E"
+else
+    python_args="-I"
+fi
+
+snapcraftctl_command="$python3_command $python_args -c '
 import snapcraft.cli.__main__
 
 # Click strips off the first arg by default, so the -c will not be passed
