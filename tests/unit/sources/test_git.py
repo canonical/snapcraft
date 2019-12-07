@@ -19,11 +19,17 @@ import shutil
 from subprocess import CalledProcessError
 from unittest import mock
 
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft.internal import sources
+from snapcraft.internal.sources import errors
 from tests import unit
 from tests.subprocess_utils import call, call_with_output
+
+
+def fake_git_command_error(*args, **kwargs):
+    raise CalledProcessError(44, ["git"], output=b"git: some error")
 
 
 # LP: #1733584
@@ -35,6 +41,10 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
         self.mock_get_source_details = patcher.start()
         self.mock_get_source_details.return_value = ""
         self.addCleanup(patcher.stop)
+
+        self.fake_check_output = self.useFixture(
+            fixtures.MockPatch("subprocess.check_output")
+        ).mock
 
     def test_pull(self):
         git = sources.Git("git://my-source", "source_dir")
@@ -51,8 +61,21 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
         git = sources.Git(url, source_dir)
         git.add("file")
-        self.mock_run.assert_called_once_with(
+        self.fake_check_output.assert_called_once_with(
             ["git", "-C", "source_dir", "add", "file"]
+        )
+
+    def test_add_error(self):
+        self.fake_check_output.side_effect = fake_git_command_error
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+
+        error = self.assertRaises(errors.GitCommandError, git.add, "file")
+        self.assertThat(
+            error.get_brief(),
+            Equals("Failed to execute git command: git -C source_dir add file"),
         )
 
     def test_add_abs_path(self):
@@ -61,8 +84,46 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
         git = sources.Git(url, source_dir)
         git.add(os.path.join(source_dir, "file"))
-        self.mock_run.assert_called_once_with(
+        self.fake_check_output.assert_called_once_with(
             ["git", "-C", "source_dir", "add", "file"]
+        )
+
+    def test_commit(self):
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        git.commit(message="message", author="author")
+
+        self.fake_check_output.assert_called_once_with(
+            [
+                "git",
+                "-C",
+                "source_dir",
+                "commit",
+                "--no-gpg-sign",
+                "--message",
+                "message",
+                "--author",
+                "author",
+            ]
+        )
+
+    def test_commit_error(self):
+        self.fake_check_output.side_effect = fake_git_command_error
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+
+        error = self.assertRaises(
+            errors.GitCommandError, git.commit, message="message", author="author"
+        )
+        self.assertThat(
+            error.get_brief(),
+            Equals(
+                "Failed to execute git command: git -C source_dir commit --no-gpg-sign --message message --author author"
+            ),
         )
 
     def test_init(self):
@@ -71,7 +132,22 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
         git = sources.Git(url, source_dir)
         git.init()
-        self.mock_run.assert_called_once_with(["git", "-C", "source_dir", "init"])
+        self.fake_check_output.assert_called_once_with(
+            ["git", "-C", "source_dir", "init"]
+        )
+
+    def test_init_error(self):
+        self.fake_check_output.side_effect = fake_git_command_error
+        url = "git://my-source"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+
+        error = self.assertRaises(errors.GitCommandError, git.init)
+        self.assertThat(
+            error.get_brief(),
+            Equals("Failed to execute git command: git -C source_dir init"),
+        )
 
     def test_push(self):
         url = "git://my-source"
@@ -80,7 +156,7 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
         git = sources.Git(url, source_dir)
         git.push(url, refspec)
-        self.mock_run.assert_called_once_with(
+        self.fake_check_output.assert_called_once_with(
             ["git", "-C", "source_dir", "push", url, refspec]
         )
 
@@ -91,8 +167,23 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
         git = sources.Git(url, source_dir)
         git.push(url, refspec, force=True)
-        self.mock_run.assert_called_once_with(
-            ["git", "-C", "source_dir", "push", "--force", url, refspec]
+        self.fake_check_output.assert_called_once_with(
+            ["git", "-C", "source_dir", "push", url, refspec, "--force"]
+        )
+
+    def test_push_error(self):
+        self.fake_check_output.side_effect = fake_git_command_error
+        url = "git://my-source"
+        refspec = "HEAD:master"
+        source_dir = "source_dir"
+
+        git = sources.Git(url, source_dir)
+        error = self.assertRaises(errors.GitCommandError, git.push, url, refspec)
+        self.assertThat(
+            error.get_brief(),
+            Equals(
+                "Failed to execute git command: git -C source_dir push git://my-source HEAD:master"
+            ),
         )
 
     def test_pull_with_depth(self):
