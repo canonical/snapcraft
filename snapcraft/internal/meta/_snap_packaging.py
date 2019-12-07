@@ -367,8 +367,13 @@ class _SnapPackaging:
 
     def finalize_snap_meta_command_chains(self) -> None:
         prepend_command_chain = self._generate_command_chain()
+
+        # If there's nothing to prepend, we have nothing to do.
+        if not prepend_command_chain:
+            return
+
         for app_name, app in self._snap_meta.apps.items():
-            app.prepend_command_chain = prepend_command_chain
+            app.command_chain = prepend_command_chain + app.command_chain
 
     def finalize_snap_meta_version(self) -> None:
         # Reparse the version, the order should stick.
