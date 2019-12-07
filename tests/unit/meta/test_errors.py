@@ -185,6 +185,18 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_reportable": False,
             },
         ),
+        (
+            "CommandChainWithIncompatibleAdapterError",
+            {
+                "exception": errors.CommandChainWithIncompatibleAdapterError,
+                "kwargs": dict(adapter="someadapter", app_name="someapp"),
+                "expected_brief": "Use of 'command-chain' for app 'someapp' is incompatible with adapter 'someadapter'.",
+                "expected_resolution": "Remove usage of 'command-chain' or set adapter to 'full'. If you haven't specified either, you may be using an extension that does. Run 'snapcraft expand-extensions' to see the snapcraft.yaml with all extensions applied.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
     )
 
     def test_snapcraft_exception_handling(self):

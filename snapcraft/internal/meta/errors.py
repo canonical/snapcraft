@@ -209,3 +209,23 @@ class GradeDevelRequiredError(errors.SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Set 'grade' to 'devel' or use a stable base for this snap."
+
+
+class CommandChainWithIncompatibleAdapterError(errors.SnapcraftException):
+    def __init__(self, *, app_name: str, adapter: str) -> None:
+        self._app_name = app_name
+        self._adapter = adapter
+
+    def get_brief(self) -> str:
+        return (
+            f"Use of 'command-chain' for app {self._app_name!r} is "
+            f"incompatible with adapter {self._adapter!r}."
+        )
+
+    def get_resolution(self) -> str:
+        return (
+            "Remove usage of 'command-chain' or set adapter to 'full'. "
+            "If you haven't specified either, you may be using an extension "
+            "that does. Run 'snapcraft expand-extensions' to see the "
+            "snapcraft.yaml with all extensions applied."
+        )

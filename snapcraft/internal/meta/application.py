@@ -142,9 +142,10 @@ class Application:
 
     def validate(self) -> None:
         """Validate application, raising exception on error."""
-
-        # No checks here (yet).
-        return
+        if self.adapter == ApplicationAdapter.NONE and self.command_chain:
+            raise errors.CommandChainWithIncompatibleAdapterError(
+                app_name=self.app_name, adapter=self.adapter.name
+            )
 
     @classmethod
     def from_dict(cls, *, app_dict: Dict[str, Any], app_name: str) -> "Application":
@@ -185,7 +186,7 @@ class Application:
         for command_name, command in self.commands.items():
             app_dict[command_name] = command.command
 
-        if self.command_chain:
+        if self.command_chain and self.adapter != ApplicationAdapter.NONE:
             app_dict["command-chain"] = self.command_chain
 
         # Adjust socket values to formats snap.yaml accepts

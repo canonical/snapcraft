@@ -117,7 +117,61 @@ class AppCommandTest(unit.TestCase):
 
         app.prime_commands(base="core18", prime_dir=self.path)
 
+        app.validate()
         self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
+
+    def test_command_chain_none_adapter(self):
+        app = application.Application.from_dict(
+            app_name="foo",
+            app_dict={
+                "command": "test-command",
+                "command-chain": ["command-chain"],
+                "adapter": "none",
+            },
+        )
+
+        app.prime_commands(base="core18", prime_dir=self.path)
+
+        self.assertRaises(errors.CommandChainWithIncompatibleAdapterError, app.validate)
+
+    def test_command_chain_legacy_adapter(self):
+        app = application.Application.from_dict(
+            app_name="foo",
+            app_dict={
+                "command": "test-command",
+                "command-chain": ["command-chain"],
+                "adapter": "legacy",
+            },
+        )
+
+        app.prime_commands(base="core18", prime_dir=self.path)
+
+        # This used to be an error condition, but since it's the schema's
+        # default, we expect it to behave reasonably. That is,
+        # do not error if using command-chain.  Only "none" should error.
+        app.validate()
+        self.assertThat(
+            app.to_dict(),
+            Equals({"command": "test-command", "command-chain": ["command-chain"]}),
+        )
+
+    def test_command_chain_full_adapter(self):
+        app = application.Application.from_dict(
+            app_name="foo",
+            app_dict={
+                "command": "test-command",
+                "command-chain": ["command-chain"],
+                "adapter": "full",
+            },
+        )
+
+        app.prime_commands(base="core18", prime_dir=self.path)
+
+        app.validate()
+        self.assertThat(
+            app.to_dict(),
+            Equals({"command": "test-command", "command-chain": ["command-chain"]}),
+        )
 
 
 class WrapperUseTest(unit.TestCase):
@@ -167,6 +221,7 @@ class WrapperUseTest(unit.TestCase):
             app_name="foo", app_dict=self.app_properties
         )
 
+        app.validate()
         self.assertThat(
             app.can_use_wrapper(base=self.base), Equals(self.expect_wrappers)
         )

@@ -35,6 +35,7 @@ from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import errors as meta_errors, _manifest, _version
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.meta.application import ApplicationAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -373,6 +374,9 @@ class _SnapPackaging:
             return
 
         for app_name, app in self._snap_meta.apps.items():
+            if app.adapter == ApplicationAdapter.NONE:
+                continue
+
             app.command_chain = prepend_command_chain + app.command_chain
 
     def finalize_snap_meta_version(self) -> None:
