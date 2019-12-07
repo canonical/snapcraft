@@ -432,12 +432,7 @@ class LaunchpadClient:
                 git_handler.add(f)
 
         # Commit files.
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        git_handler.commit(
-            "snapcraft commit\n\nversion: {}\ntimestamp: {}\n".format(
-                snapcraft.__version__, timestamp
-            )
-        )
+        git_handler.commit(f"committed by snapcraft version: {snapcraft.__version__}")
 
         return git_handler
 
