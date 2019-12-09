@@ -50,7 +50,8 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
     original_yaml_data = copy.deepcopy(yaml_data)
-    base = yaml_data.get("base")
+    base: Optional[str] = yaml_data.get("base")
+    #base = yaml_data.get("base")
 
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
@@ -120,7 +121,7 @@ def supported_extension_names() -> List[str]:
 
 
 def _load_extension(
-    base: str, extension_name: str, yaml_data: Dict[str, Any]
+    base: Optional[str], extension_name: str, yaml_data: Dict[str, Any]
 ) -> Extension:
     extension_class = find_extension(extension_name)
 
