@@ -37,14 +37,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.mock_lc.has_outstanding_build.return_value = False
 
     def test_remote_build(self):
-        result = self.run_command(
-            [
-                "remote-build",
-                "--launchpad-accept-public-upload",
-                "--launchpad-user",
-                "testuser",
-            ]
-        )
+        result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
 
         self.mock_lc.start_build.assert_called_once()
         self.mock_lc.cleanup.assert_called_once()
@@ -58,8 +51,6 @@ class RemoteBuildTests(CommandBaseTestCase):
             [
                 "remote-build",
                 "--launchpad-accept-public-upload",
-                "--launchpad-user",
-                "testuser",
                 "--build-on",
                 "i386,amd64,arm64",
             ]
@@ -76,14 +67,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertRaises(
             errors.UnsupportedArchitectureError,
             self.run_command,
-            [
-                "remote-build",
-                "--launchpad-accept-public-upload",
-                "--launchpad-user",
-                "testuser",
-                "--build-on",
-                "x64",
-            ],
+            ["remote-build", "--launchpad-accept-public-upload", "--build-on", "x64"],
         )
 
         self.mock_lc.start_build.assert_not_called()

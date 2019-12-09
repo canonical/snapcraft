@@ -85,7 +85,6 @@ class LaunchpadClient:
         *,
         project: Project,
         build_id: str,
-        user: str,
         architectures: Sequence[str],
         git_branch: str = "master",
         core18_channel: str = "stable",
@@ -98,7 +97,6 @@ class LaunchpadClient:
         self._build_id = build_id
 
         self.architectures = architectures
-        self.user = user
 
         self._lp_name = build_id
         self._lp_git_branch = git_branch
@@ -110,8 +108,8 @@ class LaunchpadClient:
         self._data_dir = self._create_data_directory()
         self._credentials = os.path.join(self._data_dir, "credentials")
 
-        self._lp: Launchpad = None
-        self._waiting = []  # type: List[str]
+        self._lp: Launchpad = self.login()
+        self.user = self._lp.me.name
 
     @property
     def architectures(self) -> Sequence[str]:
@@ -189,7 +187,7 @@ class LaunchpadClient:
         try:
             return self._lp.load(url)
         except ConnectionResetError:
-            self.login()
+            self._lp = self.login()
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(
@@ -237,7 +235,7 @@ class LaunchpadClient:
 
     def login(self) -> Launchpad:
         try:
-            self._lp = Launchpad.login_with(
+            return Launchpad.login_with(
                 "snapcraft remote-build {}".format(snapcraft.__version__),
                 "production",
                 self._cache_dir,
