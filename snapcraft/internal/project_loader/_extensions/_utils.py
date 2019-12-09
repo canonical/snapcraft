@@ -22,7 +22,8 @@ import importlib
 import logging
 import os
 import pkgutil
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Set, Type  # noqa: F401
+import json
 
 from .. import errors
 from ._extension import Extension
@@ -49,7 +50,7 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     # Don't modify the dict passed in
     yaml_data = copy.deepcopy(yaml_data)
     original_yaml_data = copy.deepcopy(yaml_data)
-    base: Optional[str] = yaml_data.get("base")
+    base = yaml_data.get("base")
 
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
@@ -119,7 +120,7 @@ def supported_extension_names() -> List[str]:
 
 
 def _load_extension(
-    base: Optional[str], extension_name: str, yaml_data: Dict[str, Any]
+    base: str, extension_name: str, yaml_data: Dict[str, Any]
 ) -> Extension:
     extension_class = find_extension(extension_name)
 
@@ -139,7 +140,6 @@ def _apply_extension(
     # Apply the root components of the extension (if any)
     root_extension = extension.root_snippet
     for property_name, property_value in root_extension.items():
-
         yaml_data[property_name] = _apply_extension_property(
             yaml_data.get(property_name), property_value
         )
@@ -159,7 +159,7 @@ def _apply_extension(
     for part_name, part_definition in parts.items():
 
         for property_name, property_value in part_extension.items():
-            
+            # part_definition_unordered[property_name] is a dict
             part_definition[property_name] = _apply_extension_property(part_definition.get(property_name), property_value)
 
         # Stores the extension's list of part_snippets in each part
@@ -178,27 +178,30 @@ def _apply_extension(
 def _apply_extension_property(existing_property: Any, extension_property: Any):
     if existing_property:
 
+        if extension_property:
+
         # If the property is not scalar, merge them
         if isinstance(existing_property, list) and isinstance(extension_property, list):
            
             # Additional check if the existing_property is a list of OrderedDicts
             temp_list = []
             seen = set()
-
-            # Safely recast each OrderedDict element of the list to a dict
             for item in existing_property:
                 if isinstance(item, collections.OrderedDict):
                     temp_list.append(dict(item))
-                existing_property = temp_list
-
-            # Keep track of user-defined values 
-            for dictitem in existing_property:
-                for key, value in dictitem.items():
-                    seen.add(key)
-
-            # Add any extension-defined values that the user has not defined
+                #else:
+                #    break
+                if len(temp_list) > 0:
+                    existing_property = temp_list
+            for item in existing_property:
+                if isinstance(item, collections.OrderedDict):
+                    for key, value in item.items():
+                        seen.add(key)
+                elif isinstance(item, list):
+                    seen.add(item)
             for dictitem in extension_property:
                 if isinstance(dictitem, dict):
+                    print("5. it's a dict")
                     for key, value in dictitem.items():
                         if key not in seen:
                             seen.add(key)
@@ -223,12 +226,12 @@ def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
     merged = list()  # type: List[str]
 
     for item in list1+list2:
-
         if item not in seen:
             seen.add(item)
             merged.append(item)
 
     return merged
+
 
 def _validate_extension_format(extension_names):
     if extension_names is not None:
