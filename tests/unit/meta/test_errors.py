@@ -185,6 +185,18 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_reportable": False,
             },
         ),
+        (
+            "SystemUsernamesValidationError",
+            {
+                "exception": errors.SystemUsernamesValidationError,
+                "kwargs": dict(name="user1", message="invalid ..."),
+                "expected_brief": "Invalid system-usernames for 'user1': invalid ...",
+                "expected_resolution": "Please configure system user according to documentation.",
+                "expected_details": None,
+                "expected_docs_url": "https://forum.snapcraft.io/t/system-usernames/13386",
+                "expected_reportable": False,
+            },
+        ),
     )
 
     def test_snapcraft_exception_handling(self):
