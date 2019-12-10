@@ -57,14 +57,6 @@ def remotecli():
     cls=PromptOption,
 )
 @click.option(
-    "--launchpad-user",
-    metavar="<username>",
-    nargs=1,
-    required=True,
-    help="Launchpad username.",
-    prompt="Launchpad username",
-)
-@click.option(
     "--package-all-sources",
     is_flag=True,
     help="Package all sources to send to remote builder, not just local sources.",
@@ -74,7 +66,6 @@ def remote_build(
     status: int,
     build_on: str,
     launchpad_accept_public_upload: bool,
-    launchpad_user: str,
     package_all_sources: bool,
     echoer=echo,
 ) -> None:
@@ -94,11 +85,11 @@ def remote_build(
 
     \b
     Examples:
-        snapcraft remote-build --launchpad-user <user>
-        snapcraft remote-build --launchpad-user <user> --build-on=amd64
-        snapcraft remote-build --launchpad-user <user> --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
-        snapcraft remote-build --launchpad-user <user> --recover 47860738
-        snapcraft remote-build --launchpad-user <user> --status 47860738
+        snapcraft remote-build
+        snapcraft remote-build --build-on=amd64
+        snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
+        snapcraft remote-build --recover 47860738
+        snapcraft remote-build --status 47860738
     """
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
@@ -121,12 +112,8 @@ def remote_build(
     architectures = _determine_architectures(project, build_on)
 
     lp = LaunchpadClient(
-        project=project,
-        build_id=build_id,
-        user=launchpad_user,
-        architectures=architectures,
+        project=project, build_id=build_id, architectures=architectures
     )
-    lp.login()
 
     if status:
         _print_status(lp)
