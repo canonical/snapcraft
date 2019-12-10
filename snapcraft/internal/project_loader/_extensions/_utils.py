@@ -178,27 +178,28 @@ def _apply_extension(
 def _apply_extension_property(existing_property: Any, extension_property: Any):
     if existing_property:
 
-        if extension_property:
-
-        # If the property is not scalar, merge them
         if isinstance(existing_property, list) and isinstance(extension_property, list):
            
             # Additional check if the existing_property is a list of OrderedDicts
             temp_list = []
             seen = set()
+            
+            # Safely copy the list of OrderedDicts to a list of dicts
             for item in existing_property:
                 if isinstance(item, collections.OrderedDict):
                     temp_list.append(dict(item))
-                #else:
-                #    break
                 if len(temp_list) > 0:
                     existing_property = temp_list
+
+            # Keep track of user-defined items
             for item in existing_property:
                 if isinstance(item, collections.OrderedDict):
                     for key, value in item.items():
                         seen.add(key)
-                elif isinstance(item, list):
-                    seen.add(item)
+                elif isinstance(item, str):
+                    return _merge_lists(existing_property, extension_property)
+
+            # In the case of a list of dicts, only merge extension items if not user-defined
             for dictitem in extension_property:
                 if isinstance(dictitem, dict):
                     print("5. it's a dict")
