@@ -24,6 +24,7 @@ from testtools.matchers import Equals
 
 from snapcraft import yaml_utils
 from snapcraft.internal.meta import errors
+from snapcraft.internal.meta.snap import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
 from tests import unit
 
@@ -58,6 +59,40 @@ class SnapYamlTests(unit.TestCase):
                 architectures:
                 - i386
                 - amd64
+                """
+                )
+            ),
+        ),
+        (
+            "system-usernames-longform",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: '1.0'
+                summary: test-summary
+                description: test-description
+                system-usernames:
+                  snap_daemon:
+                    scope: shared
+                """
+                )
+            ),
+        ),
+        (
+            "system-usernames-multiple-longform",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: '1.0'
+                summary: test-summary
+                description: test-description
+                system-usernames:
+                  lxd:
+                    scope: shared
+                  snap_daemon:
+                    scope: shared
                 """
                 )
             ),
@@ -154,6 +189,40 @@ class SnapcraftYamlTests(unit.TestCase):
                 summary: test-summary
                 description: test-description
             """
+                )
+            ),
+        ),
+        (
+            "system-usernames-longform",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: v1
+                summary: test-summary
+                description: test-description
+                system-usernames:
+                  snap_daemon:
+                    scope: shared
+                """
+                )
+            ),
+        ),
+        (
+            "system-usernames-multiple-longform",
+            dict(
+                yaml=dedent(
+                    """\
+                name: test-name
+                version: v1
+                summary: test-summary
+                description: test-description
+                system-usernames:
+                  lxd:
+                    scope: shared
+                  snap_daemon:
+                    scope: shared
+                """
                 )
             ),
         ),
@@ -303,6 +372,7 @@ class SnapTests(unit.TestCase):
                 "license": "GPL",
                 "plugs": {"test-plug": OrderedDict({"interface": "some-value"})},
                 "slots": {"test-slot": OrderedDict({"interface": "some-value"})},
+                "system-usernames": {"snap_daemon": {"scope": "shared"}},
                 "title": "test-title",
                 "type": "base",
             }
@@ -332,6 +402,59 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["confinement"], snap.confinement)
         self.assertEqual(snap_dict["title"], snap.title)
         self.assertEqual(snap_dict["type"], snap.type)
+
+    def test_system_usernames_shortform_scope(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "version": "test-version",
+                "summary": "test-summary",
+                "description": "test-description",
+                "system-usernames": {"snap_daemon": "shared", "lxd": "shared"},
+            }
+        )
+
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        self.assertThat(
+            snap.system_usernames["snap_daemon"].name, Equals("snap_daemon")
+        )
+        self.assertThat(
+            snap.system_usernames["snap_daemon"].scope, Equals(SystemUserScope.SHARED)
+        )
+        self.assertThat(snap.system_usernames["lxd"].name, Equals("lxd"))
+        self.assertThat(
+            snap.system_usernames["lxd"].scope, Equals(SystemUserScope.SHARED)
+        )
+
+    def test_system_usernames_longform_scope(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "version": "test-version",
+                "summary": "test-summary",
+                "description": "test-description",
+                "system-usernames": {
+                    "snap_daemon": {"scope": "shared"},
+                    "lxd": {"scope": "shared"},
+                },
+            }
+        )
+
+        snap = Snap.from_snapcraft_yaml_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        self.assertThat(
+            snap.system_usernames["snap_daemon"].name, Equals("snap_daemon")
+        )
+        self.assertThat(
+            snap.system_usernames["snap_daemon"].scope, Equals(SystemUserScope.SHARED)
+        )
+        self.assertThat(snap.system_usernames["lxd"].name, Equals("lxd"))
+        self.assertThat(
+            snap.system_usernames["lxd"].scope, Equals(SystemUserScope.SHARED)
+        )
 
     def test_is_passthrough_enabled_app(self):
         snap_dict = OrderedDict(
