@@ -1616,16 +1616,6 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock.resolve_dependency.assert_called_once_with("bar")
         self.catkin_mock.find.assert_called_once_with("bar")
 
-    def test_find_system_dependencies_already_satisfied_in_source(self):
-        self.assertThat(
-            catkin._find_system_dependencies(None, self.rosdep_mock, self.catkin_mock),
-            Equals(dict()),
-        )
-
-        self.rosdep_mock.get_dependencies.assert_called_once_with()
-        self.rosdep_mock.resolve_dependency.assert_called_once_with("bar")
-        self.catkin_mock.find.assert_called_once_with("bar")
-
     def test_find_system_dependencies_local_only(self):
         self.assertThat(
             catkin._find_system_dependencies(
