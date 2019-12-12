@@ -98,7 +98,9 @@ parts:
 
         echo "Compiling pyc files..."
         # This is the last step, let's now compile all our pyc files.
-        "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
+        "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -b -q .
+        find . -type f -name '*.py' -exec rm {} \;
+        find . -type f -name "*.so" -exec strip -s {} \;
 
     after: [snapcraft-libs]
 
@@ -114,6 +116,7 @@ parts:
         $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
 
         sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
+        find . -type f -name "*.so" -exec strip -s {} \;
     organize:
         '*': legacy_snapcraft/
     after: [snapcraft-libs]
