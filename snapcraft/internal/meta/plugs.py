@@ -30,6 +30,7 @@ class Plug:
     def __init__(self, *, plug_name: str) -> None:
         self._plug_name = plug_name
         self._plug_dict: Dict[str, Any] = dict()
+        self.passthrough: Dict[str, Any] = dict()
 
     @property
     def plug_name(self) -> str:
@@ -54,6 +55,9 @@ class Plug:
     def from_dict(cls, *, plug_dict: Dict[str, Any], plug_name: str) -> "Plug":
         """Create plug from dictionary."""
 
+        if plug_dict is None:
+            plug_dict = {}
+
         interface = plug_dict.get("interface", None)
         if interface is not None:
             plug_class = PLUG_MAPPINGS.get(interface, None)
@@ -62,13 +66,21 @@ class Plug:
 
         # Handle the general case.
         plug = Plug(plug_name=plug_name)
-        plug._plug_dict = plug_dict
+        plug._plug_dict = deepcopy(plug_dict)
+
+        if "passthrough" in plug._plug_dict:
+            plug.passthrough = plug._plug_dict.pop("passthrough")
+
         return plug
 
     def to_dict(self) -> Dict[str, Any]:
         """Create dictionary from plug."""
 
-        return OrderedDict(deepcopy(self._plug_dict))
+        plug_dict = deepcopy(self._plug_dict)
+
+        # Apply passthrough keys.
+        plug_dict.update(self.passthrough)
+        return OrderedDict(plug_dict)
 
     def __repr__(self) -> str:
         return repr(self.__dict__)
