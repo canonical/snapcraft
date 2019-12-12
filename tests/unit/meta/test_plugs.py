@@ -35,6 +35,15 @@ class GenericPlugTests(unit.TestCase):
         self.assertEqual(plug_name, plug.plug_name)
         self.assertEqual(plug_name, plug_from_dict.plug_name)
 
+    def test_plug_name_no_interface(self):
+        plug_name = "plug-test"
+
+        plug = Plug(plug_name=plug_name)
+        plug_from_dict = Plug.from_dict(plug_dict=None, plug_name=plug_name)
+
+        self.assertEqual(plug_name, plug.plug_name)
+        self.assertEqual(plug_name, plug_from_dict.plug_name)
+
     def test_invalid_raises_exception(self):
         plug_name = "plug-test"
 
