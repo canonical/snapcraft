@@ -51,7 +51,6 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
     yaml_data = copy.deepcopy(yaml_data)
     original_yaml_data = copy.deepcopy(yaml_data)
     base: Optional[str] = yaml_data.get("base")
-    #base = yaml_data.get("base")
 
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
@@ -247,7 +246,7 @@ def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
     seen = set()  # type: Set[str]
     merged = list()  # type: List[str]
 
-    for item in list1+list2:
+    for item in list1 + list2:
         if item not in seen:
             seen.add(item)
             merged.append(item)
