@@ -107,7 +107,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
-                        "build-snaps": [ "gnome-3-34-1804-sdk/latest/edge" ],
+                        "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
                     }
                 }
             ),
