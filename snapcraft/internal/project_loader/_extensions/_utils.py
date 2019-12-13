@@ -175,8 +175,18 @@ def _apply_extension(
         parts[part_name] = part_definition
 
 
-def _apply_extension_property(existing_property: Any, extension_property: Any) -> dict[str, Any]:
-    if existing_property:
+def _apply_extension_property(existing_property: Any, extension_property: Any) -> Dict[str, Any]:
+    """Take the user-defined yaml properties and apply any missing
+    extension properties. If there is a property defined in both, 
+    the user-defined property is applied.
+    """
+
+    # If there is no user-defined property, then just add the extension-defined property. 
+    if not existing_property:
+        return extension_property
+
+    # If there is a user-defined property, then take care when merging with the extension-defined property.
+    elif existing_property:
 
         if isinstance(existing_property, list) and isinstance(extension_property, list):
            
@@ -215,9 +225,7 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
                 existing_property[key] = _apply_extension_property(
                     existing_property.get(key), value
                 )
-            return existing_property
         return existing_property
-    return extension_property
 
 
 def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
