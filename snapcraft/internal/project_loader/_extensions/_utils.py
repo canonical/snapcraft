@@ -68,7 +68,7 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
         with contextlib.suppress(KeyError):
             del yaml_data["apps"][app_name]["extensions"]
 
-    # Process extensions in a consistent order
+    # Process extensions in a consistent order.
     for extension_name in sorted(declared_extensions.keys()):
         extension = _load_extension(base, extension_name, original_yaml_data)
         _apply_extension(
@@ -112,7 +112,7 @@ def supported_extension_names() -> List[str]:
 
     extension_names = []  # type: List[str]
     for _, modname, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
-        # Only add non-private modules/packages to the extension list
+        # Only add non-private modules/packages to the extension list.
         if not modname.startswith("_"):
             extension_names.append(modname)
 
@@ -172,14 +172,14 @@ def _apply_extension(
     extension_name: str,
     extension: Extension,
 ):
-    # Apply the root components of the extension (if any)
+    # Apply the root components of the extension (if any).
     root_extension = extension.root_snippet
     for property_name, property_value in root_extension.items():
         yaml_data[property_name] = _apply_extension_property(
             yaml_data.get(property_name), property_value
         )
 
-    # Apply the app-specific components of the extension (if any)
+    # Apply the app-specific components of the extension (if any).
     app_extension = extension.app_snippet
     for app_name in app_names:
         app_definition = yaml_data["apps"][app_name]
@@ -188,7 +188,7 @@ def _apply_extension(
                 app_definition.get(property_name), property_value
             )
 
-    # Next, apply the part-specific components
+    # Next, apply the part-specific components.
     part_extension = extension.part_snippet
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
@@ -203,16 +203,16 @@ def _apply_extension(
                     part_definition.get(property_name), property_value
                 )
 
-        # Stores the extension's list of part_snippets in each part
+        # Stores the extension's list of part_snippets in each part.
         parts[part_name] = part_definition
 
-    # Finally, add any parts specified in the extension
+    # Finally, add any parts specified in the extension.
     for part_name, part_definition in extension.parts.items():
         # If a extension part name clashes with a part that already exists, error.
         if part_name in parts:
             raise errors.ExtensionPartConflictError(extension_name, part_name)
 
-        # Stores the extension's list of parts in the parts section
+        # Stores the extension's list of parts in the parts section.
         parts[part_name] = part_definition
 
 
