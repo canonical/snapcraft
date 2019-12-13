@@ -22,8 +22,7 @@ import importlib
 import logging
 import os
 import pkgutil
-from typing import Any, Dict, List, Set, Type  # noqa: F401
-import json
+from typing import Any, Dict, List, Optional, Set, Type
 
 from .. import errors
 from ._extension import Extension
@@ -159,8 +158,9 @@ def _apply_extension(
     for part_name, part_definition in parts.items():
 
         for property_name, property_value in part_extension.items():
-            # part_definition_unordered[property_name] is a dict
-            part_definition[property_name] = _apply_extension_property(part_definition.get(property_name), property_value)
+            part_definition[property_name] = _apply_extension_property(
+                part_definition.get(property_name), property_value
+            )
 
         # Stores the extension's list of part_snippets in each part
         parts[part_name] = part_definition
@@ -175,7 +175,7 @@ def _apply_extension(
         parts[part_name] = part_definition
 
 
-def _apply_extension_property(existing_property: Any, extension_property: Any):
+def _apply_extension_property(existing_property: Any, extension_property: Any) -> dict[str, Any]:
     if existing_property:
 
         if isinstance(existing_property, list) and isinstance(extension_property, list):
