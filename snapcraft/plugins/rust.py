@@ -45,6 +45,7 @@ will be used.
 import collections
 import logging
 import os
+from pathlib import Path
 from contextlib import suppress
 from typing import List, Optional
 
@@ -52,7 +53,7 @@ import toml
 
 import snapcraft
 from snapcraft import sources
-from snapcraft import shell_utils
+from snapcraft import file_utils, shell_utils
 from snapcraft.internal import errors
 
 _RUSTUP = "https://sh.rustup.rs/"
@@ -194,21 +195,78 @@ class RustPlugin(snapcraft.BasePlugin):
             )
         return rust_target.format("unknown-linux", "gnu")
 
+    def _project_uses_workspace(self) -> bool:
+        cargo_toml_path = Path(self.builddir, "Cargo.toml")
+
+        try:
+            config = open(cargo_toml_path).read()
+        except FileNotFoundError:
+            raise errors.SnapcraftPluginAssertionError(
+                name=self.name, reason="missing required Cargo.toml in source directory"
+            )
+
+        return "workspace" in toml.loads(config)
+
+    def _install_workspace_artifacts(self) -> None:
+        """Install workspace artifacts."""
+        # Find artifacts in release directory.
+        release_dir = Path(self.builddir, "target", "release")
+
+        # Install binaries to bin/.
+        bins_dir = Path(self.installdir, "bin")
+        bins_dir.mkdir(parents=True, exist_ok=True)
+
+        # Install shared objects to usr/lib/<arch-triplet>.
+        # TODO: Dynamic library support needs to be properly added.
+        # Although we install libraries if we find them, they are most
+        # likely going to be missing dependencies, e.g.:
+        # /home/ubuntu/.cargo/toolchains/stable-x86_64-unknown-linux-gnu/lib/libstd-fae576517123aa4e.so
+        libs_dir = Path(self.installdir, "usr", "lib", self.project.arch_triplet)
+        libs_dir.mkdir(parents=True, exist_ok=True)
+
+        # Cargo build marks binaries and shared objects executable...
+        # Search target directory to get these and install them to the
+        # correct location.
+        for path in release_dir.iterdir():
+            if not os.path.isfile(path):
+                continue
+            if not os.access(path, os.X_OK):
+                continue
+
+            # File is executable, now to determine if bin or lib...
+            if path.name.endswith(".so"):
+                file_utils.link_or_copy(path.as_posix(), libs_dir.as_posix())
+            else:
+                file_utils.link_or_copy(path.as_posix(), bins_dir.as_posix())
+
     def build(self):
         super().build()
 
-        # Write a minimal config.
-        self._write_cargo_config()
+        uses_workspaces = self._project_uses_workspace()
 
-        install_cmd = [
-            self._cargo_cmd,
-            "install",
-            "--path",
-            self.builddir,
-            "--root",
-            self.installdir,
-            "--force",
-        ]
+        if uses_workspaces:
+            # This is a bit ugly because `cargo install` does not yet support
+            # workspaces.  Alternatively, there is a perhaps better option
+            # to use `cargo-build --out-dir`, but `--out-dir` is considered
+            # unstable and unavailable for use yet on the stable channel.  It
+            # may be better because the use of `cargo install` without `--locked`
+            # does not appear to honor Cargo.lock, while `cargo build` does by
+            # default, if it is present.
+            install_cmd = [self._cargo_cmd, "build", "--release"]
+        else:
+            # Write a minimal config.
+            self._write_cargo_config()
+
+            install_cmd = [
+                self._cargo_cmd,
+                "install",
+                "--path",
+                self.builddir,
+                "--root",
+                self.installdir,
+                "--force",
+            ]
+
         toolchain = self._get_toolchain()
         if toolchain is not None:
             install_cmd.insert(1, "+{}".format(toolchain))
@@ -224,10 +282,15 @@ class RustPlugin(snapcraft.BasePlugin):
             install_cmd.append(" ".join(self.options.rust_features))
 
         # build and install.
-        self.run(install_cmd, env=self._build_env())
+        self.run(install_cmd, env=self._build_env(), cwd=self.builddir)
 
         # Finally, record.
         self._record_manifest()
+
+        if uses_workspaces:
+            # We need to install the workspace artifacts as a workaround until
+            # `cargo build` supports `out-dir` in "stable".
+            self._install_workspace_artifacts()
 
     def _build_env(self):
         env = os.environ.copy()
