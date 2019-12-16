@@ -285,11 +285,13 @@ class LaunchpadTestCase(unit.TestCase):
         "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
-    def test_start_build_error_timeout(self, mock_rb):
-        raised = self.assertRaises(
-            errors.RemoteBuilderNotReadyError, self.lpc.start_build, timeout=0
+    @mock.patch("time.time", return_value=500)
+    def test_start_build_error_timeout(self, mock_time, mock_rb):
+        self.lpc.deadline = 499
+        raised = self.assertRaises(errors.RemoteBuildTimeoutError, self.lpc.start_build)
+        self.assertThat(
+            str(raised), Equals("Remote build exceeded configured timeout.")
         )
-        self.assertThat(str(raised), Contains("is not ready"))
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
@@ -326,6 +328,18 @@ class LaunchpadTestCase(unit.TestCase):
             ]
         )
         mock_log.assert_called_with("Build failed for arch 'amd64'.")
+
+    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch("time.time", return_value=500)
+    def test_monitor_build_error_timeout(self, mock_time, mock_rb):
+        self.lpc.deadline = 499
+        self.lpc.start_build()
+        raised = self.assertRaises(
+            errors.RemoteBuildTimeoutError, self.lpc.monitor_build, interval=0
+        )
+        self.assertThat(
+            str(raised), Equals("Remote build exceeded configured timeout.")
+        )
 
     def test_get_build_status(self):
         self.lpc.start_build()
