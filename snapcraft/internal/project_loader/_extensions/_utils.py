@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
+from collections import OrderedDict
 import contextlib
 import copy
 import jsonschema
@@ -130,6 +131,41 @@ def _load_extension(
     )
 
 
+def _convert_to_ordereddict(
+    property_list: List[Dict[str, str]]
+) -> OrderedDict:
+    od = OrderedDict()
+    for elem in property_list:
+        if not isinstance(elem, dict) or len(elem) != 1:
+            raise RuntimeError("Badly disguised ordered dictionary!")
+        for k, v in elem.items():
+            od[k] = v
+    return od
+
+
+def _convert_to_disguised_ordereddict(
+    od: OrderedDict
+) -> List[Dict[str, str]]:
+    disguised: List[Dict[str, str]] = list()
+    for k, v in od.items():
+        disguised.append({k: v})
+    return disguised
+
+
+def _merge_build_environment(
+    existing: List[Dict[str, str]], extension: List[Dict[str, str]]
+) -> List[Dict[str, str]]:
+    # build-environment is an OrderedDict in disguise.
+    if not existing:
+        return extension
+    if not extension:
+        return existing
+    existing_dict = _convert_to_ordereddict(existing)
+    extension_dict = _convert_to_ordereddict(extension)
+    extension_dict.update(existing_dict)
+    return _convert_to_disguised_ordereddict(extension_dict)
+
+
 def _apply_extension(
     yaml_data: Dict[str, Any],
     app_names: Set[str],
@@ -158,9 +194,14 @@ def _apply_extension(
     for part_name, part_definition in parts.items():
 
         for property_name, property_value in part_extension.items():
-            part_definition[property_name] = _apply_extension_property(
-                part_definition.get(property_name), property_value
-            )
+            if property_name == "build-environment":
+                part_definition[property_name] = _merge_build_environment(
+                    part_definition.get(property_name), property_value
+                )
+            else:
+                part_definition[property_name] = _apply_extension_property(
+                    part_definition.get(property_name), property_value
+                )
 
         # Stores the extension's list of part_snippets in each part
         parts[part_name] = part_definition
