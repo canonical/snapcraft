@@ -230,41 +230,7 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
     elif existing_property:
 
         if isinstance(existing_property, list) and isinstance(extension_property, list):
-
-            # Additional check if the existing_property is a list of OrderedDicts.
-            # If there is a build-environment section defined in a user's part, it
-            # is a list of OrderedDicts that needs to be merged with the gnome-3-34
-            # extension build-environment section which is a list of dicts. The list
-            # of order OrderedDicts needs to be made into a list of dicts so we can
-            # keep track of each build-environment var to make sure we use the user-
-            # defined variable. 
-            # See https://bugs.launchpad.net/snapcraft/+bug/1853040 for more info.
-            temp_list = []
-            seen = set()
-            
-            # Safely copy the list of OrderedDicts to a list of dicts
-            for item in existing_property:
-                if isinstance(item, collections.OrderedDict):
-                    temp_list.append(dict(item))
-                if len(temp_list) > 0:
-                    existing_property = temp_list
-
-            # Keep track of user-defined items
-            for item in existing_property:
-                if isinstance(item, collections.OrderedDict):
-                    for key, value in item.items():
-                        seen.add(key)
-                elif isinstance(item, str):
-                    return _merge_lists(existing_property, extension_property)
-
-            # In the case of a list of dicts, only merge extension items if not user-defined
-            for dictitem in extension_property:
-                if isinstance(dictitem, dict):
-                    print("5. it's a dict")
-                    for key, value in dictitem.items():
-                        if key not in seen:
-                            seen.add(key)
-                            existing_property.append(dictitem)
+            return _merge_lists(existing_property, extension_property)
 
         elif isinstance(existing_property, dict) and isinstance(
             extension_property, dict
