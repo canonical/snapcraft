@@ -227,19 +227,17 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
         return extension_property
 
     # If there is a user-defined property, then take care when merging with the extension-defined property.
-    elif existing_property:
+    if isinstance(existing_property, list) and isinstance(extension_property, list):
+        return _merge_lists(existing_property, extension_property)
 
-        if isinstance(existing_property, list) and isinstance(extension_property, list):
-            return _merge_lists(existing_property, extension_property)
-
-        elif isinstance(existing_property, dict) and isinstance(
-            extension_property, dict
-        ):
-            for key, value in extension_property.items():
-                existing_property[key] = _apply_extension_property(
-                    existing_property.get(key), value
-                )
-        return existing_property
+    elif isinstance(existing_property, dict) and isinstance(
+        extension_property, dict
+    ):
+        for key, value in extension_property.items():
+            existing_property[key] = _apply_extension_property(
+                existing_property.get(key), value
+            )
+    return existing_property
 
 
 def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
