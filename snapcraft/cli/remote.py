@@ -140,6 +140,7 @@ def remote_build(
 
     if status:
         _print_status(lp)
+        return
     elif recover:
         # Recover from interrupted build.
         if not lp.has_outstanding_build():
@@ -147,30 +148,24 @@ def remote_build(
             return
 
         echo.info("Recovering build...")
-        _monitor_build(lp)
-    elif lp.has_outstanding_build():
-        # There was a previous build that hasn't finished.
-        # Recover from interrupted build.
-        echo.info("Found previously started build.")
-        _print_status(lp)
-
-        if not echo.confirm("Do you wish to recover this build?", default=True):
-            _clean_build(lp)
-            _start_build(
-                lp=lp,
-                project=project,
-                build_id=build_id,
-                package_all_sources=package_all_sources,
-            )
-        _monitor_build(lp)
     else:
+        if lp.has_outstanding_build():
+            # There was a previous build that hasn't finished.
+            # Recover from interrupted build.
+            echo.info("Found previously started build.")
+            _print_status(lp)
+
+            if not echo.confirm("Do you wish to recover this build?", default=True):
+                _clean_build(lp)
+
         _start_build(
             lp=lp,
             project=project,
             build_id=build_id,
             package_all_sources=package_all_sources,
         )
-        _monitor_build(lp)
+
+    _monitor_build(lp)
 
 
 def _clean_build(lp: LaunchpadClient):
