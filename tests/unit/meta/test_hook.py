@@ -15,6 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+
+from testtools.matchers import Equals
+
+from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.hooks import Hook
 from tests import unit
 
@@ -72,3 +76,17 @@ class GenericHookTests(unit.TestCase):
 
         self.assertEqual(hook.to_dict(), hook_dict)
         self.assertEqual(hook.hook_name, hook_name)
+
+    def test_invalid_command_chain(self):
+        hook_dict = OrderedDict({"command-chain": ["&/foo/bar"]})
+        hook_name = "hook-test"
+
+        hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+
+        error = self.assertRaises(errors.HookValidationError, hook.validate)
+        self.assertThat(
+            str(error),
+            Equals(
+                "failed to validate hook=hook-test: '&/foo/bar' is not a valid command-chain command."
+            ),
+        )

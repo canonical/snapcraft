@@ -30,7 +30,7 @@ class Hook:
         hook_name: str,
         command_chain: Optional[List[str]] = None,
         plugs: Optional[List[str]] = None,
-        passthrough: Optional[Dict[str, Any]] = None
+        passthrough: Optional[Dict[str, Any]] = None,
     ) -> None:
         self._hook_name = hook_name
 
@@ -63,10 +63,22 @@ class Hook:
                 ),
             )
 
+    def _validate_command_chain(self) -> None:
+        """Validate command-chain names."""
+
+        # Would normally get caught/handled by schema validation.
+        for command in self.command_chain:
+            if not re.match("^[A-Za-z0-9/._#:$-]*$", command):
+                raise HookValidationError(
+                    hook_name=self.hook_name,
+                    message=f"{command!r} is not a valid command-chain command.",
+                )
+
     def validate(self) -> None:
         """Validate hook, raising exception if invalid."""
 
         self._validate_name()
+        self._validate_command_chain()
 
     @classmethod
     def from_dict(cls, hook_dict: Dict[str, Any], hook_name: str) -> "Hook":
