@@ -14,20 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import re
 
-from copy import deepcopy
 from snapcraft.internal.meta.errors import HookValidationError
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 
 class Hook:
     """Representation of a generic snap hook."""
 
-    def __init__(self, *, hook_name: str) -> None:
+    def __init__(
+        self,
+        *,
+        hook_name: str,
+        plugs: Optional[List[str]] = None,
+        passthrough: Optional[Dict[str, Any]] = None
+    ) -> None:
         self._hook_name = hook_name
-        self._hook_properties: Dict[str, Any] = dict()
+
+        self.plugs: List[str] = list()
+        if plugs:
+            self.plugs = plugs
+
         self.passthrough: Dict[str, Any] = dict()
+        if passthrough:
+            self.passthrough = passthrough
 
     @property
     def hook_name(self) -> str:
@@ -55,18 +67,19 @@ class Hook:
     def from_dict(cls, hook_dict: Dict[str, Any], hook_name: str) -> "Hook":
         """Create hook from dictionary."""
 
-        hook = Hook(hook_name=hook_name)
-        hook._hook_properties = deepcopy(hook_dict)
-
-        if "passthrough" in hook._hook_properties:
-            hook.passthrough = hook._hook_properties.pop("passthrough")
-
-        return hook
+        return Hook(
+            hook_name=hook_name,
+            plugs=hook_dict.get("plugs", None),
+            passthrough=hook_dict.get("passthrough", None),
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Create dictionary from hook."""
 
-        hook_dict = deepcopy(self._hook_properties)
+        hook_dict: Dict[str, Any] = OrderedDict()
+
+        if self.plugs:
+            hook_dict["plugs"] = self.plugs
 
         # Apply passthrough keys.
         hook_dict.update(self.passthrough)

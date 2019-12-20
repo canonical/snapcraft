@@ -40,8 +40,21 @@ class GenericHookTests(unit.TestCase):
         self.assertEqual(hook.to_dict(), hook_dict)
         self.assertEqual(hook.hook_name, hook_name)
 
-    def test_simple_dict(self):
-        hook_dict = OrderedDict({"somekey": "somevalue"})
+    def test_passthrough(self):
+        hook_dict = OrderedDict({"passthrough": {"otherkey": "othervalue"}})
+        hook_name = "hook-test"
+
+        hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+        hook.validate()
+
+        transformed_dict = OrderedDict({"otherkey": "othervalue"})
+
+        self.assertEqual(hook.to_dict(), transformed_dict)
+        self.assertEqual(hook.hook_name, hook_name)
+        self.assertEqual(hook.passthrough, hook_dict["passthrough"])
+
+    def test_plugs(self):
+        hook_dict = OrderedDict({"plugs": ["plug1", "plug2"]})
         hook_name = "hook-test"
 
         hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
@@ -49,20 +62,3 @@ class GenericHookTests(unit.TestCase):
 
         self.assertEqual(hook.to_dict(), hook_dict)
         self.assertEqual(hook.hook_name, hook_name)
-
-    def test_passthrough(self):
-        hook_dict = OrderedDict(
-            {"somekey": "somevalue", "passthrough": {"otherkey": "othervalue"}}
-        )
-        hook_name = "hook-test"
-
-        hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
-        hook.validate()
-
-        transformed_dict = OrderedDict(
-            {"somekey": "somevalue", "otherkey": "othervalue"}
-        )
-
-        self.assertEqual(hook.to_dict(), transformed_dict)
-        self.assertEqual(hook.hook_name, hook_name)
-        self.assertEqual(hook.passthrough, hook_dict["passthrough"])
