@@ -62,3 +62,13 @@ class GenericHookTests(unit.TestCase):
 
         self.assertEqual(hook.to_dict(), hook_dict)
         self.assertEqual(hook.hook_name, hook_name)
+
+    def test_command_chain(self):
+        hook_dict = OrderedDict({"command-chain": ["cmd1", "cmd2"]})
+        hook_name = "hook-test"
+
+        hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
+        hook.validate()
+
+        self.assertEqual(hook.to_dict(), hook_dict)
+        self.assertEqual(hook.hook_name, hook_name)

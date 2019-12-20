@@ -28,10 +28,15 @@ class Hook:
         self,
         *,
         hook_name: str,
+        command_chain: Optional[List[str]] = None,
         plugs: Optional[List[str]] = None,
         passthrough: Optional[Dict[str, Any]] = None
     ) -> None:
         self._hook_name = hook_name
+
+        self.command_chain: List[str] = list()
+        if command_chain:
+            self.command_chain = command_chain
 
         self.plugs: List[str] = list()
         if plugs:
@@ -69,6 +74,7 @@ class Hook:
 
         return Hook(
             hook_name=hook_name,
+            command_chain=hook_dict.get("command-chain", None),
             plugs=hook_dict.get("plugs", None),
             passthrough=hook_dict.get("passthrough", None),
         )
@@ -77,6 +83,9 @@ class Hook:
         """Create dictionary from hook."""
 
         hook_dict: Dict[str, Any] = OrderedDict()
+
+        if self.command_chain:
+            hook_dict["command-chain"] = self.command_chain
 
         if self.plugs:
             hook_dict["plugs"] = self.plugs
