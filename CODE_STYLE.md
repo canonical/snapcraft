@@ -48,5 +48,9 @@ fix it.
   error message. The formatting of the exception as a string should be
   tested only once, in the module tests/unit/test_errors.py
 
+### Comments
+
+Generally speaking, all comments should end with some punctuation.
+
 [1]: TESTING.md
 [2]: https://github.com/ambv/black
