@@ -28,18 +28,10 @@ from snapcraft.internal import common
 
 
 logger = logging.getLogger(__name__)
-_COMMAND_PATTERN = re.compile("^[A-Za-z0-9. _#:$-][A-Za-z0-9/. _#:$-]*$")
 _FMT_COMMAND_SNAP_STRIP = "Stripped '$SNAP/' from command {!r}."
 _FMT_COMMAND_ROOT = (
     "The command {!r} was not found in the prime directory, it has been "
     "changed to {!r}."
-)
-_FMT_SNAPD_WRAPPER = (
-    "A shell wrapper will be generated for command {!r} as it does not conform "
-    "with the command pattern expected by the runtime. "
-    "Commands must be relative to the prime directory and can only consist "
-    "of alphanumeric characters, spaces, and the following special characters: "
-    "/ . _ # : $ -"
 )
 
 
@@ -167,85 +159,3 @@ def _massage_command(*, command: str, prime_dir: str) -> str:
         command_parts[0] = command_path
 
     return " ".join(command_parts)
-
-
-class Command:
-    """Representation of a command string."""
-
-    def __str__(self) -> str:
-        return self.command
-
-    def __init__(self, *, app_name: str, command_name: str, command: str) -> None:
-        self._app_name = app_name
-        self._command_name = command_name
-        self.command = command
-        self.wrapped_command: Optional[str] = None
-        self.massaged_command: Optional[str] = None
-
-    @property
-    def command_name(self) -> str:
-        """Read-only to ensure consistency with app dictionary mappings."""
-        return self._command_name
-
-    @property
-    def requires_wrapper(self) -> bool:
-        if self.wrapped_command is not None:
-            command = self.wrapped_command
-        else:
-            command = self.command
-
-        return command.startswith("/") or not _COMMAND_PATTERN.match(command)
-
-    @property
-    def wrapped_command_name(self) -> str:
-        """Return the relative in-snap path to the wrapper for command."""
-        return "{command_name}-{app_name}.wrapper".format(
-            command_name=self.command_name, app_name=self._app_name
-        )
-
-    def prime_command(
-        self, *, can_use_wrapper: bool, massage_command: bool = True, prime_dir: str
-    ) -> str:
-        """Finalize and prime command, massaging as necessary.
-
-        Check if command is in prime_dir and raise exception if not valid."""
-
-        if massage_command:
-            self.command = _massage_command(command=self.command, prime_dir=prime_dir)
-
-        if self.requires_wrapper:
-            if not can_use_wrapper:
-                raise errors.InvalidAppCommandFormatError(self.command, self._app_name)
-            self.wrapped_command = self.command
-            if not _COMMAND_PATTERN.match(self.command):
-                logger.warning(_FMT_SNAPD_WRAPPER.format(self.command))
-            self.command = self.wrapped_command_name
-        else:
-            command_parts = shlex.split(self.command)
-            command_path = os.path.join(prime_dir, command_parts[0])
-            if not _executable_is_valid(command_path):
-                raise errors.InvalidAppCommandNotExecutable(
-                    command=self.command, app_name=self._app_name
-                )
-
-        return self.command
-
-    def write_wrapper(self, *, prime_dir: str) -> Optional[str]:
-        """Write command wrapper if required for this command."""
-        if self.wrapped_command is None:
-            return None
-
-        command_wrapper = os.path.join(prime_dir, self.wrapped_command_name)
-
-        # We cannot exec relative paths in our wrappers.
-        if self.wrapped_command.startswith("/"):
-            command = self.wrapped_command
-        else:
-            command = os.path.join("$SNAP", self.wrapped_command)
-
-        with open(command_wrapper, "w+") as command_file:
-            print("#!/bin/sh", file=command_file)
-            print('exec {} "$@"'.format(command), file=command_file)
-
-        os.chmod(command_wrapper, 0o755)
-        return command_wrapper

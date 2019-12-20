@@ -14,13 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 
-from testtools.matchers import Contains, Equals, FileExists, Not
+import fixtures
+from testtools.matchers import Contains, Equals, FileContains, FileExists, Not
 
 from snapcraft import yaml_utils
 from snapcraft.internal.meta import application, errors, desktop
 from tests import unit
+
+
+def _create_file(file_path: str, *, mode=0o755) -> None:
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    open(file_path, "w").close()
+    os.chmod(file_path, mode)
 
 
 class AppCommandTest(unit.TestCase):
@@ -60,7 +68,6 @@ class AppCommandTest(unit.TestCase):
             ),
         )
 
-        app.write_command_wrappers(prime_dir=self.path)
         self.expectThat("command-foo.wrapper", Not(FileExists()))
         self.expectThat("stop-command-foo.wrapper", Not(FileExists()))
 
@@ -85,7 +92,6 @@ class AppCommandTest(unit.TestCase):
             ),
         )
 
-        app.write_command_wrappers(prime_dir=self.path)
         self.expectThat("command-foo.wrapper", FileExists())
         self.expectThat("stop-command-foo.wrapper", FileExists())
 
@@ -279,3 +285,188 @@ class DesktopFileTest(unit.TestCase):
 
         self.expectThat(app.to_dict(), Not(Contains("desktop")))
         self.expectThat(expected_desktop_file_path, FileExists())
+
+
+class CommandWithoutWrapperAllowedTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
+    def tearDown(self):
+        super().tearDown()
+
+        self.assertThat(self.fake_logger.output, Equals(""))
+
+    def test_command(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="foo")
+
+        app.prime_commands(base=None, prime_dir=self.path)
+
+        self.assertThat(app.command, Equals("foo"))
+
+    def test_command_with_args(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="foo bar -baz")
+
+        app.prime_commands(base=None, prime_dir=self.path)
+
+        self.assertThat(app.command, Equals("foo bar -baz"))
+
+    def test_massage_bases(self):
+        app = application.Application(app_name="foo", command="foo")
+
+        self.assertThat(app.can_massage_commands(base=None), Equals(False))
+        self.assertThat(app.can_massage_commands(base="core"), Equals(True))
+        self.assertThat(app.can_massage_commands(base="core18"), Equals(True))
+        self.assertThat(app.can_massage_commands(base="unknown"), Equals(False))
+
+    def test_can_use_wrapper_bases(self):
+        app = application.Application(app_name="foo", command="foo")
+
+        self.assertThat(app.can_use_wrapper(base=None), Equals(False))
+        self.assertThat(app.can_use_wrapper(base="core"), Equals(True))
+        self.assertThat(app.can_use_wrapper(base="core18"), Equals(True))
+        self.assertThat(app.can_use_wrapper(base="unknown"), Equals(False))
+
+    def test_can_use_wrapper_command_chain(self):
+        adapter = application.ApplicationAdapter.LEGACY
+        app = application.Application(
+            app_name="foo", command="foo", command_chain=None, adapter=adapter
+        )
+        self.assertThat(app.can_use_wrapper(base="core"), Equals(True))
+
+        app.command_chain = ["command", "chain"]
+        self.assertThat(app.can_use_wrapper(base="core"), Equals(False))
+
+
+class CommandWithWrapperTest(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
+    def test_command(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="foo")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        self.assertThat(app.command, Equals("foo"))
+        self.assertThat(self.fake_logger.output, Equals(""))
+
+    def test_command_with_dollar_snap_and_does_not_match_snapd_pattern(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="$SNAP/foo !option")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        self.assertThat(app.command, Equals("command-foo.wrapper"))
+        self.assertThat(
+            self.fake_logger.output.strip(),
+            Equals(
+                "Stripped '$SNAP/' from command '$SNAP/foo !option'."
+                "\n"
+                "A shell wrapper will be generated for command 'foo !option' "
+                "as it does not conform with the command pattern expected "
+                "by the runtime. Commands must be relative to the prime "
+                "directory and can only consist of alphanumeric characters, "
+                "spaces, and the following special characters: / . _ # : $ -"
+            ),
+        )
+
+    def test_command_with_args(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="foo bar -baz")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        wrapper_path = os.path.join(self.path, "command-foo.wrapper")
+
+        self.expectThat(app.command, Equals("foo bar -baz"))
+        self.expectThat(wrapper_path, Not(FileExists()))
+        self.assertThat(self.fake_logger.output, Equals(""))
+
+    def test_command_does_not_match_snapd_pattern(self):
+        _create_file(os.path.join(self.path, "foo"))
+        app = application.Application(app_name="foo", command="foo /!option")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        wrapper_path = os.path.join(self.path, "command-foo.wrapper")
+
+        self.expectThat(app.command, Equals("command-foo.wrapper"))
+        self.assertThat(wrapper_path, FileExists())
+        self.assertThat(
+            wrapper_path, FileContains('#!/bin/sh\nexec $SNAP/foo /!option "$@"\n')
+        )
+        self.assertThat(
+            self.fake_logger.output.strip(),
+            Equals(
+                "A shell wrapper will be generated for command 'foo /!option' "
+                "as it does not conform with the command pattern expected "
+                "by the runtime. Commands must be relative to the prime "
+                "directory and can only consist of alphanumeric characters, "
+                "spaces, and the following special characters: / . _ # : $ -"
+            ),
+        )
+
+    def test_command_starts_with_slash(self):
+        app = application.Application(app_name="foo", command="/foo")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        wrapper_path = os.path.join(self.path, "command-foo.wrapper")
+
+        self.expectThat(app.command, Equals("command-foo.wrapper"))
+        self.assertThat(wrapper_path, FileExists())
+        self.assertThat(wrapper_path, FileContains('#!/bin/sh\nexec /foo "$@"\n'))
+        self.assertThat(
+            self.fake_logger.output.strip(),
+            Equals(
+                "A shell wrapper will be generated for command '/foo' "
+                "as it does not conform with the command pattern expected "
+                "by the runtime. Commands must be relative to the prime "
+                "directory and can only consist of alphanumeric characters, "
+                "spaces, and the following special characters: / . _ # : $ -"
+            ),
+        )
+
+    def test_command_relative_command_found_in_slash(self):
+        app = application.Application(app_name="foo", command="sh")
+
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        wrapper_path = os.path.join(self.path, "command-foo.wrapper")
+
+        self.expectThat(app.command, Equals("command-foo.wrapper"))
+        self.assertThat(wrapper_path, FileExists())
+        self.assertThat(wrapper_path, FileContains('#!/bin/sh\nexec /bin/sh "$@"\n'))
+        self.assertThat(
+            self.fake_logger.output.strip(),
+            Equals(
+                "The command 'sh' was not found in the prime directory, it has "
+                "been changed to '/bin/sh'."
+                "\n"
+                "A shell wrapper will be generated for command '/bin/sh' "
+                "as it does not conform with the command pattern expected "
+                "by the runtime. Commands must be relative to the prime "
+                "directory and can only consist of alphanumeric characters, "
+                "spaces, and the following special characters: / . _ # : $ -"
+            ),
+        )
+
+    def test_command_not_executable(self):
+        _create_file(os.path.join(self.path, "foo"), mode=0o644)
+        app = application.Application(app_name="foo", command="foo")
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotExecutable,
+            app.prime_commands,
+            base="core",
+            prime_dir=self.path,
+        )
+        self.assertThat(self.fake_logger.output.strip(), Equals(""))

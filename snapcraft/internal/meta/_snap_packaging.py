@@ -83,7 +83,7 @@ def create_snap_packaging(project_config: _config.Config) -> str:
     packaging.cleanup()
     packaging.validate_common_ids()
     packaging.finalize_snap_meta_commands()
-    packaging.finalize_snap_meta_command_chains()
+    packaging.finalize_snap_meta_snapcraft_runner()
     packaging.finalize_snap_meta_version()
     packaging.write_snap_yaml()
     packaging.setup_assets()
@@ -366,18 +366,34 @@ class _SnapPackaging:
                 base=self._project_config.project.info.base, prime_dir=self._prime_dir
             )
 
-    def finalize_snap_meta_command_chains(self) -> None:
-        prepend_command_chain = self._generate_command_chain()
+    def finalize_snap_meta_snapcraft_runner(self) -> None:
+        snapcraft_runner = self._configure_snapcraft_runner()
 
         # If there's nothing to prepend, we have nothing to do.
-        if not prepend_command_chain:
+        if snapcraft_runner is None:
             return
 
         for app_name, app in self._snap_meta.apps.items():
             if app.adapter == ApplicationAdapter.NONE:
+                # If adapter is "none", no runner added.
                 continue
-
-            app.command_chain = prepend_command_chain + app.command_chain
+            elif app.adapter == ApplicationAdapter.LEGACY:
+                # If adapter is "legacy", we prepend command.
+                if app.command:
+                    app.command = " ".join([snapcraft_runner, app.command])
+                if app.stop_command:
+                    app.stop_command = " ".join([snapcraft_runner, app.stop_command])
+                if app.post_stop_command:
+                    app.post_stop_command = " ".join(
+                        [snapcraft_runner, app.post_stop_command]
+                    )
+            elif app.adapter == ApplicationAdapter.FULL:
+                # If adapter is "full", always use command-chain.
+                app.command_chain.insert(0, snapcraft_runner)
+            else:
+                raise RuntimeError(
+                    f"Invalid application adapter value: {app.adapter!r}"
+                )
 
     def finalize_snap_meta_version(self) -> None:
         # Reparse the version, the order should stick.
@@ -411,7 +427,6 @@ class _SnapPackaging:
 
         snap_name = self._project_config.project.info.name
         for app_name, app in self._snap_meta.apps.items():
-            app.write_command_wrappers(prime_dir=self._prime_dir)
             app.write_application_desktop_file(
                 snap_name=snap_name,
                 prime_dir=self._prime_dir,
@@ -436,8 +451,33 @@ class _SnapPackaging:
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
 
-    def _generate_command_chain(self) -> List[str]:
-        command_chain = list()
+    def _write_snapcraft_runner(self) -> str:
+        """Writes snapcraft-runner" and returns the path."""
+        meta_runner = os.path.join(
+            self._prime_dir, "snap", "command-chain", "snapcraft-runner"
+        )
+
+        common.env = self._project_config.snap_env()
+        assembled_env = common.assemble_env()
+        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+
+        if assembled_env:
+            os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
+            with open(meta_runner, "w") as f:
+                print("#!/bin/sh", file=f)
+                print(assembled_env, file=f)
+                print(
+                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
+                )
+                print('exec "$@"', file=f)
+            os.chmod(meta_runner, 0o755)
+
+        common.reset_env()
+        return meta_runner
+
+    def _configure_snapcraft_runner(self) -> Optional[str]:
+        """Configures snapcrafter-runner, if needed and returns command."""
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
         if (
@@ -445,33 +485,10 @@ class _SnapPackaging:
             or not self._is_host_compatible_with_base
             or not self._snap_meta.apps
         ):
-            assembled_env = None
-        else:
-            meta_runner = os.path.join(
-                self._prime_dir, "snap", "command-chain", "snapcraft-runner"
-            )
+            return None
 
-            common.env = self._project_config.snap_env()
-            assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-
-            if assembled_env:
-                os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
-                with open(meta_runner, "w") as f:
-                    print("#!/bin/sh", file=f)
-                    print(assembled_env, file=f)
-                    print(
-                        "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
-                        file=f,
-                    )
-                    print('exec "$@"', file=f)
-                os.chmod(meta_runner, 0o755)
-
-            common.reset_env()
-            command_chain.append(os.path.relpath(meta_runner, self._prime_dir))
-
-        return command_chain
+        meta_runner = self._write_snapcraft_runner()
+        return os.path.relpath(meta_runner, self._prime_dir)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
         prime_snap_dir = os.path.join(self._prime_dir, "snap")
