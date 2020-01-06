@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -86,6 +86,32 @@ class CrystalPluginPropertiesTest(unit.TestCase):
             '"latest/stable", but it was "{}"'.format(crystal_channel_default),
         )
 
+        # Check crystal-build-options
+        crystal_build_options = properties["crystal-build-options"]
+        for expected in ["type", "default"]:
+            self.assertTrue(
+                expected in crystal_channel,
+                "Expected {!r} to be included in 'crystal-build-options'".format(
+                    expected
+                ),
+            )
+
+        crystal_build_options_type = crystal_channel["type"]
+        self.assertThat(
+            crystal_build_options_type,
+            Equals("string"),
+            'Expected "crystal-build-options" "type" to be "string", but '
+            'it was "{}"'.format(crystal_build_options_type),
+        )
+
+        crystal_build_options_default = crystal_build_options["default"]
+        self.assertThat(
+            crystal_build_options_default,
+            Equals([]),
+            'Expected "crystal-build-options" "default" to be '
+            '"[]", but it was "{}"'.format(crystal_build_options_default),
+        )
+
         # Check required properties
         self.assertThat(schema["required"], Equals(["source"]))
 
@@ -101,7 +127,7 @@ class CrystalPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["crystal-buildflags"]
+        expected_build_properties = ["crystal-build-options"]
         resulting_build_properties = crystal.CrystalPlugin.get_build_properties()
 
         self.assertThat(
@@ -126,7 +152,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
-            crystal_buildflags = []
+            crystal_build_options = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -138,7 +164,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
-            crystal_buildflags = []
+            crystal_build_options = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -171,7 +197,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
-            crystal_buildflags = ["-Dpreview_mt"]
+            crystal_build_options = ["-Dpreview_mt"]
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -206,7 +232,7 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
-            crystal_buildflags = []
+            crystal_build_options = []
 
         plugin = crystal.CrystalPlugin("test-part", Options(), self.project)
 
@@ -231,7 +257,7 @@ class CrystalPluginUnsupportedBase(unit.TestCase):
         class Options:
             source = "dir"
             crystal_channel = "latest/stable"
-            crystal_buildflags = []
+            crystal_build_options = []
 
         self.options = Options()
 
