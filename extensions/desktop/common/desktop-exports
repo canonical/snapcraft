@@ -58,6 +58,8 @@ function is_subpath() {
 
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib"
+append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/lib"
 append_dir PATH "$SNAP_DESKTOP_RUNTIME/usr/bin"
 
 # XKB config
@@ -115,7 +117,7 @@ prepend_dir XDG_DATA_DIRS "$SNAP_USER_DATA"
 
 # Set XDG_DATA_HOME to local path
 export XDG_DATA_HOME="$SNAP_USER_DATA/.local/share"
-mkdir -p "$XDG_DATA_HOME"
+ensure_dir_exists "$XDG_DATA_HOME"
 
 # Workaround for GLib < 2.53.2 not searching for schemas in $XDG_DATA_HOME:
 #   https://bugzilla.gnome.org/show_bug.cgi?id=741335
@@ -127,11 +129,11 @@ if [[ -d "$SNAP_USER_DATA/.cache" && ! -e "$XDG_CACHE_HOME" ]]; then
   # the .cache directory used to be stored under $SNAP_USER_DATA, migrate it
   mv "$SNAP_USER_DATA/.cache" "$SNAP_USER_COMMON/"
 fi
-mkdir -p "$XDG_CACHE_HOME"
+ensure_dir_exists "$XDG_CACHE_HOME"
 
 # Create $XDG_RUNTIME_DIR if not exists (to be removed when LP: #1656340 is fixed)
 # shellcheck disable=SC2174
-[ -n "$XDG_RUNTIME_DIR" ] && mkdir -p "$XDG_RUNTIME_DIR" -m 700
+[ -n "$XDG_RUNTIME_DIR" ] && ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
@@ -250,6 +252,7 @@ fi
 # GI repository
 prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/girepository-1.0"
+prepend_dir GI_TYPELIB_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/gjs/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/$ARCH/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/girepository-1.0"
 prepend_dir GI_TYPELIB_PATH "$SNAP/usr/lib/gjs/girepository-1.0"
@@ -299,7 +302,7 @@ if [ "$needs_update" = true ]; then
   if [ -d "$SNAP/data-dir/themes" ]; then
     ln -sf "$SNAP/data-dir/themes" "$XDG_DATA_HOME"
     ln -sfn "$SNAP/data-dir/themes" "$SNAP_USER_DATA/.themes"
-  else
+  elif [ -d "$SNAP_DESKTOP_RUNTIME/usr/share/themes" ]; then
     ln -sf "$SNAP_DESKTOP_RUNTIME/usr/share/themes" "$XDG_DATA_HOME"
     ln -sfn "$SNAP_DESKTOP_RUNTIME/usr/share/themes" "$SNAP_USER_DATA/.themes"
   fi
@@ -390,6 +393,11 @@ if [ "$needs_update" = true ]; then
   rm -rf "$XDG_DATA_HOME/icons"
   mkdir -p "$XDG_DATA_HOME/icons"
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
+    # The runtime and theme content snaps should already contain icon caches
+    # so we skip them to optimise app start time.
+    if [[ "${data_dirs_array[$i]}" == "$SNAP/data-dir" || "${data_dirs_array[$i]}" == "$SNAP_DESKTOP_RUNTIME/"* ]]; then
+      continue
+    fi  
     for theme in "${data_dirs_array[$i]}"/icons/*; do
       if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
         theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
@@ -421,6 +429,6 @@ done
 # create symbolic link to ibus socket path for ibus to look up its socket files
 # (see comments #3 and #6 on https://launchpad.net/bugs/1580463)
 IBUS_CONFIG_PATH="$XDG_CONFIG_HOME/ibus"
-mkdir -p "$IBUS_CONFIG_PATH"
+ensure_dir_exists "$IBUS_CONFIG_PATH"
 [ -d "$IBUS_CONFIG_PATH/bus" ] && rm -rf "$IBUS_CONFIG_PATH/bus"
 ln -sfn "$REALHOME/.config/ibus/bus" "$IBUS_CONFIG_PATH"

@@ -14,11 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import codecs
-from collections import OrderedDict
 from copy import deepcopy
-
-import yaml
+from typing import Optional
 
 from snapcraft import yaml_utils
 from . import _schema
@@ -30,7 +27,7 @@ class ProjectInfo:
 
     def __init__(self, *, snapcraft_yaml_file_path) -> None:
         self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
-        self.__raw_snapcraft = _load_yaml(yaml_file_path=snapcraft_yaml_file_path)
+        self.__raw_snapcraft = yaml_utils.load_yaml_file(snapcraft_yaml_file_path)
 
         try:
             self.name = self.__raw_snapcraft["name"]
@@ -52,7 +49,7 @@ class ProjectInfo:
         """Validate the snapcraft.yaml for this project."""
         _schema.Validator(self.__raw_snapcraft).validate()
 
-    def get_build_base(self) -> str:
+    def get_build_base(self) -> Optional[str]:
         """
         Return name for type base or the base otherwise build-base is set
         """
@@ -67,38 +64,3 @@ class ProjectInfo:
         # TODO this should be a MappingProxyType, but ordered writing
         #      depends on reading in the current code base.
         return deepcopy(self.__raw_snapcraft)
-
-
-def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
-    with open(yaml_file_path, "rb") as fp:
-        bs = fp.read(2)
-
-    if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
-        encoding = "utf-16"
-    else:
-        encoding = "utf-8"
-
-    try:
-        with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = yaml_utils.load(fp)  # type: ignore
-    except yaml.MarkedYAMLError as e:
-        raise errors.YamlValidationError(
-            "{} on line {}, column {}".format(
-                e.problem, e.problem_mark.line + 1, e.problem_mark.column + 1
-            ),
-            yaml_file_path,
-        ) from e
-    except yaml.reader.ReaderError as e:
-        raise errors.YamlValidationError(
-            "invalid character {!r} at position {}: {}".format(
-                chr(e.character), e.position + 1, e.reason
-            ),
-            yaml_file_path,
-        ) from e
-    except yaml.YAMLError as e:
-        raise errors.YamlValidationError(str(e), yaml_file_path) from e
-
-    if yaml_contents is None:
-        yaml_contents = OrderedDict()
-
-    return yaml_contents

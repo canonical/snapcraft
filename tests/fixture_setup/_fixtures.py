@@ -598,19 +598,24 @@ class SnapcraftYaml(fixtures.Fixture):
     def update_part(self, name, data):
         part = {name: data}
         self.data["parts"].update(part)
+        self.write_snapcraft_yaml()
 
     def update_app(self, name, data):
         app = {name: data}
         self.data["apps"].update(app)
+        self.write_snapcraft_yaml()
 
-    def _setUp(self):
-        super()._setUp()
+    def write_snapcraft_yaml(self):
         self.snapcraft_yaml_file_path = os.path.join(
             self.path, "snap", "snapcraft.yaml"
         )
         os.makedirs(os.path.join(self.path, "snap"), exist_ok=True)
         with open(self.snapcraft_yaml_file_path, "w") as snapcraft_yaml_file:
             yaml_utils.dump(self.data, stream=snapcraft_yaml_file)
+
+    def _setUp(self):
+        super()._setUp()
+        self.write_snapcraft_yaml()
 
 
 class SharedCache(fixtures.Fixture):
@@ -688,10 +693,17 @@ class FakeBaseEnvironment(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         self.core_path = self.useFixture(fixtures.TempDir()).path
-        patcher = mock.patch("snapcraft.internal.common.get_core_path")
+        patcher = mock.patch("snapcraft.internal.common.get_installed_snap_path")
         mock_core_path = patcher.start()
         mock_core_path.return_value = self.core_path
         self.addCleanup(patcher.stop)
+
+        self.content_dirs = set([])
+        mock_content_dirs = fixtures.MockPatch(
+            "snapcraft.project._project.Project._get_provider_content_dirs",
+            return_value=self.content_dirs,
+        )
+        self.useFixture(mock_content_dirs)
 
         # Create file to represent the linker so it is found
         linker_path = os.path.join(self.core_path, self._LINKER_FOR_ARCH[self._machine])

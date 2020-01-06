@@ -23,7 +23,7 @@ import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.extractors import _errors
-from tests import unit, skip
+from tests import unit
 
 
 def _create_desktop_file(desktop_file_path, icon: str = None) -> None:
@@ -89,6 +89,16 @@ class AppstreamTestCase(unit.TestCase):
                     "param_name": "common_id",
                     "value": "test-id",
                     "expect": "test-id",
+                },
+            ),
+            (
+                "title",
+                {
+                    "key": "name",
+                    "attributes": {},
+                    "param_name": "title",
+                    "value": "test-title",
+                    "expect": "test-title",
                 },
             ),
         ],
@@ -258,9 +268,6 @@ class AppstreamIconsTestCase(unit.TestCase):
 
 
 class AppstreamTest(unit.TestCase):
-    @skip.skip_unless_codename(
-        "xenial", "this test relies on libxslt from xenial to work"
-    )
     def test_appstream_with_ul(self):
         file_name = "snapcraft.appdata.xml"
         content = textwrap.dedent(
@@ -314,9 +321,6 @@ class AppstreamTest(unit.TestCase):
             ),
         )
 
-    @skip.skip_unless_codename(
-        "xenial", "this test relies on libxslt from xenial to work"
-    )
     def test_appstream_with_ol(self):
         file_name = "snapcraft.appdata.xml"
         content = textwrap.dedent(
@@ -447,12 +451,265 @@ class AppstreamTest(unit.TestCase):
                 "Drawing" is a basic image editor, supporting PNG, JPEG and BMP file types.
 
                 It allows you to draw or edit pictures with tools such as:
+
                 - Pencil (with various options)
                 - Selection (cut/copy/paste/drag/…)
                 - Line, Arc (with various options)
                 - Shapes (rectangle, circle, polygon, …)
                 - Text insertion
                 - Resizing, cropping, rotating"""
+                )
+            ),
+        )
+
+    def test_appstream_multilang_title(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <name>Foliate</name>
+            <name xml:lang="id_ID">Foliate_id</name>
+            <name xml:lang="pt_BR">Foliate_pt</name>
+            <name xml:lang="ru_RU">Foliate_ru</name>
+            <name xml:lang="nl_NL">Foliate_nl</name>
+            <name xml:lang="fr_FR">Foliate_fr</name>
+            <name xml:lang="cs_CS">Foliate_cs</name>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_title(), Equals("Foliate"))
+
+    def test_appstream_release(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <component type="desktop">
+            <releases>
+                <release version="1.5.3" date="2019-07-25">
+                <description>
+                    <ul>
+                    <li>Fixed Flatpak version not being able to open .mobi, .azw, and .azw3 files</li>
+                    <li>Improved Wiktionary lookup, now with links and example sentences</li>
+                    <li>Improved popover footnote extraction and formatting</li>
+                    <li>Added option to export annotations to BibTeX</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.2" date="2019-07-19">
+                <description>
+                    <ul>
+                    <li>Fixed table of contents navigation not working with some books</li>
+                    <li>Fixed not being able to zoom images with Kindle books</li>
+                    <li>Fixed not being able to open books with .epub3 filename extension</li>
+                    <li>Fixed temporary directory not being cleaned after closing</li>
+                    </ul>
+                </description>
+                </release>
+                <release version="1.5.1" date="2019-07-17">
+                <description>
+                    <ul>
+                    <li>Fixed F9 shortcut not working</li>
+                    <li>Updated translations</li>
+                    </ul>
+                </description>
+                </release>
+            </releases>
+            </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(metadata.get_version(), Equals("1.5.3"))
+
+    def test_appstream_em(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <description>
+                <p>Command Line Utility to <em>create snaps</em> quickly.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Ordered Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li><em>Build snaps</em>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+                <p>Unordered Features:</p>
+                <ul>
+                  <li><em>Build snaps</em>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ul>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+            Command Line Utility to _create snaps_ quickly.
+
+            Ordered Features:
+
+            1. _Build snaps_.
+            2. Publish snaps to the store.
+
+            Unordered Features:
+
+            - _Build snaps_.
+            - Publish snaps to the store."""
+                )
+            ),
+        )
+
+    def test_appstream_code_tags_not_swallowed(self):
+        file_name = "foliate.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <name>Drawing</name>
+              <description>
+                <p>Command Line Utility to <code>create snaps</code> quickly.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Ordered Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li><code>Build snaps</code>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+                <p>Unordered Features:</p>
+                <ul>
+                  <li><code>Build snaps</code>.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ul>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+            Command Line Utility to create snaps quickly.
+
+            Ordered Features:
+
+            1. Build snaps.
+            2. Publish snaps to the store.
+
+            Unordered Features:
+
+            - Build snaps.
+            - Publish snaps to the store."""
+                )
+            ),
+        )
+
+    def test_appstream_with_comments(self):
+        file_name = "foo.appdata.xml"
+        content = textwrap.dedent(
+            """\
+            <?xml version="1.0" encoding="UTF-8"?>
+              <component type="desktop">
+              <id>com.github.maoschanz.drawing</id>
+              <metadata_license>CC0-1.0</metadata_license>
+              <project_license>GPL-3.0-or-later</project_license>
+              <content_rating type="oars-1.1"/>
+              <!-- TRANSLATORS: the application name -->
+              <name>Drawing</name>
+              <!-- TRANSLATORS: one-line description for the app -->
+              <summary>Draw stuff</summary>
+              <description>
+                <!-- TRANSLATORS: AppData description marketing paragraph -->
+                <p>Command Line Utility to create snaps quickly.</p>
+                <p xml:lang="es">Aplicativo de línea de comandos para crear snaps.</p>
+                <p>Ordered Features:</p>
+                <p xml:lang="es">Funciones:</p>
+                <ol>
+                  <li>Build snaps.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ol>
+                <p>Unordered Features:</p>
+                <ul>
+                  <li>Build snaps.</li>
+                  <li xml:lang="es">Construye snaps.</li>
+                  <li>Publish snaps to the store.</li>
+                  <li xml:lang="es">Publica snaps en la tienda.</li>
+                </ul>
+              </description>
+              </component>
+        """
+        )
+
+        with open(file_name, "w") as f:
+            print(content, file=f)
+
+        metadata = appstream.extract(file_name, workdir=".")
+
+        self.expectThat(
+            metadata.get_description(),
+            Equals(
+                textwrap.dedent(
+                    """\
+            Command Line Utility to create snaps quickly.
+
+            Ordered Features:
+
+            1. Build snaps.
+            2. Publish snaps to the store.
+
+            Unordered Features:
+
+            - Build snaps.
+            - Publish snaps to the store."""
                 )
             ),
         )
@@ -545,6 +802,26 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component type="desktop">
                   <id>com.example.test-app.desktop</id>
+                </component>"""
+                )
+            )
+
+        _create_desktop_file(self.desktop_file_path)
+
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
+
+        self.assertThat(
+            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
+        )
+
+    def test_appstream_no_desktop_suffix(self):
+        with open("foo.metainfo.xml", "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                <?xml version="1.0" encoding="UTF-8"?>
+                <component type="desktop">
+                  <id>com.example.test-app</id>
                 </component>"""
                 )
             )

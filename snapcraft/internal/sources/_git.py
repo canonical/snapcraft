@@ -18,12 +18,31 @@ import os
 import re
 import subprocess
 import sys
+from typing import List
 
 from . import errors
 from ._base import Base
 
 
 class Git(Base):
+    @classmethod
+    def version(self):
+        """Get git version information."""
+        return (
+            subprocess.check_output(["git", "version"], stderr=subprocess.DEVNULL)
+            .decode(sys.getfilesystemencoding())
+            .strip()
+        )
+
+    @classmethod
+    def check_command_installed(cls) -> bool:
+        """Check if git is installed."""
+        try:
+            cls.version()
+        except FileNotFoundError:
+            return False
+        return True
+
     @classmethod
     def generate_version(cls, *, source_dir=None):
         """Return the latest git tag from PWD or defined source_dir.
@@ -121,6 +140,16 @@ class Git(Base):
             self._call_kwargs["stdout"] = subprocess.DEVNULL
             self._call_kwargs["stderr"] = subprocess.DEVNULL
 
+    def _run_git_command(self, command: List[str]) -> None:
+        try:
+            subprocess.check_output(command)
+        except subprocess.CalledProcessError as error:
+            raise errors.GitCommandError(
+                command=command,
+                exit_code=error.returncode,
+                output=error.output.decode(),
+            )
+
     def _pull_existing(self):
         refspec = "HEAD"
         if self.source_branch:
@@ -183,6 +212,39 @@ class Git(Base):
         else:
             self._clone_new()
         self.source_details = self._get_source_details()
+
+    def push(self, url, refspec, force=False):
+        command = [self.command, "-C", self.source_dir, "push", url, refspec]
+
+        if force:
+            command.append("--force")
+
+        self._run_git_command(command)
+
+    def init(self):
+        command = [self.command, "-C", self.source_dir, "init"]
+        self._run_git_command(command)
+
+    def add(self, file):
+        if file.startswith(self.source_dir):
+            file = os.path.relpath(file, self.source_dir)
+
+        command = [self.command, "-C", self.source_dir, "add", file]
+        self._run_git_command(command)
+
+    def commit(self, message, author="snapcraft <snapcraft@snapcraft.local>"):
+        command = [
+            self.command,
+            "-C",
+            self.source_dir,
+            "commit",
+            "--no-gpg-sign",
+            "--message",
+            message,
+            "--author",
+            author,
+        ]
+        self._run_git_command(command)
 
     def _get_source_details(self):
         tag = self.source_tag

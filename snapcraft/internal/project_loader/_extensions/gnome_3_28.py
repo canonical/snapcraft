@@ -35,7 +35,7 @@ class ExtensionImpl(Extension):
     \b
     - GTK3 Themes.
     - Common Icon Themes.
-    - Common Sound Themes
+    - Common Sound Themes.
     - The GNOME runtime libraries and utilities corresponding to 3.28.
 
     For easier desktop integration, it also configures each application
@@ -60,34 +60,34 @@ class ExtensionImpl(Extension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        platform_snap = _PLATFORM_SNAP[yaml_data.get("base")]
+        base: str = yaml_data["base"]
+        platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
             "plugs": {
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes:gtk-3-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes:icon-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes:sound-themes",
+                    "default-provider": "gtk-common-themes",
                 },
                 platform_snap: {
                     "interface": "content",
                     "target": "$SNAP/gnome-platform",
-                    "default-provider": "{snap}:{slot}".format(
-                        snap=platform_snap, slot=platform_snap
-                    ),
+                    "default-provider": "{snap}".format(snap=platform_snap),
                 },
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
             "layout": {
+                "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                 },

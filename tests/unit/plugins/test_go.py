@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,8 @@ import jsonschema
 from textwrap import dedent
 from unittest import mock
 
-from testtools.matchers import Contains, Equals, HasLength, Not
+import fixtures
+from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors
 from snapcraft.project import Project
@@ -47,13 +48,26 @@ class GoPluginBaseTest(unit.TestCase):
             target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
         )
 
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        def fake_go_build(command, cwd, *args, **kwargs):
+            if command[0] == "go" and command[1] == "build" and "-o" in command:
+                open(
+                    os.path.join(command[command.index("-o") + 1], "binary"), "w"
+                ).close()
+            elif command[0] == "go" and command[1] == "build" and "-o" not in command:
+                # the package is -1
+                open(os.path.join(cwd, os.path.basename(command[-1])), "w").close()
 
-        patcher = mock.patch("snapcraft.internal.common.run_output")
-        self.run_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        fake_run = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.common.run", side_effect=fake_go_build
+            )
+        )
+        self.run_mock = fake_run.mock
+
+        fake_run_output = self.useFixture(
+            fixtures.MockPatch("snapcraft.internal.common.run_output")
+        )
+        self.run_output_mock = fake_run_output.mock
 
 
 class GoPluginPropertiesTest(unit.TestCase):
@@ -216,7 +230,7 @@ class GoPluginPropertiesTest(unit.TestCase):
         self.assertNotIn("required", schema)
 
     def test_get_pull_properties(self):
-        expected_pull_properties = ["go-packages"]
+        expected_pull_properties = ["go-packages", "go-channel"]
         resulting_pull_properties = go.GoPlugin.get_pull_properties()
 
         self.assertThat(
@@ -227,7 +241,7 @@ class GoPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ["go-packages", "go-buildtags"]
+        expected_build_properties = ["go-packages", "go-buildtags", "go-channel"]
         resulting_build_properties = go.GoPlugin.get_build_properties()
 
         self.assertThat(
@@ -255,6 +269,10 @@ class GoPluginTest(GoPluginBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+    def assert_go_paths(self, plugin: go.GoPlugin) -> None:
+        self.assertThat(plugin._gopath, DirExists())
+        self.assertThat(plugin._gopath_src, DirExists())
+
     def test_pull_local_sources(self):
         class Options:
             source = "dir"
@@ -279,9 +297,52 @@ class GoPluginTest(GoPluginBaseTest):
             ]
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
+
+    def test_pull_go_mod(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        plugin.pull()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+    def test_go_mod_requires_newer_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go1.6.4 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        self.assertRaises(go.GoModRequiredVersionError, plugin.pull)
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_not_called()
 
     def test_no_local_source_with_go_packages(self):
         class Options:
@@ -306,9 +367,7 @@ class GoPluginTest(GoPluginBaseTest):
             ]
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_pull_with_local_sources_or_go_packages(self):
         class Options:
@@ -322,9 +381,7 @@ class GoPluginTest(GoPluginBaseTest):
 
         self.run_mock.assert_has_calls([])
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertFalse(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_build_with_local_sources(self):
         class Options:
@@ -341,7 +398,6 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
 
         self.run_mock.reset_mock()
@@ -356,16 +412,13 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "main")
         self.run_mock.assert_called_once_with(
-            ["go", "build", "-o", binary, "dir/pkg/main"],
-            cwd=plugin._gopath_src,
+            ["go", "build", "dir/pkg/main"],
+            cwd=os.path.join(plugin.installdir, "bin"),
             env=mock.ANY,
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_build_go_packages(self):
         class Options:
@@ -381,51 +434,18 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
-        # fake some binaries
-        binary = os.path.join(plugin._gopath_bin, "vet")
-        open(binary, "w").close()
 
         self.run_mock.reset_mock()
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ["go", "build", "-o", binary, plugin.options.go_packages[0]],
-            cwd=plugin._gopath_src,
+            ["go", "build", plugin.options.go_packages[0]],
+            cwd=os.path.join(plugin.installdir, "bin"),
             env=mock.ANY,
         )
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
-        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
-        self.assertTrue(os.path.exists(vet_binary))
-
-    def test_build_with_no_local_sources_or_go_packages(self):
-        class Options:
-            source = ""
-            go_channel = "latest/stable"
-            go_packages = []
-            go_importpath = ""
-            go_buildtags = ""
-
-        plugin = go.GoPlugin("test-part", Options(), self.project)
-
-        os.makedirs(plugin.sourcedir)
-
-        plugin.pull()
-
-        os.makedirs(plugin._gopath_bin)
-        os.makedirs(plugin.builddir)
-
-        plugin.build()
-
-        self.run_mock.assert_has_calls([])
-
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
     def test_clean_build(self):
         class Options:
@@ -439,15 +459,12 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin._gopath_pkg)
         os.makedirs(plugin.builddir)
 
         plugin.build()
 
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
+        self.assert_go_paths(plugin)
 
         plugin.clean_build()
 
@@ -492,7 +509,6 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
         self.run_output_mock.return_value = "github.com/snapcore/launcher main"
 
@@ -510,7 +526,6 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "launcher")
         self.run_mock.assert_has_calls(
             [
                 mock.call(
@@ -519,8 +534,8 @@ class GoPluginTest(GoPluginBaseTest):
                     env=mock.ANY,
                 ),
                 mock.call(
-                    ["go", "build", "-o", binary, "github.com/snapcore/launcher"],
-                    cwd=plugin._gopath_src,
+                    ["go", "build", "github.com/snapcore/launcher"],
+                    cwd=os.path.join(plugin.installdir, "bin"),
                     env=mock.ANY,
                 ),
             ]
@@ -531,6 +546,8 @@ class GoPluginTest(GoPluginBaseTest):
                 os.path.join(plugin._gopath_src, plugin.options.go_importpath)
             )
         )
+
+        self.assert_go_paths(plugin)
 
     def test_build_environment(self):
         class Options:
@@ -601,17 +618,35 @@ class GoPluginTest(GoPluginBaseTest):
             env=mock.ANY,
         )
 
-        binary = os.path.join(plugin._gopath_bin, "main")
         self.run_mock.assert_called_once_with(
-            [
-                "go",
-                "build",
-                "-o",
-                binary,
-                "-tags=testbuildtag1,testbuildtag2",
-                "dir/pkg/main",
-            ],
-            cwd=plugin._gopath_src,
+            ["go", "build", "-tags=testbuildtag1,testbuildtag2", "dir/pkg/main"],
+            cwd=os.path.join(plugin.installdir, "bin"),
+            env=mock.ANY,
+        )
+
+    def test_build_go_mod(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, "go.mod"), "w").close()
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "build", "-o", plugin._install_bin_dir],
+            cwd=plugin.builddir,
             env=mock.ANY,
         )
 
@@ -632,20 +667,64 @@ class GoPluginTest(GoPluginBaseTest):
 
         plugin.pull()
 
-        os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
-        # fake some binaries
-        binary = os.path.join(plugin._gopath_bin, "vet")
-        open(binary, "w").close()
 
         self.run_mock.reset_mock()
         plugin.build()
 
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls(
             [
                 mock.call(
-                    ["go", "build", "-o", binary, plugin.options.go_packages[0]],
-                    cwd=plugin._gopath_src,
+                    ["go", "build", plugin.options.go_packages[0]],
+                    cwd=os.path.join(plugin.installdir, "bin"),
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    [
+                        "go",
+                        "build",
+                        "-ldflags",
+                        "-linkmode=external",
+                        plugin.options.go_packages[0],
+                    ],
+                    cwd=os.path.join(plugin.installdir, "bin"),
+                    env=mock.ANY,
+                ),
+            ]
+        )
+
+        self.assert_go_paths(plugin)
+
+    @mock.patch("snapcraft.internal.elf.ElfFile")
+    def test_build_go_mod_classic_dynamic_relink(self, mock_elffile):
+        class Options:
+            source = ""
+            go_channel = "latest/stable"
+            go_packages = ["github.com/gotools/vet"]
+            go_importpath = ""
+            go_buildtags = ""
+
+        self.run_output_mock.return_value = "go version go13 linux/amd64"
+
+        mock_elffile.return_value = MockElfFile(path="foo")
+        self.project.info.confinement = "classic"
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, "go.mod"), "w").close()
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.assertThat(self.run_mock.call_count, Equals(2))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    ["go", "build", "-o", plugin._install_bin_dir],
+                    cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
                 mock.call(
@@ -655,20 +734,13 @@ class GoPluginTest(GoPluginBaseTest):
                         "-ldflags",
                         "-linkmode=external",
                         "-o",
-                        binary,
-                        plugin.options.go_packages[0],
+                        plugin._install_bin_dir,
                     ],
-                    cwd=plugin._gopath_src,
+                    cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
             ]
         )
-
-        self.assertTrue(os.path.exists(plugin._gopath))
-        self.assertTrue(os.path.exists(plugin._gopath_src))
-        self.assertTrue(os.path.exists(plugin._gopath_bin))
-        vet_binary = os.path.join(plugin.installdir, "bin", "vet")
-        self.assertTrue(os.path.exists(vet_binary))
 
 
 class GoPluginSchemaValidationTest(unit.TestCase):
@@ -810,3 +882,59 @@ class GoPluginCrossCompileTest(GoPluginBaseTest):
             if self.deb_arch == "armhf":
                 self.assertIn("GOARM", env)
                 self.assertThat(env["GOARM"], Equals("7"))
+
+
+class CGoLdFlagsTest(unit.TestCase):
+    scenarios = (
+        (
+            "none",
+            dict(cgo_ldflags_env="", library_paths=[], ldflags_env="", expected=""),
+        ),
+        (
+            "CGO_LDFLAGS",
+            dict(
+                cgo_ldflags_env="-lbar",
+                library_paths=[],
+                ldflags_env="",
+                expected="-lbar",
+            ),
+        ),
+        (
+            "Library Paths",
+            dict(
+                cgo_ldflags_env="",
+                library_paths=["part/part1/usr/lib", "stage/lib"],
+                ldflags_env="",
+                expected="-Lpart/part1/usr/lib -Lstage/lib",
+            ),
+        ),
+        (
+            "LDFLAGS",
+            dict(
+                cgo_ldflags_env="",
+                library_paths=[],
+                ldflags_env="-lfoo",
+                expected="-lfoo",
+            ),
+        ),
+        (
+            "all",
+            dict(
+                cgo_ldflags_env="-lbar",
+                library_paths=["part/part1/usr/lib", "stage/lib"],
+                ldflags_env="-lfoo",
+                expected="-lbar -Lpart/part1/usr/lib -Lstage/lib -lfoo",
+            ),
+        ),
+    )
+
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("CGO_LDFLAGS", self.cgo_ldflags_env)
+        )
+        self.useFixture(fixtures.EnvironmentVariable("LDFLAGS", self.ldflags_env))
+
+    def test_generated_cgo_ldflags(self):
+        self.assertThat(go._get_cgo_ldflags(self.library_paths), Equals(self.expected))

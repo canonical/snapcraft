@@ -87,9 +87,9 @@ def run_output(cmd: List[str], **kwargs) -> str:
         return output.decode("latin-1", "surrogateescape").strip()
 
 
-def get_core_path(base):
-    """Returns the path to the core base snap."""
-    return os.path.join(os.path.sep, "snap", base, "current")
+def get_installed_snap_path(snap_name: str):
+    """Returns the path to the currently installed snap."""
+    return os.path.join(os.path.sep, "snap", snap_name, "current")
 
 
 def format_snap_name(snap, *, allow_empty_version: bool = False) -> str:
@@ -230,7 +230,7 @@ def format_output_in_columns(
     """Return a formatted list of strings ready to be printed line by line
 
     elements_list is the list of elements ready to be printed on the output
-    max_width is the number of caracters the output shouldn't exceed
+    max_width is the number of characters the output shouldn't exceed
     num_col_spaces is the number of spaces set between 2 columns"""
 
     # First, try to get the starting point in term of number of lines

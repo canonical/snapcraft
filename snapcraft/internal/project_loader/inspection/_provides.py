@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Callable, Iterable, Set, Tuple, Union  # noqa: F401
+from typing import Callable, Iterable, Optional, Set, Tuple, Union
 
 from snapcraft import project
 from snapcraft.internal import pluginhandler, states, steps
@@ -76,9 +76,11 @@ def _part_states_for_step(
 ) -> Iterable[
     Tuple[pluginhandler.PluginHandler, Union[states.StageState, states.PrimeState]]
 ]:
-    state_getter = (
-        None
-    )  # type: Callable[[pluginhandler.PluginHandler], Union[states.StageState, states.PrimeState]]
+    state_getter: Optional[
+        Callable[
+            [pluginhandler.PluginHandler], Union[states.StageState, states.PrimeState]
+        ]
+    ] = None
 
     if step == steps.STAGE:
         state_getter = pluginhandler.PluginHandler.get_stage_state

@@ -168,3 +168,29 @@ class ErrorFormattingTestCase(unit.TestCase):
         self.assertThat(
             str(self.exception(**self.kwargs)), Equals(self.expected_message)
         )
+
+
+class SnapcraftExceptionTests(unit.TestCase):
+
+    scenarios = (
+        (
+            "GradeDevelRequiredError",
+            {
+                "exception": errors.GradeDevelRequiredError,
+                "kwargs": dict(set_grade="stable"),
+                "expected_brief": "Snap 'grade' was set to 'stable' but must be 'devel'.",
+                "expected_resolution": "Set 'grade' to 'devel' or use a stable base for this snap.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+    )
+
+    def test_snapcraft_exception_handling(self):
+        exception = self.exception(**self.kwargs)
+        self.assertEquals(self.expected_brief, exception.get_brief())
+        self.assertEquals(self.expected_resolution, exception.get_resolution())
+        self.assertEquals(self.expected_details, exception.get_details())
+        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
+        self.assertEquals(self.expected_reportable, exception.get_reportable())

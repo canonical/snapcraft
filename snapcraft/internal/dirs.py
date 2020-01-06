@@ -91,14 +91,17 @@ def setup_dirs() -> None:
     # $SNAP/usr/. As a result, using sys.prefix (which is '/usr') to find these
     # files won't work in the snap.
     elif common.is_snap():
-        parent_dir = os.path.join(os.environ.get("SNAP"), "share", "snapcraft")
+        snap_path = os.environ.get("SNAP")
+        if snap_path is None:
+            # Shouldn't happen, but it is certainly an error if it does.
+            raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
+
+        parent_dir = os.path.join(snap_path, "share", "snapcraft")
         common.set_plugindir(os.path.join(parent_dir, "plugins"))
         common.set_schemadir(os.path.join(parent_dir, "schema"))
         common.set_extensionsdir(os.path.join(parent_dir, "extensions"))
         common.set_keyringsdir(os.path.join(parent_dir, "keyrings"))
-        common.set_legacy_snapcraft_dir(
-            os.path.join(os.environ.get("SNAP"), "legacy_snapcraft")
-        )
+        common.set_legacy_snapcraft_dir(os.path.join(snap_path, "legacy_snapcraft"))
 
     elif sys.platform == "win32":
         common.set_plugindir(os.path.join(topdir, "snapcraft", "plugins"))

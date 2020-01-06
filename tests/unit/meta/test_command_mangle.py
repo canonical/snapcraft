@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 import os
 
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import command, errors
@@ -40,7 +42,10 @@ class CommandMangleTest(unit.TestCase):
         (
             "starts with $SNAP",
             dict(
-                command_path="foo", command="$SNAP/foo bar", expected_command="foo bar"
+                command_path="foo",
+                command="$SNAP/foo bar",
+                expected_command="foo bar",
+                expected_log="Stripped '$SNAP/' from command '$SNAP/foo bar'.",
             ),
         ),
         (
@@ -55,6 +60,7 @@ class CommandMangleTest(unit.TestCase):
                 command_path="bin/foo",
                 command="$SNAP/bin/foo bar",
                 expected_command="bin/foo bar",
+                expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
             ),
         ),
         (
@@ -89,9 +95,19 @@ class CommandMangleTest(unit.TestCase):
                 expected_command="usr/sbin/foo bar",
             ),
         ),
-        ("find in root", dict(command="sh bar", expected_command="/bin/sh bar")),
         (
-            "find in non stardard path",
+            "find in root",
+            dict(
+                command="sh bar",
+                expected_command="/bin/sh bar",
+                expected_log=(
+                    "The command 'sh bar' was not found in the prime directory, "
+                    "it has been changed to '/bin/sh'."
+                ),
+            ),
+        ),
+        (
+            "find in non standard path",
             dict(
                 command_path="bar/foo",
                 command="foo bar",
@@ -140,6 +156,7 @@ class CommandMangleTest(unit.TestCase):
                 command_path="bin/foo",
                 command="$SNAP/bin/foo bar",
                 expected_command="bin/python $SNAP/bin/foo bar",
+                expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
                 shebang="#!/usr/bin/env python",
                 interpreter="bin/python",
             ),
@@ -181,11 +198,18 @@ class CommandMangleTest(unit.TestCase):
                 open(interpreter_path, "w").close()
                 os.chmod(interpreter_path, 0o755)
 
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
     def test_mangle(self):
         self.assertThat(
             command._massage_command(command=self.command, prime_dir=self.prime_dir),
             Equals(self.expected_command),
         )
+        try:
+            self.assertThat(self.fake_logger.output.strip(), Equals(self.expected_log))
+        except AttributeError:
+            self.assertThat(self.fake_logger.output.strip(), Equals(""))
 
 
 class CommandMangleFindErrorTest(unit.TestCase):

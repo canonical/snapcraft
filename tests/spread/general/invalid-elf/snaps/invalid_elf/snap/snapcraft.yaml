@@ -1,0 +1,18 @@
+name: invalid-elf-test
+version: '1.0'
+summary: Snap to test that corrupted ELF files don't throw off priming step
+description: |
+  If this snap primes properly, then snapcraft doesn't throw errors when it encounters
+  a corrupted ELF file. The ELF files in question were taken from the Qt 5.13 codebase:
+
+    corrupt_unicode.elf64.so: https://code.qt.io/cgit/qt/qtbase.git/tree/tests/auto/corelib/plugin/qpluginloader/elftest/corrupt2.elf64.so?h=5.13
+    corrupt_empty.elf64.so: https://code.qt.io/cgit/qt/qtbase.git/tree/tests/auto/corelib/plugin/qpluginloader/elftest/corrupt3.elf64.so?h=5.13
+
+base: core18
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: dump
+    source: .

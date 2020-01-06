@@ -12,7 +12,7 @@ systems:
   - ubuntu-18.04-armhf
 
 environment:
-  SNAP_DIR: ../snaps/glib-hello
+  SNAP_DIR: ../snaps/gtk3-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -30,16 +30,26 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft
+  output="$(snapcraft)"
 
-  sudo snap install glib-hello_*.snap --dangerous
-  [ "$(glib-hello)" = "hello world" ]
+  sudo snap install gtk3-hello_*.snap --dangerous
+  [ "$(gtk3-hello)" = "hello world" ]
 
   # Verify that the extension command chain went through the proper setup procedure
-  snap_user_data="$HOME/snap/glib-hello/current"
+  snap_user_data="$HOME/snap/gtk3-hello/current"
   [ -d "$snap_user_data/.config" ]
   [ -d "$snap_user_data/.local" ]
   [ -h "$snap_user_data/.themes" ]
 
   [ -f "$snap_user_data/.last_revision" ]
   [ "$(cat "$snap_user_data/.last_revision")" = "SNAP_DESKTOP_LAST_REVISION=x1" ]
+
+  # Verify content snap was installed for dependency checks.
+  sudo snap list gnome-3-28-1804
+  sudo snap list gtk-common-themes
+
+  # Verify all dependencies were found.
+  if echo "$output" | grep -q "part is missing libraries"; then
+    echo "failed to find content snaps' libraries"
+    exit 1
+  fi

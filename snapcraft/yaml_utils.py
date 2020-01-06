@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
 import collections
 import yaml
-from typing import Any, Dict, TextIO, Union
+from typing import Any, Dict, Optional, TextIO, Union
+
+from snapcraft.project.errors import YamlValidationError
 
 try:
     # The C-based loaders/dumpers aren't available everywhere, but they're much faster.
@@ -27,12 +30,50 @@ except ImportError:
     raise RuntimeError("Snapcraft requires PyYAML to be built with libyaml bindings")
 
 
+def load_yaml_file(yaml_file_path: str) -> collections.OrderedDict:
+    """Load YAML with wrapped YamlValidationError."""
+    with open(yaml_file_path, "rb") as fp:
+        bs = fp.read(2)
+
+    if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
+        encoding = "utf-16"
+    else:
+        encoding = "utf-8"
+
+    try:
+        with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
+            yaml_contents = load(fp)  # type: ignore
+    except yaml.MarkedYAMLError as e:
+        raise YamlValidationError(
+            "{} on line {}, column {}".format(
+                e.problem, e.problem_mark.line + 1, e.problem_mark.column + 1
+            ),
+            yaml_file_path,
+        ) from e
+    except yaml.reader.ReaderError as e:
+        raise YamlValidationError(
+            "invalid character {!r} at position {}: {}".format(
+                chr(e.character), e.position + 1, e.reason
+            ),
+            yaml_file_path,
+        ) from e
+    except yaml.YAMLError as e:
+        raise YamlValidationError(str(e), yaml_file_path) from e
+
+    if yaml_contents is None:
+        yaml_contents = collections.OrderedDict()
+
+    return yaml_contents
+
+
 def load(stream: TextIO) -> Any:
     """Safely load YAML in ordered manner."""
     return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
-def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None) -> str:
+def dump(
+    data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: Optional[TextIO] = None
+) -> Optional[str]:
     """Safely dump YAML in ordered manner."""
     return yaml.dump(
         data, stream, _SafeOrderedDumper, default_flow_style=False, allow_unicode=True

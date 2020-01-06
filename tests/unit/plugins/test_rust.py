@@ -162,7 +162,7 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                         "--default-toolchain",
@@ -243,7 +243,7 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                     ],
@@ -329,7 +329,7 @@ class RustPluginTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                         "--default-toolchain",
@@ -374,7 +374,7 @@ class RustPluginTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                     ],
@@ -409,7 +409,7 @@ class RustPluginTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                         "--default-toolchain",
@@ -452,7 +452,7 @@ class RustPluginTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                         "--default-toolchain",
@@ -494,7 +494,7 @@ class RustPluginTest(RustPluginBaseTest):
             [
                 mock.call(
                     [
-                        os.path.join(plugin._rust_dir, "rustup.sh"),
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
                         "-y",
                         "--no-modify-path",
                         "--default-toolchain",

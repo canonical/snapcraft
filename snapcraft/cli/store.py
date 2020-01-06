@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import contextlib
 import os
 import functools
@@ -29,6 +30,7 @@ import snapcraft
 from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
+from ._review import review_snap
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -81,14 +83,18 @@ def storecli():
 def _human_readable_acls(store: storeapi.StoreClient) -> str:
     acl = store.acl()
     snap_names = []
-    if acl["snap_ids"]:
-        for snap_id in acl["snap_ids"]:
+    snap_ids = acl["snap_ids"]
+    if snap_ids:
+        if not isinstance(snap_ids, list):
+            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
+
+        for snap_id in snap_ids:
             snap_names.append(store.get_snap_name_for_id(snap_id))
     acl["snap_names"] = snap_names
 
-    human_readable_acl = {
+    human_readable_acl: Dict[str, Union[str, List[str], None]] = {
         "expires": str(acl["expires"])
-    }  # type: Dict[str, Union[str, List[str]]]
+    }
 
     for key in ("snap_names", "channels", "permissions"):
         human_readable_acl[key] = acl[key]
@@ -161,7 +167,6 @@ def push(snap_file, release):
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
     click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
-    channel_list = []
     if release:
         channel_list = release.split(",")
         click.echo(
@@ -169,7 +174,10 @@ def push(snap_file, release):
             "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
+    else:
+        channel_list = None
 
+    review_snap(snap_file=snap_file)
     snapcraft.push(snap_file, channel_list)
 
 

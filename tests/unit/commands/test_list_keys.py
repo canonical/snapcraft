@@ -15,49 +15,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from textwrap import dedent
-from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import CommandBaseTestCase, get_sample_key, mock_snap_output
+from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 
-class ListKeysCommandTestCase(CommandBaseTestCase):
+class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     scenarios = [
         ("list-keys", {"command_name": "list-keys"}),
         ("keys alias", {"command_name": "keys"}),
     ]
 
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_list_keys_snapd_not_installed(self, mock_installed, mock_check_output):
-        mock_installed.return_value = False
+    def test_list_keys_snapd_not_installed(self):
+        self.fake_package_installed.mock.return_value = False
 
         raised = self.assertRaises(
             storeapi.errors.MissingSnapdError, self.run_command, [self.command_name]
         )
 
         self.assertThat(str(raised), Contains("The snapd package is not installed."))
-        mock_installed.assert_called_with("snapd")
-        self.assertThat(mock_check_output.call_count, Equals(0))
+        self.assertThat(str(raised), Contains("The snapd package is not installed."))
+        self.fake_package_installed.mock.assert_called_with("snapd")
+        self.fake_check_output.mock.assert_not_called()
 
     def test_command_without_login_must_ask(self):
-        result = self.run_command([self.command_name])
+        # TODO: look into why this many calls are done inside snapcraft.storeapi
+        self.fake_store_account_info.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            {"account_id": "abcd", "account_keys": list()},
+            {"account_id": "abcd", "account_keys": list()},
+            {"account_id": "abcd", "account_keys": list()},
+        ]
+
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_list_keys_successfully(
-        self, mock_installed, mock_check_output, mock_get_account_information
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-        mock_get_account_information.return_value = {
+    def test_list_keys_successfully(self):
+        self.fake_store_account_info.mock.return_value = {
             "account_id": "abcd",
             "account_keys": [
                 {
@@ -67,7 +68,9 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
             ],
         }
 
-        result = self.run_command([self.command_name])
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -86,20 +89,10 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
             ),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_list_keys_without_registered(
-        self, mock_installed, mock_check_output, mock_get_account_information
-    ):
-        mock_installed.return_value = True
-        mock_check_output.side_effect = mock_snap_output
-        mock_get_account_information.return_value = {
-            "account_id": "abcd",
-            "account_keys": [],
-        }
-
-        result = self.run_command([self.command_name])
+    def test_list_keys_without_registered(self):
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(

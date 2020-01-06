@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 from typing import Optional
 from unittest import mock
 
@@ -24,19 +25,25 @@ from snapcraft.internal.build_providers._base_provider import Provider
 
 
 class ProviderImpl(Provider):
-    def __init__(self, *, project, echoer, is_ephemeral=False):
-        super().__init__(project=project, echoer=echoer, is_ephemeral=is_ephemeral)
+    def __init__(
+        self, *, project, echoer, is_ephemeral=False, build_provider_flags=None
+    ):
+        super().__init__(
+            project=project,
+            echoer=echoer,
+            is_ephemeral=is_ephemeral,
+            build_provider_flags=build_provider_flags,
+        )
 
         self.run_mock = mock.Mock()
         self.launch_mock = mock.Mock()
         self.start_mock = mock.Mock()
+        self.is_mounted_mock = mock.Mock(return_value=False)
         self.mount_mock = mock.Mock()
         self.unmount_mock = mock.Mock()
         self.push_file_mock = mock.Mock()
         self.create_mock = mock.Mock()
         self.destroy_mock = mock.Mock()
-        self.mount_project_mock = mock.Mock()
-        self.mount_prime_mock = mock.Mock()
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
@@ -50,8 +57,11 @@ class ProviderImpl(Provider):
     def _start(self) -> None:
         self.start_mock()
 
-    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
-        self.mount_mock(mountpoint=mountpoint, dev_or_path=dev_or_path)
+    def _is_mounted(self, target: str) -> bool:
+        return self.is_mounted_mock(target)
+
+    def _mount(self, host_source: str, target: str) -> None:
+        self.mount_mock(host_source, target)
 
     def _unmount(self, *, mountpoint: str) -> None:
         self.unmount_mock(mountpoint=mountpoint)
@@ -94,11 +104,8 @@ class ProviderImpl(Provider):
     def destroy(self):
         self.destroy_mock("destroy")
 
-    def mount_project(self):
-        self.mount_project_mock("mount-project")
-
-    def _mount_prime_directory(self):
-        self.mount_prime_mock("mount-prime")
+    def _get_home_directory(self) -> pathlib.Path:
+        return pathlib.Path("/root")
 
     def clean_project(self):
         self.clean_project_mock()

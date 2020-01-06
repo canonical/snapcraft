@@ -35,26 +35,27 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "gtk-3-themes": {
                             "interface": "content",
                             "target": "$SNAP/data-dir/themes",
-                            "default-provider": "gtk-common-themes:gtk-3-themes",
+                            "default-provider": "gtk-common-themes",
                         },
                         "icon-themes": {
                             "interface": "content",
                             "target": "$SNAP/data-dir/icons",
-                            "default-provider": "gtk-common-themes:icon-themes",
+                            "default-provider": "gtk-common-themes",
                         },
                         "sound-themes": {
                             "interface": "content",
                             "target": "$SNAP/data-dir/sounds",
-                            "default-provider": "gtk-common-themes:sound-themes",
+                            "default-provider": "gtk-common-themes",
                         },
                         "gnome-3-28-1804": {
                             "interface": "content",
                             "target": "$SNAP/gnome-platform",
-                            "default-provider": "gnome-3-28-1804:gnome-3-28-1804",
+                            "default-provider": "gnome-3-28-1804",
                         },
                     },
                     "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
                     "layout": {
+                        "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                         "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                             "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                         },

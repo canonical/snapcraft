@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2018 Canonical Ltd
+# Copyright 2017-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -49,13 +49,18 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             os.path.dirname(tests.__file__), "data", "test-snap-with-icon.snap"
         )
 
-    def assert_expected_metadata_calls(self, force=False):
+    def assert_expected_metadata_calls(self, force=False, optional_text_metadata=None):
         # text metadata
         text_metadata = {
             "description": "Description of the most simple snap",
             "summary": "Summary of the most simple snap",
         }
-        self.mock_metadata.assert_called_once_with("basic", text_metadata, force)
+        if optional_text_metadata is not None:
+            text_metadata.update(optional_text_metadata)
+
+        self.mock_metadata.assert_called_once_with(
+            snap_name="basic", metadata=text_metadata, force=force
+        )
         # binary metadata
         args, _ = self.mock_binary_metadata.call_args
         self.assertEqual(args[0], "basic")
@@ -89,6 +94,30 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("The metadata has been pushed"))
         self.assert_expected_metadata_calls(force=False)
 
+    def test_with_license_and_title(self):
+        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.snap_file = os.path.join(
+            os.path.dirname(tests.__file__),
+            "data",
+            "test-snap-with-icon-license-title.snap",
+        )
+
+        # push metadata
+        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(["push-metadata", self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(
+            result.output, Not(Contains("Pushing metadata to the Store (force=False)"))
+        )
+        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assert_expected_metadata_calls(
+            force=False, optional_text_metadata={"title": "Basic", "license": "GPL-3.0"}
+        )
+
     def test_simple_debug(self):
         patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
         self.mock_metadata = patcher.start()
@@ -109,7 +138,40 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assert_expected_metadata_calls(force=False)
 
     def test_push_metadata_without_login_must_ask(self):
-        result = self.run_command(["push-metadata", self.snap_file])
+        self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
+        self.useFixture(self.fake_store_login)
+
+        self.fake_store_account_info = fixtures.MockPatchObject(
+            storeapi._sca_client.SCAClient,
+            "get_account_information",
+            return_value={
+                "account_id": "abcd",
+                "account_keys": list(),
+                "snaps": {
+                    "16": {
+                        "snap-test": {
+                            "snap-id": "snap-test-snap-id",
+                            "status": "Approved",
+                            "private": False,
+                            "since": "2016-12-12T01:01Z",
+                            "price": "0",
+                        }
+                    }
+                },
+            },
+        )
+        self.useFixture(self.fake_store_account_info)
+
+        self.fake_store_push_metadata = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "push_metadata",
+            side_effect=[storeapi.errors.InvalidCredentialsError("error"), None],
+        )
+        self.useFixture(self.fake_store_push_metadata)
+
+        result = self.run_command(
+            ["push-metadata", self.snap_file], input="user@example.com\nsecret\n"
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
@@ -121,12 +183,16 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
     def test_unregistered_snap_must_raise_exception(self):
         class MockResponse:
             status_code = 404
-            error_list = [
-                {
-                    "code": "resource-not-found",
-                    "message": "Snap not found for name=basic",
-                }
-            ]
+
+            def json(self):
+                return dict(
+                    error_list=[
+                        {
+                            "code": "resource-not-found",
+                            "message": "Snap not found for name=basic",
+                        }
+                    ]
+                )
 
         patcher = mock.patch.object(storeapi.StoreClient, "push_precheck")
         mock_precheck = patcher.start()
@@ -141,11 +207,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Contains(
-                "You are not the publisher or allowed to push revisions for this "
-                "snap. To become the publisher, run `snapcraft register "
-                "basic` and try to push again."
-            ),
+            Contains("This snap is not registered. Register the snap and try again."),
         )
 
     def test_forced(self):

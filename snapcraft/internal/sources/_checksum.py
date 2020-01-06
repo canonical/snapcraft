@@ -21,7 +21,7 @@ from typing import Tuple
 
 def split_checksum(source_checksum: str) -> Tuple:
     """Splits source_checksum into algorithm and hash.
-    :raises ValueError: if source_checksum is not of the form algorightm/hash.
+    :raises ValueError: if source_checksum is not of the form algorithm/hash.
     :returns: a tuple consisting of the algorithm and the hash.
     """
     try:
@@ -37,7 +37,7 @@ def verify_checksum(source_checksum: str, checkfile: str) -> Tuple:
     :param str source_checksum: algorithm/hash expected for checkfile.
     :param str checkfile: the file to calculate the sum for with the
                           algorithm defined in source_checksum.
-    :raises ValueError: if source_checksum is not of the form algorightm/hash.
+    :raises ValueError: if source_checksum is not of the form algorithm/hash.
     :raises DigestDoesNotMatchError: if checkfile does not match the expected
                                      hash calculated with the algorithm defined
                                      in source_checksum.

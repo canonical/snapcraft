@@ -15,15 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from textwrap import dedent
-from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
-from . import CommandBaseTestCase
+from . import FakeStoreCommandsBaseTestCase
 
 
-class ListRegisteredTestCase(CommandBaseTestCase):
+class ListRegisteredTestCase(FakeStoreCommandsBaseTestCase):
 
     scenarios = [
         ("list-registered", {"command_name": "list-registered"}),
@@ -31,14 +30,26 @@ class ListRegisteredTestCase(CommandBaseTestCase):
     ]
 
     def test_command_without_login_must_ask(self):
-        result = self.run_command([self.command_name])
+        # TODO: look into why this many calls are done inside snapcraft.storeapi
+        self.fake_store_account_info.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            {"account_id": "abcd", "snaps": dict()},
+            {"account_id": "abcd", "snaps": dict()},
+            {"account_id": "abcd", "snaps": dict()},
+        ]
+
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    def test_list_registered_empty(self, mock_get_account_information):
-        mock_get_account_information.return_value = {"snaps": {}}
+    def test_list_registered_empty(self):
+        self.fake_store_account_info.mock.return_value = {
+            "account_id": "abcd",
+            "snaps": dict(),
+        }
 
         result = self.run_command([self.command_name])
 
@@ -47,9 +58,8 @@ class ListRegisteredTestCase(CommandBaseTestCase):
             result.output, Contains("There are no registered snaps for series '16'.")
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    def test_list_registered_successfully(self, mock_get_account_information):
-        mock_get_account_information.return_value = {
+    def test_list_registered_successfully(self):
+        self.fake_store_account_info.mock.return_value = {
             "snaps": {
                 "16": {
                     "foo": {

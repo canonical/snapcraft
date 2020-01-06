@@ -42,7 +42,7 @@ def latest_step(
                 latest_step = step
                 latest_timestamp = timestamp
 
-    if not latest_part:
+    if not latest_part or not latest_step:
         raise errors.NoStepsRunError()
 
     return (latest_part, latest_step, latest_timestamp)

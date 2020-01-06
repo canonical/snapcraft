@@ -43,7 +43,7 @@ class PushTestCase(integration.StoreTestCase):
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(["push", snap_file_path])
-        expected = r".*Ready to release!.*".format(name)
+        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_and_release(self):
@@ -73,7 +73,7 @@ class PushTestCase(integration.StoreTestCase):
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(["push", snap_file_path, "--release", "edge"])
-        expected = r".*Ready to release!.*".format(name)
+        expected = r".*edge *{version}.*".format(version=version)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_with_deprecated_upload(self):
@@ -96,5 +96,5 @@ class PushTestCase(integration.StoreTestCase):
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(["upload", snap_file_path])
-        expected = r".*Ready to release!.*".format(name)
+        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

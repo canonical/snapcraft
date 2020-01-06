@@ -96,11 +96,12 @@ class RustPlugin(snapcraft.BasePlugin):
             )
 
         self.build_packages.extend(["gcc", "git", "curl", "file"])
-        self._rust_dir = os.path.expanduser(os.path.join("~", ".cargo"))
-        self._rustup_cmd = os.path.join(self._rust_dir, "bin", "rustup")
-        self._cargo_cmd = os.path.join(self._rust_dir, "bin", "cargo")
-        self._rustc_cmd = os.path.join(self._rust_dir, "bin", "rustc")
-        self._rustdoc_cmd = os.path.join(self._rust_dir, "bin", "rustdoc")
+        self._rustup_dir = os.path.expanduser(os.path.join("~", ".rustup"))
+        self._cargo_dir = os.path.expanduser(os.path.join("~", ".cargo"))
+        self._rustup_cmd = os.path.join(self._cargo_dir, "bin", "rustup")
+        self._cargo_cmd = os.path.join(self._cargo_dir, "bin", "cargo")
+        self._rustc_cmd = os.path.join(self._cargo_dir, "bin", "rustc")
+        self._rustdoc_cmd = os.path.join(self._cargo_dir, "bin", "rustdoc")
 
         self._manifest = collections.OrderedDict()
 
@@ -117,13 +118,13 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def _fetch_rustup(self):
         # if rustup-init has already been done, we can skip this.
-        if os.path.exists(os.path.join(self._rust_dir, "bin", "rustup")):
+        if os.path.exists(self._rustup_cmd):
             return
 
         # Download rustup-init.
-        os.makedirs(self._rust_dir, exist_ok=True)
-        rustup_init_cmd = os.path.join(self._rust_dir, "rustup.sh")
-        sources.Script(_RUSTUP, self._rust_dir).download(filepath=rustup_init_cmd)
+        os.makedirs(self._rustup_dir, exist_ok=True)
+        rustup_init_cmd = os.path.join(self._rustup_dir, "rustup.sh")
+        sources.Script(_RUSTUP, self._rustup_dir).download(filepath=rustup_init_cmd)
 
         # Basic options:
         # -y: assume yes
@@ -231,7 +232,7 @@ class RustPlugin(snapcraft.BasePlugin):
     def _build_env(self):
         env = os.environ.copy()
 
-        env.update(dict(RUSTUP_HOME=self._rust_dir, CARGO_HOME=self._rust_dir))
+        env.update(dict(RUSTUP_HOME=self._rustup_dir, CARGO_HOME=self._cargo_dir))
 
         rustflags = self._get_rustflags()
         if rustflags:

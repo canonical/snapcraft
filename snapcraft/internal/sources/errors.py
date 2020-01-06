@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import shlex
+
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
 
@@ -121,7 +123,7 @@ class SnapcraftPullError(SnapcraftSourceError):
 
     def __init__(self, command, exit_code):
         if isinstance(command, list):
-            string_command = " ".join(command)
+            string_command = " ".join(shlex.quote(i) for i in command)
         else:
             string_command = command
         super().__init__(command=string_command, exit_code=exit_code)
@@ -130,3 +132,19 @@ class SnapcraftPullError(SnapcraftSourceError):
 class SnapcraftRequestError(SnapcraftSourceError):
 
     fmt = "Network request error: {message}"
+
+
+class GitCommandError(errors.SnapcraftException):
+    def __init__(self, *, command: List[str], exit_code: int, output: str) -> None:
+        self._command = " ".join(shlex.quote(i) for i in command)
+        self._exit_code = exit_code
+        self._output = output
+
+    def get_brief(self) -> str:
+        return f"Failed to execute git command: {self._command}"
+
+    def get_details(self) -> str:
+        return f"Command failed with exit code {self._exit_code!r} and output:\n{self._output}"
+
+    def get_resolution(self) -> str:
+        return "Consider checking your git configuration for settings which may cause issues."

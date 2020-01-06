@@ -4,6 +4,9 @@ environment:
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
+  # Generate manifest when building snaps.
+  SNAPCRAFT_BUILD_INFO: "1"
+
   # This variable can be set to either "deb" or "snap". It defaults to "snap".
   SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
 
@@ -227,7 +230,9 @@ suites:
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
    summary: tests of snapcraft using build providers
-   systems: [ubuntu-18.04-64]
+   systems:
+   - ubuntu-16.04-64
+   - ubuntu-18.04-64
    kill-timeout: 180m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time

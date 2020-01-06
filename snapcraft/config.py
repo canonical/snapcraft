@@ -22,7 +22,7 @@ import logging
 import os
 import sys
 import urllib.parse
-from typing import TextIO
+from typing import TextIO, Optional
 
 from xdg import BaseDirectory
 
@@ -73,6 +73,8 @@ class CLIConfig:
         :raises SnapcraftInvalidCLIConfigError:
             if the configuration data cannot be loaded from disk.
         """
+        config: Optional[str] = None
+
         try:
             with open(self.config_path) as f:
                 config = f.read()
@@ -100,7 +102,7 @@ class CLIConfig:
         with open(self.config_path, "w") as f:
             self.parser.write(f)
 
-    def _get_option(self, section_name: str, option_name: str) -> str:
+    def _get_option(self, section_name: str, option_name: str) -> Optional[str]:
         try:
             return self.parser.get(section_name, option_name)
         except (configparser.NoSectionError, configparser.NoOptionError, KeyError):
@@ -177,14 +179,21 @@ class Config(object):
         )
         return urllib.parse.urlparse(url).netloc
 
-    def get(self, option_name: str) -> str:
+    def get(
+        self, option_name: str, section_name: Optional[str] = None
+    ) -> Optional[str]:
+        if not section_name:
+            section_name = self._section_name()
         try:
-            return self.parser.get(self._section_name(), option_name)
+            return self.parser.get(section_name, option_name)
         except (configparser.NoSectionError, configparser.NoOptionError, KeyError):
             return None
 
-    def set(self, option_name: str, value: str) -> None:
-        section_name = self._section_name()
+    def set(
+        self, option_name: str, value: str, section_name: Optional[str] = None
+    ) -> None:
+        if not section_name:
+            section_name = self._section_name()
         if not self.parser.has_section(section_name):
             self.parser.add_section(section_name)
         self.parser.set(section_name, option_name, value)

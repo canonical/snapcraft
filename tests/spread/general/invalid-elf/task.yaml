@@ -1,0 +1,20 @@
+summary: Build a snap containing a corrupted ELF file
+
+systems: [ubuntu-18.04-amd64]
+
+environment:
+  SNAP_DIR: snaps/invalid_elf
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Verify that the snap can be primed successfully
+  output="$(snapcraft prime)"
+
+  # Verify that the output includes a warning about corrupted ELF file
+  echo "$output" | MATCH "Unable to parse ELF file"

@@ -19,8 +19,7 @@ import logging
 import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
-from typing import Sequence
-from typing import List  # noqa: F401
+from typing import List, Sequence, Set, Union
 from urllib import parse
 
 import requests_unixsocket
@@ -214,6 +213,11 @@ class SnapPackage:
 
     def install(self):
         """Installs the snap onto the system."""
+        if not self.is_valid():
+            raise errors.SnapUnavailableError(
+                snap_name=self.name, snap_channel=self.channel
+            )
+
         snap_install_cmd = []
         if _snap_command_requires_sudo():
             snap_install_cmd = ["sudo"]
@@ -230,8 +234,16 @@ class SnapPackage:
                 snap_name=self.name, snap_channel=self.channel
             )
 
+        # Now that the snap is installed, invalidate the data we had on it.
+        self._is_installed = None
+
     def refresh(self):
         """Refreshes a snap onto a channel on the system."""
+        if not self.is_valid():
+            raise errors.SnapUnavailableError(
+                snap_name=self.name, snap_channel=self.channel
+            )
+
         snap_refresh_cmd = []
         if _snap_command_requires_sudo():
             snap_refresh_cmd = ["sudo"]
@@ -247,6 +259,9 @@ class SnapPackage:
             raise errors.SnapRefreshError(
                 snap_name=self.name, snap_channel=self.channel
             )
+
+        # Now that the snap is refreshed, invalidate the data we had on it.
+        self._is_installed = None
 
 
 def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
@@ -270,7 +285,7 @@ def download_snaps(*, snaps_list: Sequence[str], directory: str) -> None:
         snap_pkg.download(directory=directory)
 
 
-def install_snaps(snaps_list):
+def install_snaps(snaps_list: Union[Sequence[str], Set[str]]) -> List[str]:
     """Install snaps of the format <snap-name>/<channel>.
 
     :return: a list of "name=revision" for the snaps installed.
@@ -278,9 +293,15 @@ def install_snaps(snaps_list):
     snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.installed and not snap_pkg.is_valid():
-            raise errors.SnapUnavailableError(
-                snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
+
+        # Allow bases to be installed from non stable channels.
+        snap_pkg_channel = snap_pkg.get_store_snap_info()["channel"]
+        snap_pkg_type = snap_pkg.get_store_snap_info()["type"]
+        if snap_pkg_channel != "stable" and snap_pkg_type == "base":
+            snap_pkg = SnapPackage(
+                "{snap_name}/latest/{channel}".format(
+                    snap_name=snap_pkg.name, channel=snap_pkg_channel
+                )
             )
 
         if not snap_pkg.installed:
@@ -288,7 +309,6 @@ def install_snaps(snaps_list):
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
 
-        snap_pkg = SnapPackage(snap)
         snaps_installed.append(
             "{}={}".format(snap_pkg.name, snap_pkg.get_local_snap_info()["revision"])
         )

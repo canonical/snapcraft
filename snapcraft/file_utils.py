@@ -21,10 +21,10 @@ import logging
 import re
 import os
 import shutil
+import stat
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator, List
-from typing import Set  # noqa F401
+from typing import Pattern, Callable, Generator, List, Optional, Set
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
@@ -212,7 +212,7 @@ def link_or_copy_tree(
     destination_basename = os.path.basename(destination_tree)
 
     for root, directories, files in os.walk(source_tree, topdown=True):
-        ignored = set()  # type: Set[str]
+        ignored: Set[str] = set()
         if ignore is not None:
             ignored = set(ignore(root, directories + files))
 
@@ -263,6 +263,11 @@ def create_similar_directory(source: str, destination: str) -> None:
     uid = stat.st_uid
     gid = stat.st_gid
     os.makedirs(destination, exist_ok=True)
+
+    # Windows does not have "os.chown" implementation and copystat
+    # is unlikely to be useful, so just bail after creating directory.
+    if sys.platform == "win32":
+        return
 
     try:
         os.chown(destination, uid, gid, follow_symlinks=False)
@@ -340,8 +345,14 @@ def get_tool_path(command_name: str) -> str:
     :return: Path to command
     :rtype: str
     """
+    command_path: Optional[str] = None
+
     if common.is_snap():
-        command_path = _command_path_in_root(os.getenv("SNAP"), command_name)
+        snap_path = os.getenv("SNAP")
+        if snap_path is None:
+            raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
+
+        command_path = _command_path_in_root(snap_path, command_name)
     else:
         command_path = shutil.which(command_name)
 
@@ -414,3 +425,16 @@ def get_resolved_relative_path(relative_path: str, base_directory: str) -> str:
     filename_relpath = os.path.relpath(filename_abspath, base_directory)
 
     return filename_relpath
+
+
+def _remove_readonly(func, path, excinfo):
+    # Try setting file to writeable if error occurs during rmtree.
+    # Known to be required on Windows where file is not "writeable",
+    # but it is owned by the user (who can set file permissions).
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def rmtree(path: str) -> None:
+    """Cross-platform rmtree implementation."""
+    shutil.rmtree(path, onerror=_remove_readonly)

@@ -259,12 +259,13 @@ class PartsConfig:
 
             global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)
-            # Finally, add the declared environment from the part.
-            # This is done only for the "root" part.
-            env += part.build_environment
 
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))
+
+            # Finally, add the declared environment from the part.
+            # This is done only for the "root" part.
+            env += part.build_environment
         else:
             env += part.env(stagedir)
             env += runtime_env(stagedir, self._project.arch_triplet)

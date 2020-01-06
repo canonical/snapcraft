@@ -41,6 +41,7 @@ from snapcraft.project import Project
 from snapcraft.project import errors as project_errors
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
+from snapcraft.internal import states
 from tests import unit, fixture_setup
 
 
@@ -117,6 +118,9 @@ class CreateTestCase(CreateBaseTestCase):
 
     def test_create_meta_with_core_as_base(self):
         self.config_data["base"] = "core"
+        self.fake_snapd.snaps_result = [
+            dict(name="core", channel="stable", revision="10")
+        ]
 
         y = self.generate_meta_yaml()
 
@@ -172,6 +176,20 @@ class CreateTestCase(CreateBaseTestCase):
             "assumes" in y, 'Expected "assumes" property to be copied into snap.yaml'
         )
         self.assertThat(y["assumes"], Equals(["feature1", "feature2"]))
+
+    def test_create_meta_command_chain_with_assumes(self):
+        self.config_data["assumes"] = ["feature1", "feature2"]
+        self.config_data["apps"] = {"app": {"command": "foo", "command-chain": ["bar"]}}
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+        _create_file(os.path.join(self.prime_dir, "bar"), executable=True)
+
+        y = self.generate_meta_yaml()
+        self.assertTrue(
+            "assumes" in y, 'Expected "assumes" property to be copied into snap.yaml'
+        )
+        self.assertThat(
+            y["assumes"], Equals(sorted(["feature1", "feature2", "command-chain"]))
+        )
 
     def test_create_gadget_meta_with_gadget_yaml(self):
         gadget_yaml = "stub entry: stub value"
@@ -1247,6 +1265,45 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
                 fake_logger.output,
                 Contains("'grade' property not specified: defaulting to 'stable'"),
             )
+
+
+class RequiredGradeTest(CreateBaseTestCase):
+    def test_defaults_from_schema(self):
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
+
+    def test_stable_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
+        )
+
+        global_state = states.GlobalState()
+        global_state.set_required_grade("stable")
+        global_state.save(filepath=global_state_path)
+
+        self.config_data["grade"] = "stable"
+
+        self.assertThat(self.generate_meta_yaml()["grade"], Equals("stable"))
+
+    def test_stable_but_devel_required(self):
+        global_state_path = "global_state"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.project.Project._get_global_state_file_path",
+                return_value=global_state_path,
+            )
+        )
+
+        global_state = states.GlobalState()
+        global_state.set_required_grade("devel")
+        global_state.save(filepath=global_state_path)
+
+        self.config_data["grade"] = "stable"
+
+        self.assertRaises(meta_errors.GradeDevelRequiredError, self.generate_meta_yaml)
 
 
 class CommonIdTestCase(CreateBaseTestCase):
