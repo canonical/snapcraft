@@ -131,9 +131,7 @@ def _load_extension(
     )
 
 
-def _convert_to_ordereddict(
-    property_list: List[Dict[str, str]]
-) -> OrderedDict:
+def _convert_to_ordereddict(property_list: List[Dict[str, str]]) -> OrderedDict:
     od = OrderedDict()
     for elem in property_list:
         if not isinstance(elem, dict) or len(elem) != 1:
@@ -143,9 +141,7 @@ def _convert_to_ordereddict(
     return od
 
 
-def _convert_to_disguised_ordereddict(
-    od: OrderedDict
-) -> List[Dict[str, str]]:
+def _convert_to_disguised_ordereddict(od: OrderedDict) -> List[Dict[str, str]]:
     disguised: List[Dict[str, str]] = list()
     for k, v in od.items():
         disguised.append({k: v})
@@ -216,13 +212,15 @@ def _apply_extension(
         parts[part_name] = part_definition
 
 
-def _apply_extension_property(existing_property: Any, extension_property: Any) -> Dict[str, Any]:
+def _apply_extension_property(
+    existing_property: Any, extension_property: Any
+) -> Dict[str, Any]:
     """Take the user-defined yaml properties and apply any missing
     extension properties. If there is a property defined in both, 
     the user-defined property is applied.
     """
 
-    # If there is no user-defined property, then just add the extension-defined property. 
+    # If there is no user-defined property, then just add the extension-defined property.
     if not existing_property:
         return extension_property
 
@@ -230,9 +228,7 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
     if isinstance(existing_property, list) and isinstance(extension_property, list):
         return _merge_lists(existing_property, extension_property)
 
-    elif isinstance(existing_property, dict) and isinstance(
-        extension_property, dict
-    ):
+    elif isinstance(existing_property, dict) and isinstance(extension_property, dict):
         for key, value in extension_property.items():
             existing_property[key] = _apply_extension_property(
                 existing_property.get(key), value
