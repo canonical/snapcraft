@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
 import re
+from collections import OrderedDict
+from typing import Any, Dict, List, Optional
 
 from snapcraft.internal.meta.errors import HookValidationError
-from typing import Any, Dict, List, Optional
 
 
 class Hook:
