@@ -163,9 +163,12 @@ class Wstool:
 
         env["PATH"] += ":" + os.path.join(self._wstool_install_path, "usr", "bin")
 
-        if "LD_LIBRARY_PATH" not in env:
-            env["LD_LIBRARY_PATH"] = ""
-        env["LD_LIBRARY_PATH"] += ":" + snapcraft.formatting_utils.combine_paths(
+        if "LD_LIBRARY_PATH" in env:
+            env["LD_LIBRARY_PATH"] += ":"
+        ld_library_path = env.get("LD_LIBRARY_PATH", "")
+        env[
+            "LD_LIBRARY_PATH"
+        ] = ld_library_path + snapcraft.formatting_utils.combine_paths(
             snapcraft.common.get_library_paths(
                 self._wstool_install_path, self._project.arch_triplet
             ),

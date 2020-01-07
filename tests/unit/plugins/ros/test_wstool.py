@@ -191,7 +191,7 @@ class WstoolTestCase(unit.TestCase):
                 self.test.assertThat(
                     env["LD_LIBRARY_PATH"],
                     Equals(
-                        ":{}".format(os.path.join(wstool._wstool_install_path, "lib"))
+                        "{}".format(os.path.join(wstool._wstool_install_path, "lib"))
                     ),
                 )
 
