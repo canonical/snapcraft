@@ -15,19 +15,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from collections import OrderedDict
+from typing import Any, Dict, List, Optional
 
-from copy import deepcopy
 from snapcraft.internal.meta.errors import HookValidationError
-from typing import Any, Dict
 
 
 class Hook:
     """Representation of a generic snap hook."""
 
-    def __init__(self, *, hook_name: str) -> None:
+    def __init__(
+        self,
+        *,
+        hook_name: str,
+        command_chain: Optional[List[str]] = None,
+        plugs: Optional[List[str]] = None,
+        passthrough: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self._hook_name = hook_name
-        self._hook_properties: Dict[str, Any] = dict()
+
+        self.command_chain: List[str] = list()
+        if command_chain:
+            self.command_chain = command_chain
+
+        self.plugs: List[str] = list()
+        if plugs:
+            self.plugs = plugs
+
         self.passthrough: Dict[str, Any] = dict()
+        if passthrough:
+            self.passthrough = passthrough
 
     @property
     def hook_name(self) -> str:
@@ -46,27 +63,44 @@ class Hook:
                 ),
             )
 
+    def _validate_command_chain(self) -> None:
+        """Validate command-chain names."""
+
+        # Would normally get caught/handled by schema validation.
+        for command in self.command_chain:
+            if not re.match("^[A-Za-z0-9/._#:$-]*$", command):
+                raise HookValidationError(
+                    hook_name=self.hook_name,
+                    message=f"{command!r} is not a valid command-chain command.",
+                )
+
     def validate(self) -> None:
         """Validate hook, raising exception if invalid."""
 
         self._validate_name()
+        self._validate_command_chain()
 
     @classmethod
     def from_dict(cls, hook_dict: Dict[str, Any], hook_name: str) -> "Hook":
         """Create hook from dictionary."""
 
-        hook = Hook(hook_name=hook_name)
-        hook._hook_properties = deepcopy(hook_dict)
-
-        if "passthrough" in hook._hook_properties:
-            hook.passthrough = hook._hook_properties.pop("passthrough")
-
-        return hook
+        return Hook(
+            hook_name=hook_name,
+            command_chain=hook_dict.get("command-chain", None),
+            plugs=hook_dict.get("plugs", None),
+            passthrough=hook_dict.get("passthrough", None),
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Create dictionary from hook."""
 
-        hook_dict = deepcopy(self._hook_properties)
+        hook_dict: Dict[str, Any] = OrderedDict()
+
+        if self.command_chain:
+            hook_dict["command-chain"] = self.command_chain
+
+        if self.plugs:
+            hook_dict["plugs"] = self.plugs
 
         # Apply passthrough keys.
         hook_dict.update(self.passthrough)
