@@ -24,7 +24,7 @@ execute: |
 
   # rosinstall files shouldn't require git to be installed, and this test is only
   # completely valid if it ISN'T installed
-  apt remove --yes git || true
+  apt-get remove --yes git || true
 
   # Staging should cause no conflicts
   snapcraft stage
