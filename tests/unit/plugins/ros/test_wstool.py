@@ -18,7 +18,7 @@ import os
 import subprocess
 
 from unittest import mock
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 
 from snapcraft.plugins._ros import wstool
 
@@ -158,20 +158,67 @@ class WstoolTestCase(unit.TestCase):
 
     def test_run(self):
         wstool = self.wstool
+
+        # Create a single library directory for asserting LD_LIBRARY_PATH is set
+        # properly.
+        os.makedirs(os.path.join(wstool._wstool_install_path, "lib"))
+
         wstool._run(["init"])
 
         class check_env:
+            def __init__(self, test):
+                self.test = test
+
             def __eq__(self, env):
-                return env["PATH"] == os.environ["PATH"] + ":" + os.path.join(
-                    wstool._wstool_install_path, "usr", "bin"
-                ) and env["PYTHONPATH"] == os.path.join(
-                    wstool._wstool_install_path,
-                    "usr",
-                    "lib",
-                    "python2.7",
-                    "dist-packages",
+                for variable in (
+                    "PATH",
+                    "LD_LIBRARY_PATH",
+                    "GIT_EXEC_PATH",
+                    "PYTHONPATH",
+                ):
+                    self.test.assertThat(env, Contains(variable))
+
+                self.test.assertThat(
+                    env["PATH"],
+                    Equals(
+                        "{}:{}".format(
+                            os.environ["PATH"],
+                            os.path.join(wstool._wstool_install_path, "usr", "bin"),
+                        )
+                    ),
                 )
 
+                self.test.assertThat(
+                    env["LD_LIBRARY_PATH"],
+                    Equals(
+                        "{}".format(os.path.join(wstool._wstool_install_path, "lib"))
+                    ),
+                )
+
+                self.test.assertThat(
+                    env["GIT_EXEC_PATH"],
+                    Equals(
+                        os.path.join(
+                            wstool._wstool_install_path, "usr", "lib", "git-core"
+                        )
+                    ),
+                )
+
+                self.test.assertThat(
+                    env["PYTHONPATH"],
+                    Equals(
+                        os.path.join(
+                            wstool._wstool_install_path,
+                            "usr",
+                            "lib",
+                            "python2.7",
+                            "dist-packages",
+                        )
+                    ),
+                )
+
+                return True
+
         self.check_output_mock.assert_called_with(
-            mock.ANY, env=check_env(), stderr=subprocess.PIPE
+            mock.ANY, env=check_env(self), stderr=subprocess.PIPE
         )
