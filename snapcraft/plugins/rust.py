@@ -241,8 +241,10 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        uses_workspaces = self._project_uses_workspace()
+        # Write a minimal config.
+        self._write_cargo_config()
 
+        uses_workspaces = self._project_uses_workspace()
         if uses_workspaces:
             # This is a bit ugly because `cargo install` does not yet support
             # workspaces.  Alternatively, there is a perhaps better option
@@ -253,9 +255,6 @@ class RustPlugin(snapcraft.BasePlugin):
             # default, if it is present.
             install_cmd = [self._cargo_cmd, "build", "--release"]
         else:
-            # Write a minimal config.
-            self._write_cargo_config()
-
             install_cmd = [
                 self._cargo_cmd,
                 "install",
