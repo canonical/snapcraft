@@ -89,6 +89,7 @@ class LaunchpadClient:
         git_branch: str = "master",
         core18_channel: str = "stable",
         snapcraft_channel: str = "edge",
+        deadline: int = 0,
     ) -> None:
         if not Git.check_command_installed():
             raise errors.GitNotFoundProviderError(provider="Launchpad")
@@ -111,6 +112,8 @@ class LaunchpadClient:
         self._lp: Launchpad = self.login()
         self.user = self._lp.me.name
 
+        self.deadline = deadline
+
     @property
     def architectures(self) -> Sequence[str]:
         return self._architectures
@@ -132,6 +135,13 @@ class LaunchpadClient:
     def user(self, user: str) -> None:
         self._lp_user = user
         self._lp_owner = f"/~{user}"
+
+    def _check_timeout_deadline(self) -> None:
+        if self.deadline <= 0:
+            return
+
+        if int(time.time()) >= self.deadline:
+            raise errors.RemoteBuildTimeoutError()
 
     def _create_data_directory(self) -> str:
         data_dir = BaseDirectory.save_data_path("snapcraft", "provider", "launchpad")
@@ -191,30 +201,28 @@ class LaunchpadClient:
             return self._lp.load(url)
 
     def _wait_for_build_request_acceptance(
-        self, build_request: Entry, timeout=30
+        self, build_request: Entry, timeout: int = 0
     ) -> None:
         # Not be be confused with the actual build(s), this is
         # ensuring that Launchpad accepts the build request.
+        while build_request.status == "Pending":
+            # Check to see if we've run out of time.
+            self._check_timeout_deadline()
 
-        while timeout > 0 and build_request.status == "Pending":
             logger.debug("Waiting on Launchpad build request...")
             logger.debug(
                 f"status={build_request.status} error={build_request.error_message}"
             )
+
             time.sleep(1)
 
             # Refresh status.
             build_request.lp_refresh()
-            timeout -= 1
 
         if build_request.status == "Failed":
             # Build request failed.
             self.cleanup()
             raise errors.RemoteBuilderError(builder_error=build_request.error_message)
-        elif build_request.status == "Pending":
-            # Timed out.
-            self.cleanup()
-            raise errors.RemoteBuilderNotReadyError()
         elif build_request.status != "Completed":
             # Shouldn't end up here.
             self.cleanup()
@@ -317,19 +325,24 @@ class LaunchpadClient:
         self._delete_snap()
         self._delete_git_repository()
 
-    def start_build(self, timeout=30) -> None:
-        """Start build with specified timeout (seconds)."""
+    def start_build(self, timeout: int = 0) -> None:
+        """Start build with specified timeout (time.time() in seconds)."""
         snap = self._create_snap(force=True)
 
         logger.debug("Issuing build request on Launchpad...")
         build_request = self._issue_build_request(snap)
         self._wait_for_build_request_acceptance(build_request, timeout=timeout)
 
-    def monitor_build(self, interval: int = _LP_POLL_INTERVAL) -> None:
+    def monitor_build(
+        self, interval: int = _LP_POLL_INTERVAL, timeout: int = 0
+    ) -> None:
         """Check build progress, and download artifacts when ready."""
         snap = self._get_snap()
 
         while True:
+            # Check to see if we've run out of time.
+            self._check_timeout_deadline()
+
             builds = self._get_builds(snap)
             pending = False
             timestamp = str(datetime.now())
