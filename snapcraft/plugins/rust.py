@@ -226,18 +226,17 @@ class RustPlugin(snapcraft.BasePlugin):
 
         # Cargo build marks binaries and shared objects executable...
         # Search target directory to get these and install them to the
-        # correct location.
-        for path in release_dir.iterdir():
-            if not os.path.isfile(path):
-                continue
-            if not os.access(path, os.X_OK):
-                continue
-
-            # File is executable, now to determine if bin or lib...
-            if path.name.endswith(".so"):
-                file_utils.link_or_copy(path.as_posix(), libs_dir.as_posix())
+        # correct location (*.so to lib directory, otherwise bin directory).
+        executables = [
+            i
+            for i in release_dir.iterdir()
+            if os.path.isfile(i) and os.access(i, os.X_OK)
+        ]
+        for exe_path in executables:
+            if exe_path.name.endswith(".so"):
+                file_utils.link_or_copy(exe_path.as_posix(), libs_dir.as_posix())
             else:
-                file_utils.link_or_copy(path.as_posix(), bins_dir.as_posix())
+                file_utils.link_or_copy(exe_path.as_posix(), bins_dir.as_posix())
 
     def build(self):
         super().build()
