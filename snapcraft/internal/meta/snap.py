@@ -173,6 +173,10 @@ class Snap:
             if app.command_chain:
                 self.assumes.add("command-chain")
                 return
+        for hook in self.hooks.values():
+            if hook.command_chain:
+                self.assumes.add("command-chain")
+                return
 
     @classmethod  # noqa: C901
     def from_dict(cls, snap_dict: Dict[str, Any]) -> "Snap":

@@ -736,3 +736,19 @@ class CorruptedElfFileError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Remove the suspect files from the snap using the `stage` or `prime` keywords."
+
+
+class SnapcraftPluginAssertionError(SnapcraftException):
+    def __init__(self, *, name: str, reason: str, details: str = "") -> None:
+        self._name = name
+        self._reason = reason
+        self._details = details
+
+    def get_brief(self) -> str:
+        return f"Unable to build {self._name!r}: {self._reason}"
+
+    def get_details(self) -> str:
+        return self._details
+
+    def get_resolution(self) -> str:
+        return "Ensure the part's configuration and sources are correct."

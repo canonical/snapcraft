@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import time
 
 from snapcraft.project import Project
 from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, errors
@@ -57,15 +58,28 @@ def remotecli():
     cls=PromptOption,
 )
 @click.option(
+    "--launchpad-timeout",
+    metavar="<seconds>",
+    type=int,
+    nargs=1,
+    required=False,
+    help=(
+        "Time to wait for Launchpad to build before exiting ('0' disables timeout)."
+        "Note that the build will continue on Launchpad and can be resumed later."
+    ),
+    default=0,
+)
+@click.option(
     "--package-all-sources",
     is_flag=True,
     help="Package all sources to send to remote builder, not just local sources.",
 )
 def remote_build(
-    recover: int,
-    status: int,
+    recover: bool,
+    status: bool,
     build_on: str,
     launchpad_accept_public_upload: bool,
+    launchpad_timeout: int,
     package_all_sources: bool,
     echoer=echo,
 ) -> None:
@@ -88,8 +102,8 @@ def remote_build(
         snapcraft remote-build
         snapcraft remote-build --build-on=amd64
         snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
-        snapcraft remote-build --recover 47860738
-        snapcraft remote-build --status 47860738
+        snapcraft remote-build --recover
+        snapcraft remote-build --status
     """
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
@@ -111,43 +125,43 @@ def remote_build(
     build_id = f"snapcraft-{project.info.name}-{project_hash}"
     architectures = _determine_architectures(project, build_on)
 
+    # Calculate timeout timestamp, if specified.
+    if launchpad_timeout > 0:
+        deadline = int(time.time()) + launchpad_timeout
+    else:
+        deadline = 0
+
     lp = LaunchpadClient(
-        project=project, build_id=build_id, architectures=architectures
+        project=project,
+        build_id=build_id,
+        architectures=architectures,
+        deadline=deadline,
     )
 
     if status:
         _print_status(lp)
-    elif recover:
-        # Recover from interrupted build.
-        if not lp.has_outstanding_build():
-            echo.info("No build found.")
-            return
+        return
 
-        echo.info("Recovering build...")
-        _monitor_build(lp)
-    elif lp.has_outstanding_build():
-        # There was a previous build that hasn't finished.
-        # Recover from interrupted build.
+    if lp.has_outstanding_build():
         echo.info("Found previously started build.")
         _print_status(lp)
 
-        if not echo.confirm("Do you wish to recover this build?", default=True):
-            _clean_build(lp)
-            _start_build(
-                lp=lp,
-                project=project,
-                build_id=build_id,
-                package_all_sources=package_all_sources,
-            )
-        _monitor_build(lp)
-    else:
-        _start_build(
-            lp=lp,
-            project=project,
-            build_id=build_id,
-            package_all_sources=package_all_sources,
-        )
-        _monitor_build(lp)
+        # If recovery specified, monitor build and exit.
+        if recover or echo.confirm("Do you wish to recover this build?", default=True):
+            _monitor_build(lp)
+            return
+
+        # Otherwise clean running build before we start a new one.
+        _clean_build(lp)
+
+    _start_build(
+        lp=lp,
+        project=project,
+        build_id=build_id,
+        package_all_sources=package_all_sources,
+    )
+
+    _monitor_build(lp)
 
 
 def _clean_build(lp: LaunchpadClient):
@@ -220,9 +234,7 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
     if project_architectures and user_specified_arch:
-        # TODO: remove "ignore" after mypy uprev due to a
-        # false positive that's fixed in newer mypy.
-        raise click.BadOptionUsage(  # type: ignore
+        raise click.BadOptionUsage(
             "--build-on",
             "Cannot use --build-on, architecture list is already set in snapcraft.yaml.",
         )

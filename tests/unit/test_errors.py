@@ -854,6 +854,18 @@ class SnapcraftExceptionTests(unit.TestCase):
             },
         ),
         (
+            "SnapcraftPluginAssertionError",
+            {
+                "exception": errors.SnapcraftPluginAssertionError,
+                "kwargs": {"name": "part-name", "reason": "missing important file"},
+                "expected_brief": "Unable to build 'part-name': missing important file",
+                "expected_resolution": "Ensure the part's configuration and sources are correct.",
+                "expected_details": "",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
             "XAttributeError",
             {
                 "exception": errors.XAttributeError,

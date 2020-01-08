@@ -89,9 +89,9 @@ class RemoteBuilderNotSupportedError(RemoteBuildBaseError):
         super().__init__(provider=provider)
 
 
-class RemoteBuilderNotReadyError(RemoteBuildBaseError):
+class RemoteBuildTimeoutError(RemoteBuildBaseError):
 
-    fmt = "Remote builder is not ready, please wait a few moments and try again."
+    fmt = "Remote build exceeded configured timeout."
 
 
 class RemoteBuilderError(RemoteBuildBaseError):
