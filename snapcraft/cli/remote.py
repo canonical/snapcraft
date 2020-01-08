@@ -75,8 +75,8 @@ def remotecli():
     help="Package all sources to send to remote builder, not just local sources.",
 )
 def remote_build(
-    recover: int,
-    status: int,
+    recover: bool,
+    status: bool,
     build_on: str,
     launchpad_accept_public_upload: bool,
     launchpad_timeout: int,
@@ -102,8 +102,8 @@ def remote_build(
         snapcraft remote-build
         snapcraft remote-build --build-on=amd64
         snapcraft remote-build --build-on=amd64,arm64,armhf,i386,ppc64el,s390x
-        snapcraft remote-build --recover 47860738
-        snapcraft remote-build --status 47860738
+        snapcraft remote-build --recover
+        snapcraft remote-build --status
     """
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
@@ -141,29 +141,25 @@ def remote_build(
     if status:
         _print_status(lp)
         return
-    elif recover:
-        # Recover from interrupted build.
-        if not lp.has_outstanding_build():
-            echo.info("No build found.")
+
+    if lp.has_outstanding_build():
+        echo.info("Found previously started build.")
+        _print_status(lp)
+
+        # If recovery specified, monitor build and exit.
+        if recover or echo.confirm("Do you wish to recover this build?", default=True):
+            _monitor_build(lp)
             return
 
-        echo.info("Recovering build...")
-    else:
-        if lp.has_outstanding_build():
-            # There was a previous build that hasn't finished.
-            # Recover from interrupted build.
-            echo.info("Found previously started build.")
-            _print_status(lp)
+        # Otherwise clean running build before we start a new one.
+        _clean_build(lp)
 
-            if not echo.confirm("Do you wish to recover this build?", default=True):
-                _clean_build(lp)
-
-        _start_build(
-            lp=lp,
-            project=project,
-            build_id=build_id,
-            package_all_sources=package_all_sources,
-        )
+    _start_build(
+        lp=lp,
+        project=project,
+        build_id=build_id,
+        package_all_sources=package_all_sources,
+    )
 
     _monitor_build(lp)
 
@@ -238,9 +234,7 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
     if project_architectures and user_specified_arch:
-        # TODO: remove "ignore" after mypy uprev due to a
-        # false positive that's fixed in newer mypy.
-        raise click.BadOptionUsage(  # type: ignore
+        raise click.BadOptionUsage(
             "--build-on",
             "Cannot use --build-on, architecture list is already set in snapcraft.yaml.",
         )
