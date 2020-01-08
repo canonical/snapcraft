@@ -130,7 +130,7 @@ class RustPlugin(snapcraft.BasePlugin):
         # Basic options:
         # -y: assume yes
         # --no-modify-path: do not modify bashrc
-        options = ["-y", "--no-modify-path"]
+        options = ["-y", "--no-modify-path", "--profile=minimal"]
         if self._get_toolchain() is not None:
             options.extend(["--default-toolchain", "none"])
 
