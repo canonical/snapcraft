@@ -49,7 +49,6 @@ class Application:
         adapter: ApplicationAdapter,
         desktop: str = None,
         command_chain: List[str] = None,
-        prepend_command_chain: List[str] = None,
         passthrough: Dict[str, Any] = None,
         commands: Dict[str, Command] = None
     ) -> None:
@@ -69,10 +68,6 @@ class Application:
         self.command_chain: List[str] = list()
         if command_chain:
             self.command_chain = command_chain
-
-        self.prepend_command_chain: List[str] = list()
-        if prepend_command_chain:
-            self.prepend_command_chain = prepend_command_chain
 
         self.commands: Dict[str, Command] = dict()
         if commands:
@@ -190,8 +185,8 @@ class Application:
         for command_name, command in self.commands.items():
             app_dict[command_name] = command.command
 
-        if self.prepend_command_chain or self.command_chain:
-            app_dict["command-chain"] = self.prepend_command_chain + self.command_chain
+        if self.command_chain:
+            app_dict["command-chain"] = self.command_chain
 
         # Adjust socket values to formats snap.yaml accepts
         sockets = app_dict.get("sockets", dict())
