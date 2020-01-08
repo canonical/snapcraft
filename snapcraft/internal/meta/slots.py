@@ -31,7 +31,7 @@ class Slot:
 
     def __init__(self, *, slot_name: str) -> None:
         self._slot_name = slot_name
-        self._slot_dict: Dict[str, Any] = dict()
+        self._slot_dict: Dict[str, Any] = {"interface": slot_name}
 
     @property
     def slot_name(self) -> str:
@@ -55,16 +55,17 @@ class Slot:
     def from_dict(cls, *, slot_dict: Dict[str, Any], slot_name: str) -> "Slot":
         """Return applicable Slot instance from dictionary properties."""
 
-        # If we explicitly support the type, use it instead.
-        interface = slot_dict.get("interface")
+        slot_dict = {} if slot_dict is None else slot_dict
+        interface = slot_dict.get("interface", slot_name)
 
-        if interface in SLOT_MAPPINGS:
-            slot_class = SLOT_MAPPINGS.get(interface)
+        # If we explicitly support the type, use it instead.
+        slot_class = SLOT_MAPPINGS.get(interface, None)
+        if slot_class is not None:
             return slot_class.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
         # Handle the general case.
         slot = Slot(slot_name=slot_name)
-        slot._slot_dict = slot_dict
+        slot._slot_dict.update(slot_dict)
         return slot
 
     def to_dict(self) -> Dict[str, Any]:
