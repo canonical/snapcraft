@@ -39,18 +39,19 @@ class GenericPlugTests(unit.TestCase):
         plug_name = "plug-test"
 
         plug = Plug(plug_name=plug_name)
+        plug._plug_dict = dict({})
 
         self.assertRaises(errors.PlugValidationError, plug.validate)
 
-    def test_invalid_from_dict_raises_exception(self):
+    def test_from_empty_dict(self):
         plug_dict = OrderedDict({})
         plug_name = "plug-test"
 
         plug = Plug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
-        self.assertRaises(errors.PlugValidationError, plug.validate)
+        plug.validate()
 
-    def test_valid_from_dict(self):
+    def test_from_valid_dict(self):
         plug_dict = OrderedDict({"interface": "somevalue", "someprop": "somevalue"})
         plug_name = "plug-test"
 
