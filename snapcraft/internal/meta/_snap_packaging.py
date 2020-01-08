@@ -363,8 +363,14 @@ class _SnapPackaging:
 
     def finalize_snap_meta_command_chains(self) -> None:
         prepend_command_chain = self._generate_command_chain()
+
+        if not prepend_command_chain:
+            return
+
         for app_name, app in self._snap_meta.apps.items():
-            app.prepend_command_chain = prepend_command_chain
+            # Add runner to command chain if adapter is not "none".
+            if app.adapter != "none":
+                app.prepend_command_chain = prepend_command_chain
 
     def finalize_snap_meta_version(self) -> None:
         # Reparse the version, the order should stick.
