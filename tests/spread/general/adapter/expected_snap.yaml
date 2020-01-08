@@ -13,8 +13,6 @@ apps:
     - snap/command-chain/snapcraft-runner
   adapter-none:
     command: test-cmd
-    command-chain:
-    - snap/command-chain/snapcraft-runner
   wrapped-default:
     command: command-wrapped-default.wrapper
     command-chain:
