@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -56,8 +56,6 @@ import collections
 import contextlib
 import os
 import re
-from shutil import which
-from textwrap import dedent
 from typing import List, Optional, Set
 
 import requests
@@ -227,10 +225,9 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         self._pip.setup()
 
-        with simple_env_bzr(os.path.join(self.installdir, "bin")):
-            # Download this project, using its setup.py if present. This will
-            # also download any python-packages requested.
-            self._download_project()
+        # Download this project, using its setup.py if present. This will
+        # also download any python-packages requested.
+        self._download_project()
 
     def clean_pull(self):
         super().clean_pull()
@@ -239,9 +236,7 @@ class PythonPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        with simple_env_bzr(os.path.join(self.installdir, "bin")):
-            # Install the packages that have already been downloaded
-            installed_pipy_packages = self._install_project()
+        installed_pipy_packages = self._install_project()
 
         requirements = self._get_list_of_packages_from_property(
             self.options.requirements
@@ -446,39 +441,3 @@ class PythonPlugin(snapcraft.BasePlugin):
         # the python plugin.
         fileset.append("-lib/python*/site-packages/*/RECORD")
         return fileset
-
-
-@contextlib.contextmanager
-def simple_env_bzr(bin_dir):
-    """Create an appropriate environment to run bzr.
-
-       The python plugin sets up PYTHONUSERBASE and PYTHONHOME which
-       conflicts with bzr when using python3 as those two environment
-       variables will make bzr look for modules in the wrong location.
-       """
-    os.makedirs(bin_dir, exist_ok=True)
-    bzr_bin = os.path.join(bin_dir, "bzr")
-    real_bzr_bin = which("bzr")
-    if real_bzr_bin:
-        exec_line = 'exec {} "$@"'.format(real_bzr_bin)
-    else:
-        exec_line = "echo bzr needs to be in PATH; exit 1"
-    with open(bzr_bin, "w") as f:
-        f.write(
-            dedent(
-                """#!/bin/sh
-               unset PYTHONUSERBASE
-               unset PYTHONHOME
-               {}
-            """.format(
-                    exec_line
-                )
-            )
-        )
-    os.chmod(bzr_bin, 0o777)
-    try:
-        yield
-    finally:
-        os.remove(bzr_bin)
-        if not os.listdir(bin_dir):
-            os.rmdir(bin_dir)
