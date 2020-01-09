@@ -132,7 +132,7 @@ def _load_extension(
 
 
 def _convert_to_ordereddict(property_list: List[Dict[str, str]]) -> OrderedDict:
-    od = OrderedDict()
+    od = collections.OrderedDict()
     for elem in property_list:
         if not isinstance(elem, dict) or len(elem) != 1:
             raise RuntimeError("Badly disguised ordered dictionary!")
