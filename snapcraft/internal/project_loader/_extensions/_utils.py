@@ -216,7 +216,7 @@ def _apply_extension_property(
     existing_property: Any, extension_property: Any
 ) -> Dict[str, Any]:
     """Take the user-defined yaml properties and apply any missing
-    extension properties. If there is a property defined in both, 
+    extension properties. If there is a property defined in both,
     the user-defined property is applied.
     """
 
