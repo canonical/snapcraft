@@ -21,7 +21,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
+from typing import Dict, FrozenSet, List, Optional, Set, Sequence, Tuple, Union
 
 import elftools.elf.elffile
 import elftools.common.exceptions
@@ -108,8 +108,10 @@ SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
 if parse_version(elftools.__version__) >= parse_version("0.24"):
-    _DEBUG_INFO = ".debug_info"  # type: Union[str, bytes]
-    _GNU_VERSION_R = ".gnu.version_r"  # type: Union[str, bytes]
+    _DEBUG_INFO: Union[str, bytes] = ".debug_info"
+    _DYNAMIC: Union[str, bytes] = ".dynamic"
+    _GNU_VERSION_R: Union[str, bytes] = ".gnu.version_r"
+    _INTERP: Union[str, bytes] = ".interp"
 else:
     _DEBUG_INFO = b".debug_info"
     _GNU_VERSION_R = b".gnu.version_r"
@@ -259,7 +261,11 @@ class ElfFile:
         """
         self.path = path
         self.dependencies = set()  # type: Set[Library]
-        elf_data = self._extract(path)
+
+        try:
+            elf_data = self._extract(path)
+        except (UnicodeDecodeError, AttributeError) as exception:
+            raise errors.CorruptedElfFileError(path, exception)
         self.arch = elf_data[0]
         self.interp = elf_data[1]
         self.soname = elf_data[2]
@@ -270,7 +276,7 @@ class ElfFile:
         self.has_debug_info = elf_data[7]
 
     def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
-        arch = None  # type: ElfArchitectureTuple
+        arch: Optional[ElfArchitectureTuple] = None
         interp = str()
         soname = str()
         libs = dict()
@@ -632,6 +638,10 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
             elf_file = ElfFile(path=path)
         except elftools.common.exceptions.ELFError:
             # Ignore invalid ELF files.
+            continue
+        except errors.CorruptedElfFileError as exception:
+            # Log if the ELF file seems corrupted
+            logger.warning(exception.get_brief())
             continue
 
         # If ELF has dynamic symbols, add it.

@@ -130,7 +130,7 @@ class StoreClient:
 
         return account_data
 
-    def acl(self) -> Dict[str, Union[List[str], str]]:
+    def acl(self) -> Dict[str, Union[List[str], str, None]]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}

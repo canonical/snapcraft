@@ -18,7 +18,7 @@ import logging
 import os
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Dict, Set, Sequence, List, Any
+from typing import Any, Dict, List, Set, Sequence, Optional
 
 from snapcraft import yaml_utils
 from snapcraft.internal import common
@@ -54,28 +54,91 @@ _OPTIONAL_PACKAGE_KEYS = [
 class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
-    def __init__(self) -> None:
-        self.adopt_info: str = None
-        self.base: str = None
-        self.name: str = None
-        self.version: str = None
-        self.summary: str = None
-        self.description: str = None
-        self.architectures: Sequence[str] = list()
-        self.assumes: Set[str] = set()
-        self.confinement: str = None
-        self.environment: Dict[str, Any] = dict()
-        self.epoch: Any = None
-        self.grade: str = None
-        self.license: str = None
-        self.title: str = None
-        self.type: str = None
-        self.plugs: Dict[str, Plug] = dict()
-        self.slots: Dict[str, Slot] = dict()
-        self.apps: Dict[str, Application] = dict()
-        self.hooks: Dict[str, Hook] = dict()
-        self.passthrough: Dict[str, Any] = dict()
-        self.layout: Dict[str, Any] = dict()
+    def __init__(
+        self,
+        adopt_info: Optional[str] = None,
+        apps: Optional[Dict[str, Application]] = None,
+        architectures: Optional[Sequence[str]] = None,
+        assumes: Optional[Set[str]] = None,
+        base: Optional[str] = None,
+        confinement: Optional[str] = None,
+        description: Optional[str] = None,
+        environment: Optional[Dict[str, Any]] = None,
+        epoch: Any = None,
+        grade: Optional[str] = None,
+        hooks: Optional[Dict[str, Hook]] = None,
+        layout: Optional[Dict[str, Any]] = None,
+        license: Optional[str] = None,
+        name: Optional[str] = None,
+        passthrough: Optional[Dict[str, Any]] = None,
+        plugs: Optional[Dict[str, Plug]] = None,
+        slots: Optional[Dict[str, Slot]] = None,
+        summary: Optional[str] = None,
+        title: Optional[str] = None,
+        type: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> None:
+        self.adopt_info = adopt_info
+
+        if apps is None:
+            self.apps: Dict[str, Application] = dict()
+        else:
+            self.apps = apps
+
+        if architectures is None:
+            self.architectures: Sequence[str] = list()
+        else:
+            self.architectures = architectures
+
+        if assumes is None:
+            self.assumes: Set[str] = set()
+        else:
+            self.assumes = assumes
+
+        self.base = base
+        self.confinement = confinement
+        self.description = description
+
+        if environment is None:
+            self.environment: Dict[str, Any] = dict()
+        else:
+            self.environment = environment
+
+        self.epoch = epoch
+        self.grade = grade
+
+        if hooks is None:
+            self.hooks: Dict[str, Hook] = dict()
+        else:
+            self.hooks = hooks
+
+        if layout is None:
+            self.layout: Dict[str, Any] = dict()
+        else:
+            self.layout = layout
+
+        self.license = license
+        self.name = name
+
+        if passthrough is None:
+            self.passthrough: Dict[str, Any] = dict()
+        else:
+            self.passthrough = passthrough
+
+        if plugs is None:
+            self.plugs: Dict[str, Plug] = dict()
+        else:
+            self.plugs = plugs
+
+        if slots is None:
+            self.slots: Dict[str, Slot] = dict()
+        else:
+            self.slots = slots
+
+        self.summary = summary
+        self.title = title
+        self.type = type
+        self.version = version
 
     @classmethod
     def from_file(cls, snap_yaml_path: str) -> "Snap":
@@ -113,12 +176,15 @@ class Snap:
         for plug in self.get_content_plugs():
             # Get matching slot provider for plug.
             provider = plug.provider
+            if not provider:
+                continue
+
             provider_path = common.get_installed_snap_path(provider)
             yaml_path = os.path.join(provider_path, "meta", "snap.yaml")
 
             snap = Snap.from_file(yaml_path)
             for slot in snap.get_content_slots():
-                slot_installed_path = common.get_installed_snap_path(plug.provider)
+                slot_installed_path = common.get_installed_snap_path(provider)
                 provider_dirs |= slot.get_content_dirs(
                     installed_path=slot_installed_path
                 )
@@ -129,7 +195,7 @@ class Snap:
         """Verify that all mandatory keys have been satisfied."""
         missing_keys: List[str] = []
         for key in _MANDATORY_PACKAGE_KEYS:
-            if key is "version" and self.adopt_info:
+            if key == "version" and self.adopt_info:
                 continue
 
             if not self.__dict__[key]:
@@ -168,6 +234,10 @@ class Snap:
 
         for app in self.apps.values():
             if app.command_chain:
+                self.assumes.add("command-chain")
+                return
+        for hook in self.hooks.values():
+            if hook.command_chain:
                 self.assumes.add("command-chain")
                 return
 

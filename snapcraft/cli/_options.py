@@ -107,6 +107,13 @@ _PROVIDER_OPTIONS = [
         envvar="https_proxy",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
+    dict(
+        param_decls="--bind-ssh",
+        is_flag=True,
+        help="Bind ~/.ssh directory to locally-run build environments.",
+        envvar="SNAPCRAFT_BIND_SSH",
+        supported_providers=["lxd", "multipass"],
+    ),
 ]
 
 

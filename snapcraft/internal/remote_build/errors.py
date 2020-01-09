@@ -89,9 +89,9 @@ class RemoteBuilderNotSupportedError(RemoteBuildBaseError):
         super().__init__(provider=provider)
 
 
-class RemoteBuilderNotReadyError(RemoteBuildBaseError):
+class RemoteBuildTimeoutError(RemoteBuildBaseError):
 
-    fmt = "Remote builder is not ready, please wait a few moments and try again."
+    fmt = "Remote build exceeded configured timeout."
 
 
 class RemoteBuilderError(RemoteBuildBaseError):
@@ -127,7 +127,7 @@ class AcceptPublicUploadError(RemoteBuildBaseError):
 
     fmt = (
         "Remote build needs explicit acknowledgement that data sent to build servers "
-        "is public.\nIn non-interactive runs, please use option --accept-public-upload."
+        "is public.\nIn non-interactive runs, please use option --launchpad-accept-public-upload."
     )
 
 

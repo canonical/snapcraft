@@ -46,11 +46,11 @@ class SnapInjectionTest(unit.TestCase):
     def test_snapcraft_installed_on_host_from_store(self):
         self.fake_snapd.snaps_result = [
             {
-                "name": "core",
+                "name": "snapd",
                 "confinement": "strict",
                 "id": "2kkitQ",
                 "channel": "stable",
-                "revision": "123",
+                "revision": "1",
             },
             {
                 "name": "core18",
@@ -69,8 +69,11 @@ class SnapInjectionTest(unit.TestCase):
         ]
         self.get_assertion_mock.side_effect = [
             b"fake-assertion-account-store",
-            b"fake-assertion-declaration-core",
-            b"fake-assertion-revision-core-123",
+            b"fake-assertion-declaration-snapd",
+            b"fake-assertion-revision-snapd-1",
+            b"fake-assertion-account-store",
+            b"fake-assertion-declaration-core18",
+            b"fake-assertion-revision-core18-123",
             b"fake-assertion-account-store",
             b"fake-assertion-declaration-snapcraft",
             b"fake-assertion-revision-snapcraft-345",
@@ -82,7 +85,8 @@ class SnapInjectionTest(unit.TestCase):
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
-        snap_injector.add("core")
+        snap_injector.add("snapd")
+        snap_injector.add("core18")
         snap_injector.add("snapcraft")
         snap_injector.apply()
 
@@ -93,8 +97,16 @@ class SnapInjectionTest(unit.TestCase):
                     "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
                 ]
             ),
-            call(["snap-declaration", "snap-name=core"]),
-            call(["snap-revision", "snap-revision=123", "snap-id=2kkitQ"]),
+            call(["snap-declaration", "snap-name=snapd"]),
+            call(["snap-revision", "snap-revision=1", "snap-id=2kkitQ"]),
+            call(
+                [
+                    "account-key",
+                    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                ]
+            ),
+            call(["snap-declaration", "snap-name=core18"]),
+            call(["snap-revision", "snap-revision=123", "snap-id=2kkibb"]),
             call(
                 [
                     "account-key",
@@ -110,16 +122,20 @@ class SnapInjectionTest(unit.TestCase):
                 call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
-                call(["snap", "ack", "/var/tmp/core.assert"]),
-                call(["snap", "install", "/var/tmp/core.snap"]),
+                call(["snap", "ack", "/var/tmp/snapd.assert"]),
+                call(["snap", "install", "/var/tmp/snapd.snap"]),
+                call(["snap", "ack", "/var/tmp/core18.assert"]),
+                call(["snap", "install", "/var/tmp/core18.snap"]),
                 call(["snap", "ack", "/var/tmp/snapcraft.assert"]),
                 call(["snap", "install", "--classic", "/var/tmp/snapcraft.snap"]),
             ]
         )
         self.provider.push_file_mock.assert_has_calls(
             [
-                call(source=ANY, destination="/var/tmp/core.snap"),
-                call(source=ANY, destination="/var/tmp/core.assert"),
+                call(source=ANY, destination="/var/tmp/snapd.snap"),
+                call(source=ANY, destination="/var/tmp/snapd.assert"),
+                call(source=ANY, destination="/var/tmp/core18.snap"),
+                call(source=ANY, destination="/var/tmp/core18.assert"),
                 call(source=ANY, destination="/var/tmp/snapcraft.snap"),
                 call(source=ANY, destination="/var/tmp/snapcraft.assert"),
             ]
@@ -129,10 +145,12 @@ class SnapInjectionTest(unit.TestCase):
             FileContains(
                 dedent(
                     """\
-                    core:
+                    core18:
                     - revision: '123'
                     snapcraft:
                     - revision: '345'
+                    snapd:
+                    - revision: '1'
                     """
                 )
             ),
@@ -155,7 +173,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -219,7 +236,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "ack", "/var/tmp/core.assert"]),
@@ -274,7 +290,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -319,7 +334,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -358,7 +372,6 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -381,7 +394,6 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
@@ -466,7 +478,6 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "refresh", "--channel", "stable", "core"]),
@@ -497,7 +508,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_not_called()
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "core", ANY]),
                 call(["snap", "watch", "--last=auto-refresh"]),
                 call(["snap", "install", "--channel", "stable", "core"]),

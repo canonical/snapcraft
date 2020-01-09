@@ -247,7 +247,7 @@ class _AptCache:
 
         return _get_local_sources_list()
 
-    def fetch_binary(self, *, package_candidate, destination: str) -> None:
+    def fetch_binary(self, *, package_candidate, destination: str) -> str:
         # This is a workaround for the overly verbose python-apt we use.
         # There is an unreleased patch which once released could replace
         # this code https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc  # noqa

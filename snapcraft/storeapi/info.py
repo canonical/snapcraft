@@ -127,7 +127,12 @@ class SnapDetails:
     @property
     def publisher(self) -> SnapPublisherDetails:
         if self._publisher is None:
-            self._publisher = SnapPublisherDetails(self._payload.get("publisher"))
+            publisher = self._payload.get("publisher")
+            if publisher is None:
+                # Shouldn't happen, but raise an error if it does.
+                raise RuntimeError(f"no publisher found for snap {self.name!r}")
+
+            self._publisher = SnapPublisherDetails(publisher)
         return self._publisher
 
     @property
@@ -153,13 +158,23 @@ class SnapChannelMapping:
     @property
     def channel_details(self) -> SnapChannelDetails:
         if self._channel_details is None:
-            self._channel_details = SnapChannelDetails(self._payload.get("channel"))
+            channel = self._payload.get("channel")
+            if channel is None:
+                # Shouldn't happen, but raise an error if it does.
+                raise RuntimeError(f"no channel found for {self._payload!r}")
+
+            self._channel_details = SnapChannelDetails(channel)
         return self._channel_details
 
     @property
     def download(self) -> SnapDownloadDetails:
         if self._download is None:
-            self._download = SnapDownloadDetails(self._payload.get("download"))
+            download = self._payload.get("download")
+            if download is None:
+                # Shouldn't happen, but raise an error if it does.
+                raise RuntimeError(f"no download found for {self._payload!r}")
+
+            self._download = SnapDownloadDetails(download)
         return self._download
 
     @property
@@ -195,7 +210,12 @@ class SnapInfo:
     @property
     def snap(self) -> SnapDetails:
         if self._snap is None:
-            self._snap = SnapDetails(self._payload.get("snap"))
+            snap = self._payload.get("snap")
+            if snap is None:
+                # Shouldn't happen, but raise an error if it does.
+                raise RuntimeError(f"no snap found for {self._payload!r}")
+
+            self._snap = SnapDetails(snap)
         return self._snap
 
     @property

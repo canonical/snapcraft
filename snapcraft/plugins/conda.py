@@ -28,27 +28,20 @@ such as: `filesets`, `stage`, `snap` and `organize`.
 import os
 import shutil
 import subprocess
+from typing import Optional, Tuple
 
 import snapcraft
 from snapcraft.internal import errors, sources
 
 
-# Supported versions https://repo.anaconda.com/miniconda/
-_MINICONDA_URL = {
-    "4.6.14": dict(
-        source="https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-Linux-x86_64.sh",
-        checksum="md5/718259965f234088d785cad1fbd7de03",
-    ),
-    "latest": dict(
-        source="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-        checksum=None,
-    ),
-}
+_MINICONDA_CHECKSUMS = {"4.6.14": "md5/718259965f234088d785cad1fbd7de03"}
 
-_MINICONDA_UNKNOWN_VERSION_URL = dict(
-    source="https://repo.anaconda.com/miniconda/Miniconda3-{}-Linux-x86_64.sh",
-    checksum=None,
-)
+
+def _get_miniconda_source(version: str) -> Tuple[str, Optional[str]]:
+    """Return tuuple of source_url and source_checksum (if known)."""
+    source = f"https://repo.anaconda.com/miniconda/Miniconda3-{version}-Linux-x86_64.sh"
+    checksum: Optional[str] = _MINICONDA_CHECKSUMS.get(version, None)
+    return source, checksum
 
 
 class MinicondaBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
@@ -104,24 +97,17 @@ class CondaPlugin(snapcraft.BasePlugin):
         self._conda_home = os.path.join(self.partdir, "miniconda")
         self._miniconda_script = os.path.join(self.partdir, "miniconda.sh")
 
-    def _get_miniconda_source(self) -> sources.Script:
-        miniconda_url = _MINICONDA_URL.get(self.options.conda_miniconda_version)
-        if not miniconda_url:
-            miniconda_url = _MINICONDA_UNKNOWN_VERSION_URL
-            miniconda_url["source"] = miniconda_url["source"].format(
-                self.options.conda_miniconda_version
-            )
+    def _get_miniconda_script(self) -> sources.Script:
+        source, checksum = _get_miniconda_source(self.options.conda_miniconda_version)
 
         return sources.Script(
-            source=miniconda_url["source"],
-            source_dir=self.partdir,
-            source_checksum=miniconda_url["checksum"],
+            source=source, source_dir=self.partdir, source_checksum=checksum
         )
 
     def pull(self):
         if self.project.deb_arch != "amd64":
             raise MinicondaBadArchitectureError(architecture=self.project.deb_arch)
-        miniconda_source_script = self._get_miniconda_source()
+        miniconda_source_script = self._get_miniconda_script()
         miniconda_source_script.download(filepath=self._miniconda_script)
         os.chmod(self._miniconda_script, mode=0o755)
 

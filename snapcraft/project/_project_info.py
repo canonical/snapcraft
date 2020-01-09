@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
+from typing import Optional
 
 from snapcraft import yaml_utils
 from . import _schema
@@ -48,7 +49,7 @@ class ProjectInfo:
         """Validate the snapcraft.yaml for this project."""
         _schema.Validator(self.__raw_snapcraft).validate()
 
-    def get_build_base(self) -> str:
+    def get_build_base(self) -> Optional[str]:
         """
         Return name for type base or the base otherwise build-base is set
         """

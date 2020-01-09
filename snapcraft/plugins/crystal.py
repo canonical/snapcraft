@@ -26,6 +26,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - crystal-channel:
       (string, default: latest/stable)
       The Snap Store channel to install Crystal from.
+
+    - crystal-build-options
+      (list of strings, default: '[]')
+      Options to use during shards build.
 """
 
 import os
@@ -47,9 +51,20 @@ class CrystalPlugin(snapcraft.BasePlugin):
             "type": "string",
             "default": _CRYSTAL_CHANNEL,
         }
+        schema["properties"]["crystal-build-options"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
         schema["required"] = ["source"]
 
         return schema
+
+    @classmethod
+    def get_build_properties(cls):
+        return ["crystal-build-options"]
 
     @classmethod
     def get_pull_properties(cls):
@@ -80,7 +95,10 @@ class CrystalPlugin(snapcraft.BasePlugin):
         super().build()
 
         self.run(["shards", "install", "--production"], self.builddir)
-        self.run(["shards", "build", "--production"], self.builddir)
+        self.run(
+            ["shards", "build", "--production"] + self.options.crystal_build_options,
+            self.builddir,
+        )
 
         output_bin = os.path.join(self.builddir, "bin")
         if not os.path.exists(output_bin):

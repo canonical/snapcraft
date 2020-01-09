@@ -43,7 +43,6 @@ class ExtensionImpl(Extension):
     \b
     - desktop (https://snapcraft.io/docs/desktop-interface)
     - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
-    - gsettings (https://snapcraft.io/docs/gsettings-interface)
     - wayland (https://snapcraft.io/docs/wayland-interface)
     - x11 (https://snapcraft.io/docs/x11-interface)
     """
@@ -59,7 +58,8 @@ class ExtensionImpl(Extension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        platform_snap = _PLATFORM_SNAP[yaml_data.get("base")]
+        base: str = yaml_data["base"]
+        platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
             "plugs": {
                 "icon-themes": {

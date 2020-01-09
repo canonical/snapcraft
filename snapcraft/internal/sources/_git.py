@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import List
 
 from . import errors
 from ._base import Base
@@ -139,6 +140,16 @@ class Git(Base):
             self._call_kwargs["stdout"] = subprocess.DEVNULL
             self._call_kwargs["stderr"] = subprocess.DEVNULL
 
+    def _run_git_command(self, command: List[str]) -> None:
+        try:
+            subprocess.check_output(command)
+        except subprocess.CalledProcessError as error:
+            raise errors.GitCommandError(
+                command=command,
+                exit_code=error.returncode,
+                output=error.output.decode(),
+            )
+
     def _pull_existing(self):
         refspec = "HEAD"
         if self.source_branch:
@@ -203,42 +214,37 @@ class Git(Base):
         self.source_details = self._get_source_details()
 
     def push(self, url, refspec, force=False):
+        command = [self.command, "-C", self.source_dir, "push", url, refspec]
+
         if force:
-            self._run(
-                [self.command, "-C", self.source_dir, "push", "--force", url, refspec],
-                **self._call_kwargs
-            )
-        else:
-            self._run(
-                [self.command, "-C", self.source_dir, "push", url, refspec],
-                **self._call_kwargs
-            )
+            command.append("--force")
+
+        self._run_git_command(command)
 
     def init(self):
-        self._run([self.command, "-C", self.source_dir, "init"], **self._call_kwargs)
+        command = [self.command, "-C", self.source_dir, "init"]
+        self._run_git_command(command)
 
     def add(self, file):
         if file.startswith(self.source_dir):
             file = os.path.relpath(file, self.source_dir)
 
-        self._run(
-            [self.command, "-C", self.source_dir, "add", file], **self._call_kwargs
-        )
+        command = [self.command, "-C", self.source_dir, "add", file]
+        self._run_git_command(command)
 
     def commit(self, message, author="snapcraft <snapcraft@snapcraft.local>"):
-        self._run(
-            [
-                self.command,
-                "-C",
-                self.source_dir,
-                "commit",
-                "--message",
-                message,
-                "--author",
-                author,
-            ],
-            **self._call_kwargs
-        )
+        command = [
+            self.command,
+            "-C",
+            self.source_dir,
+            "commit",
+            "--no-gpg-sign",
+            "--message",
+            message,
+            "--author",
+            author,
+        ]
+        self._run_git_command(command)
 
     def _get_source_details(self):
         tag = self.source_tag

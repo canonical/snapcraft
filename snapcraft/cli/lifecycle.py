@@ -16,6 +16,7 @@
 
 import logging
 import typing
+from typing import Optional
 import os
 
 import click
@@ -55,7 +56,7 @@ def _execute(  # noqa: C901
     step: steps.Step,
     parts: str,
     pack_project: bool = False,
-    output: str = None,
+    output: Optional[str] = None,
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
@@ -135,7 +136,7 @@ def _execute(  # noqa: C901
     return project
 
 
-def _pack(directory: str, *, output: str) -> None:
+def _pack(directory: str, *, output: Optional[str]) -> None:
     snap_name = lifecycle.pack(directory, output)
     echo.info("Snapped {}".format(snap_name))
 

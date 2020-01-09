@@ -79,13 +79,16 @@ import re
 import shutil
 import subprocess
 import textwrap
-from typing import List
+from typing import List, Set, TYPE_CHECKING
 
 import snapcraft
 from snapcraft.plugins import _ros
 from snapcraft.plugins import _python
 from snapcraft import common, file_utils, formatting_utils, repo
 from snapcraft.internal import errors, mangling
+
+if TYPE_CHECKING:
+    from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
@@ -293,7 +296,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
         if options.catkin_packages is not None:
             self.catkin_packages = set(options.catkin_packages)
         self._rosdep_path = os.path.join(self.partdir, "rosdep")
-        self._rospack_path = os.path.join(self.partdir, "rospack")
         self._catkin_path = os.path.join(self.partdir, "catkin")
         self._wstool_path = os.path.join(self.partdir, "wstool")
 
@@ -329,7 +331,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             # master. It does not affect ROS master, however-- this is just the
             # URI.
             "ROS_MASTER_URI={}".format(self.options.catkin_ros_master_uri),
-            # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
+            # Various ROS tools (e.g. roscore) keep a cache or a log,
             # and use $ROS_HOME to determine where to put them.
             "ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros",
             # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll
@@ -476,17 +478,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
         )
         catkin.setup()
 
-        # Use rospack to obtain list of packages in workspace
-        rospack = _ros.rospack.Rospack(
-            ros_distro=self._rosdistro,
-            ros_package_path=self._ros_package_path,
-            rospack_path=self._rospack_path,
-            ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
-            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
-            project=self.project,
-        )
-        rospack.setup()
-
         # Use rosdep for dependency detection and resolution
         rosdep = _ros.rosdep.Rosdep(
             ros_distro=self._rosdistro,
@@ -501,12 +492,12 @@ class CatkinPlugin(snapcraft.BasePlugin):
         )
         rosdep.setup()
 
-        self._setup_dependencies(rosdep, rospack, catkin)
+        self._setup_dependencies(rosdep, catkin)
 
-    def _setup_dependencies(self, rosdep, rospack, catkin):
+    def _setup_dependencies(self, rosdep, catkin):
         # Parse the Catkin packages to pull out their system dependencies
         system_dependencies = _find_system_dependencies(
-            self.catkin_packages, rosdep, rospack, catkin
+            self.catkin_packages, rosdep, catkin
         )
 
         # If the package requires roscore, resolve it into a system dependency
@@ -832,7 +823,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         return fileset
 
 
-def _find_system_dependencies(catkin_packages, rosdep, rospack, catkin):
+def _find_system_dependencies(catkin_packages, rosdep, catkin):
     """Find system dependencies for a given set of Catkin packages."""
 
     resolved_dependencies = {}
@@ -847,9 +838,6 @@ def _find_system_dependencies(catkin_packages, rosdep, rospack, catkin):
         # Rather than getting dependencies for an explicit list of packages,
         # let's get the dependencies for the entire workspace.
         dependencies |= rosdep.get_dependencies()
-
-    if catkin_packages is None:
-        catkin_packages = rospack.list_names()
 
     for dependency in dependencies:
         _resolve_package_dependencies(
@@ -967,7 +955,7 @@ class _Catkin:
         catkin_path: str,
         ubuntu_sources: str,
         ubuntu_keyrings: str,
-        project: snapcraft.project.Project,
+        project: "Project",
     ) -> None:
         self._ros_distro = ros_distro
         self._workspaces = workspaces

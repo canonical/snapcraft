@@ -16,6 +16,7 @@
 
 import abc
 import os
+import pathlib
 import logging
 import shlex
 import shutil
@@ -127,6 +128,8 @@ class Provider(abc.ABC):
             build_provider_flags = dict()
         self.build_provider_flags = build_provider_flags.copy()
 
+        self._cached_home_directory: Optional[pathlib.Path] = None
+
     def __enter__(self):
         try:
             self.create()
@@ -190,16 +193,39 @@ class Provider(abc.ABC):
         """Push a file into the instance."""
 
     @abc.abstractmethod
+    def _is_mounted(self, target: str) -> bool:
+        """Query if there is a mount at target mount point."""
+
+    @abc.abstractmethod
+    def _mount(self, host_source: str, target: str) -> None:
+        """Mount host source directory to target mount point."""
+
     def mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
+        target = (self._get_home_directory() / "project").as_posix()
+        self._mount(self.project._project_dir, target)
 
-    @abc.abstractmethod
+        if self.build_provider_flags.get("bind_ssh"):
+            self._mount_ssh()
+
     def _mount_prime_directory(self) -> bool:
         """Mount the host prime directory into the provider.
 
         :returns: True if the prime directory was already mounted.
         """
+        target = (self._get_home_directory() / "prime").as_posix()
+        if self._is_mounted(target):
+            return True
+
+        self._mount(self.project.prime_dir, target)
+        return False
+
+    def _mount_ssh(self) -> None:
+        """Mount ~/.ssh to target."""
+        src = (pathlib.Path.home() / ".ssh").as_posix()
+        target = (self._get_home_directory() / ".ssh").as_posix()
+        self._mount(src, target)
 
     def expose_prime(self) -> None:
         """Provider steps needed to expose the prime directory to the host.
@@ -361,6 +387,27 @@ class Provider(abc.ABC):
             env_list.append(f"{key}={value}")
 
         return env_list
+
+    def _get_home_directory(self) -> pathlib.Path:
+        """Get user's home directory path."""
+        if self._cached_home_directory is not None:
+            return self._cached_home_directory
+
+        command = ["printenv", "HOME"]
+        run_output = self._run(command=command, hide_output=True)
+
+        # Shouldn't happen, but due to _run()'s return type as being Optional,
+        # we need to check for it anyways for mypy.
+        if not run_output:
+            provider_name = self._get_provider_name()
+            raise errors.ProviderExecError(
+                provider_name=provider_name, command=command, exit_code=2
+            )
+
+        cached_home_directory = pathlib.Path(run_output.decode().strip())
+
+        self._cached_home_directory = cached_home_directory
+        return cached_home_directory
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info

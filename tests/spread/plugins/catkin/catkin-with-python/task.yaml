@@ -22,5 +22,9 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
+  # rosinstall files shouldn't require git to be installed, and this test is only
+  # completely valid if it ISN'T installed
+  apt-get remove --yes git || true
+
   # Staging should cause no conflicts
   snapcraft stage

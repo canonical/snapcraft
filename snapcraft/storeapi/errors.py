@@ -53,9 +53,13 @@ class StoreErrorList:
         return "\n".join(error_list).strip()
 
     def __repr__(self) -> str:
-        return "<StoreErrorList: {}>".format(
-            " ".join((e.get("code") for e in self._error_list))
-        )
+        code_list = []
+        for error in self._error_list:
+            code = error.get("code")
+            if code:
+                code_list.append(code)
+
+        return "<StoreErrorList: {}>".format(" ".join(code_list))
 
     def __contains__(self, error_code: str) -> bool:
         return any((error.get("code") == error_code for error in self._error_list))

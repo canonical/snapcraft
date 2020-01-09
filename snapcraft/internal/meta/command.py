@@ -66,6 +66,7 @@ def _get_shebang_from_file(file_path: str) -> List[str]:
 
 
 def _find_executable(*, binary: str, prime_dir: str) -> str:
+    found_path: Optional[str] = None
     binary_paths = (
         os.path.join(p, binary) for p in common.get_bin_paths(root=prime_dir)
     )

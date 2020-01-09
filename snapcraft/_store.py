@@ -160,7 +160,7 @@ def _try_login(
     email: str,
     password: str,
     *,
-    store: storeapi.StoreClient = None,
+    store: storeapi.StoreClient,
     save: bool = True,
     packages: Iterable[Dict[str, str]] = None,
     acls: Iterable[str] = None,
@@ -202,7 +202,7 @@ def _try_login(
 
 def login(
     *,
-    store: storeapi.StoreClient = None,
+    store: storeapi.StoreClient,
     packages: Iterable[Dict[str, str]] = None,
     save: bool = True,
     acls: Iterable[str] = None,
@@ -629,6 +629,13 @@ def push_metadata(snap_filename, force):
         "summary": snap_yaml["summary"],
         "description": snap_yaml["description"],
     }
+
+    # followed by the non mandatory keys
+    if "license" in snap_yaml:
+        metadata["license"] = snap_yaml["license"]
+
+    if "title" in snap_yaml:
+        metadata["title"] = snap_yaml["title"]
 
     # other snap info
     snap_name = snap_yaml["name"]

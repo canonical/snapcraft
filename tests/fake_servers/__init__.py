@@ -38,7 +38,7 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def raise_not_implemented(self, path):
         logger.error(
-            "Not implemented {} in {} server: {}".format(path, self.__class__.__name__)
+            "Not implemented {} in server: {}".format(path, self.__class__.__name__)
         )
         raise NotImplementedError(path)
 

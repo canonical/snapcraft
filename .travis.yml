@@ -24,7 +24,6 @@ jobs:
           - name: core
           - name: core18
           - name: shellcheck
-            channel: edge
           - name: black
             channel: beta
             confinement: devmode

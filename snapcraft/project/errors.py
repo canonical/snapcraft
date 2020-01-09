@@ -16,6 +16,7 @@
 
 import contextlib
 from collections import OrderedDict
+from typing import Dict, List
 
 from snapcraft import formatting_utils
 from snapcraft.internal.errors import SnapcraftError
@@ -94,23 +95,6 @@ class DuplicateSnapcraftYamlError(SnapcraftError):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path,
             other_snapcraft_yaml_file_path=other_snapcraft_yaml_file_path,
         )
-
-
-class SanityCheckError(SnapcraftError):
-    pass
-
-
-class CommandChainWithLegacyAdapterError(SanityCheckError):
-    fmt = (
-        "The {app_name!r} app is using 'command-chain' with the 'legacy' adapter.\n"
-        "'command-chain' is incompatible with the 'legacy' adapter. Either stop using "
-        "'command-chain', or use a different adapter. If you haven't specified either, "
-        "you may be using an extension that does. Run 'snapcraft expand-extensions' to "
-        "see the snapcraft.yaml with all extensions applied."
-    )
-
-    def __init__(self, app_name):
-        super().__init__(app_name=app_name)
 
 
 def _determine_preamble(error):

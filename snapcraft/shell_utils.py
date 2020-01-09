@@ -28,7 +28,7 @@ def which(command, **kwargs):
 
 
 def getenv(envvar, **kwargs):
-    """Return the specified envrionment variable."""
+    """Return the specified environment variable."""
     return run_script("echo ${}".format(envvar), **kwargs)
 
 

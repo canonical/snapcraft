@@ -29,7 +29,7 @@ class Plug:
 
     def __init__(self, *, plug_name: str) -> None:
         self._plug_name = plug_name
-        self._plug_dict: Dict[str, Any] = dict()
+        self._plug_dict: Dict[str, Any] = {"interface": plug_name}
 
     @property
     def plug_name(self) -> str:
@@ -54,14 +54,16 @@ class Plug:
     def from_dict(cls, *, plug_dict: Dict[str, Any], plug_name: str) -> "Plug":
         """Create plug from dictionary."""
 
-        interface = plug_dict.get("interface", None)
-        if interface in PLUG_MAPPINGS:
-            plug_class = PLUG_MAPPINGS.get(interface)
+        plug_dict = {} if plug_dict is None else plug_dict
+        interface = plug_dict.get("interface", plug_name)
+
+        plug_class = PLUG_MAPPINGS.get(interface, None)
+        if plug_class is not None:
             return plug_class.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
         # Handle the general case.
         plug = Plug(plug_name=plug_name)
-        plug._plug_dict = plug_dict
+        plug._plug_dict.update(plug_dict)
         return plug
 
     def to_dict(self) -> Dict[str, Any]:
@@ -135,7 +137,8 @@ class ContentPlug(Plug):
                 message="`interface={}` is invalid for content slot".format(interface),
             )
 
-        if "target" not in plug_dict:
+        target = plug_dict.get("target", None)
+        if target is None:
             raise PlugValidationError(
                 plug_name=plug_name, message="`target` is required for content slot"
             )
@@ -143,7 +146,7 @@ class ContentPlug(Plug):
         return ContentPlug(
             plug_name=plug_name,
             content=plug_dict.get("content", None),
-            target=plug_dict.get("target"),
+            target=target,
             default_provider=plug_dict.get("default-provider", None),
         )
 

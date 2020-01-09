@@ -19,6 +19,7 @@ import glob
 import logging
 import math
 import os
+from pathlib import Path
 import shlex
 import shutil
 import subprocess
@@ -57,21 +58,73 @@ def assemble_env():
     return "\n".join(["export " + e for e in env])
 
 
+run_number: int = 0
+
+
 def _run(cmd: List[str], runner: Callable, **kwargs):
+    global run_number
+    run_number += 1
+
     assert isinstance(cmd, list), "run command must be a list"
+
+    lines: List[str] = list()
+
+    # Set shell.
+    lines.append("#!/bin/sh")
+
+    # Account for `env` parameter by populating exports.
+    # Ordering matters: assembled_env overrides `env` parameter.
+    cmd_env = kwargs.pop("env", None)
+    if cmd_env:
+        lines.append("#############################")
+        lines.append("# Exported via `env` parameter:")
+        for key in sorted(cmd_env.keys()):
+            value = cmd_env.get(key)
+            lines.append(f"export {key}={value!r}")
+
+    # Account for assembled_env.
+    lines.append("#############################")
+    lines.append("# Exported via assembled env:")
+    lines.extend(["export " + e for e in env])
+
+    # Account for `cwd` by changing directory.
+    cmd_workdir = kwargs.pop("cwd", None)
+    if cmd_workdir:
+        lines.append("#############################")
+        lines.append("# Configured via `cwd` parameter:")
+    else:
+        cmd_workdir = os.getcwd()
+        lines.append("#############################")
+        lines.append("# Implicit working directory:")
+    lines.append(f"cd {cmd_workdir!r}")
+
+    # Finally, execute desired command.
+    lines.append("#############################")
+    lines.append("# Execute command:")
     cmd_string = " ".join([shlex.quote(c) for c in cmd])
-    # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.TemporaryFile(mode="w+") as run_file:
-        print(assemble_env(), file=run_file)
-        print("exec {}".format(cmd_string), file=run_file)
-        run_file.flush()
-        run_file.seek(0)
-        try:
-            return runner(["/bin/sh"], stdin=run_file, **kwargs)
-        except subprocess.CalledProcessError as call_error:
-            raise errors.SnapcraftCommandError(
-                command=cmd_string, call_error=call_error
-            ) from call_error
+    lines.append(f"exec {cmd_string}")
+
+    # Save script executed by snapcraft.
+    pid = os.getpid()
+    temp_dir = Path(tempfile.gettempdir(), f"snapcraft-{pid}")
+    temp_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+    script_path = temp_dir / f"run-{run_number}.sh"
+    script = "\n".join(lines) + "\n"
+
+    # Write script.
+    script_path.write_text(script)
+    script_path.chmod(0o755)
+
+    runner_command = ["/bin/sh", str(script_path)]
+    runner_command_string = " ".join([shlex.quote(c) for c in runner_command])
+    try:
+        logger.debug(f"Executing assembled script: {runner_command_string!r}")
+        return runner(runner_command, **kwargs)
+    except subprocess.CalledProcessError as call_error:
+        raise errors.SnapcraftCommandError(
+            command=cmd_string, call_error=call_error
+        ) from call_error
 
 
 def run(cmd: List[str], **kwargs) -> None:
@@ -230,7 +283,7 @@ def format_output_in_columns(
     """Return a formatted list of strings ready to be printed line by line
 
     elements_list is the list of elements ready to be printed on the output
-    max_width is the number of caracters the output shouldn't exceed
+    max_width is the number of characters the output shouldn't exceed
     num_col_spaces is the number of spaces set between 2 columns"""
 
     # First, try to get the starting point in term of number of lines

@@ -33,7 +33,6 @@ _XSLT = """\
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="text"/>
-<xsl:output omit-xml-declaration="yes" indent="yes"/>
 <xsl:strip-space elements="*"/>
 
 <xsl:template match="@* | node()">
@@ -42,31 +41,40 @@ _XSLT = """\
     </xsl:copy>
 </xsl:template>
 
+<xsl:template match="comment()"/>
+
 <xsl:template match="p">
-<xsl:value-of select="normalize-space(text())" />
-    <xsl:for-each select="ul/li[not(@xml:lang)] | ul/li[@xml:lang = en]">
 <xsl:text>&#xA;</xsl:text>
-<xsl:text>- </xsl:text>
-<xsl:value-of select="text()" />
-    </xsl:for-each>
-<xsl:text>&#xA;</xsl:text>
+<xsl:apply-templates />
 <xsl:text>&#xA;</xsl:text>
 </xsl:template>
 
-<xsl:template match="//ul">
-    <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
-<xsl:text>- </xsl:text>
-<xsl:value-of select="text()" />
+<xsl:template match="ul">
 <xsl:text>&#xA;</xsl:text>
-    </xsl:for-each>
+<xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
+<xsl:text>- </xsl:text>
+<xsl:apply-templates />
+<xsl:text>&#xA;</xsl:text>
+</xsl:for-each>
 </xsl:template>
 
 <xsl:template match="ol">
-    <xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
-<xsl:number count="li[not(@xml:lang)] | li[@xml:lang = en]" format="1. "/>
-<xsl:value-of select="." />
 <xsl:text>&#xA;</xsl:text>
-    </xsl:for-each>
+<xsl:for-each select="li[not(@xml:lang)] | li[@xml:lang = en]">
+<xsl:number count="li[not(@xml:lang)] | li[@xml:lang = en]" format="1. "/>
+<xsl:apply-templates />
+<xsl:text>&#xA;</xsl:text>
+</xsl:for-each>
+</xsl:template>
+
+<xsl:template match="em">
+<xsl:text>_</xsl:text>
+<xsl:apply-templates />
+<xsl:text>_</xsl:text>
+</xsl:template>
+
+<xsl:template match="code">
+<xsl:apply-templates />
 </xsl:template>
 
 </xsl:stylesheet>
@@ -138,7 +146,12 @@ def _get_xslt():
 def _get_value_from_xml_element(tree, key) -> Optional[str]:
     node = tree.find(key)
     if node is not None and node.text:
-        return node.text.strip()
+        # Lines that should be empty end up with empty space after the
+        # transformation. One example of this is seen for paragraphs (i.e.; <p>)
+        # than hold list in then (i.e.; <ol> or <ul>) so we split all lines
+        # here and strip any unwanted space.
+        # TODO: Improve the XSLT to remove the need for this.
+        return "\n".join([n.strip() for n in node.text.splitlines()]).strip()
     else:
         return None
 
@@ -238,10 +251,11 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     x_entries = (e.split("x") for e in entries if "x" in e)
     sized_entries = (e[0] for e in x_entries if e[0] == e[1])
     sizes = {}
-    for icon_size in sized_entries:
+    for icon_size_entry in sized_entries:
         with contextlib.suppress(ValueError):
-            sizes[int(icon_size)] = "{0}x{0}".format(icon_size)
+            sizes[int(icon_size_entry)] = "{0}x{0}".format(icon_size_entry)
 
+    icon_size = None
     if sizes:
         size = max(sizes.items(), key=operator.itemgetter(1))[0]
         icon_size = sizes[size]
@@ -249,8 +263,6 @@ def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
     elif "scalable" in entries:
         icon_size = "scalable"
         suffixes = [".svg", ".svgz"]
-    else:
-        icon_size = None
 
     icon_path = None
     if icon_size:

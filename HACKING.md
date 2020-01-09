@@ -5,25 +5,34 @@
 We want to make sure everyone develops using a consistent base, to ensure that these instructions rely on LXD (use whatever is convenient as long as you do not stray away from an Ubuntu 16.04 LTS base)
 
 Clone these sources and make it your working directory:
-    git clone https://github.com/snapcore/snapcraft.git
-    cd snapcraft
+
+```
+git clone https://github.com/snapcore/snapcraft.git
+cd snapcraft
+```
 
 If you already have LXD setup you can skip this part, if not, run:
 
-    sudo snap install lxd
-    sudo lxd init --auto --storage-backend=dir
-    sudo adduser "$USER" lxd
-    newgrp lxd
+```
+sudo snap install lxd
+sudo lxd init --auto --storage-backend=dir
+sudo adduser "$USER" lxd
+newgrp lxd
+```
 
 Setup the environment by running:
 
-    ./tools/environment-setup.sh
+```
+./tools/environment-setup.sh
+```
 
 To work inside this environment, run:
 
-    lxc exec snapcraft-dev -- sudo -iu ubuntu bash
+```
+lxc exec snapcraft-dev -- sudo -iu ubuntu bash
+```
 
-> Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
+Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH]() plugin.
 
 ### Testing
 

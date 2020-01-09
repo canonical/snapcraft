@@ -14,7 +14,7 @@ tests. Some other rules are only socially enforced during code reviews.
 ## black
 
 This code base adheres to black[2].
-You can `snap install black --edge` to install the linter and formatter onto your host.
+You can `snap install black --beta --devmode` to install the linter and formatter onto your host.
 
 ## Multiline strings
 
@@ -47,6 +47,10 @@ fix it.
   class of the exception raised and it's attributes, not the format of the
   error message. The formatting of the exception as a string should be
   tested only once, in the module tests/unit/test_errors.py
+
+### Comments
+
+Generally speaking, all comments should end with some punctuation.
 
 [1]: TESTING.md
 [2]: https://github.com/ambv/black

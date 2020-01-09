@@ -135,7 +135,9 @@ class SnapTests(unit.TestCase):
                 "environment": {"TESTING": "1"},
                 "epoch": 0,
                 "grade": "devel",
-                "hooks": {"test-hook": {"plugs": ["network"]}},
+                "hooks": {
+                    "test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}
+                },
                 "layout": {"/target": {"bind": "$SNAP/foo"}},
                 "license": "GPL",
                 "plugs": {"test-plug": OrderedDict({"interface": "some-value"})},
@@ -159,6 +161,9 @@ class SnapTests(unit.TestCase):
         self.assertEqual(set(snap_dict["assumes"]), snap.assumes)
         self.assertEqual(snap_dict["base"], snap.base)
         self.assertEqual(snap_dict["environment"], snap.environment)
+        self.assertEqual(
+            snap_dict["hooks"]["test-hook"], snap.hooks["test-hook"].to_dict()
+        )
         self.assertEqual(snap_dict["license"], snap.license)
         self.assertEqual(
             snap_dict["plugs"]["test-plug"], snap.plugs["test-plug"].to_dict()

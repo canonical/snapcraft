@@ -17,6 +17,7 @@
 import contextlib
 import logging
 import os
+import shlex
 from subprocess import CalledProcessError
 
 from snapcraft.internal import common, errors
@@ -186,7 +187,8 @@ class BasePlugin:
     def run(self, cmd, cwd=None, **kwargs):
         if not cwd:
             cwd = self.builddir
-        print(" ".join(cmd))
+        cmd_string = " ".join([shlex.quote(c) for c in cmd])
+        print(cmd_string)
         os.makedirs(cwd, exist_ok=True)
         try:
             return common.run(cmd, cwd=cwd, **kwargs)
