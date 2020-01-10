@@ -138,6 +138,10 @@ def _cleanup_common_directories_for_step(step, project: "Project", parts=None):
             project.prime_dir, steps.PRIME, message, parts, remove_dir=remove_dir
         )
 
+        if os.path.isdir(project.debug_dir):
+            logger.info("Cleaning up debug directory")
+            _remove_directory(project.debug_dir)
+
     if step <= steps.STAGE:
         # Remove the staging area.
         _cleanup_common(

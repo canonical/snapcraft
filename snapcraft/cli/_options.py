@@ -21,7 +21,7 @@ import click
 from typing import Any, Dict, List
 
 from snapcraft.project import Project, get_snapcraft_yaml
-from snapcraft.cli.echo import confirm, prompt
+from snapcraft.cli.echo import confirm, prompt, warning
 from snapcraft.internal import common, errors
 
 
@@ -256,6 +256,9 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         key_formatted = _param_decls_to_kwarg(key)
         if key_formatted in kwargs:
             build_provider_flags[key_formatted] = kwargs[key_formatted]
+
+    if build_provider_flags.get("split_debug", False):
+        warning("*EXPERIMENTAL*: Splitting debug information enabled!")
 
     return build_provider_flags
 

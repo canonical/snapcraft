@@ -23,8 +23,9 @@ import os
 import shutil
 import subprocess
 import sys
+from distutils.util import strtobool
 from glob import glob, iglob
-from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, cast
 
 import snapcraft.extractors
 from snapcraft import file_utils, yaml_utils
@@ -32,13 +33,14 @@ from snapcraft.internal import common, elf, errors, repo, sources, states, steps
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
+from ._debug_split import split_debug_info
 from ._dependencies import MissingDependencyResolver
+from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._metadata_extraction import extract_metadata
+from ._outdated_report import OutdatedReport
+from ._patchelf import PartPatcher
 from ._plugin_loader import load_plugin  # noqa
 from ._runner import Runner
-from ._patchelf import PartPatcher
-from ._dirty_report import Dependency, DirtyReport  # noqa
-from ._outdated_report import OutdatedReport
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -65,7 +67,7 @@ class PluginHandler:
         base,
         confinement,
         snap_type,
-        soname_cache
+        soname_cache,
     ) -> None:
         self.valid = False
         self.plugin = plugin
@@ -90,6 +92,7 @@ class PluginHandler:
         self._project_options = project_options
         self.deps: List[str] = list()
 
+        self.debugdir = project_options.debug_dir
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
 
@@ -233,6 +236,7 @@ class PluginHandler:
             self.plugin.builddir,
             self.plugin.installdir,
             self.plugin.statedir,
+            self.debugdir,
             self.stagedir,
             self.primedir,
         ]
@@ -813,7 +817,21 @@ class PluginHandler:
 
     def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
+
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
+
+        # EXPERIMENTAL: Split debug symbols, if configured.
+        if strtobool(os.getenv("split_debug", "n")):
+            logger.warning("*EXPERIMENTAL*: Splitting debug information!")
+            debug_files, debug_dirs = split_debug_info(
+                arch_triplet=self._project_options.arch_triplet,
+                debug_dir=self.debugdir,
+                file_paths=snap_files,
+                prime_dir=self.primedir,
+            )
+        else:
+            debug_files = set()
+            debug_dirs = set()
 
         if self._snap_type == "app":
             dependency_paths = self._handle_elf(snap_files)
@@ -822,7 +840,12 @@ class PluginHandler:
 
         primed_stage_packages = self._get_primed_stage_packages(snap_files)
         self.mark_prime_done(
-            snap_files, snap_dirs, dependency_paths, primed_stage_packages
+            snap_files,
+            snap_dirs,
+            dependency_paths,
+            primed_stage_packages,
+            debug_files,
+            debug_dirs,
         )
 
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
@@ -876,7 +899,13 @@ class PluginHandler:
         return dependency_paths
 
     def mark_prime_done(
-        self, snap_files, snap_dirs, dependency_paths, primed_stage_packages
+        self,
+        snap_files,
+        snap_dirs,
+        dependency_paths,
+        primed_stage_packages,
+        debug_files=None,
+        debug_dirs=None,
     ):
         self.mark_done(
             steps.PRIME,
@@ -888,6 +917,8 @@ class PluginHandler:
                 self._project_options,
                 self._scriptlet_metadata[steps.PRIME],
                 primed_stage_packages,
+                debug_files,
+                debug_dirs,
             ),
         )
 
@@ -901,6 +932,13 @@ class PluginHandler:
             self._clean_shared_area(self.primedir, state, project_primed_state)
         except AttributeError:
             raise errors.MissingStateCleanError(steps.PRIME)
+
+        debug_files = project_primed_state.get("debug_files", set())
+        debug_dirs = project_primed_state.get("debug_dirs", set())
+
+        if debug_files or debug_dirs:
+            logger.warning(f"cleaning debug files: {debug_files!r}")
+            _clean_migrated_files(debug_files, debug_dirs, self.debugdir)
 
         self.mark_cleaned(steps.PRIME)
 
