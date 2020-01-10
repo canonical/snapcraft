@@ -136,6 +136,8 @@ def _fake_elffile_extract(self, path):
             {glibc.name: glibc},
             False,
             True,
+            "build-id-{}".format(name),
+            False,
         )
     elif name == "fake_elf-2.23":
         glibc = elf.NeededLibrary(name="libc.so.6")
@@ -148,6 +150,8 @@ def _fake_elffile_extract(self, path):
             {glibc.name: glibc},
             False,
             True,
+            "build-id-fake_elf-2.23",
+            False,
         )
     elif name == "fake_elf-1.1":
         glibc = elf.NeededLibrary(name="libc.so.6")
@@ -160,13 +164,24 @@ def _fake_elffile_extract(self, path):
             {glibc.name: glibc},
             False,
             True,
+            "build-id-fake_elf-1.1",
+            False,
         )
     elif name == "fake_elf-static":
-        return arch, "", "", {}, False, False
+        return arch, "", "", {}, False, False, "build-id-fake_elf-static", False
     elif name == "fake_elf-shared-object":
         openssl = elf.NeededLibrary(name="libssl.so.1.0.0")
         openssl.add_version("OPENSSL_1.0.0")
-        return (arch, "", "libfake_elf.so.0", {openssl.name: openssl}, False, True)
+        return (
+            arch,
+            "",
+            "libfake_elf.so.0",
+            {openssl.name: openssl},
+            False,
+            True,
+            "build-id-fake_elf-shared-object",
+            False,
+        )
     elif name == "fake_elf-with-execstack":
         glibc = elf.NeededLibrary(name="libc.so.6")
         glibc.add_version("GLIBC_2.23")
@@ -177,6 +192,8 @@ def _fake_elffile_extract(self, path):
             {glibc.name: glibc},
             True,
             True,
+            "build-id-fake_elf-with-execstack",
+            False,
         )
     elif name == "fake_elf-with-bad-execstack":
         glibc = elf.NeededLibrary(name="libc.so.6")
@@ -188,13 +205,15 @@ def _fake_elffile_extract(self, path):
             {glibc.name: glibc},
             True,
             True,
+            "build-id-fake_elf-with-bad-execstack",
+            False,
         )
     elif name == "libc.so.6":
-        return arch, "", "libc.so.6", {}, False, True
+        return arch, "", "libc.so.6", {}, False, True, "build-id-libc", False
     elif name == "libssl.so.1.0.0":
-        return arch, "", "libssl.so.1.0.0", {}, False, True
+        return arch, "", "libssl.so.1.0.0", {}, False, True, "build-id-libssl", False
     else:
-        return arch, "", "", {}, False, True
+        return arch, "", "", {}, False, True, "", False
 
 
 class FakeElf(fixtures.Fixture):

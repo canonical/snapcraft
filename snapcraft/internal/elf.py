@@ -100,7 +100,7 @@ class NeededLibrary:
 
 ElfArchitectureTuple = Tuple[str, str, str]
 ElfDataTuple = Tuple[
-    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool, bool
+    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool, bool, str, bool
 ]  # noqa: E501
 SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 
@@ -108,13 +108,13 @@ SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
 if parse_version(elftools.__version__) >= parse_version("0.24"):
+    _DEBUG_INFO: Union[str, bytes] = ".debug_info"
     _DYNAMIC: Union[str, bytes] = ".dynamic"
     _GNU_VERSION_R: Union[str, bytes] = ".gnu.version_r"
     _INTERP: Union[str, bytes] = ".interp"
 else:
-    _DYNAMIC = b".dynamic"
+    _DEBUG_INFO = b".debug_info"
     _GNU_VERSION_R = b".gnu.version_r"
-    _INTERP = b".interp"
 
 
 class SonameCache:
@@ -272,6 +272,8 @@ class ElfFile:
         self.needed = elf_data[3]
         self.execstack_set = elf_data[4]
         self.is_dynamic = elf_data[5]
+        self.build_id = elf_data[6]
+        self.has_debug_info = elf_data[7]
 
     def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
         arch: Optional[ElfArchitectureTuple] = None
@@ -279,6 +281,9 @@ class ElfFile:
         soname = str()
         libs = dict()
         execstack_set = False
+        is_dynamic = False
+        build_id = str()
+        has_debug_info = True
 
         with open(path, "rb") as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
@@ -296,25 +301,29 @@ class ElfFile:
                 elf.header.e_machine,
             )
 
+            for segment in elf.iter_segments():
+                if isinstance(segment, elftools.elf.dynamic.DynamicSegment):
+                    is_dynamic = True
+                    for tag in segment.iter_tags("DT_NEEDED"):
+                        needed = _ensure_str(tag.needed)
+                        libs[needed] = NeededLibrary(name=needed)
+                    for tag in segment.iter_tags("DT_SONAME"):
+                        soname = _ensure_str(tag.soname)
+                elif segment["p_type"] == "PT_GNU_STACK":
+                    # p_flags holds the bit mask for this segment.
+                    # See `man 5 elf`.
+                    mode = segment["p_flags"]
+                    if mode & elftools.elf.constants.P_FLAGS.PF_X:
+                        execstack_set = True
+                elif isinstance(segment, elftools.elf.segments.InterpSegment):
+                    interp = segment.get_interp_name()
+                elif isinstance(segment, elftools.elf.segments.NoteSegment):
+                    for note in segment.iter_notes():
+                        if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
+                            build_id = _ensure_str(note.n_desc)
+
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
-            interp_section = elf.get_section_by_name(_INTERP)
-            if (
-                interp_section is not None
-                and interp_section.header.sh_type != "SHT_NOBITS"
-            ):
-                interp = interp_section.data().rstrip(b"\x00").decode("ascii")
-
-            dynamic_section = elf.get_section_by_name(_DYNAMIC)
-            is_dynamic = dynamic_section is not None
-
-            if is_dynamic and dynamic_section.header.sh_type != "SHT_NOBITS":
-                for tag in dynamic_section.iter_tags("DT_NEEDED"):
-                    needed = _ensure_str(tag.needed)
-                    libs[needed] = NeededLibrary(name=needed)
-                for tag in dynamic_section.iter_tags("DT_SONAME"):
-                    soname = _ensure_str(tag.soname)
-
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
             if (
                 verneed_section is not None
@@ -332,15 +341,22 @@ class ElfFile:
                     for version in versions:
                         lib.add_version(_ensure_str(version.name))
 
-            for segment in elf.iter_segments():
-                if segment["p_type"] == "PT_GNU_STACK":
-                    # p_flags holds the bit mask for this segment.
-                    # See `man 5 elf`.
-                    mode = segment["p_flags"]
-                    if mode & elftools.elf.constants.P_FLAGS.PF_X:
-                        execstack_set = True
+            debug_info_section = elf.get_section_by_name(_DEBUG_INFO)
+            has_debug_info = (
+                debug_info_section is not None
+                and debug_info_section.header.sh_type != "SHT_NOBITS"
+            )
 
-        return arch, interp, soname, libs, execstack_set, is_dynamic
+        return (
+            arch,
+            interp,
+            soname,
+            libs,
+            execstack_set,
+            is_dynamic,
+            build_id,
+            has_debug_info,
+        )
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determines if linker will work given the required glibc version."""
