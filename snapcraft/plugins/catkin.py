@@ -579,9 +579,10 @@ class CatkinPlugin(snapcraft.BasePlugin):
             source_script = textwrap.dedent(
                 """
                 if [ -f {underlay_setup} ]; then
+                    set -- --local
                     _CATKIN_SETUP_DIR={underlay} . {underlay_setup}
                     if [ -f {rosdir_setup} ]; then
-                        set -- --extend
+                        set -- --local --extend
                         _CATKIN_SETUP_DIR={rosdir} . {rosdir_setup}
                     fi
                 fi
@@ -596,6 +597,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             source_script = textwrap.dedent(
                 """
                 if [ -f {rosdir_setup} ]; then
+                    set -- --local
                     _CATKIN_SETUP_DIR={rosdir} . {rosdir_setup}
                 fi
             """
