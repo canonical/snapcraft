@@ -99,9 +99,6 @@ class NeededLibrary:
 
 
 ElfArchitectureTuple = Tuple[str, str, str]
-ElfDataTuple = Tuple[
-    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool, bool, str, bool
-]  # noqa: E501
 SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 
 
@@ -262,30 +259,22 @@ class ElfFile:
         self.path = path
         self.dependencies = set()  # type: Set[Library]
 
+        self.arch: Optional[ElfArchitectureTuple] = None
+        self.interp: str = ""
+        self.soname: str = ""
+        self.needed: Dict[str, NeededLibrary] = dict()
+        self.execstack_set: bool = False
+        self.is_dynamic: bool = True
+        self.build_id: str = ""
+        self.has_debug_info: bool = False
+
         try:
-            elf_data = self._extract(path)
+            self._extract_attributes()
         except (UnicodeDecodeError, AttributeError) as exception:
             raise errors.CorruptedElfFileError(path, exception)
-        self.arch = elf_data[0]
-        self.interp = elf_data[1]
-        self.soname = elf_data[2]
-        self.needed = elf_data[3]
-        self.execstack_set = elf_data[4]
-        self.is_dynamic = elf_data[5]
-        self.build_id = elf_data[6]
-        self.has_debug_info = elf_data[7]
 
-    def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
-        arch: Optional[ElfArchitectureTuple] = None
-        interp = str()
-        soname = str()
-        libs = dict()
-        execstack_set = False
-        is_dynamic = False
-        build_id = str()
-        has_debug_info = True
-
-        with open(path, "rb") as fp:
+    def _extract_attributes(self) -> None:  # noqa: C901
+        with open(self.path, "rb") as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
 
             # A set of fields to identify the architecture of the ELF file:
@@ -295,7 +284,7 @@ class ElfFile:
             #
             # For amd64 binaries, this will evaluate to:
             #   ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
-            arch = (
+            self.arch = (
                 elf.header.e_ident.EI_CLASS,
                 elf.header.e_ident.EI_DATA,
                 elf.header.e_machine,
@@ -303,24 +292,24 @@ class ElfFile:
 
             for segment in elf.iter_segments():
                 if isinstance(segment, elftools.elf.dynamic.DynamicSegment):
-                    is_dynamic = True
+                    self.is_dynamic = True
                     for tag in segment.iter_tags("DT_NEEDED"):
                         needed = _ensure_str(tag.needed)
-                        libs[needed] = NeededLibrary(name=needed)
+                        self.needed[needed] = NeededLibrary(name=needed)
                     for tag in segment.iter_tags("DT_SONAME"):
-                        soname = _ensure_str(tag.soname)
+                        self.soname = _ensure_str(tag.soname)
                 elif segment["p_type"] == "PT_GNU_STACK":
                     # p_flags holds the bit mask for this segment.
                     # See `man 5 elf`.
                     mode = segment["p_flags"]
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
-                        execstack_set = True
+                        self.execstack_set = True
                 elif isinstance(segment, elftools.elf.segments.InterpSegment):
-                    interp = segment.get_interp_name()
+                    self.interp = segment.get_interp_name()
                 elif isinstance(segment, elftools.elf.segments.NoteSegment):
                     for note in segment.iter_notes():
                         if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
-                            build_id = _ensure_str(note.n_desc)
+                            self.build_id = _ensure_str(note.n_desc)
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
@@ -335,28 +324,17 @@ class ElfFile:
                     # from a library, it may be absent from DT_NEEDED
                     # but still have an entry in .gnu.version_r for
                     # symbol versions.
-                    if library_name not in libs:
+                    if library_name not in self.needed:
                         continue
-                    lib = libs[library_name]
+                    lib = self.needed[library_name]
                     for version in versions:
                         lib.add_version(_ensure_str(version.name))
 
             debug_info_section = elf.get_section_by_name(_DEBUG_INFO)
-            has_debug_info = (
+            self.has_debug_info = (
                 debug_info_section is not None
                 and debug_info_section.header.sh_type != "SHT_NOBITS"
             )
-
-        return (
-            arch,
-            interp,
-            soname,
-            libs,
-            execstack_set,
-            is_dynamic,
-            build_id,
-            has_debug_info,
-        )
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determines if linker will work given the required glibc version."""
@@ -421,6 +399,9 @@ class ElfFile:
 
         libraries = ldd(self.path, ld_library_paths)
         for soname, soname_path in libraries.items():
+            if self.arch is None:
+                raise RuntimeError("failed to parse architecture")
+
             self.dependencies.add(
                 Library(
                     soname=soname,
