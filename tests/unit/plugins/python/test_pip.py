@@ -478,7 +478,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo", "bar"],
                 "kwargs": {},
-                "expected_args": ["foo", "bar"],
+                "expected_args": ["--no-index", "foo", "bar"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -487,7 +487,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": [],
                 "kwargs": {"setup_py_dir": "test_setup_py_dir"},
-                "expected_args": ["."],
+                "expected_args": ["--no-index", "."],
                 "expected_kwargs": {"cwd": "test_setup_py_dir"},
             },
         ),
@@ -496,7 +496,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo"],
                 "kwargs": {"constraints": ["constraint"]},
-                "expected_args": ["--constraint", "constraint", "foo"],
+                "expected_args": ["--constraint", "constraint", "--no-index", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -510,6 +510,7 @@ class PipInstallTest(PipCommandBaseTestCase):
                     "constraint1",
                     "--constraint",
                     "constraint2",
+                    "--no-index",
                     "foo",
                 ],
                 "expected_kwargs": {"cwd": None},
@@ -520,7 +521,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": [],
                 "kwargs": {"requirements": ["requirement"]},
-                "expected_args": ["--requirement", "requirement"],
+                "expected_args": ["--no-index", "--requirement", "requirement"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -530,6 +531,7 @@ class PipInstallTest(PipCommandBaseTestCase):
                 "packages": [],
                 "kwargs": {"requirements": ["requirement1", "requirement2"]},
                 "expected_args": [
+                    "--no-index",
                     "--requirement",
                     "requirement1",
                     "--requirement",
@@ -543,8 +545,17 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo"],
                 "kwargs": {"process_dependency_links": True},
-                "expected_args": ["--process-dependency-links", "foo"],
+                "expected_args": ["--process-dependency-links", "--no-index", "foo"],
                 "expected_kwargs": {"cwd": None},
+            },
+        ),
+        (
+            "use PyPI",
+            {
+                "packages": [],
+                "kwargs": {"setup_py_dir": "test_setup_py_dir", "no_index": False},
+                "expected_args": ["."],
+                "expected_kwargs": {"cwd": "test_setup_py_dir"},
             },
         ),
         (
@@ -552,7 +563,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo"],
                 "kwargs": {"upgrade": True},
-                "expected_args": ["--upgrade", "foo"],
+                "expected_args": ["--upgrade", "--no-index", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -561,7 +572,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo"],
                 "kwargs": {"install_deps": False},
-                "expected_args": ["--no-deps", "foo"],
+                "expected_args": ["--no-deps", "--no-index", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -570,7 +581,7 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo"],
                 "kwargs": {"ignore_installed": True},
-                "expected_args": ["--ignore-installed", "foo"],
+                "expected_args": ["--ignore-installed", "--no-index", "foo"],
                 "expected_kwargs": {"cwd": None},
             },
         ),
@@ -579,21 +590,14 @@ class PipInstallTest(PipCommandBaseTestCase):
             {
                 "packages": ["foo", "bar"],
                 "kwargs": {"setup_py_dir": "test_setup_py_dir"},
-                "expected_args": ["foo", "bar", "."],
+                "expected_args": ["--no-index", "foo", "bar", "."],
                 "expected_kwargs": {"cwd": "test_setup_py_dir"},
             },
         ),
     ]
 
     def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = [
-            "install",
-            "--user",
-            "--no-compile",
-            "--no-index",
-            "--find-links",
-            mock.ANY,
-        ]
+        common_args = ["install", "--user", "--no-compile", "--find-links", mock.ANY]
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 
