@@ -178,6 +178,10 @@ class ProjectOptions:
         return self.__machine_info["kernel"]
 
     @property
+    def debug_dir(self) -> str:
+        return self._debug_dir
+
+    @property
     def parts_dir(self) -> str:
         return self._parts_dir
 
@@ -204,10 +208,12 @@ class ProjectOptions:
 
         self._debug = debug
 
+        self._debug_dir = os.path.join(work_dir, "debug")
         self._parts_dir = os.path.join(work_dir, "parts")
         self._stage_dir = os.path.join(work_dir, "stage")
         self._prime_dir = os.path.join(work_dir, "prime")
 
+        logger.debug("Debug dir {}".format(self._parts_dir))
         logger.debug("Parts dir {}".format(self._parts_dir))
         logger.debug("Stage dir {}".format(self._stage_dir))
         logger.debug("Prime dir {}".format(self._prime_dir))

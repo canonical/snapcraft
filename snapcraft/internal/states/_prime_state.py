@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional, Set
+
 import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
 
@@ -30,6 +32,8 @@ class PrimeState(PartState):
         project=None,
         scriptlet_metadata=None,
         primed_stage_packages=None,
+        debug_files: Optional[Set[str]] = None,
+        debug_dirs: Optional[Set[str]] = None,
     ):
         super().__init__(part_properties, project)
 
@@ -38,7 +42,7 @@ class PrimeState(PartState):
 
         self.files = files
         self.directories = directories
-        self.dependency_paths = set()
+        self.dependency_paths: Set[str] = set()
         self.scriptlet_metadata = scriptlet_metadata
         self.primed_stage_packages = primed_stage_packages
         if self.primed_stage_packages is None:
@@ -46,6 +50,16 @@ class PrimeState(PartState):
 
         if dependency_paths:
             self.dependency_paths = dependency_paths
+
+        if debug_files is None:
+            self.debug_files: Set[str] = set()
+        else:
+            self.debug_files = debug_files
+
+        if debug_dirs is None:
+            self.debug_dirs: Set[str] = set()
+        else:
+            self.debug_dirs = debug_dirs
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from part_properties.
