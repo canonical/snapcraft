@@ -23,6 +23,7 @@ from snapcraft.internal.project_loader._extensions.gnome_3_34 import ExtensionIm
 from .. import ProjectLoaderBaseTest
 from textwrap import TextWrapper
 
+
 class ExtensionTest(ProjectLoaderBaseTest):
     def test_extension(self):
         gnome_extension = ExtensionImpl(
