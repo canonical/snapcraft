@@ -218,7 +218,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
         # test that the environment is as set in the extension
         self.assertthat(
             result.output,
-            contains(
+            Contains(
                 textwrap.dedent(
                     """\
                         environment:
@@ -232,7 +232,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
         # test that the interface plugs are as set in the extension
         self.assertthat(
             result.output,
-            contains(
+            Contains(
                 textwrap.dedent(
                     """\
                         plugs:
