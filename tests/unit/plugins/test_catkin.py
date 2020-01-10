@@ -931,7 +931,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         lines_of_interest = [
             "set --",
             "if [ -f {} ]; then".format(underlay_setup_path),
-            "set -- --local"
+            "set -- --local",
             "_CATKIN_SETUP_DIR={} . {}".format("test-underlay", underlay_setup_path),
             "if [ -f {} ]; then".format(setup_path),
             "set -- --local --extend",
