@@ -343,7 +343,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
         """
         Test that the user-defined build-environment variables are used in
         replacement of the extension-defined variables, when the variables are
-        defined in both places.         
+        defined in both places.
         """
         self.make_snapcraft_yaml(
             textwrap.dedent(
@@ -387,9 +387,9 @@ class ExtensionTest(ProjectLoaderBaseTest):
             Contains(
                 textwrap.dedent(
                     """\
-                        parts:                     
-                          test-part-1:                                                                                           
-                            plugin: nil                       
+                        parts:
+                          test-part-1:
+                            plugin: nil
                             build-environment:
                             - PATH: $PATH
                             - XDG_DATA_DIRS: /snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS
