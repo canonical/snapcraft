@@ -174,6 +174,12 @@ https://docs.snapcraft.io/the-snapcraft-format/8337"""
         self.assertEquals(50, _get_exception_exit_code(exception))
 
 
+class ReportableErrorTests(unit.TestCase):
+    def test_keyboard_interrupt(self):
+        exc_info = (KeyboardInterrupt, KeyboardInterrupt(), None)
+        self.assertFalse(_is_reportable_error(exc_info))
+
+
 class ErrorsBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
