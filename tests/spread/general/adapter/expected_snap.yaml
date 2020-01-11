@@ -19,6 +19,8 @@ apps:
     - snap/command-chain/snapcraft-runner
 architectures:
 - amd64
+assumes:
+- command-chain
 base: core18
 confinement: strict
 grade: devel
