@@ -89,6 +89,34 @@ class AppCommandTest(unit.TestCase):
         self.expectThat("command-foo.wrapper", FileExists())
         self.expectThat("stop-command-foo.wrapper", FileExists())
 
+    def test_massaged_core(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
+
+    def test_massaged_core18(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+        app.prime_commands(base="core18", prime_dir=self.path)
+
+        self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
+
+    def test_not_massaged_core20(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotExecutable,
+            app.prime_commands,
+            base="core20",
+            prime_dir=self.path,
+        )
+
     def test_socket_mode_change_to_octal(self):
         app = application.Application.from_dict(
             app_name="foo",
