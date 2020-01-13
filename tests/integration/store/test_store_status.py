@@ -66,22 +66,22 @@ class StatusTestCase(integration.StoreTestCase):
         output = self.run_snapcraft(["status", "basic"])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version    Revision    Expires at
-            latest   all     stable     -          -
-                             candidate  -          -
-                             beta       1.1-amd64  6
-                             edge       1.0-i386   3
-                             edge/test  1.1-i386   9           2019-05-30T01:17:06.465504
-                     amd64   stable     1.0-amd64  2
-                             candidate  -          -
-                             beta       1.1-amd64  4
-                             edge       ^          ^
-                             edge/test  1.1-amd64  10          2019-05-30T01:17:06.465504
-                     i386    stable     -          -
-                             candidate  -          -
-                             beta       1.1-amd64  6
-                             edge       1.0-i386   3
-                             edge/test  1.1-i386   9           2019-05-30T01:17:06.465504
+            Track    Arch    Channel    Version    Revision    Notes    Expires at
+            latest   all     stable     -          -           -
+                             candidate  -          -           -
+                             beta       1.1-amd64  6           -
+                             edge       1.0-i386   3           -
+                             edge/test  1.1-i386   9           -        2019-05-30T01:17:06.465504
+                     amd64   stable     1.0-amd64  2           -
+                             candidate  -          -           -
+                             beta       1.1-amd64  4           -
+                             edge       ^          ^           -
+                             edge/test  1.1-amd64  10          -        2019-05-30T01:17:06.465504
+                     i386    stable     -          -           -
+                             candidate  -          -           -
+                             beta       1.1-amd64  6           -
+                             edge       1.0-i386   3           -
+                             edge/test  1.1-i386   9           -        2019-05-30T01:17:06.465504
             """
         )
         self.assertThat(output, Contains(expected))

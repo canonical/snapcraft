@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -146,13 +146,13 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     1.0-amd64  2
-                             beta       1.1-amd64  4
-                             edge       ^          ^
-                     i386    stable     -          -
-                             beta       -          -
-                             edge       1.0-i386   3"""
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   amd64   stable     1.0-amd64  2           -
+                             beta       1.1-amd64  4           -
+                             edge       ^          ^           -
+                     i386    stable     -          -           -
+                             beta       -          -           -
+                             edge       1.0-i386   3           -"""
                 )
             ),
         )
@@ -173,10 +173,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   i386    stable     -          -
-                             beta       -          -
-                             edge       1.0-i386   3"""
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   i386    stable     -          -           -
+                             beta       -          -           -
+                             edge       1.0-i386   3           -"""
                 )
             ),
         )
@@ -197,13 +197,13 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     1.0-amd64  2
-                             beta       1.1-amd64  4
-                             edge       ^          ^
-                     i386    stable     -          -
-                             beta       -          -
-                             edge       1.0-i386   3"""
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   amd64   stable     1.0-amd64  2           -
+                             beta       1.1-amd64  4           -
+                             edge       ^          ^           -
+                     i386    stable     -          -           -
+                             beta       -          -           -
+                             edge       1.0-i386   3           -"""
                 )
             ),
         )
@@ -237,10 +237,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel        Version    Revision    Expires at
-            latest   i386    stable         -          -
-                             beta           -          -
-                             stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435
+            Track    Arch    Channel        Version    Revision    Notes    Expires at
+            latest   i386    stable         -          -           -
+                             beta           -          -           -
+                             stable/hotfix  1.0-i386   3           -        2017-05-21T18:52:14.578435
             """
                 )
             ),

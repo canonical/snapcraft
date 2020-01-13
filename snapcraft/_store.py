@@ -351,10 +351,20 @@ class StoreClientCLI(storeapi.StoreClient):
 
     @_login_wrapper
     def release(
-        self, *, snap_name: str, revision: str, channels: List[str]
+        self,
+        *,
+        snap_name: str,
+        revision: str,
+        channels: List[str],
+        progressive_key: Optional[str] = None,
+        progressive_percentage: Optional[int] = None,
     ) -> Dict[str, Any]:
         return super().release(
-            snap_name=snap_name, revision=revision, channels=channels
+            snap_name=snap_name,
+            revision=revision,
+            channels=channels,
+            progressive_key=progressive_key,
+            progressive_percentage=progressive_percentage,
         )
 
     @_login_wrapper
@@ -808,17 +818,29 @@ def _get_text_for_opened_channels(opened_channels):
 
 
 def _get_text_for_channel(channel):
+    if "progressive" in channel:
+        notes = "progressive ({}%)".format(channel["progressive"]["percentage"])
+    else:
+        notes = "-"
+
     if channel["info"] == "none":
-        channel_text = (channel["channel"], "-", "-", "")
+        channel_text = (channel["channel"], "-", "-", notes, "")
     elif channel["info"] == "tracking":
-        channel_text = (channel["channel"], "^", "^", "")
+        channel_text = (channel["channel"], "^", "^", notes, "")
     elif channel["info"] == "specific":
-        channel_text = (channel["channel"], channel["version"], channel["revision"], "")
+        channel_text = (
+            channel["channel"],
+            channel["version"],
+            channel["revision"],
+            notes,
+            "",
+        )
     elif channel["info"] == "branch":
         channel_text = (
             channel["channel"],
             channel["version"],
             channel["revision"],
+            notes,
             channel["expires_at"],
         )
     else:
@@ -827,16 +849,69 @@ def _get_text_for_channel(channel):
             channel["info"],
             channel["channel"],
         )
-        channel_text = (channel["channel"], "", "", "")
+        channel_text = (channel["channel"], "", "", "", "")
 
     return channel_text
 
 
-def release(snap_name, revision, release_channels):
+def _add_progressive_release_information(
+    channel_map_tree,
+    *,
+    progressive_key: str,
+    progressive_percentage: int,
+    release_channels: List[str],
+) -> None:
+    """
+    Modify channel map tree so that it has progressive release information.
+
+    This method is in place to support the UI as the channel_map_tree
+    returned by the release API does not contain this information.
+    """
+    for channel in [storeapi.channels.Channel(c) for c in release_channels]:
+        for arch_entry in channel_map_tree[channel.track][
+            storeapi.constants.DEFAULT_SERIES
+        ].values():
+            for channel_entry in arch_entry:
+                if "progressive" in channel_entry:
+                    continue
+                channel_string = (
+                    "{}/{}".format(channel.risk, channel.branch)
+                    if channel.branch
+                    else channel.risk
+                )
+                if channel_entry["channel"] != channel_string:
+                    continue
+                channel_entry["progressive"] = {
+                    "percentage": progressive_percentage,
+                    "key": progressive_key,
+                    "paused": False,
+                }
+
+
+def release(
+    snap_name,
+    revision,
+    release_channels,
+    *,
+    progressive_key: Optional[str] = None,
+    progressive_percentage: Optional[int] = None,
+):
     channels = StoreClientCLI().release(
-        snap_name=snap_name, revision=revision, channels=release_channels
+        snap_name=snap_name,
+        revision=revision,
+        channels=release_channels,
+        progressive_key=progressive_key,
+        progressive_percentage=progressive_percentage,
     )
     channel_map_tree = channels.get("channel_map_tree", {})
+
+    if progressive_key is not None and progressive_percentage is not None:
+        _add_progressive_release_information(
+            channel_map_tree,
+            progressive_key=progressive_key,
+            progressive_percentage=progressive_percentage,
+            release_channels=release_channels,
+        )
 
     # This does not look good in green so we print instead
     tabulated_channels = _tabulated_channel_map_tree(channel_map_tree)
@@ -879,9 +954,17 @@ def _tabulated_channel_map_tree(channel_map_tree):
         ]
         data += parsed_channels
 
-    have_expiration = any(x[5] for x in data)
+    have_expiration = any(x[6] for x in data)
     expires_at_header = "Expires at" if have_expiration else ""
-    headers = ["Track", "Arch", "Channel", "Version", "Revision", expires_at_header]
+    headers = [
+        "Track",
+        "Arch",
+        "Channel",
+        "Version",
+        "Revision",
+        "Notes",
+        expires_at_header,
+    ]
     return tabulate(data, numalign="left", headers=headers, tablefmt="plain")
 
 
