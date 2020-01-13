@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -77,11 +77,11 @@ class CloseCommandTestCase(CommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     -          -
-                             candidate  -          -
-                             beta       1.1        42
-                             edge       ^          ^
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       1.1        42          -
+                             edge       ^          ^           -
 
             \x1b[0;32mThe beta channel is now closed.\x1b[0m"""
                 )
@@ -122,11 +122,11 @@ class CloseCommandTestCase(CommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     -          -
-                             candidate  1.1        42
-                             beta       ^          ^
-                             edge       ^          ^
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   amd64   stable     -          -           -
+                             candidate  1.1        42          -
+                             beta       ^          ^           -
+                             edge       ^          ^           -
 
             \x1b[0;32mThe beta and edge channels are now closed.\x1b[0m"""
                 )
@@ -180,15 +180,15 @@ class CloseCommandTestCase(CommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     -          -
-                             candidate  -          -
-                             beta       1.1        42
-                             edge       ^          ^
-                     armhf   stable     -          -
-                             beta       1.2        24
-                             beta       ^          ^
-                             edge       ^          ^
+            Track    Arch    Channel    Version    Revision    Notes
+            latest   amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       1.1        42          -
+                             edge       ^          ^           -
+                     armhf   stable     -          -           -
+                             beta       1.2        24          -
+                             beta       ^          ^           -
+                             edge       ^          ^           -
 
             \x1b[0;32mThe beta channel is now closed.\x1b[0m"""
                 )
@@ -236,12 +236,12 @@ class CloseCommandTestCase(CommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Track    Arch    Channel          Version    Revision    Expires at
-            latest   amd64   stable           -          -
-                             candidate        -          -
-                             beta             1.1        42
-                             edge             ^          ^
-                             stable/hotfix-2  1.3        49          2017-05-21T18:52:14.578435
+            Track    Arch    Channel          Version    Revision    Notes    Expires at
+            latest   amd64   stable           -          -           -
+                             candidate        -          -           -
+                             beta             1.1        42          -
+                             edge             ^          ^           -
+                             stable/hotfix-2  1.3        49          -        2017-05-21T18:52:14.578435
 
             \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m"""
                 )
