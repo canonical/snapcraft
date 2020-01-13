@@ -167,7 +167,7 @@ class Snap:
             return
 
         for app in self.apps.values():
-            if app.command_chain:
+            if app.command_chain or app.prepend_command_chain:
                 self.assumes.add("command-chain")
                 return
 
