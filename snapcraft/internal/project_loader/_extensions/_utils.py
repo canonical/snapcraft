@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Type
 from .. import errors
 from ._extension import Extension
 from snapcraft.project import errors as project_errors
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -132,13 +133,15 @@ def _load_extension(
 
 
 def _convert_to_ordereddict(property_list: List[Dict[str, str]]) -> OrderedDict:
-    od: OrderedDict = collections.OrderedDict()
+    myod: OrderedDict = collections.OrderedDict()
     for elem in property_list:
         if not isinstance(elem, dict) or len(elem) != 1:
             raise RuntimeError("Badly disguised ordered dictionary!")
+
         for k, v in elem.items():
-            od[k] = v
-    return od
+            myod[k] = v
+
+    return myod
 
 
 def _convert_to_disguised_ordereddict(od: OrderedDict) -> List[Dict[str, str]]:
