@@ -11,6 +11,7 @@ parts:
     checkbox-ng-dev:
         plugin: python
         source: https://git.launchpad.net/checkbox-ng
+        source-depth: 1
         source-type: git
         build-packages:
             - libxml2-dev
