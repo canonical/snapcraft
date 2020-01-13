@@ -100,7 +100,7 @@ class MultipassCommand:
     @classmethod
     def setup_multipass(cls, *, echoer, platform: str) -> None:
         if platform == "linux":
-            repo.snaps.install_snaps(["multipass/latest/beta"])
+            repo.snaps.install_snaps(["multipass/latest/stable"])
         elif platform == "darwin":
             try:
                 subprocess.check_call(["brew", "cask", "install", "multipass"])
