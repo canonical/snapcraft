@@ -114,6 +114,14 @@
                     }
                 ]
             }
+        },
+        "system-username-scope": {
+            "type": "string",
+            "description": "short-form user configuration (<username>: <scope>)",
+            "enum": [
+                "shared"
+            ],
+            "validation-failure": "{!r} is not a valid user scope. Valid scopes include: 'shared'"
         }
     },
     "title": "snapcraft schema",
@@ -331,6 +339,34 @@
         "layout": {
             "type": "object",
             "description": "layout property to be passed into the snap.yaml as-is"
+        },
+        "system-usernames": {
+            "type": "object",
+            "description": "system username",
+            "additionalProperties": false,
+            "validation-failure": "{!r} is not a valid system-username.",
+            "patternProperties": {
+                "^snap_daemon$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/system-username-scope"
+                        },
+                        {
+                            "type": "object",
+                            "description": "long-form user configuration",
+                            "additionalProperties": false,
+                            "properties": {
+                                "scope": {
+                                    "$ref": "#/definitions/system-username-scope"
+                                }
+                            },
+                            "required": [
+                                "scope"
+                            ]
+                        }
+                    ]
+                }
+            }
         },
         "apps": {
             "type": "object",
