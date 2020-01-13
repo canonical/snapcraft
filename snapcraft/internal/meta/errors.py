@@ -200,6 +200,21 @@ class HookValidationError(errors.SnapcraftError):
         super().__init__(hook_name=hook_name, message=message)
 
 
+class SystemUsernamesValidationError(errors.SnapcraftException):
+    def __init__(self, *, name: str, message: str) -> None:
+        self._name = name
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Invalid system-usernames for {self._name!r}: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Please configure system user according to documentation."
+
+    def get_docs_url(self) -> str:
+        return "https://forum.snapcraft.io/t/system-usernames/13386"
+
+
 class GradeDevelRequiredError(errors.SnapcraftException):
     def __init__(self, *, set_grade: str) -> None:
         self.set_grade = set_grade

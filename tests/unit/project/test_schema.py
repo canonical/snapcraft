@@ -1757,3 +1757,123 @@ class InvalidCommandChainTest(ProjectBaseTest):
         )
 
         self.assertThat(raised.message, MatchesRegex(self.message))
+
+
+class SystemUsernamesTests(ProjectBaseTest):
+    def test_yaml_valid_system_usernames_long(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: nothing
+                license: MIT
+                parts:
+                  part1:
+                    plugin: nil
+                system-usernames:
+                  snap_daemon:
+                    scope: shared
+                """
+            )
+        )
+
+    def test_yaml_valid_system_usernames_short(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: nothing
+                license: MIT
+                parts:
+                  part1:
+                    plugin: nil
+                system-usernames:
+                  snap_daemon: shared
+                """
+            )
+        )
+
+    def test_invalid_yaml_invalid_username(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: nothing
+            license: MIT
+            parts:
+              part1:
+                plugin: nil
+            system-usernames:
+              snap_user: shared
+            """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'system-usernames' property does not match the required schema: 'snap_user' is not a valid system-username."
+            ),
+        )
+
+    def test_invalid_yaml_invalid_short_scope(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: nothing
+            license: MIT
+            parts:
+              part1:
+                plugin: nil
+            system-usernames:
+              snap_daemon: invalid-scope
+            """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'system-usernames/snap_daemon' property does not match the required schema: 'invalid-scope' is not valid under any of the given schemas"
+            ),
+        )
+
+    def test_invalid_yaml_invalid_long_scope(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: nothing
+            license: MIT
+            parts:
+              part1:
+                plugin: nil
+            system-usernames:
+              snap_daemon:
+                scope: invalid-scope
+            """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'system-usernames/snap_daemon' property does not match the required schema: OrderedDict([('scope', 'invalid-scope')]) is not valid under any of the given schemas"
+            ),
+        )

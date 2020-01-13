@@ -117,7 +117,7 @@ class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):
                 multipass=dict(
                     channel="beta",
                     type="app",
-                    channels={"latest/beta": dict(confinement="classic")},
+                    channels={"latest/stable": dict(confinement="classic")},
                 )
             )
         ]

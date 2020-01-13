@@ -1,7 +1,11 @@
 summary: Build a snap that tests adapter settings
 
-# This test snap uses core18
-systems: [ubuntu-18*]
+# This test snap uses core18, and is limited to amd64 arch due to
+# architectures specified in expected_snap.yaml.
+systems:
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
+  - ubuntu-18.04
 
 environment:
   SNAP_DIR: snaps/adapter-tests

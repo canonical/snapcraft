@@ -27,6 +27,7 @@ from snapcraft.internal.meta.application import Application
 from snapcraft.internal.meta.hooks import Hook
 from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from snapcraft.internal.meta.slots import ContentSlot, Slot
+from snapcraft.internal.meta.system_user import SystemUser, SystemUserScope
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ _OPTIONAL_PACKAGE_KEYS = [
     "license",
     "plugs",
     "slots",
+    "system-usernames",
     "title",
     "type",
 ]
@@ -54,7 +56,7 @@ _OPTIONAL_PACKAGE_KEYS = [
 class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
-    def __init__(
+    def __init__(  # noqa: C901
         self,
         adopt_info: Optional[str] = None,
         apps: Optional[Dict[str, Application]] = None,
@@ -74,6 +76,7 @@ class Snap:
         plugs: Optional[Dict[str, Plug]] = None,
         slots: Optional[Dict[str, Slot]] = None,
         summary: Optional[str] = None,
+        system_usernames: Optional[Dict[str, SystemUser]] = None,
         title: Optional[str] = None,
         type: Optional[str] = None,
         version: Optional[str] = None,
@@ -136,6 +139,12 @@ class Snap:
             self.slots = slots
 
         self.summary = summary
+
+        if system_usernames is None:
+            self.system_usernames: Dict[str, SystemUser] = dict()
+        else:
+            self.system_usernames = system_usernames
+
         self.title = title
         self.type = type
         self.version = version
@@ -220,6 +229,9 @@ class Snap:
         for slot in self.slots.values():
             slot.validate()
 
+        for user in self.system_usernames.values():
+            user.validate()
+
         if self.is_passthrough_enabled:
             logger.warn(
                 "The 'passthrough' property is being used to "
@@ -233,7 +245,7 @@ class Snap:
             return
 
         for app in self.apps.values():
-            if app.command_chain or app.prepend_command_chain:
+            if app.command_chain:
                 self.assumes.add("command-chain")
                 return
         for hook in self.hooks.values():
@@ -267,6 +279,34 @@ class Snap:
                 for hook_name, hook_dict in snap_dict[key].items():
                     hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
                     snap.hooks[hook_name] = hook
+            elif key == "system-usernames":
+                # Process system-username into SystemUsers.
+                raw_usernames = snap_dict["system-usernames"]
+                if not raw_usernames:
+                    continue
+
+                if not isinstance(raw_usernames, dict):
+                    raise RuntimeError(
+                        f"Improperly formatted system-usernames: {raw_usernames}"
+                    )
+
+                for user_name, raw_user in raw_usernames.items():
+                    if isinstance(raw_user, dict):
+                        user = SystemUser.from_dict(
+                            user_dict=raw_user, user_name=user_name
+                        )
+                    elif isinstance(raw_user, str):
+                        try:
+                            scope = SystemUserScope[raw_user.upper()]
+                        except KeyError:
+                            raise errors.SystemUsernamesValidationError(
+                                name=user_name, message=f"scope {raw_user!r} is invalid"
+                            )
+                        user = SystemUser(name=user_name, scope=scope)
+                    else:
+                        raise RuntimeError("Improperly formatted system-usernames.")
+                    snap.system_usernames[user_name] = user
+
             elif key in _MANDATORY_PACKAGE_KEYS:
                 snap.__dict__[key] = snap_dict[key]
             elif key in _OPTIONAL_PACKAGE_KEYS:
@@ -291,7 +331,7 @@ class Snap:
         self._ensure_command_chain_assumption()
 
         for key in _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS:
-            if self.__dict__[key] is None:
+            if key != "system-usernames" and self.__dict__[key] is None:
                 continue
 
             # Skip fields that are empty lists/dicts.
@@ -330,6 +370,13 @@ class Snap:
                 snap_dict[key] = dict()
                 for name, slot in sorted(self.slots.items()):
                     snap_dict[key][name] = slot.to_dict()
+            elif key == "system-usernames":
+                if not self.system_usernames:
+                    continue
+                snap_dict["system-usernames"] = OrderedDict()
+                for name in sorted(self.system_usernames.keys()):
+                    user = self.system_usernames[name]
+                    snap_dict["system-usernames"][name] = deepcopy(user.to_dict())
             else:
                 snap_dict[key] = deepcopy(self.__dict__[key])
 
