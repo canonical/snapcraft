@@ -1799,6 +1799,32 @@ class SystemUsernamesTests(ProjectBaseTest):
             )
         )
 
+    def test_invalid_yaml_invalid_username(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+            name: test
+            base: core18
+            version: "1"
+            summary: test
+            description: nothing
+            license: MIT
+            parts:
+              part1:
+                plugin: nil
+            system-usernames:
+              snap_user: shared
+            """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'system-usernames' property does not match the required schema: 'snap_user' is not a valid system-username."
+            ),
+        )
+
     def test_invalid_yaml_invalid_short_scope(self):
         raised = self.assertValidationRaises(
             dedent(

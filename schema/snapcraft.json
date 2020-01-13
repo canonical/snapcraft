@@ -343,8 +343,10 @@
         "system-usernames": {
             "type": "object",
             "description": "system username",
+            "additionalProperties": false,
+            "validation-failure": "{!r} is not a valid system-username.",
             "patternProperties": {
-                "^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\\$)$": {
+                "^snap_daemon$": {
                     "oneOf": [
                         {
                             "$ref": "#/definitions/system-username-scope"
