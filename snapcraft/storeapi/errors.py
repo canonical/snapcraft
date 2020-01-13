@@ -23,7 +23,7 @@ from typing import Dict, List
 
 from . import channels
 from . import status
-from snapcraft.internal.errors import SnapcraftError
+from snapcraft.internal.errors import SnapcraftError, SnapcraftException
 from snapcraft import formatting_utils
 
 logger = logging.getLogger(__name__)
@@ -384,7 +384,7 @@ class StorePushError(StoreError):
             response=response,
             snap_name=snap_name,
             status_code=response.status_code,
-            **response_json
+            **response_json,
         )
 
 
@@ -580,7 +580,7 @@ class StoreMetadataError(StoreError):
             response=response,
             snap_name=snap_name,
             status_code=response.status_code,
-            **response_json
+            **response_json,
         )
 
 
@@ -653,6 +653,20 @@ class StoreDeltaApplicationError(StoreError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class StoreSnapChannelMapError(SnapcraftException):
+    def __init__(self, *, snap_name: str) -> None:
+        self._snap_name = snap_name
+
+    def get_brief(self) -> str:
+        return f"Could not retrieve information for {self._snap_name!r}."
+
+    def get_resolution(self) -> str:
+        return (
+            "Ensure the snap name is correct and that you have permissions to "
+            "access it."
+        )
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):
@@ -846,7 +860,7 @@ class InvalidChannelSet(StoreError):
         *,
         snap_name: str,
         channel: channels.Channel,
-        channel_outliers: List[status.SnapStatusChannelDetails]
+        channel_outliers: List[status.SnapStatusChannelDetails],
     ) -> None:
         arches = formatting_utils.humanize_list(
             [c.arch for c in channel_outliers], "and"

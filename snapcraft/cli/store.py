@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,10 +27,11 @@ import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft._store import StoreClientCLI
 from snapcraft import storeapi, formatting_utils
-from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 from ._review import review_snap
+from ._channel_map import get_tabulated_channel_map
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -392,33 +393,30 @@ def close(snap_name, channels):
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
-)
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, series, arch):
+def status(snap_name, arch):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
-        snapcraft status my-snap --arch armhf
     """
-    snapcraft.status(snap_name, series, arch)
+    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
+
+    existing_architectures = snap_channel_map.get_existing_architectures()
+    if arch and arch not in existing_architectures:
+        echo.warning(f"No revisions for architecture {arch!r}.")
+    else:
+        if arch:
+            architectures = (arch,)
+        else:
+            architectures = existing_architectures
+        click.echo(get_tabulated_channel_map(snap_channel_map, architectures))
 
 
 @storecli.command("list-revisions")
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
-)
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
 )
 @click.argument("snap-name", metavar="<snap-name>")
 def list_revisions(snap_name, series, arch):
