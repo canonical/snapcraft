@@ -90,7 +90,9 @@ def _is_reportable_error(exc_info) -> bool:
         return exc_info[1].get_reportable()
 
     # Report non-snapcraft errors.
-    if not issubclass(exc_info[0], errors.SnapcraftError):
+    if not issubclass(exc_info[0], errors.SnapcraftError) and not isinstance(
+        exc_info[1], KeyboardInterrupt
+    ):
         return True
 
     # Report SnapcraftReportableError errors.
