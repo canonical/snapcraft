@@ -18,13 +18,12 @@ from testtools.matchers import Equals, Contains
 
 from snapcraft.internal.project_loader._extensions.gnome_3_34 import ExtensionImpl
 
-# import snapcraft.internal.project_loader._extensions._utils as u
-
 from .. import ProjectLoaderBaseTest
 import textwrap
 
+from tests.unit.commands import CommandBaseTestCase
 
-class ExtensionTest(ProjectLoaderBaseTest):
+class ExtensionTest(ProjectLoaderBaseTest,CommandBaseTestCase):
     def test_extension(self):
         gnome_extension = ExtensionImpl(
             extension_name="gnome-3.34", yaml_data=dict(base="core18")
@@ -216,21 +215,21 @@ class ExtensionTest(ProjectLoaderBaseTest):
         )
 
         # test that the environment is as set in the extension
-        self.assertthat(
+        self.assertThat(
             result.output,
             Contains(
                 textwrap.dedent(
                     """\
                         environment:
-                          gtk_use_portals: '1'
-                          snap_desktop_runtime: $snap/gnome-platform
+                          GTK_USE_PORTALS: \'1\'
+                          SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
                     """
                 )
             ),
         )
 
         # test that the interface plugs are as set in the extension
-        self.assertthat(
+        self.assertThat(
             result.output,
             Contains(
                 textwrap.dedent(
