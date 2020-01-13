@@ -337,6 +337,20 @@ class CreateTestCase(CreateBaseTestCase):
             y["apps"]["app"]["command-chain"],
             Equals([os.path.join("snap", "command-chain", "snapcraft-runner"), "bar"]),
         )
+        self.assertThat(y["assumes"], Equals(["command-chain"]))
+
+    def test_adapter_assumes_command_chain(self):
+        self.config_data["apps"] = {"app": {"command": "foo"}}
+        _create_file(os.path.join(self.prime_dir, "foo"), executable=True)
+
+        y = self.generate_meta_yaml()
+
+        self.expectThat(y["apps"]["app"]["command"], Equals("foo"))
+        self.expectThat(
+            y["apps"]["app"]["command-chain"],
+            Equals([os.path.join("snap", "command-chain", "snapcraft-runner")]),
+        )
+        self.assertThat(y["assumes"], Equals(["command-chain"]))
 
 
 class StopModeTestCase(CreateBaseTestCase):
