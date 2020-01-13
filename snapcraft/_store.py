@@ -893,8 +893,8 @@ def release(
     revision,
     release_channels,
     *,
-    progressive_key: Optional[str],
-    progressive_percentage: Optional[int],
+    progressive_key: Optional[str] = None,
+    progressive_percentage: Optional[int] = None,
 ):
     channels = StoreClientCLI().release(
         snap_name=snap_name,
