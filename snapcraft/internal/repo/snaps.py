@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
-from typing import List, Sequence, Set, Union
+from typing import List, Optional, Sequence, Set, Union, Tuple
 from urllib import parse
 
 import requests_unixsocket
@@ -77,6 +77,12 @@ class SnapPackage:
 
         self._is_installed = None
         self._is_in_store = None
+
+        self.track, self.risk, self.branch = _parse_channel(self.channel)
+
+        # We might be effectively installing from a safer-risk channel,
+        # and we need to account for this because /v2/find API does not.
+        self.effective_channel = self.get_effective_channel()
 
     @property
     def installed(self):
@@ -152,7 +158,7 @@ class SnapPackage:
     def is_classic(self) -> bool:
         store_channels = self._get_store_channels()
         try:
-            return store_channels[self.channel]["confinement"] == "classic"
+            return store_channels[self.effective_channel]["confinement"] == "classic"
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
@@ -167,8 +173,38 @@ class SnapPackage:
         """Check if the snap is valid."""
         if not self.in_store:
             return False
+
         store_channels = self._get_store_channels()
-        return self.channel in store_channels.keys()
+        return self.effective_channel in store_channels.keys()
+
+    def get_effective_channel(self) -> Optional[str]:
+        # If we cannot find channel in the store, it might found at the next
+        # risk-level (e.g. beta -> stable).  We search exhaustively.
+        risks = ["stable", "candidate", "beta", "edge"]
+
+        # Sanity check.
+        if self.risk not in risks:
+            return None
+
+        # Remove risks >= specified risk.
+        while risks.pop() != self.risk:
+            continue
+
+        # Remaining risks are available, we search backwards...
+        store_channels = self._get_store_channels()
+        while risks:
+            risk = risks.pop()
+            channel = "/".join([self.track, risk])
+
+            # Account for branch, if any.
+            if self.branch:
+                channel = "/".join([channel, self.branch])
+
+            if channel in store_channels.keys():
+                return channel
+
+        # Unable to find valid channel...
+        return None
 
     def local_download(self, *, snap_path: str, assertion_path: str) -> None:
         assertions = list()  # type: List[List[str]]
@@ -343,6 +379,51 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
         raise errors.SnapGetAssertionError(
             assertion_params=assertion_params
         ) from call_error
+
+
+def _parse_channel(channel: str) -> Tuple[str, str, Optional[str]]:
+    # Valid forms include:
+    # <empty> -> implying latest/stable
+    # <risk> -> implying latest/<risk>
+    # <track>/<risk>
+    # <risk>/<branch> -> implying latest/<risk>/<branch>
+    # <track>/<risk>/<branch>
+
+    track = "latest"
+    risk = "stable"
+    branch = None
+
+    channel_split = channel.split("/")
+
+    if len(channel_split) == 0:
+        return track, risk, branch
+
+    elif len(channel_split) == 1:
+        risk = channel_split[0]
+        return track, risk, branch
+
+    elif len(channel_split) == 2:
+        # Need to determine if <track>/<risk> or <risk>/<track>.
+        if channel_split[0] in _CHANNEL_RISKS:
+            risk = channel_split[0]
+            branch = channel_split[1]
+        else:
+            track = channel_split[0]
+            risk = channel_split[1]
+
+    elif len(channel_split) == 3:
+        track = channel_split[0]
+        risk = channel_split[1]
+        branch = channel_split[2]
+
+    else:
+        raise RuntimeError(f"unable to parse channel name: {channel!r}")
+
+    # Sanity check.
+    if risk not in _CHANNEL_RISKS:
+        raise RuntimeError(f"unable to parse channel name: {channel!r}")
+
+    return track, risk, branch
 
 
 def _get_parsed_snap(snap):
