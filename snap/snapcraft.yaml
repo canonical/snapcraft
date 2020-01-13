@@ -13,6 +13,9 @@ assumes:
 
 apps:
   snapcraft:
+    environment:
+      # https://github.com/lxc/pylxd/pull/361
+      PYLXD_WARNINGS: "none"
     command: bin/snapcraft
     completer: snapcraft-completion
 
