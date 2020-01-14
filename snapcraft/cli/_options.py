@@ -18,7 +18,7 @@ import os
 import sys
 
 import click
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
@@ -45,7 +45,7 @@ class PromptOption(click.Option):
         )
 
 
-_BUILD_OPTIONS = [
+_BUILD_OPTIONS: List[Dict[str, Any]] = [
     dict(
         param_decls="--target-arch",
         metavar="<arch>",
@@ -71,7 +71,7 @@ _BUILD_OPTIONS = [
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
-_PROVIDER_OPTIONS = [
+_PROVIDER_OPTIONS: List[Dict[str, Any]] = [
     dict(
         param_decls="--destructive-mode",
         is_flag=True,
@@ -114,6 +114,14 @@ _PROVIDER_OPTIONS = [
         envvar="SNAPCRAFT_BIND_SSH",
         supported_providers=["lxd", "multipass"],
     ),
+    dict(
+        param_decls="--split-debug",
+        is_flag=True,
+        help="Split and collect debug symbols.",
+        envvar="split_debug",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
 ]
 
 
@@ -128,7 +136,12 @@ def _add_options(options, func, hidden):
         if "supported_providers" in option:
             option.pop("supported_providers")
 
-        click_option = click.option(param_decls, **option, hidden=hidden)
+        # If option's hidden attribute is specified, it overrides the default.
+        if "hidden" in option:
+            click_option = click.option(param_decls, **option)
+        else:
+            click_option = click.option(param_decls, **option, hidden=hidden)
+
         func = click_option(func)
     return func
 

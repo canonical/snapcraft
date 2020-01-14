@@ -377,7 +377,7 @@ class Provider(abc.ABC):
         env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
 
         # Pass through configurable environment variables.
-        for key in ["http_proxy", "https_proxy"]:
+        for key in ["http_proxy", "https_proxy", "split_debug"]:
             value = self.build_provider_flags.get(key)
             if not value:
                 continue

@@ -19,10 +19,11 @@ import pydoc
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals, StartsWith
+from testtools.matchers import Contains, Equals, Not, StartsWith
 
-from snapcraft.cli.help import _TOPICS
+from snapcraft.cli import _options
 from snapcraft.cli._runner import run
+from snapcraft.cli.help import _TOPICS
 
 from . import CommandBaseTestCase
 
@@ -174,3 +175,29 @@ class TestHelpForCommand(HelpCommandBaseTestCase):
         self.assertThat(
             result.output, Contains(run.commands[self.command].help.split("\n")[0])
         )
+
+
+class TestHelpProviderOptionVisibilty(HelpCommandBaseTestCase):
+    def test_visible_options(self):
+        visible_opts = [
+            x["param_decls"]
+            for x in _options._PROVIDER_OPTIONS
+            if x.get("hidden", False) is False
+        ]
+
+        result = self.run_command(["help", "snap"])
+
+        for opt in visible_opts:
+            self.assertThat(result.output, Contains(opt))
+
+    def test_hidden_options(self):
+        hidden_opts = [
+            x["param_decls"]
+            for x in _options._PROVIDER_OPTIONS
+            if x.get("hidden", False) is True
+        ]
+
+        result = self.run_command(["help", "snap"])
+
+        for opt in hidden_opts:
+            self.assertThat(result.output, Not(Contains(opt)))
