@@ -141,9 +141,9 @@ def _convert_to_ordereddict(property_list: List[Dict[str, str]]) -> OrderedDict:
     return myod
 
 
-def _convert_to_disguised_ordereddict(od: OrderedDict) -> List[Dict[str, str]]:
+def _convert_to_disguised_ordereddict(myod: OrderedDict) -> List[Dict[str, str]]:
     disguised: List[Dict[str, str]] = list()
-    for k, v in od.items():
+    for k, v in myod.items():
         disguised.append({k: v})
     return disguised
 
