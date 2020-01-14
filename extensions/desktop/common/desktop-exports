@@ -373,7 +373,7 @@ if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
   fi
 fi
 # symlink the runtime dconf file as well
-if [ -r $XDG_RUNTIME_DIR/../dconf/user ]; then
+if [ -r "$XDG_RUNTIME_DIR/../dconf/user" ]; then
   ensure_dir_exists "$XDG_RUNTIME_DIR/dconf"
   ln -sf "../../dconf/user" "$XDG_RUNTIME_DIR/dconf/user"
 fi
