@@ -53,8 +53,6 @@ class Plug:
     @classmethod
     def from_dict(cls, *, plug_dict: Dict[str, Any], plug_name: str) -> "Plug":
         """Create plug from dictionary."""
-
-        plug_dict = {} if plug_dict is None else plug_dict
         interface = plug_dict.get("interface", plug_name)
 
         plug_class = PLUG_MAPPINGS.get(interface, None)
@@ -65,6 +63,19 @@ class Plug:
         plug = Plug(plug_name=plug_name)
         plug._plug_dict.update(plug_dict)
         return plug
+
+    @classmethod
+    def from_object(cls, *, plug_object: Any, plug_name: str) -> "Plug":
+        if plug_object is None:
+            return Plug(plug_name=plug_name)
+        elif isinstance(plug_object, str):
+            plug = Plug(plug_name=plug_name)
+            plug._plug_dict["interface"] = plug_object
+            return plug
+        elif isinstance(plug_object, dict):
+            return Plug.from_dict(plug_dict=plug_object, plug_name=plug_name)
+
+        raise RuntimeError(f"unknown syntax for plug {plug_name!r}: {plug_object!r}")
 
     def to_dict(self) -> Dict[str, Any]:
         """Create dictionary from plug."""

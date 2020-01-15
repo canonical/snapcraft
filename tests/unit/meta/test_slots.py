@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+
+from testtools.matchers import Equals
+
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.slots import Slot, ContentSlot, DbusSlot
+from snapcraft.internal.meta.slots import ContentSlot, DbusSlot, Slot
 from tests import unit
 
 
@@ -55,6 +58,29 @@ class GenericSlotTests(unit.TestCase):
         slot = Slot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
         slot.validate()
+
+    def test_from_object_none(self):
+        slot = Slot.from_object(slot_name="slot-name", slot_object=None)
+        slot.validate()
+
+        self.assertThat(slot._slot_dict["interface"], Equals("slot-name"))
+
+    def test_from_object_string(self):
+        slot = Slot.from_object(slot_name="slot-name", slot_object="some-interface")
+        slot.validate()
+
+        self.assertThat(slot._slot_dict["interface"], Equals("some-interface"))
+
+    def test_from_object_dict(self):
+        slot_dict = OrderedDict(
+            {"interface": "some-interface", "someprop": "somevalue"}
+        )
+        slot_name = "slot-test"
+
+        slot = Slot.from_object(slot_object=slot_dict, slot_name=slot_name)
+
+        slot.validate()
+        self.assertThat(slot._slot_dict["interface"], Equals("some-interface"))
 
 
 class ContentSlotTests(unit.TestCase):

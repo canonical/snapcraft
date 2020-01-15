@@ -16,10 +16,10 @@
 
 from collections import OrderedDict
 
-from testtools.matchers import Is
+from testtools.matchers import Equals, Is
 
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.plugs import Plug, ContentPlug
+from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from tests import unit
 
 
@@ -58,6 +58,29 @@ class GenericPlugTests(unit.TestCase):
         plug = Plug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
         plug.validate()
+
+    def test_from_object_none(self):
+        plug = Plug.from_object(plug_name="plug-name", plug_object=None)
+        plug.validate()
+
+        self.assertThat(plug._plug_dict["interface"], Equals("plug-name"))
+
+    def test_from_object_string(self):
+        plug = Plug.from_object(plug_name="plug-name", plug_object="some-interface")
+        plug.validate()
+
+        self.assertThat(plug._plug_dict["interface"], Equals("some-interface"))
+
+    def test_from_object_dict(self):
+        plug_dict = OrderedDict(
+            {"interface": "some-interface", "someprop": "somevalue"}
+        )
+        plug_name = "plug-test"
+
+        plug = Plug.from_object(plug_object=plug_dict, plug_name=plug_name)
+
+        plug.validate()
+        self.assertThat(plug._plug_dict["interface"], Equals("some-interface"))
 
 
 class ContentPlugTests(unit.TestCase):
