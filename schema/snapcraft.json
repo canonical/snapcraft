@@ -340,6 +340,50 @@
             "type": "object",
             "description": "layout property to be passed into the snap.yaml as-is"
         },
+        "package-management": {
+            "type": "object",
+            "description": "additional repository configuration.",
+            "additionalProperties": false,
+            "validation-failure": "{!r} is not a valid repository configuration.",
+            "properties": {
+                "repositories": {
+                    "type": "array",
+                    "validation-failure": "{!r} is not a valid repositories list.",
+                    "items": {
+                        "type": "object",
+                        "description": "repository",
+                        "validation-failure": "{!r} is not a valid repository.",
+                        "additionalProperties": false,
+                        "properties": {
+                            "source": {
+                                "type": "string",
+                                "description": "Repository source to fetch packages from.",
+                                "validation-failure": "{!r} is not a valid repository source."
+                            },
+                            "gpg-public-key": {
+                                "type": "string",
+                                "description": "GPG public key",
+                                "validation-failure": "{!r} is not a valid GPG key.  A GPG key must be a string starting with \"-----BEGIN PGP PUBLIC KEY BLOCK-----\".",
+                                "pattern": "^[\\s]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*"
+                            },
+                            "gpg-public-key-id": {
+                                "type": "string",
+                                "description": "GPG public key ID",
+                                "validation-failure": "{!r} is not a valid GPG key identifier.",
+                                "pattern": "^[a-zA-Z0-9]*$"
+                            },
+                            "gpg-key-server": {
+                                "type": "string",
+                                "description": "GPG key server URL",
+                                "default": "keyserver.ubuntu.com",
+                                "validation-failure": "{!r} is not a valid gpg-keyserver."
+                            }
+                        },
+                        "required": ["source"]
+                    }
+                }
+            }
+        },
         "system-usernames": {
             "type": "object",
             "description": "system username",

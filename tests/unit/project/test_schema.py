@@ -1759,6 +1759,179 @@ class InvalidCommandChainTest(ProjectBaseTest):
         self.assertThat(raised.message, MatchesRegex(self.message))
 
 
+class RepositoriesTests(ProjectBaseTest):
+    def test_yaml_repostiory_minimal(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                """
+            )
+        )
+
+    def test_yaml_invalid_source(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                    foo: bar
+                """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'package-management/repositories[0]' property does not match the required schema: 'source' is not a valid repository."
+            ),
+        )
+
+    def test_yaml_source_minimal_ppa(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: ppa:mozillateam/ppa
+                """
+            )
+        )
+
+    def test_yaml_source_keyid(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                    gpg-key-server: keyserver.ubuntu.com
+                    gpg-public-key-id: 0ab215679c571d1c8325275b9bdb3d89ce49ec21
+                """
+            )
+        )
+
+    def test_yaml_source_key(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                    gpg-public-key: |
+                      -----BEGIN PGP PUBLIC KEY BLOCK-----
+                      ...
+                      -----END PGP PUBLIC KEY BLOCK-----
+                """
+            )
+        )
+
+    def test_yaml_invalid_gpg_key(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                    gpg-public-key: |
+                      xxx-----BEGIN PGP PUBLIC KEY BLOCK-----
+                      ...
+                      -----END PGP PUBLIC KEY BLOCK-----
+                """
+            )
+        )
+
+        self.assertThat(
+            raised.message,
+            Equals(
+                "The 'package-management/repositories[0]/gpg-public-key' property does not match the required schema: <ValidationError: \"'xxx-----BEGIN PGP PUBLIC KEY BLOCK-----\\\\n...\\\\n-----END PGP PUBLIC KEY BLOCK-----\\\\n' does not match '^[\\\\\\\\s]*-----BEGIN PGP PUBLIC KEY BLOCK-----.*'\"> is not a valid GPG key.  A GPG key must be a string starting with \"-----BEGIN PGP PUBLIC KEY BLOCK-----\"."
+            ),
+        )
+
+    def test_yaml_multiple_sources(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: package-management test
+                license: GPLv2
+                parts:
+                  part1:
+                    plugin: nil
+                package-management:
+                  repositories:
+                  - source: deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+                    gpg-public-key: |
+                      -----BEGIN PGP PUBLIC KEY BLOCK-----
+                      ...
+                      -----END PGP PUBLIC KEY BLOCK-----
+                  - source: deb http://ppa.launchpad.net/another/ppa/ubuntu bionic main
+                  - source: deb http://ppa.launchpad.net/yetanother/ppa/ubuntu bionic main
+                """
+            )
+        )
+
+
 class SystemUsernamesTests(ProjectBaseTest):
     def test_yaml_valid_system_usernames_long(self):
         self.assertValidationPasses(
