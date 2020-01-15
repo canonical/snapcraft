@@ -157,9 +157,17 @@ def _apply_extension(
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
         for property_name, property_value in part_extension.items():
-            part_definition[property_name] = _apply_extension_property(
-                part_definition.get(property_name), property_value
-            )
+            if property_name == "build-environment":
+                # Special case build-environment as we want to merge
+                # the lists in reverse of the typical order, and the
+                # above merge_lists only handles string lists.
+                part_definition[property_name] = property_value + part_definition.get(
+                    property_name
+                )
+            else:
+                part_definition[property_name] = _apply_extension_property(
+                    part_definition.get(property_name), property_value
+                )
 
     # Finally, add any parts specified in the extension
     for part_name, part_definition in extension.parts.items():
