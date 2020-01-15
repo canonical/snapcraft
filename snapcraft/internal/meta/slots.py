@@ -54,8 +54,6 @@ class Slot:
     @classmethod
     def from_dict(cls, *, slot_dict: Dict[str, Any], slot_name: str) -> "Slot":
         """Return applicable Slot instance from dictionary properties."""
-
-        slot_dict = {} if slot_dict is None else slot_dict
         interface = slot_dict.get("interface", slot_name)
 
         # If we explicitly support the type, use it instead.
@@ -67,6 +65,19 @@ class Slot:
         slot = Slot(slot_name=slot_name)
         slot._slot_dict.update(slot_dict)
         return slot
+
+    @classmethod
+    def from_object(cls, *, slot_object: Any, slot_name: str) -> "Slot":
+        if slot_object is None:
+            return Slot(slot_name=slot_name)
+        elif isinstance(slot_object, str):
+            slot = Slot(slot_name=slot_name)
+            slot._slot_dict["interface"] = slot_object
+            return slot
+        elif isinstance(slot_object, dict):
+            return Slot.from_dict(slot_dict=slot_object, slot_name=slot_name)
+
+        raise RuntimeError(f"unknown syntax for slot {slot_name!r}: {slot_object!r}")
 
     def to_dict(self) -> Dict[str, Any]:
         return OrderedDict(deepcopy(self._slot_dict))
@@ -88,7 +99,7 @@ class ContentSlot(Slot):
         content: Optional[str] = None,
         read: List[str] = None,
         write: List[str] = None,
-        use_source_key: bool = True
+        use_source_key: bool = True,
     ) -> None:
         super().__init__(slot_name=slot_name)
 
