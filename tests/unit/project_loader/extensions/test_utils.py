@@ -32,6 +32,8 @@ class ExtensionTestBase(ProjectLoaderBaseTest):
         super().setUp()
 
         # Create a few fake extensions
+        self.useFixture(_build_environment_extension_fixture())
+        self.useFixture(_build_environment2_extension_fixture())
         self.useFixture(_environment_extension_fixture())
         self.useFixture(_plug_extension_fixture())
         self.useFixture(_plug2_extension_fixture())
@@ -230,7 +232,7 @@ class ExtensionOrderConsistencyTest(ExtensionTestBase):
         self.assertThat(config.data["apps"]["test-app"], Contains("plugs"))
         self.assertThat(
             config.data["apps"]["test-app"]["plugs"],
-            Equals(["test-plug", "test-plug2"]),
+            Equals(["test-plug2", "test-plug"]),
         )
 
 
@@ -248,8 +250,14 @@ class ExtensionMergeTest(ExtensionTestBase):
                 ),
                 "expected_app_definition": {
                     "command": "echo 'hello'",
-                    "plugs": ["foo", "test-plug"],
+                    "plugs": ["test-plug", "foo"],
                 },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
             },
         ),
         (
@@ -267,6 +275,72 @@ class ExtensionMergeTest(ExtensionTestBase):
                     "command": "echo 'hello'",
                     "environment": {"FOO": "BAR", "TEST_EXTENSION": 1},
                 },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
+            },
+        ),
+        (
+            "merge build environment",
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [buildenvironment]
+                    """
+                ),
+                "expected_app_definition": {"command": "echo 'hello'"},
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    build-environment:
+                      - PATH: "$PATH:/part-path"
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "nil",
+                    "build-environment": [
+                        {"PATH": "$PATH:/extension-path"},
+                        {"EXTKEY": "EXTVAL"},
+                        {"PATH": "$PATH:/part-path"},
+                    ],
+                    "prime": [],
+                    "stage": [],
+                },
+            },
+        ),
+        (
+            "merge multiple build environment",
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [buildenvironment, buildenvironment2]
+                    """
+                ),
+                "expected_app_definition": {"command": "echo 'hello'"},
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    build-environment:
+                      - PATH: "$PATH:/part-path"
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "nil",
+                    "build-environment": [
+                        {"PATH": "$PATH:/extension-path2"},
+                        {"EXTKEY": "EXTVAL2"},
+                        {"PATH": "$PATH:/extension-path"},
+                        {"EXTKEY": "EXTVAL"},
+                        {"PATH": "$PATH:/part-path"},
+                    ],
+                    "prime": [],
+                    "stage": [],
+                },
             },
         ),
         (
@@ -283,6 +357,12 @@ class ExtensionMergeTest(ExtensionTestBase):
                     "command": "echo 'hello'",
                     "daemon": "forking",
                 },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
             },
         ),
     ]
@@ -304,12 +384,13 @@ class ExtensionMergeTest(ExtensionTestBase):
 
             parts:
                 part1:
-                    plugin: nil
+            {part_definition}
             """
         )
         config = self.make_snapcraft_project(
             snapcraft_yaml.format(
-                app_definition=textwrap.indent(self.app_definition, " " * 8)
+                app_definition=textwrap.indent(self.app_definition, " " * 8),
+                part_definition=textwrap.indent(self.part_definition, " " * 8),
             )
         )
 
@@ -320,6 +401,10 @@ class ExtensionMergeTest(ExtensionTestBase):
         # Verify that the extension took effect on the app
         self.assertThat(
             config.data["apps"]["test-app"], Equals(self.expected_app_definition)
+        )
+        # Verify that the extension took effect on the part
+        self.assertThat(
+            config.data["parts"]["part1"], Equals(self.expected_part_definition)
         )
 
 
@@ -673,6 +758,58 @@ def _environment_extension_fixture():
             self.parts = {"extension-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeExtension("environment", ExtensionImpl)
+
+
+def _build_environment_extension_fixture():
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
+            self.root_snippet = {}
+            self.app_snippet = {}
+            self.part_snippet = {
+                "after": ["extension-part"],
+                "build-environment": [
+                    {"PATH": "$PATH:/extension-path"},
+                    {"EXTKEY": "EXTVAL"},
+                ],
+            }
+            self.parts = {"extension-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeExtension("buildenvironment", ExtensionImpl)
+
+
+def _build_environment2_extension_fixture():
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
+            self.root_snippet = {}
+            self.app_snippet = {}
+            self.part_snippet = {
+                "after": ["extension-part2"],
+                "build-environment": [
+                    {"PATH": "$PATH:/extension-path2"},
+                    {"EXTKEY": "EXTVAL2"},
+                ],
+            }
+            self.parts = {"extension-part2": {"plugin": "nil"}}
+
+    return fixture_setup.FakeExtension("buildenvironment2", ExtensionImpl)
 
 
 def _plug_extension_fixture():
