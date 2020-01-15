@@ -133,7 +133,7 @@ ensure_dir_exists "$XDG_CACHE_HOME"
 
 # Create $XDG_RUNTIME_DIR if not exists (to be removed when LP: #1656340 is fixed)
 # shellcheck disable=SC2174
-[ -n "$XDG_RUNTIME_DIR" ] && ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
+ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
