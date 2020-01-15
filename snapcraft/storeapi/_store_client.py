@@ -130,7 +130,7 @@ class StoreClient:
 
         return account_data
 
-    def acl(self) -> Dict[str, Union[List[str], str]]:
+    def acl(self) -> Dict[str, Union[List[str], str, None]]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}
@@ -201,9 +201,21 @@ class StoreClient:
             channels=channels,
         )
 
-    def release(self, snap_name, revision, channels):
+    def release(
+        self,
+        snap_name,
+        revision,
+        channels,
+        progressive_key: Optional[str] = None,
+        progressive_percentage: Optional[int] = None,
+    ):
         return self._refresh_if_necessary(
-            self.sca.snap_release, snap_name, revision, channels
+            self.sca.snap_release,
+            snap_name,
+            revision,
+            channels,
+            progressive_percentage=progressive_percentage,
+            progressive_key=progressive_key,
         )
 
     def get_snap_revisions(self, snap_name, series=None, arch=None):

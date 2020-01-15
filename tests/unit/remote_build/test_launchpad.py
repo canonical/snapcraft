@@ -17,12 +17,14 @@
 import os
 import snapcraft
 import textwrap
+from unittest import mock
+
+import fixtures
+from testtools.matchers import Equals, Contains
 
 from snapcraft.internal.sources.errors import SnapcraftPullError
 from snapcraft.internal.remote_build import LaunchpadClient, errors
-from testtools.matchers import Equals, Contains
 from tests import unit
-from unittest import mock
 from . import TestDir
 
 
@@ -151,6 +153,11 @@ class DistImpl(FakeLaunchpadObject):
         self.main_archive = "main_archive"
 
 
+class MeImpl(FakeLaunchpadObject):
+    def __init__(self):
+        self.name = "user"
+
+
 class LaunchpadImpl(FakeLaunchpadObject):
     def __init__(self):
         self._login_mock = mock.Mock()
@@ -163,6 +170,7 @@ class LaunchpadImpl(FakeLaunchpadObject):
         self.people = {"user": "/~user"}
         self.distributions = {"ubuntu": DistImpl()}
         self.rbi = self._rbi
+        self.me = MeImpl()
 
     def load(self, url: str, *args, **kw):
         self._load_mock(url, *args, **kw)
@@ -180,13 +188,18 @@ class LaunchpadTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self._project = self._make_snapcraft_project()
-        self.lpc = LaunchpadClient(project=self._project, build_id="id", user="user")
+        self.lp = LaunchpadImpl()
+        self.fake_login_with = fixtures.MockPatch(
+            "launchpadlib.launchpad.Launchpad.login_with", return_value=self.lp
+        )
+        self.useFixture(self.fake_login_with)
+        self.lpc = LaunchpadClient(
+            project=self._project, build_id="id", architectures=[]
+        )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
-    def test_login(self, mock_login):
-        self.lpc.login()
+    def test_login(self):
         self.assertThat(self.lpc.user, Equals("user"))
-        mock_login.assert_called_with(
+        self.fake_login_with.mock.assert_called_with(
             "snapcraft remote-build {}".format(snapcraft.__version__),
             "production",
             mock.ANY,
@@ -194,36 +207,38 @@ class LaunchpadTestCase(unit.TestCase):
             version="devel",
         )
 
-    @mock.patch("launchpadlib.launchpad.Launchpad.login_with")
-    def test_login_connection_issues(self, mock_login):
-        mock_login.side_effect = ConnectionRefusedError()
-        self.assertRaises(errors.LaunchpadHttpsError, self.lpc.login)
-        mock_login.side_effect = TimeoutError()
+    def test_login_connection_issues(self):
+        self.fake_login_with.mock.side_effect = ConnectionRefusedError()
         self.assertRaises(errors.LaunchpadHttpsError, self.lpc.login)
 
-    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient.login")
-    def test_load_connection_issues(self, mock_login):
-        self.lpc._lp = LaunchpadImpl()
+        self.fake_login_with.mock.side_effect = TimeoutError()
+        self.assertRaises(errors.LaunchpadHttpsError, self.lpc.login)
 
+    def test_load_connection_refused(self):
         # ConnectionRefusedError should surface.
+        self.fake_login_with.mock.reset_mock()
         self.lpc._lp._load_mock.side_effect = ConnectionRefusedError
         self.assertRaises(ConnectionRefusedError, self.lpc._lp_load_url, "foo")
+        self.fake_login_with.mock.assert_not_called()
 
+    def test_load_connection_reset_once(self):
         # Load URL should work OK after single connection reset.
+        self.fake_login_with.mock.reset_mock()
         self.lpc._lp._load_mock.side_effect = [ConnectionResetError, None]
         self.lpc._lp_load_url(url="foo")
-        mock_login.assert_called()
+        self.fake_login_with.mock.assert_called()
 
+    def test_load_connection_reset_twice(self):
         # Load URL should fail with two connection resets.
+        self.fake_login_with.mock.reset_mock()
         self.lpc._lp._load_mock.side_effect = [
             ConnectionResetError,
             ConnectionResetError,
         ]
         self.assertRaises(ConnectionResetError, self.lpc._lp_load_url, "foo")
-        mock_login.assert_called()
+        self.fake_login_with.mock.assert_called()
 
     def test_create_snap(self):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc._create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
             auto_build=False,
@@ -236,7 +251,6 @@ class LaunchpadTestCase(unit.TestCase):
         )
 
     def test_create_snap_with_archs(self):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc.architectures = ["arch1", "arch2"]
         self.lpc._create_snap()
         self.lpc._lp.snaps.new_mock.assert_called_with(
@@ -251,12 +265,10 @@ class LaunchpadTestCase(unit.TestCase):
         )
 
     def test_delete_snap(self):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc._delete_snap()
         self.lpc._lp.snaps.getByName_mock.assert_called_with(name="id", owner="/~user")
 
     def test_start_build(self):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc.start_build()
 
     @mock.patch(
@@ -266,8 +278,6 @@ class LaunchpadTestCase(unit.TestCase):
         ),
     )
     def test_start_build_error(self, mock_rb):
-        self.lpc._lp = LaunchpadImpl()
-
         raised = self.assertRaises(errors.RemoteBuilderError, self.lpc.start_build)
         self.assertThat(str(raised), Contains("snapcraft.yaml not found..."))
 
@@ -275,18 +285,18 @@ class LaunchpadTestCase(unit.TestCase):
         "tests.unit.remote_build.test_launchpad.SnapImpl.requestBuilds",
         return_value=SnapBuildReqImpl(status="Pending", error_message=""),
     )
-    def test_start_build_error_timeout(self, mock_rb):
-        self.lpc._lp = LaunchpadImpl()
-        raised = self.assertRaises(
-            errors.RemoteBuilderNotReadyError, self.lpc.start_build, timeout=0
+    @mock.patch("time.time", return_value=500)
+    def test_start_build_error_timeout(self, mock_time, mock_rb):
+        self.lpc.deadline = 499
+        raised = self.assertRaises(errors.RemoteBuildTimeoutError, self.lpc.start_build)
+        self.assertThat(
+            str(raised), Equals("Remote build exceeded configured timeout.")
         )
-        self.assertThat(str(raised), Contains("is not ready"))
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
         open("test_i386.txt", "w").close()
         open("test_i386.1.txt", "w").close()
-        self.lpc._lp = LaunchpadImpl()
 
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
@@ -308,7 +318,6 @@ class LaunchpadTestCase(unit.TestCase):
     )
     @mock.patch("logging.Logger.error")
     def test_monitor_build_error(self, mock_log, mock_urls, mock_download_file):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
         mock_download_file.assert_has_calls(
@@ -320,8 +329,19 @@ class LaunchpadTestCase(unit.TestCase):
         )
         mock_log.assert_called_with("Build failed for arch 'amd64'.")
 
+    @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
+    @mock.patch("time.time", return_value=500)
+    def test_monitor_build_error_timeout(self, mock_time, mock_rb):
+        self.lpc.deadline = 499
+        self.lpc.start_build()
+        raised = self.assertRaises(
+            errors.RemoteBuildTimeoutError, self.lpc.monitor_build, interval=0
+        )
+        self.assertThat(
+            str(raised), Equals("Remote build exceeded configured timeout.")
+        )
+
     def test_get_build_status(self):
-        self.lpc._lp = LaunchpadImpl()
         self.lpc.start_build()
         build_status = self.lpc.get_build_status()
         self.assertThat(
@@ -357,7 +377,6 @@ class LaunchpadTestCase(unit.TestCase):
 
     @mock.patch("snapcraft.internal.sources.Git.push", return_value=None)
     def test_push_source_tree(self, mock_push):
-        self.lpc._lp = LaunchpadImpl()
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path
@@ -375,7 +394,6 @@ class LaunchpadTestCase(unit.TestCase):
         ),
     )
     def test_push_source_tree_error(self, mock_push):
-        self.lpc._lp = LaunchpadImpl()
         source_testdir = self.useFixture(TestDir())
         source_testdir.create_file("foo")
         repo_dir = source_testdir.path

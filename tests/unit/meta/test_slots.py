@@ -36,18 +36,19 @@ class GenericSlotTests(unit.TestCase):
         slot_name = "slot-test"
 
         slot = Slot(slot_name=slot_name)
+        slot._slot_dict = dict({})
 
         self.assertRaises(errors.SlotValidationError, slot.validate)
 
-    def test_invalid_from_dict_raises_exception(self):
+    def test_from_empty_dict(self):
         slot_dict = OrderedDict({})
         slot_name = "slot-test"
 
         slot = Slot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
-        self.assertRaises(errors.SlotValidationError, slot.validate)
+        slot.validate()
 
-    def test_valid_from_dict(self):
+    def test_from_valid_dict(self):
         slot_dict = OrderedDict({"interface": "somevalue", "someprop": "somevalue"})
         slot_name = "slot-test"
 

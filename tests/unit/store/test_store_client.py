@@ -997,6 +997,28 @@ class ReleaseTestCase(StoreTestCase):
         }
         self.assertThat(channel_map, Equals(expected_channel_map))
 
+    def test_progressive_release_snap(self):
+        self.client.login("dummy", "test correct password")
+        channel_map = self.client.release(
+            "test-snap",
+            "19",
+            ["beta"],
+            progressive_key="progressive_key",
+            progressive_percentage=10,
+        )
+        expected_channel_map = {
+            "opened_channels": ["beta"],
+            "channel_map": [
+                {"channel": "stable", "info": "none"},
+                {"channel": "candidate", "info": "none"},
+                {"revision": 19, "channel": "beta", "version": "0", "info": "specific"},
+                {"channel": "edge", "info": "tracking"},
+            ],
+        }
+        # The channel map would be the same as if no progressive release was
+        # done.
+        self.assertThat(channel_map, Equals(expected_channel_map))
+
     def test_release_refreshes_macaroon(self):
         self.client.login("dummy", "test correct password")
         self.fake_store.needs_refresh = True

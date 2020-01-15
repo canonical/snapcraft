@@ -152,7 +152,7 @@ class Multipass(Provider):
             build_provider_flags=build_provider_flags,
         )
         self._multipass_cmd = MultipassCommand(platform=sys.platform)
-        self._instance_info = None  # type: InstanceInfo
+        self._instance_info: Optional[InstanceInfo] = None
 
     def create(self) -> None:
         """Create the multipass instance and setup the build environment."""
@@ -186,6 +186,9 @@ class Multipass(Provider):
 
     def _is_mounted(self, target: str) -> bool:
         """Query if there is a mount at target mount point."""
+        if self._instance_info is None:
+            return False
+
         return self._instance_info.is_mounted(target)
 
     def _mount(self, host_source: str, target: str) -> None:

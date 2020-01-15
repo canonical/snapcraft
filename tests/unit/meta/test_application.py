@@ -64,33 +64,6 @@ class AppCommandTest(unit.TestCase):
         self.expectThat("command-foo.wrapper", Not(FileExists()))
         self.expectThat("stop-command-foo.wrapper", Not(FileExists()))
 
-    def test_mangling(self):
-        app = application.Application.from_dict(
-            app_name="foo", app_dict={"command": "$SNAP/test-command"}
-        )
-        app.prepend_command_chain = ["prepend-command-chain"]
-        app.prime_commands(base="core18", prime_dir=self.path)
-
-        self.assertThat(
-            app.to_dict(),
-            Equals(
-                {"command": "test-command", "command-chain": ["prepend-command-chain"]}
-            ),
-        )
-
-    def test_no_mangling(self):
-        app = application.Application.from_dict(
-            app_name="foo", app_dict={"command": "$SNAP/test-command"}
-        )
-        app.prepend_command_chain = ["prepend-command-chain"]
-
-        self.assertRaises(
-            errors.InvalidAppCommandNotExecutable,
-            app.prime_commands,
-            base="core20",
-            prime_dir=self.path,
-        )
-
     def test_app_with_wrapper(self):
         app = application.Application.from_dict(
             app_name="foo",
@@ -100,7 +73,6 @@ class AppCommandTest(unit.TestCase):
                 "daemon": "simple",
             },
         )
-        app.prepend_command_chain = ["prepend-command-chain"]
         app.prime_commands(base="core18", prime_dir=self.path)
         self.assertThat(
             app.to_dict(),
@@ -109,7 +81,6 @@ class AppCommandTest(unit.TestCase):
                     "command": "command-foo.wrapper",
                     "stop-command": "stop-command-foo.wrapper",
                     "daemon": "simple",
-                    "command-chain": ["prepend-command-chain"],
                 }
             ),
         )
@@ -117,6 +88,34 @@ class AppCommandTest(unit.TestCase):
         app.write_command_wrappers(prime_dir=self.path)
         self.expectThat("command-foo.wrapper", FileExists())
         self.expectThat("stop-command-foo.wrapper", FileExists())
+
+    def test_massaged_core(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+        app.prime_commands(base="core", prime_dir=self.path)
+
+        self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
+
+    def test_massaged_core18(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+        app.prime_commands(base="core18", prime_dir=self.path)
+
+        self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
+
+    def test_not_massaged_core20(self):
+        app = application.Application.from_dict(
+            app_name="foo", app_dict={"command": "$SNAP/test-command"}
+        )
+
+        self.assertRaises(
+            errors.InvalidAppCommandNotExecutable,
+            app.prime_commands,
+            base="core20",
+            prime_dir=self.path,
+        )
 
     def test_socket_mode_change_to_octal(self):
         app = application.Application.from_dict(
@@ -139,7 +138,7 @@ class AppCommandTest(unit.TestCase):
             Equals(yaml_utils.OctInt),
         )
 
-    def test_no_command_chain_prepended(self):
+    def test_no_command_chain(self):
         app = application.Application.from_dict(
             app_name="foo", app_dict={"command": "test-command"}
         )
@@ -239,7 +238,6 @@ class DesktopFileTest(unit.TestCase):
         app = application.Application.from_dict(
             app_name="foo", app_dict=dict(command="/foo", desktop=desktop_file_path)
         )
-        app.prepend_command_chain = ["command-chain"]
 
         desktop_file = desktop.DesktopFile(
             snap_name="foo",

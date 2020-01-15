@@ -58,7 +58,7 @@ class _SnapManager:
         *,
         snap_name: str,
         remote_snap_dir: str,
-        latest_revision: str,
+        latest_revision: Optional[str],
         snap_arch: str,
         inject_from_host: bool = True
     ) -> None:
@@ -203,16 +203,44 @@ class _SnapManager:
     def get_revision(self) -> str:
         if self.__revision is None:
             self._set_data()
+
+        # Shouldn't happen - assert for sanity and mypy checking.
+        if self.__revision is None:
+            # Shouldn't happen.
+            raise RuntimeError(
+                "Unhandled scenario for {!r} (revision {})".format(
+                    self.snap_name, self.__revision
+                )
+            )
+
         return self.__revision
 
     def get_snap_install_cmd(self) -> List[str]:
         if self.__install_cmd is None:
             self._set_data()
+
+        # Shouldn't happen - assert for sanity and mypy checking.
+        if self.__install_cmd is None:
+            raise RuntimeError(
+                "Unhandled scenario for {!r} (install_cmd {})".format(
+                    self.snap_name, self.__install_cmd
+                )
+            )
+
         return self.__install_cmd
 
     def get_assertion_ack_cmd(self) -> List[str]:
         if self.__assertion_ack_cmd is None:
             self._set_data()
+
+        # Shouldn't happen - assert for sanity and mypy checking.
+        if self.__assertion_ack_cmd is None:
+            raise RuntimeError(
+                "Unhandled scenario for {!r} (assertion_ack_cmd {})".format(
+                    self.snap_name, self.__assertion_ack_cmd
+                )
+            )
+
         return self.__assertion_ack_cmd
 
 
@@ -334,7 +362,8 @@ class SnapInjector:
             return
 
         # Allow using snapd from the snapd snap to leverage newer snapd features.
-        self._enable_snapd_snap()
+        if any(s.snap_name == "snapd" for s in self._snaps):
+            self._enable_snapd_snap()
 
         # Disable refreshes so they do not interfere with installation ops.
         self._disable_and_wait_for_refreshes()

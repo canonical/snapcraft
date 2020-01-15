@@ -375,11 +375,11 @@ class BuildProviderTryCommandTestCase(LifecycleCommandsBaseTestCase):
         )
         self.useFixture(fixture_setup.FakeMultipass())
 
-        mount_prime_mock = mock.Mock()
+        mount_prime_mock = mock.Mock(return_value=False)
 
         class Provider(ProviderImpl):
-            def _mount_prime_directory(self) -> None:
-                mount_prime_mock()
+            def _mount_prime_directory(self) -> bool:
+                return mount_prime_mock()
 
         patcher = mock.patch(
             "snapcraft.internal.build_providers.get_provider_for", return_value=Provider

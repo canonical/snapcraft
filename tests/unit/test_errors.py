@@ -854,13 +854,37 @@ class SnapcraftExceptionTests(unit.TestCase):
             },
         ),
         (
+            "SnapcraftPluginAssertionError",
+            {
+                "exception": errors.SnapcraftPluginAssertionError,
+                "kwargs": {"name": "part-name", "reason": "missing important file"},
+                "expected_brief": "Unable to build 'part-name': missing important file",
+                "expected_resolution": "Ensure the part's configuration and sources are correct.",
+                "expected_details": "",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "XAttributeError",
+            {
+                "exception": errors.XAttributeError,
+                "kwargs": {"path": "/tmp/foo", "key": "foo", "action": "read"},
+                "expected_brief": "Unable to read extended attribute.",
+                "expected_resolution": "Check that your filesystem supports extended attributes.",
+                "expected_details": "Failed to read attribute 'foo' on '/tmp/foo'.",
+                "expected_docs_url": None,
+                "expected_reportable": True,
+            },
+        ),
+        (
             "XAttributeTooLongError",
             {
                 "exception": errors.XAttributeTooLongError,
                 "kwargs": {"path": "/tmp/foo", "key": "foo", "value": "bar"},
                 "expected_brief": "Unable to write extended attribute as the key and/or value is too long.",
                 "expected_resolution": "This issue is generally resolved by addressing/truncating the data source of the long data value. In some cases, the filesystem being used will limit the allowable size.",
-                "expected_details": "Failed to write attribute to /tmp/foo:\nkey='foo' value='bar'",
+                "expected_details": "Failed to write attribute to '/tmp/foo':\nkey='foo' value='bar'",
                 "expected_docs_url": None,
                 "expected_reportable": True,
             },

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2019 Canonical Ltd
+# Copyright 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -141,7 +141,11 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            snap_name="snap-test", revision="2", channels=["candidate"]
+            snap_name="snap-test",
+            revision="2",
+            channels=["candidate"],
+            progressive_key=None,
+            progressive_percentage=None,
         )
 
     def test_promote_yes_option(self):
@@ -190,7 +194,11 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            snap_name="snap-test", revision="2", channels=["candidate"]
+            snap_name="snap-test",
+            revision="2",
+            channels=["candidate"],
+            progressive_key=None,
+            progressive_percentage=None,
         )
 
     def test_promote_confirm_no(self):

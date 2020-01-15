@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2019 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -299,36 +299,18 @@ class PythonPluginTest(PythonPluginBaseTest):
 
         # Pip should not attempt to download again in build (only pull)
         pip_download = self.mock_pip.return_value.download
-        pip_download.assert_called_once_with(
-            [],
+        pip_download.assert_not_called()
+
+        pip_wheel.assert_called_once_with(
+            ["test", "packages"],
             constraints={constraints_path},
             process_dependency_links=False,
-            requirements=set(),
-            setup_py_dir=plugin.builddir,
-        )
-
-        self.assertThat(pip_wheel.call_count, Equals(2))
-        pip_wheel.assert_has_calls(
-            [
-                mock.call(
-                    ["test", "packages"],
-                    constraints={constraints_path},
-                    process_dependency_links=False,
-                    requirements={requirements_path},
-                    setup_py_dir=None,
-                ),
-                mock.call(
-                    [],
-                    constraints={constraints_path},
-                    process_dependency_links=False,
-                    requirements=set(),
-                    setup_py_dir=plugin.builddir,
-                ),
-            ]
+            requirements={requirements_path},
+            setup_py_dir=None,
         )
 
         pip_install = self.mock_pip.return_value.install
-        self.assertThat(pip_wheel.call_count, Equals(2))
+        self.assertThat(pip_install.call_count, Equals(2))
         pip_install.assert_has_calls(
             [
                 mock.call(
@@ -338,11 +320,11 @@ class PythonPluginTest(PythonPluginBaseTest):
                     install_deps=False,
                 ),
                 mock.call(
-                    # Our mocking needs to be smarter to reflect this.
-                    ["foo", "bar"],
+                    [],
+                    setup_py_dir=plugin.builddir,
+                    constraints={constraints_path},
                     process_dependency_links=False,
                     upgrade=True,
-                    install_deps=False,
                 ),
             ]
         )
@@ -362,24 +344,12 @@ class PythonPluginTest(PythonPluginBaseTest):
             plugin.build()
 
         pip_download = self.mock_pip.return_value.download
-        self.assertThat(pip_download.call_count, Equals(2))
-        pip_download.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(self.options.constraints),
-                    process_dependency_links=False,
-                    requirements=set(self.options.requirements),
-                    setup_py_dir=None,
-                ),
-                mock.call(
-                    [],
-                    constraints=set(self.options.constraints),
-                    process_dependency_links=False,
-                    requirements=set(),
-                    setup_py_dir=plugin.sourcedir,
-                ),
-            ]
+        pip_download.assert_called_once_with(
+            [],
+            constraints=set(self.options.constraints),
+            process_dependency_links=False,
+            requirements=set(self.options.requirements),
+            setup_py_dir=None,
         )
 
         pip_install = self.mock_pip.return_value.install
@@ -390,34 +360,22 @@ class PythonPluginTest(PythonPluginBaseTest):
                     [], upgrade=True, process_dependency_links=False, install_deps=False
                 ),
                 mock.call(
-                    [], upgrade=True, process_dependency_links=False, install_deps=False
+                    [],
+                    setup_py_dir=plugin.sourcedir,
+                    constraints=set(self.options.constraints),
+                    process_dependency_links=False,
+                    upgrade=True,
                 ),
             ]
         )
 
         pip_wheel = self.mock_pip.return_value.wheel
-        self.assertThat(pip_wheel.call_count, Equals(2))
-        pip_wheel.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(self.options.constraints),
-                    process_dependency_links=False,
-                    requirements=set(self.options.requirements),
-                    setup_py_dir=None,
-                )
-            ]
-        )
-        pip_wheel.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(self.options.constraints),
-                    process_dependency_links=False,
-                    requirements=set(),
-                    setup_py_dir=plugin.sourcedir,
-                )
-            ]
+        pip_wheel.assert_called_once_with(
+            [],
+            constraints=set(self.options.constraints),
+            process_dependency_links=False,
+            requirements=set(self.options.requirements),
+            setup_py_dir=None,
         )
 
     def test_fileset_ignores(self):
@@ -445,24 +403,12 @@ class PythonPluginTest(PythonPluginBaseTest):
         plugin.build()
 
         pip_download = self.mock_pip.return_value.download
-        self.assertThat(pip_download.call_count, Equals(2))
-        pip_download.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(),
-                    process_dependency_links=True,
-                    requirements=set(),
-                    setup_py_dir=None,
-                ),
-                mock.call(
-                    [],
-                    constraints=set(),
-                    process_dependency_links=True,
-                    requirements=set(),
-                    setup_py_dir=plugin.sourcedir,
-                ),
-            ]
+        pip_download.assert_called_once_with(
+            [],
+            constraints=set(),
+            process_dependency_links=True,
+            requirements=set(),
+            setup_py_dir=None,
         )
 
         pip_install = self.mock_pip.return_value.install
@@ -473,35 +419,22 @@ class PythonPluginTest(PythonPluginBaseTest):
                     [], upgrade=True, process_dependency_links=True, install_deps=False
                 ),
                 mock.call(
-                    [], upgrade=True, process_dependency_links=True, install_deps=False
+                    [],
+                    setup_py_dir=plugin.sourcedir,
+                    constraints=set(),
+                    process_dependency_links=True,
+                    upgrade=True,
                 ),
             ]
         )
 
         pip_wheel = self.mock_pip.return_value.wheel
-        self.assertThat(pip_wheel.call_count, Equals(2))
-        # Double check to avoid annotating the magic methods.
-        pip_wheel.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(),
-                    process_dependency_links=True,
-                    requirements=set(),
-                    setup_py_dir=None,
-                )
-            ]
-        )
-        pip_wheel.assert_has_calls(
-            [
-                mock.call(
-                    [],
-                    constraints=set(),
-                    process_dependency_links=True,
-                    requirements=set(),
-                    setup_py_dir=plugin.sourcedir,
-                )
-            ]
+        pip_wheel.assert_called_once_with(
+            [],
+            constraints=set(),
+            process_dependency_links=True,
+            requirements=set(),
+            setup_py_dir=None,
         )
 
     def test_get_manifest_with_python_packages(self):

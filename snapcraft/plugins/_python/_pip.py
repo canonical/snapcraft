@@ -51,7 +51,10 @@ def _process_common_args(
 
 
 def _process_package_args(
-    *, packages: Sequence[str], requirements: Sequence[str], setup_py_dir: str
+    *,
+    packages: Optional[Sequence[str]],
+    requirements: Optional[Sequence[str]],
+    setup_py_dir: Optional[str],
 ) -> List[str]:
     args = []
     if requirements:
@@ -240,7 +243,7 @@ class Pip:
         setup_py_dir: Optional[str] = None,
         constraints: Optional[Set[str]] = None,
         requirements: Optional[Sequence[str]] = None,
-        process_dependency_links: bool = False
+        process_dependency_links: bool = False,
     ):
         """Download packages into cache, but do not install them.
 
@@ -293,7 +296,8 @@ class Pip:
         process_dependency_links: bool = False,
         upgrade: bool = False,
         install_deps: bool = True,
-        ignore_installed: bool = False
+        ignore_installed: bool = False,
+        no_index: bool = True,
     ):
         """Install packages from cache.
 
@@ -310,6 +314,8 @@ class Pip:
         :param boolean install_deps: Install package dependencies.
         :param boolean ignore_installed: Reinstall packages if they're already
                                          installed
+        :param boolean no_index: do not hit PyPI to find missing packages.
+                                 assume packages are already downloaded.
         """
         package_args = _process_package_args(
             packages=packages, requirements=requirements, setup_py_dir=setup_py_dir
@@ -331,6 +337,11 @@ class Pip:
         if ignore_installed:
             args.append("--ignore-installed")
 
+        # --no-index: Don't hit pypi, assume the packages are already
+        #             downloaded (i.e. by using `self.download()`)
+        if no_index:
+            args.append("--no-index")
+
         # Using pip with a few special parameters:
         #
         # --user: Install packages to PYTHONUSERBASE, which we've pointed to
@@ -338,8 +349,6 @@ class Pip:
         # --no-compile: Don't compile .pyc files. FIXME: This is legacy, and
         #               should be removed once this refactor has been
         #               validated.
-        # --no-index: Don't hit pypi, assume the packages are already
-        #             downloaded (i.e. by using `self.download()`)
         # --find-links: Provide the directory into which the packages should
         #               have already been fetched
         #
@@ -350,7 +359,6 @@ class Pip:
                 "install",
                 "--user",
                 "--no-compile",
-                "--no-index",
                 "--find-links",
                 self._python_package_dir,
             ]
@@ -373,7 +381,7 @@ class Pip:
         setup_py_dir: Optional[str] = None,
         constraints: Optional[Set[str]] = None,
         requirements: Optional[Sequence[str]] = None,
-        process_dependency_links: bool = False
+        process_dependency_links: bool = False,
     ):
         """Build wheels of packages in the cache.
 

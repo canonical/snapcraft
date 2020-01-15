@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Type
+from typing import Optional, Type
 
 
 _VALID_RISKS = ["stable", "candidate", "beta", "edge"]
@@ -36,7 +36,7 @@ class Channel:
 
     @classmethod
     def from_channel_tuple(
-        cls: Type["Channel"], *, track: str, risk: str, branch: str
+        cls: Type["Channel"], *, track: str, risk: str, branch: Optional[str]
     ) -> "Channel":
         if track and risk and branch:
             channel = "{}/{}/{}".format(track, risk, branch)
@@ -87,5 +87,5 @@ class Channel:
         return self._risk
 
     @property
-    def branch(self) -> str:
+    def branch(self) -> Optional[str]:
         return self._branch

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import enum
 import os
 
 from copy import deepcopy
@@ -30,6 +31,13 @@ _COMMAND_ENTRIES = ["command", "stop-command"]
 _MASSAGED_BASES = ["core", "core18"]
 
 
+@enum.unique
+class ApplicationAdapter(enum.Enum):
+    NONE = 1
+    LEGACY = 2
+    FULL = 3
+
+
 class Application:
     """Representation of an app entry in snapcraft.yaml"""
 
@@ -38,10 +46,9 @@ class Application:
         *,
         app_name: str,
         app_properties: Dict[str, Any] = None,
-        adapter: str = None,
+        adapter: ApplicationAdapter,
         desktop: str = None,
         command_chain: List[str] = None,
-        prepend_command_chain: List[str] = None,
         passthrough: Dict[str, Any] = None,
         commands: Dict[str, Command] = None
     ) -> None:
@@ -61,10 +68,6 @@ class Application:
         self.command_chain: List[str] = list()
         if command_chain:
             self.command_chain = command_chain
-
-        self.prepend_command_chain: List[str] = list()
-        if prepend_command_chain:
-            self.prepend_command_chain = prepend_command_chain
 
         self.commands: Dict[str, Command] = dict()
         if commands:
@@ -91,7 +94,7 @@ class Application:
 
         # Now that command-chain and bases have been checked for,
         # check if the none adapter has been forced.
-        if self.adapter == "none":
+        if self.adapter == ApplicationAdapter.NONE:
             return False
 
         return True
@@ -148,10 +151,14 @@ class Application:
         """Create application from dictionary."""
 
         app_dict = deepcopy(app_dict)
+
+        adapter_string = app_dict.get("adapter", "full").upper()
+        adapter = ApplicationAdapter[adapter_string]
+
         app = Application(
             app_name=app_name,
             app_properties=app_dict,
-            adapter=app_dict.get("adapter", None),
+            adapter=adapter,
             desktop=app_dict.get("desktop", None),
             command_chain=app_dict.get("command-chain", None),
             passthrough=app_dict.get("passthrough", None),
@@ -178,8 +185,8 @@ class Application:
         for command_name, command in self.commands.items():
             app_dict[command_name] = command.command
 
-        if self.prepend_command_chain or self.command_chain:
-            app_dict["command-chain"] = self.prepend_command_chain + self.command_chain
+        if self.command_chain:
+            app_dict["command-chain"] = self.command_chain
 
         # Adjust socket values to formats snap.yaml accepts
         sockets = app_dict.get("sockets", dict())

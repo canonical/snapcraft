@@ -17,7 +17,7 @@
 import codecs
 import collections
 import yaml
-from typing import Any, Dict, TextIO, Union
+from typing import Any, Dict, Optional, TextIO, Union
 
 from snapcraft.project.errors import YamlValidationError
 
@@ -71,7 +71,9 @@ def load(stream: TextIO) -> Any:
     return yaml.load(stream, Loader=_SafeOrderedLoader)
 
 
-def dump(data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: TextIO = None) -> str:
+def dump(
+    data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: Optional[TextIO] = None
+) -> Optional[str]:
     """Safely dump YAML in ordered manner."""
     return yaml.dump(
         data, stream, _SafeOrderedDumper, default_flow_style=False, allow_unicode=True

@@ -17,7 +17,7 @@ import contextlib
 import logging
 import os
 import shutil
-import typing
+from typing import Optional, TYPE_CHECKING
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors, project_loader, mountinfo, steps
@@ -26,7 +26,7 @@ from snapcraft.internal import errors, project_loader, mountinfo, steps
 logger = logging.getLogger(__name__)
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from snapcraft.project import Project
 
 
@@ -109,6 +109,7 @@ def _cleanup_common_directories_for_step(step, project: "Project", parts=None):
         parts = []
 
     being_tried = False
+    message: Optional[str] = None
     if step <= steps.PRIME:
         # Remove the priming area. Only remove the actual 'prime' directory if
         # it's NOT being used in 'snap try'. We'll know that if it's

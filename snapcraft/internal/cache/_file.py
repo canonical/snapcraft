@@ -16,6 +16,7 @@
 import logging
 import os
 import shutil
+from typing import Optional
 
 from snapcraft.file_utils import calculate_hash
 from ._cache import SnapcraftCache
@@ -35,7 +36,7 @@ class FileCache(SnapcraftCache):
         super().__init__()
         self.file_cache = os.path.join(self.cache_root, namespace)
 
-    def cache(self, *, filename: str, algorithm: str, hash: str) -> str:
+    def cache(self, *, filename: str, algorithm: str, hash: str) -> Optional[str]:
         """Cache a file revision with hash in XDG cache, unless it already exists.
         :param str filename: path to the file to cache.
         :param str algorithm: algorithm used to calculate the hash as

@@ -115,7 +115,13 @@ def _run_installer(installer_path: str, echoer):
 def _requests_exception_hint(e: requests.RequestException) -> str:
     # Use the __doc__ description to give the user a hint. It seems to be a
     # a decent option over trying to enumerate all of possible types.
-    return e.__doc__.splitlines()[0].strip()
+    if e.__doc__:
+        split_lines = e.__doc__.splitlines()
+        if split_lines:
+            return e.__doc__.splitlines()[0].strip()
+
+    # Should never get here.
+    return "unknown download error"
 
 
 def _fetch_installer_url() -> str:
@@ -135,7 +141,7 @@ def _fetch_installer_url() -> str:
 
     try:
         data = resp.json()
-    except simplejson.scanner.JSONDecodeError():
+    except simplejson.scanner.JSONDecodeError:
         raise ProviderMultipassDownloadFailed(
             "failed to fetch valid release data from {}".format(
                 _MULTIPASS_RELEASES_API_URL

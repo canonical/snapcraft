@@ -8,11 +8,15 @@ description: |
     into Snappy.
 adopt-info: snapcraft
 confinement: classic
+license: GPL-3.0
 assumes:
   - snapd2.39
 
 apps:
   snapcraft:
+    environment:
+      # https://github.com/lxc/pylxd/pull/361
+      PYLXD_WARNINGS: "none"
     command: bin/snapcraft
     completer: snapcraft-completion
 

@@ -36,8 +36,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The source space containing colcon packages (defaults to 'src').
     - colcon-rosdistro:
       (string)
-      The ROS distro to use. Available options are bouncy and crystal (defaults to
-      crystal), both of which are only compatible with core18 as the base.
+      The ROS distro to use. Available options are bouncy, crystal, dashing, and
+      eloquent, all of which are only compatible with core18 as the base. The default
+      value is crystal.
     - colcon-cmake-args:
       (list of strings)
       Arguments to pass to cmake projects. Note that any arguments here which match
@@ -72,7 +73,12 @@ from snapcraft.internal import errors, mangling
 logger = logging.getLogger(__name__)
 
 # Map bases to ROS releases
-_ROSDISTRO_TO_BASE_MAP = {"bouncy": "core18", "crystal": "core18", "dashing": "core18"}
+_ROSDISTRO_TO_BASE_MAP = {
+    "bouncy": "core18",
+    "crystal": "core18",
+    "dashing": "core18",
+    "eloquent": "core18",
+}
 
 # Map bases to Ubuntu releases. Every base in _ROSDISTRO_TO_BASE_MAP needs to be
 # specified here.

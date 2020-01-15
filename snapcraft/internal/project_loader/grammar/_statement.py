@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Iterable, List, Set, TYPE_CHECKING
+from typing import Iterable, List, Optional, Set, TYPE_CHECKING
 
 from . import typing
 from .errors import UnsatisfiedStatementError
@@ -34,9 +34,9 @@ class Statement:
     def __init__(
         self,
         *,
-        body: typing.Grammar,
+        body: Optional[typing.Grammar],
         processor: "GrammarProcessor",
-        call_stack: typing.CallStack,
+        call_stack: Optional[typing.CallStack],
         check_primitives: bool = False
     ) -> None:
         """Create an Statement instance.
@@ -57,12 +57,12 @@ class Statement:
         self._body = body
         self._processor = processor
         self._check_primitives = check_primitives
-        self._else_bodies = []  # type: List[typing.Grammar]
+        self._else_bodies: List[Optional[typing.Grammar]] = []
 
-        self.__processed_body = None  # type: Set[str]
-        self.__processed_else = None  # type: Set[str]
+        self.__processed_body: Optional[Set[str]] = None
+        self.__processed_else: Optional[Set[str]] = None
 
-    def add_else(self, else_body: typing.Grammar) -> None:
+    def add_else(self, else_body: Optional[typing.Grammar]) -> None:
         """Add an 'else' clause to the statement.
 
         :param list else_body: The body of an 'else' clause.
@@ -102,21 +102,24 @@ class Statement:
         :return: Primitives as determined by processing the else clauses.
         :rtype: set
         """
-        if self.__processed_else is None:
-            self.__processed_else = set()
-            for else_body in self._else_bodies:
-                if not else_body:
-                    # Handle the 'else fail' case.
-                    raise UnsatisfiedStatementError(self)
+        if self.__processed_else is not None:
+            return self.__processed_else
 
-                self.__processed_else = self._processor.process(
-                    grammar=else_body, call_stack=self._call_stack()
-                )
-                if self.__processed_else:
-                    if not self._check_primitives or self._validate_primitives(
-                        self.__processed_else
-                    ):
-                        break
+        self.__processed_else = set()
+        for else_body in self._else_bodies:
+            if not else_body:
+                # Handle the 'else fail' case.
+                raise UnsatisfiedStatementError(self)
+
+            processed_else = self._processor.process(
+                grammar=else_body, call_stack=self._call_stack()
+            )
+            if processed_else:
+                self.__processed_else = processed_else
+                if not self._check_primitives or self._validate_primitives(
+                    processed_else
+                ):
+                    break
 
         return self.__processed_else
 

@@ -89,3 +89,33 @@ class ErrorFormattingTestCase(unit.TestCase):
         self.assertThat(
             str(self.exception(**self.kwargs)), Equals(self.expected_message)
         )
+
+
+class SnapcraftExceptionTests(unit.TestCase):
+
+    scenarios = (
+        (
+            "GitCommandError",
+            {
+                "exception": errors.GitCommandError,
+                "kwargs": dict(
+                    command=["echo", "hi", "$foo"],
+                    output="some error output",
+                    exit_code=0,
+                ),
+                "expected_brief": "Failed to execute git command: echo hi '$foo'",
+                "expected_resolution": "Consider checking your git configuration for settings which may cause issues.",
+                "expected_details": "Command failed with exit code 0 and output:\nsome error output",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+    )
+
+    def test_snapcraft_exception_handling(self):
+        exception = self.exception(**self.kwargs)
+        self.assertEquals(self.expected_brief, exception.get_brief())
+        self.assertEquals(self.expected_resolution, exception.get_resolution())
+        self.assertEquals(self.expected_details, exception.get_details())
+        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
+        self.assertEquals(self.expected_reportable, exception.get_reportable())

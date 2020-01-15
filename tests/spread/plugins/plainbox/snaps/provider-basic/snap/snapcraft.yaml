@@ -12,6 +12,7 @@ parts:
         plugin: python
         source: git://git.launchpad.net/checkbox-ng
         source-type: git
+        source-depth: 1
         build-packages:
             - libxml2-dev
             - libxslt1-dev
@@ -29,6 +30,7 @@ parts:
         plugin: python
         source: git://git.launchpad.net/checkbox-support
         source-type: git
+        source-depth: 1
         python-packages:
             - idna==2.7
             - urllib3==1.24
