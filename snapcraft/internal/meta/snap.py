@@ -264,12 +264,16 @@ class Snap:
 
         for key in snap_dict:
             if key == "plugs":
-                for plug_name, plug_dict in snap_dict[key].items():
-                    plug = Plug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
+                for plug_name, plug_object in snap_dict[key].items():
+                    plug = Plug.from_object(
+                        plug_object=plug_object, plug_name=plug_name
+                    )
                     snap.plugs[plug_name] = plug
             elif key == "slots":
-                for slot_name, slot_dict in snap_dict[key].items():
-                    slot = Slot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+                for slot_name, slot_object in snap_dict[key].items():
+                    slot = Slot.from_object(
+                        slot_object=slot_object, slot_name=slot_name
+                    )
                     snap.slots[slot_name] = slot
             elif key == "apps":
                 for app_name, app_dict in snap_dict[key].items():
