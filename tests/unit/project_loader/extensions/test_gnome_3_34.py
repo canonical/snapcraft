@@ -363,7 +363,8 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         build-environment:
                             - TEST_VAR1: dir1
                             - TEST_VAR2: dir2
-                            - PATH: $PATH
+                            - PATH: path1
+                            - PATH: path2
                             - PKG_CONFIG_PATH: $PKG_CONFIG_PATH
                     test-part-2:
                         plugin: nil
@@ -387,25 +388,30 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                           test-part-1:
                             plugin: nil
                             build-environment:
-                            - PATH: $PATH
+                            - PATH: /snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH
                             - XDG_DATA_DIRS: /snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS
                             - LD_LIBRARY_PATH: /snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH
-                            - PKG_CONFIG_PATH: $PKG_CONFIG_PATH
+                            - PKG_CONFIG_PATH: /snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH
                             - GETTEXTDATADIRS: /snap/gnome-3-34-1804-sdk/current/usr/share/gettext-current:$GETTEXTDATADIRS
                             - GDK_PIXBUF_MODULE_FILE: /snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache
                             - TEST_VAR1: dir1
                             - TEST_VAR2: dir2
+                            - PATH: path1
+                            - PATH: path2
+                            - PKG_CONFIG_PATH: $PKG_CONFIG_PATH
                           test-part-2:
                             plugin: nil
                             build-environment:
                             - PATH: /snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH
                             - XDG_DATA_DIRS: /snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS
-                            - LD_LIBRARY_PATH: $LD_LIBRARY_PATH
+                            - LD_LIBRARY_PATH: /snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-184-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH
                             - PKG_CONFIG_PATH: /snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH
                             - GETTEXTDATADIRS: /snap/gnome-3-34-1804-sdk/current/usr/share/gettext-current:$GETTEXTDATADIRS
-                            - GDK_PIXBUF_MODULE_FILE: $GDK_PIXBUF_MODULE_FILE
+                            - GDK_PIXBUF_MODULE_FILE: /snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache
                             - TEST_VAR3: dir3
                             - TEST_VAR4: dir4
+                            - GDK_PIXBUF_MODULE_FILE: $GDK_PIXBUF_MODULE_FILE
+                            - LD_LIBRARY_PATH: $LD_LIBRARY_PATH
                           gnome-3-34-extension:
                             build-snaps:
                             - gnome-3-34-1804-sdk/latest/stable
