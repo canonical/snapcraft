@@ -191,7 +191,8 @@ def _apply_extension(
 
         for property_name, property_value in part_extension.items():
             if property_name == "build-environment":
-                part_definition[property_name] = _merge_build_environment(
+
+                part_definition[property_name] = _merge_lists(
                     part_definition.get(property_name), property_value
                 )
             else:
@@ -209,7 +210,7 @@ def _apply_extension(
             raise errors.ExtensionPartConflictError(extension_name, part_name)
 
         # Stores the extension's list of parts in the parts section.
-        parts[part_name] = part_definition
+        # parts[part_name] = part_definition
 
 
 def _apply_extension_property(existing_property: Any, extension_property: Any):
@@ -221,6 +222,8 @@ def _apply_extension_property(existing_property: Any, extension_property: Any):
     # If there is no user-defined property, then just add the extension-defined property.
     if not existing_property:
         return extension_property
+    if not extension_property:
+        return existing_property
 
     # If there is a user-defined property, then take care when merging with the extension-defined property.
     if isinstance(existing_property, list) and isinstance(extension_property, list):
@@ -234,18 +237,19 @@ def _apply_extension_property(existing_property: Any, extension_property: Any):
     return existing_property
 
 
-def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
+def _merge_lists(
+    existing: List[Dict[str, str]], extension: List[Dict[str, str]]
+) -> List[Dict[str, str]]:
     """Merge two lists while maintaining order and removing duplicates."""
 
-    seen = set()  # type: Set[str]
-    merged = list()  # type: List[str]
+    # To make sure we start each part with the build-environment as defined in the extension, we need to modify a deepcopy of it
+    each_part_extension = copy.deepcopy(extension)
 
-    for item in list1 + list2:
-        if item not in seen:
-            seen.add(item)
-            merged.append(item)
+    # Add each user-defined build-environment variable to the list of extension-defined build-environment variables
+    for item in existing:
+        each_part_extension.append(item)
 
-    return merged
+    return each_part_extension
 
 
 def _validate_extension_format(extension_names):
