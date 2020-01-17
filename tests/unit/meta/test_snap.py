@@ -19,12 +19,13 @@ from collections import OrderedDict
 from textwrap import dedent
 from unittest import mock
 
+import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.snap import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
-from tests import unit
+from tests import integration, unit
 
 
 class SnapTests(unit.TestCase):
@@ -172,10 +173,10 @@ class SnapTests(unit.TestCase):
         )
         self.assertEqual(snap_dict["license"], snap.license)
         self.assertEqual(
-            snap_dict["plugs"]["test-plug"], snap.plugs["test-plug"].to_dict()
+            snap_dict["plugs"]["test-plug"], snap.plugs["test-plug"].to_yaml_object()
         )
         self.assertEqual(
-            snap_dict["slots"]["test-slot"], snap.slots["test-slot"].to_dict()
+            snap_dict["slots"]["test-slot"], snap.slots["test-slot"].to_yaml_object()
         )
         self.assertEqual(snap_dict["confinement"], snap.confinement)
         self.assertEqual(snap_dict["title"], snap.title)
@@ -489,3 +490,133 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertTrue("base" in written_snap_yaml)
+
+
+class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
+    scenarios = [
+        (
+            "slot-all-forms",
+            dict(
+                snapcraft_yaml=dedent(
+                    """
+            name: test-name
+            version: '1.0'
+            summary: test-summary
+            description: test-description
+            apps:
+              test-app:
+                command: test-command
+            architectures:
+            - amd64
+            base: core18
+            confinement: classic
+            grade: devel
+            slots:
+              long-form:
+                interface: content
+                read:
+                - /
+              short-form: interface-name
+              shortest-form:
+        """
+                ),
+                snap_yaml=dedent(
+                    """
+            name: test-name
+            version: '1.0'
+            summary: test-summary
+            description: test-description
+            apps:
+              test-app:
+                command: test-command
+            architectures:
+            - amd64
+            base: core18
+            confinement: classic
+            grade: devel
+            slots:
+              long-form:
+                interface: content
+                read:
+                - /
+              short-form: interface-name
+              shortest-form: null
+        """
+                ),
+            ),
+        ),
+        (
+            "plug-all-forms",
+            dict(
+                snapcraft_yaml=dedent(
+                    """
+            name: test-name
+            version: '1.0'
+            summary: test-summary
+            description: test-description
+            apps:
+              test-app:
+                command: test-command
+            architectures:
+            - amd64
+            base: core18
+            confinement: classic
+            grade: devel
+            plugs:
+              long-form:
+                interface: content
+                target: $SNAP/data-dir
+                default-provider: some-provider
+              short-form: interface-name
+              shortest-form:
+        """
+                ),
+                snap_yaml=dedent(
+                    """
+            name: test-name
+            version: '1.0'
+            summary: test-summary
+            description: test-description
+            apps:
+              test-app:
+                command: test-command
+            architectures:
+            - amd64
+            base: core18
+            confinement: classic
+            grade: devel
+            plugs:
+              long-form:
+                interface: content
+                target: $SNAP/data-dir
+                default-provider: some-provider
+              short-form: interface-name
+              shortest-form: null
+        """
+                ),
+            ),
+        ),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+    def test_conversions(self):
+        # Ordering matters for verifying the YAML.
+        snapcraft_yaml_path = os.path.join(self.path, "snapcraft.yaml")
+        with open(snapcraft_yaml_path, "w") as f:
+            f.write(self.snapcraft_yaml)
+
+        snap = Snap.from_file(snapcraft_yaml_path)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        with open(snap_yaml_path, "r") as f:
+            written_snap_yaml = f.read()
+
+        # Compare stripped versions (to remove leading/trailing newlines).
+        self.assertEqual(self.snap_yaml.strip(), written_snap_yaml.strip())

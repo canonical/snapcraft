@@ -369,11 +369,11 @@ class Snap:
             elif key == "plugs":
                 snap_dict[key] = dict()
                 for name, plug in sorted(self.plugs.items()):
-                    snap_dict[key][name] = plug.to_dict()
+                    snap_dict[key][name] = plug.to_yaml_object()
             elif key == "slots":
                 snap_dict[key] = dict()
                 for name, slot in sorted(self.slots.items()):
-                    snap_dict[key][name] = slot.to_dict()
+                    snap_dict[key][name] = slot.to_yaml_object()
             elif key == "system-usernames":
                 if not self.system_usernames:
                     continue
