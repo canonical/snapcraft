@@ -877,6 +877,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         lines_of_interest = [
             "set --",
             "if [ -f {} ]; then".format(setup_path),
+            "set -- --local",
             "_CATKIN_SETUP_DIR={} . {}".format(rosdir, setup_path),
             "fi",
             'eval "set -- $BACKUP_ARGS"',
@@ -909,9 +910,10 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         lines_of_interest = [
             "set --",
             "if [ -f {} ]; then".format(underlay_setup_path),
+            "set -- --local",
             "_CATKIN_SETUP_DIR={} . {}".format("test-underlay", underlay_setup_path),
             "if [ -f {} ]; then".format(setup_path),
-            "set -- --extend",
+            "set -- --local --extend",
             "_CATKIN_SETUP_DIR={} . {}".format(rosdir, setup_path),
             "fi",
             "fi",
