@@ -135,26 +135,12 @@ jobs:
 
     - stage: docker
       env:
-        RISK: "stable"
+        - RISK: "stable"
+        - RISK: "candidate"
+        - RISK: "beta"
+        - RISK: "edge"
       script:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
-        RISK: "edge"
-      script:
-        - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
-        RISK: "beta"
-      script:
-        - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
-        RISK: "candidate"
-      script:
-        - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
+
