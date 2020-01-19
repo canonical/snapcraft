@@ -19,7 +19,7 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft pull
+  snapcraft prime
 
   if ! snap list hello; then
     echo "snap listed as default provider was not installed"
