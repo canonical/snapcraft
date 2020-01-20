@@ -21,4 +21,4 @@ execute: |
 
   output=$(snapcraft prime)
 
-  echo "$output" | MATCH "Could not install snap defined in a plug"
+  echo "$output" | MATCH "Could not install snap defined in plug"
