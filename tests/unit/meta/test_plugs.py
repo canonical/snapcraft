@@ -35,14 +35,6 @@ class GenericPlugTests(unit.TestCase):
         self.assertEqual(plug_name, plug.plug_name)
         self.assertEqual(plug_name, plug_from_dict.plug_name)
 
-    def test_invalid_raises_exception(self):
-        plug_name = "plug-test"
-
-        plug = Plug(plug_name=plug_name)
-        plug._plug_dict = dict({})
-
-        self.assertRaises(errors.PlugValidationError, plug.validate)
-
     def test_from_empty_dict(self):
         plug_dict = OrderedDict({})
         plug_name = "plug-test"
@@ -63,13 +55,14 @@ class GenericPlugTests(unit.TestCase):
         plug = Plug.from_object(plug_name="plug-name", plug_object=None)
         plug.validate()
 
-        self.assertThat(plug._plug_dict["interface"], Equals("plug-name"))
+        self.assertThat(plug._plug_dict, Equals(dict()))
 
     def test_from_object_string(self):
         plug = Plug.from_object(plug_name="plug-name", plug_object="some-interface")
         plug.validate()
 
         self.assertThat(plug._plug_dict["interface"], Equals("some-interface"))
+        self.assertThat(plug.use_string_representation, Equals(True))
 
     def test_from_object_dict(self):
         plug_dict = OrderedDict(
@@ -120,7 +113,7 @@ class ContentPlugTests(unit.TestCase):
         transformed_dict = plug_dict.copy()
         transformed_dict["default-provider"] = plug_provider
 
-        self.assertEqual(transformed_dict, plug.to_dict())
+        self.assertEqual(transformed_dict, plug.to_yaml_object())
         self.assertEqual(plug_name, plug.plug_name)
         self.assertEqual(plug_dict["content"], plug.content)
         self.assertEqual(plug_dict["target"], plug.target)
