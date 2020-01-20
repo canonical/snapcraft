@@ -19,4 +19,6 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft prime | MATCH "Could not install snap defined in a plug"
+  output=$(snapcraft prime)
+
+  echo "$output" | MATCH "Could not install snap defined in a plug"
