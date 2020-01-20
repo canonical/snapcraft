@@ -133,7 +133,7 @@ ensure_dir_exists "$XDG_CACHE_HOME"
 
 # Create $XDG_RUNTIME_DIR if not exists (to be removed when LP: #1656340 is fixed)
 # shellcheck disable=SC2174
-[ -n "$XDG_RUNTIME_DIR" ] && ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
+ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
@@ -294,7 +294,7 @@ if [ "$needs_update" = true ]; then
   # This fontconfig fragment is installed in a location that is
   # included by the system fontconfig configuration: namely the
   # etc/fonts/conf.d/50-user.conf file.
-  mkdir -p "$XDG_CONFIG_HOME/fontconfig"
+  ensure_dir_exists "$XDG_CONFIG_HOME/fontconfig"
   async_exec make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
 
   # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
@@ -325,7 +325,7 @@ export GIO_MODULE_DIR="$XDG_CACHE_HOME/gio-modules"
 function compile_giomodules {
   if [ -f "$1/glib-2.0/gio-querymodules" ]; then
     rm -rf "$GIO_MODULE_DIR"
-    mkdir -p "$GIO_MODULE_DIR"
+    ensure_dir_exists "$GIO_MODULE_DIR"
     ln -s "$1"/gio/modules/*.so "$GIO_MODULE_DIR"
     "$1/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
@@ -339,7 +339,7 @@ GS_SCHEMA_DIR="$XDG_DATA_HOME/glib-2.0/schemas"
 function compile_schemas {
   if [ -f "$1" ]; then
     rm -rf "$GS_SCHEMA_DIR"
-    mkdir -p "$GS_SCHEMA_DIR"
+    ensure_dir_exists "$GS_SCHEMA_DIR"
     for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
       schema_dir="${data_dirs_array[$i]}/glib-2.0/schemas"
       if [ -f "$schema_dir/gschemas.compiled" ]; then
@@ -368,7 +368,7 @@ fi
 DCONF_DEST_USER_DIR="$SNAP_USER_DATA/.config/dconf"
 if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
   if [ -f "$REALHOME/.config/dconf/user" ]; then
-    mkdir -p "$DCONF_DEST_USER_DIR"
+    ensure_dir_exists "$DCONF_DEST_USER_DIR"
     ln -s "$REALHOME/.config/dconf/user" "$DCONF_DEST_USER_DIR"
   fi
 fi
@@ -391,7 +391,7 @@ fi
 # Icon themes cache
 if [ "$needs_update" = true ]; then
   rm -rf "$XDG_DATA_HOME/icons"
-  mkdir -p "$XDG_DATA_HOME/icons"
+  ensure_dir_exists "$XDG_DATA_HOME/icons"
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
     # The runtime and theme content snaps should already contain icon caches
     # so we skip them to optimise app start time.
@@ -402,7 +402,7 @@ if [ "$needs_update" = true ]; then
       if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
         theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
         if [ ! -d "$theme_dir" ]; then
-          mkdir -p "$theme_dir"
+          ensure_dir_exists "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
           if [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" ]; then
             async_exec "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
@@ -421,7 +421,7 @@ gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
 for f in "${gtk_configs[@]}"; do
   dest="$XDG_CONFIG_HOME/$f"
   if [ ! -L "$dest" ]; then
-    mkdir -p "$(dirname "$dest")"
+    ensure_dir_exists "$(dirname "$dest")"
     ln -s "$REALHOME/.config/$f" "$dest"
   fi
 done
