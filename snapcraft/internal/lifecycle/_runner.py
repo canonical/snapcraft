@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -104,9 +104,9 @@ def execute(
                 installed_snaps += repo.snaps.install_snaps([content_snap])
             except repo.snaps.errors.SnapUnavailableError:
                 logger.warning(
-                    f"Could not install snap defined in a plug {content_snap!r}. "
+                    f"Could not install snap defined in plug {content_snap!r}. "
                     "The missing library report may have false positives listed if those "
-                    "libraries were to be provided by the content snap."
+                    "libraries are provided by the content snap."
                 )
 
     try:
