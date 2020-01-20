@@ -1,0 +1,28 @@
+summary: Build a snap that uses the content interface
+
+environment:
+  SNAP_DIR: snaps/provider
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  snapcraft prime
+
+  if ! snap list hello; then
+    echo "snap listed as default provider was not installed"
+    exit 1
+  fi
+
