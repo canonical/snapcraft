@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
-from collections import OrderedDict
 import contextlib
 import copy
 import jsonschema
@@ -68,7 +67,7 @@ def apply_extensions(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
         with contextlib.suppress(KeyError):
             del yaml_data["apps"][app_name]["extensions"]
 
-    # Process extensions in a consistent order.
+    # Process extensions in a consistent order
     for extension_name in sorted(declared_extensions.keys()):
         extension = _load_extension(base, extension_name, original_yaml_data)
         _apply_extension(
@@ -112,7 +111,7 @@ def supported_extension_names() -> List[str]:
 
     extension_names = []  # type: List[str]
     for _, modname, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
-        # Only add non-private modules/packages to the extension list.
+        # Only add non-private modules/packages to the extension list
         if not modname.startswith("_"):
             extension_names.append(modname)
 
@@ -131,51 +130,20 @@ def _load_extension(
     )
 
 
-def _convert_to_ordereddict(property_list: List[Dict[str, str]]) -> OrderedDict:
-    myod: OrderedDict = collections.OrderedDict()
-    for elem in property_list:
-        if not isinstance(elem, dict) or len(elem) != 1:
-            raise RuntimeError("Badly disguised ordered dictionary!")
-        for k, v in elem.items():
-            myod[k] = v
-    return myod
-
-
-def _convert_to_disguised_ordereddict(myod: OrderedDict) -> List[Dict[str, str]]:
-    disguised: List[Dict[str, str]] = list()
-    for k, v in myod.items():
-        disguised.append({k: v})
-    return disguised
-
-
-def _merge_build_environment(
-    existing: List[Dict[str, str]], extension: List[Dict[str, str]]
-) -> List[Dict[str, str]]:
-    # build-environment is an OrderedDict in disguise.
-    if not existing:
-        return extension
-    if not extension:
-        return existing
-    existing_dict = _convert_to_ordereddict(existing)
-    extension_dict = _convert_to_ordereddict(extension)
-    extension_dict.update(existing_dict)
-    return _convert_to_disguised_ordereddict(extension_dict)
-
-
 def _apply_extension(
     yaml_data: Dict[str, Any],
     app_names: Set[str],
     extension_name: str,
     extension: Extension,
 ):
-    # Apply the root components of the extension (if any).
+    # Apply the root components of the extension (if any)
     root_extension = extension.root_snippet
     for property_name, property_value in root_extension.items():
         yaml_data[property_name] = _apply_extension_property(
             yaml_data.get(property_name), property_value
         )
 
-    # Apply the app-specific components of the extension (if any).
+    # Apply the app-specific components of the extension (if any)
     app_extension = extension.app_snippet
     for app_name in app_names:
         app_definition = yaml_data["apps"][app_name]
@@ -184,72 +152,60 @@ def _apply_extension(
                 app_definition.get(property_name), property_value
             )
 
-    # Next, apply the part-specific components.
+    # Next, apply the part-specific components
     part_extension = extension.part_snippet
     parts = yaml_data["parts"]
     for part_name, part_definition in parts.items():
-
         for property_name, property_value in part_extension.items():
-            if property_name == "build-environment":
+            part_definition[property_name] = _apply_extension_property(
+                part_definition.get(property_name), property_value
+            )
 
-                part_definition[property_name] = _merge_lists(
-                    part_definition.get(property_name), property_value
-                )
-            else:
-                part_definition[property_name] = _apply_extension_property(
-                    part_definition.get(property_name), property_value
-                )
-
-        # Stores the extension's list of part_snippets in each part.
-        parts[part_name] = part_definition
-
-    # Finally, add any parts specified in the extension.
+    # Finally, add any parts specified in the extension
     for part_name, part_definition in extension.parts.items():
         # If a extension part name clashes with a part that already exists, error.
         if part_name in parts:
             raise errors.ExtensionPartConflictError(extension_name, part_name)
 
-        # Stores the extension's list of parts in the parts section.
-        # parts[part_name] = part_definition
+        parts[part_name] = part_definition
 
 
 def _apply_extension_property(existing_property: Any, extension_property: Any):
-    """Take the user-defined yaml properties and apply any missing
-    extension properties. If there is a property defined in both,
-    the user-defined property is applied.
-    """
+    if existing_property:
+        # If the property is not scalar, merge them
+        if isinstance(existing_property, list) and isinstance(extension_property, list):
+            merged = extension_property + existing_property
 
-    # If there is no user-defined property, then just add the extension-defined property.
-    if not existing_property:
-        return extension_property
-    if not extension_property:
+            # If the lists are just strings, remove duplicates.
+            if all(isinstance(item, str) for item in merged):
+                return _remove_list_duplicates(merged)
+
+            return merged
+
+        elif isinstance(existing_property, dict) and isinstance(
+            extension_property, dict
+        ):
+            for key, value in extension_property.items():
+                existing_property[key] = _apply_extension_property(
+                    existing_property.get(key), value
+                )
+            return existing_property
         return existing_property
 
-    # If there is a user-defined property, then take care when merging with the extension-defined property.
-    if isinstance(existing_property, list) and isinstance(extension_property, list):
-        return _merge_lists(existing_property, extension_property)
-
-    elif isinstance(existing_property, dict) and isinstance(extension_property, dict):
-        for key, value in extension_property.items():
-            existing_property[key] = _apply_extension_property(
-                existing_property.get(key), value
-            )
-    return existing_property
+    return extension_property
 
 
-def _merge_lists(
-    existing: List[Dict[str, str]], extension: List[Dict[str, str]]
-) -> List[Dict[str, str]]:
-    """Merge two lists while maintaining order and removing duplicates."""
+def _remove_list_duplicates(seq: List[str]) -> List[str]:
+    """De-dupe string list maintaining ordering."""
+    seen: Set[str] = set()
+    deduped: List[str] = list()
 
-    # To make sure we start each part with the build-environment as defined in the extension, we need to modify a deepcopy of it
-    each_part_extension = copy.deepcopy(extension)
+    for item in seq:
+        if item not in seen:
+            seen.add(item)
+            deduped.append(item)
 
-    # Add each user-defined build-environment variable to the list of extension-defined build-environment variables
-    for item in existing:
-        each_part_extension.append(item)
-
-    return each_part_extension
+    return deduped
 
 
 def _validate_extension_format(extension_names):
