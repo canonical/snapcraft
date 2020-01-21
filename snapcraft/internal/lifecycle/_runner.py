@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -82,10 +82,10 @@ def execute(
             "The repo backend is not returning the list of installed packages"
         )
 
+    build_snaps = project_config.build_snaps
     content_snaps = project_config.project._get_content_snaps()
-    required_snaps = project_config.build_snaps | content_snaps
 
-    if common.is_process_container():
+    if common.is_process_container() and build_snaps:
         installed_snaps: List[str] = []
         logger.warning(
             (
@@ -93,12 +93,21 @@ def execute(
                 "is running inside docker or podman container: {}.\n"
                 "Please ensure the environment is properly setup before continuing.\n"
                 "Ignore this message if the appropriate measures have already been taken".format(
-                    ", ".join(required_snaps)
+                    ", ".join(build_snaps)
                 )
             )
         )
     else:
-        installed_snaps = repo.snaps.install_snaps(required_snaps)
+        installed_snaps = repo.snaps.install_snaps(build_snaps)
+        for content_snap in content_snaps:
+            try:
+                installed_snaps += repo.snaps.install_snaps([content_snap])
+            except repo.snaps.errors.SnapUnavailableError:
+                logger.warning(
+                    f"Could not install snap defined in plug {content_snap!r}. "
+                    "The missing library report may have false positives listed if those "
+                    "libraries are provided by the content snap."
+                )
 
     try:
         global_state = states.GlobalState.load(

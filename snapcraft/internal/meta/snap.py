@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -191,6 +191,9 @@ class Snap:
             provider_path = common.get_installed_snap_path(provider)
             yaml_path = os.path.join(provider_path, "meta", "snap.yaml")
 
+            if not os.path.exists(yaml_path):
+                continue
+
             snap = Snap.from_file(yaml_path)
             for slot in snap.get_content_slots():
                 slot_installed_path = common.get_installed_snap_path(provider)
@@ -369,11 +372,11 @@ class Snap:
             elif key == "plugs":
                 snap_dict[key] = dict()
                 for name, plug in sorted(self.plugs.items()):
-                    snap_dict[key][name] = plug.to_dict()
+                    snap_dict[key][name] = plug.to_yaml_object()
             elif key == "slots":
                 snap_dict[key] = dict()
                 for name, slot in sorted(self.slots.items()):
-                    snap_dict[key][name] = slot.to_dict()
+                    snap_dict[key][name] = slot.to_yaml_object()
             elif key == "system-usernames":
                 if not self.system_usernames:
                     continue
