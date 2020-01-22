@@ -659,7 +659,8 @@
                             "items": {
                                 "enum": [
                                     "gnome-3-28",
-                                    "kde-neon"
+                                    "kde-neon",
+                                    "opengl"
                                 ]
                             }
                         }
