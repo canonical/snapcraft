@@ -438,8 +438,8 @@ class _SnapPackaging:
 
         Return path relative to prime directory, if created."""
 
-        # If there are no apps, no need to create a runner.
-        if not self._snap_meta.apps:
+        # If there are no apps, or type is snapd, no need to create a runner.
+        if not self._snap_meta.apps or self._config_data.get("type", "") == "snapd":
             return None
 
         # Classic confinement or building on a host that does not match the target base
