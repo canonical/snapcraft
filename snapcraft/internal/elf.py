@@ -268,6 +268,9 @@ class ElfFile:
         self.build_id: str = ""
         self.has_debug_info: bool = False
 
+        # String of elf enum type, e.g. "ET_DYN", "ET_EXEC", etc.
+        self.elf_type: str = "ET_NONE"
+
         try:
             self._extract_attributes()
         except (UnicodeDecodeError, AttributeError) as exception:
@@ -335,6 +338,8 @@ class ElfFile:
                 debug_info_section is not None
                 and debug_info_section.header.sh_type != "SHT_NOBITS"
             )
+
+            self.elf_type = elf.header["e_type"]
 
     def is_linker_compatible(self, *, linker_version: str) -> bool:
         """Determines if linker will work given the required glibc version."""
