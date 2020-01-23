@@ -106,6 +106,9 @@ class TestElfFileSmoketest(unit.TestCase):
         # Instead just check that it is a boolean.
         self.assertTrue(isinstance(elf_file.has_debug_info, bool))
 
+        # Ensure type is detered as executable.
+        self.assertThat(elf_file.elf_type, Equals("ET_EXEC"))
+
 
 class TestInvalidElf(unit.TestCase):
     def test_invalid_elf_file(self):
