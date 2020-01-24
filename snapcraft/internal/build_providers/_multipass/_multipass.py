@@ -198,8 +198,12 @@ class Multipass(Provider):
             return
 
         target = "{}:{}".format(self.instance_name, target)
-        uid_map = {str(os.getuid()): "0"}
-        gid_map = {str(os.getgid()): "0"}
+        if os.system.platform != "win32":
+            uid_map = {str(os.getuid()): "0"}
+            gid_map = {str(os.getgid()): "0"}
+        else:
+            uid_map = None
+            gid_map = None
 
         self._multipass_cmd.mount(
             source=host_source, target=target, uid_map=uid_map, gid_map=gid_map
