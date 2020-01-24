@@ -45,35 +45,29 @@ import snapcraft
 
 
 class QbsPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['qbs-build-variant'] = {
-            'enum': ['debug', 'release'],
-            'default': 'release',
+        schema["properties"]["qbs-build-variant"] = {
+            "enum": ["debug", "release"],
+            "default": "release",
         }
 
-        schema['properties']['qbs-options'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["qbs-options"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
-        schema['properties']['qbs-profile'] = {
-            'enum': ['gcc', 'clang'],
-            'default': 'gcc',
+        schema["properties"]["qbs-profile"] = {
+            "enum": ["gcc", "clang"],
+            "default": "gcc",
         }
 
-        schema['properties']['qt-version'] = {
-            'enum': ['qt4', 'qt5'],
-            'default': None
-        }
+        schema["properties"]["qt-version"] = {"enum": ["qt4", "qt5"], "default": None}
 
         return schema
 
@@ -81,25 +75,26 @@ class QbsPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ['qt-version', 'qbs-profile']
+        return ["qt-version", "qbs-profile"]
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['qbs-options', 'qbs-build-variant']
+        return ["qbs-options", "qbs-build-variant"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(['qbs', 'gcc', 'clang'])
+        self.build_packages.extend(["qbs", "gcc", "clang"])
 
-        if self.options.qt_version == 'qt5':
-            self.build_packages.extend(['qt5-qmake', 'qtbase5-dev'])
-        elif self.options.qt_version == 'qt4':
-            self.build_packages.extend(['qt4-qmake', 'libqt4-dev'])
+        if self.options.qt_version == "qt5":
+            self.build_packages.extend(["qt5-qmake", "qtbase5-dev"])
+        elif self.options.qt_version == "qt4":
+            self.build_packages.extend(["qt4-qmake", "libqt4-dev"])
         elif self.options.qt_version is not None:
-            raise RuntimeError('Unsupported Qt version: {!r}'.format(
-                self.options.qt_version))
+            raise RuntimeError(
+                "Unsupported Qt version: {!r}".format(self.options.qt_version)
+            )
 
     def build(self):
         super().build()
@@ -107,9 +102,9 @@ class QbsPlugin(snapcraft.BasePlugin):
         env = self._build_environment()
 
         # Setup the toolchains, there will only be gcc or clang by default
-        self.run(['qbs', 'setup-toolchains', '--detect'], env=env)
+        self.run(["qbs", "setup-toolchains", "--detect"], env=env)
 
-        build_profile = ''
+        build_profile = ""
 
         if self.options.qt_version is None:
             build_profile = self.options.qbs_profile
@@ -117,37 +112,50 @@ class QbsPlugin(snapcraft.BasePlugin):
             # a unique'ish name for snap builds. Hopefully this shouldn't clash
             # with any other local profiles. Each profile should look something
             # like: profiles.snapcraft-qbs-qt5-clang
-            build_profile = 'snapcraft-qbs-{}-{}'.format(
-                self.options.qt_version,
-                self.options.qbs_profile)
+            build_profile = "snapcraft-qbs-{}-{}".format(
+                self.options.qt_version, self.options.qbs_profile
+            )
 
             # Find full qmake path as qbs setup-qt requires it
-            qmake = shutil.which('qmake')
+            qmake = shutil.which("qmake")
             if qmake is None:
-                raise RuntimeError('The qbs plugin requires qmake be on PATH')
+                raise RuntimeError("The qbs plugin requires qmake be on PATH")
 
             # Setup the Qt profile.
-            self.run(['qbs', 'setup-qt', qmake, build_profile], env=env)
+            self.run(["qbs", "setup-qt", qmake, build_profile], env=env)
 
             # Switch buildprofile to clang if required
             # we don't need to set gcc as that is the default baseProfile
-            if self.options.qbs_profile == 'clang':
-                self.run(['qbs', 'config',
-                          'profiles.{}.baseProfile'.format(build_profile),
-                          self.options.qbs_profile],
-                         env=env)
+            if self.options.qbs_profile == "clang":
+                self.run(
+                    [
+                        "qbs",
+                        "config",
+                        "profiles.{}.baseProfile".format(build_profile),
+                        self.options.qbs_profile,
+                    ],
+                    env=env,
+                )
 
         # Run the build.
-        self.run(['qbs', 'build',
-                  '-d', self.builddir,
-                  '-f', self.sourcedir,
-                  self.options.qbs_build_variant,
-                  'qbs.installRoot:' + self.installdir,
-                  'profile:' + build_profile] + self.options.qbs_options,
-                 env=env)
+        self.run(
+            [
+                "qbs",
+                "build",
+                "-d",
+                self.builddir,
+                "-f",
+                self.sourcedir,
+                self.options.qbs_build_variant,
+                "qbs.installRoot:" + self.installdir,
+                "profile:" + build_profile,
+            ]
+            + self.options.qbs_options,
+            env=env,
+        )
 
     def _build_environment(self):
         env = os.environ.copy()
         if self.options.qt_version is not None:
-            env['QT_SELECT'] = self.options.qt_version
+            env["QT_SELECT"] = self.options.qt_version
         return env

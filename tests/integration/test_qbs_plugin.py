@@ -19,23 +19,24 @@ import testscenarios
 import integration_tests
 
 
-class QbsPluginTestCase(testscenarios.WithScenarios,
-                        integration_tests.TestCase):
+class QbsPluginTestCase(testscenarios.WithScenarios, integration_tests.TestCase):
 
     scenarios = [
         # we expect qbs-nil to output the wrong string here as
         # 'project.printString' is set to false in the yaml file.
-        ('qbs-nil', dict(project_dir='qbs-nil',
-                         expected_value='Wrong snapcraft string')),
-        ('qbs-qt', dict(project_dir='qbs-qt',
-                        expected_value='Hello Snapcraft World')),
+        (
+            "qbs-nil",
+            dict(project_dir="qbs-nil", expected_value="Wrong snapcraft string"),
+        ),
+        ("qbs-qt", dict(project_dir="qbs-qt", expected_value="Hello Snapcraft World")),
     ]
 
     def test_stage_qbs_plugin(self):
 
-        self.run_snapcraft('stage', self.project_dir)
+        self.run_snapcraft("stage", self.project_dir)
 
         # The test binaries have the same name as the project dir
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', self.project_dir))
+            os.path.join(self.stage_dir, "bin", self.project_dir)
+        )
         self.assertEqual(self.expected_value, binary_output)
