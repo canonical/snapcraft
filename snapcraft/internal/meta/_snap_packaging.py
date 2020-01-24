@@ -433,38 +433,43 @@ class _SnapPackaging:
 
     def _generate_command_chain(self) -> List[str]:
         command_chain = list()
-        # Classic confinement or building on a host that does not match the target base
-        # means we cannot setup an environment that will work.
+
+        # command-chain is not required in these situations.
         if (
-            self._config_data["confinement"] == "classic"
+            self._config_data.get("type", "app") == "snapd"
             or not self._is_host_compatible_with_base
             or not self._snap_meta.apps
         ):
+            return command_chain
+
+        meta_runner = os.path.join(
+            self._prime_dir, "snap", "command-chain", "snapcraft-runner"
+        )
+
+        # Temporary workaround for snapd bug not expanding PATH:
+        # We generate an empty runner which addresses the issue.
+        # LP: #1860369
+        if self._config_data["confinement"] == "classic":
             assembled_env = None
         else:
-            meta_runner = os.path.join(
-                self._prime_dir, "snap", "command-chain", "snapcraft-runner"
-            )
-
             common.env = self._project_config.snap_env()
             assembled_env = common.assemble_env()
             assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
             assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-
-            if assembled_env:
-                os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
-                with open(meta_runner, "w") as f:
-                    print("#!/bin/sh", file=f)
-                    print(assembled_env, file=f)
-                    print(
-                        "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
-                        file=f,
-                    )
-                    print('exec "$@"', file=f)
-                os.chmod(meta_runner, 0o755)
-
             common.reset_env()
-            command_chain.append(os.path.relpath(meta_runner, self._prime_dir))
+
+        os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
+        with open(meta_runner, "w") as f:
+            print("#!/bin/sh", file=f)
+            if assembled_env:
+                print(assembled_env, file=f)
+                print(
+                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
+                )
+            print('exec "$@"', file=f)
+        os.chmod(meta_runner, 0o755)
+
+        command_chain.append(os.path.relpath(meta_runner, self._prime_dir))
 
         return command_chain
 
