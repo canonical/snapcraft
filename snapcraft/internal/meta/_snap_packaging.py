@@ -438,36 +438,42 @@ class _SnapPackaging:
 
         Return path relative to prime directory, if created."""
 
+        # If there are no apps, or type is snapd, no need to create a runner.
+        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
         if (
             self._config_data["confinement"] == "classic"
             or not self._is_host_compatible_with_base
-            or not self._snap_meta.apps
         ):
-            return None
+            # Temporary workaround for snapd bug not expanding PATH:
+            # We generate an empty runner which addresses the issue.
+            # https://bugs.launchpad.net/snapd/+bug/1860369
+            assembled_env = ""
+        else:
+            common.env = self._project_config.snap_env()
+            assembled_env = common.assemble_env()
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+            ld_library_env = (
+                "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            )
+            assembled_env = "\n".join([assembled_env, ld_library_env])
+            common.reset_env()
 
         meta_runner = os.path.join(
             self._prime_dir, "snap", "command-chain", "snapcraft-runner"
         )
 
-        common.env = self._project_config.snap_env()
-        assembled_env = common.assemble_env()
-        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+        os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
+        with open(meta_runner, "w") as f:
+            print("#!/bin/sh", file=f)
+            print(assembled_env, file=f)
+            print('exec "$@"', file=f)
+        os.chmod(meta_runner, 0o755)
 
-        if assembled_env:
-            os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
-            with open(meta_runner, "w") as f:
-                print("#!/bin/sh", file=f)
-                print(assembled_env, file=f)
-                print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
-                )
-                print('exec "$@"', file=f)
-            os.chmod(meta_runner, 0o755)
-
-        common.reset_env()
         return os.path.relpath(meta_runner, self._prime_dir)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
