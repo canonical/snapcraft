@@ -432,7 +432,7 @@ class _SnapPackaging:
             )
 
     def _generate_command_chain(self) -> List[str]:
-        command_chain = list()
+        command_chain: List[str] = list()
 
         # command-chain is not required in these situations.
         if (
