@@ -13,17 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import shutil
 from unittest import mock
 from testtools.matchers import HasLength
 
 import snapcraft
-from snapcraft import tests
 from snapcraft.plugins import qbs
+from tests import unit
 
 
-class QbsPluginTestCase(tests.TestCase):
+class QbsPluginTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
