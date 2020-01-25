@@ -433,15 +433,7 @@ class _SnapPackaging:
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
 
-    def _generate_snapcraft_runner(self) -> Optional[str]:
-        """Create runner if required.
-
-        Return path relative to prime directory, if created."""
-
-        # If there are no apps, or type is snapd, no need to create a runner.
-        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
-            return None
-
+    def _assemble_runtime_environment(self) -> str:
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
         if (
@@ -451,17 +443,27 @@ class _SnapPackaging:
             # Temporary workaround for snapd bug not expanding PATH:
             # We generate an empty runner which addresses the issue.
             # https://bugs.launchpad.net/snapd/+bug/1860369
-            assembled_env = ""
-        else:
-            common.env = self._project_config.snap_env()
-            assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-            ld_library_env = (
-                "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-            )
-            assembled_env = "\n".join([assembled_env, ld_library_env])
-            common.reset_env()
+            return ""
+
+        common.env = self._project_config.snap_env()
+        assembled_env = common.assemble_env()
+        common.reset_env()
+
+        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+        ld_library_env = "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+        return "\n".join([assembled_env, ld_library_env])
+
+    def _generate_snapcraft_runner(self) -> Optional[str]:
+        """Create runner if required.
+
+        Return path relative to prime directory, if created."""
+
+        # If there are no apps, or type is snapd, no need to create a runner.
+        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
+        assembled_env = self._assemble_runtime_environment()
 
         meta_runner = os.path.join(
             self._prime_dir, "snap", "command-chain", "snapcraft-runner"
@@ -529,6 +531,7 @@ class _SnapPackaging:
         hooks_dir = os.path.join(self._prime_dir, "meta", "hooks")
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
+
             for hook_name in os.listdir(snap_hooks_dir):
                 file_path = os.path.join(snap_hooks_dir, hook_name)
                 # Make sure the hook is executable
@@ -557,6 +560,8 @@ class _SnapPackaging:
                 shutil.copy2(os.path.join(gui_src, f), self.meta_gui_dir)
 
     def _write_wrap_exe(self, wrapexec, wrappath, shebang=None, args=None, cwd=None):
+        assembled_env = self._assemble_runtime_environment()
+
         if args:
             quoted_args = ['"{}"'.format(arg) for arg in args]
         else:
@@ -581,6 +586,7 @@ class _SnapPackaging:
             print("#!/bin/sh", file=f)
             if cwd:
                 print("{}".format(cwd), file=f)
+            print(assembled_env, file=f)
             print("exec {} {}".format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
