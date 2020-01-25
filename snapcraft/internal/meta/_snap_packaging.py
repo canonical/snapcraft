@@ -417,17 +417,21 @@ class _SnapPackaging:
         hooks_dir = os.path.join(self._prime_dir, "meta", "hooks")
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
-            for hook_name in os.listdir(snap_hooks_dir):
-                file_path = os.path.join(snap_hooks_dir, hook_name)
-                # Make sure the hook is executable
-                _prepare_hook(file_path)
+            common.env = self._project_config.snap_env()
+            try:
+                for hook_name in os.listdir(snap_hooks_dir):
+                    file_path = os.path.join(snap_hooks_dir, hook_name)
+                    # Make sure the hook is executable
+                    _prepare_hook(file_path)
 
-                hook_exec = os.path.join("$SNAP", "snap", "hooks", hook_name)
-                hook_path = os.path.join(hooks_dir, hook_name)
-                with contextlib.suppress(FileNotFoundError):
-                    os.remove(hook_path)
+                    hook_exec = os.path.join("$SNAP", "snap", "hooks", hook_name)
+                    hook_path = os.path.join(hooks_dir, hook_name)
+                    with contextlib.suppress(FileNotFoundError):
+                        os.remove(hook_path)
 
-                self._write_wrap_exe(hook_exec, hook_path)
+                    self._write_wrap_exe(hook_exec, hook_path)
+            finally:
+                common.reset_env()
 
     def _setup_gui(self):
         # Handles the setup directory which only contains gui assets.
