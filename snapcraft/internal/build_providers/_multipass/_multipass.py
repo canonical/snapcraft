@@ -199,7 +199,7 @@ class Multipass(Provider):
             return
 
         target = "{}:{}".format(self.instance_name, target)
-        if platform.system() != "Windows":
+        if sys.platform() != "win32":
             uid_map = {str(os.getuid()): "0"}
             gid_map = {str(os.getgid()): "0"}
         else:
