@@ -578,10 +578,25 @@ class SnapcraftYaml(fixtures.Fixture):
         description="test-description",
         confinement="strict",
         architectures=None,
+        apps=None,
+        parts=None,
+        type="app",
     ):
         super().__init__()
+
+        if apps is None:
+            apps = dict()
+
+        if parts is None:
+            parts = dict()
+
         self.path = path
-        self.data = {"confinement": confinement, "parts": {}, "apps": {}}
+        self.data = {
+            "confinement": confinement,
+            "parts": parts,
+            "apps": apps,
+            "type": type,
+        }
         if name is not None:
             self.data["name"] = name
         if version is not None:
