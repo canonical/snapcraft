@@ -16,7 +16,6 @@
 
 import logging
 import os
-import platform
 import sys
 from typing import Dict, Optional, Sequence
 
