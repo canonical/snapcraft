@@ -65,7 +65,7 @@ import requests
 
 import snapcraft
 from snapcraft.common import isurl
-from snapcraft.internal import errors, mangling
+from snapcraft.internal import errors, mangling, os_release
 from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
@@ -155,7 +155,9 @@ class PythonPlugin(snapcraft.BasePlugin):
             stage_packages = []
 
         if self.project.info.get_build_base() == "core18" and python_base == "python3":
-            stage_packages.append("{}-distutils".format(python_base))
+            release_codename = os_release.OsRelease().version_codename()
+            if release_codename != "xenial":
+                stage_packages.append("{}-distutils".format(python_base))
 
         return stage_packages
 
