@@ -107,9 +107,15 @@ jobs:
             classic: true
       workspaces:
         use: snaps
-      script: |
-        echo $SNAP_TOKEN | snapcraft login --with -
-        snapcraft push "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --release "edge/pr-$TRAVIS_PULL_REQUEST"
+      script:
+        # Exit early if SNAP_TOKEN is not set.
+        - [ -n "$SNAP_TOKEN" ] || echo '$SNAP_TOKEN not set'
+        - [ -n "$SNAP_TOKEN" ] || exit 1
+        # Login with SNAP_TOKEN.
+        - echo $SNAP_TOKEN | snapcraft login --with -
+        # Push the snap built in the previous stage and release to channel
+        # of the form edge/pr-PR#.
+        - snapcraft push "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --release "edge/pr-$TRAVIS_PULL_REQUEST"
     - stage: integration
       name: spread
       workspaces:
