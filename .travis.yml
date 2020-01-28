@@ -97,6 +97,19 @@ jobs:
         - sudo journalctl -u snapd
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
+    - stage: deploy
+      name: Snap Store
+      if: type = pull_request
+      addons:
+        snaps:
+          - name: snapcraft
+            channel: candidate
+            classic: true
+      workspaces:
+        use: snaps
+      script: |
+        echo $SNAP_TOKEN | snapcraft login --with -
+        snapcraft push "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --release "edge/pr-$TRAVIS_PULL_REQUEST"
     - stage: integration
       name: spread
       workspaces:
