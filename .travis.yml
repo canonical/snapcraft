@@ -108,9 +108,7 @@ jobs:
       workspaces:
         use: snaps
       script:
-        - [ -n "$SNAP_TOKEN" ] || echo '$SNAP_TOKEN not set'
-        - [ -n "$SNAP_TOKEN" ] || exit 1
-        - echo $SNAP_TOKEN | snapcraft login --with -
+        - echo "$SNAP_TOKEN" | snapcraft login --with -
         - snapcraft push "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --release "edge/pr-$TRAVIS_PULL_REQUEST"
     - stage: integration
       name: spread
