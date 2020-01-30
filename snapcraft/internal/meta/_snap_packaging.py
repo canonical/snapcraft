@@ -20,10 +20,8 @@ import itertools
 import logging
 import os
 import re
-import shlex
 import shutil
 import stat
-import subprocess
 from typing import Any, Dict, List, Optional, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
@@ -591,34 +589,6 @@ class _SnapPackaging:
 
         os.chmod(wrappath, 0o755)
 
-    def _wrap_exe(self, command, basename=None):
-        execparts = shlex.split(command)
-        exepath = os.path.join(self._prime_dir, execparts[0])
-        if basename:
-            wrappath = os.path.join(self._prime_dir, basename) + ".wrapper"
-        else:
-            wrappath = exepath + ".wrapper"
-        shebang = None
-
-        if os.path.exists(wrappath):
-            os.remove(wrappath)
-
-        wrapexec = "$SNAP/{}".format(execparts[0])
-        if not os.path.exists(exepath) and "/" not in execparts[0]:
-            _find_bin(execparts[0], self._prime_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, "rb") as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b"#!":
-                    shebang = exefile.readline().strip().decode("utf-8")
-
-        self._write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=execparts[1:])
-
-        return os.path.relpath(wrappath, self._prime_dir)
-
     def validate_common_ids(self) -> None:
         if (
             not self._extracted_metadata
@@ -637,15 +607,6 @@ class _SnapPackaging:
                         common_id=app_common_id, app=app
                     )
                 )
-
-
-def _find_bin(binary, basedir):
-    # If it doesn't exist it might be in the path
-    logger.debug("Checking that {!r} is in the $PATH".format(binary))
-    try:
-        shell_utils.which(binary, cwd=basedir)
-    except subprocess.CalledProcessError:
-        raise meta_errors.CommandError(binary)
 
 
 def _prepare_hook(hook_path):
