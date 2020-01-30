@@ -129,8 +129,12 @@ def _run_mksquashfs(
                 time.sleep(0.2)
                 ret = proc.poll()
         print("")
-        if ret != 0:
-            logger.error(proc.stdout.read().decode("utf-8"))
-            raise RuntimeError("Failed to create snap {!r}".format(output_snap_name))
+        output = proc.stdout.read().decode("utf-8")
+        logger.debug(output)
 
-        logger.debug(proc.stdout.read().decode("utf-8"))
+        if ret != 0:
+            raise RuntimeError(
+                "Failed to create snap {!r}, mksquashfs failed:\n{}".format(
+                    output_snap_name, output
+                )
+            )
