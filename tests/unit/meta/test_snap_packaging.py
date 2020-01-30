@@ -110,3 +110,32 @@ class SnapPackagingRunnerTests(unit.TestCase):
         runner = sp._generate_snapcraft_runner()
 
         self.assertThat(runner, Equals(None))
+
+    def test_assembled_runtime_environment_classic(self):
+        apps = dict(testapp=dict(command="echo"))
+
+        sp = self._get_snap_packaging(
+            apps=apps, confinement="classic", type="app", base="core"
+        )
+
+        assembled_env = sp._assemble_runtime_environment()
+
+        self.assertThat(assembled_env, Equals(""))
+
+    def test_assembled_runtime_environment_strict(self):
+        apps = dict(testapp=dict(command="echo"))
+
+        sp = self._get_snap_packaging(
+            apps=apps, confinement="strict", type="app", base="core"
+        )
+
+        assembled_env = sp._assemble_runtime_environment()
+
+        expected_env = textwrap.dedent(
+            """
+            export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+            """
+        ).strip()
+
+        self.assertThat(assembled_env, Equals(expected_env))
