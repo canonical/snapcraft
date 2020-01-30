@@ -99,7 +99,7 @@ jobs:
 
     - stage: deploy
       name: Snap Store
-      if: type = pull_request AND repo = snapcore/snapcraft
+      if: repo = "snapcore/snapcraft" and type = pull_request
       addons:
         snaps:
           - name: snapcraft
