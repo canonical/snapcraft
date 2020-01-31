@@ -51,7 +51,7 @@ class SiteCustomizeTestCase(PythonBaseTestCase):
             # Do not include snap_dir during builds as this will include
             # snapcraft's in-snap site directory.
             # snapcraftctl exports SNAPCRAFT_INTERPRETER
-            if os.getenv("SNAPCRAFT_INTERPRETER"):
+            if not os.getenv("SNAPCRAFT_INTERPRETER"):
                 site_directories = [snap_dir] + site_directories
 
             for d in site_directories:
