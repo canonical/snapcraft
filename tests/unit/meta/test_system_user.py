@@ -71,3 +71,73 @@ class SystemUserTests(unit.TestCase):
             error.get_brief(),
             Equals("Invalid system-usernames for 'name': scope 'ghost' is invalid"),
         )
+
+    def test_from_object_dict(self):
+        user_name = "name"
+        user_object = {"scope": "shared"}
+
+        user = SystemUser.from_object(user_name=user_name, user_object=user_object)
+
+        self.assertThat(user.name, Equals(user_name))
+        self.assertThat(user.scope, Equals(SystemUserScope.SHARED))
+
+    def test_from_object_dict_invalid(self):
+        user_name = "name"
+        user_object = {"scope": "invalid_scope"}
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
+        )
+
+        self.assertThat(
+            error.get_brief(),
+            Equals(
+                "Invalid system-usernames for 'name': scope 'invalid_scope' is invalid"
+            ),
+        )
+
+    def test_from_object_none(self):
+        user_name = "name"
+        user_object = None
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
+        )
+
+        self.assertThat(
+            error.get_brief(),
+            Equals("Invalid system-usernames for 'name': undefined user"),
+        )
+
+    def test_from_object_string(self):
+        user_name = "name"
+        user_object = "shared"
+
+        user = SystemUser.from_object(user_name=user_name, user_object=user_object)
+
+        self.assertThat(user.name, Equals(user_name))
+        self.assertThat(user.scope, Equals(SystemUserScope.SHARED))
+
+    def test_from_object_string_invalid(self):
+        user_name = "name"
+        user_object = "invalid_scope"
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
+        )
+
+        self.assertThat(
+            error.get_brief(),
+            Equals(
+                "Invalid system-usernames for 'name': scope 'invalid_scope' is invalid"
+            ),
+        )

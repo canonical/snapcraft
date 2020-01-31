@@ -27,7 +27,7 @@ from snapcraft.internal.meta.application import Application
 from snapcraft.internal.meta.hooks import Hook
 from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from snapcraft.internal.meta.slots import ContentSlot, Slot
-from snapcraft.internal.meta.system_user import SystemUser, SystemUserScope
+from snapcraft.internal.meta.system_user import SystemUser
 
 logger = logging.getLogger(__name__)
 
@@ -287,33 +287,11 @@ class Snap:
                     hook = Hook.from_dict(hook_dict=hook_dict, hook_name=hook_name)
                     snap.hooks[hook_name] = hook
             elif key == "system-usernames":
-                # Process system-username into SystemUsers.
-                raw_usernames = snap_dict["system-usernames"]
-                if not raw_usernames:
-                    continue
-
-                if not isinstance(raw_usernames, dict):
-                    raise RuntimeError(
-                        f"Improperly formatted system-usernames: {raw_usernames}"
+                for user_name, user_object in snap_dict[key].items():
+                    system_username = SystemUser.from_object(
+                        user_object=user_object, user_name=user_name
                     )
-
-                for user_name, raw_user in raw_usernames.items():
-                    if isinstance(raw_user, dict):
-                        user = SystemUser.from_dict(
-                            user_dict=raw_user, user_name=user_name
-                        )
-                    elif isinstance(raw_user, str):
-                        try:
-                            scope = SystemUserScope[raw_user.upper()]
-                        except KeyError:
-                            raise errors.SystemUsernamesValidationError(
-                                name=user_name, message=f"scope {raw_user!r} is invalid"
-                            )
-                        user = SystemUser(name=user_name, scope=scope)
-                    else:
-                        raise RuntimeError("Improperly formatted system-usernames.")
-                    snap.system_usernames[user_name] = user
-
+                    snap.system_usernames[user_name] = system_username
             elif key in _MANDATORY_PACKAGE_KEYS:
                 snap.__dict__[key] = snap_dict[key]
             elif key in _OPTIONAL_PACKAGE_KEYS:

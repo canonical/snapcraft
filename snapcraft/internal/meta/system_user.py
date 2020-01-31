@@ -17,7 +17,7 @@
 from collections import OrderedDict
 import enum
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 from snapcraft.internal.meta import errors
 
@@ -35,7 +35,7 @@ class SystemUser:
         self.scope = scope
 
     @classmethod
-    def from_dict(self, *, user_name: str, user_dict: Dict[str, str]) -> "SystemUser":
+    def from_dict(cls, *, user_name: str, user_dict: Dict[str, str]) -> "SystemUser":
         raw_scope = user_dict.get("scope", None)
         if raw_scope is None:
             raise errors.SystemUsernamesValidationError(
@@ -50,6 +50,28 @@ class SystemUser:
             )
 
         return SystemUser(name=user_name, scope=scope)
+
+    @classmethod
+    def from_object(cls, *, user_object: Any, user_name: str) -> "SystemUser":
+        if user_object is None:
+            raise errors.SystemUsernamesValidationError(
+                name=user_name, message="undefined user"
+            )
+        elif isinstance(user_object, str):
+            try:
+                scope = SystemUserScope[user_object.upper()]
+            except KeyError:
+                raise errors.SystemUsernamesValidationError(
+                    name=user_name, message=f"scope {user_object!r} is invalid"
+                )
+
+            return SystemUser(name=user_name, scope=scope)
+        elif isinstance(user_object, dict):
+            return cls.from_dict(user_dict=user_object, user_name=user_name)
+
+        raise errors.SystemUsernamesValidationError(
+            name=user_name, message=f"unknown syntax for {user_object!r}"
+        )
 
     def to_dict(self):
         user_dict = OrderedDict()
