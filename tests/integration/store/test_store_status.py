@@ -121,11 +121,11 @@ class StatusTestCase(integration.StoreTestCase):
         output = self.run_snapcraft(["status", name])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version                           Revision
-            latest   {arch}   stable     -                                 -
-                             candidate  -                                 -
-                             beta       {version}  1
-                             edge       ^                                 ^
+            Track    Arch    Channel    Version                           Revision    Notes
+            latest   {arch}   stable     -                                 -           -
+                             candidate  -                                 -           -
+                             beta       {version}  1           -
+                             edge       ^                                 ^           -
             """
         ).format(arch=self.deb_arch, version=version)
         self.assertThat(output, Contains(expected))
