@@ -140,7 +140,7 @@ jobs:
             classic: true
       workspaces:
         use: snaps
-      if: (type = pull_request) AND (env(SNAP_TOKEN) IS present)
+      if: (type = pull_request) AND (head_repo = "snapcore/snapcraft")
       script: ./tools/travis_deploy.sh
 
     - stage: docker
