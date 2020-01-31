@@ -47,12 +47,12 @@ class SiteCustomizeTestCase(PythonBaseTestCase):
             snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")
             snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")
 
-            site_directories = [snapcraft_stage_dir, snapcraft_part_install]
             # Do not include snap_dir during builds as this will include
             # snapcraft's in-snap site directory.
-            # snapcraftctl exports SNAPCRAFT_INTERPRETER
-            if not os.getenv("SNAPCRAFT_INTERPRETER"):
-                site_directories = [snap_dir] + site_directories
+            if snapcraft_stage_dir is not None and snapcraft_part_install is not None:
+                site_directories = [snapcraft_stage_dir, snapcraft_part_install]
+            else:
+                site_directories = [snap_dir]
 
             for d in site_directories:
                 if d:
