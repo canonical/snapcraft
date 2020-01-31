@@ -20,10 +20,8 @@ import itertools
 import logging
 import os
 import re
-import shlex
 import shutil
 import stat
-import subprocess
 from typing import Any, Dict, List, Optional, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
@@ -433,15 +431,7 @@ class _SnapPackaging:
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
 
-    def _generate_snapcraft_runner(self) -> Optional[str]:
-        """Create runner if required.
-
-        Return path relative to prime directory, if created."""
-
-        # If there are no apps, or type is snapd, no need to create a runner.
-        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
-            return None
-
+    def _assemble_runtime_environment(self) -> str:
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
         if (
@@ -451,17 +441,27 @@ class _SnapPackaging:
             # Temporary workaround for snapd bug not expanding PATH:
             # We generate an empty runner which addresses the issue.
             # https://bugs.launchpad.net/snapd/+bug/1860369
-            assembled_env = ""
-        else:
-            common.env = self._project_config.snap_env()
-            assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-            assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-            ld_library_env = (
-                "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-            )
-            assembled_env = "\n".join([assembled_env, ld_library_env])
-            common.reset_env()
+            return ""
+
+        common.env = self._project_config.snap_env()
+        assembled_env = common.assemble_env()
+        common.reset_env()
+
+        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+        ld_library_env = "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+        return "\n".join([assembled_env, ld_library_env])
+
+    def _generate_snapcraft_runner(self) -> Optional[str]:
+        """Create runner if required.
+
+        Return path relative to prime directory, if created."""
+
+        # If there are no apps, or type is snapd, no need to create a runner.
+        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
+        assembled_env = self._assemble_runtime_environment()
 
         meta_runner = os.path.join(
             self._prime_dir, "snap", "command-chain", "snapcraft-runner"
@@ -529,6 +529,7 @@ class _SnapPackaging:
         hooks_dir = os.path.join(self._prime_dir, "meta", "hooks")
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
+
             for hook_name in os.listdir(snap_hooks_dir):
                 file_path = os.path.join(snap_hooks_dir, hook_name)
                 # Make sure the hook is executable
@@ -557,6 +558,8 @@ class _SnapPackaging:
                 shutil.copy2(os.path.join(gui_src, f), self.meta_gui_dir)
 
     def _write_wrap_exe(self, wrapexec, wrappath, shebang=None, args=None, cwd=None):
+        assembled_env = self._assemble_runtime_environment()
+
         if args:
             quoted_args = ['"{}"'.format(arg) for arg in args]
         else:
@@ -581,37 +584,10 @@ class _SnapPackaging:
             print("#!/bin/sh", file=f)
             if cwd:
                 print("{}".format(cwd), file=f)
+            print(assembled_env, file=f)
             print("exec {} {}".format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
-
-    def _wrap_exe(self, command, basename=None):
-        execparts = shlex.split(command)
-        exepath = os.path.join(self._prime_dir, execparts[0])
-        if basename:
-            wrappath = os.path.join(self._prime_dir, basename) + ".wrapper"
-        else:
-            wrappath = exepath + ".wrapper"
-        shebang = None
-
-        if os.path.exists(wrappath):
-            os.remove(wrappath)
-
-        wrapexec = "$SNAP/{}".format(execparts[0])
-        if not os.path.exists(exepath) and "/" not in execparts[0]:
-            _find_bin(execparts[0], self._prime_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, "rb") as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b"#!":
-                    shebang = exefile.readline().strip().decode("utf-8")
-
-        self._write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=execparts[1:])
-
-        return os.path.relpath(wrappath, self._prime_dir)
 
     def validate_common_ids(self) -> None:
         if (
@@ -631,15 +607,6 @@ class _SnapPackaging:
                         common_id=app_common_id, app=app
                     )
                 )
-
-
-def _find_bin(binary, basedir):
-    # If it doesn't exist it might be in the path
-    logger.debug("Checking that {!r} is in the $PATH".format(binary))
-    try:
-        shell_utils.which(binary, cwd=basedir)
-    except subprocess.CalledProcessError:
-        raise meta_errors.CommandError(binary)
 
 
 def _prepare_hook(hook_path):
