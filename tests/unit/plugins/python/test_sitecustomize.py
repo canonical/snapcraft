@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
 
 from testtools.matchers import Contains, FileContains
 
 from snapcraft.plugins import _python
-
 from ._basesuite import PythonBaseTestCase
 
 
@@ -35,6 +35,34 @@ def _create_user_site_packages(base_dir):
 
 
 class SiteCustomizeTestCase(PythonBaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.expected_sitecustomize = dedent(
+            """\
+            import site
+            import os
+
+            snap_dir = os.getenv("SNAP")
+            snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")
+            snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")
+
+            # Do not include snap_dir during builds as this will include
+            # snapcraft's in-snap site directory.
+            if snapcraft_stage_dir is not None and snapcraft_part_install is not None:
+                site_directories = [snapcraft_stage_dir, snapcraft_part_install]
+            else:
+                site_directories = [snap_dir]
+
+            for d in site_directories:
+                if d:
+                    site_dir = os.path.join(d, "lib/pythontest/site-packages")
+                    site.addsitedir(site_dir)
+
+            if snap_dir:
+                site.ENABLE_USER_SITE = False"""
+        )
+
     def test_generate_sitecustomize_staged(self):
         stage_dir = "stage_dir"
         install_dir = "install_dir"
@@ -53,29 +81,10 @@ class SiteCustomizeTestCase(PythonBaseTestCase):
             "test", stage_dir=stage_dir, install_dir=install_dir
         )
 
-        expected_sitecustomize = (
-            "import site\n"
-            "import os\n"
-            "\n"
-            'snap_dir = os.getenv("SNAP")\n'
-            'snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")\n'
-            'snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")\n'
-            "\n"
-            "for d in (snap_dir, snapcraft_stage_dir, "
-            "snapcraft_part_install):\n"
-            "    if d:\n"
-            "        site_dir = os.path.join(d, "
-            '"lib/pythontest/site-packages")\n'
-            "        site.addsitedir(site_dir)\n"
-            "\n"
-            "if snap_dir:\n"
-            "    site.ENABLE_USER_SITE = False"
-        )
-
         site_path = os.path.join(
             install_dir, "usr", "lib", "pythontest", "sitecustomize.py"
         )
-        self.assertThat(site_path, FileContains(expected_sitecustomize))
+        self.assertThat(site_path, FileContains(self.expected_sitecustomize))
 
     def test_generate_sitecustomize_installed(self):
         stage_dir = "stage_dir"
@@ -95,29 +104,10 @@ class SiteCustomizeTestCase(PythonBaseTestCase):
             "test", stage_dir=stage_dir, install_dir=install_dir
         )
 
-        expected_sitecustomize = (
-            "import site\n"
-            "import os\n"
-            "\n"
-            'snap_dir = os.getenv("SNAP")\n'
-            'snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")\n'
-            'snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")\n'
-            "\n"
-            "for d in (snap_dir, snapcraft_stage_dir, "
-            "snapcraft_part_install):\n"
-            "    if d:\n"
-            "        site_dir = os.path.join(d, "
-            '"lib/pythontest/site-packages")\n'
-            "        site.addsitedir(site_dir)\n"
-            "\n"
-            "if snap_dir:\n"
-            "    site.ENABLE_USER_SITE = False"
-        )
-
         site_path = os.path.join(
             install_dir, "usr", "lib", "pythontest", "sitecustomize.py"
         )
-        self.assertThat(site_path, FileContains(expected_sitecustomize))
+        self.assertThat(site_path, FileContains(self.expected_sitecustomize))
 
     def test_generate_sitecustomize_missing_user_site_raises(self):
         stage_dir = "stage_dir"
