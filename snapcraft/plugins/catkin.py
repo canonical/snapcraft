@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -921,9 +921,9 @@ def _handle_rosinstall_files(wstool, rosinstall_files):
 def _recursively_handle_rosinstall_files(wstool, source_path, *, cache=None):
     "Recursively find and merge rosinstall files and update workspace"
 
-    rosinstall_files = set()  # type: Set[str]
+    rosinstall_files: Set[str] = set()
     if not cache:
-        cache = set()  # type: Set[str]
+        cache: Set[str] = set()
 
     # Walk the entire source directory looking for rosinstall files. Keep track
     # of any we haven't seen previously.
