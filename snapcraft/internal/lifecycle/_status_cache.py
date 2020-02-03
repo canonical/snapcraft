@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -34,9 +34,9 @@ class StatusCache:
         :param _config.Config config: Project config.
         """
         self.config = config
-        self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
-        self._outdated_reports = collections.defaultdict(dict)  # type: _OutdatedReport
-        self._dirty_reports = collections.defaultdict(dict)  # type: _DirtyReport
+        self._steps_run: Dict[str, Set[steps.Step]] = dict()
+        self._outdated_reports: _OutdatedReport = collections.defaultdict(dict)
+        self._dirty_reports: _DirtyReport = collections.defaultdict(dict)
 
     def should_step_run(
         self, part: pluginhandler.PluginHandler, step: steps.Step
@@ -159,7 +159,7 @@ class StatusCache:
         prerequisite_step = steps.get_dependency_prerequisite_step(step)
         dependencies = self.config.parts.get_dependencies(part.name, recursive=True)
 
-        changed_dependencies = []  # type: List[pluginhandler.Dependency]
+        changed_dependencies: List[pluginhandler.Dependency] = []
         with contextlib.suppress(errors.StepHasNotRunError):
             timestamp = part.step_timestamp(step)
             for dependency in dependencies:

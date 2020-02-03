@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -198,7 +198,7 @@ class Config:
         return self.parts.all_parts
 
     def __init__(self, project: project.Project) -> None:
-        self.build_snaps = set()  # type: Set[str]
+        self.build_snaps: Set[str] = set()
         self.project = project
 
         # raw_snapcraft_yaml is read only, create a new copy
@@ -389,8 +389,8 @@ def _create_architecture_list(architectures, current_arch):
     if not architectures:
         return [_Architecture(build_on=[current_arch])]
 
-    build_architectures = []  # type: List[str]
-    architecture_list = []  # type: List[_Architecture]
+    build_architectures: List[str] = []
+    architecture_list: List[_Architecture] = []
     for item in architectures:
         if isinstance(item, str):
             build_architectures.append(item)
