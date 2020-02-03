@@ -1131,6 +1131,46 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
                 ),
             )
 
+    @patch("snapcraft.internal.project_loader._config.Config.snap_env")
+    def test_generated_hook_wrappers_include_environment(self, mock_snap_env):
+        mock_snap_env.return_value = ["PATH={}/foo".format(self.prime_dir)]
+
+        # Set up the prime directory to contain a hook in snap/hooks as well as
+        # one in meta/hooks
+        snap_hook = os.path.join(self.prime_dir, "snap", "hooks", "snap-hook")
+        meta_hook = os.path.join(self.prime_dir, "meta", "hooks", "meta-hook")
+
+        for path in (snap_hook, meta_hook):
+            _create_file(path, executable=True, content=path)
+
+        # Now generate hook wrappers
+        self.generate_meta_yaml()
+
+        # Verify that the hook already in meta was unchanged (no environment)
+        final_meta_hook = os.path.join(self.hooks_dir, "meta-hook")
+        self.assertThat(final_meta_hook, FileExists())
+        self.assertThat(final_meta_hook, unit.IsExecutable())
+        self.assertThat(final_meta_hook, FileContains(meta_hook))
+
+        # Verify that the snap hook was unchanged
+        self.assertThat(snap_hook, FileExists())
+        self.assertThat(snap_hook, unit.IsExecutable())
+        self.assertThat(snap_hook, FileContains(snap_hook))
+
+        # Verify that the snap hook got a wrapper generated for it with a full
+        # environment
+        final_snap_hook = os.path.join(self.hooks_dir, "snap-hook")
+        self.assertThat(final_snap_hook, FileExists())
+        self.assertThat(final_snap_hook, unit.IsExecutable())
+        expected = (
+            "#!/bin/sh\n"
+            "export PATH=$SNAP/foo\n"
+            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n"
+            'exec "$SNAP/snap/hooks/snap-hook" "$@"\n'
+        )
+
+        self.assertThat(final_snap_hook, FileContains(expected))
+
     def test_generate_hook_wrappers_not_executable_chmods(self):
         # Set up the prime directory to contain a hook in snap/hooks that is
         # not executable.
