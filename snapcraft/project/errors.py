@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -131,7 +131,7 @@ def _determine_cause(error):
 
     # anyOf failures might have usable context... try to improve them a bit
     if error.validator == "anyOf":
-        contextual_messages = OrderedDict()  # type: Dict[str, str]
+        contextual_messages: Dict[str, str] = OrderedDict()
         for contextual_error in error.context:
             key = contextual_error.schema_path.popleft()
             if key not in contextual_messages:
@@ -141,7 +141,7 @@ def _determine_cause(error):
                 # Sure it starts lower-case (not all messages do)
                 contextual_messages[key].append(message[0].lower() + message[1:])
 
-        oneOf_messages = []  # type: List[str]
+        oneOf_messages: List[str] = []
         for key, value in contextual_messages.items():
             oneOf_messages.append(formatting_utils.humanize_list(value, "and", "{}"))
 
