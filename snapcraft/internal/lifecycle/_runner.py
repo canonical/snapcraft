@@ -27,6 +27,7 @@ from snapcraft.internal import (
     states,
     steps,
 )
+from snapcraft.internal.repo.package_management import configure_package_manager
 from snapcraft.internal.meta._snap_packaging import create_snap_packaging
 
 from ._status_cache import StatusCache
@@ -76,11 +77,17 @@ def execute(
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
+    # First install the dependencies for adding repositories, if required.
+    repo_build_tools = configure_package_manager(
+        project_config.project._snap_meta.package_management
+    )
+
     installed_packages = repo.Repo.install_build_packages(project_config.build_tools)
     if installed_packages is None:
         raise ValueError(
             "The repo backend is not returning the list of installed packages"
         )
+    installed_packages += repo_build_tools
 
     build_snaps = project_config.build_snaps
     content_snaps = project_config.project._get_content_snaps()
