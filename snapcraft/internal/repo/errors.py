@@ -19,7 +19,7 @@ from typing import Sequence
 from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
-
+from snapcraft.internal.meta.package_management import Repository
 from typing import List
 
 
@@ -194,3 +194,33 @@ class SnapdConnectionError(RepoError):
 
     def __init__(self, snap_name: str, url: str) -> None:
         super().__init__(snap_name=snap_name, url=url)
+
+
+class RepositoryError(errors.SnapcraftException):
+    def __init__(self, *, repo: Repository, message: str) -> None:
+        self._repo = repo
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Error adding repository: {self._message}"
+
+    def get_resolution(self) -> str:
+        return f"Please ensure that the repository key configuration for {self._repo!r} is valid."
+
+    def get_docs_url(self) -> str:
+        return "<TODO>"
+
+
+class RepositoryKeyError(errors.SnapcraftException):
+    def __init__(self, *, repo: Repository, message: str) -> None:
+        self._repo = repo
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Error adding repository key: {self._message}"
+
+    def get_resolution(self) -> str:
+        return f"Please ensure that the repository key configuration for {self._repo!r} is valid and that key server {self._repo.gpg_key_server!r} is accessible."
+
+    def get_docs_url(self) -> str:
+        return "<TODO>"
