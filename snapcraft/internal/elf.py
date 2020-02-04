@@ -211,7 +211,7 @@ class Library:
 
         valid_search_paths = [p for p in self.search_paths if os.path.exists(p)]
         in_search_paths = any(
-            [self.soname_path.startswith(p) for p in valid_search_paths]
+            self.soname_path.startswith(p) for p in valid_search_paths
         )
 
         # Expedite path crawling if we have a valid elf file that lives
