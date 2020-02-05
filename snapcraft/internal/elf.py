@@ -209,18 +209,23 @@ class Library:
 
         logger.debug("Crawling to find soname {!r}".format(self.soname))
 
-        if self._is_valid_elf(self.soname_path):
+        valid_search_paths = [p for p in self.search_paths if os.path.exists(p)]
+        in_search_paths = any(
+            self.soname_path.startswith(p) for p in valid_search_paths
+        )
+
+        # Expedite path crawling if we have a valid elf file that lives
+        # inside the search paths.
+        if in_search_paths and self._is_valid_elf(self.soname_path):
             self._update_soname_cache(self.soname_path)
             return self.soname_path
 
-        for path in self.search_paths:
-            if not os.path.exists(path):
-                continue
+        for path in valid_search_paths:
             for root, directories, files in os.walk(path):
                 if self.soname not in files:
                     continue
 
-                file_path = os.path.join(root, self.soname)
+                file_path = os.path.join(root, self.soname.strip("/"))
                 if self._is_valid_elf(file_path):
                     self._update_soname_cache(file_path)
                     return file_path
