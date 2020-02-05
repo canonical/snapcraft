@@ -128,6 +128,7 @@ def _fake_elffile_extract_attributes(self):
         "fake_elf-with-core-libs",
         "fake_elf-with-missing-libs",
         "fake_elf-bad-patchelf",
+        "fake_elf-with-host-libraries",
     ]:
         glibc = elf.NeededLibrary(name="libc.so.6")
         glibc.add_version("GLIBC_2.2.5")
@@ -299,6 +300,9 @@ class FakeElf(fixtures.Fixture):
             "fake_elf-shared-object": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-shared-object")
             ),
+            "fake_elf-with-host-libraries": elf.ElfFile(
+                path=os.path.join(self.root_path, "fake_elf-with-host-libraries")
+            ),
             "fake_elf-bad-ldd": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-bad-ldd")
             ),
@@ -329,9 +333,13 @@ class FakeElf(fixtures.Fixture):
                 if elf_file.path.endswith("fake_elf-bad-patchelf"):
                     f.write(b"nointerpreter")
 
-        self.root_libraries = {"foo.so.1": os.path.join(self.root_path, "foo.so.1")}
+        self.root_libraries = {
+            "foo.so.1": os.path.join(self.root_path, "foo.so.1"),
+            "moo.so.2": os.path.join(self.root_path, "non-standard", "moo.so.2"),
+        }
 
         for root_library in self.root_libraries.values():
+            os.makedirs(os.path.dirname(root_library), exist_ok=True)
             with open(root_library, "wb") as f:
                 f.write(b"\x7fELF")
 
