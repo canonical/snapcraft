@@ -23,7 +23,7 @@ import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.snap import SystemUserScope
+from snapcraft.internal.meta.system_user import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
 from tests import integration, unit
 
