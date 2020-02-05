@@ -186,6 +186,30 @@ class SnapcraftExceptionTests(unit.TestCase):
             },
         ),
         (
+            "PackageManagementValidationError",
+            {
+                "exception": errors.PackageManagementValidationError,
+                "kwargs": dict(message="invalid ..."),
+                "expected_brief": "Invalid package-management: invalid ...",
+                "expected_resolution": "Please configure package-management according to documentation.",
+                "expected_details": None,
+                "expected_docs_url": "<TODO>",
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "RepositoryValidationError",
+            {
+                "exception": errors.RepositoryValidationError,
+                "kwargs": dict(message="invalid ..."),
+                "expected_brief": "Invalid repository: invalid ...",
+                "expected_resolution": "Please configure repository according to documentation.",
+                "expected_details": None,
+                "expected_docs_url": "<TODO>",
+                "expected_reportable": False,
+            },
+        ),
+        (
             "SystemUsernamesValidationError",
             {
                 "exception": errors.SystemUsernamesValidationError,

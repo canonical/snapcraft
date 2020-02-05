@@ -200,6 +200,34 @@ class HookValidationError(errors.SnapcraftError):
         super().__init__(hook_name=hook_name, message=message)
 
 
+class PackageManagementValidationError(errors.SnapcraftException):
+    def __init__(self, *, message: str) -> None:
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Invalid package-management: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Please configure package-management according to documentation."
+
+    def get_docs_url(self) -> str:
+        return "<TODO>"
+
+
+class RepositoryValidationError(errors.SnapcraftException):
+    def __init__(self, *, message: str) -> None:
+        self._message = message
+
+    def get_brief(self) -> str:
+        return f"Invalid repository: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Please configure repository according to documentation."
+
+    def get_docs_url(self) -> str:
+        return "<TODO>"
+
+
 class SystemUsernamesValidationError(errors.SnapcraftException):
     def __init__(self, *, name: str, message: str) -> None:
         self._name = name
