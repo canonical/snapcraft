@@ -1,0 +1,20 @@
+name: test-ppa-short
+version: 'test1'
+summary: test
+description: test
+grade: stable
+confinement: strict
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+      - test-ppa
+
+apps:
+    test-ppa:
+      command: test-ppa
+
+package-management:
+  repositories:
+    - source: ppa:cjp256/test-ppa

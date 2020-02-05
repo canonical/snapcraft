@@ -1,0 +1,32 @@
+summary: Verify repository using short-form ppa syntax.
+
+environment:
+  SNAP_DIR: test-ppa-short
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  # Remove test-ppa repo.
+  sudo apt-add-repository -r ppa:cjp256/test-ppa -y
+
+  # Remove test-ppa apt-key.
+  sudo apt-key del "590C A3D8 E482 6565 BE32 0052 6A63 4116 E00F 4C82"
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  snap install test-ppa-short*.snap --dangerous
+
+  # Run test-ppa.
+  test-ppa-short.test-ppa | MATCH "hello!"

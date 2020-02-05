@@ -1,0 +1,24 @@
+name: test-ppa-with-invalid-key-block
+version: 'test1'
+summary: test
+description: test
+grade: stable
+confinement: strict
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+      - test-ppa
+
+apps:
+    test-ppa:
+      command: test-ppa
+
+package-management:
+  repositories:
+    - source: http://ppa.launchpad.net/cjp256/test-ppa/ubuntu
+      gpg-public-key: |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        -----END PGP PUBLIC KEY BLOCK-----

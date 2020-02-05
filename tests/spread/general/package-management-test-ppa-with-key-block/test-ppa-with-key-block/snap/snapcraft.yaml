@@ -1,0 +1,49 @@
+name: test-ppa-with-key-block
+version: 'test1'
+summary: test
+description: test
+grade: stable
+confinement: strict
+
+parts:
+  test-ppa:
+    plugin: nil
+    stage-packages:
+      - test-ppa
+
+apps:
+    test-ppa:
+      command: test-ppa
+
+package-management:
+  repositories:
+    - source: http://ppa.launchpad.net/cjp256/test-ppa/ubuntu
+      gpg-public-key: |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        mQINBF4y3MIBEAC6rYxrDtleK/OPftHKySm5nN8OIc+tBFnGr9pz4eu2CRukFxXc
+        Ap07pj5EkRbzI60BeGVK/spLFtrU7PPxBXJ3DiaxEaWmOUW/7MdukSWTVk9EgEAZ
+        dwKjbwNrrxmCif8RJzK9JFz1IqGqY/uzR7X90J2Wn4/+FvWNofE2kCQeGEpDQtmF
+        bpcBdHZmcru8g/t3KQy11i4GJ5gLXqFdDF3T3YcVgLyoOx910VK0Y41Rsux7PwlR
+        PmF3doZ+fjLBYVBo0l5ek56dc7p1Z6RL30IHgbwdSbDcYJ8d8dXR+gFUuB4xSYTk
+        XRD2Uzc+jDcwXEaTGFvxQNxIXW4ELwwB5ceqbt/l1w4Yo+pQrSKDjOeG80kwRWsw
+        bGnaAEa8ZKMHvQdr6wIGwiD6LfNAKGtr5xw4O7VzalF6KuzmrRt9RQc/bkso3DQV
+        tCC/nkI55gXEM6zH3NiGQiz47SrjENXWOwJvGrBT36eHCsLZ984SwRHCOqubEAwE
+        G7mkRcew/YC2xe6ic7ZMxVQ3DkmHKojO3qoS73KbuRgp6xwcBXxtPN2k/rAEmVTz
+        aXIPp46mXbwAfcuo5gFRknGzgyOP8cG5KMbl/AGJjRRfiWlIC5RmCcguGsgC5p0n
+        4cPX7+u0J9+pjyPdOntSm5WS1+2HYkd7vS0Qmio5/e7Sw1blCai1mxc7rQARAQAB
+        tCFMYXVuY2hwYWQgUFBBIGZvciBDaHJpcyBQYXR0ZXJzb26JAjgEEwECACIFAl4y
+        3MICGwMGCwkIBwMCBhUIAgkKCwQWAgMBAh4BAheAAAoJEGpjQRbgD0yCanYP/001
+        tx9sgjfGCsA2WNbHAcoqN5Di1dIo4js5inFHWhFFDte4qY1uAx3lKxpq5iyqzwtB
+        rN/fbp3URd+ZqsVQ8IkfPf+lzMubf9YnKxbuBeXU+y5Kj8pmoL6sCpieobk9+3Go
+        rtAkrlmFw7GmpPeCzaHhr5YzOO82T75EEb2a6FYduPv+ONGJqk8P2f20CzlK84ze
+        G6ApSD7BdZ70iUvC0oy6AJoU8uSgoOfMdTIgT7NWXLfqzOIo+Fy5dlnmGS09y132
+        hpjqvx3VCFdGH+NSfcmEVCTcLnqoPqD6InXoROqi30c2D4PmX2h1Endac6BF9uCB
+        xdFBb8SKZ7mJ/dydAEV9KbUr+mQCAG5JO0+GnxgtKanHjMmDcF9BtmHMZsKDjILs
+        7iyiWEsrk+QsUpV5gxOdpOFvL2FfSVTTYhmKgCI9h+KqesAPnJwIhCI5Gz94MaYo
+        V8T+4ZjX36DNh5f7gzWLvajvKznOXGJkX6TgbqFo/wrijK75DPmuuR7m2Xa4AlAT
+        J0JZFdHWXuJnYI3vSZ2OfgHJKsLePheLFtJvpFJTPC0nOFwWgg2JH//UDbEIk5md
+        nLQl+agC5z32g+Qet+D/5y+xamJP/5HKgix8RhggPSIsaMi8ezNrF08jyollwDFk
+        c24ABjaDjM0uWKllldFtmpnW7V0tOFxm+RIA6dCM
+        =ulGo
+        -----END PGP PUBLIC KEY BLOCK-----
