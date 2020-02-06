@@ -8,6 +8,7 @@ env:
     - LC_ALL: "C.UTF-8"
     - LANG: "C.UTF-8"
     - PATH: "/snap/bin:$PATH"
+    - SPREAD_DEBUG_JOURNAL: "true"
 
 jobs:
   include:
