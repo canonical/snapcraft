@@ -171,6 +171,11 @@ class RustPlugin(snapcraft.BasePlugin):
             "--manifest-path",
             os.path.join(sourcedir, "Cargo.toml"),
         ]
+
+        # Use Cargo.lock, if available.
+        if self._project_uses_cargo_lock():
+            fetch_cmd.append("--locked")
+
         toolchain = self._get_toolchain()
         if toolchain is not None:
             fetch_cmd.insert(1, "+{}".format(toolchain))
@@ -194,6 +199,10 @@ class RustPlugin(snapcraft.BasePlugin):
                 )
             )
         return rust_target.format("unknown-linux", "gnu")
+
+    def _project_uses_cargo_lock(self) -> bool:
+        cargo_lock_path = Path(self.builddir, "Cargo.lock")
+        return cargo_lock_path.exists()
 
     def _project_uses_workspace(self) -> bool:
         cargo_toml_path = Path(self.builddir, "Cargo.toml")
@@ -249,10 +258,7 @@ class RustPlugin(snapcraft.BasePlugin):
             # This is a bit ugly because `cargo install` does not yet support
             # workspaces.  Alternatively, there is a perhaps better option
             # to use `cargo-build --out-dir`, but `--out-dir` is considered
-            # unstable and unavailable for use yet on the stable channel.  It
-            # may be better because the use of `cargo install` without `--locked`
-            # does not appear to honor Cargo.lock, while `cargo build` does by
-            # default, if it is present.
+            # unstable and unavailable for use yet on the stable channel.
             install_cmd = [self._cargo_cmd, "build", "--release"]
         else:
             install_cmd = [
@@ -264,6 +270,9 @@ class RustPlugin(snapcraft.BasePlugin):
                 self.installdir,
                 "--force",
             ]
+
+            if self._project_uses_cargo_lock():
+                install_cmd.append("--locked")
 
         toolchain = self._get_toolchain()
         if toolchain is not None:
