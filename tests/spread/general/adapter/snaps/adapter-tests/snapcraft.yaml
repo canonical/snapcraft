@@ -18,6 +18,9 @@ apps:
   adapter-none:
     command: test-cmd
     adapter: none
+  adapter-none-py:
+    command: test-cmd.py
+    adapter: none
   adapter-full:
     command: test-cmd
     adapter: full
