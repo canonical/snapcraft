@@ -360,9 +360,13 @@ class _SnapPackaging:
 
     def finalize_snap_meta_commands(self) -> None:
         for app_name, app in self._snap_meta.apps.items():
-            app.prime_commands(
-                base=self._project_config.project.info.base, prime_dir=self._prime_dir
-            )
+            # Prime commands only if adapter != "none",
+            # otherwise leave as-is.
+            if app.adapter != ApplicationAdapter.NONE:
+                app.prime_commands(
+                    base=self._project_config.project.info.base,
+                    prime_dir=self._prime_dir,
+                )
 
     def finalize_snap_meta_command_chains(self) -> None:
         snapcraft_runner = self._generate_snapcraft_runner()
