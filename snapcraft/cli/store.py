@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -392,14 +392,8 @@ def close(snap_name, channels):
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
-)
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, series, arch):
+def status(snap_name, arch):
     """Get the status on the store for <snap-name>.
 
     \b
@@ -407,21 +401,15 @@ def status(snap_name, series, arch):
         snapcraft status my-snap
         snapcraft status my-snap --arch armhf
     """
-    snapcraft.status(snap_name, series, arch)
+    snapcraft.status(snap_name, arch)
 
 
 @storecli.command("list-revisions")
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
-)
 @click.argument("snap-name", metavar="<snap-name>")
-def list_revisions(snap_name, series, arch):
+def list_revisions(snap_name, arch):
     """Get the history on the store for <snap-name>.
 
     This command has an alias of `revisions`.
@@ -432,7 +420,7 @@ def list_revisions(snap_name, series, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, series, arch)
+    snapcraft.revisions(snap_name, arch)
 
 
 @storecli.command("list-registered")
@@ -499,7 +487,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": "16"})
+            snap_list.append({"name": package, "series": DEFAULT_SERIES})
 
     if channels:
         channel_list = channels.split(",")

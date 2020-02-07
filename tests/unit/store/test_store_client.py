@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,7 +26,7 @@ import pymacaroons
 from testtools.matchers import Contains, Equals, FileExists, Not
 
 from snapcraft import config, storeapi
-from snapcraft.storeapi import errors, constants
+from snapcraft.storeapi import errors
 import tests
 from tests import fixture_setup, unit
 
@@ -1296,12 +1296,6 @@ class GetSnapRevisionsTestCase(StoreTestCase):
         self.client.login("dummy", "test correct password")
         self.assertThat(self.client.get_snap_revisions("basic"), Equals(self.expected))
 
-    def test_get_snap_revisions_filter_by_series(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_revisions("basic", series="16"), Equals(self.expected)
-        )
-
     def test_get_snap_revisions_filter_by_arch(self):
         self.client.login("dummy", "test correct password")
         self.assertThat(
@@ -1309,39 +1303,13 @@ class GetSnapRevisionsTestCase(StoreTestCase):
             Equals([rev for rev in self.expected if rev["arch"] == "amd64"]),
         )
 
-    def test_get_snap_revisions_filter_by_series_and_filter(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_revisions("basic", series="16", arch="amd64"),
-            Equals(
-                [
-                    rev
-                    for rev in self.expected
-                    if "16" in rev["series"] and rev["arch"] == "amd64"
-                ]
-            ),
-        )
-
-    def test_get_snap_revisions_filter_by_unknown_series(self):
-        self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_revisions,
-            "basic",
-            series="12",
-        )
-        self.assertThat(str(e), Equals("Snap 'basic' was not found in '12' series."))
-
     def test_get_snap_revisions_filter_by_unknown_arch(self):
         self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.client.get_snap_revisions,
             "basic",
             arch="somearch",
-        )
-        self.assertThat(
-            str(e), Equals("Snap 'basic' for 'somearch' was not found in '16' series.")
         )
 
     def test_get_snap_revisions_refreshes_macaroon(self):
@@ -1466,12 +1434,6 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.client.login("dummy", "test correct password")
         self.assertThat(self.client.get_snap_status("basic"), Equals(self.expected))
 
-    def test_get_snap_status_filter_by_series(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_status("basic", series="16"), Equals(self.expected)
-        )
-
     def test_get_snap_status_filter_by_arch(self):
         self.client.login("dummy", "test correct password")
         exp_arch = self.expected["channel_map_tree"]["latest"]["16"]["amd64"]
@@ -1479,24 +1441,6 @@ class GetSnapStatusTestCase(StoreTestCase):
             self.client.get_snap_status("basic", arch="amd64"),
             Equals({"channel_map_tree": {"latest": {"16": {"amd64": exp_arch}}}}),
         )
-
-    def test_get_snap_status_filter_by_series_and_filter(self):
-        self.client.login("dummy", "test correct password")
-        exp_arch = self.expected["channel_map_tree"]["latest"]["16"]["amd64"]
-        self.assertThat(
-            self.client.get_snap_status("basic", series="16", arch="amd64"),
-            Equals({"channel_map_tree": {"latest": {"16": {"amd64": exp_arch}}}}),
-        )
-
-    def test_get_snap_status_filter_by_unknown_series(self):
-        self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_status,
-            "basic",
-            series="12",
-        )
-        self.assertThat(str(e), Equals("Snap 'basic' was not found in '12' series."))
 
     def test_get_snap_status_filter_by_unknown_arch(self):
         self.client.login("dummy", "test correct password")
@@ -1841,17 +1785,10 @@ class SnapNotFoundTestCase(StoreTestCase):
     def test_snap_not_found(self):
         self._setup_snap()
         metadata = {"field_ok": "dummy"}
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.SnapNotFoundError,
             getattr(self.client, self.attribute),
             "test-unexistent-snap",
             metadata,
             False,
-        )
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Snap 'test-unexistent-snap' was not "
-                "found in '{}' series.".format(constants.DEFAULT_SERIES)
-            ),
         )
