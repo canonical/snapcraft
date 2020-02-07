@@ -1,0 +1,47 @@
+summary: Build and run a basic rust snap with Cargo.lock
+
+systems:
+  - ubuntu-18.04
+  - ubuntu-18.04-64
+  - ubuntu-18.04-amd64
+  - ubuntu-18.04-i386
+  - ubuntu-18.04-armhf
+  - ubuntu-16.04
+  - ubuntu-16.04-64
+  - ubuntu-16.04-amd64
+  - ubuntu-16.04-i386
+  - ubuntu-16.04-armhf
+
+environment:
+  SNAP_DIR: ../snaps/rust-hello-with-cargo-lock
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft 2>&1)"
+
+  echo "$output" | MATCH "Downloaded time v0.2.0"
+  echo "$output" | MATCH "Compiling time v0.2.0"
+
+  fetch_count="$(echo "$output" | grep "Downloaded time" -c)"
+  if [ "$fetch_count" -ne 1 ]; then
+    echo "Rust plugin appears to have multiple fetches for locked time:"
+    echo "$output"
+    exit 1
+  fi
+
+  sudo snap install rust-hello-with-cargo-lock_*.snap --dangerous
+  rust-hello-with-cargo-lock.rust-hello | MATCH "Hello"

@@ -106,6 +106,11 @@ class RustPlugin(snapcraft.BasePlugin):
 
         self._manifest = collections.OrderedDict()
 
+        if self.options.source_subdir:
+            self.source_path = Path(self.sourcedir, self.options.source_subdir)
+        else:
+            self.source_path = Path(self.sourcedir)
+
     def enable_cross_compilation(self):
         # The logic is applied transparently trough internal
         # rust tooling.
@@ -159,6 +164,9 @@ class RustPlugin(snapcraft.BasePlugin):
 
             self.run(add_target_cmd, env=self._build_env())
 
+    def _project_uses_cargo_lock(self) -> bool:
+        return Path(self.source_path, "Cargo.lock").exists()
+
     def _fetch_cargo_deps(self):
         if self.options.source_subdir:
             sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
@@ -171,6 +179,11 @@ class RustPlugin(snapcraft.BasePlugin):
             "--manifest-path",
             os.path.join(sourcedir, "Cargo.toml"),
         ]
+
+        # Use Cargo.lock, if available.
+        if self._project_uses_cargo_lock():
+            fetch_cmd.append("--locked")
+
         toolchain = self._get_toolchain()
         if toolchain is not None:
             fetch_cmd.insert(1, "+{}".format(toolchain))
@@ -249,10 +262,7 @@ class RustPlugin(snapcraft.BasePlugin):
             # This is a bit ugly because `cargo install` does not yet support
             # workspaces.  Alternatively, there is a perhaps better option
             # to use `cargo-build --out-dir`, but `--out-dir` is considered
-            # unstable and unavailable for use yet on the stable channel.  It
-            # may be better because the use of `cargo install` without `--locked`
-            # does not appear to honor Cargo.lock, while `cargo build` does by
-            # default, if it is present.
+            # unstable and unavailable for use yet on the stable channel.
             install_cmd = [self._cargo_cmd, "build", "--release"]
         else:
             install_cmd = [
@@ -264,6 +274,9 @@ class RustPlugin(snapcraft.BasePlugin):
                 self.installdir,
                 "--force",
             ]
+
+            if self._project_uses_cargo_lock():
+                install_cmd.append("--locked")
 
         toolchain = self._get_toolchain()
         if toolchain is not None:
