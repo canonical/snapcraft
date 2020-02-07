@@ -252,3 +252,53 @@ class DesktopFileTest(unit.TestCase):
 
         self.expectThat(app.to_dict(), Not(Contains("desktop")))
         self.expectThat(expected_desktop_file_path, FileExists())
+
+
+class AppPassthroughTests(unit.TestCase):
+    def test_no_passthroug(self):
+        app = application.Application(
+            app_name="foo",
+            adapter=application.ApplicationAdapter.NONE,
+            command_chain=["test-command-chain"],
+            passthrough=None,
+        )
+
+        app_dict = app.to_dict()
+
+        self.assertThat(app_dict, Equals({"command-chain": ["test-command-chain"]}))
+
+    def test_passthrough_to_dict(self):
+        app = application.Application(
+            app_name="foo",
+            adapter=application.ApplicationAdapter.NONE,
+            command_chain=["test-command-chain"],
+            passthrough={"test-property": "test-value"},
+        )
+
+        app_dict = app.to_dict()
+
+        self.assertThat(
+            app_dict,
+            Equals(
+                {"command-chain": ["test-command-chain"], "test-property": "test-value"}
+            ),
+        )
+
+    def test_passthrough_to_dict_from_dict(self):
+        app = application.Application.from_dict(
+            app_name="foo",
+            app_dict={
+                "adapter": "none",
+                "command-chain": ["test-command-chain"],
+                "passthrough": {"test-property": "test-value"},
+            },
+        )
+
+        app_dict = app.to_dict()
+
+        self.assertThat(
+            app_dict,
+            Equals(
+                {"command-chain": ["test-command-chain"], "test-property": "test-value"}
+            ),
+        )
