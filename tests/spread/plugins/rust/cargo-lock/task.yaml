@@ -31,6 +31,17 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  snapcraft 2>&1 | MATCH "time v0.2.0"
+  output="$(snapcraft 2>&1)"
+
+  echo "$output" | MATCH "Downloaded time v0.2.0"
+  echo "$output" | MATCH "Compiling time v0.2.0"
+
+  fetch_count="$(echo "$output" | grep "Downloaded time" -c)"
+  if [ "$fetch_count" -ne 1 ]; then
+    echo "Rust plugin appears to have multiple fetches for locked time:"
+    echo "$output"
+    exit 1
+  fi
+
   sudo snap install rust-hello-with-cargo-lock_*.snap --dangerous
   rust-hello-with-cargo-lock.rust-hello | MATCH "Hello"

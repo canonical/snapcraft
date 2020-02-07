@@ -106,6 +106,11 @@ class RustPlugin(snapcraft.BasePlugin):
 
         self._manifest = collections.OrderedDict()
 
+        if self.options.source_subdir:
+            self.source_path = Path(self.sourcedir, self.options.source_subdir)
+        else:
+            self.source_path = Path(self.sourcedir)
+
     def enable_cross_compilation(self):
         # The logic is applied transparently trough internal
         # rust tooling.
@@ -159,6 +164,9 @@ class RustPlugin(snapcraft.BasePlugin):
 
             self.run(add_target_cmd, env=self._build_env())
 
+    def _project_uses_cargo_lock(self) -> bool:
+        return Path(self.source_path, "Cargo.lock").exists()
+
     def _fetch_cargo_deps(self):
         if self.options.source_subdir:
             sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
@@ -199,10 +207,6 @@ class RustPlugin(snapcraft.BasePlugin):
                 )
             )
         return rust_target.format("unknown-linux", "gnu")
-
-    def _project_uses_cargo_lock(self) -> bool:
-        cargo_lock_path = Path(self.builddir, "Cargo.lock")
-        return cargo_lock_path.exists()
 
     def _project_uses_workspace(self) -> bool:
         cargo_toml_path = Path(self.builddir, "Cargo.toml")

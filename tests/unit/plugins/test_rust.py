@@ -381,11 +381,8 @@ class RustPluginTest(RustPluginBaseTest):
     def test_pull_with_cargo_lock(self, script_mock):
         self.plugin.options.rust_revision = []
         self.plugin.options.rust_channel = []
-
-        with open(
-            os.path.join(self.plugin.builddir, "Cargo.lock"), "w"
-        ) as cargo_lock_file:
-            cargo_lock_file.write("test cargo lock contents")
+        with open(self.plugin.source_path / "Cargo.lock", "w") as f:
+            f.write("")
 
         self.plugin.pull()
 
@@ -694,10 +691,8 @@ class RustPluginTest(RustPluginBaseTest):
         )
 
     def test_build_with_cargo_lock(self):
-        with open(
-            os.path.join(self.plugin.builddir, "Cargo.lock"), "w"
-        ) as cargo_lock_file:
-            cargo_lock_file.write("test cargo lock contents")
+        with open(self.plugin.source_path / "Cargo.lock", "w") as f:
+            f.write("")
 
         self.plugin.build()
 
