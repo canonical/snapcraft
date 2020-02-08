@@ -48,7 +48,7 @@ class SnapCache(SnapcraftProjectCache):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_filename,
                     "-e",
-                    os.path.join("meta", "snap.yaml"),
+                    "meta/snap.yaml",
                 ]
             )
             logger.debug(output)
