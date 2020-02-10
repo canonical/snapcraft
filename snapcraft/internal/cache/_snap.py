@@ -50,7 +50,7 @@ class SnapCache(SnapcraftProjectCache):
                     snap_filename,
                     "-e",
                     # cygwin unsquashfs uses unix paths
-                    Path("meta").joinpath("snap.yaml").as_posix()
+                    Path("meta", "snap.yaml").as_posix()
                 ]
             )
             logger.debug(output)

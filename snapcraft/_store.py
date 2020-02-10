@@ -61,7 +61,7 @@ def _get_data_from_snap_file(snap_path):
                     snap_path,
                     "-e",
                     # cygwin unsquashfs on windows uses unix paths
-                    Path("meta").joinpath("snap.yaml").as_posix()
+                    Path("meta", "snap.yaml").as_posix()
                 ]
             )
         except subprocess.CalledProcessError:
