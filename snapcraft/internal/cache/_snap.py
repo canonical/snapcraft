@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 from ._cache import SnapcraftProjectCache
 from snapcraft import file_utils, yaml_utils
@@ -48,7 +49,8 @@ class SnapCache(SnapcraftProjectCache):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_filename,
                     "-e",
-                    "meta/snap.yaml",
+                    # cygwin unsquashfs uses unix paths
+                    Path("meta").joinpath("snap.yaml").as_posix()
                 ]
             )
             logger.debug(output)
