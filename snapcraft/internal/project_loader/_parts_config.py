@@ -216,7 +216,7 @@ class PartsConfig:
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
             snap_base_path=path.join("/", "snap", self._project.info.name, "current"),
-            base=self._project.info.base,
+            base=self._project.info.get_build_base(),
             confinement=self._project.info.confinement,
             snap_type=self._snap_type,
             soname_cache=self._soname_cache,
