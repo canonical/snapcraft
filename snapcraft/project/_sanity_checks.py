@@ -25,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^snapcraft.yaml$"),
-    re.compile(r"^.snapcraft(/state)?$"),
-    re.compile(r"^hooks(/.*)?$"),
-    re.compile(r"^local(/.*)?$"),
-    re.compile(r"^plugins(/.*)?$"),
-    re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
+    re.compile(r"^.snapcraft([/|\\]state)?$"),
+    re.compile(r"^hooks([/|\\].*)?$"),
+    re.compile(r"^local([/|\\].*)?$"),
+    re.compile(r"^plugins([/|\\].*)?$"),
+    re.compile(r"^gui([/|\\].*\.(png|svg|desktop))?$"),
 }
 
 
