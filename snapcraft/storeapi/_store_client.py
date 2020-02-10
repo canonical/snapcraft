@@ -362,7 +362,7 @@ class StoreClient:
         try:
             snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name)
+            raise errors.SnapNotFoundError(snap_name=snap_name)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)

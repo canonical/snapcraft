@@ -1803,4 +1803,4 @@ class SnapNotFoundTestCase(StoreTestCase):
 
         self.expectThat(raised._snap_name, Equals("test-nonexistent-snap"))
         self.expectThat(raised._channel, Is(None))
-        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Is(None))
