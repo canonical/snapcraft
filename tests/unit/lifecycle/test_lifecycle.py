@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -466,7 +466,7 @@ class GlobalStateTest(LifecycleTestBase):
 
     def test_stable_grade_for_non_stable_base(self):
         self.fake_storeapi_get_info.mock.side_effect = snapcraft.storeapi.errors.SnapNotFoundError(
-            name="core18"
+            snap_name="core18"
         )
         lifecycle.execute(steps.PULL, self.project_config)
 
