@@ -270,6 +270,33 @@ class TestGetLibraries(TestElfBase):
         self.assertThat(libs, Equals({self.fake_elf.root_libraries["moo.so.2"]}))
 
 
+class TestLibrary(TestElfBase):
+    def test_is_valid_elf_ignores_corrupt_files(self):
+        soname = "libssl.so.1.0.0"
+        soname_path = os.path.join(self.path, soname)
+        library = elf.Library(
+            soname=soname,
+            soname_path=soname_path,
+            search_paths=[self.path],
+            core_base_path="/snap/core/current",
+            arch=("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64"),
+            soname_cache=elf.SonameCache(),
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(True))
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.ElfFile",
+                side_effect=errors.CorruptedElfFileError(
+                    path=soname_path, error=RuntimeError()
+                ),
+            )
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(False))
+
+
 class TestGetElfFiles(TestElfBase):
     def test_get_elf_files(self):
         elf_files = elf.get_elf_files(self.fake_elf.root_path, {"fake_elf-2.23"})

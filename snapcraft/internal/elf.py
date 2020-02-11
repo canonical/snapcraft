@@ -196,11 +196,17 @@ class Library:
         self.soname_cache[self.arch, self.soname] = resolved_path
 
     def _is_valid_elf(self, resolved_path: str) -> bool:
-        return (
-            os.path.exists(resolved_path)
-            and ElfFile.is_elf(resolved_path)
-            and ElfFile(path=resolved_path).arch == self.arch
-        )
+        if not os.path.exists(resolved_path) or not ElfFile.is_elf(resolved_path):
+            return False
+
+        try:
+            elf_file = ElfFile(path=resolved_path)
+        except errors.CorruptedElfFileError as error:
+            # Log if the ELF file seems corrupted.
+            logger.warning(error.get_brief())
+            return False
+
+        return elf_file.arch == self.arch
 
     def _crawl_for_path(self) -> str:
         # Speed things up and return what was already found once.
