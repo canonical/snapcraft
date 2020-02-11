@@ -26,12 +26,10 @@ The full API is documented on https://dashboard.snapcraft.io/docs/v2/en/snaps.ht
 
 class Revision:
     def __repr__(self) -> str:
-        return "<Revision: {!r} for version {!r} and architectures {!r}>".format(
-            self.revision, self.version, self.architectures
-        )
+        return f"<Revision: {self.revision!r} for version {self.version!r} and architectures {self.architectures!r}>"
 
-    def __init__(self, revision: Dict[str, Any]) -> None:
-        self._payload = revision
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
 
     @property
     def revision(self) -> int:

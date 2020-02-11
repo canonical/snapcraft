@@ -27,8 +27,11 @@ The full API is documented on https://dashboard.snapcraft.io/docs/v2/en/snaps.ht
 class Progressive:
     """Represents a progressive release structure from the Snap Store."""
 
-    def __init__(self, progressive: Dict[str, Any]) -> None:
-        self._payload = progressive
+    def __repr__(self) -> str:
+        return f"<Progressive: {self.key!r}>"
+
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
 
     @property
     def key(self) -> Optional[str]:

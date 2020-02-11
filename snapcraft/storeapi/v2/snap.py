@@ -32,8 +32,8 @@ class Snap:
     def __repr__(self) -> str:
         return "<Snap: {!r}>".format(self.name)
 
-    def __init__(self, snap: Dict[str, Any]) -> None:
-        self._payload = snap
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
         self._channels: Optional[List[channel.SnapChannel]] = None
         self._tracks: Optional[List[channel.Track]] = None
 

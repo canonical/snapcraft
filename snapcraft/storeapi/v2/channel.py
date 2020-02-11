@@ -32,12 +32,10 @@ class MappedChannel:
     """
 
     def __repr__(self) -> str:
-        return "<MappedChannel: {!r} for revision {!r} and architecture {!r}>".format(
-            self.channel, self.revision, self.architecture
-        )
+        return f"<MappedChannel: {self.channel!r} for revision {self.revision!r} and architecture {self.architecture!r}>"
 
-    def __init__(self, channel: Dict[str, Any]) -> None:
-        self._payload = channel
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
 
     @property
     def channel(self) -> str:
@@ -45,14 +43,14 @@ class MappedChannel:
         return self._payload["channel"]
 
     @property
-    def progressive(self):
-        """Return the progressive release status for this channel."""
-        return progressive.Progressive(self._payload["progressive"])
-
-    @property
     def revision(self) -> int:
         """Return the revision for this channel."""
         return self._payload["revision"]
+
+    @property
+    def architecture(self) -> str:
+        """Return the architecture string set for this channel."""
+        return self._payload["architecture"]
 
     @property
     def expiration_date(self) -> Optional[str]:
@@ -60,9 +58,9 @@ class MappedChannel:
         return self._payload["expiration-date"]
 
     @property
-    def architecture(self) -> str:
-        """Return the architecture string set for this channel."""
-        return self._payload["architecture"]
+    def progressive(self):
+        """Return the progressive release status for this channel."""
+        return progressive.Progressive(self._payload["progressive"])
 
 
 class SnapChannel:
@@ -71,10 +69,10 @@ class SnapChannel:
     """
 
     def __repr__(self) -> str:
-        return "<SnapChannel: {!r}>".format(self.name)
+        return f"<SnapChannel: {self.name!r}>"
 
-    def __init__(self, channel: Dict[str, Any]) -> None:
-        self._payload = channel
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
 
     @property
     def name(self) -> str:
@@ -92,7 +90,7 @@ class SnapChannel:
         return self._payload["risk"]
 
     @property
-    def branch(self) -> str:
+    def branch(self) -> Optional[str]:
         """Return the branch for this channel."""
         return self._payload["branch"]
 
@@ -106,10 +104,10 @@ class Track:
     """Represents a Track structure from the Snap Store."""
 
     def __repr__(self) -> str:
-        return "<Track: {!r}>".format(self.name)
+        return f"<Track: {self.name!r}>"
 
-    def __init__(self, track: Dict[str, Any]) -> None:
-        self._payload = track
+    def __init__(self, payload: Dict[str, Any]) -> None:
+        self._payload = payload
 
     @property
     def name(self) -> str:
@@ -117,6 +115,6 @@ class Track:
         return self._payload["name"]
 
     @property
-    def version_pattern(self) -> str:
+    def version_pattern(self) -> Optional[str]:
         """Return the version pattern accepted by this track."""
         return self._payload["version-pattern"]
