@@ -322,10 +322,7 @@ class ElfFile:
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
-            if (
-                verneed_section is not None
-                and verneed_section.header.sh_type != "SHT_NOBITS"
-            ):
+            if isinstance(verneed_section, elftools.elf.gnuversions.GNUVerNeedSection):
                 for library, versions in verneed_section.iter_versions():
                     library_name = _ensure_str(library.name)
                     # If the ELF file only references weak symbols
