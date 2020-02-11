@@ -81,7 +81,7 @@ class RubyPlugin(BasePlugin):
 
         # Beta Warning
         # Remove this comment and warning once ruby plugin is stable.
-        logger.warn(
+        logger.warning(
             "The ruby plugin is currently in beta, "
             "its API may break. Use at your own risk"
         )
