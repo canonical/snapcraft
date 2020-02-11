@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -54,9 +54,7 @@ class ListRegisteredTestCase(FakeStoreCommandsBaseTestCase):
         result = self.run_command([self.command_name])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output, Contains("There are no registered snaps for series '16'.")
-        )
+        self.assertThat(result.output, Contains("There are no registered snaps."))
 
     def test_list_registered_successfully(self):
         self.fake_store_account_info.mock.return_value = {
