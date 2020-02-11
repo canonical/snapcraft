@@ -155,14 +155,19 @@ if [ "$HOME" != "$SNAP_USER_DATA" ] && ! is_subpath "$XDG_CONFIG_HOME" "$HOME"; 
   done
 fi
 
-if can_open_file "$REALHOME/.config/user-dirs.dirs" && can_open_file "$REALHOME/.config/user-dirs.locale"; then
+if can_open_file "$REALHOME/.config/user-dirs.dirs"; then
   # shellcheck disable=SC2154
   if [ "$needs_update" = true ] || [ "$needs_xdg_reload" = true ]; then
     sed "/^#/!s#\$HOME#${REALHOME}#g" "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
-    cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
-    for f in user-dirs.dirs user-dirs.locale; do
-      md5sum < "$REALHOME/.config/$f" > "$XDG_CONFIG_HOME/$f.md5sum"
-    done
+    md5sum < "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum"
+    # It's possible user-dirs.dirs exists when user-dirs.locale doesn't. This
+    # simply means the user opted to never ask to translate their user dirs
+    if can_open_file "$REALHOME/.config/user-dirs.locale"; then
+      cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
+      md5sum < "$REALHOME/.config/user-dirs.locale" > "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+    elif [ -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]; then
+      rm "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+    fi
     needs_xdg_reload=true
   fi
 else
