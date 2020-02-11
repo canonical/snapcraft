@@ -32,42 +32,102 @@ class SystemUserTests(unit.TestCase):
 
     def test_invalid_user_empty_scope(self):
         user = SystemUser(name="name", scope=None)
+
         error = self.assertRaises(errors.SystemUsernamesValidationError, user.validate)
-        self.assertThat(
-            error.get_brief(),
-            Equals("Invalid system-usernames for 'name': scope None is invalid"),
-        )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("scope None is invalid"))
 
     def test_invalid_user_empty_scope_from_dict(self):
         user_dict = {"scope": None}
+
         error = self.assertRaises(
             errors.SystemUsernamesValidationError,
             SystemUser.from_dict,
             user_name="name",
             user_dict=user_dict,
         )
-        self.assertThat(
-            error.get_brief(),
-            Equals("Invalid system-usernames for 'name': 'scope' is undefined"),
-        )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("'scope' is undefined"))
 
     def test_invalid_user_non_shared_scope(self):
         user = SystemUser(name="name", scope="none")
+
         error = self.assertRaises(errors.SystemUsernamesValidationError, user.validate)
-        self.assertThat(
-            error.get_brief(),
-            Equals("Invalid system-usernames for 'name': scope 'none' is invalid"),
-        )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("scope 'none' is invalid"))
 
     def test_invalid_user_non_shared_scope_from_dict(self):
         user_dict = {"scope": "ghost"}
+
         error = self.assertRaises(
             errors.SystemUsernamesValidationError,
             SystemUser.from_dict,
             user_name="name",
             user_dict=user_dict,
         )
-        self.assertThat(
-            error.get_brief(),
-            Equals("Invalid system-usernames for 'name': scope 'ghost' is invalid"),
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("scope 'ghost' is invalid"))
+
+    def test_from_object_dict(self):
+        user_name = "name"
+        user_object = {"scope": "shared"}
+
+        user = SystemUser.from_object(user_name=user_name, user_object=user_object)
+
+        self.assertThat(user.name, Equals(user_name))
+        self.assertThat(user.scope, Equals(SystemUserScope.SHARED))
+
+    def test_from_object_dict_invalid(self):
+        user_name = "name"
+        user_object = {"scope": "invalid_scope"}
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
         )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("scope 'invalid_scope' is invalid"))
+
+    def test_from_object_none(self):
+        user_name = "name"
+        user_object = None
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
+        )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("undefined user"))
+
+    def test_from_object_string(self):
+        user_name = "name"
+        user_object = "shared"
+
+        user = SystemUser.from_object(user_name=user_name, user_object=user_object)
+
+        self.assertThat(user.name, Equals(user_name))
+        self.assertThat(user.scope, Equals(SystemUserScope.SHARED))
+
+    def test_from_object_string_invalid(self):
+        user_name = "name"
+        user_object = "invalid_scope"
+
+        error = self.assertRaises(
+            errors.SystemUsernamesValidationError,
+            SystemUser.from_object,
+            user_name=user_name,
+            user_object=user_object,
+        )
+
+        self.assertThat(error._name, Equals("name"))
+        self.assertThat(error._message, Equals("scope 'invalid_scope' is invalid"))

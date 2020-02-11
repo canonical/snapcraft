@@ -419,7 +419,7 @@ def status(snap_name, arch):
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def list_revisions(snap_name, series, arch):
+def list_revisions(snap_name, arch):
     """Get the history on the store for <snap-name>.
 
     This command has an alias of `revisions`.
@@ -430,7 +430,7 @@ def list_revisions(snap_name, series, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, series, arch)
+    snapcraft.revisions(snap_name, arch)
 
 
 @storecli.command("list-registered")
@@ -497,7 +497,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": "16"})
+            snap_list.append({"name": package, "series": DEFAULT_SERIES})
 
     if channels:
         channel_list = channels.split(",")

@@ -378,6 +378,51 @@ class RustPluginTest(RustPluginBaseTest):
         )
 
     @mock.patch.object(rust.sources, "Script")
+    def test_pull_with_cargo_lock(self, script_mock):
+        self.plugin.options.rust_revision = []
+        self.plugin.options.rust_channel = []
+        with open(self.plugin.source_path / "Cargo.lock", "w") as f:
+            f.write("")
+
+        self.plugin.pull()
+
+        self.assertThat(self.run_mock.call_count, Equals(3))
+
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        os.path.join(self.plugin._rustup_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                        "--profile=minimal",
+                        "--default-toolchain",
+                        "none",
+                    ],
+                    cwd=os.path.join(self.plugin.partdir, "build"),
+                    env=self.plugin._build_env(),
+                ),
+                mock.call(
+                    [self.plugin._rustup_cmd, "install", "stable"],
+                    cwd=self.plugin.builddir,
+                    env=self.plugin._build_env(),
+                ),
+                mock.call(
+                    [
+                        self.plugin._cargo_cmd,
+                        "+stable",
+                        "fetch",
+                        "--manifest-path",
+                        os.path.join(self.plugin.sourcedir, "Cargo.toml"),
+                        "--locked",
+                    ],
+                    cwd=self.plugin.builddir,
+                    env=self.plugin._build_env(),
+                ),
+            ]
+        )
+
+    @mock.patch.object(rust.sources, "Script")
     def test_pull_with_rust_toolchain_file(self, script_mock):
         open(os.path.join(self.plugin.sourcedir, "rust-toolchain"), "w").close()
 
@@ -640,6 +685,28 @@ class RustPluginTest(RustPluginBaseTest):
                 "--force",
                 "--features",
                 "conditional-compilation",
+            ],
+            cwd=os.path.join(self.plugin.partdir, "build"),
+            env=self.plugin._build_env(),
+        )
+
+    def test_build_with_cargo_lock(self):
+        with open(self.plugin.source_path / "Cargo.lock", "w") as f:
+            f.write("")
+
+        self.plugin.build()
+
+        self.run_mock.assert_called_once_with(
+            [
+                self.plugin._cargo_cmd,
+                "+stable",
+                "install",
+                "--path",
+                self.plugin.builddir,
+                "--root",
+                self.plugin.installdir,
+                "--force",
+                "--locked",
             ],
             cwd=os.path.join(self.plugin.partdir, "build"),
             env=self.plugin._build_env(),

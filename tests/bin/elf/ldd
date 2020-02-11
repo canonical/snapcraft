@@ -20,6 +20,9 @@ _LDD_OUT = {
         'barsnap.so.2 => {CORE_PATH}/barsnap.so.2 (0xbeef)',
         '/lib/baz.so.2 (0x1234)',
     ],
+    'fake_elf-with-host-libraries': [
+        'moo.so.2 => /usr/lib/moo.so.2 (0xbeef)',
+    ]
 }
 
 

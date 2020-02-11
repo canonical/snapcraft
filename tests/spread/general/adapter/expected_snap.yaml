@@ -13,6 +13,8 @@ apps:
     - snap/command-chain/snapcraft-runner
   adapter-none:
     command: test-cmd
+  adapter-none-py:
+    command: test-cmd.py
   wrapped-default:
     command: command-wrapped-default.wrapper
     command-chain:

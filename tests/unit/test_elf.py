@@ -139,14 +139,7 @@ class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("os.path.exists")
-        self.path_exists_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.path_exists_mock.return_value = True
-
-        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(self.fake_logger)
+        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
 
     def test_get_libraries(self):
         elf_file = self.fake_elf["fake_elf-2.23"]
@@ -236,6 +229,9 @@ class TestGetLibraries(TestElfBase):
         )
 
     def test_get_libraries_ldd_failure_logs_warning(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
         elf_file = self.fake_elf["fake_elf-bad-ldd"]
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
@@ -249,6 +245,29 @@ class TestGetLibraries(TestElfBase):
             self.fake_logger.output,
             Contains("Unable to determine library dependencies for"),
         )
+
+    def test_existing_host_library_searched_for(self):
+        elf_file = self.fake_elf["fake_elf-with-host-libraries"]
+
+        class MooLibrary(elf.Library):
+            """A Library implementation that always returns valid for moo."""
+
+            def _is_valid_elf(self, resolved_path: str) -> bool:
+                #  This path is defined in ldd for fake_elf-with-host-libraries.
+                if resolved_path == "/usr/lib/moo.so.2":
+                    return True
+                else:
+                    return super()._is_valid_elf(resolved_path)
+
+        with mock.patch("snapcraft.internal.elf.Library", side_effect=MooLibrary):
+            libs = elf_file.load_dependencies(
+                root_path=self.fake_elf.root_path,
+                core_base_path=self.fake_elf.core_base_path,
+                arch_triplet=self.arch_triplet,
+                content_dirs=self.content_dirs,
+            )
+
+        self.assertThat(libs, Equals({self.fake_elf.root_libraries["moo.so.2"]}))
 
 
 class TestGetElfFiles(TestElfBase):

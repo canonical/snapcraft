@@ -1,6 +1,8 @@
 project: snapcraft
 
 environment:
+  SPREAD_DEBUG_JOURNAL: "$(HOST: echo ${SPREAD_DEBUG_JOURNAL:-false})"
+
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
@@ -166,13 +168,17 @@ prepare: |
   fi
 
 debug: |
-  journalctl -xe
+  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
+    journalctl -xe
+  fi
 
 restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 debug-each: |
-  journalctl -xe
+  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
+    journalctl -xe
+  fi
 
 suites:
  # Unit tests
