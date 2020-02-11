@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,11 +19,11 @@ from http.client import responses
 import logging
 from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from . import channels
 from . import status
-from snapcraft.internal.errors import SnapcraftError
+from snapcraft.internal.errors import SnapcraftError, SnapcraftException
 from snapcraft import formatting_utils
 
 logger = logging.getLogger(__name__)
@@ -111,28 +111,63 @@ class StoreNetworkError(StoreError):
         super().__init__(message=message)
 
 
-class SnapNotFoundError(StoreError):
+class SnapNotFoundError(SnapcraftException):
+    def __init__(
+        self,
+        *,
+        snap_name: str = "",
+        snap_id: Optional[str] = None,
+        channel: Optional[str] = None,
+        arch: Optional[str] = None,
+    ):
+        super().__init__()
 
-    __FMT_ARCH_CHANNEL = (
-        "Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel."
-    )
-    __FMT_CHANNEL = "Snap {name!r} was not found in the {channel!r} channel."
-    __FMT_SERIES_ARCH = "Snap {name!r} for {arch!r} was not found in {series!r} series."
-    __FMT_SERIES = "Snap {name!r} was not found in {series!r} series."
+        # Defaulting snap_name to "" to support the one case we have that
+        # makes use of snap_id.
+        if snap_name == "" and snap_id is None:
+            raise RuntimeError("Both 'snap_name' and 'snap_id' cannot be None.")
 
-    fmt = "Snap {name!r} was not found."
+        self._snap_name = snap_name
+        self._snap_id = snap_id
+        self._channel = channel
+        self._arch = arch
 
-    def __init__(self, name, channel=None, arch=None, series=None):
-        if channel and arch:
-            self.fmt = self.__FMT_ARCH_CHANNEL
-        elif channel:
-            self.fmt = self.__FMT_CHANNEL
-        elif series and arch:
-            self.fmt = self.__FMT_SERIES_ARCH
-        elif series:
-            self.fmt = self.__FMT_SERIES
+    def get_brief(self) -> str:
+        if self._snap_id:
+            # This is legacy.
+            brief = f"Cannot find snap with snap_id {self._snap_id!r}."
+        elif self._channel and self._arch:
+            brief = f"Snap {self._snap_name!r} for architecture {self._arch!r} was not found on channel {self._channel!r}."
+        elif self._channel:
+            brief = (
+                f"Snap {self._snap_name!r} was not found on channel {self._channel!r}."
+            )
+        elif self._arch:
+            brief = f"Snap {self._snap_name!r} for architecture {self._arch!r} was not found."
+        else:
+            brief = f"Snap {self._snap_name!r} was not found."
 
-        super().__init__(name=name, channel=channel, arch=arch, series=series)
+        return brief
+
+    def get_resolution(self) -> str:
+        # All new APIs use snap_name.
+        if self._snap_id:
+            snap_identifier = self._snap_id
+        else:
+            snap_identifier = self._snap_name
+
+        resolution = f"Ensure you have proper access rights for {snap_identifier!r}."
+
+        if self._channel and self._arch:
+            resolution += (
+                f"\nAlso ensure the correct channel and architecture was used."
+            )
+        elif self._channel:
+            resolution += f"\nAlso ensure the correct channel was used."
+        elif self._arch:
+            resolution += f"\nAlso ensure the correct architecture was used."
+
+        return resolution
 
 
 class NoSnapIdError(StoreError):
@@ -384,7 +419,7 @@ class StorePushError(StoreError):
             response=response,
             snap_name=snap_name,
             status_code=response.status_code,
-            **response_json
+            **response_json,
         )
 
 
@@ -580,7 +615,7 @@ class StoreMetadataError(StoreError):
             response=response,
             snap_name=snap_name,
             status_code=response.status_code,
-            **response_json
+            **response_json,
         )
 
 
@@ -846,7 +881,7 @@ class InvalidChannelSet(StoreError):
         *,
         snap_name: str,
         channel: channels.Channel,
-        channel_outliers: List[status.SnapStatusChannelDetails]
+        channel_outliers: List[status.SnapStatusChannelDetails],
     ) -> None:
         arches = formatting_utils.humanize_list(
             [c.arch for c in channel_outliers], "and"
