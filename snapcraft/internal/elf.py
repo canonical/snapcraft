@@ -24,6 +24,7 @@ import tempfile
 from typing import Dict, FrozenSet, List, Optional, Set, Sequence, Tuple, Union
 
 import elftools.elf.elffile
+from elftools.construct import ConstructError
 import elftools.common.exceptions
 from pkg_resources import parse_version
 
@@ -284,7 +285,7 @@ class ElfFile:
 
         try:
             self._extract_attributes()
-        except (UnicodeDecodeError, AttributeError) as exception:
+        except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
