@@ -35,6 +35,21 @@ from snapcraft.internal import common, errors, repo
 logger = logging.getLogger(__name__)
 
 
+def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
+    logger.debug(f"_ldd_resolve: {soname!r} {soname_path!r}")
+
+    # If found, resolve the path components.
+    if soname_path.startswith("/"):
+        abs_path = os.path.abspath(soname_path)
+
+        # Use resolved path if confirmed to exist.
+        if os.path.exists(abs_path):
+            return soname, abs_path
+
+    # Not found, use the soname.
+    return soname, soname
+
+
 def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
     """Return a set of resolved library mappings using specified library paths.
 
@@ -49,42 +64,38 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
 
     try:
         # ldd output sample:
+        # linux-vdso.so.1 =>  (0x00007ffdc13ec000)   <== ubuntu 16.04 ldd
+        # linux-vdso.so.1 (0x00007ffdc13ec000)       <== newer ldd
         # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
         # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
         # libmissing.so.2 => not found
         ldd_lines = (
             subprocess.check_output(["ldd", path], env=env).decode().splitlines()
         )
+        logger.debug(f"ldd output:\n{ldd_lines}")
     except subprocess.CalledProcessError:
         logger.warning("Unable to determine library dependencies for {!r}".format(path))
         return libraries
 
     for line in ldd_lines:
         # First match against libraries that are found.
-        # We know this because of the address (0x...).
         match = re.match(r"\t(.*) => (.*) \(0x", line)
-        if match:
-            soname = match.group(1)
-            soname_path = match.group(2)
-            libraries[soname] = soname_path
+
+        if not match:
+            # Now find those not found, or not providing the address...
+            match = re.match(r"\t(.*) => (.*)", line)
+
+        # Ignore ld-linux, linux-vdso, etc. that don't match these regex.
+        # As Ubuntu 16.04's ldd provides an empty string for the found
+        # path (in group 2) on linux-vdso, check for this and ignore it.
+        # See example output above for reference.
+        if not match or match.group(2) == "":
             continue
 
-        # Now find those not found, or not providing the address...
-        match = re.match(r"\t(.*) => (.*)", line)
-        if match:
-            soname = match.group(1)
-            soname_path = match.group(2)
-            if soname_path.startswith("/") and os.path.exists(soname_path):
-                # Checks out.
-                libraries[soname] = soname_path
-            else:
-                # Doesn't check out - use the soname.
-                libraries[soname] = soname
-            continue
+        soname, soname_path = _ldd_resolve(match.group(1), match.group(2))
+        libraries[soname] = soname_path
 
-        # Ignore the rest... (linux-vdso.so, ld-linux.so).
-        continue
-
+    logger.debug(f"ldd results: {libraries!r}")
     return libraries
 
 
@@ -166,7 +177,7 @@ class Library:
         search_paths: List[str],
         core_base_path: str,
         arch: ElfArchitectureTuple,
-        soname_cache: SonameCache
+        soname_cache: SonameCache,
     ) -> None:
 
         self.soname = soname
