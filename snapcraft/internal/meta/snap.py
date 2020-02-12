@@ -236,7 +236,7 @@ class Snap:
             user.validate()
 
         if self.is_passthrough_enabled:
-            logger.warn(
+            logger.warning(
                 "The 'passthrough' property is being used to "
                 "propagate experimental properties to snap.yaml "
                 "that have not been validated."

@@ -475,7 +475,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 elif opt == "CONFIG_DEVPTS_MULTIPLE_INSTANCES":
                     note = "(4.8.x and earlier versions only)"
                 warn += "{} {}\n".format(opt, note)
-            logger.warn(warn)
+            logger.warning(warn)
 
     def _do_check_initrd(self, builtin, modules):
         # check all required_boot[] items are either builtin or part of initrd
@@ -503,7 +503,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             warn = "\n{}\n".format(msg)
             for opt in missing:
                 warn += "{}\n".format(opt)
-            logger.warn(warn)
+            logger.warning(warn)
 
     def pull(self):
         super().pull()

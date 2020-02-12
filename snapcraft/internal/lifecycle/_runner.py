@@ -130,7 +130,7 @@ def execute(
     executor = _Executor(project_config)
     executor.run(step, part_names)
     if not executor.steps_were_run:
-        logger.warn(
+        logger.warning(
             "The requested action has already been taken. Consider\n"
             "specifying parts, or clean the steps you want to run again."
         )
