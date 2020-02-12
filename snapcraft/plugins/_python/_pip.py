@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -463,7 +463,7 @@ class Pip:
         except subprocess.CalledProcessError:
             # --format requires a newer pip, so fall back to legacy output
             output = self._run_output(command)
-            json_output = []  # type: List[Dict[str, str]]
+            json_output: List[Dict[str, str]] = []
             version_regex = re.compile(r"\((.+)\)")
             for line in output.splitlines():
                 line = line.split()

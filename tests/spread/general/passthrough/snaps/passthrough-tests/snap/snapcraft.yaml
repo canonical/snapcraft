@@ -1,0 +1,30 @@
+name: passthrough-tests
+version: "1.0"
+summary: passthrough-tests
+description: passthrough-tests
+
+base: core18
+grade: devel
+confinement: strict
+
+parts:
+  passthrough-tests:
+    plugin: nil
+    source: .
+    override-build:
+      install -m 0755 test-cmd $SNAPCRAFT_PART_INSTALL/
+
+apps:
+  test-cmd:
+    adapter: none
+    command: test-cmd
+    passthrough:
+      pt-test-app: pt-test-app
+
+hooks:
+  configure:
+    passthrough:
+      pt-test-hook: pt-test-hook
+
+passthrough:
+  pt-test-snap: pt-test-snap

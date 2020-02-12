@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,6 +39,7 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 if TYPE_CHECKING:
@@ -394,8 +395,6 @@ class StoreClientCLI(storeapi.StoreClient):
 
 
 def list_registered():
-    series = storeapi.constants.DEFAULT_SERIES
-
     account_info = StoreClientCLI().get_account_information()
     snaps = [
         (
@@ -405,14 +404,14 @@ def list_registered():
             info["price"] or "-",
             "-",
         )
-        for name, info in account_info["snaps"].get(series, {}).items()
+        for name, info in account_info["snaps"].get(DEFAULT_SERIES, {}).items()
         # Presenting only approved snap registrations, which means name
         # disputes will be displayed/sorted some other way.
         if info["status"] == "Approved"
     ]
 
     if not snaps:
-        print("There are no registered snaps for series {!r}.".format(series))
+        echo.warning("There are no registered snaps.")
         return
 
     tabulated_snaps = tabulate(
@@ -582,7 +581,6 @@ def sign_build(snap_filename, key_name=None, local=False):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
-    snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
@@ -592,10 +590,10 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     try:
         authority_id = account_info["account_id"]
-        snap_id = account_info["snaps"][snap_series][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError as e:
         raise storeapi.errors.StoreBuildAssertionPermissionError(
-            snap_name, snap_series
+            snap_name, DEFAULT_SERIES
         ) from e
 
     snap_build_path = snap_filename + "-build"
@@ -725,7 +723,7 @@ def push(snap_filename, release_channels=None):
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
     if release_channels:
-        status(snap_name, storeapi.constants.DEFAULT_SERIES, deb_arch)
+        status(snap_name, deb_arch)
 
     snap_cache.cache(snap_filename=snap_filename)
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
@@ -868,9 +866,7 @@ def _add_progressive_release_information(
     returned by the release API does not contain this information.
     """
     for channel in [storeapi.channels.Channel(c) for c in release_channels]:
-        for arch_entry in channel_map_tree[channel.track][
-            storeapi.constants.DEFAULT_SERIES
-        ].values():
+        for arch_entry in channel_map_tree[channel.track][DEFAULT_SERIES].values():
             for channel_entry in arch_entry:
                 if "progressive" in channel_entry:
                     continue
@@ -925,7 +921,7 @@ def _tabulated_channel_map_tree(channel_map_tree):
 
     """Tabulate channel map (LTS Channel channel-maps)"""
 
-    def _format_tree(channel_maps, track, series):
+    def _format_tree(channel_maps, track):
         arches = []
 
         for arch, channel_map in sorted(channel_maps.items()):
@@ -949,9 +945,7 @@ def _tabulated_channel_map_tree(channel_map_tree):
         for series, series_data in track_data.items():
             for arch, channel_map in series_data.items():
                 channel_maps[arch] = channel_map
-        parsed_channels = [
-            channel for channel in _format_tree(channel_maps, track, series)
-        ]
+        parsed_channels = [channel for channel in _format_tree(channel_maps, track)]
         data += parsed_channels
 
     have_expiration = any(x[6] for x in data)
@@ -970,16 +964,14 @@ def _tabulated_channel_map_tree(channel_map_tree):
 
 def close(snap_name, channel_names):
     """Close one or more channels for the specific snap."""
-    snap_series = storeapi.constants.DEFAULT_SERIES
-
     store_client = StoreClientCLI()
     account_info = store_client.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][snap_series][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError as e:
         raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, snap_series
+            snap_name, DEFAULT_SERIES
         ) from e
 
     closed_channels, c_m_tree = store_client.close_channels(
@@ -1031,8 +1023,8 @@ def download(
     )
 
 
-def status(snap_name, series, arch):
-    status = StoreClientCLI().get_snap_status(snap_name, series, arch)
+def status(snap_name, arch):
+    status = StoreClientCLI().get_snap_status(snap_name, arch)
 
     channel_map_tree = status.get("channel_map_tree", {})
     # This does not look good in green so we print instead
@@ -1050,8 +1042,8 @@ def _get_text_for_current_channels(channels, current_channels):
     )
 
 
-def revisions(snap_name, series, arch):
-    revisions = StoreClientCLI().get_snap_revisions(snap_name, series, arch)
+def revisions(snap_name, arch):
+    revisions = StoreClientCLI().get_snap_revisions(snap_name, arch)
 
     parsed_revisions = [
         (
@@ -1079,12 +1071,11 @@ def gated(snap_name):
     # Get data for the gating snap
     snaps = account_info.get("snaps", {})
 
-    release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
     try:
-        snap_id = snaps[release][snap_name]["snap-id"]
+        snap_id = snaps[DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name)
+        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
     validations = store_client.get_assertion(snap_id, endpoint="validations")
 
@@ -1123,11 +1114,10 @@ def validate(snap_name, validations, revoke=False, key=None):
     authority_id = account_info["account_id"]
 
     # Get data for the gating snap
-    release = storeapi.constants.DEFAULT_SERIES
     try:
-        snap_id = account_info["snaps"][release][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name)
+        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
@@ -1137,7 +1127,7 @@ def validate(snap_name, validations, revoke=False, key=None):
         assertion = {
             "type": "validation",
             "authority-id": authority_id,
-            "series": release,
+            "series": DEFAULT_SERIES,
             "snap-id": snap_id,
             "approved-snap-id": approved_data.snap_id,
             "approved-snap-revision": rev,

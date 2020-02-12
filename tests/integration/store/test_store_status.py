@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,18 +30,20 @@ class StatusTestCase(integration.StoreTestCase):
         error = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, ["status", "mysnap"]
         )
-        self.assertIn("Snap 'mysnap' was not found in '16' series.", str(error.output))
 
-    def test_status_with_login_bad_snap_with_series(self):
-        self.addCleanup(self.logout)
-        self.login()
+        self.assertThat(
+            str(error.output),
+            Contains(
+                dedent(
+                    """\
+            Snap 'mysnap' was not found.
 
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft,
-            ["status", "mysnap", "--series=16"],
+            Recommended resolution:
+            Ensure you have proper access rights for 'mysnap'.
+        """
+                )
+            ),
         )
-        self.assertIn("Snap 'mysnap' was not found in '16' series.", str(error.output))
 
     def test_status_with_login_bad_snap_with_arch(self):
         self.addCleanup(self.logout)
@@ -52,8 +54,20 @@ class StatusTestCase(integration.StoreTestCase):
             self.run_snapcraft,
             ["status", "mysnap", "--arch=i386"],
         )
-        self.assertIn(
-            "Snap 'mysnap' for 'i386' was not found in '16' series.", str(error.output)
+
+        self.assertThat(
+            str(error.output),
+            Contains(
+                dedent(
+                    """\
+            Snap 'mysnap' for architecture 'i386' was not found.
+
+            Recommended resolution:
+            Ensure you have proper access rights for 'mysnap'.
+            Also ensure the correct architecture was used.
+        """
+                )
+            ),
         )
 
     def test_status_fake_store(self):
@@ -121,11 +135,11 @@ class StatusTestCase(integration.StoreTestCase):
         output = self.run_snapcraft(["status", name])
         expected = dedent(
             """\
-            Track    Arch    Channel    Version                           Revision
-            latest   {arch}   stable     -                                 -
-                             candidate  -                                 -
-                             beta       {version}  1
-                             edge       ^                                 ^
+            Track    Arch    Channel    Version                           Revision    Notes
+            latest   {arch}   stable     -                                 -           -
+                             candidate  -                                 -           -
+                             beta       {version}  1           -
+                             edge       ^                                 ^           -
             """
         ).format(arch=self.deb_arch, version=version)
         self.assertThat(output, Contains(expected))

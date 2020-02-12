@@ -10,4 +10,4 @@ pexpect==4.7.0
 pycodestyle==2.5.0
 pyftpdlib==1.5.5
 pyramid==1.10.4
-pyinstaller==3.5; sys_platform == 'win32'
+pyinstaller==3.6; sys_platform == 'win32'

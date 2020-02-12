@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,8 +28,8 @@ from snapcraft.internal.indicators import download_requests_stream
 
 from . import logger
 from . import _upload
-from . import constants
 from . import errors
+from .constants import DEFAULT_SERIES
 
 from ._sso_client import SSOClient
 from ._snap_index_client import SnapIndexClient
@@ -160,7 +160,7 @@ class StoreClient:
             snap_name,
             is_private=is_private,
             store_id=store_id,
-            series=constants.DEFAULT_SERIES,
+            series=DEFAULT_SERIES,
         )
 
     def push_precheck(self, snap_name):
@@ -218,47 +218,41 @@ class StoreClient:
             progressive_key=progressive_key,
         )
 
-    def get_snap_revisions(self, snap_name, series=None, arch=None):
-        if series is None:
-            series = constants.DEFAULT_SERIES
-
+    def get_snap_revisions(self, snap_name, arch=None):
         account_info = self.get_account_information()
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_revisions, snap_id, series, arch
+            self.sca.snap_revisions, snap_id, DEFAULT_SERIES, arch
         )
 
         if not response:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
 
-    def get_snap_status(self, snap_name, series=None, arch=None):
-        if series is None:
-            series = constants.DEFAULT_SERIES
-
+    def get_snap_status(self, snap_name, arch=None):
         account_info = self.get_account_information()
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_status, snap_id, series, arch
+            self.sca.snap_status, snap_id, DEFAULT_SERIES, arch
         )
 
         if not response:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
 
@@ -350,11 +344,10 @@ class StoreClient:
     def push_metadata(self, snap_name, metadata, force):
         """Push the metadata to the server."""
         account_info = self.get_account_information()
-        series = constants.DEFAULT_SERIES
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series)
+            raise errors.SnapNotFoundError(snap_name=snap_name)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
@@ -366,11 +359,10 @@ class StoreClient:
     def push_binary_metadata(self, snap_name, metadata, force):
         """Push the binary metadata to the server."""
         account_info = self.get_account_information()
-        series = constants.DEFAULT_SERIES
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series)
+            raise errors.SnapNotFoundError(snap_name=snap_name)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)

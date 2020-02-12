@@ -8,6 +8,7 @@ env:
     - LC_ALL: "C.UTF-8"
     - LANG: "C.UTF-8"
     - PATH: "/snap/bin:$PATH"
+    - SPREAD_DEBUG_JOURNAL: "true"
 
 jobs:
   include:
@@ -97,6 +98,17 @@ jobs:
         - sudo journalctl -u snapd
         - /snap/bin/http https://api.snapcraft.io/v2/snaps/info/core architecture==amd64 Snap-Device-Series:16
 
+    - stage: deploy
+      name: Snap Store
+      addons:
+        snaps:
+          - name: snapcraft
+            channel: candidate
+            classic: true
+      workspaces:
+        use: snaps
+      if: (type = pull_request) AND (head_repo = "snapcore/snapcraft")
+      script: ./tools/travis_deploy.sh
     - stage: integration
       name: spread
       workspaces:
