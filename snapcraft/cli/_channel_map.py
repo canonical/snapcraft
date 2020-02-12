@@ -79,6 +79,10 @@ def _get_channel_line(
             notes = f"progressive ({mapped_channel.progressive.percentage:.0f}%)"
 
     except ValueError:
+        # if the branch is not None and we could not find it on the map,
+        # we won't print it for this architecture to.
+        if channel_info.branch is not None:
+            raise
         if channel_info.fallback is None:
             hint = "-"
         else:
@@ -131,10 +135,13 @@ def get_tabulated_channel_map(snap_channel_map, architectures):
                 else:
                     architecture_string = ""
 
-                channel_lines.append(
-                    [track_string, architecture_string]
-                    + _get_channel_line(snap_channel_map, channel_name, architecture)
-                )
+                try:
+                    channel_lines.append(
+                        [track_string, architecture_string]
+                        + _get_channel_line(snap_channel_map, channel_name, architecture)
+                    )
+                except ValueError:
+                    continue
 
     # Item 6 is expiration_date
     have_expiration = any(line[6] != "" for line in channel_lines)
