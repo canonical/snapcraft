@@ -16,6 +16,7 @@
 
 from textwrap import dedent
 from unittest import mock
+from typing import Optional
 
 import fixtures
 
@@ -26,21 +27,25 @@ class FakeOsRelease(fixtures.Fixture):
     def __init__(
         self,
         id: str = "ubuntu",
-        version_id: str = "16.04",
-        version_codename: str = None,
+        version_id: Optional[str] = "16.04",
+        version_codename: Optional[str] = None,
+        name: Optional[str] = "Ubuntu",
     ) -> None:
         self._id = id
         self._version_id = version_id
         self._version_codename = version_codename
+        self._name = name
 
     def _setUp(self):
         super()._setUp()
 
         with open("os-release", "w") as release_file:
+            if self._name is not None:
+                print(f'NAME="{self._name}"', file=release_file)
+
             print(
                 dedent(
-                    """\
-                NAME="Ubuntu"
+                    f"""\
                 VERSION="16.04.3 LTS (Xenial Xerus)"
                 ID_LIKE=debian
                 PRETTY_NAME="Ubuntu 16.04.3 LTS"
@@ -51,6 +56,7 @@ class FakeOsRelease(fixtures.Fixture):
                 ),
                 file=release_file,
             )
+
             if self._id is not None:
                 print("ID={}".format(self._id), file=release_file)
             if self._version_id is not None:
