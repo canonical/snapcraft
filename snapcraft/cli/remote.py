@@ -58,6 +58,15 @@ def remotecli():
     cls=PromptOption,
 )
 @click.option(
+    "--launchpad-snapcraft-channel",
+    default="stable",
+    metavar="<channel>",
+    nargs=1,
+    required=False,
+    type=str,
+    help="Specify Snapcraft channel for Launchpad to build with.",
+)
+@click.option(
     "--launchpad-timeout",
     metavar="<seconds>",
     type=int,
@@ -79,6 +88,7 @@ def remote_build(
     status: bool,
     build_on: str,
     launchpad_accept_public_upload: bool,
+    launchpad_snapcraft_channel: str,
     launchpad_timeout: int,
     package_all_sources: bool,
     echoer=echo,
@@ -136,6 +146,7 @@ def remote_build(
         build_id=build_id,
         architectures=architectures,
         deadline=deadline,
+        snapcraft_channel=launchpad_snapcraft_channel,
     )
 
     if status:

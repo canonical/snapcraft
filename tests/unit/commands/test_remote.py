@@ -72,3 +72,17 @@ class RemoteBuildTests(CommandBaseTestCase):
 
         self.mock_lc.start_build.assert_not_called()
         self.mock_lc.cleanup.assert_not_called()
+
+    def test_remote_build_snapcraft_channel(self):
+        result = self.run_command(
+            [
+                "remote-build",
+                "--launchpad-accept-public-upload",
+                "--launchpad-snapcraft-channel=edge",
+            ]
+        )
+
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(result.output, Contains("Building snap package for i386."))
+        self.assertThat(result.exit_code, Equals(0))
