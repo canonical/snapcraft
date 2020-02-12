@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,23 +15,47 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import platform
 
 import fixtures
+from testtools.matchers import Equals
+
 from snapcraft import ProjectOptions, storeapi, __version__ as snapcraft_version
 from tests import unit
+from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class UserAgentTestCase(unit.TestCase):
-    def test_user_agent(self):
+    def test_user_agent_linux(self):
+        self.useFixture(FakeOsRelease())
+
         arch = ProjectOptions().deb_arch
-        expected_pre = "snapcraft/{} ".format(snapcraft_version)
-        expected_post = " {} ({})".format(
-            "/".join(platform.dist()[0:2]), arch  # i.e. Ubuntu/16.04
+        expected = f"snapcraft/{snapcraft_version} Ubuntu/16.04 ({arch})"
+
+        self.expectThat(storeapi._agent.get_user_agent("linux"), Equals(expected))
+
+    def test_user_agent_linux_unknown(self):
+        self.useFixture(FakeOsRelease(name=None, version_id=None))
+
+        arch = ProjectOptions().deb_arch
+        expected = f"snapcraft/{snapcraft_version} Unknown/Unknown Version ({arch})"
+
+        self.expectThat(storeapi._agent.get_user_agent("linux"), Equals(expected))
+
+    def test_user_agent_windows(self):
+        arch = ProjectOptions().deb_arch
+        expected = f"snapcraft/{snapcraft_version} Windows ({arch})"
+
+        self.expectThat(
+            storeapi._agent.get_user_agent(platform="windows"), Equals(expected)
         )
-        actual = storeapi._agent.get_user_agent()
-        self.assertTrue(actual.startswith(expected_pre))
-        self.assertTrue(actual.endswith(expected_post))
+
+    def test_user_agent_darwin(self):
+        arch = ProjectOptions().deb_arch
+        expected = f"snapcraft/{snapcraft_version} Darwin ({arch})"
+
+        self.expectThat(
+            storeapi._agent.get_user_agent(platform="darwin"), Equals(expected)
+        )
 
     def test_in_travis_ci_env(self):
         self.useFixture(fixtures.EnvironmentVariable("TRAVIS_TESTING", "1"))
