@@ -514,6 +514,7 @@ class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
             slots:
               long-form:
                 interface: content
+                content: explicit-content
                 read:
                 - /
               short-form: interface-name
@@ -537,6 +538,7 @@ class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
             slots:
               long-form:
                 interface: content
+                content: explicit-content
                 read:
                 - /
               short-form: interface-name
