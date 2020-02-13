@@ -118,7 +118,13 @@ class ContentSlotTests(unit.TestCase):
         self.assertEqual(set(), slot.get_content_dirs(installed_path=""))
 
     def test_read_from_dict(self):
-        slot_dict = OrderedDict({"interface": "content", "read": ["some/path"]})
+        slot_dict = OrderedDict(
+            {
+                "interface": "content",
+                "content": "explicit-content",
+                "read": ["some/path"],
+            }
+        )
         slot_name = "slot-test"
 
         slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
@@ -130,6 +136,7 @@ class ContentSlotTests(unit.TestCase):
         self.assertEqual(
             set(slot_dict["read"]), slot.get_content_dirs(installed_path="")
         )
+        self.assertEqual(slot_dict["content"], slot.content)
 
     def test_read_from_dict_force_source_key(self):
         slot_dict = OrderedDict({"interface": "content", "read": ["some/path"]})
