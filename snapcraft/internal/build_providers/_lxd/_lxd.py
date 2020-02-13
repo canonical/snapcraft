@@ -235,7 +235,7 @@ class LXD(Provider):
                 ) from lxd_api_error
 
         # Ensure cloud init is done
-        self.echoer.wrapped("Waiting for cloud-init")
+        self.echoer.wrapped("Waiting for container to be ready")
         self._run(command=["cloud-init", "status", "--wait"])
 
     def _stop(self):
