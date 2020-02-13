@@ -44,9 +44,10 @@ ensure_dir_exists "$XDG_CONFIG_HOME"
 chmod 700 "$XDG_CONFIG_HOME"
 
 # If the user has modified their user-dirs settings, force an update
-if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" && -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]]; then
+if [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum" ]]; then
   if [[ "$(md5sum < "$REALHOME/.config/user-dirs.dirs")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum")" ||
-        "$(md5sum < "$REALHOME/.config/user-dirs.locale")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.locale.md5sum")" ]]; then
+        ( -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" &&
+          "$(md5sum < "$REALHOME/.config/user-dirs.locale")" != "$(cat "$XDG_CONFIG_HOME/user-dirs.locale.md5sum")" ) ]]; then
     needs_update=true
   fi
 else
