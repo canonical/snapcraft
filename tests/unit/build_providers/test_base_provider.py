@@ -23,8 +23,7 @@ from unittest.mock import call, patch, Mock
 from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import errors, _base_provider
-from tests import unit
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
