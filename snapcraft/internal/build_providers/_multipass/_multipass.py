@@ -98,7 +98,6 @@ class Multipass(Provider):
         return "snapcraft:{}".format(self.project.info.get_build_base())
 
     def _launch(self) -> None:
-        cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
         cpus = _MachineSetting(envvar="SNAPCRAFT_BUILD_ENVIRONMENT_CPU", default="2")
@@ -113,7 +112,6 @@ class Multipass(Provider):
             mem=mem.get_value(),
             disk=disk.get_value(),
             image=image,
-            cloud_init=cloud_user_data_filepath,
         )
 
     def _start(self):
