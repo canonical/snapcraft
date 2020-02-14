@@ -38,13 +38,15 @@ logger = logging.getLogger(__name__)
 def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
     logger.debug(f"_ldd_resolve: {soname!r} {soname_path!r}")
 
-    # If found, resolve the path components.
-    if soname_path.startswith("/"):
+    # If found, resolve the path components.  We can safely determine that
+    # ldd found the match if it returns an absolute path.  For additional
+    # safety, check that it exists.  See example ldd output in ldd() below.
+    # If not found, ldd should use a string like "not found", but we do not
+    # really care what that string is with this approach as it has to start
+    # with "/" and point to a valid file.
+    if soname_path.startswith("/") and os.path.exists(soname_path):
         abs_path = os.path.abspath(soname_path)
-
-        # Use resolved path if confirmed to exist.
-        if os.path.exists(abs_path):
-            return soname, abs_path
+        return soname, abs_path
 
     # Not found, use the soname.
     return soname, soname
