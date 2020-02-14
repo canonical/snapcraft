@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,8 +23,7 @@ from unittest.mock import call, patch, Mock
 from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import errors, _base_provider
-from tests import unit
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -431,9 +430,7 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         os.makedirs(provider.provider_project_dir)
 
-        cloud_data_filepath = provider._get_cloud_user_data(
-            timezone="America/Argentina/Cordoba"
-        )
+        cloud_data_filepath = provider._get_cloud_user_data()
         self.assertThat(
             cloud_data_filepath,
             FileContains(
@@ -446,8 +443,6 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
                 mode: growpart
                 devices: ["/"]
                 ignore_growroot_disabled: false
-            runcmd:
-            - ["ln", "-s", "../usr/share/zoneinfo/America/Argentina/Cordoba", "/etc/localtime"]
             write_files:
                 - path: /root/.bashrc
                   permissions: 0644
@@ -473,19 +468,4 @@ class GetCloudUserDataTest(BaseProviderBaseTest):
         """  # noqa: W605
                 )
             ),
-        )
-
-
-class GetTzDataTest(unit.TestCase):
-    def test_path_found(self):
-        with open("timezone", "w") as timezone_file:
-            print("America/Argentina/Cordoba", file=timezone_file)
-
-        self.assertThat(
-            _base_provider._get_tzdata("timezone"), Equals("America/Argentina/Cordoba")
-        )
-
-    def test_path_not_found(self):
-        self.assertThat(
-            _base_provider._get_tzdata("timezone-not-found"), Equals("Etc/UTC")
         )
