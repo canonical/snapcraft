@@ -293,6 +293,24 @@ class LaunchpadTestCase(unit.TestCase):
             str(raised), Equals("Remote build exceeded configured timeout.")
         )
 
+    def test_issue_build_request_defaults(self):
+        fake_snap = mock.MagicMock()
+
+        self.lpc._issue_build_request(fake_snap)
+
+        self.assertThat(
+            fake_snap.mock_calls,
+            Equals(
+                [
+                    mock.call.requestBuilds(
+                        archive="main_archive",
+                        channels={"core18": "stable", "snapcraft": "stable"},
+                        pocket="Updates",
+                    )
+                ]
+            ),
+        )
+
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     def test_monitor_build(self, mock_download_file):
         open("test_i386.txt", "w").close()
