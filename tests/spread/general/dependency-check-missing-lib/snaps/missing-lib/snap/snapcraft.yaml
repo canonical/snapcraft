@@ -1,0 +1,19 @@
+name: missing-lib
+version: 'test1'
+summary: test
+description: test
+grade: stable
+confinement: strict
+
+parts:
+  pciutils:
+    plugin: nil
+    stage-packages:
+      - pciutils
+    stage:
+      - -usr/lib
+      - -lib
+
+apps:
+  lspci:
+    command: usr/bin/lspci
