@@ -61,6 +61,7 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
 
     env = os.environ.copy()
     env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
+    logger.debug(f"invoking ldd with ld library paths: {ld_library_paths!r}")
 
     try:
         # ldd output sample:
