@@ -114,6 +114,7 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
+            partdir=self.plugin.partdir,
             sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
             stagedir=self.stagedir,
