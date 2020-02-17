@@ -146,25 +146,29 @@ jobs:
         - SNAPCRAFT_PACKAGE_TYPE=snap ./runtests.sh tests/integration/store
 
     - stage: docker
+      if type = cron
       env:
         RISK: "stable"
       script:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
+    - if type = cron
+      env:
         RISK: "edge"
       script:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
+    - if type = cron
+      env:
         RISK: "beta"
       script:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
-    - env:
+    - if type = cron
+      env:
         RISK: "candidate"
       script:
         - cd docker
