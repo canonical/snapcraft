@@ -14,9 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import os
+from pathlib import Path
 import tarfile
 
+from testtools.matchers import Equals
+
+from snapcraft import yaml_utils
 from snapcraft.internal.remote_build import WorkTree
 from snapcraft.project import Project
 from tests import fixture_setup, unit
@@ -184,3 +189,40 @@ class WorkTreeTestCase(unit.TestCase):
         )
         self.assertTrue(self._dest.exists("repo", "snap"))
         self.assertTrue(self._dest.exists("repo", "snap", "snapcraft.yaml"))
+
+    def test_stripped_source_keys(self):
+        self._snapcraft_yaml.update_part(
+            "my-part",
+            {
+                "plugin": "nil",
+                "source": self._source.path,
+                "source-checksum": "strip-me",
+                "source-branch": "strip-me",
+                "source-commit": "strip-me",
+                "source-depth": "strip-me",
+                "source-subdir": "test-sub-dir",
+                "source-tag": "strip-me",
+                "source-type": "local",
+            },
+        )
+
+        self.load_project_and_worktree()
+        self._wt.prepare_repository()
+
+        config = yaml_utils.load_yaml_file(
+            str(Path(self._dest.path, "repo", "snap", "snapcraft.yaml"))
+        )
+
+        self.assertThat(
+            config["parts"]["my-part"],
+            Equals(
+                OrderedDict(
+                    [
+                        ("plugin", "nil"),
+                        ("source", "sources/my-part/my-part.tar.gz"),
+                        ("source-subdir", "test-sub-dir"),
+                        ("source-type", "tar"),
+                    ]
+                )
+            ),
+        )
