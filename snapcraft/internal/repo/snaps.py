@@ -61,6 +61,9 @@ class SnapPackage:
 
     @classmethod
     def is_snap_installed(cls, snap):
+        #Hack for windows
+        if sys.platform == "win32":
+            return False
         return cls(snap).installed
 
     def __init__(self, snap):

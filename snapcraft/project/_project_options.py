@@ -131,6 +131,8 @@ def _get_platform_architecture():
 class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
+        if sys.platform == "win32":
+            return os.cpu_count()
         return len(os.sched_getaffinity(0))
 
     @property
