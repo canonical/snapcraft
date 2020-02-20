@@ -379,6 +379,9 @@ class Snap:
         if self.description is not None:
             snap_dict["description"] = self.description
 
+        if self.adopt_info is not None:
+            snap_dict["adopt-info"] = self.adopt_info
+
         if self.apps:
             snap_dict["apps"] = OrderedDict()
             for name, app in sorted(self.apps.items()):
@@ -416,6 +419,9 @@ class Snap:
         if self.license is not None:
             snap_dict["license"] = self.license
 
+        if self.passthrough:
+            snap_dict["passthrough"] = deepcopy(self.passthrough)
+
         if self.plugs:
             snap_dict["plugs"] = OrderedDict()
             for name, plug in sorted(self.plugs.items()):
@@ -437,18 +443,28 @@ class Snap:
         if self.type is not None:
             snap_dict["type"] = self.type
 
-        # Apply passthrough keys.
-        snap_dict.update(deepcopy(self.passthrough))
         return snap_dict
 
-    def write_snap_yaml(self, path: str) -> None:
-        """Write snap.yaml contents to specified path."""
+    def to_snap_yaml_dict(self) -> OrderedDict:
         snap_dict = self.to_dict()
 
         # If the base is core in snapcraft.yaml we do not set it in
         # snap.yaml LP: #1819290
         if self.base == "core":
             snap_dict.pop("base")
+
+        # Remove keys that are not for snap.yaml.
+        snap_dict.pop("adopt-info", None)
+
+        # Apply passthrough keys.
+        passthrough = snap_dict.pop("passthrough", dict())
+        snap_dict.update(passthrough)
+
+        return snap_dict
+
+    def write_snap_yaml(self, path: str) -> None:
+        """Write snap.yaml contents to specified path."""
+        snap_dict = self.to_snap_yaml_dict()
 
         with open(path, "w") as f:
             yaml_utils.dump(snap_dict, stream=f)
