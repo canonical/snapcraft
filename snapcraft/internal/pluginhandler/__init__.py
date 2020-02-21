@@ -927,9 +927,9 @@ class PluginHandler:
         _clean_migrated_files(primed_files, primed_directories, shared_directory)
 
     def _calculate_dependency_paths(
-        self, split_depencies: Dict[str, Set[str]]
+        self, split_dependencies: Dict[str, Set[str]]
     ) -> Set[str]:
-        part_dependencies: Set[str] = split_depencies.get(self.primedir, set())
+        part_dependencies = split_dependencies.get(self.primedir, set())
         return {os.path.dirname(d) for d in part_dependencies}
 
     def _warn_missing_dependencies(self, split_dependencies: Dict[str, Set[str]]):
