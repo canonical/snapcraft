@@ -8,11 +8,11 @@ confinement: strict
 parts:
   pciutils:
     plugin: nil
-    stage-packages:
+    build-packages:
       - pciutils
-    stage:
-      - -usr/lib
-      - -lib
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/bin
+      install -m 0755 /usr/bin/lspci $SNAPCRAFT_PART_INSTALL/usr/bin
 
 apps:
   lspci:

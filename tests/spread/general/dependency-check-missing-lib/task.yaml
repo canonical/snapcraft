@@ -1,4 +1,4 @@
-summary: Build a snap that tests adapter settings
+summary: Build a snap that is missing a library dependency
 
 systems: [ubuntu-*]
 
@@ -23,5 +23,5 @@ execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
 
-  echo "$output" | MATCH "part is missing libraries that are not included in the snap or base. They can be satisfied by adding the following entries to the existing stage-packages for this part:"
+  echo "$output" | MATCH "The 'pciutils' part is missing libraries that are not included in the snap or base."
   echo "$output" | MATCH -- "- libpci3"
