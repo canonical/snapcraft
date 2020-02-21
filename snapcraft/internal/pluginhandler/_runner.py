@@ -37,6 +37,7 @@ class Runner:
         self,
         *,
         part_properties: Dict[str, Any],
+        partdir: str,
         sourcedir: str,
         builddir: str,
         stagedir: str,
@@ -45,6 +46,7 @@ class Runner:
     ) -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
+        :param str partdir: the root directory for this part.
         :param str sourcedir: The source directory for this part.
         :param str builddir: The build directory for this part.
         :param str stagedir: The staging area.
@@ -52,6 +54,7 @@ class Runner:
         :param dict builtin_functions: Dict of builtin function names to
                                        actual callables.
         """
+        self._partdir = partdir
         self._sourcedir = sourcedir
         self._builddir = builddir
         self._stagedir = stagedir
@@ -92,7 +95,7 @@ class Runner:
             )
 
     def _run_scriptlet(self, scriptlet_name: str, scriptlet: str, workdir: str) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
+        with tempfile.TemporaryDirectory(dir=self._partdir) as tempdir:
             call_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "function_call"))
             feedback_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "call_feedback"))
 

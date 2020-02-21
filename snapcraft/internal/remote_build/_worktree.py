@@ -245,7 +245,7 @@ class WorkTree:
         if source_modified:
             # Strip source attributes no longer relevant.
             for key in list(part_config.keys()):
-                if key.startswith("source-"):
+                if key.startswith("source-") and key != "source-subdir":
                     part_config.pop(key)
 
             # It's now an archive, set it explicitly.

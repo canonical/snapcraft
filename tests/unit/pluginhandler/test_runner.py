@@ -44,11 +44,18 @@ def _fake_prime():
 
 
 class RunnerTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.partdir = os.path.abspath("partdir")
+        os.mkdir(self.partdir)
+
     def test_pull(self):
         os.mkdir("sourcedir")
 
         runner = _runner.Runner(
             part_properties={"override-pull": "touch pull"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -65,6 +72,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-pull": "snapcraftctl pull"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -83,6 +91,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "echo $PATH > path"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -105,6 +114,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "touch build"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -121,6 +131,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "snapcraftctl build"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -137,6 +148,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-stage": "touch stage"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -153,6 +165,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-stage": "snapcraftctl stage"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -169,6 +182,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "touch prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -185,6 +199,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "snapcraftctl prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -198,6 +213,12 @@ class RunnerTestCase(unit.TestCase):
 
 
 class RunnerFailureTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.partdir = os.path.abspath("partdir")
+        os.mkdir(self.partdir)
+
     def test_failure_on_last_script_command_results_in_failure(self):
         os.mkdir("builddir")
 
@@ -210,6 +231,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": script},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -231,6 +253,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": script},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -245,6 +268,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "alias snapcraftctl 2> /dev/null"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
@@ -265,6 +289,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "snapcraftctl prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
