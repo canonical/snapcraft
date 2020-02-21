@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -141,10 +141,8 @@ class LXDBaseTest(BaseProviderBaseTest):
 class LXDInitTest(LXDBaseTest):
     def test_create(self):
         instance = LXD(project=self.project, echoer=self.echoer_mock)
-        with mock.patch.object(
-            LXD, "_get_cloud_user_data_string", return_value="fake-cloud"
-        ):
-            instance.create()
+
+        instance.create()
 
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
@@ -159,7 +157,6 @@ class LXDInitTest(LXDBaseTest):
                     "alias": "16.04",
                 },
                 "environment.SNAPCRAFT_HAS_TTY": "False",
-                "user.user-data": "fake-cloud",
             },
             wait=True,
         )
@@ -167,15 +164,15 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(container.sync_mock.call_count, Equals(3))
-        self.assertThat(self.check_call_mock.call_count, Equals(2))
+        self.assertThat(container.sync_mock.call_count, Equals(11))
+        self.assertThat(self.check_call_mock.call_count, Equals(8))
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
                     [
                         "/snap/bin/lxc",
                         "exec",
-                        self.instance_name,
+                        "snapcraft-project-name",
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
@@ -188,12 +185,90 @@ class LXDInitTest(LXDBaseTest):
                     [
                         "/snap/bin/lxc",
                         "exec",
-                        self.instance_name,
+                        "snapcraft-project-name",
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "snapcraft",
                         "refresh",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/tmp/L3Jvb3QvLmJhc2hyYw==",
+                        "/root/.bashrc",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/root/.bashrc",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0600",
+                        "/root/.bashrc",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/bin/_snapcraft_prompt",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/bin/_snapcraft_prompt",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0755",
+                        "/bin/_snapcraft_prompt",
                     ]
                 ),
             ]
@@ -236,10 +311,8 @@ class LXDInitTest(LXDBaseTest):
         self.project.info.base = None
 
         instance = LXD(project=self.project, echoer=self.echoer_mock)
-        with mock.patch.object(
-            LXD, "_get_cloud_user_data_string", return_value="fake-cloud"
-        ):
-            instance.create()
+
+        instance.create()
 
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
@@ -254,7 +327,6 @@ class LXDInitTest(LXDBaseTest):
                     "alias": "18.04",
                 },
                 "environment.SNAPCRAFT_HAS_TTY": "False",
-                "user.user-data": "fake-cloud",
             },
             wait=True,
         )

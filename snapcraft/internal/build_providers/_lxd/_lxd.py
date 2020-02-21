@@ -22,7 +22,6 @@ import urllib.parse
 import warnings
 from typing import Dict, Optional, Sequence
 
-from .._base_provider import _CLOUD_USER_DATA
 from .._base_provider import Provider
 from .._base_provider import errors
 from ._images import get_image_source
@@ -200,7 +199,6 @@ class LXD(Provider):
             raise errors.ProviderLaunchError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-        container.config["user.user-data"] = _CLOUD_USER_DATA
         # This is setup by cloud init, but set it here to be on the safer side.
         container.config["environment.SNAPCRAFT_BUILD_ENVIRONMENT"] = "managed-host"
         container.save(wait=True)

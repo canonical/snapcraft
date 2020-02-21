@@ -92,7 +92,25 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.launch_mock.assert_any_call()
         provider.start_mock.assert_any_call()
         provider.save_info_mock.assert_called_once_with({"base": "core16"})
-        provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
+
+        self.assertThat(provider.run_mock.call_count, Equals(7))
+        provider.run_mock.assert_has_calls(
+            [
+                call(["snapcraft", "refresh"]),
+                call(["mv", "/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                call(["chown", "root:root", "/root/.bashrc"]),
+                call(["chmod", "0600", "/root/.bashrc"]),
+                call(
+                    [
+                        "mv",
+                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/bin/_snapcraft_prompt",
+                    ]
+                ),
+                call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
+                call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+            ]
+        )
 
         self.assertThat(provider.provider_project_dir, DirExists())
 
@@ -194,6 +212,59 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider._ensure_base()
         provider.clean_project_mock.assert_not_called()
+
+    def test_setup_environment_content(self):
+        @contextlib.contextmanager
+        def get_tempfile():
+            try:
+                with open(
+                    get_tempfile.temp_files[get_tempfile.index], "wb"
+                ) as fake_temp_file:
+                    yield fake_temp_file
+            finally:
+                get_tempfile.index += 1
+
+        get_tempfile.temp_files = ["bashrc", "prompt"]
+        get_tempfile.index = 0
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider._setup_environment(tempfile_func=get_tempfile)
+
+        self.expectThat(
+            "bashrc",
+            FileContains(
+                dedent(
+                    """\
+            #!/bin/bash
+            export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
+            export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
+            export PATH=/snap/bin:$PATH
+        """
+                )
+            ),
+        )
+        self.expectThat(
+            "prompt",
+            FileContains(
+                dedent(
+                    """\
+            #!/bin/bash
+            if [[ "$PWD" =~ ^$HOME.* ]]; then
+                path="${PWD/#$HOME/\\ ..}"
+                if [[ "$path" == " .." ]]; then
+                    ps1=""
+                else
+                    ps1="$path"
+                fi
+            else
+                ps1="$PWD"
+            fi
+            echo -n $ps1
+        """
+                )
+            ),
+        )
 
     def test_start_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -423,49 +494,3 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
-
-
-class GetCloudUserDataTest(BaseProviderBaseTest):
-    def test_get(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        os.makedirs(provider.provider_project_dir)
-
-        cloud_data_filepath = provider._get_cloud_user_data()
-        self.assertThat(
-            cloud_data_filepath,
-            FileContains(
-                dedent(
-                    """\
-            #cloud-config
-            manage_etc_hosts: true
-            package_update: false
-            growpart:
-                mode: growpart
-                devices: ["/"]
-                ignore_growroot_disabled: false
-            write_files:
-                - path: /root/.bashrc
-                  permissions: 0644
-                  content: |
-                    export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
-                    export PS1="\h \$(/bin/_snapcraft_prompt)# "
-                    export PATH=/snap/bin:$PATH
-                - path: /bin/_snapcraft_prompt
-                  permissions: 0755
-                  content: |
-                    #!/bin/bash
-                    if [[ "$PWD" =~ ^$HOME.* ]]; then
-                        path="${PWD/#$HOME/\ ..}"
-                        if [[ "$path" == " .." ]]; then
-                            ps1=""
-                        else
-                            ps1="$path"
-                        fi
-                    else
-                        ps1="$PWD"
-                    fi
-                    echo -n $ps1
-        """  # noqa: W605
-                )
-            ),
-        )
