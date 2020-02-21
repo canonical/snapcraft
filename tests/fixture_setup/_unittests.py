@@ -338,7 +338,10 @@ class FakeElf(fixtures.Fixture):
             "moo.so.2": os.path.join(self.root_path, "non-standard", "moo.so.2"),
         }
 
-        for root_library in self.root_libraries.values():
+        barsnap_elf = os.path.join(self.core_base_path, "barsnap.so.2")
+        elf_list = [*self.root_libraries.values(), barsnap_elf]
+
+        for root_library in elf_list:
             os.makedirs(os.path.dirname(root_library), exist_ok=True)
             with open(root_library, "wb") as f:
                 f.write(b"\x7fELF")
