@@ -11,8 +11,7 @@ parts:
     build-packages:
       - pciutils
     override-build: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/bin
-      install -m 0755 /usr/bin/lspci $SNAPCRAFT_PART_INSTALL/usr/bin
+      install -D -m 0755 /usr/bin/lspci $SNAPCRAFT_PART_INSTALL/usr/bin
 
 apps:
   lspci:
