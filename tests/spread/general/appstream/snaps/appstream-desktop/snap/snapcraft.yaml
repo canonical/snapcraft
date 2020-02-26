@@ -1,0 +1,23 @@
+name: appstream-desktop
+base: core18
+
+grade: devel
+confinement: strict
+adopt-info: appstream-desktop
+
+apps:
+  appstream-desktop:
+    command: usr/bin/appstream-desktop
+    common-id: io.snapcraft.appstream
+    desktop: usr/share/applications/io.snapcraft.appstream.desktop
+
+parts:
+  appstream-desktop:
+    plugin: nil
+    source: .
+    build-packages: [gcc, libc6-dev]
+    parse-info: [io.snapcraft.appstream.metainfo.xml]
+    override-build: |
+      install -D -m 0644 io.snapcraft.appstream.desktop $SNAPCRAFT_PART_INSTALL/usr/share/applications/io.snapcraft.appstream.desktop
+      install -D -m 0644 snapcraft.svg $SNAPCRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/snapcraft.svg
+      install -D -m 0755 appstream-desktop $SNAPCRAFT_PART_INSTALL/usr/bin/appstream-desktop
