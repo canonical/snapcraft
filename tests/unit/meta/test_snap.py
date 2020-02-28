@@ -29,11 +29,6 @@ from tests import integration, unit
 
 
 class SnapTests(unit.TestCase):
-    """ Test the snaps.  Note that the ordering of ordereddicts must align
-    with Snap's use of _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS.
-
-    This applies even for verifying YAMLs, which are (now) ordered."""
-
     def test_empty(self):
         snap_dict = OrderedDict()
 
