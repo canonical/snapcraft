@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,7 +31,14 @@ _SITECUSTOMIZE_TEMPLATE = dedent(
     snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")
     snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")
 
-    for d in (snap_dir, snapcraft_stage_dir, snapcraft_part_install):
+    # Do not include snap_dir during builds as this will include
+    # snapcraft's in-snap site directory.
+    if snapcraft_stage_dir is not None and snapcraft_part_install is not None:
+        site_directories = [snapcraft_stage_dir, snapcraft_part_install]
+    else:
+        site_directories = [snap_dir]
+
+    for d in site_directories:
         if d:
             site_dir = os.path.join(d, "{site_dir}")
             site.addsitedir(site_dir)

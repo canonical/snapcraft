@@ -114,6 +114,7 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
+            partdir=self.plugin.partdir,
             sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
             stagedir=self.stagedir,
@@ -815,7 +816,7 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        if self._snap_type == "app":
+        if self._snap_type == "app" and self._base is not None:
             dependency_paths = self._handle_elf(snap_files)
         else:
             dependency_paths = set()

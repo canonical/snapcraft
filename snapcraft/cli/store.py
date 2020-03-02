@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,7 @@ import operator
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import click
 from tabulate import tabulate
@@ -219,24 +219,7 @@ def push_metadata(snap_file, force):
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("revision", metavar="<revision>")
 @click.argument("channels", metavar="<channels>")
-@click.option(
-    "--progressive-percentage",
-    type=click.IntRange(0, 100),
-    metavar="<percentage>",
-    help="set a release progression to a certain percentage before continuing.",
-)
-@click.option(
-    "--progressive-key",
-    metavar="<key>",
-    help="the progression key to use to keep track of the --progressive-percentage to be set.",
-)
-def release(
-    snap_name,
-    revision,
-    channels,
-    progressive_percentage: Optional[int],
-    progressive_key: Optional[str],
-) -> None:
+def release(snap_name, revision, channels) -> None:
     """Release <snap-name> on <revision> to the selected store <channels>.
     <channels> is a comma separated list of valid channels on the
     store.
@@ -267,19 +250,7 @@ def release(
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    progressive_options = [progressive_percentage, progressive_key]
-    if any(progressive_options) and not all(progressive_options):
-        raise click.UsageError(
-            "--progressive-percentage and --progressive-key must be used together."
-        )
-
-    snapcraft.release(
-        snap_name,
-        revision,
-        channels.split(","),
-        progressive_percentage=progressive_percentage,
-        progressive_key=progressive_key,
-    )
+    snapcraft.release(snap_name, revision, channels.split(","))
 
 
 @storecli.command()
@@ -392,14 +363,8 @@ def close(snap_name, channels):
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
-)
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, series, arch):
+def status(snap_name, arch):
     """Get the status on the store for <snap-name>.
 
     \b
@@ -407,21 +372,15 @@ def status(snap_name, series, arch):
         snapcraft status my-snap
         snapcraft status my-snap --arch armhf
     """
-    snapcraft.status(snap_name, series, arch)
+    snapcraft.status(snap_name, arch)
 
 
 @storecli.command("list-revisions")
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
-@click.option(
-    "--series",
-    metavar="<series>",
-    default=DEFAULT_SERIES,
-    help="The snap series to get the status for",
-)
 @click.argument("snap-name", metavar="<snap-name>")
-def list_revisions(snap_name, series, arch):
+def list_revisions(snap_name, arch):
     """Get the history on the store for <snap-name>.
 
     This command has an alias of `revisions`.
@@ -432,7 +391,7 @@ def list_revisions(snap_name, series, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, series, arch)
+    snapcraft.revisions(snap_name, arch)
 
 
 @storecli.command("list-registered")
@@ -499,7 +458,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": "16"})
+            snap_list.append({"name": package, "series": DEFAULT_SERIES})
 
     if channels:
         channel_list = channels.split(",")

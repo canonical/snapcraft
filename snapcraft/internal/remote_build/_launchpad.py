@@ -88,7 +88,7 @@ class LaunchpadClient:
         architectures: Sequence[str],
         git_branch: str = "master",
         core18_channel: str = "stable",
-        snapcraft_channel: str = "edge",
+        snapcraft_channel: str = "stable",
         deadline: int = 0,
     ) -> None:
         if not Git.check_command_installed():

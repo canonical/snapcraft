@@ -366,6 +366,15 @@ class CreateTestCase(CreateBaseTestCase):
         )
         self.assertThat(y["assumes"], Equals(["command-chain"]))
 
+    def test_adapter_none(self):
+        # Adapter "none" will passthrough command as-is.
+        self.config_data["apps"] = {"app": {"adapter": "none", "command": "/foo"}}
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y["apps"]["app"]["command"], Equals("/foo"))
+        self.assertThat(y["apps"]["app"].get("command-chain"), Equals(None))
+
 
 class StopModeTestCase(CreateBaseTestCase):
 

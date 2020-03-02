@@ -139,14 +139,7 @@ class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("os.path.exists")
-        self.path_exists_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.path_exists_mock.return_value = True
-
-        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(self.fake_logger)
+        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
 
     def test_get_libraries(self):
         elf_file = self.fake_elf["fake_elf-2.23"]
@@ -236,6 +229,9 @@ class TestGetLibraries(TestElfBase):
         )
 
     def test_get_libraries_ldd_failure_logs_warning(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
         elf_file = self.fake_elf["fake_elf-bad-ldd"]
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
@@ -249,6 +245,56 @@ class TestGetLibraries(TestElfBase):
             self.fake_logger.output,
             Contains("Unable to determine library dependencies for"),
         )
+
+    def test_existing_host_library_searched_for(self):
+        elf_file = self.fake_elf["fake_elf-with-host-libraries"]
+
+        class MooLibrary(elf.Library):
+            """A Library implementation that always returns valid for moo."""
+
+            def _is_valid_elf(self, resolved_path: str) -> bool:
+                #  This path is defined in ldd for fake_elf-with-host-libraries.
+                if resolved_path == "/usr/lib/moo.so.2":
+                    return True
+                else:
+                    return super()._is_valid_elf(resolved_path)
+
+        with mock.patch("snapcraft.internal.elf.Library", side_effect=MooLibrary):
+            libs = elf_file.load_dependencies(
+                root_path=self.fake_elf.root_path,
+                core_base_path=self.fake_elf.core_base_path,
+                arch_triplet=self.arch_triplet,
+                content_dirs=self.content_dirs,
+            )
+
+        self.assertThat(libs, Equals({self.fake_elf.root_libraries["moo.so.2"]}))
+
+
+class TestLibrary(TestElfBase):
+    def test_is_valid_elf_ignores_corrupt_files(self):
+        soname = "libssl.so.1.0.0"
+        soname_path = os.path.join(self.path, soname)
+        library = elf.Library(
+            soname=soname,
+            soname_path=soname_path,
+            search_paths=[self.path],
+            core_base_path="/snap/core/current",
+            arch=("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64"),
+            soname_cache=elf.SonameCache(),
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(True))
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.ElfFile",
+                side_effect=errors.CorruptedElfFileError(
+                    path=soname_path, error=RuntimeError()
+                ),
+            )
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(False))
 
 
 class TestGetElfFiles(TestElfBase):
@@ -493,3 +539,80 @@ class HandleGlibcTestCase(unit.TestCase):
             root_path=self.path,
             snap_base_path="/snap/snap-name/current",
         )
+
+
+class LddParsingTests(unit.TestCase):
+    scenarios = [
+        (
+            "ubuntu 20.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007ffcae3e6000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f33eebeb000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007f33eedf2000)
+""",
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 18.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007fffeddd1000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007fe500619000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fe500228000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fe500a44000)
+""",
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+        (
+            "ubuntu 16.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007ffd71d64000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fda33a16000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fda33de0000)
+    """,
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 16.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007fff305b3000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007faef225c000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007faef1e92000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007faef2473000)
+    """,
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+    ]
+
+    def test_scenario(self):
+        def fake_abspath(path):
+            return path
+
+        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
+        self.useFixture(fixtures.MockPatch("os.path.abspath", side_effect=fake_abspath))
+        self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output", return_value=self.ldd_output.encode()
+            )
+        )
+
+        libraries = elf.ldd(path="/bin/foo", ld_library_paths=[])
+
+        self.assertThat(libraries, Equals(self.expected))

@@ -78,59 +78,22 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_status_with_3rd_party_snap(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError, self.run_command, ["status", "snap-test"]
         )
 
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '16' series.")
-        )
-
     def test_status_with_3rd_party_snap_by_arch(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
             ["status", "snap-test", "--arch=arm64"],
         )
 
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'arm64' was not found in '16' series."),
-        )
-
-    def test_status_with_3rd_party_snap_by_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--series=18"],
-        )
-
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '18' series.")
-        )
-
     def test_status_by_unknown_arch(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
             ["status", "snap-test", "--arch=some-arch"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'some-arch' was not found in '16' series."),
-        )
-
-    def test_status_by_unknown_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--series=some-series"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' was not found in 'some-series' series."),
         )
 
     def test_status(self):
@@ -182,33 +145,6 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
         self.fake_store_status.mock.assert_called_once_with(
             "snap-test-snap-id", "16", "i386"
-        )
-
-    def test_status_by_series(self):
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": self.expected}}
-        }
-
-        result = self.run_command(["status", "snap-test", "--series=16"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     1.0-amd64  2           -
-                             beta       1.1-amd64  4           -
-                             edge       ^          ^           -
-                     i386    stable     -          -           -
-                             beta       -          -           -
-                             edge       1.0-i386   3           -"""
-                )
-            ),
-        )
-        self.fake_store_status.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
         )
 
     def test_status_including_branch(self):

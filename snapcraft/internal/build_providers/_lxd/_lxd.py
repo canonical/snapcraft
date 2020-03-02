@@ -199,7 +199,6 @@ class LXD(Provider):
             raise errors.ProviderLaunchError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-        container.config["user.user-data"] = self._get_cloud_user_data_string()
         # This is setup by cloud init, but set it here to be on the safer side.
         container.config["environment.SNAPCRAFT_BUILD_ENVIRONMENT"] = "managed-host"
         container.save(wait=True)
@@ -235,7 +234,7 @@ class LXD(Provider):
                 ) from lxd_api_error
 
         # Ensure cloud init is done
-        self.echoer.wrapped("Waiting for cloud-init")
+        self.echoer.wrapped("Waiting for container to be ready")
         self._run(command=["cloud-init", "status", "--wait"])
 
     def _stop(self):

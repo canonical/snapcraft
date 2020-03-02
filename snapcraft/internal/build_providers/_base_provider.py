@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,12 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import base64
 import os
 import pathlib
 import logging
 import shlex
 import shutil
 import sys
+import tempfile
 from textwrap import dedent
 from typing import Optional, Sequence
 from typing import Any, Dict
@@ -40,43 +42,26 @@ def _get_platform() -> str:
     return sys.platform
 
 
-def _get_tzdata(timezone_filepath=os.path.join(os.path.sep, "etc", "timezone")) -> str:
-    """Return the host's timezone from timezone_filepath or Etc/UTC on error."""
-    try:
-        with open(timezone_filepath) as timezone_file:
-            timezone = timezone_file.read().strip()
-    except FileNotFoundError:
-        timezone = "Etc/UTC"
-
-    return timezone
-
-
-# cloud-init's timezone keyword is not used as it requires tzdata to be installed
-# and the images used may not have it preinstalled.
-_CLOUD_USER_DATA_TMPL = dedent(
-    """\
-    #cloud-config
-    manage_etc_hosts: true
-    package_update: false
-    growpart:
-        mode: growpart
-        devices: ["/"]
-        ignore_growroot_disabled: false
-    runcmd:
-    - ["ln", "-s", "../usr/share/zoneinfo/{timezone}", "/etc/localtime"]
-    write_files:
-        - path: /root/.bashrc
-          permissions: 0644
-          content: |
+_SNAPCRAFT_FILES = [
+    {
+        "path": "/root/.bashrc",
+        "content": dedent(
+            """\
+            #!/bin/bash
             export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
-            export PS1="\h \$(/bin/_snapcraft_prompt)# "
+            export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
             export PATH=/snap/bin:$PATH
-        - path: /bin/_snapcraft_prompt
-          permissions: 0755
-          content: |
+            """
+        ),
+        "permissions": "0600",
+    },
+    {
+        "path": "/bin/_snapcraft_prompt",
+        "content": dedent(
+            """\
             #!/bin/bash
             if [[ "$PWD" =~ ^$HOME.* ]]; then
-                path="${{PWD/#$HOME/\ ..}}"
+                path="${PWD/#$HOME/\\ ..}"
                 if [[ "$path" == " .." ]]; then
                     ps1=""
                 else
@@ -86,8 +71,11 @@ _CLOUD_USER_DATA_TMPL = dedent(
                 ps1="$PWD"
             fi
             echo -n $ps1
-    """  # noqa: W605
-)
+            """
+        ),
+        "permissions": "0755",
+    },
+]
 
 
 class Provider(abc.ABC):
@@ -287,10 +275,9 @@ class Provider(abc.ABC):
             os.makedirs(self.provider_project_dir)
             # then launch
             self._launch()
-            # We need to setup snapcraft now to be able to refresh
-            self._setup_snapcraft()
-            # and do first boot related things
-            self._run(["snapcraft", "refresh"])
+            # and do first boot related things and if any failure occurs,
+            # then clean up.
+            self._setup_environment()
         else:
             # We always setup snapcraft after a start to bring it up to speed with
             # what is on the host
@@ -306,6 +293,29 @@ class Provider(abc.ABC):
                 )
             )
             self.clean_project()
+
+    def _setup_environment(self, *, tempfile_func=tempfile.NamedTemporaryFile) -> None:
+        # We need to setup snapcraft now to be able to refresh
+        self._setup_snapcraft()
+        self._run(["snapcraft", "refresh"])
+
+        for snapcraft_file in _SNAPCRAFT_FILES:
+            with tempfile_func() as temp_file:
+                temp_file.write(snapcraft_file["content"].encode())
+                temp_file.flush()
+                # Push to a location that can be written to by all backends
+                # with unique files depending on path.
+                remote_file = os.path.join(
+                    "/tmp", base64.b64encode(snapcraft_file["path"].encode()).decode()
+                )
+                self._push_file(source=temp_file.name, destination=remote_file)
+                self._run(["mv", remote_file, snapcraft_file["path"]])
+                # This chown is not necessarily needed. but does keep things
+                # consistent.
+                self._run(["chown", "root:root", snapcraft_file["path"]])
+                self._run(
+                    ["chmod", snapcraft_file["permissions"], snapcraft_file["path"]]
+                )
 
     def _setup_snapcraft(self) -> None:
         self._save_info(base=self.project.info.get_build_base())
@@ -349,23 +359,6 @@ class Provider(abc.ABC):
         snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
-
-    def _get_cloud_user_data_string(self, timezone=_get_tzdata()) -> str:
-        return _CLOUD_USER_DATA_TMPL.format(timezone=timezone)
-
-    def _get_cloud_user_data(self, timezone=_get_tzdata()) -> str:
-        cloud_user_data_filepath = os.path.join(
-            self.provider_project_dir, "user-data.yaml"
-        )
-        if os.path.exists(cloud_user_data_filepath):
-            return cloud_user_data_filepath
-
-        user_data = self._get_cloud_user_data_string(timezone=timezone)
-
-        with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
-            print(user_data, file=cloud_user_data_file, end="")
-
-        return cloud_user_data_filepath
 
     def _get_env_command(self) -> Sequence[str]:
         """Get command sequence for `env` with configured flags."""

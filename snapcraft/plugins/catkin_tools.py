@@ -45,7 +45,7 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
 
         # Beta Warning
         # Remove this comment and warning once catkin tools plugin is stable.
-        logger.warn(
+        logger.warning(
             "The catkin tools plugin is currently in beta, "
             "its API may break. Use at your own risk"
         )

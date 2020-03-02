@@ -23,17 +23,12 @@ import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.snap import SystemUserScope
+from snapcraft.internal.meta.system_user import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
 from tests import integration, unit
 
 
 class SnapTests(unit.TestCase):
-    """ Test the snaps.  Note that the ordering of ordereddicts must align
-    with Snap's use of _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS.
-
-    This applies even for verifying YAMLs, which are (now) ordered."""
-
     def test_empty(self):
         snap_dict = OrderedDict()
 
@@ -97,7 +92,7 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["summary"], snap.summary)
         self.assertEqual(snap_dict["description"], snap.description)
 
-    def test_passthrough(self):
+    def test_snap_yaml_passthrough(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
@@ -116,7 +111,7 @@ class SnapTests(unit.TestCase):
         passthrough = transformed_dict.pop("passthrough")
         transformed_dict.update(passthrough)
 
-        self.assertEqual(transformed_dict, snap.to_dict())
+        self.assertEqual(transformed_dict, snap.to_snap_yaml_dict())
         self.assertEqual(True, snap.is_passthrough_enabled)
         self.assertEqual(passthrough, snap.passthrough)
         self.assertEqual(snap_dict["name"], snap.name)
@@ -124,63 +119,74 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["summary"], snap.summary)
         self.assertEqual(snap_dict["description"], snap.description)
 
+    def test_snap_yaml_all_keys(self):
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "adopt-info": "some-part",
+            "apps": {"test-app": {"command": "test-app"}},
+            "architectures": ["all"],
+            "assumes": ["command-chain"],
+            "base": "core",
+            "confinement": "strict",
+            "environment": {"TESTING": "1"},
+            "epoch": 0,
+            "grade": "devel",
+            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "layout": {"/target": {"bind": "$SNAP/foo"}},
+            "license": "GPL",
+            "passthrough": {"test": "value"},
+            "plugs": {"test-plug": {"interface": "some-value"}},
+            "slots": {"test-slot": {"interface": "some-value"}},
+            "system-usernames": {"snap_daemon": {"scope": "shared"}},
+            "title": "test-title",
+            "type": "base",
+        }
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        expected_dict = snap_dict.copy()
+        expected_dict.pop("adopt-info")
+        expected_dict.pop("base")
+        expected_dict.update(expected_dict.pop("passthrough"))
+
+        self.assertEqual(expected_dict, snap.to_snap_yaml_dict())
+        self.assertEqual(True, snap.is_passthrough_enabled)
+
     def test_all_keys(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "test-version",
-                "summary": "test-summary",
-                "description": "test-description",
-                "apps": {"test-app": {"command": "test-app"}},
-                "architectures": ["all"],
-                "assumes": ["command-chain"],
-                "base": "core",
-                "confinement": "strict",
-                "environment": {"TESTING": "1"},
-                "epoch": 0,
-                "grade": "devel",
-                "hooks": {
-                    "test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}
-                },
-                "layout": {"/target": {"bind": "$SNAP/foo"}},
-                "license": "GPL",
-                "plugs": {"test-plug": OrderedDict({"interface": "some-value"})},
-                "slots": {"test-slot": OrderedDict({"interface": "some-value"})},
-                "system-usernames": OrderedDict(
-                    {"snap_daemon": OrderedDict({"scope": "shared"})}
-                ),
-                "title": "test-title",
-                "type": "base",
-            }
-        )
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "adopt-info": "some-part",
+            "apps": {"test-app": {"command": "test-app"}},
+            "architectures": ["all"],
+            "assumes": ["command-chain"],
+            "base": "core",
+            "confinement": "strict",
+            "environment": {"TESTING": "1"},
+            "epoch": 0,
+            "grade": "devel",
+            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "layout": {"/target": {"bind": "$SNAP/foo"}},
+            "license": "GPL",
+            "passthrough": {"test": "value"},
+            "plugs": {"test-plug": {"interface": "some-value"}},
+            "slots": {"test-slot": {"interface": "some-value"}},
+            "system-usernames": {"snap_daemon": {"scope": "shared"}},
+            "title": "test-title",
+            "type": "base",
+        }
 
         snap = Snap.from_dict(snap_dict=snap_dict)
         snap.validate()
 
         self.assertEqual(snap_dict, snap.to_dict())
-        self.assertEqual(False, snap.is_passthrough_enabled)
-        self.assertEqual(snap_dict["name"], snap.name)
-        self.assertEqual(snap_dict["version"], snap.version)
-        self.assertEqual(snap_dict["summary"], snap.summary)
-        self.assertEqual(snap_dict["description"], snap.description)
-        self.assertEqual(snap_dict["apps"]["test-app"], snap.apps["test-app"].to_dict())
-        self.assertEqual(snap_dict["architectures"], snap.architectures)
-        self.assertEqual(set(snap_dict["assumes"]), snap.assumes)
-        self.assertEqual(snap_dict["base"], snap.base)
-        self.assertEqual(snap_dict["environment"], snap.environment)
-        self.assertEqual(
-            snap_dict["hooks"]["test-hook"], snap.hooks["test-hook"].to_dict()
-        )
-        self.assertEqual(snap_dict["license"], snap.license)
-        self.assertEqual(
-            snap_dict["plugs"]["test-plug"], snap.plugs["test-plug"].to_yaml_object()
-        )
-        self.assertEqual(
-            snap_dict["slots"]["test-slot"], snap.slots["test-slot"].to_yaml_object()
-        )
-        self.assertEqual(snap_dict["confinement"], snap.confinement)
-        self.assertEqual(snap_dict["title"], snap.title)
-        self.assertEqual(snap_dict["type"], snap.type)
+        self.assertEqual(True, snap.is_passthrough_enabled)
 
     def test_system_usernames_shortform_scope(self):
         snap_dict = OrderedDict(
@@ -514,6 +520,7 @@ class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
             slots:
               long-form:
                 interface: content
+                content: explicit-content
                 read:
                 - /
               short-form: interface-name
@@ -537,6 +544,7 @@ class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
             slots:
               long-form:
                 interface: content
+                content: explicit-content
                 read:
                 - /
               short-form: interface-name

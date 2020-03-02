@@ -333,9 +333,6 @@ class _SnapPackaging:
         self._parts_dir = project_config.project.parts_dir
 
         self._arch_triplet = project_config.project.arch_triplet
-        self._is_host_compatible_with_base = (
-            project_config.project.is_host_compatible_with_base
-        )
         self.meta_dir = os.path.join(self._prime_dir, "meta")
         self.meta_gui_dir = os.path.join(self.meta_dir, "gui")
         self._config_data = project_config.data.copy()
@@ -360,9 +357,13 @@ class _SnapPackaging:
 
     def finalize_snap_meta_commands(self) -> None:
         for app_name, app in self._snap_meta.apps.items():
-            app.prime_commands(
-                base=self._project_config.project.info.base, prime_dir=self._prime_dir
-            )
+            # Prime commands only if adapter != "none",
+            # otherwise leave as-is.
+            if app.adapter != ApplicationAdapter.NONE:
+                app.prime_commands(
+                    base=self._project_config.project.info.base,
+                    prime_dir=self._prime_dir,
+                )
 
     def finalize_snap_meta_command_chains(self) -> None:
         snapcraft_runner = self._generate_snapcraft_runner()
@@ -434,10 +435,7 @@ class _SnapPackaging:
     def _assemble_runtime_environment(self) -> str:
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
-        if (
-            self._config_data["confinement"] == "classic"
-            or not self._is_host_compatible_with_base
-        ):
+        if self._config_data["confinement"] == "classic":
             # Temporary workaround for snapd bug not expanding PATH:
             # We generate an empty runner which addresses the issue.
             # https://bugs.launchpad.net/snapd/+bug/1860369

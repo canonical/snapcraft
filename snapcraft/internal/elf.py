@@ -24,6 +24,7 @@ import tempfile
 from typing import Dict, FrozenSet, List, Optional, Set, Sequence, Tuple, Union
 
 import elftools.elf.elffile
+from elftools.construct import ConstructError
 import elftools.common.exceptions
 from pkg_resources import parse_version
 
@@ -32,6 +33,23 @@ from snapcraft.internal import common, errors, repo
 
 
 logger = logging.getLogger(__name__)
+
+
+def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
+    logger.debug(f"_ldd_resolve: {soname!r} {soname_path!r}")
+
+    # If found, resolve the path components.  We can safely determine that
+    # ldd found the match if it returns an absolute path.  For additional
+    # safety, check that it exists.  See example ldd output in ldd() below.
+    # If not found, ldd should use a string like "not found", but we do not
+    # really care what that string is with this approach as it has to start
+    # with "/" and point to a valid file.
+    if soname_path.startswith("/") and os.path.exists(soname_path):
+        abs_path = os.path.abspath(soname_path)
+        return soname, abs_path
+
+    # Not found, use the soname.
+    return soname, soname
 
 
 def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
@@ -45,45 +63,42 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
 
     env = os.environ.copy()
     env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
+    logger.debug(f"invoking ldd with ld library paths: {ld_library_paths!r}")
 
     try:
         # ldd output sample:
+        # linux-vdso.so.1 =>  (0x00007ffdc13ec000)   <== ubuntu 16.04 ldd
+        # linux-vdso.so.1 (0x00007ffdc13ec000)       <== newer ldd
         # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
         # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
         # libmissing.so.2 => not found
         ldd_lines = (
             subprocess.check_output(["ldd", path], env=env).decode().splitlines()
         )
+        logger.debug(f"ldd output:\n{ldd_lines}")
     except subprocess.CalledProcessError:
         logger.warning("Unable to determine library dependencies for {!r}".format(path))
         return libraries
 
     for line in ldd_lines:
         # First match against libraries that are found.
-        # We know this because of the address (0x...).
         match = re.match(r"\t(.*) => (.*) \(0x", line)
-        if match:
-            soname = match.group(1)
-            soname_path = match.group(2)
-            libraries[soname] = soname_path
+
+        if not match:
+            # Now find those not found, or not providing the address...
+            match = re.match(r"\t(.*) => (.*)", line)
+
+        # Ignore ld-linux, linux-vdso, etc. that don't match these regex.
+        # As Ubuntu 16.04's ldd provides an empty string for the found
+        # path (in group 2) on linux-vdso, check for this and ignore it.
+        # See example output above for reference.
+        if not match or match.group(2) == "":
             continue
 
-        # Now find those not found, or not providing the address...
-        match = re.match(r"\t(.*) => (.*)", line)
-        if match:
-            soname = match.group(1)
-            soname_path = match.group(2)
-            if soname_path.startswith("/") and os.path.exists(soname_path):
-                # Checks out.
-                libraries[soname] = soname_path
-            else:
-                # Doesn't check out - use the soname.
-                libraries[soname] = soname
-            continue
+        soname, soname_path = _ldd_resolve(match.group(1), match.group(2))
+        libraries[soname] = soname_path
 
-        # Ignore the rest... (linux-vdso.so, ld-linux.so).
-        continue
-
+    logger.debug(f"ldd results: {libraries!r}")
     return libraries
 
 
@@ -165,7 +180,7 @@ class Library:
         search_paths: List[str],
         core_base_path: str,
         arch: ElfArchitectureTuple,
-        soname_cache: SonameCache
+        soname_cache: SonameCache,
     ) -> None:
 
         self.soname = soname
@@ -196,11 +211,17 @@ class Library:
         self.soname_cache[self.arch, self.soname] = resolved_path
 
     def _is_valid_elf(self, resolved_path: str) -> bool:
-        return (
-            os.path.exists(resolved_path)
-            and ElfFile.is_elf(resolved_path)
-            and ElfFile(path=resolved_path).arch == self.arch
-        )
+        if not os.path.exists(resolved_path) or not ElfFile.is_elf(resolved_path):
+            return False
+
+        try:
+            elf_file = ElfFile(path=resolved_path)
+        except errors.CorruptedElfFileError as error:
+            # Log if the ELF file seems corrupted.
+            logger.warning(error.get_brief())
+            return False
+
+        return elf_file.arch == self.arch
 
     def _crawl_for_path(self) -> str:
         # Speed things up and return what was already found once.
@@ -209,18 +230,23 @@ class Library:
 
         logger.debug("Crawling to find soname {!r}".format(self.soname))
 
-        if self._is_valid_elf(self.soname_path):
+        valid_search_paths = [p for p in self.search_paths if os.path.exists(p)]
+        in_search_paths = any(
+            self.soname_path.startswith(p) for p in valid_search_paths
+        )
+
+        # Expedite path crawling if we have a valid elf file that lives
+        # inside the search paths.
+        if in_search_paths and self._is_valid_elf(self.soname_path):
             self._update_soname_cache(self.soname_path)
             return self.soname_path
 
-        for path in self.search_paths:
-            if not os.path.exists(path):
-                continue
+        for path in valid_search_paths:
             for root, directories, files in os.walk(path):
                 if self.soname not in files:
                     continue
 
-                file_path = os.path.join(root, self.soname)
+                file_path = os.path.join(root, self.soname.strip("/"))
                 if self._is_valid_elf(file_path):
                     self._update_soname_cache(file_path)
                     return file_path
@@ -273,7 +299,7 @@ class ElfFile:
 
         try:
             self._extract_attributes()
-        except (UnicodeDecodeError, AttributeError) as exception:
+        except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
@@ -317,10 +343,7 @@ class ElfFile:
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
-            if (
-                verneed_section is not None
-                and verneed_section.header.sh_type != "SHT_NOBITS"
-            ):
+            if isinstance(verneed_section, elftools.elf.gnuversions.GNUVerNeedSection):
                 for library, versions in verneed_section.iter_versions():
                     library_name = _ensure_str(library.name)
                     # If the ELF file only references weak symbols

@@ -55,7 +55,7 @@ def extract_metadata(
             except extractors.UnhandledFileError:
                 pass  # Try the next extractor
             except AttributeError:
-                logger.warn(
+                logger.warning(
                     "Extractor {!r} doesn't include the 'extract' function. "
                     "Skipping...".format(module_name)
                 )
