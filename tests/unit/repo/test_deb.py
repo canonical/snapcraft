@@ -571,18 +571,24 @@ class BuildPackagesTestCase(unit.TestCase):
     def test_refresh_buid_packages(self, mock_check_call):
         repo.Ubuntu.refresh_build_packages()
 
-        mock_check_call.assert_called_once_with(["sudo", "apt", "update"])
+        mock_check_call.assert_called_once_with(
+            ["sudo", "--preserve-env", "apt-get", "update"]
+        )
 
     @patch(
         "subprocess.check_call",
-        side_effect=CalledProcessError(returncode=1, cmd=["sudo", "apt", "update"]),
+        side_effect=CalledProcessError(
+            returncode=1, cmd=["sudo", "--preserve-env", "apt-get", "update"]
+        ),
     )
     def test_refresh_buid_packages_fails(self, mock_check_call):
         self.assertRaises(
             errors.CacheUpdateFailedError, repo.Ubuntu.refresh_build_packages
         )
 
-        mock_check_call.assert_called_once_with(["sudo", "apt", "update"])
+        mock_check_call.assert_called_once_with(
+            ["sudo", "--preserve-env", "apt-get", "update"]
+        )
 
 
 class PackageForFileTest(unit.TestCase):
