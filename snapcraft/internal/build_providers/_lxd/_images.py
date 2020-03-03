@@ -16,7 +16,7 @@
 
 from typing import Dict
 
-_BASE_IMAGE = dict(core="16.04", core16="16.04", core18="18.04")
+_BASE_IMAGE = dict(core="16.04", core16="16.04", core18="18.04", core20="20.04")
 
 
 def get_image_source(*, base: str) -> Dict[str, str]:
@@ -30,7 +30,7 @@ def get_image_source(*, base: str) -> Dict[str, str]:
     return dict(
         type="image",
         mode="pull",
-        server="https://cloud-images.ubuntu.com/minimal/releases/",
+        server="https://cloud-images.ubuntu.com/buildd/daily",
         protocol="simplestreams",
         alias=_BASE_IMAGE[base],
     )

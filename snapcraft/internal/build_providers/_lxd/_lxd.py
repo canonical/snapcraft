@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
 import logging
 import os
 import subprocess
 import sys
 import urllib.parse
 import warnings
+from time import sleep
 from typing import Dict, Optional, Sequence
 
 from .._base_provider import Provider
@@ -38,6 +40,28 @@ logger = logging.getLogger(__name__)
 # Filter out attribute setting warnings for properties that exist in LXD operations
 # but are unhandled in pylxd.
 warnings.filterwarnings("ignore", module="pylxd.models.operation")
+
+
+_SNAPCRAFT_FILES = [
+    {
+        "path": "/etc/systemd/network/10-eth0.network",
+        "content": dedent(
+            """\
+            [Match]
+            Name=eth0
+
+            [Network]
+            DHCP=ipv4
+            LinkLocalAddressing=ipv6
+
+            [DHCP]
+            RouteMetric=100
+            UseMTU=true
+            """
+        ),
+        "permissions": "0644",
+    }
+]
 
 
 class LXD(Provider):
@@ -139,11 +163,6 @@ class LXD(Provider):
             is_ephemeral=is_ephemeral,
             build_provider_flags=build_provider_flags,
         )
-        self.echoer.warning(
-            "The LXD provider is offered as a technology preview for early adopters.\n"
-            "The command line interface, container names or lifecycle handling may "
-            "change in upcoming releases."
-        )
         # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
         lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
         endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
@@ -233,9 +252,7 @@ class LXD(Provider):
                     provider_name=self._get_provider_name(), error_message=lxd_api_error
                 ) from lxd_api_error
 
-        # Ensure cloud init is done
         self.echoer.wrapped("Waiting for container to be ready")
-        self._run(command=["cloud-init", "status", "--wait"])
 
     def _stop(self):
         # If _container is still None here it means creation/starting was not
@@ -364,6 +381,49 @@ class LXD(Provider):
 
     def shell(self) -> None:
         self._run(command=["/bin/bash"])
+
+    def _wait_for_network(self) -> None:
+        while True:
+            if self._container is None:
+                raise RuntimeError("Attempted to use container before starting.")
+            if any(
+                a["address"]
+                for a in self._container.state().network["eth0"]["addresses"]
+                if a["family"] == "inet"
+            ):
+                break
+            sleep(1)
+
+    def _setup_environment(self) -> None:
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
+        # Setup networking before anything else.
+        super()._setup_environment_files(files=_SNAPCRAFT_FILES)
+
+        self._container.restart(wait=True)
+        self._wait_for_network()
+
+        # Setup snapd to bootstrap.
+        self._run(["apt-get", "update"])
+
+        # First install fuse and udev, snapd requires them.
+        self._run(["apt-get", "install", "udev", "fuse", "--yes"])
+
+        # udev running is a snapd requirement.
+        self._run(["systemctl", "enable", "systemd-udevd"])
+        self._run(["systemctl", "start", "systemd-udevd"])
+
+        # And only then install snapd.
+        self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
+        self._run(["systemctl", "start", "snapd"])
+
+        # Only then continue setting up.
+        super()._setup_environment()
+
+    def _setup_snapcraft(self):
+        self._wait_for_network()
+        super()._setup_snapcraft()
 
     def _ensure_container_running(self) -> None:
         # Sanity check - developer error if container not initialized.

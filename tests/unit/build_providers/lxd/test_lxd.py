@@ -38,14 +38,15 @@ class FakeContainer:
         self.config = config
         self.devices = dict()  # type: Dict[str, Any]
 
+        self.delete_mock = mock.Mock()
+        self.files_delete_mock = mock.Mock()
+        self.files_get_mock = mock.Mock()
+        self.files_put_mock = mock.Mock()
+        self.restart_mock = mock.Mock()
         self.save_mock = mock.Mock()
         self.start_mock = mock.Mock()
         self.stop_mock = mock.Mock()
-        self.delete_mock = mock.Mock()
         self.sync_mock = mock.Mock()
-        self.files_get_mock = mock.Mock()
-        self.files_put_mock = mock.Mock()
-        self.files_delete_mock = mock.Mock()
 
         class FakeContainerFiles:
             delete_available = True
@@ -63,17 +64,29 @@ class FakeContainer:
         self.files = FakeContainerFiles
 
     def _reset_mocks(self) -> None:
+        self.delete_mock.reset_mock()
+        self.files_delete_mock.reset_mock()
+        self.files_get_mock.reset_mock()
+        self.files_put_mock.reset_mock()
+        self.restart_mock.reset_mock()
         self.save_mock.reset_mock()
         self.start_mock.reset_mock()
         self.stop_mock.reset_mock()
-        self.delete_mock.reset_mock()
         self.sync_mock.reset_mock()
-        self.files_get_mock.reset_mock()
-        self.files_put_mock.reset_mock()
-        self.files_delete_mock.reset_mock()
+
+    def restart(self, wait: bool) -> None:
+        self.restart_mock(wait=wait)
 
     def save(self, wait: bool) -> None:
         self.save_mock(wait=wait)
+
+    def state(self):
+        class State:
+            network = dict(
+                eth0=dict(addresses=[dict(address="192.168.0.1", family="inet")])
+            )
+
+        return State()
 
     def sync(self) -> None:
         self.sync_mock()
@@ -152,7 +165,7 @@ class LXDInitTest(LXDBaseTest):
                 "source": {
                     "mode": "pull",
                     "type": "image",
-                    "server": "https://cloud-images.ubuntu.com/minimal/releases/",
+                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
                     "protocol": "simplestreams",
                     "alias": "16.04",
                 },
@@ -164,8 +177,8 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(container.sync_mock.call_count, Equals(11))
-        self.assertThat(self.check_call_mock.call_count, Equals(8))
+        self.assertThat(container.sync_mock.call_count, Equals(20))
+        self.assertThat(self.check_call_mock.call_count, Equals(16))
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
@@ -176,9 +189,9 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "cloud-init",
-                        "status",
-                        "--wait",
+                        "mv",
+                        "/tmp/L2V0Yy9zeXN0ZW1kL25ldHdvcmsvMTAtZXRoMC5uZXR3b3Jr",
+                        "/etc/systemd/network/10-eth0.network",
                     ]
                 ),
                 mock.call(
@@ -189,8 +202,103 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "refresh",
+                        "chown",
+                        "root:root",
+                        "/etc/systemd/network/10-eth0.network",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0644",
+                        "/etc/systemd/network/10-eth0.network",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "apt-get",
+                        "update",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "apt-get",
+                        "install",
+                        "udev",
+                        "fuse",
+                        "--yes",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "enable",
+                        "systemd-udevd",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "start",
+                        "systemd-udevd",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "apt-get",
+                        "install",
+                        "snapd",
+                        "sudo",
+                        "--yes",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "start",
+                        "snapd",
                     ]
                 ),
                 mock.call(
@@ -271,6 +379,18 @@ class LXDInitTest(LXDBaseTest):
                         "/bin/_snapcraft_prompt",
                     ]
                 ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
+                        "refresh",
+                    ]
+                ),
             ]
         )
 
@@ -322,7 +442,7 @@ class LXDInitTest(LXDBaseTest):
                 "source": {
                     "mode": "pull",
                     "type": "image",
-                    "server": "https://cloud-images.ubuntu.com/minimal/releases/",
+                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
                     "protocol": "simplestreams",
                     "alias": "18.04",
                 },

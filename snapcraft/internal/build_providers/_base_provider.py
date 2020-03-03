@@ -25,7 +25,7 @@ import sys
 import tempfile
 from textwrap import dedent
 from typing import Optional, Sequence
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from xdg import BaseDirectory
 
@@ -290,12 +290,10 @@ class Provider(abc.ABC):
             )
             self.clean_project()
 
-    def _setup_environment(self, *, tempfile_func=tempfile.NamedTemporaryFile) -> None:
-        # We need to setup snapcraft now to be able to refresh
-        self._setup_snapcraft()
-        self._run(["snapcraft", "refresh"])
-
-        for snapcraft_file in _SNAPCRAFT_FILES:
+    def _setup_environment_files(
+        self, *, files: List[Dict[str, Any]], tempfile_func=tempfile.NamedTemporaryFile
+    ) -> None:
+        for snapcraft_file in files:
             with tempfile_func() as temp_file:
                 temp_file.write(snapcraft_file["content"].encode())
                 temp_file.flush()
@@ -312,6 +310,13 @@ class Provider(abc.ABC):
                 self._run(
                     ["chmod", snapcraft_file["permissions"], snapcraft_file["path"]]
                 )
+
+    def _setup_environment(self) -> None:
+        self._setup_environment_files(files=_SNAPCRAFT_FILES)
+
+        # We need to setup snapcraft now to be able to refresh
+        self._setup_snapcraft()
+        self._run(["snapcraft", "refresh"])
 
     def _setup_snapcraft(self) -> None:
         self._save_info(base=self.project.info.get_build_base())
