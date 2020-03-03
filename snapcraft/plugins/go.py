@@ -284,9 +284,7 @@ class GoPlugin(snapcraft.BasePlugin):
     def build(self) -> None:
         super().build()
 
-        # Clear the installation before continuing.
-        if os.path.exists(self._install_bin_dir):
-            shutil.rmtree(self._install_bin_dir)
+        # Ensure install directory exists.
         os.makedirs(self._install_bin_dir)
 
         if self._is_using_go_mod(cwd=self.builddir):

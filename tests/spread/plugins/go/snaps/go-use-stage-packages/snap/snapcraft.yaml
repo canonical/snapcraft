@@ -1,0 +1,20 @@
+name: go-hello
+version: "0.1"
+summary: A simple go project
+description: |
+  Test to ensure stage packages ship in the final snap.
+
+grade: devel
+confinement: strict
+base: core18
+
+apps:
+  go-hello:
+    command: go-hello
+
+parts:
+  go-hello:
+    plugin: go
+    go-channel: ""
+    source: go-hello
+    stage-packages: [grep]
