@@ -13,17 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
-from unittest.mock import patch
 
-from testtools.matchers import EndsWith, Is
+import shutil
+import os
 
 from snapcraft.file_utils import calculate_hash
-from snapcraft.internal import cache
-from tests import unit
 
 
-class FileCacheTestCase(unit.TestCase):
+class TestFileCache:
 
     scenarios = [
         ("sha384", dict(algo="sha384")),
@@ -38,46 +35,40 @@ class FileCacheTestCase(unit.TestCase):
         ("sha3_512", dict(algo="sha3_512")),
     ]
 
-    def setUp(self):
-        super().setUp()
-        self.file_cache = cache.FileCache()
+    def test_get_nothing_cached(self, file_cache, algo):
+        assert file_cache.get(algorithm=algo, hash="1") is None
 
-    def test_get_nothing_cached(self):
-        file = self.file_cache.get(algorithm=self.algo, hash="1")
-        self.assertThat(file, Is(None))
-
-    def test_cache_and_retrieve(self):
-        with open("hash_file", "w") as f:
-            f.write("random stub data")
-
-        calculated_hash = calculate_hash("hash_file", algorithm=self.algo)
-        file = self.file_cache.cache(
-            filename="hash_file", algorithm=self.algo, hash=calculated_hash
+    def test_cache_and_retrieve(self, random_data_file, file_cache, algo):
+        calculated_hash = calculate_hash(random_data_file, algorithm=algo)
+        cached_file = file_cache.cache(
+            filename=random_data_file, algorithm=algo, hash=calculated_hash
         )
-        leaf_path = os.path.join(self.algo, calculated_hash)
-        self.assertThat(file, EndsWith(leaf_path))
+        leaf_path = os.path.join(algo, calculated_hash)
+        assert cached_file.endswith(leaf_path)
 
-        retrieved_file = self.file_cache.get(algorithm=self.algo, hash=calculated_hash)
-        self.assertThat(retrieved_file, EndsWith(leaf_path))
+        retrieved_file = file_cache.get(algorithm=algo, hash=calculated_hash)
+        assert retrieved_file.endswith(leaf_path)
 
-    def test_cache_not_possible(self):
-        with open("hash_file", "w") as f:
-            f.write("random stub data")
-
+    def test_cache_not_possible(self, random_data_file, file_cache, algo):
         bad_calculated_hash = "1"
-        file = self.file_cache.cache(
-            filename="hash_file", algorithm=self.algo, hash=bad_calculated_hash
+
+        cached_file = file_cache.cache(
+            filename=random_data_file, algorithm=algo, hash=bad_calculated_hash
         )
-        self.assertThat(file, Is(None))
+        assert cached_file is None
 
-    def test_cache_file_copy_error(self):
-        with open("hash_file", "w") as f:
-            f.write("random stub data")
+    def test_cache_file_copy_error(
+        self, monkeypatch, random_data_file, file_cache, algo
+    ):
+        calculated_hash = calculate_hash(random_data_file, algorithm=algo)
 
-        calculated_hash = calculate_hash("hash_file", algorithm=self.algo)
-        with patch("shutil.copyfile") as mock_copyfile:
-            mock_copyfile.side_effect = OSError()
-            file = self.file_cache.cache(
-                filename="hash_file", algorithm=self.algo, hash=calculated_hash
-            )
-        self.assertThat(file, Is(None))
+        def fake_copy(*args, **kwargs):
+            raise OSError()
+
+        monkeypatch.setattr(shutil, "copyfile", fake_copy)
+
+        cached_file = file_cache.cache(
+            filename=random_data_file, algorithm=algo, hash=calculated_hash
+        )
+
+        assert cached_file is None

@@ -23,13 +23,6 @@ from . import LifecycleCommandsBaseTestCase
 
 
 class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
-    scenarios = (
-        ("pull", dict(step=steps.PULL, previous_step=None)),
-        ("build", dict(step=steps.BUILD, previous_step=steps.PULL)),
-        ("stage", dict(step=steps.STAGE, previous_step=steps.BUILD)),
-        ("prime", dict(step=steps.PRIME, previous_step=steps.STAGE)),
-    )
-
     def assert_build_provider_calls(self, step: steps.Step):
         self.fake_lifecycle_execute.mock.assert_not_called()
         self.provider_mock.mount_project.assert_called_once_with()
@@ -39,72 +32,166 @@ class TestPullBuildStagePrimeCommand(LifecycleCommandsBaseTestCase):
             self.provider_mock.execute_step.assert_called_once_with(step)
         self.assert_clean_not_called()
 
-    def test_using_defaults(self):
-        result = self.run_command([self.step.name])
+    def run_test_using_defaults(self, step):
+        result = self.run_command([step.name])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
-        self.assert_build_provider_calls(self.step)
+        self.assert_build_provider_calls(step)
         self.provider_mock.shell.assert_not_called()
 
-    def test_with_parts_specified_using_defaults(self):
-        result = self.run_command([self.step.name, "part0", "part1", "part2"])
+    def run_test_with_parts_specified_using_defaults(self, step):
+        result = self.run_command([step.name, "part0", "part1", "part2"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
-        self.assert_build_provider_calls(self.step)
+        self.assert_build_provider_calls(step)
         self.provider_mock.shell.assert_not_called()
 
-    def test_shell_using_defaults(self):
-        result = self.run_command([self.step.name, "--shell"])
+    def run_test_shell_using_defaults(self, step, previous_step):
+        result = self.run_command([step.name, "--shell"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
-        self.assert_build_provider_calls(self.previous_step)
+        self.assert_build_provider_calls(previous_step)
         self.provider_mock.shell.assert_called_once_with()
 
-    def test_shell_after_using_defaults(self):
-        result = self.run_command([self.step.name, "--shell-after"])
+    def run_test_shell_after_using_defaults(self, step):
+        result = self.run_command([step.name, "--shell-after"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
-        self.assert_build_provider_calls(self.step)
+        self.assert_build_provider_calls(step)
         self.provider_mock.shell.assert_called_once_with()
 
-    def test_using_lxd(self):
-        result = self.run_command([self.step.name, "--use-lxd"])
+    def run_test_using_lxd(self, step):
+        result = self.run_command([step.name, "--use-lxd"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("lxd")
-        self.assert_build_provider_calls(self.step)
+        self.assert_build_provider_calls(step)
         self.provider_mock.shell.assert_not_called()
 
-    def test_with_parts_specified_using_lxd(self):
-        result = self.run_command(
-            [self.step.name, "--use-lxd", "part0", "part1", "part2"]
-        )
+    def run_test_with_parts_specified_using_lxd(self, step):
+        result = self.run_command([step.name, "--use-lxd", "part0", "part1", "part2"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("lxd")
-        self.assert_build_provider_calls(self.step)
+        self.assert_build_provider_calls(step)
         self.provider_mock.shell.assert_not_called()
 
-    def test_using_destructive_mode(self):
-        result = self.run_command([self.step.name, "--destructive-mode"])
+    def run_test_using_destructive_mode(self, step):
+        result = self.run_command([step.name, "--destructive-mode"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_not_called()
         self.fake_lifecycle_execute.mock.assert_called_once_with(
-            self.step, mock.ANY, tuple()
+            step, mock.ANY, tuple()
         )
 
-    def test_with_parts_specified_using_destructive_mode(self):
+    def run_test_with_parts_specified_using_destructive_mode(self, step):
         result = self.run_command(
-            [self.step.name, "--destructive-mode", "part0", "part1", "part2"]
+            [step.name, "--destructive-mode", "part0", "part1", "part2"]
         )
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_not_called()
         self.fake_lifecycle_execute.mock.assert_called_once_with(
-            self.step, mock.ANY, tuple(["part0", "part1", "part2"])
+            step, mock.ANY, tuple(["part0", "part1", "part2"])
         )
+
+    def test_pull_defaults(self):
+        self.run_test_using_defaults(step=steps.PULL)
+
+    def test_pull_with_parts_specified_using_defaults(self):
+        self.run_test_with_parts_specified_using_defaults(step=steps.PULL)
+
+    def test_pull_shell_using_defaults(self):
+        self.run_test_shell_using_defaults(step=steps.PULL, previous_step=None)
+
+    def test_pull_shell_after_using_defaults(self):
+        self.run_test_shell_after_using_defaults(step=steps.PULL)
+
+    def test_pull_using_lxd(self):
+        self.run_test_using_lxd(step=steps.PULL)
+
+    def test_pull_with_parts_specified_using_lxd(self):
+        self.run_test_with_parts_specified_using_lxd(step=steps.PULL)
+
+    def test_pull_using_destructive_mode(self):
+        self.run_test_using_destructive_mode(step=steps.PULL)
+
+    def test_pull_with_parts_specified_using_destructive_mode(self):
+        self.run_test_with_parts_specified_using_destructive_mode(step=steps.PULL)
+
+    def test_build_defaults(self):
+        self.run_test_using_defaults(step=steps.BUILD)
+
+    def test_build_with_parts_specified_using_defaults(self):
+        self.run_test_with_parts_specified_using_defaults(step=steps.BUILD)
+
+    def test_build_shell_using_defaults(self):
+        self.run_test_shell_using_defaults(step=steps.BUILD, previous_step=steps.PULL)
+
+    def test_build_shell_after_using_defaults(self):
+        self.run_test_shell_after_using_defaults(step=steps.BUILD)
+
+    def test_build_using_lxd(self):
+        self.run_test_using_lxd(step=steps.BUILD)
+
+    def test_build_with_parts_specified_using_lxd(self):
+        self.run_test_with_parts_specified_using_lxd(step=steps.BUILD)
+
+    def test_build_using_destructive_mode(self):
+        self.run_test_using_destructive_mode(step=steps.BUILD)
+
+    def test_build_with_parts_specified_using_destructive_mode(self):
+        self.run_test_with_parts_specified_using_destructive_mode(step=steps.BUILD)
+
+    def test_stage_defaults(self):
+        self.run_test_using_defaults(step=steps.STAGE)
+
+    def test_stage_with_parts_specified_using_defaults(self):
+        self.run_test_with_parts_specified_using_defaults(step=steps.STAGE)
+
+    def test_stage_shell_using_defaults(self):
+        self.run_test_shell_using_defaults(step=steps.STAGE, previous_step=steps.BUILD)
+
+    def test_stage_shell_after_using_defaults(self):
+        self.run_test_shell_after_using_defaults(step=steps.STAGE)
+
+    def test_stage_using_lxd(self):
+        self.run_test_using_lxd(step=steps.STAGE)
+
+    def test_stage_with_parts_specified_using_lxd(self):
+        self.run_test_with_parts_specified_using_lxd(step=steps.STAGE)
+
+    def test_stage_using_destructive_mode(self):
+        self.run_test_using_destructive_mode(step=steps.STAGE)
+
+    def test_stage_with_parts_specified_using_destructive_mode(self):
+        self.run_test_with_parts_specified_using_destructive_mode(step=steps.STAGE)
+
+    def test_prime_defaults(self):
+        self.run_test_using_defaults(step=steps.PRIME)
+
+    def test_prime_with_parts_specified_using_defaults(self):
+        self.run_test_with_parts_specified_using_defaults(step=steps.PRIME)
+
+    def test_prime_shell_using_defaults(self):
+        self.run_test_shell_using_defaults(step=steps.PRIME, previous_step=steps.STAGE)
+
+    def test_prime_shell_after_using_defaults(self):
+        self.run_test_shell_after_using_defaults(step=steps.PRIME)
+
+    def test_prime_using_lxd(self):
+        self.run_test_using_lxd(step=steps.PRIME)
+
+    def test_prime_with_parts_specified_using_lxd(self):
+        self.run_test_with_parts_specified_using_lxd(step=steps.PRIME)
+
+    def test_prime_using_destructive_mode(self):
+        self.run_test_using_destructive_mode(step=steps.PRIME)
+
+    def test_prime_with_parts_specified_using_destructive_mode(self):
+        self.run_test_with_parts_specified_using_destructive_mode(step=steps.PRIME)

@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
-from pathlib import Path
 import os
 import subprocess
-
-from testtools.matchers import Contains, Equals, FileExists, Not
+from pathlib import Path
 from unittest import mock
+
+import pytest
 import toml
+from testtools.matchers import Contains, Equals, FileExists, Not
 
 import snapcraft
 from snapcraft.internal import errors, meta
@@ -124,7 +125,20 @@ class RustPluginPropertiesTest(unit.TestCase):
         )
 
 
-class RustPluginCrossCompileTest(RustPluginBaseTest):
+@pytest.fixture
+def options():
+    class Options:
+        makefile = None
+        make_parameters = []
+        rust_features = []
+        rust_revision = ""
+        rust_channel = "stable"
+        source_subdir = ""
+
+    return Options()
+
+
+class TestRustPluginCrossCompile:
 
     scenarios = [
         ("armv7l", dict(deb_arch="armhf", target="armv7-unknown-linux-gnueabihf")),
@@ -135,162 +149,77 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
         ("s390x", dict(deb_arch="s390x", target="s390x-unknown-linux-gnu")),
     ]
 
-    def setUp(self):
-        super().setUp()
-
-        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
-
-        patcher = mock.patch(
-            "snapcraft.project.Project.is_cross_compiling", return_value=True
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
     @mock.patch("snapcraft.internal.sources._script.Script.download")
-    def test_cross_compile(self, mock_download):
-        self.plugin = rust.RustPlugin("test-part", self.options, self.project)
-        self.plugin.pull()
+    def test_cross_compile(
+        self,
+        mock_download,
+        monkeypatch,
+        tmp_work_path,
+        mock_run,
+        mock_run_output,
+        options,
+        deb_arch,
+        target,
+    ):
+        monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
+        project = snapcraft.project.Project(target_deb_arch=deb_arch)
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-        self.assertThat(self.run_mock.call_count, Equals(4))
-        self.run_mock.assert_has_calls(
+        plugin = rust.RustPlugin("test-part", options, project)
+        plugin.pull()
+
+        assert len(mock_run.mock_calls) == 4
+        assert mock_run.mock_calls[0][1][0] == [
+            os.path.join(plugin._rustup_dir, "rustup.sh"),
+            "-y",
+            "--no-modify-path",
+            "--profile=minimal",
+            "--default-toolchain",
+            "none",
+        ]
+        assert mock_run.mock_calls[1][1][0] == [plugin._rustup_cmd, "install", "stable"]
+        assert mock_run.mock_calls[2][1][0] == [
+            plugin._rustup_cmd,
+            "target",
+            "add",
+            "--toolchain",
+            "stable",
+            target,
+        ]
+        assert mock_run.mock_calls[3][1][0] == [
+            plugin._cargo_cmd,
+            "+stable",
+            "fetch",
+            "--manifest-path",
+            os.path.join(plugin.sourcedir, "Cargo.toml"),
+        ]
+
+        mock_run.reset_mock()
+        cargo_path = Path(plugin.builddir) / "Cargo.toml"
+        cargo_path.parent.mkdir(parents=True)
+        cargo_path.touch()
+
+        plugin.build()
+
+        assert os.path.exists(os.path.join(plugin.builddir, ".cargo", "config"))
+        assert mock_run.call_count == 1
+        mock_run.assert_has_calls(
             [
                 mock.call(
                     [
-                        os.path.join(self.plugin._rustup_dir, "rustup.sh"),
-                        "-y",
-                        "--no-modify-path",
-                        "--profile=minimal",
-                        "--default-toolchain",
-                        "none",
-                    ],
-                    cwd=os.path.join(self.plugin.partdir, "build"),
-                    env=self.plugin._build_env(),
-                ),
-                mock.call(
-                    [self.plugin._rustup_cmd, "install", "stable"],
-                    cwd=self.plugin.builddir,
-                    env=self.plugin._build_env(),
-                ),
-                mock.call(
-                    [
-                        self.plugin._rustup_cmd,
-                        "target",
-                        "add",
-                        "--toolchain",
-                        "stable",
-                        self.target,
-                    ],
-                    cwd=self.plugin.builddir,
-                    env=self.plugin._build_env(),
-                ),
-                mock.call(
-                    [
-                        self.plugin._cargo_cmd,
-                        "+stable",
-                        "fetch",
-                        "--manifest-path",
-                        os.path.join(self.plugin.sourcedir, "Cargo.toml"),
-                    ],
-                    cwd=self.plugin.builddir,
-                    env=self.plugin._build_env(),
-                ),
-            ]
-        )
-
-        self.run_mock.reset_mock()
-
-        self.plugin.build()
-
-        self.assertThat(
-            os.path.join(self.plugin.builddir, ".cargo", "config"), FileExists()
-        )
-
-        self.assertThat(self.run_mock.call_count, Equals(1))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        self.plugin._cargo_cmd,
+                        plugin._cargo_cmd,
                         "+stable",
                         "install",
                         "--path",
-                        self.plugin.builddir,
+                        plugin.builddir,
                         "--root",
-                        self.plugin.installdir,
+                        plugin.installdir,
                         "--force",
                         "--target",
-                        self.target,
+                        target,
                     ],
-                    cwd=os.path.join(self.plugin.partdir, "build"),
-                    env=self.plugin._build_env(),
-                )
-            ]
-        )
-
-    @mock.patch("snapcraft.internal.sources._script.Script.download")
-    def test_cross_compile_with_rust_toolchain_file(self, mock_download):
-        self.plugin = rust.RustPlugin("test-part", self.options, self.project)
-        open(os.path.join(self.plugin.sourcedir, "rust-toolchain"), "w").close()
-
-        self.plugin.pull()
-
-        self.assertThat(self.run_mock.call_count, Equals(3))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        os.path.join(self.plugin._rustup_dir, "rustup.sh"),
-                        "-y",
-                        "--no-modify-path",
-                        "--profile=minimal",
-                    ],
-                    cwd=os.path.join(self.plugin.partdir, "build"),
-                    env=self.plugin._build_env(),
-                ),
-                mock.call(
-                    [self.plugin._rustup_cmd, "target", "add", self.target],
-                    cwd=self.plugin.builddir,
-                    env=self.plugin._build_env(),
-                ),
-                mock.call(
-                    [
-                        self.plugin._cargo_cmd,
-                        "fetch",
-                        "--manifest-path",
-                        os.path.join(self.plugin.sourcedir, "Cargo.toml"),
-                    ],
-                    cwd=self.plugin.builddir,
-                    env=self.plugin._build_env(),
-                ),
-            ]
-        )
-
-        self.run_mock.reset_mock()
-
-        self.plugin.build()
-
-        self.assertThat(
-            os.path.join(self.plugin.builddir, ".cargo", "config"), FileExists()
-        )
-
-        self.assertThat(self.run_mock.call_count, Equals(1))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        self.plugin._cargo_cmd,
-                        "install",
-                        "--path",
-                        self.plugin.builddir,
-                        "--root",
-                        self.plugin.installdir,
-                        "--force",
-                        "--target",
-                        self.target,
-                    ],
-                    cwd=os.path.join(self.plugin.partdir, "build"),
-                    env=self.plugin._build_env(),
+                    cwd=plugin.builddir,
+                    env=plugin._build_env(),
                 )
             ]
         )

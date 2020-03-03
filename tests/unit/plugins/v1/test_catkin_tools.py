@@ -13,12 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import os.path
-import re
 
+import os
 from unittest import mock
-from testtools.matchers import Contains, Equals
+
+import pytest
 
 from snapcraft.plugins.v1 import catkin_tools
 from . import PluginsV1BaseTestCase
@@ -121,7 +120,24 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
         finish_build_mock.assert_called_once_with()
 
 
-class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
+@pytest.fixture
+def options():
+    class Options:
+        rosdistro = "indigo"
+        ubuntu_distro = "trusty"
+        catkin_packages = ["my_package"]
+        source_space = "src"
+        source_subdir = None
+        include_roscore = False
+        catkin_cmake_args = []
+        underlay = None
+        rosinstall_files = None
+        build_attributes = []
+
+    return Options()
+
+
+class TestPrepareBuild:
 
     scenarios = [
         (
@@ -142,69 +158,56 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-
-        self.properties.build_attributes.extend(self.build_attributes)
-        self.properties.catkin_cmake_args = self.catkin_cmake_args
-
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_use_in_snap_python")
-    def test_prepare_build(self, use_python_mock, run_mock):
-        plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project
+    def test_prepare_build(
+        self,
+        monkeypatch,
+        mock_run,
+        project,
+        options,
+        build_attributes,
+        catkin_cmake_args,
+    ):
+        monkeypatch.setattr(
+            catkin_tools.CatkinToolsPlugin, "_use_in_snap_python", lambda x: True
         )
+
+        options.build_attributes.extend(build_attributes)
+        options.catkin_cmake_args = catkin_cmake_args
+
+        plugin = catkin_tools.CatkinToolsPlugin("test-part", options, project)
         os.makedirs(os.path.join(plugin.rosdir, "test"))
 
         plugin._prepare_build()
 
-        build_attributes = self.build_attributes
-        catkin_cmake_args = self.catkin_cmake_args
-
-        self.assertTrue(use_python_mock.called)
-
-        confArgs = run_mock.mock_calls[0][1][0]
-        command = " ".join(confArgs)
-        self.assertThat(command, Contains("catkin init"))
-
-        confArgs = run_mock.mock_calls[1][1][0]
-        command = " ".join(confArgs)
-        self.assertThat(command, Contains("catkin clean -y"))
-
-        confArgs = run_mock.mock_calls[2][1][0]
-        command = " ".join(confArgs)
-        self.assertThat(command, Contains("catkin profile add -f default"))
-
-        confArgs = run_mock.mock_calls[3][1][0]
-        self.assertThat(confArgs[0], Equals("catkin"))
-        self.assertThat(confArgs[1], Equals("config"))
-
-        command = " ".join(confArgs)
-        self.assertThat(command, Contains("--profile default"))
-        self.assertThat(command, Contains("--install"))
-        self.assertThat(command, Contains("--build-space {}".format(plugin.builddir)))
-        self.assertThat(
-            command,
-            Contains(
-                "--source-space {}".format(
-                    os.path.join(plugin.builddir, plugin.options.source_space)
-                )
-            ),
-        )
-        self.assertThat(command, Contains("--install-space {}".format(plugin.rosdir)))
-
-        expected_args = " ".join(self.catkin_cmake_args)
-
-        if catkin_cmake_args:
-            self.assertRegexpMatches(
-                command, ".*--cmake-args.*{}".format(re.escape(expected_args))
-            )
-
-        if "debug" in build_attributes:
-            self.assertRegexpMatches(
-                command, ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug"
-            )
+        assert mock_run.mock_calls[0][1][0] == ["catkin", "init"]
+        assert mock_run.mock_calls[1][1][0] == ["catkin", "clean", "-y"]
+        assert mock_run.mock_calls[2][1][0] == [
+            "catkin",
+            "profile",
+            "add",
+            "-f",
+            "default",
+        ]
+        if "debug" in options.build_attributes:
+            expected_cmake_args = ["-DCMAKE_BUILD_TYPE=Debug"] + catkin_cmake_args
         else:
-            self.assertRegexpMatches(
-                command, ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release"
-            )
+            expected_cmake_args = ["-DCMAKE_BUILD_TYPE=Release"] + catkin_cmake_args
+
+        assert (
+            mock_run.mock_calls[3][1][0]
+            == [
+                "catkin",
+                "config",
+                "--profile",
+                "default",
+                "--build-space",
+                plugin.builddir,
+                "--source-space",
+                os.path.join(plugin.builddir, plugin.options.source_space),
+                "--install",
+                "--install-space",
+                plugin.rosdir,
+                "--cmake-args",
+            ]
+            + expected_cmake_args
+        )

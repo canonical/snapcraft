@@ -14,19 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
-
 from snapcraft.internal.meta import errors
-from tests import unit
 
 
-class ErrorFormattingTestCase(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = (
         (
             "MissingSnapcraftYamlKeysError",
             {
-                "exception": errors.MissingSnapcraftYamlKeysError,
+                "exception_class": errors.MissingSnapcraftYamlKeysError,
                 "kwargs": {"keys": ["test-key1", "test-key2"]},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -39,7 +36,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "AdoptedPartMissingError",
             {
-                "exception": errors.AdoptedPartMissingError,
+                "exception_class": errors.AdoptedPartMissingError,
                 "kwargs": {"part": "test-part"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -51,7 +48,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "AdoptedPartNotParsingInfo",
             {
-                "exception": errors.AdoptedPartNotParsingInfo,
+                "exception_class": errors.AdoptedPartNotParsingInfo,
                 "kwargs": {"part": "test-part"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -63,7 +60,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "AmbiguousPassthroughKeyError",
             {
-                "exception": errors.AmbiguousPassthroughKeyError,
+                "exception_class": errors.AmbiguousPassthroughKeyError,
                 "kwargs": {"keys": ["key1", "key2"]},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -76,7 +73,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidAppCommandError",
             {
-                "exception": errors.InvalidAppCommandError,
+                "exception_class": errors.InvalidAppCommandError,
                 "kwargs": {"command": "test-command", "app_name": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -89,7 +86,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidAppCommandNotFound",
             {
-                "exception": errors.InvalidAppCommandNotFound,
+                "exception_class": errors.InvalidAppCommandNotFound,
                 "kwargs": {"command": "test-command", "app_name": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -102,7 +99,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidAppCommandNotExecutable",
             {
-                "exception": errors.InvalidAppCommandNotExecutable,
+                "exception_class": errors.InvalidAppCommandNotExecutable,
                 "kwargs": {"command": "test-command", "app_name": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -114,7 +111,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidAppCommandFormatError",
             {
-                "exception": errors.InvalidAppCommandFormatError,
+                "exception_class": errors.InvalidAppCommandFormatError,
                 "kwargs": {"command": "test-command", "app_name": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -128,7 +125,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidCommandChainError",
             {
-                "exception": errors.InvalidCommandChainError,
+                "exception_class": errors.InvalidCommandChainError,
                 "kwargs": {"item": "test-chain", "app_name": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -141,7 +138,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidDesktopFileError",
             {
-                "exception": errors.InvalidDesktopFileError,
+                "exception_class": errors.InvalidDesktopFileError,
                 "kwargs": {"filename": "test-file", "message": "test-message"},
                 "expected_message": (
                     "Failed to generate desktop file: "
@@ -152,7 +149,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PrimedCommandNotFoundError",
             {
-                "exception": errors.PrimedCommandNotFoundError,
+                "exception_class": errors.PrimedCommandNotFoundError,
                 "kwargs": {"command": "test-command"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -164,19 +161,17 @@ class ErrorFormattingTestCase(unit.TestCase):
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftException:
 
     scenarios = (
         (
             "GradeDevelRequiredError",
             {
-                "exception": errors.GradeDevelRequiredError,
+                "exception_class": errors.GradeDevelRequiredError,
                 "kwargs": dict(set_grade="stable"),
                 "expected_brief": "Snap 'grade' was set to 'stable' but must be 'devel'.",
                 "expected_resolution": "Set 'grade' to 'devel' or use a stable base for this snap.",
@@ -188,7 +183,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SystemUsernamesValidationError",
             {
-                "exception": errors.SystemUsernamesValidationError,
+                "exception_class": errors.SystemUsernamesValidationError,
                 "kwargs": dict(name="user1", message="invalid ..."),
                 "expected_brief": "Invalid system-usernames for 'user1': invalid ...",
                 "expected_resolution": "Please configure system user according to documentation.",
@@ -199,10 +194,19 @@ class SnapcraftExceptionTests(unit.TestCase):
         ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.assertEquals(self.expected_brief, exception.get_brief())
-        self.assertEquals(self.expected_resolution, exception.get_resolution())
-        self.assertEquals(self.expected_details, exception.get_details())
-        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
-        self.assertEquals(self.expected_reportable, exception.get_reportable())
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        kwargs,
+        expected_brief,
+        expected_resolution,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+    ):
+        exception = exception_class(**kwargs)
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable

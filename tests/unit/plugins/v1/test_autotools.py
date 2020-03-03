@@ -16,15 +16,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import stat
-
 from unittest import mock
+
+import pytest
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import autotools, make
 from . import PluginsV1BaseTestCase
+
+
+@pytest.fixture
+def options():
+    class Options:
+        configflags = []
+        install_via = "destdir"
+        disable_parallel = False
+        makefile = None
+        make_parameters = []
+        make_install_var = "DESTDIR"
+        artifacts = []
+
+    return Options()
 
 
 class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
@@ -407,51 +423,31 @@ class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
         self.assertThat(raised.base, Equals("unsupported-base"))
 
 
-class AutotoolsCrossCompilePluginTestCase(PluginsV1BaseTestCase):
+@pytest.mark.parametrize(
+    "deb_arch,triplet",
+    [
+        ("armhf", "arm-linux-gnueabihf"),
+        ("arm64", "aarch64-linux-gnu"),
+        ("i386", "i386-linux-gnu"),
+        ("amd64", "x86_64-linux-gnu"),
+        ("ppc64el", "powerpc64le-linux-gnu"),
+    ],
+)
+@mock.patch.object(autotools.AutotoolsPlugin, "run")
+def test_cross_compile(mock_run, monkeypatch, project, options, deb_arch, triplet):
+    monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
 
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf", triplet="arm-linux-gnueabihf")),
-        ("aarch64", dict(deb_arch="arm64", triplet="aarch64-linux-gnu")),
-        ("i386", dict(deb_arch="i386", triplet="i386-linux-gnu")),
-        ("x86_64", dict(deb_arch="amd64", triplet="x86_64-linux-gnu")),
-        ("ppc64le", dict(deb_arch="ppc64el", triplet="powerpc64le-linux-gnu")),
-    ]
+    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-    def setUp(self):
-        super().setUp()
+    plugin = autotools.AutotoolsPlugin("test-part", options, project)
+    plugin.enable_cross_compilation()
+    configure_file = pathlib.Path(plugin.builddir) / "configure"
+    configure_file.parent.mkdir(parents=True)
+    configure_file.touch()
 
-        class Options:
-            configflags = []
-            install_via = "destdir"
-            disable_parallel = False
-            makefile = None
-            make_parameters = []
-            make_install_var = "DESTDIR"
-            artifacts = []
+    plugin.build()
 
-        self.options = Options()
-        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
-
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch(
-            "snapcraft.project.Project.is_cross_compiling", return_value=True
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_cross_compile(self):
-        plugin = autotools.AutotoolsPlugin("test-part", self.options, self.project)
-        plugin.enable_cross_compilation()
-        plugin.build()
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    ["./configure", "--prefix=", "--host={}".format(self.triplet)],
-                    cwd=mock.ANY,
-                )
-            ]
-        )
+    mock_run.assert_has_calls(
+        [mock.call(["./configure", "--prefix=", f"--host={triplet}"])]
+    )

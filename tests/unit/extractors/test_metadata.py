@@ -89,19 +89,16 @@ class ExtractedMetadataTestCase(unit.TestCase):
         self.assertThat(metadata.get_summary(), Equals("summary"))
 
 
-class ExtractedMetadataGettersTestCase(unit.TestCase):
+class TestExtractedMetadataGetters:
 
     scenarios = [
-        ("common_id", {"property": "common_id", "value": "test-value"}),
-        ("summary", {"property": "summary", "value": "test-value"}),
-        ("description", {"property": "description", "value": "test-value"}),
-        ("version", {"property": "version", "value": "test-value"}),
-        ("grade", {"property": "grade", "value": "test-value"}),
-        ("icon", {"property": "icon", "value": "test-value"}),
-        (
-            "desktop_file_paths",
-            {"property": "desktop_file_paths", "value": ["test-value"]},
-        ),
+        ("common_id", {"prop": "common_id", "value": "test-value"}),
+        ("summary", {"prop": "summary", "value": "test-value"}),
+        ("description", {"prop": "description", "value": "test-value"}),
+        ("version", {"prop": "version", "value": "test-value"}),
+        ("grade", {"prop": "grade", "value": "test-value"}),
+        ("icon", {"prop": "icon", "value": "test-value"}),
+        ("desktop_file_paths", {"prop": "desktop_file_paths", "value": ["test-value"]}),
     ]
 
     properties = (
@@ -114,19 +111,11 @@ class ExtractedMetadataGettersTestCase(unit.TestCase):
         "desktop_file_paths",
     )
 
-    def test_getters(self):
-        metadata = ExtractedMetadata(**{self.property: self.value})
-        for prop in self.properties:
-            gotten = getattr(metadata, "get_{}".format(prop))()
-            if prop == self.property:
-                self.assertThat(
-                    gotten,
-                    Equals(self.value),
-                    "Expected {!r} getter to return {}".format(prop, self.value),
-                )
+    def test_getters(self, tmp_work_path, prop, value):
+        metadata = ExtractedMetadata(**{prop: value})
+        for p in self.properties:
+            gotten = getattr(metadata, "get_{}".format(p))()
+            if p == prop:
+                assert gotten == value
             else:
-                self.assertThat(
-                    gotten,
-                    Equals(None),
-                    "Expected {!r} getter to return None".format(prop),
-                )
+                assert gotten is None

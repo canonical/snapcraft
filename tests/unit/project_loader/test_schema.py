@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import pathlib
 from textwrap import dedent
 
 import fixtures
+import pytest
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals
 
@@ -28,7 +30,19 @@ from snapcraft import project
 from tests import fixture_setup
 
 
-class ValidArchitecturesTest(ProjectLoaderBaseTest):
+def get_project_config(snapcraft_yaml_content, target_deb_arch=None):
+    snapcraft_yaml_path = pathlib.Path("Snapcraft.yaml")
+    with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
+        print(snapcraft_yaml_content, file=snapcraft_yaml_file)
+
+    snapcraft_project = project.Project(
+        snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix(),
+        target_deb_arch=target_deb_arch,
+    )
+    return load_config(snapcraft_project)
+
+
+class TestValidArchitectures:
 
     yaml_scenarios = [
         (
@@ -168,10 +182,16 @@ class ValidArchitecturesTest(ProjectLoaderBaseTest):
 
     scenarios = multiply_scenarios(yaml_scenarios, arch_scenarios)
 
-    def test_architectures(self):
-        snippet = ""
-        if self.yaml:
-            snippet = "architectures: {}".format(self.yaml)
+    def test(
+        self,
+        tmp_work_path,
+        yaml,
+        target_arch,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        snippet = "architectures: {}".format(yaml) if yaml else ""
         snapcraft_yaml = dedent(
             """\
             name: test
@@ -186,14 +206,14 @@ class ValidArchitecturesTest(ProjectLoaderBaseTest):
         """
         ).format(snippet)
 
-        try:
-            project_kwargs = dict(target_deb_arch=self.target_arch)
-            c = self.make_snapcraft_project(snapcraft_yaml, project_kwargs)
+        c = get_project_config(snapcraft_yaml, target_deb_arch=target_arch)
 
-            expected = getattr(self, "expected_{}".format(self.target_arch))
-            self.assertThat(c.data["architectures"], Equals(expected))
-        except errors.YamlValidationError as e:
-            self.fail("Expected YAML to be valid, got an error: {}".format(e))
+        expected_targets = {
+            "amd64": expected_amd64,
+            "i386": expected_i386,
+            "armhf": expected_armhf,
+        }
+        assert c.data["architectures"] == expected_targets[target_arch]
 
 
 class AliasesTest(ProjectLoaderBaseTest):
@@ -269,13 +289,10 @@ class AliasesTest(ProjectLoaderBaseTest):
         self.assertThat(str(raised), Contains(expected))
 
 
-class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
-
-    scenarios = [("slots", dict(property="slots")), ("plugs", dict(property="plugs"))]
-
-    def test_loading_properties(self):
-        snapcraft_yaml = dedent(
-            """\
+@pytest.mark.parametrize("entry", ["slots", "plugs"])
+def test_loading_additional_properties_fails(tmp_work_path, entry):
+    snapcraft_yaml = dedent(
+        f"""\
             name: my-package-1
             base: core18
             version: 1.0-snapcraft1~ppa1
@@ -284,18 +301,9 @@ class AdditionalPartPropertiesTest(ProjectLoaderBaseTest):
             parts:
                 part1:
                     plugin: nil
-                    {property}: [{property}1]
+                    {entry}: [{entry}1]
         """
-        ).format(property=self.property)
+    )
 
-        raised = self.assertRaises(
-            PluginError, self.make_snapcraft_project, snapcraft_yaml
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "properties failed to load for part1: Additional properties are "
-                "not allowed ('{}' was unexpected)".format(self.property)
-            ),
-        )
+    with pytest.raises(PluginError):
+        get_project_config(snapcraft_yaml)

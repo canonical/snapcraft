@@ -186,36 +186,51 @@ class AssortedBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
 
 
 class ValidBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
-    scenarios = [
-        ("default", dict(env=None, arg=None, result="multipass")),
-        ("host_env", dict(env="host", arg=None, result="host")),
-        ("host_arg", dict(env=None, arg="host", result="host")),
-        ("host_both", dict(env="host", arg="host", result="host")),
-        ("lxd_env", dict(env="lxd", arg=None, result="lxd")),
-        ("lxd_arg", dict(env=None, arg="lxd", result="lxd")),
-        ("lxd_both", dict(env="lxd", arg="lxd", result="lxd")),
-        ("multipass_env", dict(env="multipass", arg=None, result="multipass")),
-        ("multipass_arg", dict(env=None, arg="multipass", result="multipass")),
-        ("multipass_both", dict(env="multipass", arg="multipass", result="multipass")),
-    ]
-
-    def test_valid_clean_providers(self):
+    def assert_run(self, env, arg, result):
         self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", self.env)
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", env)
         )
 
-        if self.result == "host":
-            result = self.run_command(
-                [self.step, "--provider", self.arg, "--destructive-mode"]
-            )
+        if result == "host":
+            res = self.run_command([self.step, "--provider", arg, "--destructive-mode"])
 
             self.mock_get_provider_for.assert_not_called()
         else:
-            result = self.run_command([self.step, "--provider", self.arg])
+            res = self.run_command([self.step, "--provider", arg])
 
-            self.mock_get_provider_for.assert_called_once_with(self.result)
+            self.mock_get_provider_for.assert_called_once_with(result)
 
-        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(res.exit_code, Equals(0))
+
+    def test_default(self):
+        self.assert_run(env=None, arg=None, result="multipass")
+
+    def test_host_env(self):
+        self.assert_run(env="host", arg=None, result="host")
+
+    def test_host_arg(self):
+        self.assert_run(env=None, arg="host", result="host")
+
+    def test_host_both(self):
+        self.assert_run(env="host", arg="host", result="host")
+
+    def test_lxd_env(self):
+        self.assert_run(env="lxd", arg=None, result="lxd")
+
+    def test_lxd_arg(self):
+        self.assert_run(env=None, arg="lxd", result="lxd")
+
+    def test_lxd_both(self):
+        self.assert_run(env="lxd", arg="lxd", result="lxd")
+
+    def test_multipass_env(self):
+        self.assert_run(env="multipass", arg=None, result="multipass")
+
+    def test_multipass_arg(self):
+        self.assert_run(env=None, arg="multipass", result="multipass")
+
+    def test_multipass_both(self):
+        self.assert_run(env="multipass", arg="multipass", result="multipass")
 
 
 class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):

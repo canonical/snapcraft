@@ -14,38 +14,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from textwrap import dedent
 from unittest import mock
 
-from testscenarios.scenarios import multiply_scenarios
-from testtools.matchers import Contains, Equals, MatchesAny, MatchesRegex
+import pytest
+from testtools import TestCase
+from testtools.matchers import Contains, Equals
 
-from . import ProjectBaseTest
 from snapcraft.project import errors
 from snapcraft.project._schema import Validator
-from tests import unit
+from . import ProjectBaseTest
 
 
-class ValidationBaseTest(unit.TestCase):
+def get_data():
+    return {
+        "name": "my-package-1",
+        "base": "core18",
+        "version": "1.0-snapcraft1~ppa1",
+        "summary": "my summary less that 79 chars",
+        "description": "description which can be pretty long",
+        "adopt-info": "part1",
+        "parts": {"part1": {"plugin": "project", "parse-info": ["test-metadata-file"]}},
+    }
+
+
+@pytest.fixture
+def data():
+    """Return snapcraft.yaml data to validate."""
+    return get_data()
+
+
+class ValidationBaseTest(TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("os.path.exists")
-        self.mock_path_exists = patcher.start()
-        self.mock_path_exists.return_value = True
-        self.addCleanup(patcher.stop)
-
-        self.data = {
-            "name": "my-package-1",
-            "base": "core18",
-            "version": "1.0-snapcraft1~ppa1",
-            "summary": "my summary less that 79 chars",
-            "description": "description which can be pretty long",
-            "adopt-info": "part1",
-            "parts": {
-                "part1": {"plugin": "project", "parse-info": ["test-metadata-file"]}
-            },
-        }
+        self.data = get_data()
 
 
 class ValidationTest(ValidationBaseTest):
@@ -84,11 +88,6 @@ class ValidationTest(ValidationBaseTest):
 
         expected_message = "snapcraft validation file is missing from installation path"
         self.assertThat(raised.message, Equals(expected_message))
-
-    def test_icon_missing_is_valid_yaml(self):
-        self.mock_path_exists.return_value = False
-
-        Validator(self.data).validate()
 
     def test_valid_app_daemons(self):
         self.data["apps"] = {
@@ -192,50 +191,44 @@ class ValidationTest(ValidationBaseTest):
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 
 
-class DaemonDependencyTest(ValidationBaseTest):
+def test_icon_missing_is_valid_yaml(monkeypatch, data):
+    monkeypatch.setattr(os.path, "exists", lambda x: False)
 
-    scenarios = [
-        ("stop-command", dict(option="stop-command", value="binary1 --stop")),
-        (
-            "post-stop-command",
-            dict(option="post-stop-command", value="binary1 --post-stop"),
-        ),
-        ("before", dict(option="before", value=["service2"])),
-        ("after", dict(option="after", value=["service2"])),
-    ]
-
-    def test_daemon_dependency(self):
-        self.data["apps"] = {
-            "service1": {"command": "binary1", self.option: self.value}
-        }
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        self.assertThat(
-            str(raised),
-            Contains(
-                "The 'apps/service1' property does not match the required schema: "
-                "'daemon' is a dependency of '{}'".format(self.option)
-            ),
-        )
+    Validator(data).validate()
 
 
-class RequiredPropertiesTest(ValidationBaseTest):
+@pytest.mark.parametrize(
+    "option,value",
+    [
+        ("stop-command", "binary1 --stop"),
+        ("post-stop-command", "binary1 --post-stop"),
+        ("before", ["service1"]),
+        ("after", ["service2"]),
+    ],
+)
+def test_daemon_dependency(data, option, value):
+    data["apps"] = {"service1": {"command": "binary1", option: value}}
 
-    scenarios = [(key, dict(key=key)) for key in ["name", "parts"]]
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-    def test_required_properties(self):
-        data = self.data.copy()
-        del data[self.key]
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        expected_message = "'{}' is a required property".format(self.key)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
+    assert str(error.value).endswith(
+        "The 'apps/service1' property does not match the required schema: "
+        f"'daemon' is a dependency of {option!r}"
+    )
 
 
-class InvalidNamesTest(ValidationBaseTest):
+@pytest.mark.parametrize("key", ["name", "parts"])
+def test_required_properties(data, key):
+    del data[key]
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    assert f"{key!r} is a required property" in str(error.value)
+
+
+class TestInvalidNames:
     e1 = "not a valid snap name. Snap names can only use ASCII lowercase letters, numbers, and hyphens, and must have at least one letter."
     e2 = "not a valid snap name. Snap names cannot start with a hyphen."
     e3 = "not a valid snap name. Snap names cannot end with a hyphen."
@@ -281,31 +274,24 @@ class InvalidNamesTest(ValidationBaseTest):
         ("review-tools bad6", dict(name="foo-Bar", err=e1)),
     ]
 
-    def test_invalid_names(self):
-        data = self.data.copy()
-        data["name"] = self.name
+    def test(self, data, name, err):
+        data["name"] = name
 
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
+        with pytest.raises(errors.YamlValidationError) as error:
+            Validator(data).validate()
 
-        expected_message = (
-            "The 'name' property does not match the required schema: {!r} is {}"
-        ).format(self.name, self.err)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
+        assert str(error.value).endswith(
+            f"The 'name' property does not match the required schema: {name!r} is {err}"
+        )
 
 
-class ValidTypesTest(ValidationBaseTest):
+@pytest.mark.parametrize("snap_type", ["app", "base", "gadget", "kernel", "snapd"])
+def test_valid_types(data, snap_type):
+    data["type"] = snap_type
+    if snap_type in ("base", "kernel", "snapd"):
+        data.pop("base")
 
-    scenarios = [
-        (type_, dict(type_=type_))
-        for type_ in ["app", "base", "gadget", "kernel", "snapd"]
-    ]
-
-    def test_valid_types(self):
-        data = self.data.copy()
-        data["type"] = self.type_
-        if self.type_ in ("base", "kernel", "snapd"):
-            data.pop("base")
-        Validator(data).validate()
+    Validator(data).validate()
 
 
 _BASE_TYPE_MSG = (
@@ -319,246 +305,250 @@ _TYPE_ENUM_TMPL = (
 )
 
 
-class InvalidTypesTest(ValidationBaseTest):
+@pytest.mark.parametrize("snap_type", ["apps", "framework", "platform", "oem"])
+def test_invalid_types(data, snap_type):
+    data["type"] = snap_type
 
-    scenarios = [
-        (type_, dict(type_=type_)) for type_ in ["apps", "framework", "platform", "oem"]
-    ]
-
-    def test_invalid_types(self):
-        data = self.data.copy()
-        data["type"] = self.type_
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        self.assertThat(
-            raised.message,
-            # The schema is not loaded in order, so we can get different results depending on what is loaded first.
-            MatchesAny(
-                Equals(_BASE_TYPE_MSG), Equals(_TYPE_ENUM_TMPL.format(self.type_))
-            ),
-            message=data,
-        )
-
-
-class CombinedBaseTypeTest(ValidationBaseTest):
-    def test_type_base_and_no_base(self):
-        data = self.data.copy()
-        data.pop("base")
-        data["type"] = "base"
-
-        Validator(data).validate()
-
-    def test_type_base_and_base(self):
-        data = self.data.copy()
-        data["type"] = "base"
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        self.assertThat(raised.message, Equals(_BASE_TYPE_MSG), message=data)
-
-    def test_build_base_and_base(self):
-        data = self.data.copy()
-        data["build-base"] = "fake-base"
-
-        Validator(data).validate()
-
-    def test_build_base_and_type_base(self):
-        data = self.data.copy()
-        data.pop("base")
-        data["type"] = "base"
-        data["build-base"] = "fake-base"
-
-        Validator(data).validate()
-
-    def test_build_base_and_base_bare(self):
-        data = self.data.copy()
-        data["base"] = "bare"
-        data["build-base"] = "fake-base"
-
+    with pytest.raises(errors.YamlValidationError):
         Validator(data).validate()
 
 
-class ValidRestartConditionsTest(ValidationBaseTest):
+def test_type_base_and_no_base(data):
+    data.pop("base")
+    data["type"] = "base"
 
-    scenarios = [
-        (condition, dict(condition=condition))
-        for condition in [
-            "always",
-            "on-success",
-            "on-failure",
-            "on-abnormal",
-            "on-abort",
-            "on-watchdog",
-            "never",
-        ]
-    ]
-
-    def test_valid_restart_conditions(self):
-        self.data["apps"] = {"service1": {"command": "binary1", "daemon": "simple"}}
-        self.data["apps"]["service1"]["restart-condition"] = self.condition
-        Validator(self.data).validate()
+    Validator(data).validate()
 
 
-class RefreshModeTest(ValidationBaseTest):
+def test_type_base_and_base(data):
+    data["type"] = "base"
 
-    refresh_modes = ["endure", "restart"]
-    scenarios = [(mode, dict(mode=mode)) for mode in refresh_modes]
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-    def test_valid_modes(self):
-        self.data["apps"] = {
-            "service1": {
-                "command": "binary1",
-                "daemon": "simple",
-                "refresh-mode": self.mode,
-            }
-        }
-        Validator(self.data).validate()
-
-    def test_daemon_missing_errors(self):
-        self.data["apps"] = {
-            "service1": {"command": "binary1", "refresh-mode": self.mode}
-        }
-
-        self.assertRaises(errors.YamlValidationError, Validator(self.data).validate)
+    assert _BASE_TYPE_MSG in str(error.value)
 
 
-class StopModeTest(ValidationBaseTest):
+def test_build_base_and_base(data):
+    data["build-base"] = "fake-base"
 
-    stop_modes = [
-        "sigterm",
-        "sigterm-all",
-        "sighup",
-        "sighup-all",
-        "sigusr1",
-        "sigusr1-all",
-        "sigusr2",
-        "sigusr2-all",
-    ]
-    scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
-
-    def test_valid_modes(self):
-        self.data["apps"] = {
-            "service1": {
-                "command": "binary1",
-                "daemon": "simple",
-                "stop-mode": self.mode,
-            }
-        }
-        Validator(self.data).validate()
-
-    def test_daemon_missing_errors(self):
-        self.data["apps"] = {"service1": {"command": "binary1", "stop-mode": self.mode}}
-
-        self.assertRaises(errors.YamlValidationError, Validator(self.data).validate)
+    Validator(data).validate()
 
 
-class InvalidStopRefreshModesTest(ValidationBaseTest):
+def test_build_base_and_type_base(data):
+    data.pop("base")
+    data["type"] = "base"
+    data["build-base"] = "fake-base"
 
-    bad_values = [(mode, dict(mode=mode)) for mode in ["sigterm-bad", "123", "-----"]]
-    keys = [(k, dict(key=k)) for k in ["stop-mode", "refresh-mode"]]
-
-    scenarios = multiply_scenarios(keys, bad_values)
-
-    def setUp(self):
-        super().setUp()
-        self.valid_modes = {
-            "stop-mode": (
-                "['sigterm', 'sigterm-all', 'sighup', 'sighup-all', "
-                "'sigusr1', 'sigusr1-all', 'sigusr2', 'sigusr2-all']"
-            ),
-            "refresh-mode": "['endure', 'restart']",
-        }
-
-    def test_invalid_modes(self):
-        self.data["apps"] = {
-            "service1": {"command": "binary1", "daemon": "simple", self.key: self.mode}
-        }
-        raised = self.assertRaises(
-            errors.YamlValidationError, Validator(self.data).validate
-        )
-
-        expected_message = (
-            "The 'apps/service1/{}' property does not match the "
-            "required schema: '{}' is not one of {}"
-        ).format(self.key, self.mode, self.valid_modes[self.key])
-        self.assertThat(raised.message, Equals(expected_message), message=self.data)
+    Validator(data).validate()
 
 
-class InvalidAppNamesTest(ValidationBaseTest):
+def test_build_base_and_base_bare(data):
+    data["base"] = "bare"
+    data["build-base"] = "fake-base"
 
-    scenarios = [
-        (name, dict(name=name))
-        for name in ["qwe#rty", "qwe_rty", "queue rty", "queue  rty"]
-    ]
-
-    def test_invalid_app_names(self):
-        data = self.data.copy()
-        data["apps"] = {self.name: {"command": "1"}}
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        expected_message = (
-            "The 'apps' property does not match the required schema: {!r} is "
-            "not a valid app name. App names consist of upper- and lower-case "
-            "alphanumeric characters and hyphens. They cannot start or end "
-            "with a hyphen."
-        ).format(self.name)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
+    Validator(data).validate()
 
 
-class InvalidHookNamesTest(ValidationBaseTest):
+@pytest.mark.parametrize(
+    "name",
+    [
+        "1",
+        "a",
+        "aa",
+        "aaa",
+        "aaaa",
+        "Aa",
+        "aA",
+        "1a",
+        "a1",
+        "1-a",
+        "a-1",
+        "a-a",
+        "aa-a",
+        "a-aa",
+        "a-b-c",
+        "0a-a",
+        "a-0a",
+    ],
+)
+def test_valid_app_names(data, name):
+    data["apps"] = {name: {"command": "foo"}}
 
-    scenarios = [
-        (name, dict(name=name))
-        for name in ["qwe#rty", "qwe_rty", "queue rty", "queue  rty", "Hi"]
-    ]
-
-    def test_invalid_app_names(self):
-        data = self.data.copy()
-        data["hooks"] = {self.name: {"plugs": ["network"]}}
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        expected_message = (
-            "The 'hooks' property does not match the required schema: {!r} is "
-            "not a valid hook name. Hook names consist of lower-case "
-            "alphanumeric characters and hyphens. They cannot start or end "
-            "with a hyphen."
-        ).format(self.name)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
-
-
-class InvalidPartNamesTest(ValidationBaseTest):
-
-    scenarios = [
-        (name, dict(name=name))
-        for name in [
-            "plugins",
-            "qwe#rty",
-            "qwe_rty",
-            "queue rty",
-            "queue  rty",
-            "part/sub",
-        ]
-    ]
-
-    def test_invalid_part_names(self):
-        data = self.data.copy()
-        data["parts"] = {self.name: {"plugin": "nil"}}
-
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
-
-        expected_message = (
-            "The 'parts' property does not match the required schema: {!r} is "
-            "not a valid part name. Part names consist of lower-case "
-            "alphanumeric characters, hyphens and plus signs. "
-            "As a special case, 'plugins' is also not a valid part name."
-        ).format(self.name)
-        self.assertThat(raised.message, Equals(expected_message), message=data)
+    Validator(data).validate()
 
 
-class InvalidArchitecturesTest(ValidationBaseTest):
+@pytest.mark.parametrize(
+    "name",
+    [
+        "qwe#rty",
+        "qwe_rty",
+        "queue rty",
+        "queue  rty",
+        "",
+        "-",
+        "--",
+        "a--a",
+        "a-",
+        "a ",
+        " a",
+        "a a",
+        "日本語",
+        "한글",
+        "ру́сский язы́к",
+        "ໄຂ່​ອີ​ສ​ເຕີ້",
+        ":a",
+        "a:",
+        "a:a",
+        "_a",
+        "a_",
+        "a_a",
+    ],
+)
+def test_invalid_app_names(data, name):
+    data["apps"] = {name: {"command": "1"}}
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        f"The 'apps' property does not match the required schema: {name!r} is "
+        "not a valid app name. App names consist of upper- and lower-case "
+        "alphanumeric characters and hyphens. They cannot start or end "
+        "with a hyphen."
+    )
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "condition",
+    [
+        "always",
+        "on-success",
+        "on-failure",
+        "on-abnormal",
+        "on-abort",
+        "on-watchdog",
+        "never",
+    ],
+)
+def test_valid_restart_conditions(data, condition):
+    data["apps"] = {"service1": {"command": "binary1", "daemon": "simple"}}
+    data["apps"]["service1"]["restart-condition"] = condition
+
+    Validator(data).validate()
+
+
+_REFRESH_MODES = ["endure", "restart"]
+
+
+@pytest.mark.parametrize("mode", _REFRESH_MODES)
+def test_valid_refresh_modes(data, mode):
+    data["apps"] = {
+        "service1": {"command": "binary1", "daemon": "simple", "refresh-mode": mode}
+    }
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("mode", _REFRESH_MODES)
+def test_refresh_mode_daemon_missing_errors(data, mode):
+    data["apps"] = {"service1": {"command": "binary1", "refresh-mode": mode}}
+
+    with pytest.raises(errors.YamlValidationError):
+        Validator(data).validate()
+
+
+_STOP_MODES = [
+    "sigterm",
+    "sigterm-all",
+    "sighup",
+    "sighup-all",
+    "sigusr1",
+    "sigusr1-all",
+    "sigusr2",
+    "sigusr2-all",
+]
+
+
+@pytest.mark.parametrize("mode", _STOP_MODES)
+def test_valid_modes(data, mode):
+    data["apps"] = {
+        "service1": {"command": "binary1", "daemon": "simple", "stop-mode": mode}
+    }
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("mode", _STOP_MODES)
+def test_daemon_missing_errors(data, mode):
+    data["apps"] = {"service1": {"command": "binary1", "stop-mode": mode}}
+
+    with pytest.raises(errors.YamlValidationError):
+        Validator(data).validate()
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "qwe#rty",
+        "qwe_rty",
+        "queue rty",
+        "queue  rty",
+        "Hi",
+        "",
+        "-",
+        "--",
+        "a--a",
+        "a-",
+        "a ",
+        " a",
+        "a a",
+        "日本語",
+        "한글",
+        "ру́сский язы́к",
+        "ໄຂ່​ອີ​ສ​ເຕີ້",
+        ":a",
+        "a:",
+        "a:a",
+        "_a",
+        "a_",
+        "a_a",
+        "Hi",
+    ],
+)
+def test_invalid_hook_names(data, name):
+    data["hooks"] = {name: {"plugs": ["network"]}}
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        f"The 'hooks' property does not match the required schema: {name!r} is "
+        "not a valid hook name. Hook names consist of lower-case "
+        "alphanumeric characters and hyphens. They cannot start or end "
+        "with a hyphen."
+    )
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "name", ["plugins", "qwe#rty", "qwe_rty", "queue rty", "queue  rty", "part/sub"]
+)
+def test_invalid_part_names(data, name):
+    data["parts"] = {name: {"plugin": "nil"}}
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        f"The 'parts' property does not match the required schema: {name!r} is "
+        "not a valid part name. Part names consist of lower-case "
+        "alphanumeric characters, hyphens and plus signs. "
+        "As a special case, 'plugins' is also not a valid part name."
+    )
+    assert str(error.value).endswith(expected_message)
+
+
+class TestInvalidArchitectures:
 
     scenarios = [
         (
@@ -675,63 +665,13 @@ class InvalidArchitecturesTest(ValidationBaseTest):
         ),
     ]
 
-    def test_invalid_architectures(self):
-        data = self.data.copy()
-        data["architectures"] = self.architectures
+    def test(self, data, architectures, message):
+        data["architectures"] = architectures
 
-        raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
+        with pytest.raises(errors.YamlValidationError) as error:
+            Validator(data).validate()
 
-        self.assertThat(
-            raised.message,
-            MatchesRegex(
-                "The 'architectures.*?' property does not match the required "
-                "schema: {}".format(self.message)
-            ),
-            message=data,
-        )
-
-
-class NameTest(ProjectBaseTest):
-    def setUp(self):
-        super().setUp()
-
-        self.snapcraft_yaml = dedent(
-            """\
-            name: {}
-            version: "1"
-            base: core18
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: stable
-
-            parts:
-                part1:
-                    plugin: nil
-        """
-        )
-
-    def test_invalid_yaml_invalid_name_as_number(self):
-        raised = self.assertValidationRaises(self.snapcraft_yaml.format("1"))
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'name' property does not match the required "
-                "schema: snap names need to be strings."
-            ),
-        )
-
-    def test_invalid_yaml_invalid_name_as_list(self):
-        raised = self.assertValidationRaises(self.snapcraft_yaml.format("[]"))
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'name' property does not match the required "
-                "schema: snap names need to be strings."
-            ),
-        )
+        assert message in str(error.value)
 
 
 class IconTest(ProjectBaseTest):
@@ -784,86 +724,37 @@ class IconTest(ProjectBaseTest):
         )
 
 
-class ValidTitleTest(ProjectBaseTest):
-    scenarios = (
-        ("normal", dict(title="a title")),
-        ("normal with caps", dict(title="A Title")),
-        ("upper limit (40)", dict(title="T" * 40)),
-        ("upper limit (40) with emoji", dict(title="💩" * 40)),
-        ("upper limit (40) with unicode (non emoji)", dict(title="’" * 40)),
-    )
+@pytest.mark.parametrize("title", ["a title", "A Title", "T" * 40, "💩" * 40, "’" * 40])
+def test_valid_title(data, title):
+    data["title"] = title
 
-    def test_title(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            title: {}
-            summary: test
-            description: nothing
-            confinement: strict
-
-            parts:
-              part1:
-                plugin: nil
-            """
-            ).format(self.title)
-        )
+    Validator(data).validate()
 
 
-class InvalidTitleTest(ProjectBaseTest):
-    scenarios = (
-        ("non string", dict(title=1, error_template="number")),
-        ("over upper limit (40)", dict(title="T" * 41, error_template="length")),
-        (
-            "over upper limit (40) with emoji",
-            dict(title="💩" * 41, error_template="length"),
-        ),
-        (
-            "over upper limit (40) with unicode (non emoji)",
-            dict(title="’" * 41, error_template="length"),
-        ),
-    )
+_EXPECTED_ERROR_TEMPLATE = {
+    "number": (
+        "Issues while validating snapcraft.yaml: The 'title' property "
+        "does not match the required schema: {} is not of type 'string'"
+    ),
+    "length": (
+        "Issues while validating snapcraft.yaml: The 'title' property "
+        "does not match the required schema: {!r} is too long "
+        "(maximum length is 40)"
+    ),
+}
 
-    _EXPECTED_ERROR_TEMPLATE = {
-        "number": (
-            "Issues while validating snapcraft.yaml: The 'title' property "
-            "does not match the required schema: {} is not of type 'string'"
-        ),
-        "length": (
-            "Issues while validating snapcraft.yaml: The 'title' property "
-            "does not match the required schema: {!r} is too long "
-            "(maximum length is 40)"
-        ),
-    }
 
-    def test_invalid(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            title: {}
-            summary: test
-            description: nothing
-            confinement: strict
+@pytest.mark.parametrize(
+    "title,error_template",
+    [(1, "number"), ("T" * 41, "length"), ("💩" * 41, "length"), ("’" * 41, "length")],
+)
+def test_invalid_title(data, title, error_template):
+    data["title"] = title
 
-            parts:
-              part1:
-                plugin: nil
-            """
-            ).format(self.title)
-        )
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-        self.assertThat(
-            str(raised),
-            Contains(
-                self._EXPECTED_ERROR_TEMPLATE[self.error_template].format(self.title)
-            ),
-        )
+    assert _EXPECTED_ERROR_TEMPLATE[error_template].format(title) in str(error.value)
 
 
 class OrganizeTest(ProjectBaseTest):
@@ -953,149 +844,80 @@ class VersionTest(ProjectBaseTest):
         )
 
 
-class ValidVersionTest(ProjectBaseTest):
+@pytest.mark.parametrize(
+    "version", ["buttered-popcorn", "1.2.3", "v12.4:1:2~", "HeLlo", "v+"]
+)
+def test_valid_version(data, version):
+    data["version"] = version
 
-    scenarios = [
-        (version, dict(version=version))
-        for version in [
-            "'buttered-popcorn'",
-            "'1.2.3'",
-            '"1.2.3"',
-            "'v12.4:1:2~'",
-            "'HeLlo'",
-            "'v+'",
-        ]
-    ]
-
-    def test_valid_version(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: {}
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.version)
-        )
+    Validator(data).validate()
 
 
-class InvalidVersionGenericTest(ProjectBaseTest):
+@pytest.mark.parametrize(
+    "version",
+    [
+        "'*'",
+        "''",
+        "':v'",
+        "'.v'",
+        "'+v'",
+        "'~v'",
+        "'_v'",
+        "'-v'",
+        "'v:'",
+        "'v.'",
+        "'v_'",
+        "'v-'",
+        "'underscores_are_bad'",
+    ],
+)
+def test_invalid_version(data, version):
+    data["version"] = version
 
-    scenarios = [
-        (str(version), dict(version=version))
-        for version in [
-            "'*'",
-            "''",
-            "':v'",
-            "'.v'",
-            "'+v'",
-            "'~v'",
-            "'_v'",
-            "'-v'",
-            "'v:'",
-            "'v.'",
-            "'v_'",
-            "'v-'",
-            "'underscores_are_bad'",
-        ]
-    ]
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-    def test_invalid_version(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: {}
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.version)
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'version' property does not match the required "
-                "schema: {} is not a valid snap version string. Snap versions "
-                "consist of upper- and lower-case alphanumeric characters, "
-                "as well as periods, colons, plus signs, tildes, and "
-                "hyphens. They cannot begin with a period, colon, plus "
-                "sign, tilde, or hyphen. They cannot end with a period, "
-                "colon, or hyphen.".format(self.version)
-            ),
-        )
+    expected_message = (
+        "The 'version' property does not match the required "
+        f"schema: {version!r} is not a valid snap version string. Snap versions "
+        "consist of upper- and lower-case alphanumeric characters, "
+        "as well as periods, colons, plus signs, tildes, and "
+        "hyphens. They cannot begin with a period, colon, plus "
+        "sign, tilde, or hyphen. They cannot end with a period, "
+        "colon, or hyphen."
+    )
+    assert expected_message in str(error.value)
 
 
-class InvalidVersionSpecificTest(ProjectBaseTest):
-    def test_invalid_type(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """
-            name: test
-            base: core18
-            version: 0.1
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            parts:
-              part1:
-                plugin: nil
-        """
-            )
-        )
+def test_invalid_version_type(data):
+    data["version"] = 0.1
 
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'version' property does not match the required "
-                "schema: snap versions need to be strings. They must "
-                "also be wrapped in quotes when the value will be "
-                "interpreted by the YAML parser as a non-string. "
-                "Examples: '1', '1.2', '1.2.3', git (will be replaced "
-                "by a git describe based version string)."
-            ),
-        )
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
 
-    def test_too_long(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """
-            name: test
-            base: core18
-            version: this.is.a.really.too.long.version
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            parts:
-              part1:
-                plugin: nil
-        """
-            )
-        )
+    expected_message = (
+        "The 'version' property does not match the required "
+        "schema: snap versions need to be strings. They must "
+        "also be wrapped in quotes when the value will be "
+        "interpreted by the YAML parser as a non-string. "
+        "Examples: '1', '1.2', '1.2.3', git (will be replaced "
+        "by a git describe based version string)."
+    )
+    assert expected_message in str(error.value)
 
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'version' property does not match the required "
-                "schema: 'this.is.a.really.too.long.version' is too long "
-                "(maximum length is 32)"
-            ),
-        )
+
+def test_invalid_version_length(data):
+    data["version"] = "this.is.a.really.too.long.version"
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'version' property does not match the required "
+        "schema: 'this.is.a.really.too.long.version' is too long "
+        "(maximum length is 32)"
+    )
+    assert expected_message in str(error.value)
 
 
 class EnvironmentTest(ProjectBaseTest):
@@ -1168,595 +990,146 @@ class EnvironmentTest(ProjectBaseTest):
         )
 
 
-class ValidAppNamesTest(ProjectBaseTest):
-
-    scenarios = [
-        (name, dict(name=name))
-        for name in [
-            "1",
-            "a",
-            "aa",
-            "aaa",
-            "aaaa",
-            "Aa",
-            "aA",
-            "1a",
-            "a1",
-            "1-a",
-            "a-1",
-            "a-a",
-            "aa-a",
-            "a-aa",
-            "a-b-c",
-            "0a-a",
-            "a-0a",
-        ]
-    ]
-
-    def test_valid_app_names(self):
-        snapcraft_yaml = self.assertValidationPasses(
-            dedent(
-                dedent(
-                    """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: stable
-
-            apps:
-              {!r}:
-                command: foo
-
-            parts:
-              part1:
-                plugin: nil
-        """
-                ).format(self.name)
-            )
-        )
-
-        self.assertThat(snapcraft_yaml["apps"], Contains(self.name))
-
-
-class InvalidAppNamesYamlTest(ProjectBaseTest):
-
-    scenarios = [
-        (name, dict(name=name))
-        for name in [
-            "",
-            "-",
-            "--",
-            "a--a",
-            "a-",
-            "a ",
-            " a",
-            "a a",
-            "日本語",
-            "한글",
-            "ру́сский язы́к",
-            "ໄຂ່​ອີ​ສ​ເຕີ້",
-            ":a",
-            "a:",
-            "a:a",
-            "_a",
-            "a_",
-            "a_a",
-        ]
-    ]
-
-    def test_invalid_yaml_invalid_app_names(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: stable
-
-            apps:
-              {!r}:
-                command: foo
-
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.name)
-        )
-
-        self.assertRegex(
-            raised.message,
-            "The 'apps' property does not match the required schema: .* is "
-            "not a valid app name. App names consist of upper- and lower-case "
-            "alphanumeric characters and hyphens",
-        )
-
-
-class InvalidHookNamesYamlTest(ProjectBaseTest):
-
-    scenarios = [
-        (name, dict(name=name))
-        for name in [
-            "",
-            "-",
-            "--",
-            "a--a",
-            "a-",
-            "a ",
-            " a",
-            "a a",
-            "日本語",
-            "한글",
-            "ру́сский язы́к",
-            "ໄຂ່​ອີ​ສ​ເຕີ້",
-            ":a",
-            "a:",
-            "a:a",
-            "_a",
-            "a_",
-            "a_a",
-            "Hi",
-        ]
-    ]
-
-    def test_invalid_yaml_invalid_hook_names(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: stable
-
-            hooks:
-              {!r}:
-                plugs: [network]
-
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.name)
-        )
-
-        self.assertRegex(
-            raised.message,
-            "The 'hooks' property does not match the required schema: .* is "
-            "not a valid hook name. Hook names consist of lower-case "
-            "alphanumeric characters and hyphens",
-        )
-
-
-class ValidConfinmentTest(ProjectBaseTest):
-
-    scenarios = [
-        (confinement, dict(confinement=confinement))
-        for confinement in ["strict", "devmode", "classic"]
-    ]
-
-    def test_valid_confinement(self):
-        snapcraft_yaml = self.assertValidationPasses(
-            (
-                dedent(
-                    """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: {}
-            grade: stable
-
-            parts:
-              part1:
-                plugin: go
-                stage-packages: [fswebcam]
-        """
-                ).format(self.confinement)
-            )
-        )
-
-        self.assertThat(snapcraft_yaml["confinement"], Equals(self.confinement))
-
-
-class InvalidConfinementTest(ProjectBaseTest):
-
-    scenarios = [
-        (confinement, dict(confinement=confinement))
-        for confinement in ["foo", "strict-", "_devmode"]
-    ]
-
-    def test_invalid_confinement(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: {}
-            grade: stable
-
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.confinement)
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'confinement' property does not match the required "
-                "schema: '{}' is not one of ['classic', 'devmode', "
-                "'strict']".format(self.confinement)
-            ),
-        )
-
-
-class ValidGradeTest(ProjectBaseTest):
-
-    scenarios = [(grade, dict(grade=grade)) for grade in ["stable", "devel"]]
-
-    def test_yaml_valid_grade_types(self):
-        snapcraft_yaml = self.assertValidationPasses(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            confinement: strict
-            grade: {}
-
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.grade)
-        )
-
-        self.assertThat(snapcraft_yaml["grade"], Equals(self.grade))
-
-
-class InvalidGradeTest(ProjectBaseTest):
-
-    scenarios = [
-        (grade, dict(grade=grade)) for grade in ["foo", "unstable-", "_experimental"]
-    ]
-
-    def test_invalid_yaml_invalid_grade_types(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1"
-                summary: test
-                description: nothing
-                confinement: strict
-                grade: {}
-
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            ).format(self.grade)
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals(
-                "The 'grade' property does not match the required "
-                "schema: '{}' is not one of ['stable', 'devel']".format(self.grade)
-            ),
-        )
-
-
-class ValidEpochsTest(ProjectBaseTest):
-
-    scenarios = [
-        ("int 0", {"yaml": 0, "expected": 0}),
-        ("int string 0", {"yaml": '"0"', "expected": "0"}),
-        ("1*", {"yaml": "1*", "expected": "1*"}),
-        ('"1*"', {"yaml": '"1*"', "expected": "1*"}),
-        ("int 1", {"yaml": 1, "expected": 1}),
-        ("inst string 1", {"yaml": '"1"', "expected": "1"}),
-        ("400 *", {"yaml": "400*", "expected": "400*"}),
-        ('"400*"', {"yaml": '"400*"', "expected": "400*"}),
-        ("high int", {"yaml": 1234, "expected": 1234}),
-        ("high int string", {"yaml": '"1234"', "expected": "1234"}),
-        ("padded with 0", {"yaml": "0001", "expected": 1}),
-    ]
-
-    def test_yaml_valid_epochs(self):
-        snapcraft_yaml = self.assertValidationPasses(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            epoch: {}
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.yaml)
-        )
-
-        self.assertThat(snapcraft_yaml["epoch"], Equals(self.expected))
-
-
-class InvalidEpochsTest(ProjectBaseTest):
-
-    scenarios = [
-        (epoch, dict(epoch=epoch))
-        for epoch in [
-            "0*",
-            "_",
-            "1-",
-            "1+",
-            "-1",
-            "-1*",
-            "a",
-            "1a",
-            "1**",
-            '"01"',
-            "1.2",
-            '"1.2"',
-            "[1]",
-        ]
-    ]
-
-    def test_invalid_yaml_invalid_epochs(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            epoch: {}
-            parts:
-              part1:
-                plugin: nil
-        """
-            ).format(self.epoch)
-        )
-
-        self.assertRegex(
-            raised.message,
-            r"The 'epoch' property does not match the required "
-            r"schema:.*is not a 'epoch' \(epochs are positive integers "
-            r"followed by an optional asterisk\)",
-        )
-
-
-class LicenseTest(ProjectBaseTest):
-    def test_yaml_valid_license_string(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1"
-                summary: test
-                description: nothing
-                license: MIT-0
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            )
-        )
-
-    def test_invalid_yaml_invalid_license_non_string(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            license: 23.1
-            parts:
-              part1:
-                plugin: nil
-            """
-            )
-        )
-
-        self.assertRegex(
-            raised.message,
-            "The 'license' property does not match the required schema:.*is "
-            "not of type 'string'",
-        )
-
-
-class ValidAdaptersTest(ProjectBaseTest):
-    scenarios = [("none", {"yaml": "none"}), ("legacy", {"yaml": "legacy"})]
-
-    def test_yaml_valid_adapters(self):
-        self.assertValidationPasses(
-            dedent(
-                """\
-                name: test
-                base: core18
-                version: "1"
-                summary: test
-                description: nothing
-                apps:
-                  app:
-                    command: foo
-                    adapter: {}
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            ).format(self.yaml)
-        )
-
-
-class InvalidAdapterTest(ProjectBaseTest):
-    scenarios = [
-        ("NONE", {"yaml": "NONE"}),
-        ("none-", {"yaml": "none-"}),
-        ("invalid", {"yaml": "invalid"}),
-        ("LeGaCY", {"yaml": "LeGaCY"}),
-        ("leg-acy", {"yaml": "leg-acy"}),
-    ]
-
-    def test_invalid_yaml_invalid_adapters(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: nothing
-            apps:
-              app:
-                command: foo
-                adapter: {}
-            parts:
-              part1:
-                plugin: nil
-            """
-            ).format(self.yaml)
-        )
-
-        self.assertRegex(
-            raised.message,
-            r"The 'apps/app/adapter' property does not match the required schema:.*is "
-            r"not one of \['none', 'legacy', 'full'\]",
-        )
-
-
-class InvalidBuildEnvironmentTest(ProjectBaseTest):
-
-    scenarios = [
-        (
-            "wrong type (string)",
-            {
-                "environment": "a string",
-                "message": ".*property does not match the required schema: 'a string' is not of type 'array'.*",
-            },
-        ),
-        (
-            "wrong type (list of strings)",
-            {
-                "environment": "['a string']",
-                "message": ".*property does not match the required schema: 'a string' is not of type 'object'.*",
-            },
-        ),
-        (
-            "too many properties",
-            {
-                "environment": "[{key1: value1, key2: value2}]",
-                "message": ".*property does not match the required schema:.*has too many properties.*",
-            },
-        ),
-        (
-            "wrong property type",
-            {
-                "environment": "[{key1: 5}]",
-                "message": ".*property does not match the required schema: 5 is not of type 'string'.*",
-            },
-        ),
-    ]
-
-    def test_build_environment(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: my-package-1
-            base: core18
-            version: 1.0-snapcraft1~ppa1
-            summary: my summary less that 79 chars
-            description: description which can be pretty long
-            parts:
-                part1:
-                    plugin: nil
-                    build-environment: {}
-        """
-            ).format(self.environment)
-        )
-
-        self.assertThat(raised.message, MatchesRegex(self.message))
-
-
-class InvalidCommandChainTest(ProjectBaseTest):
-
-    scenarios = [
-        (
-            "a string",
-            {
-                "command_chain": "a string",
-                "message": ".*'a string' is not of type 'array'.*",
-            },
-        ),
-        (
-            "list of numbers",
-            {
-                "command_chain": [1],
-                "message": ".*1 is not a valid command-chain entry.*",
-            },
-        ),
-        (
-            "spaces",
-            {
-                "command_chain": ["test chain"],
-                "message": ".*'test chain' is not a valid command-chain entry.*",
-            },
-        ),
-        (
-            "quotes",
-            {
-                "command_chain": ["test'chain"],
-                "message": '.*"test\'chain" is not a valid command-chain entry.*',
-            },
-        ),
-    ]
-
-    def test_command_chain(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test-snap
-            base: core18
-            version: "1.0"
-            summary: test summary
-            description: test description
-
-            apps:
-                my-app:
-                    command: foo
-                    command-chain: {}
-
-            parts:
-                my-part:
-                    plugin: nil
-        """
-            ).format(self.command_chain)
-        )
-
-        self.assertThat(raised.message, MatchesRegex(self.message))
+@pytest.mark.parametrize("confinement", ["strict", "devmode", "classic"])
+def test_valid_confinement(data, confinement):
+    data["confinement"] = confinement
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("confinement", ["foo", "strict-", "_devmode"])
+def test_invalid_confinement(data, confinement):
+    data["confinement"] = confinement
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'confinement' property does not match the required "
+        f"schema: {confinement!r} is not one of ['classic', 'devmode', "
+        "'strict']"
+    )
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize("grade", ["stable", "devel"])
+def test_valid_grade(data, grade):
+    data["grade"] = grade
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("grade", ["foo", "strict-", "_devmode"])
+def test_invalid_grade(data, grade):
+    data["grade"] = grade
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'grade' property does not match the required "
+        f"schema: {grade!r} is not one of ['stable', 'devel']"
+    )
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize("epoch", [0, "0", "1*", 1, "1", "400*", "1234"])
+def test_valid_epoch(data, epoch):
+    data["epoch"] = epoch
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize(
+    "epoch",
+    [
+        "0*",
+        "_",
+        "1-",
+        "1+",
+        "-1",
+        "-1*",
+        "a",
+        "1a",
+        "1**",
+        '"01"',
+        "1.2",
+        '"1.2"',
+        "[1]",
+    ],
+)
+def test_invalid_epoch(data, epoch):
+    data["epoch"] = epoch
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        f"{epoch!r} is not a 'epoch' (epochs are positive integers "
+        "followed by an optional asterisk)"
+    )
+    assert expected_message in str(error.value)
+
+
+def test_valid_license(data):
+    data["license"] = "MIT-0"
+
+    Validator(data).validate()
+
+
+def test_invalid_license(data):
+    data["license"] = 1234
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'license' property does not match the required schema: "
+        "1234 is not of type 'string'"
+    )
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize("adapter", ["none", "legacy", "full"])
+def test_valid_adapter(data, adapter):
+    data["apps"] = {"foo": {"command": "foo", "adapter": adapter}}
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("adapter", ["NONE", "F", "Full"])
+def test_invalid_adapter(data, adapter):
+    data["apps"] = {"foo": {"command": "foo", "adapter": adapter}}
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = "The 'apps/foo/adapter' property does not match"
+    assert expected_message in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "build_environment",
+    ["a string", ["a string"], [{"k1": "v1", "k2": "v2"}], [{"k1": 5}]],
+)
+def test_invalid_part_build_environment_key_type(data, build_environment):
+    data["parts"]["part1"]["build-environment"] = build_environment
+
+    with pytest.raises(errors.YamlValidationError):
+        Validator(data).validate()
+
+
+@pytest.mark.parametrize(
+    "command_chain", ["a string", [1], ["test chain"], ["test'chain"]]
+)
+def test_invalid_command_chain(data, command_chain):
+    data["apps"] = {"foo": {"command": "foo", "command-chain": command_chain}}
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = "The 'apps/foo/command-chain"
+    assert expected_message in str(error.value)
 
 
 class SystemUsernamesTests(ProjectBaseTest):
@@ -1914,233 +1287,202 @@ class PackageManagement(ProjectBaseTest):
         )
 
 
-class InvalidAptConfigurations(ProjectBaseTest):
+class TestInvalidAptConfigurations:
     scenarios = [
         (
             "ppa extra invalid field",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      ppa: test/ppa
-                      invalid: invalid
-                    """
-                ),
+                packages=[{"type": "apt", "ppa": "test/ppa", "invalid": "invalid"}],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb extra invalid field",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main]
-                      key-id: test-key-id
-                      url: http://archive.ubuntu.com/ubuntu
-                      suites: [test, test-updates, test-security]
-                      invalid: invalid
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                        "invalid": "invalid",
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb missing field: components",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      key-id: test-key-id
-                      url: http://archive.ubuntu.com/ubuntu
-                      suites: [test, test-updates, test-security]
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb missing field: key-id",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      url: http://archive.ubuntu.com/ubuntu
-                      suites: [test, test-updates, test-security]
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb missing field: suites",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      url: http://archive.ubuntu.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "key-id": "test-key-id",
+                        "components": ["main"],
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb missing field: url",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb invalid deb type",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      deb-type: [invalid]
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "deb-type": ["invalid"],
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb invalid key-id",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: \\*\\*
-                      suites: [test, test-updates, test-security]
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "\\*\\*",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb empty architectures",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                      architectures: []
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                        "architectures": [],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb empty components",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: []
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": [],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "deb empty suites",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main]
-                      key-id: test-key-id
-                      suites: []
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": [],
+                    }
+                ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
             ),
         ),
         (
             "ppa duplicate",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      ppa: dupe/check
-                    - type: apt
-                      ppa: dupe/check
-                    """
-                ),
+                packages=[
+                    {"type": "apt", "ppa": "dupe/check"},
+                    {"type": "apt", "ppa": "dupe/check"},
+                ],
                 message_contains="has non-unique elements",
             ),
         ),
         (
             "deb duplicate",
             dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                    """
-                ),
+                packages=[
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    },
+                    {
+                        "type": "apt",
+                        "components": ["main"],
+                        "key-id": "test-key-id",
+                        "url": "http://archive.ubuntu.com/ubuntu",
+                        "suites": ["test", "test-updates", "test-security"],
+                    },
+                ],
                 message_contains="has non-unique elements",
             ),
         ),
     ]
 
-    def test_invalid(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                f"""\
-            name: test-snap
-            base: core18
-            version: "1.0"
-            summary: test summary
-            description: test description
+    def test_invalid(self, data, packages, message_contains):
+        data["package-repositories"] = packages
 
-            parts:
-                my-part:
-                    plugin: nil
-        """
-            )
-            + self.packages
-        )
+        with pytest.raises(errors.YamlValidationError) as error:
+            Validator(data).validate()
 
-        self.assertThat(raised.message, Contains(self.message_contains))
+        assert message_contains in str(error.value)

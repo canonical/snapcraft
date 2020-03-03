@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,13 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import doctest
+import pytest
 
-from snapcraft.internal.project_loader.grammar_processing import (
-    _global_grammar_processor as processor,
-)
+from snapcraft.internal import cache
 
 
-def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(processor))
-    return tests
+@pytest.fixture()
+def random_data_file(tmp_path):
+    """Return a file with some text in it."""
+    file_path = tmp_path / "to_hash"
+    with file_path.open("w") as to_hash_file:
+        print("random stub data", file=to_hash_file, end="")
+
+    return file_path.as_posix()
+
+
+@pytest.fixture()
+def file_cache(xdg_dirs):
+    """Return a FileCache instance."""
+    return cache.FileCache()

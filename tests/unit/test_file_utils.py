@@ -15,15 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import re
+import shutil
 import subprocess
 from unittest import mock
 
 import testtools
-import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft import file_utils
+from snapcraft.internal import common
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
@@ -34,7 +36,7 @@ from snapcraft.internal.errors import (
 from tests import fixture_setup, unit
 
 
-class ReplaceInFileTestCase(unit.TestCase):
+class TestReplaceInFile:
 
     scenarios = [
         (
@@ -63,41 +65,18 @@ class ReplaceInFileTestCase(unit.TestCase):
         ),
     ]
 
-    def test_replace_in_file(self):
-        os.makedirs("bin")
+    def test_replace_in_file(self, tmp_work_path, file_path, contents, expected):
+        (tmp_work_path / "bin").mkdir()
 
-        with open(self.file_path, "w") as f:
-            f.write(self.contents)
+        with open(file_path, "w") as f:
+            f.write(contents)
 
         file_utils.replace_in_file(
             "bin", re.compile(r""), re.compile(r"#!.*python"), r"#!/usr/bin/env python"
         )
 
-        with open(self.file_path, "r") as f:
-            self.assertThat(f.read(), Equals(self.expected))
-
-    def test_replace_in_file_with_permission_error(self):
-        os.makedirs("bin")
-        file_info = {
-            "path": os.path.join("bin", "readonly"),
-            "contents": "#!/foo/bar/baz/python",
-            "expected": "#!/foo/bar/baz/python",
-        }
-        with open(file_info["path"], "w") as f:
-            f.write(file_info["contents"])
-
-        # Use a mock here to force a PermissionError, even within a docker
-        # container which always runs with elevated permissions
-        with mock.patch("snapcraft.file_utils.open", side_effect=PermissionError("")):
-            file_utils.replace_in_file(
-                "bin",
-                re.compile(r""),
-                re.compile(r"#!.*python"),
-                r"#!/usr/bin/env python",
-            )
-
-        with open(file_info["path"], "r") as f:
-            self.assertThat(f.read(), Equals(file_info["expected"]))
+        with open(file_path, "r") as f:
+            assert f.read() == expected
 
 
 class TestLinkOrCopyTree(unit.TestCase):
@@ -322,86 +301,33 @@ _BIN_PATHS = [
 ]
 
 
-class GetToolPathTest(testscenarios.WithScenarios, testtools.TestCase):
+class TestGetToolPath:
 
     scenarios = [
-        (i, dict(tool_path=os.path.join(i, "tool-command"))) for i in _BIN_PATHS
+        (i, dict(tool_path=pathlib.Path(i) / "tool-command")) for i in _BIN_PATHS
     ]
 
-    def _patch(self, root: str):
-        tool_path = os.path.join(root, self.tool_path)
-        original_exists = os.path.exists
+    def test_get_tool_from_host_path(self, monkeypatch, tool_path, fake_exists):
+        abs_tool_path = pathlib.Path("/") / tool_path
+        fake_exists.paths = [abs_tool_path]
+        monkeypatch.setattr(shutil, "which", lambda x: abs_tool_path.as_posix())
 
-        def _fake_exists(path):
-            if path == tool_path:
-                return True
-            else:
-                return original_exists(path)
+        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
 
-        patcher = mock.patch("os.path.exists", side_effect=_fake_exists)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    def test_get_tool_from_snapcraft_snap_path(self, in_snap, tool_path, fake_exists):
+        abs_tool_path = pathlib.Path("/snap/snapcraft/current") / tool_path
+        fake_exists.paths = [abs_tool_path]
 
-    def test_get_tool_from_host_path(self):
-        self._patch(os.path.sep)
+        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
 
-        patcher = mock.patch(
-            "shutil.which", return_value=os.path.join(os.path.sep, self.tool_path)
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    def test_get_tool_from_docker_snap_path(
+        self, monkeypatch, in_snap, tool_path, fake_exists
+    ):
+        abs_tool_path = pathlib.Path("/snap/snapcraft/current") / tool_path
+        fake_exists.paths = [abs_tool_path]
+        monkeypatch.setattr(common, "is_process_container", lambda: True)
 
-        self.assertThat(
-            file_utils.get_tool_path("tool-command"),
-            Equals(os.path.join(os.path.sep, self.tool_path)),
-        )
-
-    def test_get_tool_from_snapcraft_snap_path(self):
-        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
-
-        snap_root = os.path.join(os.path.sep, "snap", "snapcraft", "current")
-        self._patch(snap_root)
-
-        self.assertThat(
-            file_utils.get_tool_path("tool-command"),
-            Equals(os.path.join(snap_root, self.tool_path)),
-        )
-
-    def test_get_tool_from_docker_snap_path(self):
-        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
-
-        snap_root = os.path.join(os.path.sep, "snap", "snapcraft", "current")
-        self._patch(snap_root)
-
-        with mock.patch(
-            "snapcraft.internal.common.is_process_container", return_value=True
-        ):
-            self.assertThat(
-                file_utils.get_tool_path("tool-command"),
-                Equals(os.path.join(snap_root, self.tool_path)),
-            )
-
-    def test_get_tool_from_docker_deb_path(self):
-        self._patch(os.path.sep)
-
-        patcher = mock.patch(
-            "shutil.which",
-            return_value=os.path.join(
-                os.path.sep, "bin", os.path.basename(self.tool_path)
-            ),
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        with mock.patch(
-            "snapcraft.internal.common.is_process_container", return_value=True
-        ):
-            self.assertThat(
-                file_utils.get_tool_path("tool-command"),
-                Equals(
-                    os.path.join(os.path.sep, "bin", os.path.basename(self.tool_path))
-                ),
-            )
+        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
 
 
 class GetToolPathErrorsTest(testtools.TestCase):

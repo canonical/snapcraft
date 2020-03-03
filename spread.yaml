@@ -286,7 +286,9 @@ suites:
      # shellcheck source=/dev/null
      source "$HOME/venv/snapcraft/bin/activate"
      pip install --upgrade pip wheel setuptools
-     pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt codecov
+     cd /snapcraft
+     pip install -r requirements.txt -r requirements-devel.txt codecov
+     pip install -e .
    recover: |
      rm -rf ~/venv
 

@@ -24,11 +24,7 @@ from . import FakeStoreCommandsBaseTestCase
 
 class ListTest(FakeStoreCommandsBaseTestCase):
 
-    scenarios = [
-        ("list", {"command_name": "list"}),
-        ("list-registered", {"command_name": "list-registered"}),
-        ("registered alias", {"command_name": "registered"}),
-    ]
+    command_name = "list"
 
     def test_command_without_login_must_ask(self):
         # TODO: look into why this many calls are done inside snapcraft.storeapi
@@ -47,6 +43,30 @@ class ListTest(FakeStoreCommandsBaseTestCase):
         )
 
     def test_list_empty(self):
+        self.fake_store_account_info.mock.return_value = {
+            "account_id": "abcd",
+            "snaps": dict(),
+        }
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains("There are no registered snaps."))
+
+    def test_list_registered(self):
+        self.command_name = "list-registered"
+        self.fake_store_account_info.mock.return_value = {
+            "account_id": "abcd",
+            "snaps": dict(),
+        }
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains("There are no registered snaps."))
+
+    def test_registered(self):
+        self.command_name = "registered"
         self.fake_store_account_info.mock.return_value = {
             "account_id": "abcd",
             "snaps": dict(),

@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
+import pytest
 
 from snapcraft.storeapi import channels
-from tests import unit
 
 
-class ChannelTest(unit.TestCase):
+class TestChannel:
     scenarios = (
         (
             "risk",
@@ -64,16 +63,19 @@ class ChannelTest(unit.TestCase):
         ),
     )
 
-    def test_channel(self):
-        c = channels.Channel(self.channel)
-        self.assertThat(c.track, Equals(self.expected_track))
-        self.assertThat(c.risk, Equals(self.expected_risk))
-        self.assertThat(c.branch, Equals(self.expected_branch))
-        self.assertThat(str(c), Equals(self.expected_channel))
-        self.assertThat(repr(c), Equals("'{}'".format(self.expected_channel)))
+    def test_channel(
+        self, channel, expected_track, expected_risk, expected_branch, expected_channel
+    ):
+        c = channels.Channel(channel)
+
+        assert c.track == expected_track
+        assert c.risk == expected_risk
+        assert c.branch == expected_branch
+        assert str(c) == expected_channel
+        assert repr(c), "'{}'".format(expected_channel)
 
 
-class ChannelTupleTest(unit.TestCase):
+class TestChannelTuple:
     scenarios = (
         (
             "risk",
@@ -117,18 +119,16 @@ class ChannelTupleTest(unit.TestCase):
         ),
     )
 
-    def test_channel(self):
-        c = channels.Channel.from_channel_tuple(
-            track=self.track, risk=self.risk, branch=self.branch
-        )
-        self.assertThat(c.track, Equals(self.expected_track))
-        self.assertThat(c.risk, Equals(self.risk))
-        self.assertThat(c.branch, Equals(self.branch))
-        self.assertThat(str(c), Equals(self.expected_channel))
-        self.assertThat(repr(c), Equals("'{}'".format(self.expected_channel)))
+    def test_channel(self, track, risk, branch, expected_track, expected_channel):
+        c = channels.Channel.from_channel_tuple(track=track, risk=risk, branch=branch)
+        assert c.track == expected_track
+        assert c.risk == risk
+        assert c.branch == branch
+        assert str(c) == expected_channel
+        assert repr(c), "'{}'".format(expected_channel)
 
 
-class InvalidChannelTest(unit.TestCase):
+class TestInvalidChannel:
     scenarios = (
         ("invalid risk", dict(channel="invalid-edge")),
         ("invalid track/risk", dict(channel="track/invalid-edge")),
@@ -136,5 +136,6 @@ class InvalidChannelTest(unit.TestCase):
         ("invalid tuple", dict(channel="start/track/invalid-edge/branch/end")),
     )
 
-    def test_invalid(self):
-        self.assertRaises(RuntimeError, channels.Channel, self.channel)
+    def test_invalid(self, channel):
+        with pytest.raises(RuntimeError):
+            channels.Channel(channel)

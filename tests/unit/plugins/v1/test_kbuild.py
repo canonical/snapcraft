@@ -17,14 +17,14 @@
 import logging
 import os
 
+import pytest
 import fixtures
 from testtools.matchers import Equals, HasLength
 from unittest import mock
 
 import snapcraft
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import kbuild
-from tests import unit
 from . import PluginsV1BaseTestCase
 
 
@@ -280,65 +280,6 @@ ACCEPT=n
 """
         self.assertThat(config_contents, Equals(expected_config))
 
-
-class KBuildCrossCompilePluginTestCase(unit.TestCase):
-
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf")),
-        ("aarch64", dict(deb_arch="arm64")),
-        ("ppc64le", dict(deb_arch="ppc64el")),
-    ]
-
-    def setUp(self):
-        super().setUp()
-
-        class Options:
-            build_parameters = []
-            kconfigfile = None
-            kconfigflavour = None
-            kdefconfig = []
-            kconfigs = []
-            build_attributes = []
-
-        self.options = Options()
-        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta.base = "core"
-
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.dict(os.environ, {})
-        self.env_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    @mock.patch("subprocess.check_call")
-    @mock.patch.object(kbuild.KBuildPlugin, "run")
-    def test_cross_compile(self, run_mock, check_call_mock):
-        plugin = kbuild.KBuildPlugin("test-part", self.options, self.project)
-        plugin.enable_cross_compilation()
-
-        plugin.build()
-        run_mock.assert_has_calls(
-            [
-                mock.call(
-                    [
-                        "make",
-                        "-j1",
-                        "ARCH={}".format(self.project.kernel_arch),
-                        "CROSS_COMPILE={}".format(self.project.cross_compiler_prefix),
-                        "PATH={}:/usr/{}/bin".format(
-                            os.environ.copy().get("PATH", ""), self.project.arch_triplet
-                        ),
-                    ]
-                )
-            ]
-        )
-
     def test_unsupported_base(self):
         self.project._snap_meta.base = "unsupported-base"
 
@@ -352,3 +293,38 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
 
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
+
+
+@pytest.mark.parametrize("deb_arch", ["armhf", "arm64", "i386", "ppc64el"])
+@mock.patch("subprocess.check_call")
+def test_cross_compile(mock_check_call, monkeypatch, mock_run, deb_arch):
+    monkeypatch.setattr(snapcraft.project.Project, "is_cross_compiling", True)
+
+    class Options:
+        build_parameters = []
+        kconfigfile = None
+        kconfigflavour = None
+        kdefconfig = []
+        kconfigs = []
+        build_attributes = []
+
+    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
+    plugin = kbuild.KBuildPlugin("test-part", Options(), project)
+    plugin.enable_cross_compilation()
+
+    plugin.build()
+    mock_run.assert_has_calls(
+        [
+            mock.call(
+                [
+                    "make",
+                    "-j1",
+                    f"ARCH={project.kernel_arch}",
+                    f"CROSS_COMPILE={project.cross_compiler_prefix}",
+                    mock.ANY,
+                ]
+            )
+        ]
+    )

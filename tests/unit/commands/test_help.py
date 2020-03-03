@@ -179,34 +179,30 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
 
 class TopicWithDevelTestCase(HelpCommandBaseTestCase):
-
-    scenarios = [(topic, dict(topic=topic)) for topic in _TOPICS]
-
     def test_print_topic_help_with_devel_for_valid_topic(self):
         expected = {
             "sources": "Help on package snapcraft",
             "plugins": "Help on package snapcraft",
         }
 
-        result = self.run_command(["help", self.topic, "--devel"])
-        output = result.output[: len(expected[self.topic])]
-        self.assertThat(
-            output,
-            Equals(expected[self.topic]),
-            "The help message does not start with {!r} but with "
-            "{!r} instead".format(expected[self.topic], output),
-        )
+        for topic in _TOPICS:
+            result = self.run_command(["help", topic, "--devel"])
+            output = result.output[: len(expected[topic])]
+            self.assertThat(
+                output,
+                Equals(expected[topic]),
+                "The help message does not start with {!r} but with "
+                "{!r} instead".format(expected[topic], output),
+            )
 
 
 class TestHelpForCommand(HelpCommandBaseTestCase):
-
-    scenarios = [(c, dict(command=c)) for c in run.commands]
-
     def test_help_for_command(self):
-        result = self.run_command(["help", self.command])
-        self.assertThat(result.exit_code, Equals(0))
-        # Verify that the first line of help text is correct
-        # to ensure no name squatting takes place.
-        self.assertThat(
-            result.output, Contains(run.commands[self.command].help.split("\n")[0])
-        )
+        for command in run.commands:
+            result = self.run_command(["help", command])
+            self.assertThat(result.exit_code, Equals(0))
+            # Verify that the first line of help text is correct
+            # to ensure no name squatting takes place.
+            self.assertThat(
+                result.output, Contains(run.commands[command].help.split("\n")[0])
+            )

@@ -182,46 +182,48 @@ class TestLocal(unit.TestCase):
         self.assertTrue(sources._source_handler["local"] is sources.Local)
 
 
-class TestLocalIgnores(unit.TestCase):
+class TestLocalIgnores:
     """Verify that the snapcraft root dir does not get copied into itself."""
 
     scenarios = [
         (f, dict(snapcraft_dir=f)) for f in common.SNAPCRAFT_FILES if "." not in f
     ]
 
-    def test_pull_with_source_the_parent_of_current_dir(self):
+    def test_pull_with_source_the_parent_of_current_dir(
+        self, tmp_work_path, snapcraft_dir
+    ):
         os.makedirs("subdir")
 
-        cwd = os.getcwd()
+        cwd = tmp_work_path.as_posix()
         os.chdir("subdir")
-        source_dir = os.path.join(self.snapcraft_dir, "foo_src")
+        source_dir = os.path.join(snapcraft_dir, "foo_src")
         local = sources.Local("..", source_dir)
         local.pull()
         os.chdir(cwd)
-        self.assertFalse(
-            os.path.exists(
-                os.path.join("subdir", source_dir, "subdir", self.snapcraft_dir)
-            )
-        )
-        self.assertTrue("subdir" in os.listdir(os.path.join("subdir", source_dir)))
 
-    def test_pull_with_source_a_parent_of_current_dir(self):
+        assert not os.path.exists(
+            os.path.join("subdir", source_dir, "subdir", snapcraft_dir)
+        )
+        assert "subdir" in os.listdir(os.path.join("subdir", source_dir))
+
+    def test_pull_with_source_a_parent_of_current_dir(
+        self, tmp_work_path, snapcraft_dir
+    ):
         subdir = os.path.join("subdir", "subsubdir", "subsubsubdir")
         os.makedirs(subdir)
 
-        cwd = os.getcwd()
+        cwd = tmp_work_path.as_posix()
         os.chdir(subdir)
         source = "../" * (subdir.count(os.sep) + 1)
-        source_dir = os.path.join(self.snapcraft_dir, "foo_src")
+        source_dir = os.path.join(snapcraft_dir, "foo_src")
         local = sources.Local(source, source_dir)
         local.pull()
         os.chdir(cwd)
-        self.assertFalse(
-            os.path.exists(os.path.join(subdir, source_dir, subdir, self.snapcraft_dir))
+        assert not os.path.exists(
+            os.path.join(subdir, source_dir, subdir, snapcraft_dir)
         )
-        self.assertTrue(
-            os.path.basename(subdir)
-            in os.listdir(os.path.join(subdir, source_dir, os.path.dirname(subdir)))
+        assert os.path.basename(subdir) in os.listdir(
+            os.path.join(subdir, source_dir, os.path.dirname(subdir))
         )
 
 
@@ -341,7 +343,7 @@ class TestLocalUpdate(unit.TestCase):
         self.assertThat(os.path.join(destination, "dir", "file2"), FileExists())
 
 
-class TestLocalUpdateSnapcraftYaml(unit.TestCase):
+class TestLocalUpdateSnapcraftYaml:
 
     scenarios = [
         ("snapcraft.yaml", dict(snapcraft_file="snapcraft.yaml")),
@@ -353,11 +355,11 @@ class TestLocalUpdateSnapcraftYaml(unit.TestCase):
         ("snap/<content>", dict(snapcraft_file=os.path.join("snap", "test-file"))),
     ]
 
-    def test_snapcraft_yaml_modification_ignored(self):
+    def test_snapcraft_yaml_modification_ignored(self, tmp_work_path, snapcraft_file):
         source = "source"
         destination = "destination"
-        snapcraft_source_path = os.path.join(source, self.snapcraft_file)
-        snapcraft_destination_path = os.path.join(destination, self.snapcraft_file)
+        snapcraft_source_path = os.path.join(source, snapcraft_file)
+        snapcraft_destination_path = os.path.join(destination, snapcraft_file)
         os.makedirs(os.path.dirname(snapcraft_source_path))
         os.mkdir(destination)
 
@@ -373,10 +375,8 @@ class TestLocalUpdateSnapcraftYaml(unit.TestCase):
 
         local = sources.Local(source, destination)
         local.pull()
-        self.assertFalse(
-            local.check("reference"), "Expected no updates to be available"
-        )
-        self.assertThat(snapcraft_destination_path, FileExists())
+        assert not local.check("reference")
+        assert os.path.exists(snapcraft_destination_path)
 
         # Now add a new file to the directory, and make sure it has a timestamp
         # later than our reference (this whole test happens too fast)
@@ -387,4 +387,4 @@ class TestLocalUpdateSnapcraftYaml(unit.TestCase):
         modify_time = os.stat("reference").st_mtime
         os.utime(snapcraft_source_path, (access_time, modify_time + 1))
 
-        self.assertFalse(local.check("reference"), "Expected no update to be available")
+        assert not local.check("reference")

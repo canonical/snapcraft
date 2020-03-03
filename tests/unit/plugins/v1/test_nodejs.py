@@ -17,11 +17,12 @@
 import collections
 import json
 import os
+import pathlib
 import tarfile
 from unittest import mock
 
+import pytest
 import fixtures
-from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Equals, HasLength, FileExists
 
 from snapcraft.plugins.v1 import nodejs
@@ -221,66 +222,55 @@ class NodejsPluginPropertiesTest(unit.TestCase):
 
 
 class NodePluginTest(NodePluginBaseTest):
-
-    scenarios = multiply_scenarios(
-        [
-            ("without-proxy", dict(http_proxy=None, https_proxy=None)),
-            (
-                "with-proxy",
-                dict(
-                    http_proxy="http://localhost:3132",
-                    https_proxy="http://localhost:3133",
-                ),
-            ),
-        ],
-        [("npm", dict(package_manager="npm")), ("yarn", dict(package_manager="yarn"))],
-    )
-
-    def setUp(self):
-        super().setUp()
-        for v in ("http_proxy", "https_proxy"):
-            self.useFixture(fixtures.EnvironmentVariable(v, getattr(self, v)))
-
-        self.options.nodejs_package_manager = self.package_manager
-
     def get_npm_cmd(self, plugin):
         return os.path.join(plugin._npm_dir, "bin", "npm")
 
     def get_yarn_cmd(self, plugin):
         return os.path.join(plugin._npm_dir, "bin", "yarn")
 
-    def test_pull(self):
+    def test_pull_with_npm(self):
+        self.options.nodejs_package_manager = "npm"
         plugin = nodejs.NodePlugin("test-part", self.options, self.project)
 
         self.create_assets(plugin)
 
         plugin.pull()
 
-        if self.package_manager == "npm":
-            expected_tar_calls = [
-                mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call().download(),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
-            ]
-        else:
-            expected_tar_calls = [
-                mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call().download(),
-                mock.call("https://yarnpkg.com/latest.tar.gz", plugin._npm_dir),
-                mock.call().download(),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
-                mock.call().provision(
-                    plugin._npm_dir, clean_target=False, keep_tarball=True
-                ),
-            ]
+        expected_tar_calls = [
+            mock.call(self.nodejs_url, plugin._npm_dir),
+            mock.call().download(),
+            mock.call().provision(
+                plugin._npm_dir, clean_target=False, keep_tarball=True
+            ),
+        ]
 
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
-    def test_build(self):
+    def test_pull_with_yarn(self):
+        self.options.nodejs_package_manager = "yarn"
+        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin)
+
+        plugin.pull()
+
+        expected_tar_calls = [
+            mock.call(self.nodejs_url, plugin._npm_dir),
+            mock.call().download(),
+            mock.call("https://yarnpkg.com/latest.tar.gz", plugin._npm_dir),
+            mock.call().download(),
+            mock.call().provision(
+                plugin._npm_dir, clean_target=False, keep_tarball=True
+            ),
+            mock.call().provision(
+                plugin._npm_dir, clean_target=False, keep_tarball=True
+            ),
+        ]
+
+        self.tar_mock.assert_has_calls(expected_tar_calls)
+
+    def test_build_with_npm(self):
+        self.options.nodejs_package_manager = "npm"
         plugin = nodejs.NodePlugin("test-part", self.options, self.project)
 
         self.create_assets(plugin)
@@ -290,61 +280,34 @@ class NodePluginTest(NodePluginBaseTest):
         self.assertThat(os.path.join(plugin.installdir, "bin", "run"), FileExists())
 
         expected_env = dict(PATH=os.path.join(plugin._npm_dir, "bin"))
-        if self.http_proxy is not None:
-            expected_env["http_proxy"] = self.http_proxy
-        if self.https_proxy is not None:
-            expected_env["https_proxy"] = self.https_proxy
-        if self.package_manager == "npm":
-            expected_run_calls = [
-                mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
-                    cwd=plugin.builddir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    [self.get_npm_cmd(plugin), "pack"],
-                    cwd=plugin.builddir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    [
-                        self.get_npm_cmd(plugin),
-                        "install",
-                        "--unsafe-perm",
-                        "--offline",
-                        "--prod",
-                    ],
-                    cwd=os.path.join(plugin.builddir, "package"),
-                    env=expected_env,
-                ),
-            ]
-            expected_tar_calls = [
-                mock.call("test-nodejs-1.0.tgz", plugin.builddir),
-                mock.call().provision(os.path.join(plugin.builddir, "package")),
-            ]
-        else:
-            cmd = [self.get_yarn_cmd(plugin)]
-            if self.http_proxy is not None:
-                cmd.extend(["--proxy", self.http_proxy])
-            if self.https_proxy is not None:
-                cmd.extend(["--https-proxy", self.https_proxy])
-            expected_run_calls = [
-                mock.call(cmd + ["install"], cwd=plugin.builddir, env=expected_env),
-                mock.call(
-                    cmd + ["pack", "--filename", "test-nodejs-1.0.tgz"],
-                    cwd=plugin.builddir,
-                    env=expected_env,
-                ),
-                mock.call(
-                    cmd + ["install", "--offline", "--prod"],
-                    cwd=os.path.join(plugin.builddir, "package"),
-                    env=expected_env,
-                ),
-            ]
-            expected_tar_calls = [
-                mock.call("test-nodejs-1.0.tgz", plugin.builddir),
-                mock.call().provision(os.path.join(plugin.builddir, "package")),
-            ]
+
+        expected_run_calls = [
+            mock.call(
+                [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
+                cwd=plugin.builddir,
+                env=expected_env,
+            ),
+            mock.call(
+                [self.get_npm_cmd(plugin), "pack"],
+                cwd=plugin.builddir,
+                env=expected_env,
+            ),
+            mock.call(
+                [
+                    self.get_npm_cmd(plugin),
+                    "install",
+                    "--unsafe-perm",
+                    "--offline",
+                    "--prod",
+                ],
+                cwd=os.path.join(plugin.builddir, "package"),
+                env=expected_env,
+            ),
+        ]
+        expected_tar_calls = [
+            mock.call("test-nodejs-1.0.tgz", plugin.builddir),
+            mock.call().provision(os.path.join(plugin.builddir, "package")),
+        ]
 
         self.run_mock.assert_has_calls(expected_run_calls)
         self.tar_mock.assert_has_calls(expected_tar_calls)
@@ -355,56 +318,145 @@ class NodePluginTest(NodePluginBaseTest):
         ]
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
-    def test_build_scoped_name(self):
+    def test_build_with_yarn(self):
+        self.options.nodejs_package_manager = "yarn"
+        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin)
+
+        plugin.build()
+
+        self.assertThat(os.path.join(plugin.installdir, "bin", "run"), FileExists())
+
+        expected_env = dict(PATH=os.path.join(plugin._npm_dir, "bin"))
+        cmd = [self.get_yarn_cmd(plugin)]
+        expected_run_calls = [
+            mock.call(cmd + ["install"], cwd=plugin.builddir, env=expected_env),
+            mock.call(
+                cmd + ["pack", "--filename", "test-nodejs-1.0.tgz"],
+                cwd=plugin.builddir,
+                env=expected_env,
+            ),
+            mock.call(
+                cmd + ["install", "--offline", "--prod"],
+                cwd=os.path.join(plugin.builddir, "package"),
+                env=expected_env,
+            ),
+        ]
+        expected_tar_calls = [
+            mock.call("test-nodejs-1.0.tgz", plugin.builddir),
+            mock.call().provision(os.path.join(plugin.builddir, "package")),
+        ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+        self.tar_mock.assert_has_calls(expected_tar_calls)
+
+        expected_tar_calls = [
+            mock.call("test-nodejs-1.0.tgz", plugin.builddir),
+            mock.call().provision(os.path.join(plugin.builddir, "package")),
+        ]
+        self.tar_mock.assert_has_calls(expected_tar_calls)
+
+    def test_build_yarn_with_proxy(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable("http_proxy", "http://localhost:3132")
+        )
+        self.useFixture(
+            fixtures.EnvironmentVariable("https_proxy", "http://localhost:3133")
+        )
+        self.options.nodejs_package_manager = "yarn"
+        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin)
+
+        plugin.build()
+
+        self.assertThat(os.path.join(plugin.installdir, "bin", "run"), FileExists())
+
+        cmd = [
+            self.get_yarn_cmd(plugin),
+            "--proxy",
+            "http://localhost:3132",
+            "--https-proxy",
+            "http://localhost:3133",
+        ]
+
+        expected_run_calls = [
+            mock.call(cmd + ["install"], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(
+                cmd + ["pack", "--filename", "test-nodejs-1.0.tgz"],
+                cwd=plugin.builddir,
+                env=mock.ANY,
+            ),
+            mock.call(
+                cmd + ["install", "--offline", "--prod"],
+                cwd=os.path.join(plugin.builddir, "package"),
+                env=mock.ANY,
+            ),
+        ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+
+    def test_build_scoped_name_with_npm(self):
+        self.options.nodejs_package_manager = "npm"
         plugin = nodejs.NodePlugin("test-part", self.options, self.project)
 
         self.create_assets(plugin, package_name="@org/name")
 
         plugin.build()
 
-        if self.package_manager == "npm":
-            expected_run_calls = [
-                mock.call(
-                    [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
-                    cwd=os.path.join(plugin.builddir),
-                    env=mock.ANY,
-                ),
-                mock.call(
-                    [self.get_npm_cmd(plugin), "pack"],
-                    cwd=plugin.builddir,
-                    env=mock.ANY,
-                ),
-                mock.call(
-                    [
-                        self.get_npm_cmd(plugin),
-                        "install",
-                        "--unsafe-perm",
-                        "--offline",
-                        "--prod",
-                    ],
-                    cwd=os.path.join(plugin.builddir, "package"),
-                    env=mock.ANY,
-                ),
-            ]
-        else:
-            cmd = [self.get_yarn_cmd(plugin)]
-            if self.http_proxy is not None:
-                cmd.extend(["--proxy", self.http_proxy])
-            if self.https_proxy is not None:
-                cmd.extend(["--https-proxy", self.https_proxy])
-            expected_run_calls = [
-                mock.call(cmd + ["install"], cwd=plugin.builddir, env=mock.ANY),
-                mock.call(
-                    cmd + ["pack", "--filename", "org-name-1.0.tgz"],
-                    cwd=plugin.builddir,
-                    env=mock.ANY,
-                ),
-                mock.call(
-                    cmd + ["install", "--offline", "--prod"],
-                    cwd=os.path.join(plugin.builddir, "package"),
-                    env=mock.ANY,
-                ),
-            ]
+        expected_run_calls = [
+            mock.call(
+                [self.get_npm_cmd(plugin), "install", "--unsafe-perm"],
+                cwd=os.path.join(plugin.builddir),
+                env=mock.ANY,
+            ),
+            mock.call(
+                [self.get_npm_cmd(plugin), "pack"], cwd=plugin.builddir, env=mock.ANY
+            ),
+            mock.call(
+                [
+                    self.get_npm_cmd(plugin),
+                    "install",
+                    "--unsafe-perm",
+                    "--offline",
+                    "--prod",
+                ],
+                cwd=os.path.join(plugin.builddir, "package"),
+                env=mock.ANY,
+            ),
+        ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+
+        expected_tar_calls = [
+            mock.call("org-name-1.0.tgz", plugin.builddir),
+            mock.call().provision(os.path.join(plugin.builddir, "package")),
+        ]
+        self.tar_mock.assert_has_calls(expected_tar_calls)
+
+    def test_build_scoped_name_with_yarn(self):
+        self.options.nodejs_package_manager = "yarn"
+        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+
+        self.create_assets(plugin, package_name="@org/name")
+
+        plugin.build()
+
+        cmd = [self.get_yarn_cmd(plugin)]
+        expected_run_calls = [
+            mock.call(cmd + ["install"], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(
+                cmd + ["pack", "--filename", "org-name-1.0.tgz"],
+                cwd=plugin.builddir,
+                env=mock.ANY,
+            ),
+            mock.call(
+                cmd + ["install", "--offline", "--prod"],
+                cwd=os.path.join(plugin.builddir, "package"),
+                env=mock.ANY,
+            ),
+        ]
 
         self.run_mock.assert_has_calls(expected_run_calls)
 
@@ -415,65 +467,120 @@ class NodePluginTest(NodePluginBaseTest):
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
 
-class NodePluginManifestTest(NodePluginBaseTest):
-    scenarios = multiply_scenarios(
-        [
-            (
-                "simple",
-                dict(
-                    ls_output=(
-                        '{"dependencies": {'
-                        '   "testpackage1": {"version": "1.0"},'
-                        '   "testpackage2": {"version": "1.2"}}}'
-                    ),
-                    expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
-                ),
-            ),
-            (
-                "nested",
-                dict(
-                    ls_output=(
-                        '{"dependencies": {'
-                        '   "testpackage1": {'
-                        '      "version": "1.0",'
-                        '      "dependencies": {'
-                        '        "testpackage2": {"version": "1.2"}}}}}'
-                    ),
-                    expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
-                ),
-            ),
-            (
-                "missing",
-                dict(
-                    ls_output=(
-                        '{"dependencies": {'
-                        '   "testpackage1": {"version": "1.0"},'
-                        '   "testpackage2": {"version": "1.2"},'
-                        '   "missing": {"noversion": "dummy"}}}'
-                    ),
-                    expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
-                ),
-            ),
-            ("none", dict(ls_output="{}", expected_dependencies=[])),
-        ],
-        [("npm", dict(package_manager="npm")), ("yarn", dict(package_manager="yarn"))],
-    )
+@pytest.fixture(params=["npm", "yarn"])
+def nodejs_plugin(project, request):
+    """Return an instance of NodejsPlugin setup varying bases and pkg managers."""
 
-    def test_get_manifest_with_node_packages(self):
-        self.run_output_mock.return_value = self.ls_output
-        self.options.node_package_manager = self.package_manager
+    class Options:
+        source = "."
+        nodejs_version = nodejs._NODEJS_VERSION
+        nodejs_package_manager = request.param
+        nodejs_yarn_version = ""
+        source = "."
 
-        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+    return nodejs.NodePlugin("test-part", Options(), project)
 
-        self.create_assets(plugin)
+
+def _create_assets(nodejs_plugin, mock_tar, package_name="test-nodejs"):
+    for directory in (nodejs_plugin.sourcedir, nodejs_plugin.builddir):
+        directory_path = pathlib.Path(directory)
+        directory_path.mkdir(parents=True)
+
+        package_json_path = directory_path / "package.json"
+        with package_json_path.open("w") as json_file:
+            json.dump(
+                dict(name=package_name, bin=dict(run="node.js"), version="1.0"),
+                json_file,
+            )
+
+        package_name = package_name.lstrip("@").replace("/", "-")
+        packed_tar_path = directory_path / f"{package_name}-1.0.tgz"
+
+        (directory_path / "node.js").touch()
+
+    tarfile.TarFile(packed_tar_path, "w").close()
+
+    def provision(directory, **kwargs):
+        if directory == os.path.join(nodejs_plugin.builddir, "package"):
+            package_dir = os.path.join(nodejs_plugin.builddir, "package")
+            open(os.path.join(package_dir, "node.js"), "w").close()
+
+    # Create a fake node bin
+    bin_path = pathlib.Path(nodejs_plugin._npm_dir) / "bin"
+    bin_path.mkdir(parents=True)
+    (bin_path / "node").touch()
+
+    nodejs_bin_path = pathlib.Path(nodejs_plugin.installdir) / "node.js"
+    nodejs_bin_path.parent.mkdir(parents=True)
+    nodejs_bin_path.touch()
+
+
+@pytest.fixture()
+def nodejs_plugin_with_assets(mock_tar, nodejs_plugin):
+    """Return an instance of NodejsPlugin with artifacts setup using nodejs_plugin."""
+    _create_assets(nodejs_plugin, mock_tar)
+
+    return nodejs_plugin
+
+
+class TestManifest:
+    scenarios = [
+        (
+            "simple",
+            dict(
+                ls_output=(
+                    '{"dependencies": {'
+                    '   "testpackage1": {"version": "1.0"},'
+                    '   "testpackage2": {"version": "1.2"}}}'
+                ),
+                expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
+            ),
+        ),
+        (
+            "nested",
+            dict(
+                ls_output=(
+                    '{"dependencies": {'
+                    '   "testpackage1": {'
+                    '      "version": "1.0",'
+                    '      "dependencies": {'
+                    '        "testpackage2": {"version": "1.2"}}}}}'
+                ),
+                expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
+            ),
+        ),
+        (
+            "missing",
+            dict(
+                ls_output=(
+                    '{"dependencies": {'
+                    '   "testpackage1": {"version": "1.0"},'
+                    '   "testpackage2": {"version": "1.2"},'
+                    '   "missing": {"noversion": "dummy"}}}'
+                ),
+                expected_dependencies=["testpackage1=1.0", "testpackage2=1.2"],
+            ),
+        ),
+        ("none", dict(ls_output="{}", expected_dependencies=[])),
+    ]
+
+    def test_get_manifest_with_node_packages(
+        self,
+        mock_run,
+        mock_run_output,
+        nodejs_plugin_with_assets,
+        ls_output,
+        expected_dependencies,
+    ):
+        mock_run_output.return_value = ls_output
+        plugin = nodejs_plugin_with_assets
 
         plugin.build()
 
-        self.assertThat(
-            plugin.get_manifest(),
-            Equals(
-                collections.OrderedDict({"node-packages": self.expected_dependencies})
-            ),
+        if plugin.options.nodejs_package_manager == "yarn":
+            expected_dependencies = []
+        assert plugin.get_manifest() == collections.OrderedDict(
+            {"node-packages": expected_dependencies}
         )
 
 
@@ -496,7 +603,7 @@ class NodePluginYarnLockManifestTest(NodePluginBaseTest):
         self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
 
 
-class NodeBinTest(unit.TestCase):
+class TestNodeBin:
     scenarios = [
         (
             "dict",
@@ -524,27 +631,24 @@ class NodeBinTest(unit.TestCase):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-
-        if type(self.package_json["bin"]) == dict:
-            binaries = self.package_json["bin"].values()
+    def test_bins(self, tmp_work_path, package_json, expected_bins):
+        if type(package_json["bin"]) == dict:
+            binaries = package_json["bin"].values()
         else:
-            binaries = [self.package_json["bin"]]
+            binaries = [package_json["bin"]]
 
         for binary in binaries:
             os.makedirs(os.path.dirname(binary), exist_ok=True)
             open(binary, "w").close()
 
-    def test_bins(self):
-        nodejs._create_bins(self.package_json, ".")
-        binary_paths = (os.path.join("bin", b) for b in self.expected_bins)
+        nodejs._create_bins(package_json, ".")
+        binary_paths = (os.path.join("bin", b) for b in expected_bins)
 
         for binary in binary_paths:
-            self.assertThat(binary, FileExists())
+            assert os.path.exists(binary)
 
 
-class NodeReleaseTest(unit.TestCase):
+class TestNodeRelease:
     scenarios = [
         (
             "amd64",
@@ -598,9 +702,8 @@ class NodeReleaseTest(unit.TestCase):
         ),
     ]
 
-    def test_get_nodejs_release(self):
-        node_url = nodejs.get_nodejs_release(self.engine, self.deb_arch)
-        self.assertThat(node_url, Equals(self.expected_url))
+    def test_get_nodejs_release(self, deb_arch, engine, expected_url):
+        assert nodejs.get_nodejs_release(engine, deb_arch) == expected_url
 
 
 class NodePluginUnsupportedArchTest(NodePluginBaseTest):
@@ -620,15 +723,19 @@ class NodePluginUnsupportedArchTest(NodePluginBaseTest):
 
 
 class NodePluginMissingFilesTest(NodePluginBaseTest):
-
-    scenarios = [
-        ("npm", dict(package_manager="npm")),
-        ("yarn", dict(package_manager="yarn")),
-    ]
-
-    def test_missing_package_json(self):
+    def run_test(self):
         plugin = nodejs.NodePlugin("test-part", self.options, self.project)
 
         self.create_assets(plugin, skip_package_json=True)
 
         self.assertRaises(nodejs.NodejsPluginMissingPackageJsonError, plugin.pull)
+
+    def test_npm(self):
+        self.package_manager = "npm"
+
+        self.run_test()
+
+    def test_yarn(self):
+        self.package_manager = "yarn"
+
+        self.run_test()
