@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -97,35 +97,26 @@ class DotNetProjectBaseTest(unit.TestCase):
                 self._checksum = checksum
 
             def read(self):
-                if self._url.endswith("releases.json"):
-                    data = json.dumps(
-                        [
+                return json.dumps(
+                    {
+                        "releases": [
                             {
-                                "version-runtime": dotnet._RUNTIME_DEFAULT,
-                                "blob-sdk": "https://dotnetcli.blob.core.windows.net/dotnet/"
-                                "Sdk/2.1.4/",
-                                "sdk-linux-x64": "dotnet-sdk-2.1.4-linux-x64.tar.gz",
-                                "checksums-sdk": "https://dotnetcli.blob.core.windows.net/dotnet/"
-                                "checksums/2.1.4-sdk-sha.txt",
-                            },
-                            {"version-sdk": "2.1.104"},
+                                "release-version": "2.0.9",
+                                "sdk": {
+                                    "runtime-version": "2.0.9",
+                                    "files": [
+                                        {
+                                            "name": "dotnet-sdk-linux-x64.tar.gz",
+                                            "rid": "linux-x64",
+                                            "url": "https://download.microsoft.com/download/f/c/1/fc16c864-b374-4668-83a2-f9f880928b2d/dotnet-sdk-2.1.202-linux-x64.tar.gz",
+                                            "hash": "c1b07ce8849619ca505aafd2983bcdd7141536ccae243d4249b0c9665daf107e03a696ad5f1d95560142cd841a0888bbf5f1a8ff77d3bdc3696b5873481f0998",
+                                        }
+                                    ],
+                                },
+                            }
                         ]
-                    ).encode("utf-8")
-                else:
-                    # A checksum file with a list of checksums and archives.
-                    # We fill in the computed checksum used in the pull test.
-                    data = bytes(
-                        dedent(
-                            """\
-                        Hash: SHA512
-
-                        05fe90457a8b77ad5a5eb2f22348f53e962012a
-                        {} dotnet-sdk-2.1.4-linux-x64.tar.gz
-                        """
-                        ).format(self._checksum),
-                        "utf-8",
-                    )
-                return data
+                    }
+                ).encode("utf-8")
 
         with tarfile.open("test-sdk.tar", "w") as test_sdk_tar:
             open("test-sdk", "w").close()

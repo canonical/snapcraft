@@ -325,7 +325,7 @@ class Ubuntu(BaseRepo):
     @classmethod
     def refresh_build_packages(cls) -> None:
         try:
-            subprocess.check_call(["sudo", "apt", "update"])
+            subprocess.check_call(["sudo", "--preserve-env", "apt-get", "update"])
         except subprocess.CalledProcessError as call_error:
             raise errors.CacheUpdateFailedError(
                 "failed to run apt update"
