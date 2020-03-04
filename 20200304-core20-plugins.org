@@ -3,11 +3,11 @@
 #+DATE: [2020-03-04]
 
 * Scope
-Starting with =base: core20=, plugins shall be versioned by base.
+Starting with =base: core20=, plugins shall be explicitly versioned.
 This shall ensure that plugins can evolve independently and that no
 breakages occur when other bases are used.
 
-The reach of this document is to define plugin layout and the base plugin.
+The reach of this document by base. is to define plugin layout and the base plugin.
 Each plugin specification shall have its own specification drafted.
 
 * Plugin Layout
@@ -45,27 +45,20 @@ with the following definition:
 
 #+BEGIN_SRC  python
 class BaseCore20Plugin(abc.ABC):
-    @staticmethod
+    @classmethod
     @abstactmethod
-    def get_static_environment(cls) -> Dict[str, str]:
+    def get_environment(cls) -> Dict[str, str]:
         """Return a dictionary with the static environment that is relevant to the plugin."""
 
-    def __init__(self, project: project.Project, build_environment: List: Dict[str, str]) -> None:
+    def __init__(self, project: build_environment: Dict[str, str]) -> None:
         """
-        :param project project.Project: project information useful for plugins.
         :param build_environment: user added build environment for the plugin to consume.
         :raises PluginBadBuildEnvironmentError: when invalid build_environment was passed to the plugin.
         """
 
     @abstractmethod
-    def get_dynamic_environment(self) -> Dict[str, str]:
-        """Return environment composed from build_environment and other dynamic plugin elements."""
-
-    @abstractmethod
     def get_build_commands(self) -> List[List[str]]:
         """Return a list of commands to run during the pull step."
-
-
 #+END_SRC
 
 A common difference from previus implementations is that only build needs to be
