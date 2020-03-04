@@ -1,0 +1,73 @@
+#+TITLE: Plugins for core20
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-03-04]
+
+* Scope
+Starting with =base: core20=, plugins shall be versioned by base.
+This shall ensure that plugins can evolve independently and that no
+breakages occur when other bases are used.
+
+The reach of this document is to define plugin layout and the base plugin.
+Each plugin specification shall have its own specification drafted.
+
+* Plugin Layout
+Existing plugins using =core= or =core18= as a =base= shall continue using their
+original logic for loading, that is
+When the =base= in snapcraft is set different one than the previously mentioned
+bases, then snapcraft will use the following path to search for plugins:
+=snapcraft.plugins.<base>= and search for =<plugin-name>.py=.
+
+Plugin class names must be named =Plugin=.
+** Custom Plugins
+Custom plugins shall be declared on =snapcraft.yaml= with a prefix of =x-= and
+the plugin name. On the file system they shall be found on
+=snap/plugins/x_<plugin.name.py>=.
+* CLI Help
+The Snapcraft =help= command shall default to the =base= declared in
+=snapcraft.yaml= or if not in a *Snapcraft Project*, to the latest supported
+base.
+
+In all cases, Snapcraft shall inform the base the help applies to.
+
+A mechanism must exist to be able to invoke the help for a plugin that would
+apply to different base than the one from the current project or default.
+
+The proposal is to enhance =snapcraft help= to have a =--base= option, so that
+the following can be possible:
+#+BEGIN_SRC
+$ snapcraft help --base=core python
+Displaying help for the 'python' plugin for 'core20'
+#+END_SRC
+* Base Plugin
+The base class plugins must inherit from shall be =abc.ABC= inheriting class
+named =BaseCore20Plugin= with an import path of =snapcraft.BaseCore20Plugin=
+with the following definition:
+
+#+BEGIN_SRC  python
+class BaseCore20Plugin(abc.ABC):
+    @staticmethod
+    @abstactmethod
+    def get_static_environment(cls) -> Dict[str, str]:
+        """Return a dictionary with the static environment that is relevant to the plugin."""
+
+    def __init__(self, project: project.Project, build_environment: List: Dict[str, str]) -> None:
+        """
+        :param project project.Project: project information useful for plugins.
+        :param build_environment: user added build environment for the plugin to consume.
+        :raises PluginBadBuildEnvironmentError: when invalid build_environment was passed to the plugin.
+        """
+
+    @abstractmethod
+    def get_dynamic_environment(self) -> Dict[str, str]:
+        """Return environment composed from build_environment and other dynamic plugin elements."""
+
+    @abstractmethod
+    def get_build_commands(self) -> List[List[str]]:
+        """Return a list of commands to run during the pull step."
+
+
+#+END_SRC
+
+A common difference from previus implementations is that only build needs to be
+implemented. This leaves source handling through the pull step a pure snapcraft
+core concern.
