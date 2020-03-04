@@ -285,7 +285,7 @@ class GoPlugin(snapcraft.BasePlugin):
         super().build()
 
         # Ensure install directory exists.
-        os.makedirs(self._install_bin_dir)
+        os.makedirs(self._install_bin_dir, exist_ok=True)
 
         if self._is_using_go_mod(cwd=self.builddir):
             self._build()
