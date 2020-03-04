@@ -1,4 +1,4 @@
 #+TITLE: Snapcraft Specifications
 
 * 2020
-** [[file:20200304-core20-plugins.org][Snapcraft Core20 Plugins]]
+- [[file:20200304-core20-plugins.org][Snapcraft Core20 Plugins]]
