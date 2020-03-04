@@ -87,8 +87,6 @@ jobs:
             - libnacl-dev
             - libsodium-dev
             - libssl-dev
-            - libxml2-dev
-            - libxslt-dev
             - libyaml-dev
             - python3.6-dev
       script: snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
