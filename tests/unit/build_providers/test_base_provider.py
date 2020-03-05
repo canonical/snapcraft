@@ -237,9 +237,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                 dedent(
                     """\
             #!/bin/bash
-            export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
             export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
-            export PATH=/snap/bin:$PATH
         """
                 )
             ),
@@ -301,7 +299,18 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         results = provider._get_env_command()
 
-        self.assertThat(results, Equals(["env", "SNAPCRAFT_HAS_TTY=False"]))
+        self.assertThat(
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                ]
+            ),
+        )
 
     def test_passthrough_environment_flags_non_string(self):
         # Set http_proxy to a bool even though it doesn't make sense...
@@ -312,7 +321,17 @@ class BaseProviderTest(BaseProviderBaseTest):
         results = provider._get_env_command()
 
         self.assertThat(
-            results, Equals(["env", "SNAPCRAFT_HAS_TTY=False", "http_proxy=True"])
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "http_proxy=True",
+                ]
+            ),
         )
 
     def test_passthrough_environment_flags_all(self):
@@ -328,6 +347,9 @@ class BaseProviderTest(BaseProviderBaseTest):
             Equals(
                 [
                     "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=http://127.0.0.1:8080",
                     "https_proxy=http://127.0.0.1:8080",
