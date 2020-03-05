@@ -48,9 +48,7 @@ _SNAPCRAFT_FILES = [
         "content": dedent(
             """\
             #!/bin/bash
-            export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
             export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
-            export PATH=/snap/bin:$PATH
             """
         ),
         "permissions": "0600",
@@ -115,8 +113,6 @@ class Provider(abc.ABC):
         if build_provider_flags is None:
             build_provider_flags = dict()
         self.build_provider_flags = build_provider_flags.copy()
-
-        self._cached_home_directory: Optional[pathlib.Path] = None
 
     def __enter__(self):
         try:
@@ -365,6 +361,17 @@ class Provider(abc.ABC):
 
         env_list = ["env"]
 
+        # Tell Snapcraft it can take ownership of the host.
+        env_list.append("SNAPCRAFT_BUILD_ENVIRONMENT=managed-host")
+
+        # Setup PATH so that snaps have precedence.
+        env_list.append(
+            "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        )
+
+        # Set the HOME directory.
+        env_list.append(f"HOME={self._get_home_directory()}")
+
         # Configure SNAPCRAFT_HAS_TTY.
         has_tty = str(sys.stdout.isatty())
         env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
@@ -383,24 +390,7 @@ class Provider(abc.ABC):
 
     def _get_home_directory(self) -> pathlib.Path:
         """Get user's home directory path."""
-        if self._cached_home_directory is not None:
-            return self._cached_home_directory
-
-        command = ["printenv", "HOME"]
-        run_output = self._run(command=command, hide_output=True)
-
-        # Shouldn't happen, but due to _run()'s return type as being Optional,
-        # we need to check for it anyways for mypy.
-        if not run_output:
-            provider_name = self._get_provider_name()
-            raise errors.ProviderExecError(
-                provider_name=provider_name, command=command, exit_code=2
-            )
-
-        cached_home_directory = pathlib.Path(run_output.decode().strip())
-
-        self._cached_home_directory = cached_home_directory
-        return cached_home_directory
+        return pathlib.Path("/root")
 
     def _base_has_changed(self, base: str, provider_base: str) -> bool:
         # Make it backwards compatible with instances without project info
