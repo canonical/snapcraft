@@ -1,4 +1,9 @@
-#+TITLE: Snapcraft Specifications
+#+TITLE: Snapcraft Tasks
+#+STARTUP: content
+#+STARTUP: lognotestate
+#+SEQ_TODO: TODO STARTED | DONE DEFERRED CANCELLED
 
-* 2020
-- [[file:20200304-core20-plugins.org][Snapcraft Core20 Plugins]]
+
+* Specifications
+** 2020
+*** TODO[[file:20200304-core20-plugins.org][ Snapcraft Core20 Plugins]]
