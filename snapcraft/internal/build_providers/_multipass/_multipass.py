@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -83,9 +83,11 @@ class Multipass(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        env_command = self._get_env_command()
+        env_command = super()._get_env_command()
 
-        cmd = ["sudo", "-i"]
+        cmd = ["sudo", "-H"]
+        if not hide_output:
+            cmd.append("-i")
         cmd.extend(env_command)
         cmd.extend(command)
         self._log_run(cmd)
@@ -225,7 +227,7 @@ class Multipass(Provider):
             self._run(command=["rm", name])
 
     def shell(self) -> None:
-        self._run(command=["/bin/bash"])
+        self._run(command=["/bin/bash", "-i"])
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(

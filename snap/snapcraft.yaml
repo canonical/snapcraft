@@ -28,8 +28,6 @@ build-packages:
   - libssl-dev
   - libsodium-dev
   - liblzma-dev
-  - libxml2-dev
-  - libxslt-dev
   - libyaml-dev
   - patch
   - sed
@@ -64,8 +62,6 @@ parts:
         - gpgv
         - libffi6
         - libsodium23
-        - libxml2
-        - libxslt1.1
         - squashfs-tools
         - xdelta3
     override-build: |
