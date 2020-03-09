@@ -515,7 +515,7 @@ class EnvironmentTest(ProjectLoaderBaseTest):
 
     @mock.patch("os.sched_getaffinity", side_effect=AttributeError)
     @mock.patch("multiprocessing.cpu_count", side_effect=NotImplementedError)
-    def test_parts_build_env_contains_parallel_build_count_no_getaffinity(
+    def test_parts_build_env_contains_parallel_build_count_no_cpucount(
         self, affinity_mock, cpu_mock
     ):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
