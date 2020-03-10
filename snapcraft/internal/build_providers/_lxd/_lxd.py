@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -164,7 +164,7 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        env_command = self._get_env_command()
+        env_command = super()._get_env_command()
 
         # TODO: use pylxd
         cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
@@ -199,8 +199,6 @@ class LXD(Provider):
             raise errors.ProviderLaunchError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-        # This is setup by cloud init, but set it here to be on the safer side.
-        container.config["environment.SNAPCRAFT_BUILD_ENVIRONMENT"] = "managed-host"
         container.save(wait=True)
         self._container = container
 
@@ -214,9 +212,7 @@ class LXD(Provider):
             self._container = self._lxd_client.containers.get(self.instance_name)
 
         self._container.sync()
-        self._container.config["environment.SNAPCRAFT_HAS_TTY"] = str(
-            sys.stdout.isatty()
-        )
+
         # map to the owner of the directory we are eventually going to write the
         # snap to.
         self._container.config["raw.idmap"] = "both {!s} 0".format(
