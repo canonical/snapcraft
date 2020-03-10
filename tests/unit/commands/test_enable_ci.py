@@ -29,7 +29,7 @@ class EnableCITestCase(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                'Error: Missing argument "<ci-system>".  Choose from:\n\ttravis.\n'
+                "Error: Missing argument '<ci-system>'.  Choose from:\n\ttravis.\n"
             ),
         )
 
