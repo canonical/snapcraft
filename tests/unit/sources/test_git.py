@@ -253,6 +253,16 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
                         "git",
                         "-C",
                         "source_dir",
+                        "fetch",
+                        "origin",
+                        "2514f9533ec9b45d07883e10a561b248497a8e3c",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "git",
+                        "-C",
+                        "source_dir",
                         "checkout",
                         "2514f9533ec9b45d07883e10a561b248497a8e3c",
                     ]
