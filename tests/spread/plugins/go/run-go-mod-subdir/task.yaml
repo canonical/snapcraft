@@ -1,4 +1,4 @@
-summary: Build and run a basic Go snap using go.mod
+summary: Build and run a basic Go snap using go.mod with main package in a subdir
 
 environment:
   SNAP_DIR: ../snaps/go-mod-hello-subdir
