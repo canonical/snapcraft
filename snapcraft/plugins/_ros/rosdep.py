@@ -118,7 +118,7 @@ class Rosdep:
 
         logger.info("Updating rosdep database...")
         try:
-            self._run(["update"])
+            self._run(["update", "--include-eol-distros"])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
             raise RosdepInitializationError(

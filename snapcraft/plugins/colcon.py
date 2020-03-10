@@ -80,6 +80,12 @@ _ROSDISTRO_TO_BASE_MAP = {
     "eloquent": "core18",
 }
 
+# Snaps can still be built with ROS distros that are end-of-life, but such
+# things are not supported. Maintain a list so we can warn about such things.
+# This really should be using rosdistro to automatically detect the support
+# status, but that's a larger feature than we want to implement at this time.
+_EOL_ROSDISTROS = ["bouncy", "crystal"]
+
 # Map bases to Ubuntu releases. Every base in _ROSDISTRO_TO_BASE_MAP needs to be
 # specified here.
 _BASE_TO_UBUNTU_RELEASE_MAP = {"core18": "bionic"}
@@ -264,6 +270,13 @@ class ColconPlugin(snapcraft.BasePlugin):
         if project.info.get_build_base() != _ROSDISTRO_TO_BASE_MAP[self._rosdistro]:
             raise ColconPluginBaseError(
                 self.name, project.info.get_build_base(), self._rosdistro
+            )
+
+        if self._rosdistro in _EOL_ROSDISTROS:
+            logger.warning(
+                "The {!r} ROS distro has reached end-of-life and is no longer supported. Use at your own risk.".format(
+                    self._rosdistro
+                )
             )
 
         # Beta warning. Remove this comment and warning once plugin is stable.
