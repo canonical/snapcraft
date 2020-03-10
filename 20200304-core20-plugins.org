@@ -46,7 +46,15 @@ class Plugin(abc.ABC):
 
     @abstractmethod
     def get_build_commands(self) -> List[str]:
-        """Return a list of commands to run during the pull step."
+        """
+        Return a list of commands to run during the build step.
+
+        These commands are run in a single shell instance. This means
+        that commands run before do affect the commands that follow.
+
+        snapcraftctl can be used in the script to call out to snapcraft
+        specific functionality.
+        """
 #+END_SRC
 
 A common difference from previous implementations is that only build needs to be
