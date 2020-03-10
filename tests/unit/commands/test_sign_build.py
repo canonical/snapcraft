@@ -78,7 +78,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                'Error: Invalid value for "<snap-file>": File "nonexisting.snap" does not exist.\n'
+                "Error: Invalid value for '<snap-file>': File 'nonexisting.snap' does not exist.\n"
             ),
         )
         self.assertThat(mock_check_output.call_count, Equals(0))
