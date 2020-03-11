@@ -199,6 +199,8 @@ suites:
        libnacl-dev \
        libsodium-dev \
        libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
        libyaml-dev \
        python3-venv \
        python3-yaml \
@@ -213,6 +215,8 @@ suites:
        libnacl-dev \
        libsodium-dev \
        libssl-dev \
+       libxml2-dev \
+       libxslt-dev \
        libyaml-dev \
        python3-venv \
        python3-yaml \
