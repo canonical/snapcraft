@@ -250,8 +250,8 @@ class GoPlugin(snapcraft.BasePlugin):
 
         if self._is_using_go_mod(self.builddir) and not package:
             work_dir = self.builddir
-            build_cmd.extend(["-o", self._install_bin_dir])
-            relink_cmd.extend(["-o", self._install_bin_dir])
+            build_cmd.extend(["-o", self._install_bin_dir, "./..."])
+            relink_cmd.extend(["-o", self._install_bin_dir, "./..."])
         else:
             work_dir = self._install_bin_dir
             build_cmd.append(package)

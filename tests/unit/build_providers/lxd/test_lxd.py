@@ -22,10 +22,19 @@ from unittest import mock
 from testtools.matchers import Equals, FileContains, FileExists
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal.build_providers import errors
+from snapcraft.internal.build_providers import _base_provider, errors
 from snapcraft.internal.build_providers._lxd import LXD
 from snapcraft.internal.repo.errors import SnapdConnectionError
 from tests.unit.build_providers import BaseProviderBaseTest
+
+
+class GetEnv(_base_provider.Provider):
+    def _get_env_command(self):
+        return ["env", "SNAPCRAFT_HAS_TTY=False"]
+
+
+class LXDTestImpl(LXD, GetEnv):
+    pass
 
 
 class FakeContainer:
@@ -140,14 +149,13 @@ class LXDBaseTest(BaseProviderBaseTest):
 
 class LXDInitTest(LXDBaseTest):
     def test_create(self):
-        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
 
         instance.create()
 
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
                 "name": "snapcraft-project-name",
-                "environment.SNAPCRAFT_BUILD_ENVIRONMENT": "managed-host",
                 "raw.idmap": "both 1000 0",
                 "source": {
                     "mode": "pull",
@@ -156,7 +164,6 @@ class LXDInitTest(LXDBaseTest):
                     "protocol": "simplestreams",
                     "alias": "16.04",
                 },
-                "environment.SNAPCRAFT_HAS_TTY": "False",
             },
             wait=True,
         )
@@ -275,7 +282,7 @@ class LXDInitTest(LXDBaseTest):
         )
 
     def test_clean_project(self):
-        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         instance.create()
 
         instance.clean_project()
@@ -286,13 +293,13 @@ class LXDInitTest(LXDBaseTest):
         self.assertThat(instance.clean_project(), Equals(True))
 
     def test_clean_project_new_instance(self):
-        pre_instance = LXD(project=self.project, echoer=self.echoer_mock)
+        pre_instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         pre_instance.create()
         pre_instance._stop()
 
         self.fake_pylxd_client.containers.get(self.instance_name)._reset_mocks()
 
-        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         instance.clean_project()
 
         container = self.fake_pylxd_client.containers.get(self.instance_name)
@@ -301,7 +308,7 @@ class LXDInitTest(LXDBaseTest):
         self.assertThat(instance.clean_project(), Equals(True))
 
     def test_destroy_when_not_created(self):
-        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         # This call should not fail
         instance.destroy()
 
@@ -310,14 +317,13 @@ class LXDInitTest(LXDBaseTest):
         self.project.info.type = "base"
         self.project.info.base = None
 
-        instance = LXD(project=self.project, echoer=self.echoer_mock)
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
 
         instance.create()
 
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
                 "name": "snapcraft-core18",
-                "environment.SNAPCRAFT_BUILD_ENVIRONMENT": "managed-host",
                 "raw.idmap": "both 1000 0",
                 "source": {
                     "mode": "pull",
@@ -326,7 +332,6 @@ class LXDInitTest(LXDBaseTest):
                     "protocol": "simplestreams",
                     "alias": "18.04",
                 },
-                "environment.SNAPCRAFT_HAS_TTY": "False",
             },
             wait=True,
         )
@@ -336,7 +341,7 @@ class LXDLaunchedTest(LXDBaseTest):
     def setUp(self):
         super().setUp()
 
-        self.instance = LXD(project=self.project, echoer=self.echoer_mock)
+        self.instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         self.instance.create()
         self.fake_container = self.fake_pylxd_client.containers.get(self.instance_name)
         # reset for the tests to only be concerned about what they are testing
@@ -417,20 +422,9 @@ class LXDLaunchedTest(LXDBaseTest):
                 }
             ),
         )
-        self.assertThat(self.fake_container.sync_mock.call_count, Equals(2))
+        self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.check_output_mock.assert_called_once_with(
-            [
-                "/snap/bin/lxc",
-                "exec",
-                self.instance_name,
-                "--",
-                "env",
-                "SNAPCRAFT_HAS_TTY=False",
-                "printenv",
-                "HOME",
-            ]
-        )
+        self.check_output_mock.assert_not_called()
 
     def test_mount_prime_directory(self):
         self.check_output_mock.return_value = b"/root"
@@ -449,20 +443,9 @@ class LXDLaunchedTest(LXDBaseTest):
                 }
             ),
         )
-        self.assertThat(self.fake_container.sync_mock.call_count, Equals(2))
+        self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.check_output_mock.assert_called_once_with(
-            [
-                "/snap/bin/lxc",
-                "exec",
-                self.instance_name,
-                "--",
-                "env",
-                "SNAPCRAFT_HAS_TTY=False",
-                "printenv",
-                "HOME",
-            ]
-        )
+        self.check_output_mock.assert_not_called()
 
     def test_run(self):
         self.instance._run(["ls", "/root/project"])

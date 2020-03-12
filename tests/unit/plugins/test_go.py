@@ -645,7 +645,7 @@ class GoPluginTest(GoPluginBaseTest):
             ["go", "version"], cwd=mock.ANY, env=mock.ANY
         )
         self.run_mock.assert_called_once_with(
-            ["go", "build", "-o", plugin._install_bin_dir],
+            ["go", "build", "-o", plugin._install_bin_dir, "./..."],
             cwd=plugin.builddir,
             env=mock.ANY,
         )
@@ -723,7 +723,7 @@ class GoPluginTest(GoPluginBaseTest):
         self.run_mock.assert_has_calls(
             [
                 mock.call(
-                    ["go", "build", "-o", plugin._install_bin_dir],
+                    ["go", "build", "-o", plugin._install_bin_dir, "./..."],
                     cwd=plugin.builddir,
                     env=mock.ANY,
                 ),
@@ -735,6 +735,7 @@ class GoPluginTest(GoPluginBaseTest):
                         "-linkmode=external",
                         "-o",
                         plugin._install_bin_dir,
+                        "./...",
                     ],
                     cwd=plugin.builddir,
                     env=mock.ANY,

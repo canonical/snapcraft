@@ -77,7 +77,7 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.assert_has_calls(
             [
                 mock.call(["rosdep", "init"], env=mock.ANY),
-                mock.call(["rosdep", "update"], env=mock.ANY),
+                mock.call(["rosdep", "update", "--include-eol-distros"], env=mock.ANY),
             ]
         )
 
@@ -107,7 +107,7 @@ class RosdepTestCase(unit.TestCase):
 
     def test_setup_update_failure(self):
         def run(args, **kwargs):
-            if args == ["rosdep", "update"]:
+            if args == ["rosdep", "update", "--include-eol-distros"]:
                 raise subprocess.CalledProcessError(1, "foo", b"bar")
 
             return mock.DEFAULT
