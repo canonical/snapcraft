@@ -58,8 +58,13 @@ class Plugin(abc.ABC):
 #+END_SRC
 
 A common difference from previous implementations is that only build needs to be
-implemented. This leaves source handling through the pull step a pure snapcraft
+implemented. This leaves source handling through the pull step a pure Snapcraft
 core concern.
+
+This new plugin design does not *encourage* importing any of the Snapcraft
+internals for a plugin to actually work, this means that most, if not **all**
+plugins will lack an =import snapcraft= or =from snapcraft import= statement for
+the plugin to be functional.
 ** Example
 As an example, this would be a simplified implementation of the samurai plugin
 (a fake ninja based build tool that uses make syntax):
