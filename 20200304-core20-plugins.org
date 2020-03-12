@@ -132,8 +132,7 @@ class PluginImpl(snapcraft.plugins.core20.Plugin):
 #+END_SRC
 * CLI
 Wherever relevant, the Snapcraft commands shall default to the =base= declared
-in =snapcraft.yaml= or if not in a *Snapcraft Project*, to the latest supported
-base.
+in =snapcraft.yaml=, otherwise to the latest supported base.
 
 In all cases, Snapcraft shall inform the base that is being used to present
 information.
