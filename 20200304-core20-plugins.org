@@ -32,16 +32,29 @@ The plugin name is =Plugin= with an import path of =snapcraft.plugins.core20.plu
 defines the following:
 
 #+BEGIN_SRC  python
-class Plugin(abc.ABC):
-    @classmethod
-    @abstactmethod
-    def get_environment(cls) -> Dict[str, str]:
-        """Return a dictionary with the static environment that is relevant to the plugin."""
+import abc
+from typing import Any
 
-    def __init__(self, project: build_environment: Dict[str, str]) -> None:
+class Plugin(abc.ABC):
+    @abstactmethod
+    @classmethod
+    def schema(cls) -> Dict[str, Any]:
+        """Return a schema for the plugin properties."""
+
+    def __init__(self, properties: Dict[str, str]) -> None:
         """
-        :param build_environment: user added build environment for the plugin to consume.
+        :param properties: plugin defined properties.
         :raises PluginBadBuildEnvironmentError: when invalid build_environment was passed to the plugin.
+        """
+
+    @abstactmethod
+    def get_build_environment(cls) -> Dict[str, str]:
+        """
+        Return a dictionary with the environment to use in the build step.
+
+        For consistency, the keys should be defined as SNAPCRAFT_<PLUGIN>_<KEY>.
+
+        This method is called by the PluginHandler during the "build" step.
         """
 
     @abstractmethod
@@ -49,6 +62,7 @@ class Plugin(abc.ABC):
         """
         Return a list of commands to run during the build step.
 
+        This method is called by the PluginHandler during the "build" step.
         These commands are run in a single shell instance. This means
         that commands run before do affect the commands that follow.
 
@@ -63,8 +77,24 @@ core concern.
 
 This new plugin design does not *encourage* importing any of the Snapcraft
 internals for a plugin to actually work, this means that most, if not **all**
-plugins will lack an =import snapcraft= or =from snapcraft import= statement for
-the plugin to be functional.
+plugins, aside from the need of importing the base plugin will lack an =import
+snapcraft= or =from snapcraft import= statement for the plugin to be functional.
+
+The responsibility of running through the *build* step is done by
+=PluginHandler.build=, to do so, during =.build= what will happen to construct
+the build script at a high level is:
+
+- A single environment dictionary is created.
+- Snapcraft's internal =get_build_environment= method is called to update the
+  environment dictionary.
+- The plugin's =get_build_environment= method is called to updated the
+  environment dictionary.
+- The Part's =build-environment= key is retrieved and used to update the
+  dictionary.
+
+This is a powerful mechanism to give the Snapcraft *Snap* author the necessary
+control to override any undesired behavior or tune specific ones as well.
+
 ** Example
 As an example, this would be a simplified implementation of the samurai plugin
 (a fake ninja based build tool that uses make syntax):
@@ -78,12 +108,11 @@ from typing import Dict, List
 import snapcraft
 
 class PluginImpl(snapcraft.plugins.core20.Plugin):
-    @classmethod
-    def get_environment(cls) -> Dict[str, str]:
+    def get_build_environment(cls) -> Dict[str, str]:
         environment = super().get_environment()
         environment.update(
             {
-                "CPPFLAGS": "-I$SNAPCRAFT_STAGE/include -I foo",
+                "SNAPCRAFT_SAMURAI_ARGS": "--seppuku",
             }
         )
         return environment
@@ -92,7 +121,7 @@ class PluginImpl(snapcraft.plugins.core20.Plugin):
         commands = super().get_build_commands()
         commands.extend(
             [
-                "samurai -j $SNAPCRAFT_PARALELL_BUILD_COUNT",
+                "samurai -j $SNAPCRAFT_SAMURAI_ARGS $SNAPCRAFT_PARALELL_BUILD_COUNT",
                 "samurai install DESTDIR=$SNAPCRAFT_PART_INSTALL",
             ]
         )
@@ -153,7 +182,7 @@ parts:
     source: .
     plugin: samurai
     build-environment:
-      CPPFLAGS: "-I$SNAPCRAFT_STAGE/include -I foo",
+      SNAPCRAFT_SAMURAI_ARGS: "--seppuku"
     override-build: |
      samurai -j $SNAPCRAFT_PARALELL_BUILD_COUNT
      samurai $SNAPCRAFT_SAMURAI_INSTALL_TARGET DESTDIR=$SNAPCRAFT_PART_INSTALL
