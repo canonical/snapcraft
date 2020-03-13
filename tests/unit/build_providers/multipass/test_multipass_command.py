@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import subprocess
 from collections import OrderedDict
 from unittest import mock
@@ -158,8 +159,8 @@ class MultipassCommandPassthroughBaseTest(MultipassCommandBaseTest):
 
         patcher = mock.patch("subprocess.Popen")
         self.popen_mock = patcher.start()
-        self.popen_mock().communicate.return_value = (b"", b"error")
-        self.popen_mock().returncode = 0
+        self.popen_mock.return_value.communicate.return_value = (b"", b"error")
+        self.popen_mock.return_value.returncode = 0
         self.addCleanup(patcher.stop)
 
         self.multipass_command = MultipassCommand(platform="linux")
@@ -459,31 +460,161 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
 
 
 class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
-    def test_transfer(self):
-        source = "source-file"
+    def test_push(self):
+        source = mock.MagicMock(spec=io.BufferedIOBase)
+        source.read.return_value = b"read data"
         destination = "{}/destination-file".format(self.instance_name)
-        self.multipass_command.copy_files(source=source, destination=destination)
 
-        self.check_call_mock.assert_called_once_with(
-            ["multipass", "transfer", source, destination], stdin=subprocess.DEVNULL
+        self.popen_mock.return_value.stdout = None
+        self.popen_mock.return_value.communicate.side_effect = (
+            subprocess.TimeoutExpired("foo", 1),
+            (b"communicate data", b"error"),
         )
-        self.check_output_mock.assert_not_called()
 
-    def test_transfer_fails(self):
+        self.multipass_command.push_file(source=source, destination=destination)
+
+        self.popen_mock.assert_called_once_with(
+            ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
+        )
+        source.read.assert_called_once_with(1024)
+        self.popen_mock.return_value.stdin.write.assert_called_once_with(b"read data")
+        self.assertEqual(
+            self.popen_mock.return_value.communicate.call_args_list,
+            [mock.call(timeout=1), mock.call(timeout=1)],
+        )
+
+    def test_buffered_push(self):
+        source = mock.MagicMock(spec=io.BufferedIOBase)
+        source.read.side_effect = (b"read data", b"")
+        destination = "{}/destination-file".format(self.instance_name)
+
+        self.popen_mock.return_value.stdout = None
+        self.popen_mock.return_value.communicate.side_effect = (
+            subprocess.TimeoutExpired("foo", 1),
+            (b"communicate data", b"error"),
+        )
+
+        self.multipass_command.push_file(
+            source=source, destination=destination, bufsize=9
+        )
+
+        self.popen_mock.assert_called_once_with(
+            ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
+        )
+        self.assertEqual(source.read.call_args_list, [mock.call(9), mock.call(9)])
+        self.assertEqual(
+            self.popen_mock.return_value.stdin.write.call_args_list,
+            [mock.call(b"read data"), mock.call(b"")],
+        )
+        self.assertEqual(
+            self.popen_mock.return_value.communicate.call_args_list,
+            [mock.call(timeout=1), mock.call(timeout=1)],
+        )
+
+    def test_pull(self):
+        source = "source-file"
+        destination = mock.MagicMock(spec=io.BufferedIOBase)
+
+        self.popen_mock.return_value.stdin = None
+        self.popen_mock.return_value.stdout.read.return_value = b"stdout data"
+        self.popen_mock.return_value.communicate.side_effect = (
+            subprocess.TimeoutExpired("foo", 1),
+            (b"communicate data", b"error"),
+        )
+
+        self.multipass_command.pull_file(source=source, destination=destination)
+
+        self.popen_mock.assert_called_once_with(
+            ["multipass", "transfer", source, "-"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+        )
+        self.assertEqual(
+            self.popen_mock.return_value.communicate.call_args_list,
+            [mock.call(timeout=1), mock.call(timeout=1)],
+        )
+        self.assertEqual(
+            destination.write.call_args_list,
+            [mock.call(b"stdout data"), mock.call(b"communicate data")],
+        )
+
+    def test_buffered_pull(self):
+        source = "source-file"
+        destination = mock.MagicMock(spec=io.BufferedIOBase)
+
+        self.popen_mock.return_value.stdin = None
+        self.popen_mock.return_value.stdout.read.side_effect = (
+            b"full stdout data",
+            b"stdout data",
+        )
+
+        self.popen_mock.return_value.communicate.side_effect = (
+            subprocess.TimeoutExpired("foo", 1),
+            (b"communicate data", b"error"),
+        )
+
+        self.multipass_command.pull_file(
+            source=source, destination=destination, bufsize=16
+        )
+
+        self.popen_mock.assert_called_once_with(
+            ["multipass", "transfer", source, "-"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+        )
+        self.assertEqual(
+            self.popen_mock.return_value.communicate.call_args_list,
+            [mock.call(timeout=1), mock.call(timeout=1)],
+        )
+        self.assertEqual(
+            destination.write.call_args_list,
+            [
+                mock.call(b"full stdout data"),
+                mock.call(b"stdout data"),
+                mock.call(b"communicate data"),
+            ],
+        )
+
+    def test_push_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.
-        source = "source-file"
+        source = mock.MagicMock(spec=io.BufferedIOBase)
         destination = "destination-file"
-        cmd = ["multipass", "transfer", source, destination]
-        self.check_call_mock.side_effect = subprocess.CalledProcessError(1, cmd)
+        cmd = ["multipass", "transfer", "-", destination]
+
+        self.popen_mock.return_value.stdin = mock.MagicMock()
+        self.popen_mock.return_value.stdout = None
+        self.popen_mock.return_value.returncode = 1
 
         self.assertRaises(
             errors.ProviderFileCopyError,
-            self.multipass_command.copy_files,
+            self.multipass_command.push_file,
             source=source,
             destination=destination,
         )
-        self.check_call_mock.assert_called_once_with(cmd, stdin=subprocess.DEVNULL)
+        self.popen_mock.assert_called_once_with(cmd, stdin=subprocess.PIPE)
+        self.check_output_mock.assert_not_called()
+
+    def test_pull_fails(self):
+        # multipass can fail due to several reasons and will display the error
+        # right above this exception message.
+        source = "source-file"
+        destination = mock.MagicMock(spec=io.BufferedIOBase)
+        cmd = ["multipass", "transfer", source, "-"]
+
+        self.popen_mock.return_value.stdin = None
+        self.popen_mock.return_value.stdout = mock.MagicMock()
+        self.popen_mock.return_value.returncode = 1
+
+        self.assertRaises(
+            errors.ProviderFileCopyError,
+            self.multipass_command.pull_file,
+            source=source,
+            destination=destination,
+        )
+        self.popen_mock.assert_called_once_with(
+            cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE
+        )
         self.check_output_mock.assert_not_called()
 
 

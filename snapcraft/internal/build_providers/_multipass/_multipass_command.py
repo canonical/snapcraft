@@ -14,12 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import logging
 import shutil
 import subprocess
 
 from time import sleep
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union  # noqa: F401
+from typing import (  # noqa: F401
+    Any,
+    Callable,
+    Dict,
+    IO,
+    List,
+    Optional,
+    Sequence,
+    Union,
+)
 
 from ._windows import windows_reload_multipass_path_env, windows_install_multipass
 
@@ -39,6 +49,13 @@ def _run(command: Sequence[str], stdin=subprocess.DEVNULL) -> None:
 def _run_output(command: Sequence[str], **kwargs) -> bytes:
     logger.debug("Running {}".format(" ".join(command)))
     return subprocess.check_output(command, **kwargs)
+
+
+def _popen(
+    command: Sequence[str], stdin=subprocess.DEVNULL, **kwargs
+) -> subprocess.Popen:
+    logger.debug("Running {}".format(" ".join(command)))
+    return subprocess.Popen(command, stdin=stdin, **kwargs)
 
 
 class MultipassCommand:
@@ -300,21 +317,85 @@ class MultipassCommand:
                 provider_name=self.provider_name, exit_code=process_error.returncode
             ) from process_error
 
-    def copy_files(self, *, source: str, destination: str) -> None:
-        """Passthrough for running multipass copy-files.
+    def push_file(self, *, source: IO, destination: str, bufsize: int = 1024) -> None:
+        """Passthrough for pushing a file through `multipass transfer`.
 
-        :param str source: the source file to copy, using syntax expected
-                           by multipass.
-        :param str destination: the destination of the copied file, using
-                                syntax expected by multipass.
+        :param IO source: a file-like object to read from
+        :param str destination: the destination of the copied file, using syntax
+                                expected by multipass
         """
-        cmd = [self.provider_cmd, "transfer", source, destination]
-        try:
-            _run(cmd)
-        except subprocess.CalledProcessError as process_error:
-            raise errors.ProviderFileCopyError(
-                provider_name=self.provider_name, exit_code=process_error.returncode
-            ) from process_error
+        assert isinstance(source, io.IOBase)
+
+        # can't use std{in,out}=open(...) due to LP#1849753
+        data_to_read = True
+
+        p = _popen(
+            [self.provider_cmd, "transfer", "-", destination], stdin=subprocess.PIPE
+        )
+
+        while data_to_read:
+            read = source.read(bufsize)
+            p.stdin.write(read)
+            if len(read) < bufsize:
+                logger.debug("Finished streaming source file")
+                data_to_read = False
+
+        while True:
+            try:
+                out, err = p.communicate(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
+            else:
+                if p.returncode == 0:
+                    logger.debug("Process completed")
+                    break
+
+                elif p.returncode is not None:
+                    raise errors.ProviderFileCopyError(
+                        provider_name=self.provider_name, exit_code=p.returncode
+                    )
+
+    def pull_file(self, *, source: str, destination: IO, bufsize: int = 1024) -> None:
+        """Passthrough for pulling a file through `multipass transfer`
+
+        :param str or IO source: the source file to copy, using syntax expected
+                                 by multipass
+        :param str or IO destination: a file-like object to write to
+        """
+        assert isinstance(destination, io.IOBase)
+
+        # can't use std{in,out}=open(...) due to LP#1849753
+        data_to_write = True
+
+        p = _popen(
+            [self.provider_cmd, "transfer", source, "-"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+        )
+
+        while data_to_write:
+            written = p.stdout.read(bufsize)
+            destination.write(written)
+            if len(written) < bufsize:
+                logger.debug("Finished streaming standard output")
+                data_to_write = False
+
+        while True:
+            try:
+                out, err = p.communicate(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
+            else:
+                destination.write(out)
+
+                if p.returncode == 0:
+                    logger.debug("Process completed")
+                    break
+
+                elif p.returncode is not None:
+                    raise errors.ProviderFileCopyError(
+                        provider_name=self.provider_name, exit_code=p.returncode
+                    )
 
     def info(self, *, instance_name: str, output_format: str = None) -> bytes:
         """Passthrough for running multipass info."""
