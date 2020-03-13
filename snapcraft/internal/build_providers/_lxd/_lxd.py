@@ -388,7 +388,7 @@ class LXD(Provider):
                 if a["family"] == "inet"
             ):
                 break
-            sleep(1)
+            sleep(0.1)
 
     def _setup_environment(self) -> None:
         if self._container is None:
