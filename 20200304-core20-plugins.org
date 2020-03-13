@@ -18,14 +18,14 @@ When the =base= in snapcraft is set different one than the previously mentioned
 bases, then snapcraft will use the following path to search for plugins:
 =snapcraft.plugins.<base>= and search for =<plugin-name>.py=.
 
-Plugin class names must be named =PluginImpl= (following the same pattern used
-for extensions). The plugin help shall be implemented as the *doctring* for the
-plugin module.
+In-tree plugins shall be centrally mapped to the plugin class implementation.
+The plugin help shall be implemented as the *doctring* for the plugin module.
 
 ** Custom Plugins
 Custom plugins shall be declared on =snapcraft.yaml= with a prefix of =x-= and
 the plugin name. On the file system they shall be found on
 =snap/plugins/x_<plugin.name.py>=.
+The class name must be =PluginImpl= for the plugin to be easily found.
 * Core20 Base Plugin
 The base plugin for =core20=, an Abstract Base Class (inherits from =abc.ABC=)
 is required to create a plugin to be used with =core20=.
@@ -40,17 +40,16 @@ from typing import Any
 class Plugin(abc.ABC):
     @abstactmethod
     @classmethod
-    def schema(cls) -> Dict[str, Any]:
-        """Return a schema for the plugin properties."""
+    def get_schema(cls) -> Dict[str, Any]:
+        """Return a jsonschema compatible dictionary for the plugin properties."""
 
     def __init__(self, properties: Dict[str, str]) -> None:
         """
         :param properties: plugin defined properties.
-        :raises PluginBadBuildEnvironmentError: when invalid build_environment was passed to the plugin.
         """
 
     @abstactmethod
-    def get_build_environment(cls) -> Dict[str, str]:
+    def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
 
@@ -105,12 +104,15 @@ As an example, this would be a simplified implementation of the samurai plugin
 Plugin help
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import snapcraft
 
-class PluginImpl(snapcraft.plugins.core20.Plugin):
-    def get_build_environment(cls) -> Dict[str, str]:
+class SamuraiPlugin(snapcraft.plugins.core20.Plugin):
+    def get_schema(cls) -> Dict[str, Any]:
+        return dict()
+
+    def get_build_environment(self) -> Dict[str, str]:
         environment = super().get_environment()
         environment.update(
             {
