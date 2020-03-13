@@ -1,0 +1,197 @@
+#+TITLE: Plugins for core20
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-03-04]
+
+* Scope
+Starting with =base: core20=, plugins shall be explicitly versioned. This shall
+ensure that plugins can evolve independently and that no breakages occur when
+other bases are used.
+
+This document defines the core20 plugin interfaces and the high level changes
+required in Snapcraft, such as those in the =PluginHandler= and plugin loading
+logic. Each plugin will have its own specification relevant to the plugin.
+
+* Plugin Layout
+Existing plugins using =core= or =core18= as a =base= shall continue using their
+original logic for loading, that is
+When the =base= in snapcraft is set different one than the previously mentioned
+bases, then snapcraft will use the following path to search for plugins:
+=snapcraft.plugins.<base>= and search for =<plugin-name>.py=.
+
+In-tree plugins shall be centrally mapped to the plugin class implementation.
+The plugin help shall be implemented as the *doctring* for the plugin module.
+
+** Custom Plugins
+Custom plugins shall be declared on =snapcraft.yaml= with a prefix of =x-= and
+the plugin name. On the file system they shall be found on
+=snap/plugins/x_<plugin.name.py>=.
+The class name must be =PluginImpl= for the plugin to be easily found.
+* Core20 Base Plugin
+The base plugin for =core20=, an Abstract Base Class (inherits from =abc.ABC=)
+is required to create a plugin to be used with =core20=.
+
+The =core20= base plugin and the in-tree plugins implementing it must reside in
+the =snapcraft.plugins.core20= package, the base plugin shall be implemented
+with a class name of =Plugin= in a module with and import path of
+=snapcraft.plugins.core20._plugin=, for convenience,
+=snapcraft.plugins.core20.__init__.py= will import =Plugin= such that a plugin
+author could simply =import snapcraft.plugins.core20.Plugin=. This plugin
+defines the following:
+
+#+BEGIN_SRC  python
+import abc
+from typing import Any
+
+class Plugin(abc.ABC):
+    @abstactmethod
+    @classmethod
+    def get_schema(cls) -> Dict[str, Any]:
+        """Return a jsonschema compatible dictionary for the plugin properties."""
+
+    def __init__(self, properties: Dict[str, str]) -> None:
+        """
+        :param properties: plugin defined properties.
+        """
+
+    @abstactmethod
+    def get_build_environment(self) -> Dict[str, str]:
+        """
+        Return a dictionary with the environment to use in the build step.
+
+        For consistency, the keys should be defined as SNAPCRAFT_<PLUGIN>_<KEY>.
+
+        This method is called by the PluginHandler during the "build" step.
+        """
+
+    @abstractmethod
+    def get_build_commands(self) -> List[str]:
+        """
+        Return a list of commands to run during the build step.
+
+        This method is called by the PluginHandler during the "build" step.
+        These commands are run in a single shell instance. This means
+        that commands run before do affect the commands that follow.
+
+        snapcraftctl can be used in the script to call out to snapcraft
+        specific functionality.
+        """
+#+END_SRC
+
+A common difference from previous implementations is that only build needs to be
+implemented. This leaves source handling through the pull step a pure Snapcraft
+core concern.
+
+This new plugin design does not *encourage* importing any of the Snapcraft
+internals for a plugin to actually work, this means that most, if not **all**
+plugins, aside from the need of importing the base plugin will lack an =import
+snapcraft= or =from snapcraft import= statement for the plugin to be functional.
+
+The responsibility of running through the *build* step is done by
+=PluginHandler.build=, to do so, during =.build= what will happen to construct
+the build script at a high level is:
+
+- A single environment dictionary is created.
+- Snapcraft's internal =get_build_environment= method is called to update the
+  environment dictionary.
+- The plugin's =get_build_environment= method is called to updated the
+  environment dictionary.
+- The Part's =build-environment= key is retrieved and used to update the
+  dictionary.
+
+This is a powerful mechanism to give the Snapcraft *Snap* author the necessary
+control to override any undesired behavior or tune specific ones as well.
+
+** Example
+As an example, this would be a simplified implementation of the samurai plugin
+(a fake ninja based build tool that uses make syntax):
+#+BEGIN_SRC python
+"""
+Plugin help
+"""
+
+from typing import Any, Dict, List
+
+import snapcraft
+
+class SamuraiPlugin(snapcraft.plugins.core20.Plugin):
+    def get_schema(cls) -> Dict[str, Any]:
+        return dict()
+
+    def get_build_environment(self) -> Dict[str, str]:
+        environment = super().get_environment()
+        environment.update(
+            {
+                "SNAPCRAFT_SAMURAI_ARGS": "--seppuku",
+            }
+        )
+        return environment
+
+    def get_build_commands(self) -> List[str]:
+        commands = super().get_build_commands()
+        commands.extend(
+            [
+                "samurai -j $SNAPCRAFT_SAMURAI_ARGS $SNAPCRAFT_PARALELL_BUILD_COUNT",
+                "samurai install DESTDIR=$SNAPCRAFT_PART_INSTALL",
+            ]
+        )
+
+        return commands
+#+END_SRC
+* CLI
+Wherever relevant, the Snapcraft commands shall default to the =base= declared
+in =snapcraft.yaml=, otherwise to the latest supported base.
+
+In all cases, Snapcraft shall inform the base that is being used to present
+information.
+
+A mechanism must exist to be able to invoke Snapcraft commands for a plugin that
+would apply to different base than the one from the current project or default.
+
+The =--base= option is the preferred way to specify output targeting a specific
+base.
+** Help
+#+BEGIN_SRC
+$ snapcraft help --base=core python
+Displaying help for the 'python' plugin for 'core20'
+<plugin-help>
+#+END_SRC
+** Listing plugins
+#+BEGIN_SRC
+$ snapcraft list-plugins --base=core
+Displaying plugins available for core
+<plugin-list>
+#+END_SRC
+** Expanding snapcraft.yaml
+This is a new command, meant to expose the plugins behavior in an easy way to
+the =snapcraft.yaml= author. Given the plugin described in [[*Example][Example]], with the
+following =snapcraft.yaml=
+#+BEGIN_SRC yaml
+name: project
+base: core20
+summary: use of the samurai plugin
+description: an example meant to expand the samurai plugin
+
+parts:
+  samurai-part:
+    source: .
+    plugin: samurai
+#+END_SRC
+
+It can be *expanded* (or *explained*), by running:
+#+BEGIN_SRC
+$ snapcraft expand
+name: project
+base: core20
+summary: use of the samurai plugin
+description: an example meant to expand the samurai plugin
+
+parts:
+  samurai-part:
+    source: .
+    plugin: samurai
+    build-environment:
+      SNAPCRAFT_SAMURAI_ARGS: "--seppuku"
+    override-build: |
+     samurai -j $SNAPCRAFT_PARALELL_BUILD_COUNT
+     samurai $SNAPCRAFT_SAMURAI_INSTALL_TARGET DESTDIR=$SNAPCRAFT_PART_INSTALL
+#+END_SRC
