@@ -127,7 +127,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
         # False.
-        provider.build_provider_flags = dict(bind_ssh=False)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=False)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
@@ -141,7 +141,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
 
         # True.
-        provider.build_provider_flags = dict(bind_ssh=True)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=True)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [

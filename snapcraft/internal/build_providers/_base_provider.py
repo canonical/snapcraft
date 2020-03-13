@@ -190,7 +190,7 @@ class Provider(abc.ABC):
         target = (self._get_home_directory() / "project").as_posix()
         self._mount(self.project._project_dir, target)
 
-        if self.build_provider_flags.get("bind_ssh"):
+        if self.build_provider_flags.get("SNAPCRAFT_BIND_SSH"):
             self._mount_ssh()
 
     def _mount_prime_directory(self) -> bool:
@@ -382,8 +382,7 @@ class Provider(abc.ABC):
         env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
 
         # Pass through configurable environment variables.
-        for key in ["http_proxy", "https_proxy"]:
-            value = self.build_provider_flags.get(key)
+        for key, value in self.build_provider_flags.items():
             if not value:
                 continue
 

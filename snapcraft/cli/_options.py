@@ -18,7 +18,7 @@ import os
 import sys
 
 import click
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
@@ -229,6 +229,7 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
 
     for option in _PROVIDER_OPTIONS:
         key: str = option["param_decls"]  # type: ignore
+        envvar: Optional[str] = option.get("envvar")  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
         # Skip --provider option.
@@ -239,10 +240,10 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         if build_provider not in supported_providers:
             continue
 
-        # Add option, if set.
+        # Add build provider flag using envvar as key.
         key_formatted = _param_decls_to_kwarg(key)
-        if key_formatted in kwargs:
-            build_provider_flags[key_formatted] = kwargs[key_formatted]
+        if envvar is not None and key_formatted in kwargs:
+            build_provider_flags[envvar] = kwargs[key_formatted]
 
     return build_provider_flags
 
