@@ -30,7 +30,12 @@ The class name must be =PluginImpl= for the plugin to be easily found.
 The base plugin for =core20=, an Abstract Base Class (inherits from =abc.ABC=)
 is required to create a plugin to be used with =core20=.
 
-The plugin name is =Plugin= with an import path of =snapcraft.plugins.core20.plugin=
+The =core20= base plugin and the in-tree plugins implementing it must reside in
+the =snapcraft.plugins.core20= package, the base plugin shall be implemented
+with a class name of =Plugin= in a module with and import path of
+=snapcraft.plugins.core20._plugin=, for convenience,
+=snapcraft.plugins.core20.__init__.py= will import =Plugin= such that a plugin
+author could simply =import snapcraft.plugins.core20.Plugin=. This plugin
 defines the following:
 
 #+BEGIN_SRC  python
