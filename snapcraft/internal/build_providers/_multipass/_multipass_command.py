@@ -312,7 +312,7 @@ class MultipassCommand:
         :param str destination: the destination of the copied file, using
                                 syntax expected by multipass.
         """
-        cmd = [self.provider_cmd, "copy-files", source, destination]
+        cmd = [self.provider_cmd, "transfer", source, destination]
         try:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:

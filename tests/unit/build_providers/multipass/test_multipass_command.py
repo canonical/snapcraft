@@ -458,23 +458,23 @@ class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
         self.check_output_mock.assert_not_called()
 
 
-class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
-    def test_copy_files(self):
+class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
+    def test_transfer(self):
         source = "source-file"
         destination = "{}/destination-file".format(self.instance_name)
         self.multipass_command.copy_files(source=source, destination=destination)
 
         self.check_call_mock.assert_called_once_with(
-            ["multipass", "copy-files", source, destination], stdin=subprocess.DEVNULL
+            ["multipass", "transfer", source, destination], stdin=subprocess.DEVNULL
         )
         self.check_output_mock.assert_not_called()
 
-    def test_copy_files_fails(self):
+    def test_transfer_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.
         source = "source-file"
         destination = "destination-file"
-        cmd = ["multipass", "copy-files", source, destination]
+        cmd = ["multipass", "transfer", source, destination]
         self.check_call_mock.side_effect = subprocess.CalledProcessError(1, cmd)
 
         self.assertRaises(
