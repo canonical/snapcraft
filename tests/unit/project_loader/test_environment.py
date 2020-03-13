@@ -338,9 +338,9 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CFLAGS="$CFLAGS -I{stage_dir}/include -I{stage_dir}/usr/include '
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CFLAGS="$CFLAGS -isystem{stage_dir}/include -isystem{stage_dir}/usr/include '
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -348,10 +348,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CPPFLAGS="$CPPFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CPPFLAGS="$CPPFLAGS -isystem{stage_dir}/include '
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -359,10 +359,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CXXFLAGS="$CXXFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CXXFLAGS="$CXXFLAGS -isystem{stage_dir}/include '
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -449,10 +449,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
 
         expected_cflags = (
             "-I/user-provided "
-            "-I{parts_dir}/part2/install/include -I{stage_dir}/include "
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            "-I{stage_dir}/usr/include/{arch_triplet}".format(
+            "-isystem{parts_dir}/part2/install/include -isystem{stage_dir}/include "
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            "-isystem{stage_dir}/usr/include/{arch_triplet}".format(
                 parts_dir=self.parts_dir,
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
