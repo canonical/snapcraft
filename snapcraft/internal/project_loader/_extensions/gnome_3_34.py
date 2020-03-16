@@ -20,11 +20,11 @@ from typing import Any, Dict, Tuple
 
 from ._extension import Extension
 
-_PLATFORM_SNAP = dict(core18="gnome-3-28-1804")
+_PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
 
 
 class ExtensionImpl(Extension):
-    """This extension eases creation of snaps that integrate with GNOME 3.28
+    """This extension eases creation of snaps that integrate with GNOME 3.34.
 
     At build time it ensures the right build dependencies are setup and for
     the runtime it ensures the application is run in an environment catered
@@ -36,7 +36,7 @@ class ExtensionImpl(Extension):
     - GTK3 Themes.
     - Common Icon Themes.
     - Common Sound Themes.
-    - The GNOME runtime libraries and utilities corresponding to 3.28.
+    - The GNOME runtime libraries and utilities corresponding to 3.34.
 
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
@@ -60,7 +60,7 @@ class ExtensionImpl(Extension):
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         super().__init__(extension_name=extension_name, yaml_data=yaml_data)
 
-        base: str = yaml_data["base"]
+        base = yaml_data["base"]
         platform_snap = _PLATFORM_SNAP[base]
         self.root_snippet = {
             "plugs": {
@@ -85,9 +85,11 @@ class ExtensionImpl(Extension):
                     "default-provider": "{snap}".format(snap=platform_snap),
                 },
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+                "GTK_USE_PORTALS": "1",
+            },
             "layout": {
-                "/usr/bin/gjs": {"symlink": "$SNAP/gnome-platform/usr/bin/gjs"},
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
                 },
@@ -102,11 +104,32 @@ class ExtensionImpl(Extension):
             "plugs": ["desktop", "desktop-legacy", "gsettings", "wayland", "x11"],
         }
 
+        self.part_snippet = {
+            "build-environment": [
+                {"PATH": "/snap/gnome-3-34-1804-sdk/current/usr/bin:$PATH"},
+                {
+                    "XDG_DATA_DIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share:/usr/share:$XDG_DATA_DIRS"
+                },
+                {
+                    "LD_LIBRARY_PATH": "/snap/gnome-3-34-1804-sdk/current/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:/snap/gnome-3-34-1804-sdk/current/usr/lib:/snap/gnome-3-34-1804-sdk/current/usr/lib/vala-current:$LD_LIBRARY_PATH"
+                },
+                {
+                    "PKG_CONFIG_PATH": "/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/lib/pkgconfig:/snap/gnome-3-34-1804-sdk/current/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+                },
+                {
+                    "GETTEXTDATADIRS": "/snap/gnome-3-34-1804-sdk/current/usr/share/gettext-current:$GETTEXTDATADIRS"
+                },
+                {
+                    "GDK_PIXBUF_MODULE_FILE": "/snap/gnome-3-34-1804-sdk/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gdk-pixbuf-current/loaders.cache"
+                },
+            ]
+        }
+
         self.parts = {
-            "gnome-3-28-extension": {
+            "gnome-3-34-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
-                "build-packages": ["libgtk-3-dev"],
+                "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
             }
         }
