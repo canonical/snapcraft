@@ -372,6 +372,16 @@ suites:
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
 
+# External snap tests
+ tests/spread/snaps/:
+   systems:
+   - ubuntu-18.04-64
+   manual: true
+   summary: externals snaps
+   prepare: |
+     sudo apt-get install git
+     sudo apt-mark auto git
+
 # Legacy tests
  tests/spread/legacy/:
    summary: legacy snapcraft tests
