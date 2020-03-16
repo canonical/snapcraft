@@ -13,6 +13,7 @@ potential instability, the instability can be present in different ways:
 
 This document defines a common pattern to follow to enable features that must be
 disabled by default.
+
 * Guidelines
 These are the guidelines to enable a feature through a feature flag:
 
@@ -24,6 +25,7 @@ These are the guidelines to enable a feature through a feature flag:
 In general features are enabled with options on the command line interface with
 the following pattern =--experimental-<feature>= and with an environment
 variable =SNAPCRAFT_EXPERIMENTAL_<FEATURE>=.
+
 ** Enabling feature that affects =snapcraft.yaml=
 Given the feature *feature*, the syntax shall have the following pattern:
 #+BEGIN_SRC sh
@@ -36,6 +38,7 @@ SNAPCRAFT_EXPERIMENTAL_FEATURE=y snapcraft
 
 If =snapcraft-yaml= makes use of a feature that requires a feature flag and
 error shall be presented with hints about enabling the experimental feature.
+
 ** Using a feature enabled by command line options
 Given the feature *feature* enabled by use of the =--feature= option, the
 syntax shall have the following pattern:
@@ -49,6 +52,7 @@ SNAPCRAFT_EXPERIMENTAL_FEATURE=y snapcraft --feature
 
 When using =--feature= without using the experimental flag, a command line
 option error shall be presented.
+
 ** Using a feature that affects output
 To expose new output through a feature flag the syntax shall have the following pattern:
 #+BEGIN_SRC sh
