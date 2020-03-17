@@ -25,7 +25,6 @@ from . import echo
 from ._command import SnapcraftProjectCommand
 from ._config import enable_snapcraft_config_file
 from ._options import (
-    add_build_options,
     add_provider_options,
     apply_host_provider_flags,
     get_build_provider,
@@ -157,7 +156,6 @@ def _retrieve_provider_error(instance) -> None:
 
 
 @click.group()
-@add_build_options()
 @add_provider_options()
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
@@ -179,7 +177,6 @@ def init():
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
 @enable_snapcraft_config_file()
 @click.pass_context
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def pull(ctx, parts, **kwargs):
@@ -196,7 +193,6 @@ def pull(ctx, parts, **kwargs):
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
 @enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -213,7 +209,6 @@ def build(parts, **kwargs):
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
 @enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -230,7 +225,6 @@ def stage(parts, **kwargs):
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
 @enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -247,7 +241,6 @@ def prime(parts, **kwargs):
 
 @lifecyclecli.command("try")
 @enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 def try_command(**kwargs):
     """Try a snap on the host, priming if necessary.
@@ -266,7 +259,6 @@ def try_command(**kwargs):
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
 @enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
