@@ -586,7 +586,7 @@ class PrepareBuildTest(ColconPluginTestBase):
         self.plugin._prepare_build()
         shebangs_mock.assert_called_once_with(self.plugin.installdir)
 
-    def test_cmake_paths_are_rewritten(self):
+    def test_underlay_cmake_paths_are_rewritten(self):
         os.makedirs(os.path.join(self.plugin._ros_underlay, "test"))
 
         # Place a few .cmake files with incorrect paths, and some files that
@@ -626,6 +626,55 @@ class PrepareBuildTest(ColconPluginTestBase):
 
         for file_info in files:
             path = os.path.join(self.plugin._ros_underlay, file_info["path"])
+            with open(path, "r") as f:
+                self.assertThat(f.read(), Equals(file_info["expected"]))
+
+    def test_cmake_paths_are_rewritten(self):
+        # Place a few .cmake files with incorrect paths, and some files that
+        # shouldn't be changed.
+        files = [
+            {
+                "path": "fooConfig.cmake",
+                "contents": '"/usr/lib/foo"',
+                "expected": '"{}/usr/lib/foo"'.format(self.plugin.installdir),
+            },
+            {"path": "bar", "contents": '"/usr/lib/bar"', "expected": '"/usr/lib/bar"'},
+            {
+                "path": "test/bazConfig.cmake",
+                "contents": '"/test/baz;/usr/lib/baz"',
+                "expected": '"{0}/test/baz;{0}/usr/lib/baz"'.format(
+                    self.plugin.installdir
+                ),
+            },
+            {"path": "test/quxConfig.cmake", "contents": "qux", "expected": "qux"},
+            {
+                "path": "test/installedConfig.cmake",
+                "contents": '"{}/foo"'.format(self.plugin.installdir),
+                "expected": '"{}/foo"'.format(self.plugin.installdir),
+            },
+            {
+                "path": "test/poco.cmake",
+                "contents": 'INTERFACE_LINK_LIBRARIES "pthread;dl;rt;/usr/lib/x86_64-linux-gnu/libpcre.so;/usr/lib/x86_64-linux-gnu/libz.so"',
+                "expected": 'INTERFACE_LINK_LIBRARIES "pthread;dl;rt;{0}/usr/lib/x86_64-linux-gnu/libpcre.so;{0}/usr/lib/x86_64-linux-gnu/libz.so"'.format(
+                    self.plugin.installdir
+                ),
+            },
+        ]
+
+        for file_info in files:
+            path = os.path.join(
+                self.plugin.installdir, "usr", "lib", "cmake", file_info["path"]
+            )
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write(file_info["contents"])
+
+        self.plugin._prepare_build()
+
+        for file_info in files:
+            path = os.path.join(
+                self.plugin.installdir, "usr", "lib", "cmake", file_info["path"]
+            )
             with open(path, "r") as f:
                 self.assertThat(f.read(), Equals(file_info["expected"]))
 

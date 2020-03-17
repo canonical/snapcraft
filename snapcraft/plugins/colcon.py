@@ -540,6 +540,13 @@ class ColconPlugin(snapcraft.BasePlugin):
             _rewrite_paths,
         )
 
+        file_utils.replace_in_file(
+            os.path.join(self.installdir, "usr", "lib", "cmake"),
+            re.compile(r".*.cmake$"),
+            re.compile(r'"(.*?/.*?)"'),
+            _rewrite_paths,
+        )
+
     def _finish_build(self):
         # Fix all shebangs to use the in-snap python.
         mangling.rewrite_python_shebangs(self.installdir)

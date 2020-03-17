@@ -115,6 +115,14 @@ _PROVIDER_OPTIONS = [
         envvar="SNAPCRAFT_BIND_SSH",
         supported_providers=["lxd", "multipass"],
     ),
+    dict(
+        param_decls="--enable-developer-debug",
+        is_flag=True,
+        help="Enable developer debug logging.",
+        envvar="SNAPCRAFT_ENABLE_DEVELOPER_DEBUG",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
 ]
 
 
@@ -129,7 +137,8 @@ def _add_options(options, func, hidden):
         if "supported_providers" in option:
             option.pop("supported_providers")
 
-        click_option = click.option(param_decls, **option, hidden=hidden)
+        hidden_override = option.pop("hidden", hidden)
+        click_option = click.option(param_decls, **option, hidden=hidden_override)
         func = click_option(func)
     return func
 
