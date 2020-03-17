@@ -1,0 +1,25 @@
+summary: Build microk8s using LXD
+kill-timeout: 30m
+
+environment:
+  SNAP_REPO: https://github.com/ubuntu/microk8s.git
+
+prepare: |
+  git clone "$SNAP_REPO" repo
+
+restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  pushd repo
+  snapcraft clean --use-lxd
+  popd
+
+  rm -rf repo
+
+execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  cd repo
+  snapcraft --use-lxd
+
+  snap install --dangerous --classic microk8s_*.snap
