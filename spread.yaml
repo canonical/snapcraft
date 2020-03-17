@@ -415,7 +415,7 @@ suites:
    systems:
    - ubuntu-18.04-64
    manual: true
-   summary: externals snaps
+   summary: external snaps
    prepare: |
      sudo apt-get install git
      sudo apt-mark auto git

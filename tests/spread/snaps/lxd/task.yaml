@@ -1,0 +1,28 @@
+summary: Build lxd using LXD and on host
+kill-timeout: 90m
+
+environment:
+  SNAP_REPO: https://github.com/lxc/lxd-pkg-snap
+  PROVIDER_OPTION/lxd: "--use-lxd"
+  PROVIDER_OPTION/destructive: "--destructive-mode"
+
+prepare: |
+  git clone "$SNAP_REPO" repo
+
+restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  pushd repo
+  snapcraft clean "$PROVIDER_OPTION"
+  popd
+
+  rm -rf repo
+
+execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  cd repo
+  snapcraft "$PROVIDER_OPTION"
+
+  # TODO LXD is a special snow flake. Enabling this needs removal on restore.
+  # snap install --dangerous lxd_*.snap
