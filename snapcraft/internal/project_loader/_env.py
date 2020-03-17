@@ -59,7 +59,7 @@ def build_env(root: str, snap_name: str, arch_triplet: str) -> List[str]:
         for envvar in ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]:
             env.append(
                 formatting_utils.format_path_variable(
-                    envvar, paths, prepend="-I", separator=" "
+                    envvar, paths, prepend="-isystem", separator=" "
                 )
             )
 
