@@ -1,0 +1,38 @@
+#+TITLE: Enabling Experimental LZO compression
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-03-17]
+
+* Scope
+There have been observations at snap runtime that some snaps might have an
+improved startup time if the squash FS compression was changed.
+
+This document defines how this *experimental* feature must work.
+
+* Enabling the feature
+As an experimental feature, an option must be used to enable this feature as
+defined on [[file:20200316-enabling-experimental-features.org][Enabling Experimental Features]].
+
+Such that the new =snapcraft.yaml= shall only be valid if called as:
+#+BEGIN_SRC sh
+snapcraft --experimental-compression
+#+END_SRC
+
+Or with the following environment variable defined:
+#+BEGIN_SRC sh
+SNAPCRAFT_EXPERIMENTAL_COMPRESSION=y snapcraft
+#+END_SRC
+
+* Defining compression in =snapcraft.yaml=
+Snapcraft's =snapcraft.yaml= shall accept a new top-level entry =compression=
+with two valid values: =lzo= and =xz= (the current default).
+
+If this key is used without [[*Enabling the feature][Enabling the feature]] a standard schema error shall be displayed:
+#+BEGIN_SRC sh
+Issues while validating snapcraft.yaml: Additional properties are not allowed ('compression' was unexpected)
+#+END_SRC
+
+When used with the feature enabled, the following message shall be displayed
+during the /packing/ step:
+#+BEGIN_SRC sh
+EXPERIMENTAL: Setting the squash FS compression to 'lzo'
+#+END_SRC
