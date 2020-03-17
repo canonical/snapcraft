@@ -17,7 +17,6 @@ import functools
 import logging
 import os
 import sys
-from distutils import util
 
 import click
 
@@ -73,13 +72,7 @@ command_groups = [
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
-    # Debugging snapcraft itself is not tied to debugging a snapcraft project.
-    try:
-        is_snapcraft_developer_debug = util.strtobool(
-            os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n")
-        )
-    except ValueError:
-        is_snapcraft_developer_debug = False
+    is_snapcraft_developer_debug = kwargs["enable_developer_debug"]
     if is_snapcraft_developer_debug:
         log_level = logging.DEBUG
         click.echo(
