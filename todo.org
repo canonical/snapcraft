@@ -16,3 +16,8 @@
 - [ ] Add CLI support for =expand-plugins=
 - [ ] Introduce new custom plugin loading logic for =core20=
 *** TODO [[file:specifications/20200316-enabling-experimental-features.org][Enabling Experimental Features]]
+*** TODO [[file:specifications/20200317-enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [/]
+- [ ] Add =click= option to enable experimental feature
+- [ ] Amend schema to allow =compression=
+- [ ] Replace =mksquashfs= with =snap pack=
+- [ ] Toggle compression with =snap pack=
