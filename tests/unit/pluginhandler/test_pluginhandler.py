@@ -958,24 +958,26 @@ class StateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch("snapcraft._baseplugin.BasePlugin.get_pull_properties")
-        self.get_pull_properties_mock = patcher.start()
-        self.get_pull_properties_mock.return_value = []
-        self.addCleanup(patcher.stop)
+        self.get_pull_properties_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.v1.PluginV1.get_pull_properties", return_value=[]
+            )
+        ).mock
 
-        patcher = patch("snapcraft._baseplugin.BasePlugin.get_build_properties")
-        self.get_build_properties_mock = patcher.start()
-        self.get_build_properties_mock.return_value = []
-        self.addCleanup(patcher.stop)
+        self.get_build_properties_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.v1.PluginV1.get_build_properties", return_value=[]
+            )
+        ).mock
 
         self.handler = self.load_part("test_part")
-
         self.handler.makedirs()
 
-        patcher = patch("snapcraft.internal.elf.get_elf_files")
-        self.get_elf_files_mock = patcher.start()
-        self.get_elf_files_mock.return_value = frozenset()
-        self.addCleanup(patcher.stop)
+        self.get_elf_files_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.get_elf_files", return_value=frozenset()
+            )
+        ).mock
 
         self.useFixture(
             fixtures.MockPatch(

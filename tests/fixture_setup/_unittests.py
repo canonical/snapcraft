@@ -103,7 +103,9 @@ class FakePlugin(fixtures.Fixture):
 
     def __init__(self, plugin_name, plugin_class):
         super().__init__()
-        self._import_name = "snapcraft.plugins.{}".format(plugin_name.replace("-", "_"))
+        self._import_name = "snapcraft.plugins.v1.{}".format(
+            plugin_name.replace("-", "_")
+        )
         self._plugin_class = plugin_class
 
     def _setUp(self):
