@@ -41,7 +41,7 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
-from snapcraft.plugins import nil
+from snapcraft.plugins.v1 import nil
 from snapcraft.project import Project
 from tests import fixture_setup, unit
 
@@ -121,7 +121,7 @@ class PluginTestCase(unit.TestCase):
         )
         self.assertThat(exclude, Equals(["etc", "usr/lib/*.a"]))
 
-    @patch.object(snapcraft.plugins.nil.NilPlugin, "snap_fileset")
+    @patch.object(snapcraft.plugins.v1.nil.NilPlugin, "snap_fileset")
     def test_migratable_fileset_for_no_options_modification(self, mock_snap_fileset):
         """Making sure migratable_fileset_for() doesn't modify options"""
 

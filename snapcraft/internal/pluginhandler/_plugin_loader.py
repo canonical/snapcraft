@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -83,7 +83,9 @@ def _load_module(module_name, plugin_name, local_plugins_dir):
 
     if not module:
         with contextlib.suppress(ImportError):
-            module = importlib.import_module("snapcraft.plugins.{}".format(module_name))
+            module = importlib.import_module(
+                "snapcraft.plugins.v1.{}".format(module_name)
+            )
 
     if not module:
         logger.info("Searching for local plugin for %s", plugin_name)

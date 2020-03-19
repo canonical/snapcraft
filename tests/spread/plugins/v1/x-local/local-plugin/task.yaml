@@ -1,0 +1,29 @@
+summary: Use local plugins to build a snap
+
+environment:
+  SNAP_DIR/baseplugin: ../snaps/from-baseplugin
+  SNAP_DIR/nilplugin: ../snaps/from-nilplugin
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  snapcraft build
+
+  if [ ! -f parts/install/x-local-plugin/install/build-stamp ]; then
+      echo "Local plugin failed to create 'build-stamp"
+      exit 1
+  fi
