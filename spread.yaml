@@ -48,6 +48,44 @@ backends:
       - ubuntu-18.04-64:
           workers: 18
           image: ubuntu-1804-64
+  multipass:
+    type: adhoc
+    allocate: |
+      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+        image="18.04"
+        instance_name="spread-18-04"
+      else
+        FATAL "$SPREAD_SYSTEM is not supported!"
+      fi
+
+      multipass launch --disk 20G --mem 2G --name "$instance_name" "$image"
+
+      # Get the IP from the instance
+      ip=$(multipass info --format csv "$instance_name" | tail -1 | cut -d\, -f3)
+      # Enable PasswordAuthertication for root over SSH.
+      multipass exec "$instance_name" -- \
+        sudo sh -c "echo root:ubuntu | sudo chpasswd"
+      multipass exec "$instance_name" -- \
+        sudo sh -c \
+        "sed -i /etc/ssh/sshd_config -e 's/^PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#PermitRootLogin.*/PermitRootLogin yes/'"
+      multipass exec "$instance_name" -- \
+        sudo systemctl restart ssh
+
+      ADDRESS "$ip:22"
+    discard: |
+      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+        image="18.04"
+        instance_name="spread-18-04"
+      else
+        FATAL "$SPREAD_SYSTEM is not supported!"
+      fi
+
+      multipass delete --purge "$instance_name"
+    systems:
+      - ubuntu-18.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
   autopkgtest:
     type: adhoc
     allocate: |
@@ -371,6 +409,16 @@ suites:
 # Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
+
+# External snap tests
+ tests/spread/snaps/:
+   systems:
+   - ubuntu-18.04-64
+   manual: true
+   summary: external snaps
+   prepare: |
+     sudo apt-get install git
+     sudo apt-mark auto git
 
 # Legacy tests
  tests/spread/legacy/:

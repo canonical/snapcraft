@@ -1,12 +1,10 @@
 #+TITLE: Snapcraft Tasks
 #+STARTUP: content
 #+STARTUP: lognotestate
-#+SEQ_TODO: TODO INPROGRESS | DONE DEFERRED CANCELLED
-
 
 * Specifications
 ** 2020
-*** TODO[[file:specifications/20200304-core20-plugins.org][ Snapcraft Core20 Plugins]] [/]
+*** TODO [[file:specifications/20200304-core20-plugins.org][Snapcraft Core20 Plugins]] [/]
 - [ ] Move =BasePlugin= to a legacy import path
 - [ ] Add backwards compatibility for =BasePlugin=
 - [ ] Rework in-tree plugin importing into a map
@@ -17,3 +15,9 @@
 - [ ] Add CLI support for =list-plugins=
 - [ ] Add CLI support for =expand-plugins=
 - [ ] Introduce new custom plugin loading logic for =core20=
+*** TODO [[file:specifications/20200316-enabling-experimental-features.org][Enabling Experimental Features]]
+*** TODO [[file:specifications/20200317-enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [/]
+- [ ] Add =click= option to enable experimental feature
+- [ ] Amend schema to allow =compression=
+- [ ] Replace =mksquashfs= with =snap pack=
+- [ ] Toggle compression with =snap pack=
