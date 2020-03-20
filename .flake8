@@ -10,6 +10,7 @@ ignore =
 max-complexity = 10
 exclude =
     # No need to traverse our git directory
+    .direnv,
     .git,
     .hg,
     .mypy_cache,
