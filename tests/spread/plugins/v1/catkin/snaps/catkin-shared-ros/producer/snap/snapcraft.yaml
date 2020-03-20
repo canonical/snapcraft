@@ -5,6 +5,7 @@ description: |
   Of particular note, the shared bits do not include Catkin
 
 grade: devel
+base: core18
 confinement: strict
 
 parts:

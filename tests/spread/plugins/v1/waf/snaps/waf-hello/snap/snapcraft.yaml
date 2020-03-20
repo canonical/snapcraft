@@ -4,6 +4,8 @@ summary: test the waf plugin
 description: |
   This is a basic waf snap with configflags.
 confinement: strict
+grade: devel
+base: core18
 
 apps:
   waf-hello:

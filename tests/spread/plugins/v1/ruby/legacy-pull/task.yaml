@@ -8,6 +8,11 @@ systems: [ubuntu-*]
 environment:
   SNAP_DIR: ../snaps/ruby-hello
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  clear_base "$SNAP_DIR/snap/snapcraft.yaml"
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean

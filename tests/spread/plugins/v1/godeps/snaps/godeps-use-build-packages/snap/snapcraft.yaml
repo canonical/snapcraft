@@ -5,6 +5,7 @@ description: |
   Proves that it is possible to build a snap using godeps.
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

@@ -5,6 +5,7 @@ description: |
   Leverage conda-packages to install ipython and use it to say "hello world".
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

@@ -6,6 +6,7 @@ description: |
     then be used by a checkbox application
 confinement: strict
 grade: devel
+base: core18
 
 parts:
     checkbox-ng-dev:

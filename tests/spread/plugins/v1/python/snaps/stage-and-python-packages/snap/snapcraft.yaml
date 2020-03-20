@@ -5,6 +5,7 @@ description: |
   Use a stage-package and a python-package from PyPI
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   python-from-archive:

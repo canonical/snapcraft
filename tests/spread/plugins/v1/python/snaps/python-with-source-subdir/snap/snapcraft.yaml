@@ -9,6 +9,7 @@ description: |
   properly handled.
 confinement: strict
 grade: devel
+base: core18
 
 apps:
   python-hello:

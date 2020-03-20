@@ -5,6 +5,7 @@ description: this is a basic snap using kbuild to build a hello-world
    example program
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

@@ -5,6 +5,7 @@ description: |
   This example won't build. It's only meant for pulling.
 
 grade: devel
+base: core18
 confinement: strict
 
 parts:

@@ -6,6 +6,7 @@ description: |
   plugin.
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   pip-bzr:

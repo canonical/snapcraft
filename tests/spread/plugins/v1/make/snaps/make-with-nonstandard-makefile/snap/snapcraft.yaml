@@ -4,6 +4,7 @@ summary: test the make plugin with a nonstandard makefile location
 description: test the make plugin with a nonstandard makefile location
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

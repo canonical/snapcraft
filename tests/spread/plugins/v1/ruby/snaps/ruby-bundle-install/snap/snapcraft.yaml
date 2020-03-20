@@ -5,6 +5,7 @@ description: |
   Snap to test 'bundle install' command
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

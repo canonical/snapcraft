@@ -4,6 +4,7 @@ summary: test the gnome extension
 description: This is a basic gtk snap
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

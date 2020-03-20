@@ -5,6 +5,7 @@ description: |
   Snap to test ruby compiled correctly, exists, and works
 
 grade: stable
+base: core18
 confinement: strict
 
 apps:

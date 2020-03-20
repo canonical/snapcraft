@@ -4,6 +4,7 @@ summary: Test cmake rebuilds
 description: Test cmake rebuilds
 
 grade: devel
+base: core18
 confinement: strict
 
 parts:

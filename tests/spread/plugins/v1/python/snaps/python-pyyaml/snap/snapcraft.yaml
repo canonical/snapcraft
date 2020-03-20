@@ -2,7 +2,10 @@ name: python-pyyaml
 version: "0"
 summary: summary
 description: description
+
+base: core18
 confinement: strict
+grade: devel
 
 parts:
   python2:

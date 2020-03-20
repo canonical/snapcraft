@@ -5,6 +5,9 @@ description: |
   "This tests out LP: #1599328 and verifies the mechanism to work
   in such scenarios."
 
+grade: devel
+base: core18
+
 parts:
   multiple-mains:
       source: .

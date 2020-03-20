@@ -12,8 +12,11 @@ environment:
   SNAP_DIR: ../snaps/ros-talker-listener
 
 prepare: |
-  cd "$SNAP_DIR"
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  clear_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  cd "$SNAP_DIR"
   # Legacy requires the rosdistro to be specified
   echo "    rosdistro: kinetic" >> snap/snapcraft.yaml
 

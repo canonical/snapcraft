@@ -6,6 +6,7 @@ description: >
   as it may have dependencies.
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

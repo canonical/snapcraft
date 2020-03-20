@@ -6,6 +6,7 @@ description: >
 version: "0.1"
 confinement: strict
 grade: devel
+base: core18
 
 apps:
     checkbox-cli:

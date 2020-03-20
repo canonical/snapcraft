@@ -5,6 +5,7 @@ description: |
   Snap to test 'gem install <gem>' command
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

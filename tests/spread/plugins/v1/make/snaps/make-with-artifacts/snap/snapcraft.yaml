@@ -4,6 +4,7 @@ summary: test make with artifacts
 description: test make artifacts are correctly collected
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

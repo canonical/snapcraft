@@ -6,6 +6,7 @@ description: |
   possible to build a snap using local go sources.
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:
