@@ -46,7 +46,7 @@ backends:
           workers: 12
           image: ubuntu-1604-64
       - ubuntu-18.04-64:
-          workers: 18
+          workers: 20
           image: ubuntu-1804-64
   multipass:
     type: adhoc
