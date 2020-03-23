@@ -47,26 +47,11 @@ jobs:
       script:
         - ./tools/cla_check.py
 
-    - stage: unit, snap and osx
+    - stage: unit and snap
       name: unit tests
       script:
         - SNAPCRAFT_PACKAGE_TYPE=none ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/unit/coverage"
-    - stage: unit, snap and osx
-      name: osx
-      os: osx
-      addons:
-        homebrew:
-          packages:
-            - coreutils
-            - python
-      install:
-        - echo Temporarily disabled
-        - echo python3 ./tools/brew_install_from_source.py
-        - echo python3 -m pip install -r requirements.txt
-        - echo python3 -m pip install -r requirements-devel.txt
-      script:
-        - echo SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-    - stage: unit, snap and osx
+    - stage: unit and snap
       name: snap
       workspaces:
         create:
