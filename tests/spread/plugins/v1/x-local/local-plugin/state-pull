@@ -12,6 +12,7 @@ extracted_metadata:
 project_options:
   deb_arch: amd64
 properties:
+  foo: null
   override-pull: snapcraftctl pull
   parse-info: []
   plugin: x-local-plugin
