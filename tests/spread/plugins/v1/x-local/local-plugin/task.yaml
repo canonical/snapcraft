@@ -19,6 +19,8 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  expected_pull_state="$(pwd)/state-pull"
+
   cd "$SNAP_DIR"
 
   snapcraft build
@@ -27,3 +29,9 @@ execute: |
       echo "Local plugin failed to create 'build-stamp"
       exit 1
   fi
+
+  if ! diff -U10 parts/x-local-plugin/state/pull "$expected_pull_state"; then
+    echo "Pull state does not match"
+    exit 1
+  fi
+

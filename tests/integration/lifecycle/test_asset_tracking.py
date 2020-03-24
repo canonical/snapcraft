@@ -25,65 +25,6 @@ from testtools.matchers import Contains, FileContains, FileExists
 from tests import fixture_setup, integration
 
 
-class PullPropertiesTestCase(integration.TestCase):
-    def test_pull(self):
-        self.assert_expected_pull_state("local-plugin-pull-properties")
-
-    def test_pull_legacy_pull_properties(self):
-        self.assert_expected_pull_state("local-plugin-legacy-pull-properties")
-
-    def assert_expected_pull_state(self, project_dir):
-        self.run_snapcraft("pull", project_dir)
-
-        state_file = os.path.join(self.parts_dir, "x-local-plugin", "state", "pull")
-        self.assertThat(state_file, FileExists())
-        # Verify that the correct schema dependencies made it into the state.
-        # and that the contents of the dependencies made it in as well.
-        self.assertThat(
-            state_file,
-            FileContains(
-                matcher=Contains(
-                    dedent(
-                        """\
-                properties:
-                  foo: bar
-                  override-pull: snapcraftctl pull
-                  parse-info: []
-                  plugin: x-local-plugin
-                  source: .
-                  source-branch: ''
-                  source-commit: ''
-                  source-depth: 0
-                  source-subdir: ''
-                  source-tag: ''
-                  source-type: ''
-                  stage-packages: []
-                schema_properties:
-                - foo
-                - stage-packages
-              """
-                    )
-                )
-            ),
-        )
-        self.assertThat(
-            state_file,
-            FileContains(
-                matcher=Contains(
-                    dedent(
-                        """\
-                assets:
-                  build-packages: []
-                  build-snaps: []
-                  source-details: null
-                  stage-packages: []
-                """
-                    )
-                )
-            ),
-        )
-
-
 class AssetTrackingTestCase(integration.TestCase):
     def test_pull(self):
         self.copy_project_to_cwd("asset-tracking")

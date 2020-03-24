@@ -18,5 +18,21 @@ from snapcraft.plugins import nil
 
 
 class LocalPlugin(nil.NilPlugin):
+    @classmethod
+    def schema(cls):
+        schema = super().schema()
+
+        schema["properties"]["foo"] = {"type": "string"}
+
+        return schema
+
+    @classmethod
+    def get_pull_properties(cls):
+        return ["foo", "stage-packages"]
+
+    @classmethod
+    def get_build_properties(cls):
+        return ["foo", "stage-packages"]
+
     def build(self):
         return self.run(["touch", "build-stamp"], self.installdir)
