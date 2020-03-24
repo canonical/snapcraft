@@ -1,0 +1,24 @@
+name: environment-tests
+version: '1.0'
+summary: environment-tests
+description: environment-tests
+apps:
+  hello:
+    command: hello
+    environment:
+      a: foo
+      c: foo
+      b: foo
+    command-chain:
+    - snap/command-chain/snapcraft-runner
+architectures:
+- amd64
+assumes:
+- command-chain
+base: core18
+confinement: strict
+environment:
+  a: foo
+  c: foo
+  b: foo
+grade: devel

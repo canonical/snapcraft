@@ -1,0 +1,28 @@
+name: environment-tests
+version: "1.0"
+summary: environment-tests
+description: environment-tests
+
+base: core18
+grade: devel
+confinement: strict
+
+parts:
+  environment-tests:
+    plugin: nil
+    source: .
+    override-build:
+      install -m 0755 hello $SNAPCRAFT_PART_INSTALL/
+
+apps:
+  hello:
+    command: hello
+    environment:
+      a: foo
+      c: foo
+      b: foo
+
+environment:
+  a: foo
+  c: foo
+  b: foo
