@@ -23,7 +23,7 @@ execute: |
 
   snapcraft build
 
-  if [ ! -f parts/install/x-local-plugin/install/build-stamp ]; then
+  if [ ! -f parts/x-local-plugin/install/build-stamp ]; then
       echo "Local plugin failed to create 'build-stamp"
       exit 1
   fi
