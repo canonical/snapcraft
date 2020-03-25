@@ -452,7 +452,7 @@ class Snap:
         snap_dict = self.to_snap_yaml_dict()
 
         with open(path, "w") as f:
-            yaml_utils.dump(snap_dict, stream=f)
+            yaml_utils.dump(snap_dict, stream=f, sort_keys=False)
 
     def __repr__(self) -> str:
         return repr(self.__dict__)
