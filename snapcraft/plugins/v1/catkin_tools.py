@@ -61,17 +61,17 @@ class CatkinToolsPlugin(catkin.CatkinPlugin):
         # It's possible that this workspace wasn't initialized to be used with
         # catkin-tools, so initialize it first. Note that this is a noop if it
         # was already initialized.
-        self._run_in_bash(["catkin", "init"])
+        self.run(["catkin", "init"])
 
         # Clean to prevent conflicts with externally built packages.
-        self._run_in_bash(["catkin", "clean", "-y"])
+        self.run(["catkin", "clean", "-y"])
 
     def _add_catkin_profile(self):
         # Overwrite the default catkin profile to ensure builds
         # aren't affected by profile changes.
         catkincmd = ["catkin", "profile", "add", "-f", "default"]
 
-        self._run_in_bash(catkincmd)
+        self.run(catkincmd)
 
     def _configure_catkin_profile(self):
         # Use catkin config to set all configurations before running build.
@@ -97,9 +97,9 @@ class CatkinToolsPlugin(catkin.CatkinPlugin):
             build_type = "Debug"
         catkincmd.append("-DCMAKE_BUILD_TYPE={}".format(build_type))
 
-        catkincmd.extend(self.options.catkin_cmake_args)
+        catkincmd.extend(self._parse_cmake_args())
 
-        self._run_in_bash(catkincmd)
+        self.run(catkincmd)
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
@@ -118,6 +118,4 @@ class CatkinToolsPlugin(catkin.CatkinPlugin):
         if self.catkin_packages:
             catkincmd.extend(self.catkin_packages)
 
-        # This command must run in bash due to a bug in Catkin that causes it
-        # to explode if there are spaces in the cmake args (which there are).
-        self._run_in_bash(catkincmd)
+        self.run(catkincmd)

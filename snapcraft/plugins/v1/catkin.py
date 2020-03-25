@@ -76,6 +76,7 @@ import os
 import tempfile
 import logging
 import re
+import shlex
 import shutil
 import subprocess
 import textwrap
@@ -101,6 +102,45 @@ _BASE_TO_UBUNTU_RELEASE_MAP = {"core": "xenial", "core16": "xenial", "core18": "
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
 _ROS_KEYRING_PATH = os.path.join(snapcraft.internal.common.get_keyringsdir(), "ros.gpg")
+
+
+def _parse_cmake_arg(arg: str) -> str:
+    # Parse cmake arg string that makes catkin happy.
+
+    # The user can specify a list like:
+    # catkin-cmake-args:
+    # - -DSOMETHING=FOO
+    # - -DCMAKE_C_FLAGS=-Wall -Werror
+    # - -DCMAKE_CXX_FLAGS="-Wall -Werror"
+    # Catkin can handle strings (1) and (2), but will fail on parsing (3)
+    # because of the quotes.  It will end up passing "-Wall -Werror" as a
+    # single quoted string to c++.  To work around this, we need to
+    # evaluate the string like bash would.  We can do this by using
+    # shlex.split() and rejoining the string with spaces.
+
+    # Examples:
+
+    # No quotes.
+    # >>> test = '-DCMAKE_C_FLAGS=-Wall -Werror'
+    # >>> " ".join(shlex.split(test))
+    # '-DCMAKE_C_FLAGS=-Wall -Werror'
+
+    # Double quotes.
+    # >>> test2 = '-DCMAKE_CXX_FLAGS="-Wall -Werror"'
+    # >>> " ".join(shlex.split(test2))
+    # '-DCMAKE_CXX_FLAGS=-Wall -Werror'
+
+    # Single quotes.
+    # >>> test3 = "-DCMAKE_CXX_FLAGS='-Wall -Werror'"
+    # >>> " ".join(shlex.split(test3))
+    # '-DCMAKE_CXX_FLAGS=-Wall -Werror'
+
+    # Nested quotes.
+    # >>> test4 = '-DCMAKE_CXX_FLAGS=\"-I\'/some/path with spaces\'\" -Wall -Werror'
+    # >>> " ".join(shlex.split(test4))
+    # "-DCMAKE_CXX_FLAGS=-I'/some/path with spaces' -Wall -Werror"
+
+    return " ".join(shlex.split(arg))
 
 
 class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
@@ -631,14 +671,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def rosdir(self):
         return os.path.join(self.installdir, "opt", "ros", self._rosdistro)
 
-    def _run_in_bash(self, commandlist, cwd=None, env=None):
-        with tempfile.NamedTemporaryFile(mode="w") as f:
-            f.write("set -e\n")
-            f.write("exec {}\n".format(" ".join(commandlist)))
-            f.flush()
-
-            self.run(["/bin/bash", f.name], cwd=cwd, env=env)
-
     def build(self):
         """Build Catkin packages.
 
@@ -763,6 +795,13 @@ class CatkinPlugin(snapcraft.BasePlugin):
             profile_d_path, re.compile(r""), re.compile(r"/usr/bin/python"), r"python"
         )
 
+    def _parse_cmake_args(self):
+        args: List[str] = list()
+        for arg in self.options.catkin_cmake_args:
+            cmake_arg = " ".join(shlex.split(arg))
+            args.append(cmake_arg)
+        return args
+
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
         if self.catkin_packages is not None and len(self.catkin_packages) == 0:
@@ -803,13 +842,9 @@ class CatkinPlugin(snapcraft.BasePlugin):
         catkincmd.append("-DCMAKE_BUILD_TYPE={}".format(build_type))
 
         # Finally, add any cmake-args requested from the plugin options
-        catkincmd.extend(self.options.catkin_cmake_args)
+        catkincmd.extend(self._parse_cmake_args())
 
-        # This command must run in bash due to a bug in Catkin that causes it
-        # to explode if there are spaces in the cmake args (which there are).
-        # This has been fixed in Catkin Tools... perhaps we should be using
-        # that instead.
-        self._run_in_bash(catkincmd)
+        self.run(catkincmd)
 
     def snap_fileset(self):
         """Filter useless files out of the snap.

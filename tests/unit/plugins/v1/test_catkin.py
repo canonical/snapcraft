@@ -541,17 +541,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         )
 
     @mock.patch.object(catkin.CatkinPlugin, "run")
-    @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
     def test_build_multiple(
-        self,
-        finish_build_mock,
-        prepare_build_mock,
-        run_output_mock,
-        bashrun_mock,
-        run_mock,
+        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
     ):
         self.properties.catkin_packages.append("package_2")
 
@@ -571,7 +565,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
                 self.test.assertIn("package_2", packages)
                 return True
 
-        bashrun_mock.assert_called_with(check_pkg_arguments(self))
+        run_mock.assert_called_with(check_pkg_arguments(self))
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -579,18 +573,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         )
 
         finish_build_mock.assert_called_once_with()
-
-    @mock.patch.object(catkin.CatkinPlugin, "run")
-    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
-    def test_build_runs_in_bash(self, run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        os.makedirs(os.path.join(plugin.sourcedir, "src"))
-
-        plugin.build()
-
-        run_mock.assert_has_calls(
-            [mock.call(["/bin/bash", mock.ANY], cwd=mock.ANY, env=mock.ANY)]
-        )
 
     def test_use_in_snap_python_rewrites_shebangs(self):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
@@ -1275,17 +1257,11 @@ class BuildTestCase(CatkinPluginBaseTest):
             self.properties.disable_parallel = self.disable_parallel
 
     @mock.patch.object(catkin.CatkinPlugin, "run")
-    @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
     def test_build(
-        self,
-        finish_build_mock,
-        prepare_build_mock,
-        run_output_mock,
-        bashrun_mock,
-        run_mock,
+        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
     ):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
@@ -1338,7 +1314,7 @@ class BuildTestCase(CatkinPluginBaseTest):
                     and args_parallel_build_count
                 )
 
-        bashrun_mock.assert_called_with(check_build_command())
+        run_mock.assert_called_with(check_build_command())
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -1348,17 +1324,11 @@ class BuildTestCase(CatkinPluginBaseTest):
         finish_build_mock.assert_called_once_with()
 
     @mock.patch.object(catkin.CatkinPlugin, "run")
-    @mock.patch.object(catkin.CatkinPlugin, "_run_in_bash")
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
     def test_build_all_packages(
-        self,
-        finish_build_mock,
-        prepare_build_mock,
-        run_output_mock,
-        bashrun_mock,
-        run_mock,
+        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
     ):
         self.properties.catkin_packages = None
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
@@ -1403,7 +1373,7 @@ class BuildTestCase(CatkinPluginBaseTest):
                     in command
                 )
 
-        bashrun_mock.assert_called_with(check_build_command())
+        run_mock.assert_called_with(check_build_command())
 
         self.assertFalse(
             self.dependencies_mock.called,
@@ -1867,4 +1837,61 @@ class CatkinFindTestCase(unit.TestCase):
         positional_args = self.check_output_mock.call_args[0][0]
         self.assertThat(
             " ".join(positional_args), Contains("catkin_find --first-only foo")
+        )
+
+
+class CatkinCmakeArgTests(unit.TestCase):
+    scenarios = [
+        (
+            "no quote",
+            dict(input_string="-DCMAKE_FOO=BAR", expected_string="-DCMAKE_FOO=BAR"),
+        ),
+        (
+            "no quote multiple",
+            dict(
+                input_string="-DCMAKE_C_FLAGS=-Wall -Werror",
+                expected_string="-DCMAKE_C_FLAGS=-Wall -Werror",
+            ),
+        ),
+        (
+            "single quote",
+            dict(input_string="-DCMAKE_FOO='BAR'", expected_string="-DCMAKE_FOO=BAR"),
+        ),
+        (
+            "single quote multiple",
+            dict(
+                input_string="-DCMAKE_C_FLAGS='-Wall -Werror'",
+                expected_string="-DCMAKE_C_FLAGS=-Wall -Werror",
+            ),
+        ),
+        (
+            "double quote",
+            dict(input_string='-DCMAKE_FOO="BAR"', expected_string="-DCMAKE_FOO=BAR"),
+        ),
+        (
+            "double quote multiple",
+            dict(
+                input_string='-DCMAKE_C_FLAGS="-Wall -Werror"',
+                expected_string="-DCMAKE_C_FLAGS=-Wall -Werror",
+            ),
+        ),
+        (
+            "nested double quote",
+            dict(
+                input_string='-DCMAKE_C_FLAGS="-Wall -Werror -DTEXT=\\"Hello Friend\\""',
+                expected_string='-DCMAKE_C_FLAGS=-Wall -Werror -DTEXT="Hello Friend"',
+            ),
+        ),
+        (
+            "nested single quote",
+            dict(
+                input_string="-DCMAKE_C_FLAGS=\"-Wall -Werror -DTEXT='Hello Friend'\"",
+                expected_string="-DCMAKE_C_FLAGS=-Wall -Werror -DTEXT='Hello Friend'",
+            ),
+        ),
+    ]
+
+    def test_arg(self):
+        self.assertThat(
+            catkin._parse_cmake_arg(self.input_string), Equals(self.expected_string)
         )
