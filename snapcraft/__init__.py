@@ -354,7 +354,6 @@ from snapcraft._store import (  # noqa
     register,
     register_key,
     sign_build,
-    status,
     validate,
 )
 from snapcraft import common  # noqa

@@ -274,12 +274,12 @@ def release(
     if progressive == 100:
         progressive = None
 
-    progressive_options = [progressive, experimental_progressive_release]
-    if any(progressive_options) and not all(progressive_options):
+    if progressive is not None and not experimental_progressive_release:
         raise click.UsageError(
             "--progressive requires --experimental-progressive-release."
         )
     elif progressive:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"] = "Y"
         echo.warning("*EXPERIMENTAL* progressive releases in use.")
 
     store_client_cli = StoreClientCLI()
@@ -372,9 +372,8 @@ def promote(snap_name, from_channel, to_channel, yes):
             ),
         )
 
-    store = storeapi.StoreClient()
-    with _requires_login():
-        status_payload = store.get_snap_status(snap_name)
+    store_client_cli = StoreClientCLI()
+    status_payload = store_client_cli.get_snap_status(snap_name)
 
     snap_status = storeapi.status.SnapStatus(
         snap_name=snap_name, payload=status_payload
@@ -394,7 +393,18 @@ def promote(snap_name, from_channel, to_channel, yes):
         )
     ):
         for c in from_channel_set:
-            snapcraft.release(snap_name, str(c.revision), [str(parsed_to_channel)])
+            store_client_cli.release(
+                snap_name=snap_name,
+                revision=str(c.revision),
+                channels=[str(parsed_to_channel)],
+            )
+        snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+        existing_architectures = snap_channel_map.get_existing_architectures()
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map, architectures=existing_architectures
+            )
+        )
     else:
         echo.wrapped("Channel promotion cancelled")
 
@@ -415,23 +425,49 @@ def close(snap_name, channels):
         snapcraft close my-snap beta
         snapcraft close my-snap beta edge
     """
-    snapcraft.close(snap_name, channels)
+    closed_channels = snapcraft.close(snap_name, channels)
+
+    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
+    tracks = [storeapi.channels.Channel(c).track for c in channels]
+    existing_architectures = snap_channel_map.get_existing_architectures()
+    click.echo(
+        get_tabulated_channel_map(
+            snap_channel_map, tracks=tracks, architectures=existing_architectures
+        )
+    )
+
+    if len(closed_channels) == 1:
+        msg = "The {} channel is now closed.".format(closed_channels[0])
+    else:
+        msg = "The {} and {} channels are now closed.".format(
+            ", ".join(closed_channels[:-1]), closed_channels[-1]
+        )
+    echo.info(msg)
 
 
 @storecli.command()
 @click.option(
+    "--experimental-progressive-release",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables 'progressive releases'.",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE",
+)
+@click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch):
+def status(snap_name, arch, experimental_progressive_release):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
     """
-    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
+    if experimental_progressive_release:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"] = "Y"
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
 
+    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
     existing_architectures = snap_channel_map.get_existing_architectures()
     if arch and arch not in existing_architectures:
         echo.warning(f"No revisions for architecture {arch!r}.")
@@ -440,7 +476,9 @@ def status(snap_name, arch):
             architectures = (arch,)
         else:
             architectures = existing_architectures
-        click.echo(get_tabulated_channel_map(snap_channel_map, architectures))
+        click.echo(
+            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+        )
 
 
 @storecli.command("list-revisions")

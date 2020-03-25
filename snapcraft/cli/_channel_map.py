@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from collections import OrderedDict
 from typing import List, Optional, Union, TYPE_CHECKING
 
@@ -66,7 +67,7 @@ def _get_channel_line(
     channel_info = snap_channel_map.get_channel_info(channel_name)
     channel = channel_info.risk
     expiration_date = ""
-    notes = "-"
+    progress = "-"
 
     try:
         mapped_channel = snap_channel_map.get_mapped_channel(channel_name, architecture)
@@ -81,7 +82,7 @@ def _get_channel_line(
         revision = f"{mapped_channel.revision}"
 
         if mapped_channel.progressive.percentage is not None:
-            notes = f"progressive ({mapped_channel.progressive.percentage:.0f}%)"
+            progress = f"=>{mapped_channel.progressive.percentage:.0f}%"
 
     except ValueError:
         # if the branch is not None and we could not find it on the map,
@@ -100,7 +101,10 @@ def _get_channel_line(
         version = hint
         revision = hint
 
-    return [channel, version, revision, notes, expiration_date]
+    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"):
+        return [channel, version, revision, progress, expiration_date]
+    else:
+        return [channel, version, revision, expiration_date]
 
 
 def _has_channels_for_architecture(
@@ -152,17 +156,17 @@ def get_tabulated_channel_map(
                 except ValueError:
                     continue
 
-    # Item 6 is expiration_date
-    have_expiration = any(line[6] != "" for line in channel_lines)
-    expires_at_header = "Expires at" if have_expiration else ""
-    headers = [
-        "Track",
-        "Arch",
-        "Channel",
-        "Version",
-        "Revision",
-        "Notes",
-        expires_at_header,
-    ]
+    headers = ["Track", "Arch", "Channel", "Version", "Revision"]
+    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"):
+        headers.append("Progress")
+        # Item 6 is expiration_date when progressive releases are enabled.
+        expires_column = 6
+    else:
+        expires_column = 5
+
+    if any(line[expires_column] != "" for line in channel_lines):
+        headers.append("Expires at")
+    else:
+        headers.append("")
 
     return tabulate(channel_lines, numalign="left", headers=headers, tablefmt="plain")

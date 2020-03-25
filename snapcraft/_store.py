@@ -720,8 +720,6 @@ def push(snap_filename, release_channels=None):
         )
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
-    if release_channels:
-        status(snap_name, deb_arch)
 
     snap_cache.cache(snap_filename=snap_filename)
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
@@ -803,120 +801,6 @@ def _push_delta(
     return result
 
 
-def _get_text_for_channel(channel):
-    if "progressive" in channel:
-        notes = "progressive ({}%)".format(channel["progressive"]["percentage"])
-    else:
-        notes = "-"
-
-    if channel["info"] == "none":
-        channel_text = (channel["channel"], "-", "-", notes, "")
-    elif channel["info"] == "tracking":
-        channel_text = (channel["channel"], "^", "^", notes, "")
-    elif channel["info"] == "specific":
-        channel_text = (
-            channel["channel"],
-            channel["version"],
-            channel["revision"],
-            notes,
-            "",
-        )
-    elif channel["info"] == "branch":
-        channel_text = (
-            channel["channel"],
-            channel["version"],
-            channel["revision"],
-            notes,
-            channel["expires_at"],
-        )
-    else:
-        logger.error(
-            "Unexpected channel info: %r in channel %s",
-            channel["info"],
-            channel["channel"],
-        )
-        channel_text = (channel["channel"], "", "", "", "")
-
-    return channel_text
-
-
-def _add_progressive_release_information(
-    channel_map_tree,
-    *,
-    progressive_key: str,
-    progressive_percentage: int,
-    release_channels: List[str],
-) -> None:
-    """
-    Modify channel map tree so that it has progressive release information.
-
-    This method is in place to support the UI as the channel_map_tree
-    returned by the release API does not contain this information.
-    """
-    for channel in [storeapi.channels.Channel(c) for c in release_channels]:
-        for arch_entry in channel_map_tree[channel.track][DEFAULT_SERIES].values():
-            for channel_entry in arch_entry:
-                if "progressive" in channel_entry:
-                    continue
-                channel_string = (
-                    "{}/{}".format(channel.risk, channel.branch)
-                    if channel.branch
-                    else channel.risk
-                )
-                if channel_entry["channel"] != channel_string:
-                    continue
-                channel_entry["progressive"] = {
-                    "percentage": progressive_percentage,
-                    "key": progressive_key,
-                    "paused": False,
-                }
-
-
-def _tabulated_channel_map_tree(channel_map_tree):
-
-    """Tabulate channel map (LTS Channel channel-maps)"""
-
-    def _format_tree(channel_maps, track):
-        arches = []
-
-        for arch, channel_map in sorted(channel_maps.items()):
-            arches += [
-                (printable_arch,) + _get_text_for_channel(channel)
-                for (printable_arch, channel) in zip(
-                    [arch] + [""] * len(channel_map), channel_map
-                )
-            ]
-
-        return [
-            (printable_arch,) + printable_track
-            for (printable_arch, printable_track) in zip(
-                [track] + [""] * len(arches), arches
-            )
-        ]
-
-    data = []
-    for track, track_data in sorted(channel_map_tree.items()):
-        channel_maps = {}
-        for series, series_data in track_data.items():
-            for arch, channel_map in series_data.items():
-                channel_maps[arch] = channel_map
-        parsed_channels = [channel for channel in _format_tree(channel_maps, track)]
-        data += parsed_channels
-
-    have_expiration = any(x[6] for x in data)
-    expires_at_header = "Expires at" if have_expiration else ""
-    headers = [
-        "Track",
-        "Arch",
-        "Channel",
-        "Version",
-        "Revision",
-        "Notes",
-        expires_at_header,
-    ]
-    return tabulate(data, numalign="left", headers=headers, tablefmt="plain")
-
-
 def close(snap_name, channel_names):
     """Close one or more channels for the specific snap."""
     store_client = StoreClientCLI()
@@ -929,21 +813,11 @@ def close(snap_name, channel_names):
             snap_name, DEFAULT_SERIES
         ) from e
 
-    closed_channels, c_m_tree = store_client.close_channels(
+    closed_channels, _ = store_client.close_channels(
         snap_id=snap_id, channel_names=channel_names
     )
 
-    tabulated_status = _tabulated_channel_map_tree(c_m_tree)
-    print(tabulated_status)
-
-    print()
-    if len(closed_channels) == 1:
-        msg = "The {} channel is now closed.".format(closed_channels[0])
-    else:
-        msg = "The {} and {} channels are now closed.".format(
-            ", ".join(closed_channels[:-1]), closed_channels[-1]
-        )
-    logger.info(msg)
+    return closed_channels
 
 
 def download(
@@ -976,15 +850,6 @@ def download(
         arch=arch,
         except_hash=except_hash,
     )
-
-
-def status(snap_name, arch):
-    status = StoreClientCLI().get_snap_status(snap_name, arch)
-
-    channel_map_tree = status.get("channel_map_tree", {})
-    # This does not look good in green so we print instead
-    tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
-    print(tabulated_status)
 
 
 def _get_text_for_current_channels(channels, current_channels):
