@@ -73,17 +73,11 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
         self.addCleanup(patcher.stop)
 
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_prepare_build")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_finish_build")
     def test_build_multiple(
-        self,
-        finish_build_mock,
-        prepare_build_mock,
-        run_output_mock,
-        bashrun_mock,
-        run_mock,
+        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
     ):
         self.properties.catkin_packages.append("package_2")
 
@@ -105,36 +99,16 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
                 self.test.assertIn("package_2", packages)
                 return True
 
-        bashrun_mock.assert_called_with(check_pkg_arguments(self))
+        run_mock.assert_called_with(check_pkg_arguments(self))
 
         finish_build_mock.assert_called_once_with()
 
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
-    def test_build_runs_in_bash(self, run_output_mock, run_mock):
-        plugin = catkin_tools.CatkinToolsPlugin(
-            "test-part", self.properties, self.project
-        )
-        os.makedirs(os.path.join(plugin.sourcedir, "src"))
-
-        plugin.build()
-
-        run_mock.assert_has_calls(
-            [mock.call(["/bin/bash", mock.ANY], cwd=mock.ANY, env=mock.ANY)]
-        )
-
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_prepare_build")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_finish_build")
     def test_build(
-        self,
-        finish_build_mock,
-        prepare_build_mock,
-        run_output_mock,
-        bashrun_mock,
-        run_mock,
+        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
     ):
         plugin = catkin_tools.CatkinToolsPlugin(
             "test-part", self.properties, self.project
@@ -154,7 +128,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
                     and "my_package" in command
                 )
 
-        bashrun_mock.assert_called_with(check_build_command())
+        run_mock.assert_called_with(check_build_command())
 
         finish_build_mock.assert_called_once_with()
 
@@ -186,9 +160,9 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.catkin_cmake_args = self.catkin_cmake_args
 
-    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_run_in_bash")
+    @mock.patch.object(catkin_tools.CatkinToolsPlugin, "run")
     @mock.patch.object(catkin_tools.CatkinToolsPlugin, "_use_in_snap_python")
-    def test_prepare_build(self, use_python_mock, bashrun_mock):
+    def test_prepare_build(self, use_python_mock, run_mock):
         plugin = catkin_tools.CatkinToolsPlugin(
             "test-part", self.properties, self.project
         )
@@ -201,19 +175,19 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTest):
 
         self.assertTrue(use_python_mock.called)
 
-        confArgs = bashrun_mock.mock_calls[0][1][0]
+        confArgs = run_mock.mock_calls[0][1][0]
         command = " ".join(confArgs)
         self.assertThat(command, Contains("catkin init"))
 
-        confArgs = bashrun_mock.mock_calls[1][1][0]
+        confArgs = run_mock.mock_calls[1][1][0]
         command = " ".join(confArgs)
         self.assertThat(command, Contains("catkin clean -y"))
 
-        confArgs = bashrun_mock.mock_calls[2][1][0]
+        confArgs = run_mock.mock_calls[2][1][0]
         command = " ".join(confArgs)
         self.assertThat(command, Contains("catkin profile add -f default"))
 
-        confArgs = bashrun_mock.mock_calls[3][1][0]
+        confArgs = run_mock.mock_calls[3][1][0]
         self.assertThat(confArgs[0], Equals("catkin"))
         self.assertThat(confArgs[1], Equals("config"))
 
