@@ -37,7 +37,6 @@ version = "devel"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
-package_data = {}
 license = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -76,7 +75,6 @@ setup(
     author_email=author_email,
     url=url,
     packages=find_namespace_packages(),
-    package_data=package_data,
     license=license,
     classifiers=classifiers,
     scripts=scripts,
