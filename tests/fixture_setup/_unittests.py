@@ -30,6 +30,7 @@ import fixtures
 
 import snapcraft
 from snapcraft.internal import elf
+from snapcraft.internal.repo import _deb
 from tests.file_utils import get_snapcraft_path
 
 
@@ -529,12 +530,7 @@ class FakeAptCache(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         # Add all the packages in the manifest.
-        with open(
-            os.path.join(
-                get_snapcraft_path(), "snapcraft", "internal", "repo", "manifest.txt"
-            )
-        ) as manifest_file:
-            self.add_packages([line.strip() for line in manifest_file])
+        self.add_packages(_deb._DEFAULT_FILTERED_STAGE_PACKAGES)
 
     def add_package(self, package):
         package.temp_dir = self.path
