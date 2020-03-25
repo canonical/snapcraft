@@ -16,6 +16,7 @@
 
 import apt
 import os
+import textwrap
 from subprocess import CalledProcessError
 from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
 
@@ -273,87 +274,74 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
         )
 
-    @patch("snapcraft.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_is_none_uses_default(self, mock_cc):
-        mock_cc.return_value = "ar"
-
+    def test_sources_amd64_vivid(self):
         self.maxDiff = None
-        sources_list = repo._deb._format_sources_list(
-            "", use_geoip=True, deb_arch="amd64"
+        sources_list = textwrap.dedent(
+            """
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+            """
         )
 
-        expected_sources_list = """deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial universe
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates universe
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates multiverse
-deb http://security.ubuntu.com/ubuntu xenial-security main restricted
-deb http://security.ubuntu.com/ubuntu xenial-security universe
-deb http://security.ubuntu.com/ubuntu xenial-security multiverse
-"""
-        self.assertThat(sources_list, Equals(expected_sources_list))
-
-    def test_no_geoip_uses_default_archive(self):
         sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES, deb_arch="amd64", use_geoip=False
+            sources_list, release="vivid", deb_arch="amd64"
         )
 
-        expected_sources_list = """deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted
-deb http://archive.ubuntu.com/ubuntu/ xenial universe
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe
-deb http://archive.ubuntu.com/ubuntu/ xenial multiverse
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates multiverse
-deb http://security.ubuntu.com/ubuntu xenial-security main restricted
-deb http://security.ubuntu.com/ubuntu xenial-security universe
-deb http://security.ubuntu.com/ubuntu xenial-security multiverse
-"""
-
+        expected_sources_list = textwrap.dedent(
+            """
+            deb http://archive.ubuntu.com/ubuntu/ vivid main restricted
+            deb http://archive.ubuntu.com/ubuntu/ vivid-updates main restricted
+            deb http://archive.ubuntu.com/ubuntu/ vivid universe
+            deb http://archive.ubuntu.com/ubuntu/ vivid-updates universe
+            deb http://archive.ubuntu.com/ubuntu/ vivid multiverse
+            deb http://archive.ubuntu.com/ubuntu/ vivid-updates multiverse
+            deb http://security.ubuntu.com/ubuntu vivid-security main restricted
+            deb http://security.ubuntu.com/ubuntu vivid-security universe
+            deb http://security.ubuntu.com/ubuntu vivid-security multiverse
+            """
+        )
         self.assertThat(sources_list, Equals(expected_sources_list))
 
-    @patch("snapcraft.internal.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_amd64_vivid(self, mock_cc):
-        self.maxDiff = None
-        mock_cc.return_value = "ar"
-
-        sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES,
-            deb_arch="amd64",
-            use_geoip=True,
-            release="vivid",
+    def test_sources_armhf_trusty(self):
+        sources_list = textwrap.dedent(
+            """
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
+            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+        """
         )
 
-        expected_sources_list = """deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid universe
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates universe
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates multiverse
-deb http://security.ubuntu.com/ubuntu vivid-security main restricted
-deb http://security.ubuntu.com/ubuntu vivid-security universe
-deb http://security.ubuntu.com/ubuntu vivid-security multiverse
-"""
-        self.assertThat(sources_list, Equals(expected_sources_list))
-
-    @patch("snapcraft.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_armhf_trusty(self, mock_cc):
         sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES, deb_arch="armhf", release="trusty"
+            sources_list, deb_arch="armhf", release="trusty"
         )
 
-        expected_sources_list = """deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
-"""
+        expected_sources_list = textwrap.dedent(
+            """
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
+            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
+            deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
+            deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
+            deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
+            """
+        )
         self.assertThat(sources_list, Equals(expected_sources_list))
-        self.assertFalse(mock_cc.called)
 
 
 class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
