@@ -122,6 +122,64 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             progressive_percentage=None,
         )
 
+    def test_progressive_release(self):
+        self.fake_store_release.mock.return_value = {
+            "opened_channels": ["2.1/beta"],
+            "channel_map_tree": {
+                "2.1": {
+                    "16": {
+                        "amd64": [
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "revision": 19,
+                                "channel": "beta",
+                                "version": "0",
+                                "info": "specific",
+                            },
+                            {"channel": "edge", "info": "tracking"},
+                        ]
+                    }
+                }
+            },
+        }
+
+        result = self.run_command(
+            [
+                "release",
+                "nil-snap",
+                "19",
+                "2.1/beta",
+                "--progressive-key",
+                "progressive-key",
+                "--progressive-percentage",
+                "10",
+            ]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision    Notes
+            2.1      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       0          19          progressive (10%)
+                             edge       ^          ^           -
+            \x1b[0;32mThe '2.1/beta' channel is now open.\x1b[0m"""
+                )
+            ),
+        )
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap",
+            revision="19",
+            channels=["2.1/beta"],
+            progressive_key="progressive-key",
+            progressive_percentage=10,
+        )
+
     def test_release_snap_with_branch(self):
         self.fake_store_release.mock.return_value = {
             "opened_channels": ["stable/hotfix1"],
@@ -175,6 +233,72 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             channels=["stable/hotfix1"],
             progressive_key=None,
             progressive_percentage=None,
+        )
+
+    def test_progressive_release_snap_with_branch(self):
+        self.fake_store_release.mock.return_value = {
+            "opened_channels": ["stable/hotfix1"],
+            "channel_map_tree": {
+                "latest": {
+                    "16": {
+                        "amd64": [
+                            {"channel": "stable", "info": "none"},
+                            {"channel": "candidate", "info": "none"},
+                            {
+                                "revision": 19,
+                                "channel": "beta",
+                                "version": "0",
+                                "info": "specific",
+                            },
+                            {"channel": "edge", "info": "tracking"},
+                            {
+                                "channel": "stable/hotfix1",
+                                "info": "branch",
+                                "revision": 20,
+                                "version": "1",
+                                "expires_at": "2017-05-21T18:52:14.578435",
+                            },
+                        ]
+                    }
+                }
+            },
+        }
+
+        result = self.run_command(
+            [
+                "release",
+                "nil-snap",
+                "20",
+                "stable/hotfix1",
+                "--progressive-key",
+                "progressive-key",
+                "--progressive-percentage",
+                "10",
+            ]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Contains(
+                dedent(
+                    """\
+            Track    Arch    Channel         Version    Revision    Notes              Expires at
+            latest   amd64   stable          -          -           -
+                             candidate       -          -           -
+                             beta            0          19          -
+                             edge            ^          ^           -
+                             stable/hotfix1  1          20          progressive (10%)  2017-05-21T18:52:14.578435
+            \x1b[0;32mThe 'stable/hotfix1' channel is now open.\x1b[0m"""
+                )
+            ),
+        )
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap",
+            revision="20",
+            channels=["stable/hotfix1"],
+            progressive_key="progressive-key",
+            progressive_percentage=10,
         )
 
     def test_release_snap_opens_more_than_one_channel(self):
@@ -309,4 +433,22 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
+        )
+
+
+class ReleaseCommandProgressiveUsageTest(FakeStoreCommandsBaseTestCase):
+    scenarios = (
+        ("key and no percentage", dict(args=["--progressive-key", "pk"])),
+        ("percentage and no key", dict(args=["--progressive-percentage", "10"])),
+    )
+
+    def test_progressive_release_usage(self):
+        result = self.run_command(["release", "nil-snap", "19", "beta"] + self.args)
+
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(
+            result.output,
+            Contains(
+                "Error: --progressive-percentage and --progressive-key must be used together."
+            ),
         )

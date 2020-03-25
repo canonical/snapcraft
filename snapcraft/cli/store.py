@@ -21,7 +21,7 @@ import operator
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from tabulate import tabulate
@@ -220,7 +220,26 @@ def push_metadata(snap_file, force):
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("revision", metavar="<revision>")
 @click.argument("channels", metavar="<channels>")
-def release(snap_name, revision, channels) -> None:
+@click.option(
+    "--progressive",
+    type=click.IntRange(0, 100),
+    default=100,
+    metavar="<percentage>",
+    help="set a release progression to a certain percentage.",
+)
+@click.option(
+    "--experimental-progressive-release",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables 'progressive releases'.",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE",
+)
+def release(
+    snap_name,
+    revision,
+    channels,
+    progressive: Optional[int],
+    experimental_progressive_release: bool,
+) -> None:
     """Release <snap-name> on <revision> to the selected store <channels>.
     <channels> is a comma separated list of valid channels on the
     store.
@@ -251,7 +270,41 @@ def release(snap_name, revision, channels) -> None:
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    snapcraft.release(snap_name, revision, channels.split(","))
+    # If progressive is set to 100, treat it as None.
+    if progressive == 100:
+        progressive = None
+
+    progressive_options = [progressive, experimental_progressive_release]
+    if any(progressive_options) and not all(progressive_options):
+        raise click.UsageError(
+            "--progressive requires --experimental-progressive-release."
+        )
+    elif progressive:
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
+
+    store_client_cli = StoreClientCLI()
+    release_data = store_client_cli.release(
+        snap_name=snap_name,
+        revision=revision,
+        channels=channels.split(","),
+        progressive_percentage=progressive,
+    )
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+    architectures_for_revision = snap_channel_map.get_revision(
+        int(revision)
+    ).architectures
+    click.echo(get_tabulated_channel_map(snap_channel_map, architectures_for_revision))
+
+    opened_channels = release_data.get("opened_channels", [])
+    if len(opened_channels) == 1:
+        echo.info(f"The {opened_channels[0]!r} channel is now open.")
+    elif len(opened_channels) > 1:
+        channels = ("{!r}".format(channel) for channel in opened_channels[:-1])
+        echo.info(
+            "The {} and {!r} channels are now open.".format(
+                ", ".join(channels), opened_channels[-1]
+            )
+        )
 
 
 @storecli.command()

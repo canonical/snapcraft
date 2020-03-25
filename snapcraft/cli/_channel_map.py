@@ -33,8 +33,11 @@ def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
     return tick
 
 
-def _get_channel_order(snap_channels) -> OrderedDict:
+def _get_channel_order(snap_channels, track: Optional[str] = None) -> OrderedDict:
     channel_order: OrderedDict = OrderedDict()
+
+    if track is not None:
+        snap_channels = [s for s in snap_channels if s.track == track]
 
     for snap_channel in snap_channels:
         if snap_channel.track not in channel_order:
@@ -110,8 +113,8 @@ def _has_channels_for_architecture(
     return False
 
 
-def get_tabulated_channel_map(snap_channel_map, architectures):
-    channel_order = _get_channel_order(snap_channel_map.snap.channels)
+def get_tabulated_channel_map(snap_channel_map, track, architectures):
+    channel_order = _get_channel_order(snap_channel_map.snap.channels, track)
 
     channel_lines = list()
     for track_name in channel_order:
@@ -138,7 +141,9 @@ def get_tabulated_channel_map(snap_channel_map, architectures):
                 try:
                     channel_lines.append(
                         [track_string, architecture_string]
-                        + _get_channel_line(snap_channel_map, channel_name, architecture)
+                        + _get_channel_line(
+                            snap_channel_map, channel_name, architecture
+                        )
                     )
                 except ValueError:
                     continue

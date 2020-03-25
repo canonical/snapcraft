@@ -357,14 +357,12 @@ class StoreClientCLI(storeapi.StoreClient):
         snap_name: str,
         revision: str,
         channels: List[str],
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ) -> Dict[str, Any]:
         return super().release(
             snap_name=snap_name,
             revision=revision,
             channels=channels,
-            progressive_key=progressive_key,
             progressive_percentage=progressive_percentage,
         )
 
@@ -805,16 +803,6 @@ def _push_delta(
     return result
 
 
-def _get_text_for_opened_channels(opened_channels):
-    if len(opened_channels) == 1:
-        return "The {!r} channel is now open.".format(opened_channels[0])
-    else:
-        channels = ("{!r}".format(channel) for channel in opened_channels[:-1])
-        return "The {} and {!r} channels are now open.".format(
-            ", ".join(channels), opened_channels[-1]
-        )
-
-
 def _get_text_for_channel(channel):
     if "progressive" in channel:
         notes = "progressive ({}%)".format(channel["progressive"]["percentage"])
@@ -882,39 +870,6 @@ def _add_progressive_release_information(
                     "key": progressive_key,
                     "paused": False,
                 }
-
-
-def release(
-    snap_name,
-    revision,
-    release_channels,
-    *,
-    progressive_key: Optional[str] = None,
-    progressive_percentage: Optional[int] = None,
-):
-    channels = StoreClientCLI().release(
-        snap_name=snap_name,
-        revision=revision,
-        channels=release_channels,
-        progressive_key=progressive_key,
-        progressive_percentage=progressive_percentage,
-    )
-    channel_map_tree = channels.get("channel_map_tree", {})
-
-    if progressive_key is not None and progressive_percentage is not None:
-        _add_progressive_release_information(
-            channel_map_tree,
-            progressive_key=progressive_key,
-            progressive_percentage=progressive_percentage,
-            release_channels=release_channels,
-        )
-
-    # This does not look good in green so we print instead
-    tabulated_channels = _tabulated_channel_map_tree(channel_map_tree)
-    print(tabulated_channels)
-
-    if "opened_channels" in channels:
-        logger.info(_get_text_for_opened_channels(channels["opened_channels"]))
 
 
 def _tabulated_channel_map_tree(channel_map_tree):
