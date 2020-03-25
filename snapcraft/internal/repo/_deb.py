@@ -604,7 +604,7 @@ class Ubuntu(BaseRepo):
             if package.is_auto_removable:
                 package.mark_keep()
 
-    def _is_filtered_package(self, package_name: str):
+    def _is_filtered_package(self, package_name: str) -> bool:
         # Filter out packages provided by the core snap.
         # TODO: use manifest found in core snap, if found at:
         # <core-snap>/usr/share/snappy/dpkg.list
