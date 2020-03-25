@@ -338,9 +338,9 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CFLAGS="$CFLAGS -I{stage_dir}/include -I{stage_dir}/usr/include '
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CFLAGS="$CFLAGS -isystem{stage_dir}/include -isystem{stage_dir}/usr/include '
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -348,10 +348,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CPPFLAGS="$CPPFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CPPFLAGS="$CPPFLAGS -isystem{stage_dir}/include '
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -359,10 +359,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
             "Current environment is {!r}".format(environment),
         )
         self.assertTrue(
-            'CXXFLAGS="$CXXFLAGS -I{stage_dir}/include '
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            '-I{stage_dir}/usr/include/{arch_triplet}"'.format(
+            'CXXFLAGS="$CXXFLAGS -isystem{stage_dir}/include '
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            '-isystem{stage_dir}/usr/include/{arch_triplet}"'.format(
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
             )
@@ -449,10 +449,10 @@ class EnvironmentTest(ProjectLoaderBaseTest):
 
         expected_cflags = (
             "-I/user-provided "
-            "-I{parts_dir}/part2/install/include -I{stage_dir}/include "
-            "-I{stage_dir}/usr/include "
-            "-I{stage_dir}/include/{arch_triplet} "
-            "-I{stage_dir}/usr/include/{arch_triplet}".format(
+            "-isystem{parts_dir}/part2/install/include -isystem{stage_dir}/include "
+            "-isystem{stage_dir}/usr/include "
+            "-isystem{stage_dir}/include/{arch_triplet} "
+            "-isystem{stage_dir}/usr/include/{arch_triplet}".format(
                 parts_dir=self.parts_dir,
                 stage_dir=self.stage_dir,
                 arch_triplet=project_config.project.arch_triplet,
@@ -500,6 +500,30 @@ class EnvironmentTest(ProjectLoaderBaseTest):
         ][0]
         env = project_config.parts.build_env_for_part(part1)
         self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="42"'))
+
+    @mock.patch("os.sched_getaffinity", side_effect=AttributeError)
+    @mock.patch("multiprocessing.cpu_count", return_value=42)
+    def test_parts_build_env_contains_parallel_build_count_no_getaffinity(
+        self, affinity_mock, cpu_mock
+    ):
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        part1 = [
+            part for part in project_config.parts.all_parts if part.name == "part1"
+        ][0]
+        env = project_config.parts.build_env_for_part(part1)
+        self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="42"'))
+
+    @mock.patch("os.sched_getaffinity", side_effect=AttributeError)
+    @mock.patch("multiprocessing.cpu_count", side_effect=NotImplementedError)
+    def test_parts_build_env_contains_parallel_build_count_no_cpucount(
+        self, affinity_mock, cpu_mock
+    ):
+        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
+        part1 = [
+            part for part in project_config.parts.all_parts if part.name == "part1"
+        ][0]
+        env = project_config.parts.build_env_for_part(part1)
+        self.assertThat(env, Contains('SNAPCRAFT_PARALLEL_BUILD_COUNT="1"'))
 
     def test_extension_dir(self):
         common.set_extensionsdir("/foo")

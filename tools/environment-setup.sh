@@ -37,8 +37,6 @@ lxc exec snapcraft-dev -- apt install --yes \
     libapt-pkg-dev \
     libffi-dev \
     libsodium-dev \
-    libxml2-dev \
-    libxslt-dev \
     libyaml-dev \
     make \
     patchelf \

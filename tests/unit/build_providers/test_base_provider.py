@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,8 +23,7 @@ from unittest.mock import call, patch, Mock
 from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import errors, _base_provider
-from tests import unit
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -93,7 +92,25 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.launch_mock.assert_any_call()
         provider.start_mock.assert_any_call()
         provider.save_info_mock.assert_called_once_with({"base": "core16"})
-        provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
+
+        self.assertThat(provider.run_mock.call_count, Equals(7))
+        provider.run_mock.assert_has_calls(
+            [
+                call(["snapcraft", "refresh"]),
+                call(["mv", "/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                call(["chown", "root:root", "/root/.bashrc"]),
+                call(["chmod", "0600", "/root/.bashrc"]),
+                call(
+                    [
+                        "mv",
+                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/bin/_snapcraft_prompt",
+                    ]
+                ),
+                call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
+                call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+            ]
+        )
 
         self.assertThat(provider.provider_project_dir, DirExists())
 
@@ -110,7 +127,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
         # False.
-        provider.build_provider_flags = dict(bind_ssh=False)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=False)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
@@ -124,7 +141,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
 
         # True.
-        provider.build_provider_flags = dict(bind_ssh=True)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=True)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [
@@ -196,6 +213,57 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider._ensure_base()
         provider.clean_project_mock.assert_not_called()
 
+    def test_setup_environment_content(self):
+        @contextlib.contextmanager
+        def get_tempfile():
+            try:
+                with open(
+                    get_tempfile.temp_files[get_tempfile.index], "wb"
+                ) as fake_temp_file:
+                    yield fake_temp_file
+            finally:
+                get_tempfile.index += 1
+
+        get_tempfile.temp_files = ["bashrc", "prompt"]
+        get_tempfile.index = 0
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+
+        provider._setup_environment(tempfile_func=get_tempfile)
+
+        self.expectThat(
+            "bashrc",
+            FileContains(
+                dedent(
+                    """\
+            #!/bin/bash
+            export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
+        """
+                )
+            ),
+        )
+        self.expectThat(
+            "prompt",
+            FileContains(
+                dedent(
+                    """\
+            #!/bin/bash
+            if [[ "$PWD" =~ ^$HOME.* ]]; then
+                path="${PWD/#$HOME/\\ ..}"
+                if [[ "$path" == " .." ]]; then
+                    ps1=""
+                else
+                    ps1="$path"
+                fi
+            else
+                ps1="$PWD"
+            fi
+            echo -n $ps1
+        """
+                )
+            ),
+        )
+
     def test_start_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
@@ -231,7 +299,18 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         results = provider._get_env_command()
 
-        self.assertThat(results, Equals(["env", "SNAPCRAFT_HAS_TTY=False"]))
+        self.assertThat(
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                ]
+            ),
+        )
 
     def test_passthrough_environment_flags_non_string(self):
         # Set http_proxy to a bool even though it doesn't make sense...
@@ -242,7 +321,17 @@ class BaseProviderTest(BaseProviderBaseTest):
         results = provider._get_env_command()
 
         self.assertThat(
-            results, Equals(["env", "SNAPCRAFT_HAS_TTY=False", "http_proxy=True"])
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "http_proxy=True",
+                ]
+            ),
         )
 
     def test_passthrough_environment_flags_all(self):
@@ -258,6 +347,9 @@ class BaseProviderTest(BaseProviderBaseTest):
             Equals(
                 [
                     "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=http://127.0.0.1:8080",
                     "https_proxy=http://127.0.0.1:8080",
@@ -424,68 +516,3 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
-
-
-class GetCloudUserDataTest(BaseProviderBaseTest):
-    def test_get(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        os.makedirs(provider.provider_project_dir)
-
-        cloud_data_filepath = provider._get_cloud_user_data(
-            timezone="America/Argentina/Cordoba"
-        )
-        self.assertThat(
-            cloud_data_filepath,
-            FileContains(
-                dedent(
-                    """\
-            #cloud-config
-            manage_etc_hosts: true
-            package_update: false
-            growpart:
-                mode: growpart
-                devices: ["/"]
-                ignore_growroot_disabled: false
-            runcmd:
-            - ["ln", "-s", "../usr/share/zoneinfo/America/Argentina/Cordoba", "/etc/localtime"]
-            write_files:
-                - path: /root/.bashrc
-                  permissions: 0644
-                  content: |
-                    export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
-                    export PS1="\h \$(/bin/_snapcraft_prompt)# "
-                    export PATH=/snap/bin:$PATH
-                - path: /bin/_snapcraft_prompt
-                  permissions: 0755
-                  content: |
-                    #!/bin/bash
-                    if [[ "$PWD" =~ ^$HOME.* ]]; then
-                        path="${PWD/#$HOME/\ ..}"
-                        if [[ "$path" == " .." ]]; then
-                            ps1=""
-                        else
-                            ps1="$path"
-                        fi
-                    else
-                        ps1="$PWD"
-                    fi
-                    echo -n $ps1
-        """  # noqa: W605
-                )
-            ),
-        )
-
-
-class GetTzDataTest(unit.TestCase):
-    def test_path_found(self):
-        with open("timezone", "w") as timezone_file:
-            print("America/Argentina/Cordoba", file=timezone_file)
-
-        self.assertThat(
-            _base_provider._get_tzdata("timezone"), Equals("America/Argentina/Cordoba")
-        )
-
-    def test_path_not_found(self):
-        self.assertThat(
-            _base_provider._get_tzdata("timezone-not-found"), Equals("Etc/UTC")
-        )

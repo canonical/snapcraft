@@ -32,27 +32,6 @@ from snapcraft.internal.meta.system_user import SystemUser
 logger = logging.getLogger(__name__)
 
 
-_MANDATORY_PACKAGE_KEYS = ["name", "version", "summary", "description"]
-_OPTIONAL_PACKAGE_KEYS = [
-    "apps",
-    "architectures",
-    "assumes",
-    "base",
-    "confinement",
-    "environment",
-    "epoch",
-    "grade",
-    "hooks",
-    "layout",
-    "license",
-    "plugs",
-    "slots",
-    "system-usernames",
-    "title",
-    "type",
-]
-
-
 class Snap:
     """Representation of snap meta object, writes snap.yaml."""
 
@@ -206,12 +185,18 @@ class Snap:
     def _validate_required_keys(self) -> None:
         """Verify that all mandatory keys have been satisfied."""
         missing_keys: List[str] = []
-        for key in _MANDATORY_PACKAGE_KEYS:
-            if key == "version" and self.adopt_info:
-                continue
 
-            if not self.__dict__[key]:
-                missing_keys.append(key)
+        if not self.name:
+            missing_keys.append("name")
+
+        if not self.version and not self.adopt_info:
+            missing_keys.append("version")
+
+        if not self.summary:
+            missing_keys.append("summary")
+
+        if not self.description:
+            missing_keys.append("description")
 
         if missing_keys:
             raise errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
@@ -367,68 +352,104 @@ class Snap:
         # Ensure command-chain is in assumes, if required.
         self._ensure_command_chain_assumption()
 
-        for key in _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS:
-            if key != "system-usernames" and self.__dict__[key] is None:
-                continue
+        if self.name is not None:
+            snap_dict["name"] = self.name
 
-            # Skip fields that are empty lists/dicts.
-            if (
-                key
-                in [
-                    "apps",
-                    "architectures",
-                    "assumes",
-                    "environment",
-                    "hooks",
-                    "layout",
-                    "plugs",
-                    "slots",
-                ]
-                and not self.__dict__[key]
-            ):
-                continue
+        if self.version is not None:
+            snap_dict["version"] = self.version
 
-            # Sort where possible for consistency.
-            if key == "apps":
-                snap_dict[key] = dict()
-                for name, app in sorted(self.apps.items()):
-                    snap_dict[key][name] = app.to_dict()
-            elif key == "assumes":
-                snap_dict[key] = sorted(set(self.assumes))
-            elif key == "hooks":
-                snap_dict[key] = dict()
-                for name, hook in sorted(self.hooks.items()):
-                    snap_dict[key][name] = hook.to_dict()
-            elif key == "plugs":
-                snap_dict[key] = dict()
-                for name, plug in sorted(self.plugs.items()):
-                    snap_dict[key][name] = plug.to_yaml_object()
-            elif key == "slots":
-                snap_dict[key] = dict()
-                for name, slot in sorted(self.slots.items()):
-                    snap_dict[key][name] = slot.to_yaml_object()
-            elif key == "system-usernames":
-                if not self.system_usernames:
-                    continue
-                snap_dict["system-usernames"] = OrderedDict()
-                for name in sorted(self.system_usernames.keys()):
-                    user = self.system_usernames[name]
-                    snap_dict["system-usernames"][name] = deepcopy(user.to_dict())
-            else:
-                snap_dict[key] = deepcopy(self.__dict__[key])
+        if self.summary is not None:
+            snap_dict["summary"] = self.summary
 
-        # Apply passthrough keys.
-        snap_dict.update(deepcopy(self.passthrough))
+        if self.description is not None:
+            snap_dict["description"] = self.description
+
+        if self.adopt_info is not None:
+            snap_dict["adopt-info"] = self.adopt_info
+
+        if self.apps:
+            snap_dict["apps"] = OrderedDict()
+            for name, app in sorted(self.apps.items()):
+                snap_dict["apps"][name] = deepcopy(app.to_dict())
+
+        if self.architectures:
+            snap_dict["architectures"] = deepcopy(self.architectures)
+
+        if self.assumes:
+            snap_dict["assumes"] = sorted(set(deepcopy(self.assumes)))
+
+        if self.base is not None:
+            snap_dict["base"] = self.base
+
+        if self.confinement is not None:
+            snap_dict["confinement"] = self.confinement
+
+        if self.environment:
+            snap_dict["environment"] = self.environment
+
+        if self.epoch is not None:
+            snap_dict["epoch"] = self.epoch
+
+        if self.grade is not None:
+            snap_dict["grade"] = self.grade
+
+        if self.hooks:
+            snap_dict["hooks"] = OrderedDict()
+            for name, hook in sorted(self.hooks.items()):
+                snap_dict["hooks"][name] = deepcopy(hook.to_dict())
+
+        if self.layout:
+            snap_dict["layout"] = deepcopy(self.layout)
+
+        if self.license is not None:
+            snap_dict["license"] = self.license
+
+        if self.passthrough:
+            snap_dict["passthrough"] = deepcopy(self.passthrough)
+
+        if self.plugs:
+            snap_dict["plugs"] = OrderedDict()
+            for name, plug in sorted(self.plugs.items()):
+                snap_dict["plugs"][name] = deepcopy(plug.to_yaml_object())
+
+        if self.slots:
+            snap_dict["slots"] = OrderedDict()
+            for name, slot in sorted(self.slots.items()):
+                snap_dict["slots"][name] = deepcopy(slot.to_yaml_object())
+
+        if self.system_usernames:
+            snap_dict["system-usernames"] = OrderedDict()
+            for name, user in sorted(self.system_usernames.items()):
+                snap_dict["system-usernames"][name] = deepcopy(user.to_dict())
+
+        if self.title is not None:
+            snap_dict["title"] = self.title
+
+        if self.type is not None:
+            snap_dict["type"] = self.type
+
         return snap_dict
 
-    def write_snap_yaml(self, path: str) -> None:
-        """Write snap.yaml contents to specified path."""
+    def to_snap_yaml_dict(self) -> OrderedDict:
         snap_dict = self.to_dict()
 
         # If the base is core in snapcraft.yaml we do not set it in
         # snap.yaml LP: #1819290
         if self.base == "core":
             snap_dict.pop("base")
+
+        # Remove keys that are not for snap.yaml.
+        snap_dict.pop("adopt-info", None)
+
+        # Apply passthrough keys.
+        passthrough = snap_dict.pop("passthrough", dict())
+        snap_dict.update(passthrough)
+
+        return snap_dict
+
+    def write_snap_yaml(self, path: str) -> None:
+        """Write snap.yaml contents to specified path."""
+        snap_dict = self.to_snap_yaml_dict()
 
         with open(path, "w") as f:
             yaml_utils.dump(snap_dict, stream=f)

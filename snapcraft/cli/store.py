@@ -21,7 +21,7 @@ import operator
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import click
 from tabulate import tabulate
@@ -220,24 +220,7 @@ def push_metadata(snap_file, force):
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("revision", metavar="<revision>")
 @click.argument("channels", metavar="<channels>")
-@click.option(
-    "--progressive-percentage",
-    type=click.IntRange(0, 100),
-    metavar="<percentage>",
-    help="set a release progression to a certain percentage before continuing.",
-)
-@click.option(
-    "--progressive-key",
-    metavar="<key>",
-    help="the progression key to use to keep track of the --progressive-percentage to be set.",
-)
-def release(
-    snap_name,
-    revision,
-    channels,
-    progressive_percentage: Optional[int],
-    progressive_key: Optional[str],
-) -> None:
+def release(snap_name, revision, channels) -> None:
     """Release <snap-name> on <revision> to the selected store <channels>.
     <channels> is a comma separated list of valid channels on the
     store.
@@ -268,19 +251,7 @@ def release(
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    progressive_options = [progressive_percentage, progressive_key]
-    if any(progressive_options) and not all(progressive_options):
-        raise click.UsageError(
-            "--progressive-percentage and --progressive-key must be used together."
-        )
-
-    snapcraft.release(
-        snap_name,
-        revision,
-        channels.split(","),
-        progressive_percentage=progressive_percentage,
-        progressive_key=progressive_key,
-    )
+    snapcraft.release(snap_name, revision, channels.split(","))
 
 
 @storecli.command()

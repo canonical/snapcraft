@@ -20,7 +20,7 @@ import os
 import re
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 
 def recursive_data_files(directory, install_directory):
@@ -37,37 +37,6 @@ version = "devel"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
-packages = [
-    "snapcraft",
-    "snapcraft.cli",
-    "snapcraft.cli.snapcraftctl",
-    "snapcraft.extractors",
-    "snapcraft.integrations",
-    "snapcraft.internal",
-    "snapcraft.internal.cache",
-    "snapcraft.internal.build_providers",
-    "snapcraft.internal.build_providers._lxd",
-    "snapcraft.internal.build_providers._multipass",
-    "snapcraft.internal.deltas",
-    "snapcraft.internal.lifecycle",
-    "snapcraft.internal.meta",
-    "snapcraft.internal.pluginhandler",
-    "snapcraft.internal.project_loader",
-    "snapcraft.internal.project_loader.grammar",
-    "snapcraft.internal.project_loader.grammar_processing",
-    "snapcraft.internal.project_loader.inspection",
-    "snapcraft.internal.project_loader._extensions",
-    "snapcraft.internal.remote_build",
-    "snapcraft.internal.repo",
-    "snapcraft.internal.review_tools",
-    "snapcraft.internal.sources",
-    "snapcraft.internal.states",
-    "snapcraft.project",
-    "snapcraft.plugins",
-    "snapcraft.plugins._ros",
-    "snapcraft.plugins._python",
-    "snapcraft.storeapi",
-]
 package_data = {"snapcraft.internal.repo": ["manifest.txt"]}
 license = "GPL v3"
 classifiers = [
@@ -106,7 +75,7 @@ setup(
     description=description,
     author_email=author_email,
     url=url,
-    packages=packages,
+    packages=find_namespace_packages(),
     package_data=package_data,
     license=license,
     classifiers=classifiers,

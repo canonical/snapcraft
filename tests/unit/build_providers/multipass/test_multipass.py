@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,7 +28,7 @@ from tests.unit.build_providers import (
 )
 from snapcraft.internal import steps
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal.build_providers import errors
+from snapcraft.internal.build_providers import _base_provider, errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
 
 
@@ -70,6 +70,15 @@ _DEFAULT_INSTANCE_INFO = dedent(
 )  # noqa: E501
 
 
+class GetEnv(_base_provider.Provider):
+    def _get_env_command(self):
+        return ["env", "SNAPCRAFT_HAS_TTY=False"]
+
+
+class MultipassTestImpl(Multipass, GetEnv):
+    pass
+
+
 class MultipassTest(BaseProviderBaseTest):
     def setUp(self):
         super().setUp()
@@ -99,7 +108,7 @@ class MultipassTest(BaseProviderBaseTest):
         ]
 
     def test_ephemeral_instance_with_contextmanager(self):
-        with Multipass(
+        with MultipassTestImpl(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=True
         ) as instance:
             instance.execute_step(steps.PULL)
@@ -111,7 +120,6 @@ class MultipassTest(BaseProviderBaseTest):
             mem="2G",
             disk="256G",
             image="snapcraft:core16",
-            cloud_init=mock.ANY,
         )
         # Given SnapInjector is mocked, we only need to verify the commands
         # called from the Multipass class.
@@ -122,18 +130,7 @@ class MultipassTest(BaseProviderBaseTest):
                     hide_output=False,
                     command=[
                         "sudo",
-                        "-i",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "refresh",
-                    ],
-                ),
-                mock.call(
-                    instance_name=self.instance_name,
-                    hide_output=False,
-                    command=[
-                        "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
@@ -146,6 +143,7 @@ class MultipassTest(BaseProviderBaseTest):
                     hide_output=False,
                     command=[
                         "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
@@ -162,47 +160,6 @@ class MultipassTest(BaseProviderBaseTest):
                 mock.call(instance_name=self.instance_name, output_format="json"),
             ]
         )
-        self.assertThat(self.multipass_cmd_mock().execute.call_count, Equals(3))
-        self.multipass_cmd_mock().execute.assert_has_calls(
-            [
-                mock.call(
-                    command=[
-                        "sudo",
-                        "-i",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "refresh",
-                    ],
-                    hide_output=False,
-                    instance_name="snapcraft-project-name",
-                ),
-                mock.call(
-                    command=[
-                        "sudo",
-                        "-i",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "pull",
-                    ],
-                    hide_output=False,
-                    instance_name="snapcraft-project-name",
-                ),
-                mock.call(
-                    command=[
-                        "sudo",
-                        "-i",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "build",
-                    ],
-                    hide_output=False,
-                    instance_name="snapcraft-project-name",
-                ),
-            ]
-        )
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name, time=10
         )
@@ -215,7 +172,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_CPU", "64")
         )
 
-        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
         instance.create()
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
@@ -224,7 +181,6 @@ class MultipassTest(BaseProviderBaseTest):
             mem="2G",
             disk="256G",
             image="snapcraft:core16",
-            cloud_init=mock.ANY,
         )
 
     def test_launch_for_type_base(self):
@@ -232,7 +188,7 @@ class MultipassTest(BaseProviderBaseTest):
         self.project.info.type = "base"
         self.project.info.base = None
 
-        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
         self.useFixture(
             fixtures.MockPatchObject(
                 instance,
@@ -254,7 +210,6 @@ class MultipassTest(BaseProviderBaseTest):
             mem="2G",
             disk="256G",
             image="snapcraft:core18",
-            cloud_init=mock.ANY,
         )
 
     def test_launch_with_ram_from_environment(self):
@@ -262,7 +217,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY", "4G")
         )
 
-        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
         instance.create()
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
@@ -271,7 +226,6 @@ class MultipassTest(BaseProviderBaseTest):
             mem="4G",
             disk="256G",
             image="snapcraft:core16",
-            cloud_init=mock.ANY,
         )
 
     def test_launch_with_disk_from_environment(self):
@@ -279,7 +233,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_DISK", "400G")
         )
 
-        instance = Multipass(project=self.project, echoer=self.echoer_mock)
+        instance = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
         instance.create()
 
         self.multipass_cmd_mock().launch.assert_called_once_with(
@@ -288,17 +242,17 @@ class MultipassTest(BaseProviderBaseTest):
             mem="2G",
             disk="400G",
             image="snapcraft:core16",
-            cloud_init=mock.ANY,
         )
 
     def test_pull_file(self):
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.pull_file("src.txt", "dest.txt")
 
         self.multipass_cmd_mock().execute.assert_called_once_with(
             command=[
                 "sudo",
+                "-H",
                 "-i",
                 "env",
                 "SNAPCRAFT_HAS_TTY=False",
@@ -319,7 +273,7 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().delete.assert_not_called()
 
     def test_pull_and_delete_file(self):
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.pull_file("src.txt", "dest.txt", delete=True)
 
@@ -332,6 +286,7 @@ class MultipassTest(BaseProviderBaseTest):
                 mock.call(
                     command=[
                         "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
@@ -345,6 +300,7 @@ class MultipassTest(BaseProviderBaseTest):
                 mock.call(
                     command=[
                         "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
@@ -366,7 +322,7 @@ class MultipassTest(BaseProviderBaseTest):
             provider_name=self.instance_name, exit_code=2, stderr=b"error"
         )
 
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.destroy()
 
@@ -378,7 +334,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "60")
         )
 
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.create()
         multipass.destroy()
@@ -393,7 +349,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "0")
         )
 
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.create()
         multipass.destroy()
@@ -408,7 +364,7 @@ class MultipassTest(BaseProviderBaseTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT_STOP_TIME", "A")
         )
 
-        multipass = Multipass(project=self.project, echoer=self.echoer_mock)
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
         multipass.create()
 
@@ -453,9 +409,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.project = get_project(base=self.base)
 
         def execute_effect(*, command, instance_name, hide_output):
-            if command[-2] == "printenv" and command[-1] == "HOME":
-                return "/root".encode()
-            elif hide_output:
+            if hide_output:
                 return None
             else:
                 return b""
@@ -475,7 +429,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
         self.expected_gid_map = {str(os.getgid()): "0"}
 
     def test_lifecycle(self):
-        with Multipass(
+        with MultipassTestImpl(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=False
         ) as instance:
             instance.mount_project()
@@ -487,33 +441,119 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             mem="2G",
             disk="256G",
             image=self.expected_image,
-            cloud_init=mock.ANY,
         )
+        self.assertThat(self.multipass_cmd_mock().execute.call_count, Equals(8))
         self.multipass_cmd_mock().execute.assert_has_calls(
             [
                 mock.call(
-                    instance_name=self.instance_name,
-                    hide_output=True,
                     command=[
                         "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "printenv",
-                        "HOME",
+                        "snapcraft",
+                        "refresh",
                     ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
                 ),
                 mock.call(
-                    instance_name=self.instance_name,
-                    hide_output=False,
                     command=[
                         "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/tmp/L3Jvb3QvLmJhc2hyYw==",
+                        "/root/.bashrc",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/root/.bashrc",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0600",
+                        "/root/.bashrc",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/bin/_snapcraft_prompt",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/bin/_snapcraft_prompt",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0755",
+                        "/bin/_snapcraft_prompt",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "snapcraft",
                         "pull",
                     ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
                 ),
             ]
         )
@@ -531,14 +571,26 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(instance_name=self.instance_name, output_format="json"),
             ]
         )
-        self.multipass_cmd_mock().copy_files.assert_not_called()
+        self.assertThat(self.multipass_cmd_mock().copy_files.call_count, Equals(2))
+        self.multipass_cmd_mock().copy_files.assert_has_calls(
+            [
+                mock.call(
+                    source=mock.ANY,
+                    destination="snapcraft-project-name:/tmp/L3Jvb3QvLmJhc2hyYw==",
+                ),
+                mock.call(
+                    source=mock.ANY,
+                    destination="snapcraft-project-name:/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                ),
+            ]
+        )
         self.multipass_cmd_mock().stop.assert_called_once_with(
             instance_name=self.instance_name, time=10
         )
         self.multipass_cmd_mock().delete.assert_not_called()
 
     def test_mount_prime_directory(self):
-        with Multipass(
+        with MultipassTestImpl(
             project=self.project, echoer=self.echoer_mock, is_ephemeral=False
         ) as instance:
             instance._mount_prime_directory()

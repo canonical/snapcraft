@@ -65,7 +65,7 @@ class PluginHandler:
         base,
         confinement,
         snap_type,
-        soname_cache
+        soname_cache,
     ) -> None:
         self.valid = False
         self.plugin = plugin
@@ -114,6 +114,7 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
+            partdir=self.plugin.partdir,
             sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
             stagedir=self.stagedir,
@@ -827,7 +828,7 @@ class PluginHandler:
 
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
-        all_dependencies = set()
+        all_dependencies: Set[str] = set()
         core_path = common.get_installed_snap_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
@@ -847,9 +848,14 @@ class PluginHandler:
                 )
             )
 
-        dependency_paths = self._handle_dependencies(
-            all_dependencies=all_dependencies, content_dirs=content_dirs
-        )
+        # Split the necessary dependencies into their corresponding location.
+        search_paths = [self.primedir, core_path, *content_dirs]
+        split_dependencies = _split_dependencies(all_dependencies, search_paths)
+
+        logger.debug(f"_handle_elf: search_paths={search_paths!r}")
+        logger.debug(f"_handle_elf: split_dependencies={split_dependencies!r}")
+
+        self._warn_missing_dependencies(split_dependencies)
 
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
@@ -873,7 +879,7 @@ class PluginHandler:
             )
             part_patcher.patch()
 
-        return dependency_paths
+        return self._calculate_dependency_paths(split_dependencies)
 
     def mark_prime_done(
         self, snap_files, snap_dirs, dependency_paths, primed_stage_packages
@@ -921,38 +927,22 @@ class PluginHandler:
         # part.
         _clean_migrated_files(primed_files, primed_directories, shared_directory)
 
-    def _handle_dependencies(
-        self, *, all_dependencies: Set[str], content_dirs: Set[str]
-    ):
-        # Split the necessary dependencies into their corresponding location.
-        # We'll only track the part and staged dependencies, since they should have
-        # already been primed by other means, and migrating them again could
-        # potentially override the `stage` or `snap` filtering.
-        dirs = [self.plugin.installdir, self.stagedir, self.primedir, *content_dirs]
+    def _calculate_dependency_paths(
+        self, split_dependencies: Dict[str, Set[str]]
+    ) -> Set[str]:
+        part_dependencies = split_dependencies.get(self.primedir, set())
+        return {os.path.dirname(d) for d in part_dependencies}
 
-        dependencies = _split_dependencies(all_dependencies, dirs)
-        dependency_paths: Set[str] = set()
+    def _warn_missing_dependencies(self, split_dependencies: Dict[str, Set[str]]):
+        # Anything that is determined to be found on host ("/") is missing.
+        missing_list: List[str] = sorted(split_dependencies.get("/", set()))
 
-        part_dependencies: Set[str] = dependencies.get(self.plugin.installdir, set())
-        part_dependency_paths = {os.path.dirname(d) for d in part_dependencies}
-
-        stage_dependencies = dependencies.get(self.stagedir, set())
-        staged_dependency_paths: Set[str] = {
-            os.path.dirname(d) for d in stage_dependencies
-        }
-
-        dependency_paths = part_dependency_paths | staged_dependency_paths
-
-        missing_set: Set[str] = dependencies.get("/", set())
-        missing_list: List[str] = sorted(list(missing_set))
         resolver = MissingDependencyResolver(elf_files=missing_list)
         resolver.print_resolutions(
             part_name=self.name,
             stage_packages_exist=self._part_properties.get("stage-packages"),
             echoer=logger,
         )
-
-        return dependency_paths
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()

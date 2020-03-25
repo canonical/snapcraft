@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -43,8 +43,8 @@ from snapcraft.internal import errors
 from typing import List
 
 
-_DOTNET_RELEASE_METADATA_URL = "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"  # noqa
-_RUNTIME_DEFAULT = "2.0.5"
+_DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/2.0/releases.json"  # noqa
+_RUNTIME_DEFAULT = "2.0.9"
 
 # TODO extend for other architectures
 _SDK_ARCH = ["amd64"]
@@ -131,12 +131,9 @@ class DotNetPlugin(snapcraft.BasePlugin):
         if sdk_arch not in _SDK_ARCH:
             raise DotNetBadArchitectureError(architecture=sdk_arch, supported=_SDK_ARCH)
         # TODO: Make this a class that takes care of retrieving the infos
-        sdk_info = self._get_sdk_info(self.options.dotnet_runtime_version)
+        sdk_files = self._get_sdk_info(self.options.dotnet_runtime_version)
 
-        sdk_url = sdk_info["package_url"]
-        return sources.Tar(
-            sdk_url, self._dotnet_sdk_dir, source_checksum=sdk_info["checksum"]
-        )
+        return sources.Tar(sdk_files["url"], self._dotnet_sdk_dir)
 
     def pull(self):
         super().pull()
@@ -185,15 +182,15 @@ class DotNetPlugin(snapcraft.BasePlugin):
                 return os.path.splitext(file)[0]
 
     def _get_version_metadata(self, version):
-        jsonData = self._get_dotnet_release_metadata()
+        json_data = self._get_dotnet_release_metadata()
         package_data = list(
-            filter(lambda x: x.get("version-runtime") == version, jsonData)
+            filter(lambda x: x.get("release-version") == version, json_data["releases"])
         )
 
         if not package_data:
             raise DotNetBadReleaseDataError(version)
 
-        return package_data
+        return package_data[0]
 
     def _get_dotnet_release_metadata(self):
         package_metadata = []
@@ -207,50 +204,14 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def _get_sdk_info(self, version):
         metadata = self._get_version_metadata(version)
 
-        if "sdk-linux-x64" in metadata[0]:
-            # look for sdk-linux-x64 property, if it doesn't exist
-            # look for ubuntu.14.04 entry as shipped during 1.1
-            sdk_package_url = metadata[0]["sdk-linux-x64"]
-        elif "sdk-ubuntu.14.04" in metadata[0]:
-            sdk_package_url = metadata[0]["sdk-ubuntu.14.04"]
-        else:
-            raise DotNetBadReleaseDataError(version)
-
-        # for older releases prepend the base sdk url
-        if not sdk_package_url.startswith("http"):
-            sdk_package_url = "{}{}".format(metadata[0]["blob-sdk"], sdk_package_url)
-
-        parsed_url = urllib.parse.urlparse(sdk_package_url)
-        filename = os.path.basename(parsed_url.path)
-
-        sdk_checksum = self._get_package_checksum(
-            metadata[0]["checksums-sdk"], filename, version
+        sdk_files = list(
+            filter(lambda x: x.get("rid") == "linux-x64", metadata["sdk"]["files"])
         )
 
-        return {"package_url": sdk_package_url, "checksum": sdk_checksum}
-
-    def _get_package_checksum(
-        self, checksum_url: str, filename: str, version: str
-    ) -> str:
-        req = urllib.request.Request(checksum_url)
-        r = urllib.request.urlopen(req).read()
-        data = r.decode("utf-8").split("\n")
-
-        hash = None
-        checksum = None
-        for line in data:
-            text = line.split()
-            if len(text) == 2 and "Hash" in text[0]:
-                hash = text[1]
-
-            if len(text) == 2 and filename in text[1]:
-                checksum = text[0]
-                break
-
-        if not hash or not checksum:
+        if not sdk_files:
             raise DotNetBadReleaseDataError(version)
 
-        return "{}/{}".format(hash.lower(), checksum.lower())
+        return sdk_files[0]
 
     def env(self, root):
         # Update the PATH only during the Build and Install step

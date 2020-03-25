@@ -1684,6 +1684,7 @@ class StateTestCase(StateBaseTestCase):
             "/foo/bar/baz",
             "{}/lib1/installed".format(self.handler.plugin.installdir),
             "{}/lib2/staged".format(self.handler.stagedir),
+            "{}/lib3/primed".format(self.handler.primedir),
         }
         self.get_elf_files_mock.return_value = frozenset(
             [
@@ -1728,17 +1729,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertThat(len(state.files), Equals(2))
+        self.assertThat(state.dependency_paths, Equals({"lib3"}))
         self.assertTrue("bin/1" in state.files)
         self.assertTrue("bin/2" in state.files)
         self.assertThat(len(state.directories), Equals(1))
         self.assertTrue("bin" in state.directories)
-        self.assertThat(len(state.dependency_paths), Equals(2))
-        self.assertFalse("foo/bar" in state.dependency_paths)
-        self.assertTrue("lib1" in state.dependency_paths)
-        self.assertTrue("lib2" in state.dependency_paths)
         self.assertTrue("prime" in state.properties)
         self.assertThat(state.properties["prime"], Equals(["*"]))
         self.assertTrue(type(state.project_options) is OrderedDict)
@@ -1762,6 +1759,7 @@ class StateTestCase(StateBaseTestCase):
                 "/foo/bar/baz",
                 "{}/lib1/installed".format(self.handler.plugin.installdir),
                 "{}/lib2/staged".format(self.handler.stagedir),
+                "{}/lib3/primed".format(self.handler.primedir),
             ]
         )
 
@@ -1790,23 +1788,19 @@ class StateTestCase(StateBaseTestCase):
 
         state = self.handler.get_prime_state()
 
-        # Verify that only the part and staged libraries were saved into the
-        # dependency paths, not the system dependency.
-        self.assertTrue(type(state.dependency_paths) is set)
-        self.assertThat(len(state.dependency_paths), Equals(2))
-        self.assertTrue("lib1" in state.dependency_paths)
-        self.assertTrue("lib2" in state.dependency_paths)
+        # Verify that only the primed paths were captured.
+        # The rest should be considered missing.
+        self.assertThat(state.dependency_paths, Equals({"lib3"}))
 
     @patch("snapcraft.internal.elf.ElfFile._extract_attributes")
-    @patch(
-        "snapcraft.internal.elf.ElfFile.load_dependencies",
-        return_value=set(["/foo/bar/baz"]),
-    )
+    @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft.internal.pluginhandler._migrate_files")
     def test_prime_state_with_shadowed_dependencies(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):
         self.get_elf_files_mock.return_value = frozenset([elf.ElfFile(path="bin/1")])
+        mock_load_dependencies.return_value = {f"{self.handler.primedir}/foo/bar/baz"}
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
@@ -1840,8 +1834,7 @@ class StateTestCase(StateBaseTestCase):
         state = self.handler.get_prime_state()
 
         self.assertTrue(type(state) is states.PrimeState)
-        self.assertThat(len(state.dependency_paths), Equals(1))
-        self.assertTrue("foo/bar" in state.dependency_paths)
+        self.assertThat(state.dependency_paths, Equals({"foo/bar"}))
 
     @patch("shutil.copy")
     def test_prime_state_with_prime_keyword(self, mock_copy):
