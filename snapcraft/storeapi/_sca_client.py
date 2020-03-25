@@ -185,11 +185,7 @@ class SCAClient(Client):
         delta_format=None,
         progressive_percentage: Optional[int] = None,
     ):
-        data = {
-            "name": snap_name,
-            "revision": str(revision),
-            "channels": channels,
-        }
+        data = {"name": snap_name, "revision": str(revision), "channels": channels}
         if delta_format:
             data["delta_format"] = delta_format
         if progressive_percentage is not None:

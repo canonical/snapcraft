@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Optional, Union, TYPE_CHECKING
 
 from tabulate import tabulate
 
@@ -33,11 +33,13 @@ def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
     return tick
 
 
-def _get_channel_order(snap_channels, track: Optional[str] = None) -> OrderedDict:
+def _get_channel_order(
+    snap_channels, tracks: Optional[List[str]] = None
+) -> OrderedDict:
     channel_order: OrderedDict = OrderedDict()
 
-    if track is not None:
-        snap_channels = [s for s in snap_channels if s.track == track]
+    if tracks is not None:
+        snap_channels = [s for s in snap_channels if s.track in tracks]
 
     for snap_channel in snap_channels:
         if snap_channel.track not in channel_order:
@@ -113,8 +115,10 @@ def _has_channels_for_architecture(
     return False
 
 
-def get_tabulated_channel_map(snap_channel_map, track, architectures):
-    channel_order = _get_channel_order(snap_channel_map.snap.channels, track)
+def get_tabulated_channel_map(
+    snap_channel_map, *, architectures: List[str], tracks: Optional[List[str]] = None
+):
+    channel_order = _get_channel_order(snap_channel_map.snap.channels, tracks)
 
     channel_lines = list()
     for track_name in channel_order:

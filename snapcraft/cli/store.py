@@ -293,7 +293,12 @@ def release(
     architectures_for_revision = snap_channel_map.get_revision(
         int(revision)
     ).architectures
-    click.echo(get_tabulated_channel_map(snap_channel_map, architectures_for_revision))
+    tracks = [storeapi.channels.Channel(c).track for c in channels.split(",")]
+    click.echo(
+        get_tabulated_channel_map(
+            snap_channel_map, tracks=tracks, architectures=architectures_for_revision
+        )
+    )
 
     opened_channels = release_data.get("opened_channels", [])
     if len(opened_channels) == 1:
