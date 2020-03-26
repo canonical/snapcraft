@@ -22,39 +22,25 @@ import logging
 import os
 import re
 import shutil
-import stat
 import string
 import subprocess
 import sys
 import tempfile
-import urllib
-import urllib.request
-from typing import Dict, Set, List, Tuple  # noqa: F401
+from typing import Dict, List, Set, Tuple  # noqa: F401
 
 import apt
-from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common, os_release
+from snapcraft.internal import cache, common, os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
-from ._base import BaseRepo
-from . import errors
 
+from . import errors
+from ._base import BaseRepo
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_SOURCES = """deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-"""
-_GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+
 _library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 
@@ -85,10 +71,9 @@ def _run_dpkg_query_s(file_path: str) -> str:
 
 
 class _AptCache:
-    def __init__(self, deb_arch, *, sources_list=None, keyrings=None, use_geoip=False):
+    def __init__(self, deb_arch, *, sources_list=None, keyrings=None):
         self._deb_arch = deb_arch
         self._sources_list = sources_list
-        self._use_geoip = use_geoip
 
         if not keyrings:
             keyrings = list()
@@ -236,12 +221,11 @@ class _AptCache:
         ).hexdigest()
 
     def _collected_sources_list(self):
-        if self._use_geoip or self._sources_list:
+        if self._sources_list:
             release = os_release.OsRelease()
             return _format_sources_list(
                 self._sources_list,
                 deb_arch=self._deb_arch,
-                use_geoip=self._use_geoip,
                 release=release.version_codename(),
             )
 
@@ -608,30 +592,9 @@ def _get_local_sources_list():
     return sources
 
 
-def _get_geoip_country_code_prefix():
-    try:
-        with urllib.request.urlopen(_GEOIP_SERVER) as f:
-            xml_data = f.read()
-        et = ElementTree.fromstring(xml_data)
-        cc = et.find("CountryCode")
-        if cc is None:
-            return ""
-        return cc.text.lower()
-    except (ElementTree.ParseError, urllib.error.URLError):
-        pass
-    return ""
-
-
-def _format_sources_list(sources_list, *, deb_arch, use_geoip=False, release="xenial"):
-    if not sources_list:
-        sources_list = _DEFAULT_SOURCES
-
+def _format_sources_list(sources_list: str, *, deb_arch: str, release: str = "xenial"):
     if deb_arch in ("amd64", "i386"):
-        if use_geoip:
-            geoip_prefix = _get_geoip_country_code_prefix()
-            prefix = "{}.archive".format(geoip_prefix)
-        else:
-            prefix = "archive"
+        prefix = "archive"
         suffix = "ubuntu"
         security = "security"
     else:
@@ -642,27 +605,6 @@ def _format_sources_list(sources_list, *, deb_arch, use_geoip=False, release="xe
     return string.Template(sources_list).substitute(
         {"prefix": prefix, "release": release, "suffix": suffix, "security": security}
     )
-
-
-def _fix_filemode(path):
-    mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
-    if mode & 0o4000 or mode & 0o2000:
-        logger.warning("Removing suid/guid from {}".format(path))
-        os.chmod(path, mode & 0o1777)
-
-
-def _try_copy_local(path, target):
-    real_path = os.path.realpath(path)
-    if os.path.exists(real_path):
-        logger.warning(
-            "Copying needed target link from the system {}".format(real_path)
-        )
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copyfile(os.readlink(path), target)
-        return True
-    else:
-        logger.warning("{} will be a dangling symlink".format(path))
-        return False
 
 
 def _set_pkg_version(pkg, version):
