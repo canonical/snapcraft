@@ -43,6 +43,118 @@ logger = logging.getLogger(__name__)
 
 _library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+_DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
+    "adduser",
+    "apt",
+    "apt-utils",
+    "base-files",
+    "base-passwd",
+    "bash",
+    "bsdutils",
+    "coreutils",
+    "dash",
+    "debconf",
+    "debconf-i18n",
+    "debianutils",
+    "diffutils",
+    "dmsetup",
+    "dpkg",
+    "e2fslibs",
+    "e2fsprogs",
+    "file",
+    "findutils",
+    "gcc-4.9-base",
+    "gcc-5-base",
+    "gnupg",
+    "gpgv",
+    "grep",
+    "gzip",
+    "hostname",
+    "init",
+    "initscripts",
+    "insserv",
+    "libacl1",
+    "libapparmor1",
+    "libapt",
+    "libapt-inst1.5",
+    "libapt-pkg4.12",
+    "libattr1",
+    "libaudit-common",
+    "libaudit1",
+    "libblkid1",
+    "libbz2-1.0",
+    "libc-bin",
+    "libc6",
+    "libcap2",
+    "libcap2-bin",
+    "libcomerr2",
+    "libcryptsetup4",
+    "libdb5.3",
+    "libdebconfclient0",
+    "libdevmapper1.02.1",
+    "libgcc1",
+    "libgcrypt20",
+    "libgpg-error0",
+    "libgpm2",
+    "libkmod2",
+    "liblocale-gettext-perl",
+    "liblzma5",
+    "libmagic1",
+    "libmount1",
+    "libncurses5",
+    "libncursesw5",
+    "libpam-modules",
+    "libpam-modules-bin",
+    "libpam-runtime",
+    "libpam0g",
+    "libpcre3",
+    "libprocps3",
+    "libreadline6",
+    "libselinux1",
+    "libsemanage-common",
+    "libsemanage1",
+    "libsepol1",
+    "libslang2",
+    "libsmartcols1",
+    "libss2",
+    "libstdc++6",
+    "libsystemd0",
+    "libtext-charwidth-perl",
+    "libtext-iconv-perl",
+    "libtext-wrapi18n-perl",
+    "libtinfo5",
+    "libudev1",
+    "libusb-0.1-4",
+    "libustr-1.0-1",
+    "libuuid1",
+    "locales",
+    "login",
+    "lsb-base",
+    "makedev",
+    "manpages",
+    "manpages-dev",
+    "mawk",
+    "mount",
+    "multiarch-support",
+    "ncurses-base",
+    "ncurses-bin",
+    "passwd",
+    "perl-base",
+    "procps",
+    "readline-common",
+    "sed",
+    "sensible-utils",
+    "systemd",
+    "systemd-sysv",
+    "sysv-rc",
+    "sysvinit-utils",
+    "tar",
+    "tzdata",
+    "ubuntu-keyring",
+    "udev",
+    "util-linux",
+    "zlib1g",
+]
 
 
 @functools.lru_cache(maxsize=256)
@@ -476,9 +588,13 @@ class Ubuntu(BaseRepo):
             if package.is_auto_removable:
                 package.mark_keep()
 
-    def _filter_base_packages(self, apt_cache, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt_cache)
+    def _is_filtered_package(self, package_name: str) -> bool:
+        # Filter out packages provided by the core snap.
+        # TODO: use manifest found in core snap, if found at:
+        # <core-snap>/usr/share/snappy/dpkg.list
+        return package_name in _DEFAULT_FILTERED_STAGE_PACKAGES
 
+    def _filter_base_packages(self, apt_cache, package_names):
         skipped_essential = []
         skipped_blacklisted = []
 
@@ -494,7 +610,7 @@ class Ubuntu(BaseRepo):
                 skipped_essential.append(pkg.name)
                 pkg.mark_keep()
                 continue
-            if pkg.name in manifest_dep_names and pkg.name not in package_names:
+            if self._is_filtered_package(pkg.name) and pkg.name not in package_names:
                 skipped_blacklisted.append(pkg.name)
                 pkg.mark_keep()
                 continue
@@ -567,17 +683,6 @@ class Ubuntu(BaseRepo):
                 self._mark_origin_stage_package(temp_dir, deb_name)
                 file_utils.link_or_copy_tree(temp_dir, unpackdir)
         self.normalize(unpackdir)
-
-    def _manifest_dep_names(self, apt_cache):
-        manifest_dep_names = set()
-
-        with open(os.path.abspath(os.path.join(__file__, "..", "manifest.txt"))) as f:
-            for line in f:
-                pkg = line.strip()
-                if pkg in apt_cache:
-                    manifest_dep_names.add(pkg)
-
-        return manifest_dep_names
 
 
 def _get_local_sources_list():
