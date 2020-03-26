@@ -4,9 +4,9 @@
 
 * Specifications
 ** 2020
-*** TODO [[file:specifications/20200304-core20-plugins.org][Snapcraft Core20 Plugins]] [/]
-- [ ] Move =BasePlugin= to a legacy import path
-- [ ] Add backwards compatibility for =BasePlugin=
+*** STRT [[file:specifications/20200304-core20-plugins.org][Snapcraft Core20 Plugins]] [/]
+- [x] Move =BasePlugin= to a v1 import path
+- [x] Add backwards compatibility for =BasePlugin=
 - [ ] Rework in-tree plugin importing into a map
 - [ ] Add dictionary =build-environment= support to the schema for =core20=
 - [ ] Introduce =snapcraft.plugins.core20.plugin=
