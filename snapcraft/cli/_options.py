@@ -45,33 +45,34 @@ class PromptOption(click.Option):
         )
 
 
-_BUILD_OPTIONS = [
+_SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
+_HIDDEN_PROVIDERS = ["managed-host"]
+_ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
+_PROVIDER_OPTIONS = [
     dict(
         param_decls="--target-arch",
         metavar="<arch>",
         help="Target architecture to cross compile to",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
         param_decls="--debug",
         is_flag=True,
         help="Shells into the environment if the build fails.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
         param_decls="--shell",
         is_flag=True,
         help="Shells into the environment in lieu of the step to run.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
         param_decls="--shell-after",
         is_flag=True,
         help="Shells into the environment after the step has run.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
-]
-
-_SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
-_HIDDEN_PROVIDERS = ["managed-host"]
-_ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
-_PROVIDER_OPTIONS = [
     dict(
         param_decls="--destructive-mode",
         is_flag=True,
@@ -114,6 +115,14 @@ _PROVIDER_OPTIONS = [
         envvar="SNAPCRAFT_BIND_SSH",
         supported_providers=["lxd", "multipass"],
     ),
+    dict(
+        param_decls="--enable-developer-debug",
+        is_flag=True,
+        help="Enable developer debug logging.",
+        envvar="SNAPCRAFT_ENABLE_DEVELOPER_DEBUG",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
 ]
 
 
@@ -128,16 +137,10 @@ def _add_options(options, func, hidden):
         if "supported_providers" in option:
             option.pop("supported_providers")
 
-        click_option = click.option(param_decls, **option, hidden=hidden)
+        hidden_override = option.pop("hidden", hidden)
+        click_option = click.option(param_decls, **option, hidden=hidden_override)
         func = click_option(func)
     return func
-
-
-def add_build_options(hidden=False):
-    def _add_build_options(func):
-        return _add_options(_BUILD_OPTIONS, func, hidden)
-
-    return _add_build_options
 
 
 def add_provider_options(hidden=False):
