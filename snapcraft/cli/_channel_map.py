@@ -63,14 +63,20 @@ def _get_channel_line(
     snap_channel_map: "snap_channel_map.SnapChannelMap",
     channel_name: str,
     architecture: str,
+    *,
+    progressive: bool = False,
+    progress: str = "-",
 ) -> List[Union[int, str]]:
     channel_info = snap_channel_map.get_channel_info(channel_name)
-    channel = channel_info.risk
     expiration_date = ""
-    progress = "-"
+
+    if progressive:
+        channel = ""
+    else:
+        channel = channel_info.risk
 
     try:
-        mapped_channel = snap_channel_map.get_mapped_channel(channel_name, architecture)
+        mapped_channel = snap_channel_map.get_mapped_channel(channel_name=channel_name, architecture=architecture, progressive=progressive)
 
         if channel_info.branch is not None:
             channel = f"{channel_info.risk}/{channel_info.branch}"
@@ -84,7 +90,12 @@ def _get_channel_line(
         if mapped_channel.progressive.percentage is not None:
             progress = f"=>{mapped_channel.progressive.percentage:.0f}%"
 
-    except ValueError:
+    except ValueError as value_error:
+        # We have no "status" line if we were searching for a progressive
+        # release and found none.
+        if progressive:
+            raise value_error
+
         # if the branch is not None and we could not find it on the map,
         # we won't print it for this architecture to.
         if channel_info.branch is not None:
@@ -112,7 +123,7 @@ def _has_channels_for_architecture(
 ) -> bool:
     for channel_name in channels:
         try:
-            snap_channel_map.get_mapped_channel(channel_name, architecture)
+            snap_channel_map.get_mapped_channel(channel_name=channel_name, architecture=architecture, progressive=False)
             return True
         except ValueError:
             continue
@@ -153,6 +164,13 @@ def get_tabulated_channel_map(
                             snap_channel_map, channel_name, architecture
                         )
                     )
+                    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"):
+                        channel_lines.append(
+                            [track_string, architecture_string]
+                            + _get_channel_line(
+                                snap_channel_map, channel_name, architecture, progressive=True
+                            )
+                        )
                 except ValueError:
                     continue
 
