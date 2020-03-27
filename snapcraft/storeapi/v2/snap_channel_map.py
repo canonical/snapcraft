@@ -65,15 +65,23 @@ class SnapChannelMap:
         return self._snap
 
     def get_mapped_channel(
-            self, *, channel_name: str, architecture: str, progressive: bool
+        self, *, channel_name: str, architecture: str, progressive: bool
     ) -> channel.MappedChannel:
-        channels_with_name = (cm for cm in self.channel_map if cm.channel == channel_name)
-        channels_with_arch = (cm for cm in channels_with_name if cm.architecture == architecture)
+        channels_with_name = (
+            cm for cm in self.channel_map if cm.channel == channel_name
+        )
+        channels_with_arch = (
+            cm for cm in channels_with_name if cm.architecture == architecture
+        )
 
         if progressive:
-            channels = [cm for cm in channels_with_arch if cm.progressive.percentage is not None]
+            channels = [
+                cm for cm in channels_with_arch if cm.progressive.percentage is not None
+            ]
         else:
-            channels = [cm for cm in channels_with_arch if cm.progressive.percentage is None]
+            channels = [
+                cm for cm in channels_with_arch if cm.progressive.percentage is None
+            ]
 
         try:
             return channels[0]

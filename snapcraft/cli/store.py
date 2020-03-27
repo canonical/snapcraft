@@ -564,7 +564,9 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if snaps:
         snap_list = []
         for package in snaps.split(","):
-            snap_list.append({"name": package, "series": DEFAULT_SERIES})
+            snap_list.append(
+                {"name": package, "series": storeapi.constants.DEFAULT_SERIES}
+            )
 
     if channels:
         channel_list = channels.split(",")
