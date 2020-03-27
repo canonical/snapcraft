@@ -38,6 +38,7 @@ _HINTS = _HINTS_T("-", "↑", "-", "→")
 
 
 def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
+    tick = _HINTS.CLOSED
     for c in channel_map:
         if c.channel == fallback and c.architecture == architecture:
             tick = _HINTS.FOLLOWING
@@ -45,8 +46,6 @@ def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
     else:
         if fallback is None:
             tick = _HINTS.CLOSED
-        else:
-            tick = _HINTS.FOLLOWING
     return tick
 
 
@@ -93,7 +92,7 @@ def _get_channel_line(
         revision_string = f"{revision.revision}"
 
     if mapped_channel is not None:
-        if mapped_channel.progressive.percentage:
+        if channel_info.branch is None and mapped_channel.progressive.percentage:
             channel_string = ""
         elif channel_info.branch is not None:
             channel_string = f"{channel_info.risk}/{channel_info.branch}"
@@ -146,6 +145,8 @@ def _get_channel_lines_for_channel(
             hint=hint,
             progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
         )
+        # Setup progress for the actually released revision, this needs to be
+        # calculated. But only show it if the channel is open.
         progress_string = "{} {:.0f}%".format(
             _HINTS.PROGRESSING_TO,
             100 - progressive_mapped_channel.progressive.percentage,
@@ -179,7 +180,9 @@ def _get_channel_lines_for_channel(
                 revision=None,
                 channel_info=channel_info,
                 hint=hint,
-                progress_string=progress_string,
+                progress_string=_HINTS.NO_PROGRESS
+                if hint == _HINTS.CLOSED
+                else progress_string,
             )
         )
 
@@ -196,13 +199,16 @@ def _has_channels_for_architecture(
     snap_channel_map, architecture: str, channels: List[str]
 ) -> bool:
     for channel_name in channels:
-        try:
-            snap_channel_map.get_mapped_channel(
-                channel_name=channel_name, architecture=architecture, progressive=False
-            )
-            return True
-        except ValueError:
-            continue
+        for progressive in (False, True):
+            try:
+                snap_channel_map.get_mapped_channel(
+                    channel_name=channel_name,
+                    architecture=architecture,
+                    progressive=progressive,
+                )
+                return True
+            except ValueError:
+                continue
     return False
 
 

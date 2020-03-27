@@ -141,6 +141,13 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
+        # Our experimental environment variable is sticky
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE", None
+            )
+        )
+
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
 
@@ -196,6 +203,11 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi._sca_client.SCAClient, "register_key"
         )
         self.useFixture(self.fake_store_register_key)
+
+        self.fake_store_get_snap_channel_map = fixtures.MockPatchObject(
+            storeapi.StoreClient, "get_snap_channel_map"
+        )
+        self.useFixture(self.fake_store_get_snap_channel_map)
 
         # Uploading
         self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
