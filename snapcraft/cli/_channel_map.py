@@ -16,7 +16,7 @@
 
 import os
 from collections import OrderedDict
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import List, NamedTuple, Optional, Union, TYPE_CHECKING
 
 from tabulate import tabulate
 
@@ -24,16 +24,28 @@ if TYPE_CHECKING:
     from snapcraft.storeapi.v2 import snap_channel_map
 
 
+_HINTS_T = NamedTuple(
+    "_HINTS_T",
+    [
+        ("CLOSED", str),
+        ("FOLLOWING", str),
+        ("NO_PROGRESS", str),
+        ("PROGRESSING_TO", str),
+    ],
+)
+_HINTS = _HINTS_T("-", "↑", "-", "→")
+
+
 def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
     for c in channel_map:
         if c.channel == fallback and c.architecture == architecture:
-            tick = "^"
+            tick = _HINTS.FOLLOWING
             break
     else:
         if fallback is None:
-            tick = "-"
+            tick = _HINTS.CLOSED
         else:
-            tick = "^"
+            tick = _HINTS.FOLLOWING
     return tick
 
 
@@ -162,17 +174,18 @@ def get_tabulated_channel_map(
                         revision=progressive_revision,
                         channel_info=channel_info,
                         hint=hint,
-                        progress_string=f"→ {progressive_mapped_channel.progressive.percentage:.0f}%",
+                        progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
                     )
                 except ValueError:
                     progressive_mapped_channel = None
 
                 if progressive_mapped_channel is not None:
-                    progress_string = "→ {:.0f}%".format(
-                        100 - progressive_mapped_channel.progressive.percentage
+                    progress_string = "{} {:.0f}%".format(
+                        _HINTS.PROGRESSING_TO,
+                        100 - progressive_mapped_channel.progressive.percentage,
                     )
                 else:
-                    progress_string = "-"
+                    progress_string = _HINTS.NO_PROGRESS
 
                 try:
                     mapped_channel = snap_channel_map.get_mapped_channel(
