@@ -16,12 +16,13 @@
 
 import os
 from collections import OrderedDict
-from typing import List, NamedTuple, Optional, Union, TYPE_CHECKING
+from typing import List, NamedTuple, Optional
 
 from tabulate import tabulate
 
-if TYPE_CHECKING:
-    from snapcraft.storeapi.v2 import snap_channel_map
+from snapcraft.storeapi.v2.channel import MappedChannel, SnapChannel
+from snapcraft.storeapi.v2.revision import Revision
+from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
 
 
 _HINTS_T = NamedTuple(
@@ -76,12 +77,12 @@ def _get_channel_order(
 
 def _get_channel_line(
     *,
-    mapped_channel: Optional["snap_channel_map.channel.MappedChannel"],
-    revision: Optional["snap_channel_map.revision.Revision"],
-    channel_info: "snap_channel_map.channel.SnapChannel",
+    mapped_channel: Optional[MappedChannel],
+    revision: Optional[Revision],
+    channel_info: SnapChannel,
     hint: str,
     progress_string: str,
-) -> List[Union[int, str]]:
+) -> List[str]:
     version_string = hint
     revision_string = hint
     expiration_date_string = ""
@@ -110,6 +111,85 @@ def _get_channel_line(
         ]
     else:
         return [channel_string, version_string, revision_string, expiration_date_string]
+
+
+def _get_channel_lines_for_channel(
+    snap_channel_map: SnapChannelMap, channel_name: str, architecture: str
+) -> List[List[str]]:
+    channel_lines: List[List[str]] = list()
+
+    channel_info = snap_channel_map.get_channel_info(channel_name)
+
+    hint = _get_channel_hint(
+        channel_map=snap_channel_map.channel_map,
+        fallback=channel_info.fallback,
+        architecture=architecture,
+    )
+
+    try:
+        progressive_mapped_channel: Optional[
+            MappedChannel
+        ] = snap_channel_map.get_mapped_channel(
+            channel_name=channel_name, architecture=architecture, progressive=True
+        )
+    except ValueError:
+        progressive_mapped_channel = None
+
+    if progressive_mapped_channel is not None:
+        progressive_revision = snap_channel_map.get_revision(
+            progressive_mapped_channel.revision
+        )
+        progressive_mapped_channel_line = _get_channel_line(
+            mapped_channel=progressive_mapped_channel,
+            revision=progressive_revision,
+            channel_info=channel_info,
+            hint=hint,
+            progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
+        )
+        progress_string = "{} {:.0f}%".format(
+            _HINTS.PROGRESSING_TO,
+            100 - progressive_mapped_channel.progressive.percentage,
+        )
+    else:
+        progress_string = _HINTS.NO_PROGRESS
+
+    try:
+        mapped_channel: Optional[MappedChannel] = snap_channel_map.get_mapped_channel(
+            channel_name=channel_name, architecture=architecture, progressive=False
+        )
+    except ValueError:
+        mapped_channel = None
+
+    if mapped_channel is not None:
+        revision = snap_channel_map.get_revision(mapped_channel.revision)
+        channel_lines.append(
+            _get_channel_line(
+                mapped_channel=mapped_channel,
+                revision=revision,
+                channel_info=channel_info,
+                hint=hint,
+                progress_string=progress_string,
+            )
+        )
+    # Don't show empty branches
+    elif channel_info.branch is None:
+        channel_lines.append(
+            _get_channel_line(
+                mapped_channel=None,
+                revision=None,
+                channel_info=channel_info,
+                hint=hint,
+                progress_string=progress_string,
+            )
+        )
+
+    if (
+        os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE")
+        and progressive_mapped_channel is not None
+    ):
+        channel_lines.append(progressive_mapped_channel_line)
+
+    return channel_lines
 
 
 def _has_channels_for_architecture(
@@ -153,82 +233,14 @@ def get_tabulated_channel_map(
                 else:
                     architecture_string = ""
 
-                channel_info = snap_channel_map.get_channel_info(channel_name)
-                hint = _get_channel_hint(
-                    channel_map=snap_channel_map.channel_map,
-                    fallback=channel_info.fallback,
-                    architecture=architecture,
-                )
-
-                try:
-                    progressive_mapped_channel = snap_channel_map.get_mapped_channel(
-                        channel_name=channel_name,
-                        architecture=architecture,
-                        progressive=True,
-                    )
-                    progressive_revision = snap_channel_map.get_revision(
-                        progressive_mapped_channel.revision
-                    )
-                    progressive_mapped_channel_line = _get_channel_line(
-                        mapped_channel=progressive_mapped_channel,
-                        revision=progressive_revision,
-                        channel_info=channel_info,
-                        hint=hint,
-                        progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
-                    )
-                except ValueError:
-                    progressive_mapped_channel = None
-
-                if progressive_mapped_channel is not None:
-                    progress_string = "{} {:.0f}%".format(
-                        _HINTS.PROGRESSING_TO,
-                        100 - progressive_mapped_channel.progressive.percentage,
-                    )
-                else:
-                    progress_string = _HINTS.NO_PROGRESS
-
-                try:
-                    mapped_channel = snap_channel_map.get_mapped_channel(
-                        channel_name=channel_name,
-                        architecture=architecture,
-                        progressive=False,
-                    )
-                    revision = snap_channel_map.get_revision(mapped_channel.revision)
-                    mapped_channel_line = _get_channel_line(
-                        mapped_channel=mapped_channel,
-                        revision=revision,
-                        channel_info=channel_info,
-                        hint=hint,
-                        progress_string=progress_string,
-                    )
-                except ValueError:
-                    # Don't show empty branches
-                    if channel_info.branch is None:
-                        mapped_channel_line = _get_channel_line(
-                            mapped_channel=None,
-                            revision=None,
-                            channel_info=channel_info,
-                            hint=hint,
-                            progress_string=progress_string,
-                        )
-                    else:
-                        mapped_channel_line = []
-
-                if mapped_channel_line:
+                for channel_line in _get_channel_lines_for_channel(
+                    snap_channel_map, channel_name, architecture
+                ):
                     channel_lines.append(
-                        [track_string, architecture_string] + mapped_channel_line
+                        [track_string, architecture_string] + channel_line
                     )
                     track_string = ""
                     architecture_string = ""
-
-                if (
-                    os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE")
-                    and progressive_mapped_channel is not None
-                ):
-                    channel_lines.append(
-                        [track_string, architecture_string]
-                        + progressive_mapped_channel_line
-                    )
 
     headers = ["Track", "Arch", "Channel", "Version", "Revision"]
     if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASE"):
