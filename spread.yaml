@@ -285,9 +285,9 @@ suites:
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
- tests/spread/plugins/ant/:
+ tests/spread/plugins/v1/ant/:
    summary: tests of snapcraft's Ant plugin
- tests/spread/plugins/ament/:
+ tests/spread/plugins/v1/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    systems:
    - ubuntu-16.04-amd64
@@ -296,9 +296,9 @@ suites:
    - ubuntu-16.04
    - ubuntu-16.04-64
    kill-timeout: 360m
- tests/spread/plugins/autotools/:
+ tests/spread/plugins/v1/autotools/:
    summary: tests of snapcraft's Autotools plugin
- tests/spread/plugins/catkin/:
+ tests/spread/plugins/v1/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
    - ubuntu-16.04
@@ -312,7 +312,7 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
- tests/spread/plugins/colcon/:
+ tests/spread/plugins/v1/colcon/:
    summary: tests of snapcraft's Colcon plugin
    systems:
    - ubuntu-18.04
@@ -321,7 +321,7 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
- tests/spread/plugins/conda/:
+ tests/spread/plugins/v1/conda/:
    summary: tests of snapcraft's Conda plugin
    systems:
    - ubuntu-18.04
@@ -332,11 +332,11 @@ suites:
    - ubuntu-16.04-64
    # Network errors on autopkgtest infra
    # - ubuntu-16.04-amd64
- tests/spread/plugins/copy/:
+ tests/spread/plugins/v1/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
- tests/spread/plugins/cmake/:
+ tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
- tests/spread/plugins/crystal/:
+ tests/spread/plugins/v1/crystal/:
    summary: tests of snapcraft's Crystal plugin
    systems:
    - ubuntu-18.04
@@ -345,46 +345,46 @@ suites:
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
- tests/spread/plugins/dotnet/:
+ tests/spread/plugins/v1/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
    # Keep this 16.04 as it is the only supported system for this plugin
    systems:
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
- tests/spread/plugins/go/:
+ tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
- tests/spread/plugins/godeps/:
+ tests/spread/plugins/v1/godeps/:
    summary: tests of snapcraft's Godeps plugin
- tests/spread/plugins/gradle/:
+ tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/kbuild/:
+ tests/spread/plugins/v1/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
- tests/spread/plugins/make/:
+ tests/spread/plugins/v1/make/:
    summary: tests of snapcraft's Make plugin
- tests/spread/plugins/maven/:
+ tests/spread/plugins/v1/maven/:
    summary: tests of snapcraft's Maven plugin
- tests/spread/plugins/meson/:
+ tests/spread/plugins/v1/meson/:
    summary: tests of snapcraft's Meson plugin
- tests/spread/plugins/nodejs/:
+ tests/spread/plugins/v1/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
- tests/spread/plugins/nil/:
+ tests/spread/plugins/v1/nil/:
    summary: tests of snapcraft's Nil plugin
- tests/spread/plugins/plainbox/:
+ tests/spread/plugins/v1/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/python/:
+ tests/spread/plugins/v1/python/:
    summary: tests of snapcraft's Python plugin
- tests/spread/plugins/qmake/:
+ tests/spread/plugins/v1/qmake/:
    summary: tests of snapcraft's qmake plugin
- tests/spread/plugins/ruby/:
+ tests/spread/plugins/v1/ruby/:
    summary: tests of snapcraft's Ruby plugin
    kill-timeout: 180m
- tests/spread/plugins/rust/:
+ tests/spread/plugins/v1/rust/:
    summary: tests of snapcraft's Rust plugin
    systems:
    - ubuntu-18.04
@@ -399,13 +399,15 @@ suites:
    - ubuntu-16.04-i386
    - ubuntu-16.04-armhf
    - ubuntu-16.04-s390x
- tests/spread/plugins/scons/:
+ tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
- tests/spread/plugins/tar-content/:
+ tests/spread/plugins/v1/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
- tests/spread/plugins/waf/:
+ tests/spread/plugins/v1/waf/:
    summary: tests of snapcraft's Waf plugin
-
+ tests/spread/plugins/v1/x-local/:
+   summary: tests of snapcraft's local plugins
+ 
 # Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions

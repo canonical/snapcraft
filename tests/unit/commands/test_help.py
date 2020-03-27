@@ -79,7 +79,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
     def test_show_module_help_with_devel_for_valid_plugin(self):
         result = self.run_command(["help", "nil", "--devel"])
 
-        expected = "Help on module snapcraft.plugins.nil in snapcraft.plugins"
+        expected = "Help on module snapcraft.plugins.v1.nil in snapcraft.plugins"
         output = result.output[: len(expected)]
 
         self.assertThat(
