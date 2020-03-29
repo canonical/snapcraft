@@ -1005,10 +1005,7 @@ class ReleaseTestCase(StoreTestCase):
     def test_progressive_release_snap(self):
         self.client.login("dummy", "test correct password")
         channel_map = self.client.release(
-            "test-snap",
-            "19",
-            ["beta"],
-            progressive_percentage=10,
+            "test-snap", "19", ["beta"], progressive_percentage=10
         )
         expected_channel_map = {
             "opened_channels": ["beta"],
