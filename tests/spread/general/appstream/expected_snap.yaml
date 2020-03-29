@@ -15,9 +15,9 @@ description: |-
 apps:
   appstream-desktop:
     command: usr/bin/appstream-desktop
+    common-id: io.snapcraft.appstream
     command-chain:
     - snap/command-chain/snapcraft-runner
-    common-id: io.snapcraft.appstream
 architectures:
 - amd64
 assumes:
