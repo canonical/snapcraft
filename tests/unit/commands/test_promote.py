@@ -144,7 +144,6 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
             snap_name="snap-test",
             revision="2",
             channels=["candidate"],
-            progressive_key=None,
             progressive_percentage=None,
         )
 
@@ -197,7 +196,6 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
             snap_name="snap-test",
             revision="2",
             channels=["candidate"],
-            progressive_key=None,
             progressive_percentage=None,
         )
 

@@ -27,7 +27,8 @@
 - [x] Add support for the release command
 - [x] Add support for the close command
 - [x] Add support for the promote command
-- [x] Remove the state endpoint
+- [ ] Migrate promote away from using the state endpoint
+- [ ] Remove the state endpoint
 - [ ] Add support for metrics
 - [ ] Add support for specific channel-map endpoint errors
 - [ ] Remove experimental flag
