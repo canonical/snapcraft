@@ -25,6 +25,7 @@
 - [x] Implement channel-map endpoint
 - [x] Add support for the status command
 - [x] Add support for the release command
+- [x] Add support for the close command
 - [x] Add support for the promote command
 - [x] Remove the state endpoint
 - [ ] Add support for metrics
