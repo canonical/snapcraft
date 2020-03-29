@@ -199,6 +199,11 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_release)
 
+        self.fake_store_close = fixtures.MockPatchObject(
+            storeapi.StoreClient, "close_channels", side_effect=[(["beta"], dict())]
+        )
+        self.useFixture(self.fake_store_close)
+
         self.fake_store_register_key = fixtures.MockPatchObject(
             storeapi._sca_client.SCAClient, "register_key"
         )

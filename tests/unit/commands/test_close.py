@@ -14,20 +14,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from textwrap import dedent
-from unittest import mock
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Equals
 
 import snapcraft.storeapi.errors
-from snapcraft import storeapi
-from . import CommandBaseTestCase
+from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
+from . import FakeStoreCommandsBaseTestCase
 
 
-class CloseCommandTestCase(CommandBaseTestCase):
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    def test_close_missing_permission(self, mock_get_account_info):
-        mock_get_account_info.return_value = {"account_id": "abcd", "snaps": {}}
+class CloseCommandTestCase(FakeStoreCommandsBaseTestCase):
+    def setUp(self):
+        super().setUp()
 
+        self.channel_map_payload = {
+            "channel-map": [
+                {
+                    "architecture": "amd64",
+                    "channel": "latest/edge",
+                    "expiration-date": None,
+                    "revision": 19,
+                    "progressive": {"key": None, "paused": None, "percentage": None},
+                    "when": "2020-02-03T20:58:37Z",
+                }
+            ],
+            "revisions": [
+                {"architectures": ["amd64"], "revision": 19, "version": "10"}
+            ],
+            "snap": {
+                "channels": [
+                    {
+                        "branch": None,
+                        "fallback": None,
+                        "name": "latest/stable",
+                        "risk": "stable",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/stable",
+                        "name": "latest/candidate",
+                        "risk": "candidate",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/candidate",
+                        "name": "latest/beta",
+                        "risk": "beta",
+                        "track": "latest",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "latest/beta",
+                        "name": "latest/edge",
+                        "risk": "edge",
+                        "track": "latest",
+                    },
+                ]
+            },
+        }
+        self.fake_store_get_snap_channel_map.mock.return_value = SnapChannelMap(
+            self.channel_map_payload
+        )
+
+    def test_close_missing_permission(self):
         raised = self.assertRaises(
             snapcraft.storeapi.errors.StoreChannelClosingPermissionError,
             self.run_command,
@@ -43,207 +93,95 @@ class CloseCommandTestCase(CommandBaseTestCase):
             ),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "close_channels")
-    def test_close_basic(self, mock_close_channels, mock_get_account_info):
-        mock_get_account_info.return_value = {
-            "snaps": {"16": {"basic": {"snap-id": "snap-id"}}}
-        }
-        closed_channels = ["beta"]
-        channel_map_tree = {
-            "latest": {
-                "16": {
-                    "amd64": [
-                        {"channel": "stable", "info": "none"},
-                        {"channel": "candidate", "info": "none"},
-                        {
-                            "channel": "beta",
-                            "info": "specific",
-                            "version": "1.1",
-                            "revision": 42,
-                        },
-                        {"channel": "edge", "info": "tracking"},
-                    ]
-                }
-            }
-        }
-        mock_close_channels.side_effect = [(closed_channels, channel_map_tree)]
-
+    def test_close_basic(self):
         result = self.run_command(["close", "basic", "beta"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     -          -           -
-                             candidate  -          -           -
-                             beta       1.1        42          -
-                             edge       ^          ^           -
-
-            \x1b[0;32mThe beta channel is now closed.\x1b[0m"""
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     -          -
+                             candidate  -          -
+                             beta       -          -
+                             edge       10         19
+            The beta channel is now closed.
+            """
                 )
             ),
         )
 
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "close_channels")
-    def test_close_multiple_channels(self, mock_close_channels, mock_get_account_info):
-        mock_get_account_info.return_value = {
-            "snaps": {"16": {"basic": {"snap-id": "snap-id"}}}
-        }
-        closed_channels = ["beta", "edge"]
-        channel_map_tree = {
-            "latest": {
-                "16": {
-                    "amd64": [
-                        {"channel": "stable", "info": "none"},
-                        {
-                            "channel": "candidate",
-                            "info": "specific",
-                            "version": "1.1",
-                            "revision": 42,
-                        },
-                        {"channel": "beta", "info": "tracking"},
-                        {"channel": "edge", "info": "tracking"},
-                    ]
-                }
+    def test_close_multiple_channels(self):
+        self.channel_map_payload["channel-map"].append(
+            {
+                "architecture": "s390x",
+                "channel": "2.1/edge",
+                "expiration-date": None,
+                "revision": 20,
+                "progressive": {"key": None, "paused": None, "percentage": None},
+                "when": "2020-02-03T20:58:37Z",
             }
-        }
-        mock_close_channels.side_effect = [(closed_channels, channel_map_tree)]
-
-        result = self.run_command(["close", "basic", "beta", "edge"])
+        )
+        self.channel_map_payload["revisions"].append(
+            {"architectures": ["s390x"], "revision": 20, "version": "10"}
+        )
+        self.channel_map_payload["snap"]["channels"].extend(
+            [
+                {
+                    "branch": None,
+                    "fallback": None,
+                    "name": "2.1/stable",
+                    "risk": "stable",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/stable",
+                    "name": "2.1/candidate",
+                    "risk": "candidate",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/candidate",
+                    "name": "2.1/beta",
+                    "risk": "beta",
+                    "track": "2.1",
+                },
+                {
+                    "branch": None,
+                    "fallback": "2.1/beta",
+                    "name": "2.1/edge",
+                    "risk": "edge",
+                    "track": "2.1",
+                },
+            ]
+        )
+        self.fake_store_get_snap_channel_map.mock.return_value = SnapChannelMap(
+            self.channel_map_payload
+        )
+        self.fake_store_close.mock.side_effect = [(["beta", "2.1/beta"], dict())]
+        result = self.run_command(["close", "basic", "latest/beta", "2.1/beta"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     -          -           -
-                             candidate  1.1        42          -
-                             beta       ^          ^           -
-                             edge       ^          ^           -
-
-            \x1b[0;32mThe beta and edge channels are now closed.\x1b[0m"""
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     -          -
+                             candidate  -          -
+                             beta       -          -
+                             edge       10         19
+            2.1      s390x   stable     -          -
+                             candidate  -          -
+                             beta       -          -
+                             edge       10         20
+           The beta and 2.1/beta channels are now closed.
+           """
                 )
             ),
         )
-
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "close_channels")
-    def test_close_multiple_architectures(
-        self, mock_close_channels, mock_get_account_info
-    ):
-        mock_get_account_info.return_value = {
-            "snaps": {"16": {"basic": {"snap-id": "snap-id"}}}
-        }
-        closed_channels = ["beta"]
-        channel_map_tree = {
-            "latest": {
-                "16": {
-                    "amd64": [
-                        {"channel": "stable", "info": "none"},
-                        {"channel": "candidate", "info": "none"},
-                        {
-                            "channel": "beta",
-                            "info": "specific",
-                            "version": "1.1",
-                            "revision": 42,
-                        },
-                        {"channel": "edge", "info": "tracking"},
-                    ],
-                    "armhf": [
-                        {"channel": "stable", "info": "none"},
-                        {
-                            "channel": "beta",
-                            "info": "specific",
-                            "version": "1.2",
-                            "revision": 24,
-                        },
-                        {"channel": "beta", "info": "tracking"},
-                        {"channel": "edge", "info": "tracking"},
-                    ],
-                }
-            }
-        }
-        mock_close_channels.side_effect = [(closed_channels, channel_map_tree)]
-
-        result = self.run_command(["close", "basic", "beta"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     -          -           -
-                             candidate  -          -           -
-                             beta       1.1        42          -
-                             edge       ^          ^           -
-                     armhf   stable     -          -           -
-                             beta       1.2        24          -
-                             beta       ^          ^           -
-                             edge       ^          ^           -
-
-            \x1b[0;32mThe beta channel is now closed.\x1b[0m"""
-                )
-            ),
-        )
-
-    @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
-    @mock.patch.object(storeapi._sca_client.SCAClient, "close_channels")
-    def test_close_branches(self, mock_close_channels, mock_get_account_info):
-        mock_get_account_info.return_value = {
-            "snaps": {"16": {"basic": {"snap-id": "snap-id"}}}
-        }
-        closed_channels = ["stable/hotfix-1"]
-        channel_map_tree = {
-            "latest": {
-                "16": {
-                    "amd64": [
-                        {"channel": "stable", "info": "none"},
-                        {"channel": "candidate", "info": "none"},
-                        {
-                            "channel": "beta",
-                            "info": "specific",
-                            "version": "1.1",
-                            "revision": 42,
-                        },
-                        {"channel": "edge", "info": "tracking"},
-                        {
-                            "channel": "stable/hotfix-2",
-                            "info": "branch",
-                            "version": "1.3",
-                            "revision": 49,
-                            "expires_at": "2017-05-21T18:52:14.578435",
-                        },
-                    ]
-                }
-            }
-        }
-        mock_close_channels.side_effect = [(closed_channels, channel_map_tree)]
-
-        result = self.run_command(["close", "basic", "stable/hotfix-1"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel          Version    Revision    Notes    Expires at
-            latest   amd64   stable           -          -           -
-                             candidate        -          -           -
-                             beta             1.1        42          -
-                             edge             ^          ^           -
-                             stable/hotfix-2  1.3        49          -        2017-05-21T18:52:14.578435
-
-            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m"""
-                )
-            ),
-        )  # noqa
