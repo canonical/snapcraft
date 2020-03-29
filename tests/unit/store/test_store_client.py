@@ -1008,7 +1008,6 @@ class ReleaseTestCase(StoreTestCase):
             "test-snap",
             "19",
             ["beta"],
-            progressive_key="progressive_key",
             progressive_percentage=10,
         )
         expected_channel_map = {
