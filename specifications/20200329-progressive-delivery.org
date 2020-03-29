@@ -91,7 +91,7 @@ As this API is the preferred mechanism used for displaying /status/, the [[https
 endpoint shall be removed from the code base.
 
 ** Affected commands
-These commands are affected as they display status information on command exectution:
+These commands are affected as they display status information on command execution:
 - =release=
 - =status=
 - =promote=
