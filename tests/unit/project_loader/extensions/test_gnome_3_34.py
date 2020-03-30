@@ -186,6 +186,8 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                             plugin: nil
                             build-environment: *id001
                           gnome-3-34-extension:
+                            build-packages:
+                            - gcc
                             build-snaps:
                             - gnome-3-34-1804-sdk/latest/stable
                             plugin: make
