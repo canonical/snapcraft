@@ -695,13 +695,8 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         return process.wait()
 
-    def close(self, *args, **kwargs):
-        process = self.spawn_snapcraft(["close"] + list(args))
-        expected = kwargs.get("expected")
-        if expected is not None:
-            process.expect(expected)
-        process.expect(pexpect.EOF)
-        return process.wait()
+    def close(self, *args, **kwargs) -> str:
+        return self.run_snapcraft(["close"] + list(args))
 
     def push(self, snap, release=None, expected=None):
         actions = ["push", snap]
