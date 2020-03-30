@@ -343,38 +343,6 @@ class _AptCache:
 
         return _get_local_sources_list()
 
-    def fetch_binary(self, *, package_candidate, destination: str) -> str:
-        # This is a workaround for the overly verbose python-apt we use.
-        # There is an unreleased patch which once released could replace
-        # this code https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc  # noqa
-        # What follows is almost a tit for tat implementation of upstream's
-        # fetch_binary logic.
-        base = os.path.basename(package_candidate._records.filename)
-        destfile = os.path.join(destination, base)
-        if apt.package._file_is_same(
-            destfile, package_candidate.size, package_candidate._records.md5_hash
-        ):
-            logging.debug("Ignoring already existing file: {}".format(destfile))
-            return os.path.abspath(destfile)
-        acq = apt.apt_pkg.Acquire(self.progress)
-        acqfile = apt.apt_pkg.AcquireFile(
-            acq,
-            package_candidate.uri,
-            package_candidate._records.md5_hash,
-            package_candidate.size,
-            base,
-            destfile=destfile,
-        )
-        acq.run()
-
-        if acqfile.status != acqfile.STAT_DONE:
-            raise apt.package.FetchError(
-                "The item %r could not be fetched: %s"
-                % (acqfile.destfile, acqfile.error_text)
-            )
-
-        return os.path.abspath(destfile)
-
 
 class Ubuntu(BaseRepo):
     @classmethod
@@ -627,29 +595,14 @@ class Ubuntu(BaseRepo):
             )
 
     def _get(self, apt_cache):
-        # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
-        # mangle some package names on disk such that we can't match it up to
-        # the archive later. We could get around this a few different ways:
-        #
-        # 1. Store each stage package in the cache named by a hash instead of
-        #    its name from the archive.
-        # 2. Download packages in a different manner.
-        #
-        # In the end, (2) was chosen for minimal overhead and a simpler cache
-        # implementation. So we're using fetch_binary() here instead.
-        # Downloading each package individually has the drawback of witholding
-        # any clue of how long the whole pulling process will take, but that's
-        # something we'll have to live with.
         pkg_list = []
         for package in apt_cache.get_changes():
             pkg_list.append(str(package.candidate))
             try:
-                source = self._apt.fetch_binary(
-                    package_candidate=package.candidate,
-                    destination=self._cache.packages_dir,
-                )
+                source = package.candidate.fetch_binary(self._cache.packages_dir)
             except apt.package.FetchError as e:
                 raise errors.PackageFetchError(str(e))
+
             destination = os.path.join(self._downloaddir, os.path.basename(source))
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
