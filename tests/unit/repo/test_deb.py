@@ -557,7 +557,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
     @patch("subprocess.check_call")
     def test_refresh_buid_packages(self, mock_check_call):
-        repo.Ubuntu.refresh()
+        repo.Ubuntu.refresh_build_packages()
 
         mock_check_call.assert_called_once_with(
             ["sudo", "--preserve-env", "apt-get", "update"]

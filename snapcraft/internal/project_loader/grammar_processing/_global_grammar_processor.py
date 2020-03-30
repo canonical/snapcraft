@@ -47,7 +47,7 @@ class GlobalGrammarProcessor:
             processor = grammar.GrammarProcessor(
                 self._build_package_grammar,
                 self._project,
-                repo.Repo.is_valid,
+                repo.Repo.is_valid_package,
                 transformer=package_transformer,
             )
             self.__build_packages = processor.process()

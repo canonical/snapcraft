@@ -38,22 +38,14 @@ class BaseRepo:
     """Base implementation for a platform specific repo handler.
 
     Generally any new repo handling system would inherit from this and
-    implement:
-
-    - get
-    - unpack
-    - get_package_libraries
-    - get_packages_for_source_type
-    - refresh
-    - install_build_packages
-    - is_package_installed
+    implement all interfaces below that raise errors.NoNativeBackendError().
 
     At the end of the `unpack` method `normalize` needs to be called to
     adapt the artifacts downloaded to be generic enough for building a snap."""
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
-        """Return a list of libraries in package_name.
+        """Return a set of libraries in package_name.
 
         Given the contents of package_name, return the subset of what are
         considered libraries from those contents, be it static or shared.
@@ -101,7 +93,7 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def refresh(cls) -> None:
+    def refresh_build_packages(cls) -> None:
         """Refresh the build packages cache.
 
         If refreshing is not possible
@@ -135,6 +127,15 @@ class BaseRepo:
         :rtype: list of strings.
         :raises snapcraft.repo.errors.NoNativeBackendError:
             if the method is not implemented in the subclass.
+        """
+        raise errors.NoNativeBackendError()
+
+    @classmethod
+    def is_valid_package(cls, package_name):
+        """Check that a given package is valid on the host.
+
+        :param package_name: a package name to check.
+        :type package_name: str
         """
         raise errors.NoNativeBackendError()
 

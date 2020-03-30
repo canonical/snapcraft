@@ -377,7 +377,7 @@ class ColconPlugin(snapcraft.BasePlugin):
             logger.info("Installing apt dependencies...")
             try:
                 repo.Ubuntu.install_stage_packages(
-                    apt_dependencies, install_dir=self.installdir
+                    package_names=apt_dependencies, install_dir=self.installdir
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise ColconAptDependencyFetchError(e.message)

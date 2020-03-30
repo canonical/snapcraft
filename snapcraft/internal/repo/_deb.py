@@ -225,7 +225,7 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def refresh(cls) -> None:
+    def refresh_build_packages(cls) -> None:
         try:
             subprocess.check_call(["sudo", "--preserve-env", "apt-get", "update"])
         except subprocess.CalledProcessError as call_error:
@@ -315,6 +315,13 @@ class Ubuntu(BaseRepo):
         return cls._cache[package_name]
 
     @classmethod
+    def _is_filtered_package(cls, package_name: str) -> bool:
+        # Filter out packages provided by the core snap.
+        # TODO: use manifest found in core snap, if found at:
+        # <core-snap>/usr/share/snappy/dpkg.list
+        return package_name in _DEFAULT_FILTERED_STAGE_PACKAGES
+
+    @classmethod
     def _mark_package_dependencies(
         cls,
         *,
@@ -327,7 +334,7 @@ class Ubuntu(BaseRepo):
             # already marked, ignore.
             return
 
-        if package.name in _DEFAULT_FILTERED_STAGE_PACKAGES:
+        if cls._is_filtered_package(package.name):
             skipped_blacklisted.add(package.name)
             return
 
@@ -423,7 +430,7 @@ class Ubuntu(BaseRepo):
         return package.installed.version if package.installed else None
 
     @classmethod
-    def is_valid(cls, package_name: str) -> bool:
+    def is_valid_package(cls, package_name: str) -> bool:
         return package_name in cls._cache
 
     @classmethod
@@ -457,12 +464,9 @@ class Ubuntu(BaseRepo):
                 command = [
                     "sudo",
                     "install",
-                    "-o",
-                    "root",
-                    "-g",
-                    "root",
-                    "-m",
-                    "0644",
+                    "--owner=root",
+                    "--group=root",
+                    "--mode=0644",
                     src_f.name,
                     str(dst_path),
                 ]
@@ -492,6 +496,6 @@ class Ubuntu(BaseRepo):
         source_line = source_line.format(os_codename=os_codename)
 
         cls._sudo_write_file(dst_path=conf, content=source_line.encode())
-        cls.refresh()
+        cls.refresh_build_packages()
 
         logger.debug(f"Installed apt repository in {conf}: {source_line}")

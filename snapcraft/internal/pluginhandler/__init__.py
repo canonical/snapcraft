@@ -537,6 +537,8 @@ class PluginHandler:
 
     def prepare_build(self, force=False):
         self.makedirs()
+        # Stage packages are fetched and unpacked in the pull step, but we'll
+        # unpack again here just in case the build step has been cleaned.
         self._install_stage_packages()
 
     def build(self, force=False):

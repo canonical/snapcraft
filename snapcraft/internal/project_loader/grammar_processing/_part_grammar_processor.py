@@ -31,7 +31,7 @@ class PartGrammarProcessor:
     >>> import snapcraft
     >>> # Pretend that all packages are valid
     >>> repo = mock.Mock()
-    >>> repo.is_valid.return_value = True
+    >>> repo.is_valid_package.return_value = True
     >>> plugin = mock.Mock()
     >>> plugin.stage_packages = [{'try': ['foo']}]
     >>> processor = PartGrammarProcessor(
@@ -47,7 +47,7 @@ class PartGrammarProcessor:
     >>> import snapcraft
     >>> # Pretend that all packages are valid
     >>> repo = mock.Mock()
-    >>> repo.is_valid.return_value = True
+    >>> repo.is_valid_package.return_value = True
     >>> plugin = mock.Mock()
     >>> plugin.build_packages = [{'try': ['foo']}]
     >>> processor = PartGrammarProcessor(
@@ -136,7 +136,7 @@ class PartGrammarProcessor:
             processor = grammar.GrammarProcessor(
                 getattr(self._plugin, "build_packages", []),
                 self._project,
-                self._repo.is_valid,
+                self._repo.is_valid_package,
                 transformer=package_transformer,
             )
             self.__build_packages = processor.process()
@@ -148,7 +148,7 @@ class PartGrammarProcessor:
             processor = grammar.GrammarProcessor(
                 getattr(self._plugin, "stage_packages", []),
                 self._project,
-                self._repo.is_valid,
+                self._repo.is_valid_package,
                 transformer=package_transformer,
             )
             self.__stage_packages = processor.process()
