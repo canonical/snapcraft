@@ -50,7 +50,7 @@ class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
 
 class RefreshCommandTestCase(RefreshCommandBaseTestCase):
-    @mock.patch("snapcraft.cli.containers.repo.Repo.refresh_build_packages")
+    @mock.patch("snapcraft.cli.containers.repo.Repo.refresh")
     def test_refresh(self, mock_repo_refresh):
         self.make_snapcraft_yaml()
 

@@ -136,7 +136,7 @@ class PartGrammarProcessor:
             processor = grammar.GrammarProcessor(
                 getattr(self._plugin, "build_packages", []),
                 self._project,
-                self._repo.build_package_is_valid,
+                self._repo.is_valid,
                 transformer=package_transformer,
             )
             self.__build_packages = processor.process()

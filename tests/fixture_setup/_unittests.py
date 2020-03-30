@@ -526,7 +526,7 @@ class FakeAptCache(fixtures.Fixture):
             open(path, "w").close()
             return path
 
-        patcher = mock.patch("snapcraft.repo._deb._AptCache.fetch_binary")
+        patcher = mock.patch("apt.Cache.fetch_binary")
         mock_fetch_binary = patcher.start()
         mock_fetch_binary.side_effect = fetch_binary
         self.addCleanup(patcher.stop)

@@ -235,33 +235,6 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         return self.__pip
 
-    @property
-    def PLUGIN_STAGE_SOURCES(self):
-        ros_repo = "http://repo.ros2.org/ubuntu/main"
-        ubuntu_repo = "http://${prefix}.ubuntu.com/${suffix}/"
-        security_repo = "http://${security}.ubuntu.com/${suffix}/"
-
-        return textwrap.dedent(
-            """
-            deb {ros_repo} {codename} main
-            deb {ubuntu_repo} {codename} main universe
-            deb {ubuntu_repo} {codename}-updates main universe
-            deb {ubuntu_repo} {codename}-security main universe
-            deb {security_repo} {codename}-security main universe
-            """.format(
-                ros_repo=ros_repo,
-                ubuntu_repo=ubuntu_repo,
-                security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
-                    self.project.info.get_build_base()
-                ],
-            )
-        )
-
-    @property
-    def PLUGIN_STAGE_KEYRINGS(self):
-        return [_ROS_KEYRING_PATH]
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.out_of_source_build = True
@@ -326,6 +299,15 @@ class ColconPlugin(snapcraft.BasePlugin):
         if os.path.abspath(self.sourcedir) == os.path.abspath(self._ros_package_path):
             raise ColconWorkspaceIsRootError()
 
+        self._install_ros2_repo()
+
+    def _install_ros2_repo(self) -> None:
+        repo.Ubuntu.add_gpg_keyring(name="ros2", gpg_keyring_path=_ROS_KEYRING_PATH)
+        repo.Ubuntu.add_source(
+            name="ros2",
+            source_line="deb http://repo.ros2.org/ubuntu/main/ {os_codename} main",
+        )
+
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
@@ -374,8 +356,6 @@ class ColconPlugin(snapcraft.BasePlugin):
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
                 self.project.info.get_build_base()
             ],
-            ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
-            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,
         )
         rosdep.setup()
@@ -394,25 +374,13 @@ class ColconPlugin(snapcraft.BasePlugin):
 
     def _setup_apt_dependencies(self, apt_dependencies):
         if apt_dependencies:
-            ubuntudir = os.path.join(self.partdir, "ubuntu")
-            os.makedirs(ubuntudir, exist_ok=True)
-
-            logger.info("Preparing to fetch apt dependencies...")
-            ubuntu = repo.Ubuntu(
-                ubuntudir,
-                sources=self.PLUGIN_STAGE_SOURCES,
-                keyrings=self.PLUGIN_STAGE_KEYRINGS,
-                project_options=self.project,
-            )
-
-            logger.info("Fetching apt dependencies...")
+            logger.info("Installing apt dependencies...")
             try:
-                ubuntu.get(apt_dependencies)
+                repo.Ubuntu.install_stage_packages(
+                    apt_dependencies, install_dir=self.installdir
+                )
             except repo.errors.PackageNotFoundError as e:
                 raise ColconAptDependencyFetchError(e.message)
-
-            logger.info("Installing apt dependencies...")
-            ubuntu.unpack(self.installdir)
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:

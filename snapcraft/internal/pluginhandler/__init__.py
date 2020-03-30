@@ -427,28 +427,24 @@ class PluginHandler:
                 self.plugin.installdir, clean_target=False, keep_snap=True
             )
 
-    def _fetch_stage_packages(self):
+    def _install_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug("Fetching stage-packages {!r}".format(stage_packages))
+            logger.debug("Installing stage-packages {!r}".format(stage_packages))
+
             try:
-                self.stage_packages = self._stage_packages_repo.get(stage_packages)
+                self.stage_packages = self._stage_packages_repo.install_stage_packages(
+                    package_names=stage_packages, install_dir=self.plugin.installdir
+                )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)
 
-    def _unpack_stage_packages(self):
-        stage_packages = self._grammar_processor.get_stage_packages()
-        if stage_packages:
-            logger.debug(
-                "Unpacking stage-packages to {!r}".format(self.plugin.installdir)
-            )
-            self._stage_packages_repo.unpack(self.plugin.installdir)
-
     def prepare_pull(self, force=False):
         self.makedirs()
-        self._fetch_stage_packages()
+        # TODO: This is redundant with prepare_build() and should be removed.
+        # This requires that all build actions to be decoupled from pull step.
+        self._install_stage_packages()
         self._fetch_stage_snaps()
-        self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
     def pull(self, force=False):
@@ -541,9 +537,7 @@ class PluginHandler:
 
     def prepare_build(self, force=False):
         self.makedirs()
-        # Stage packages are fetched and unpacked in the pull step, but we'll
-        # unpack again here just in case the build step has been cleaned.
-        self._unpack_stage_packages()
+        self._install_stage_packages()
 
     def build(self, force=False):
         self.makedirs()

@@ -131,7 +131,7 @@ class FixXmlToolsTestCase(RepoBaseTestCase):
             with open(path, "w") as f:
                 f.write(test_file["content"])
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         for test_file in self.files:
             self.assertThat(test_file["path"], FileContains(test_file["expected"]))
@@ -195,7 +195,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         with open(self.file_path, "w") as fd:
             fd.write(self.content)
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         with open(self.file_path, "r") as fd:
             self.assertThat(fd.read(), Equals(self.expected))
@@ -243,7 +243,7 @@ class RemoveUselessFilesTestCase(RepoBaseTestCase):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, "w").close()
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         self.assertThat(path, self.matcher)
 
@@ -271,7 +271,7 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
                 )
             )
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         expected_pc_file_content = dedent(
             """\
@@ -312,7 +312,7 @@ class FixSymlinksTestCase(RepoBaseTestCase):
     def test_fix_symlinks(self):
         os.symlink(self.src, self.dst)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         self.assertThat(os.readlink(self.dst), Equals(self.src))
 
@@ -337,6 +337,6 @@ class FixSUIDTestCase(RepoBaseTestCase):
         open(file, mode="w").close()
         os.chmod(file, self.test_mod)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         self.assertThat(stat.S_IMODE(os.stat(file).st_mode), Equals(self.expected_mod))

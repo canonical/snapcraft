@@ -134,8 +134,6 @@ class CatkinPluginBaseTest(unit.TestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
-                    ubuntu_sources=sources,
-                    ubuntu_keyrings=keyrings,
                     project=self.project,
                 ),
                 mock.call().setup(),
@@ -349,8 +347,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             )
         )
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
+        catkin.CatkinPlugin("test-part", self.properties, self.project)
 
     def test_get_stage_sources_core16(self):
         self.project = snapcraft.project.Project(
@@ -364,8 +361,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             )
         )
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
+        catkin.CatkinPlugin("test-part", self.properties, self.project)
 
     def test_get_stage_sources_core18(self):
         self.project = snapcraft.project.Project(
@@ -379,8 +375,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             )
         )
 
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("bionic" in plugin.PLUGIN_STAGE_SOURCES)
+        catkin.CatkinPlugin("test-part", self.properties, self.project)
 
     def test_pull_invalid_dependency(self):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
@@ -1020,8 +1015,6 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1063,8 +1056,6 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1112,8 +1103,6 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()
@@ -1146,15 +1135,11 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.assert_wstool_setup(
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "wstool"),
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_has_calls(
@@ -1191,8 +1176,6 @@ class PullTestCase(CatkinPluginBaseTest):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.wstool_mock.assert_not_called()

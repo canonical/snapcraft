@@ -288,33 +288,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         return self.__pip
 
-    @property
-    def PLUGIN_STAGE_SOURCES(self):
-        ros_repo = "http://packages.ros.org/ros/ubuntu/"
-        ubuntu_repo = "http://${prefix}.ubuntu.com/${suffix}/"
-        security_repo = "http://${security}.ubuntu.com/${suffix}/"
-
-        return textwrap.dedent(
-            """
-            deb {ros_repo} {codename} main
-            deb {ubuntu_repo} {codename} main universe
-            deb {ubuntu_repo} {codename}-updates main universe
-            deb {ubuntu_repo} {codename}-security main universe
-            deb {security_repo} {codename}-security main universe
-            """.format(
-                ros_repo=ros_repo,
-                ubuntu_repo=ubuntu_repo,
-                security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
-                    self.project.info.get_build_base()
-                ],
-            )
-        )
-
-    @property
-    def PLUGIN_STAGE_KEYRINGS(self):
-        return [_ROS_KEYRING_PATH]
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
@@ -357,6 +330,15 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         if os.path.abspath(self.sourcedir) == os.path.abspath(self._ros_package_path):
             raise CatkinWorkspaceIsRootError()
+
+        self._install_ros_repo()
+
+    def _install_ros_repo(self) -> None:
+        repo.Ubuntu.add_gpg_keyring(name="ros1", gpg_keyring_path=_ROS_KEYRING_PATH)
+        repo.Ubuntu.add_source(
+            name="ros1",
+            source_line="deb http://packages.ros.org/ros/ubuntu/ {os_codename} main",
+        )
 
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
@@ -446,11 +428,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # with the pull.
         if self.options.rosinstall_files or self.options.recursive_rosinstall:
             wstool = _ros.wstool.Wstool(
-                self._ros_package_path,
-                self._wstool_path,
-                self.PLUGIN_STAGE_SOURCES,
-                self.PLUGIN_STAGE_KEYRINGS,
-                self.project,
+                self._ros_package_path, self._wstool_path, self.project
             )
             wstool.setup()
 
@@ -509,12 +487,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         # Use catkin_find to discover dependencies already in the underlay
         catkin = _Catkin(
-            self._rosdistro,
-            dependency_workspaces,
-            self._catkin_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
+            self._rosdistro, dependency_workspaces, self._catkin_path, self.project
         )
         catkin.setup()
 
@@ -526,8 +499,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
                 self.project.info.get_build_base()
             ],
-            ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
-            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,
         )
         rosdep.setup()
@@ -564,12 +535,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             os.makedirs(ubuntudir, exist_ok=True)
 
             logger.info("Preparing to fetch apt dependencies...")
-            ubuntu = repo.Ubuntu(
-                ubuntudir,
-                sources=self.PLUGIN_STAGE_SOURCES,
-                keyrings=self.PLUGIN_STAGE_KEYRINGS,
-                project_options=self.project,
-            )
+            ubuntu = repo.Ubuntu(ubuntudir, project_options=self.project)
 
             logger.info("Fetching apt dependencies...")
             try:
@@ -990,15 +956,11 @@ class _Catkin:
         ros_distro: str,
         workspaces: List[str],
         catkin_path: str,
-        ubuntu_sources: str,
-        ubuntu_keyrings: str,
         project: "Project",
     ) -> None:
         self._ros_distro = ros_distro
         self._workspaces = workspaces
         self._catkin_path = catkin_path
-        self._ubuntu_sources = ubuntu_sources
-        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
         self._catkin_install_path = os.path.join(self._catkin_path, "install")
 
@@ -1007,18 +969,11 @@ class _Catkin:
 
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
-        logger.info("Preparing to fetch catkin...")
-        ubuntu = repo.Ubuntu(
-            self._catkin_path,
-            sources=self._ubuntu_sources,
-            keyrings=self._ubuntu_keyrings,
-            project_options=self._project,
-        )
-        logger.info("Fetching catkin...")
-        ubuntu.get(["ros-{}-catkin".format(self._ros_distro)])
-
         logger.info("Installing catkin...")
-        ubuntu.unpack(self._catkin_install_path)
+        repo.Ubuntu.install_stage_packages(
+            package_names=["ros-{}-catkin".format(self._ros_distro)],
+            install_dir=self._wstool_install_path,
+        )
 
     def find(self, package_name):
         with contextlib.suppress(subprocess.CalledProcessError):

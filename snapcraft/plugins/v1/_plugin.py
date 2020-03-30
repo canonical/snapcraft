@@ -53,16 +53,6 @@ class PluginV1:
         return []
 
     @property
-    def PLUGIN_STAGE_SOURCES(self):
-        """Define alternative sources.list."""
-        return getattr(self, "_PLUGIN_STAGE_SOURCES", [])
-
-    @property
-    def PLUGIN_STAGE_KEYRINGS(self):
-        """Define additional keyrings to trust for stage-packages."""
-        return getattr(self, "_PLUGIN_STAGE_KEYRINGS", [])
-
-    @property
     def stage_packages(self):
         return self._stage_packages
 

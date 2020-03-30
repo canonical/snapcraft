@@ -399,7 +399,7 @@ class AutokeepTestCase(RepoBaseTestCase):
         ]
 
         project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu
         ubuntu.get(["main-package", "conflicting-dependency"])
 
         # Verify that the package was actually fetched and copied into the
@@ -557,7 +557,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
     @patch("subprocess.check_call")
     def test_refresh_buid_packages(self, mock_check_call):
-        repo.Ubuntu.refresh_build_packages()
+        repo.Ubuntu.refresh()
 
         mock_check_call.assert_called_once_with(
             ["sudo", "--preserve-env", "apt-get", "update"]
@@ -570,9 +570,7 @@ class BuildPackagesTestCase(unit.TestCase):
         ),
     )
     def test_refresh_buid_packages_fails(self, mock_check_call):
-        self.assertRaises(
-            errors.CacheUpdateFailedError, repo.Ubuntu.refresh_build_packages
-        )
+        self.assertRaises(errors.CacheUpdateFailedError, repo.Ubuntu.refresh)
 
         mock_check_call.assert_called_once_with(
             ["sudo", "--preserve-env", "apt-get", "update"]
