@@ -39,7 +39,7 @@ channel set to 80% with 71% for the /progressive release/ and 23% of the
 population on the actual release, the following behavior shall be observed:
 
 #+BEGIN_SRC sh
-$ snapcraft staging servers> snapcraft status candycane
+$ snapcraft status candycane
 Track     Arch    Channel    Version    Revision    Progress
 latest    all     stable     -          -           -
                   candidate  -          -           -
@@ -52,7 +52,7 @@ If a /progressive release/ is done on =edge= while =edge= is currently
 following =beta=, then following information shall be observed:
 
 #+BEGIN_SRC sh
-$ snapcraft staging servers> snapcraft status candycane
+$ snapcraft status candycane
 Track     Arch    Channel    Version    Revision    Progress
 latest    all     stable     -          -           -
                   candidate  -          -           -
