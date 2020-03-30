@@ -21,3 +21,14 @@
 - [ ] Amend schema to allow =compression=
 - [ ] Replace =mksquashfs= with =snap pack=
 - [ ] Toggle compression with =snap pack=
+*** TODO [[file:specifications/20200329-progressive-delivery.org][Progressive Delivery]] [/]
+- [ ] Implement channel-map endpoint
+- [ ] Add support for the status command
+- [ ] Add support for the release command
+- [ ] Add support for the close command
+- [ ] Add support for the promote command
+- [ ] Migrate promote away from using the state endpoint
+- [ ] Remove the state endpoint
+- [ ] Add support for metrics
+- [ ] Add support for specific channel-map endpoint errors
+- [ ] Remove experimental flag
