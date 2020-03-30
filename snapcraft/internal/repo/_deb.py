@@ -40,8 +40,6 @@ from ._base import BaseRepo
 
 logger = logging.getLogger(__name__)
 
-
-_library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
     "adduser",
@@ -158,7 +156,7 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
 
 
 @functools.lru_cache(maxsize=256)
-def _run_dpkg_query_s(file_path: str) -> str:
+def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
@@ -180,6 +178,18 @@ def _run_dpkg_query_s(file_path: str) -> str:
         0
     ]
     return provides_output.split(":")[0]
+
+
+@functools.lru_cache(maxsize=256)
+def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
+    output = (
+        subprocess.check_output(["dpkg", "-L", package_name])
+        .decode(sys.getfilesystemencoding())
+        .strip()
+        .split()
+    )
+
+    return {i for i in output if ("lib" in i and os.path.isfile(i))}
 
 
 class _AptCache:
@@ -378,24 +388,12 @@ class _AptCache:
 
 class Ubuntu(BaseRepo):
     @classmethod
-    def get_package_libraries(cls, package_name):
-        global _library_list
-        if package_name not in _library_list:
-            output = (
-                subprocess.check_output(["dpkg", "-L", package_name])
-                .decode(sys.getfilesystemencoding())
-                .strip()
-                .split()
-            )
-            _library_list[package_name] = {
-                i for i in output if ("lib" in i and os.path.isfile(i))
-            }
-
-        return _library_list[package_name].copy()
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
+        return _run_dpkg_query_list_files(package_name)
 
     @classmethod
     def get_package_for_file(cls, file_path: str) -> str:
-        return _run_dpkg_query_s(file_path)
+        return _run_dpkg_query_search(file_path)
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
