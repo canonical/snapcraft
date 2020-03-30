@@ -171,15 +171,15 @@ class CloseCommandTestCase(FakeStoreCommandsBaseTestCase):
             Equals(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision
-            latest   amd64   stable     -          -
-                             candidate  -          -
-                             beta       -          -
-                             edge       10         19
-            2.1      s390x   stable     -          -
-                             candidate  -          -
-                             beta       -          -
-                             edge       10         20
+           Track    Arch    Channel    Version    Revision
+           latest   amd64   stable     -          -
+                            candidate  -          -
+                            beta       -          -
+                            edge       10         19
+           2.1      s390x   stable     -          -
+                            candidate  -          -
+                            beta       -          -
+                            edge       10         20
            The beta and 2.1/beta channels are now closed.
            """
                 )
