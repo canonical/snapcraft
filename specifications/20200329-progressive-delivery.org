@@ -30,7 +30,6 @@ When the flag is used, the following shall be displayed using
 #+END_SRC
 
 * User Experience
-
 ** Showing Progress
 Progress shall be displayed when used when the definitions in [[*Enabling the feature][Enabling the feature]]
 are satisfied.
@@ -40,7 +39,7 @@ channel set to 80% with 71% for the /progressive release/ and 23% of the
 population on the actual release, the following behavior shall be observed:
 
 #+BEGIN_SRC sh
-$ snapcraft staging servers> snapcraft status candycane
+$ snapcraft status candycane
 Track     Arch    Channel    Version    Revision    Progress
 latest    all     stable     -          -           -
                   candidate  -          -           -
@@ -53,7 +52,7 @@ If a /progressive release/ is done on =edge= while =edge= is currently
 following =beta=, then following information shall be observed:
 
 #+BEGIN_SRC sh
-$ snapcraft staging servers> snapcraft status candycane
+$ snapcraft status candycane
 Track     Arch    Channel    Version    Revision    Progress
 latest    all     stable     -          -           -
                   candidate  -          -           -
@@ -75,7 +74,9 @@ Will create a /progressive release/ for each =channel= with a percentage of
 scoped to tracks in =channel= the architecture of =revision= shall be displayed
 followed by the list of opened channels.
 
-When the progressive =percentage= is set to 100%, a normal release shall take place.
+When the progressive =percentage= is set to 100%, a normal release shall take
+place.
+
 * Implementation
 ** Snap Store API
 New API is required to implement the /progressive delivery/ feature. That is
