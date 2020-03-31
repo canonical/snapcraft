@@ -114,20 +114,20 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
     def _setup_base_tools(self, base):
         extra_packages = [
-                    "libcurl3",
-                    "libcurl3-gnutls",
-                    "liblttng-ust0",
-                    "libunwind8",
-                    "lldb",
-                    "libssl1.0.0",
-                    "libgssapi-krb5-2",
-                    "zlib1g",
-                    "libgcc1",
-                ]
+            "libcurl3",
+            "libcurl3-gnutls",
+            "liblttng-ust0",
+            "libunwind8",
+            "lldb",
+            "libssl1.0.0",
+            "libgssapi-krb5-2",
+            "zlib1g",
+            "libgcc1",
+        ]
         if base in ("core", "core16"):
-            self.stage_packages += extra_packages + ['libicu55']
+            self.stage_packages += extra_packages + ["libicu55"]
         elif base in ("core18",):
-            self.stage_packages += extra_packages + ['libicu60']
+            self.stage_packages += extra_packages + ["libicu60"]
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
@@ -200,7 +200,9 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def _get_dotnet_release_metadata(self):
         package_metadata = []
 
-        metadata_url = _DOTNET_RELEASE_METADATA_URL.format(version=self.options.dotnet_version)
+        metadata_url = _DOTNET_RELEASE_METADATA_URL.format(
+            version=self.options.dotnet_version
+        )
         req = urllib.request.Request(metadata_url)
         r = urllib.request.urlopen(req).read()
         package_metadata = json.loads(r.decode("utf-8"))

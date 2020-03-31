@@ -272,4 +272,3 @@ class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
                 ]
             ),
         )
-
