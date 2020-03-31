@@ -241,6 +241,7 @@ suites:
        libxslt-dev \
        libyaml-dev \
        python3-venv \
+       python3-wheel \
        python3-yaml \
        python3.6-dev \
        rpm2cpio \
@@ -257,6 +258,7 @@ suites:
        libxslt-dev \
        libyaml-dev \
        python3-venv \
+       python3-wheel \
        python3-yaml \
        python3.6-dev \
        rpm2cpio \
