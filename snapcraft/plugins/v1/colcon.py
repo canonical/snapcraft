@@ -237,26 +237,7 @@ class ColconPlugin(snapcraft.BasePlugin):
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
-        ros_repo = "http://repo.ros2.org/ubuntu/main"
-        ubuntu_repo = "http://${prefix}.ubuntu.com/${suffix}/"
-        security_repo = "http://${security}.ubuntu.com/${suffix}/"
-
-        return textwrap.dedent(
-            """
-            deb {ros_repo} {codename} main
-            deb {ubuntu_repo} {codename} main universe
-            deb {ubuntu_repo} {codename}-updates main universe
-            deb {ubuntu_repo} {codename}-security main universe
-            deb {security_repo} {codename}-security main universe
-            """.format(
-                ros_repo=ros_repo,
-                ubuntu_repo=ubuntu_repo,
-                security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
-                    self.project.info.get_build_base()
-                ],
-            )
-        )
+        return ["deb http://repo.ros2.org/ubuntu/main ${release} main"]
 
     @property
     def PLUGIN_STAGE_KEYRINGS(self):

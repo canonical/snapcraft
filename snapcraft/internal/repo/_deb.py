@@ -26,7 +26,7 @@ import string
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Set, Tuple  # noqa: F401
+from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
 import apt
 
@@ -183,12 +183,9 @@ def _run_dpkg_query_s(file_path: str) -> str:
 
 
 class _AptCache:
-    def __init__(self, deb_arch, *, sources_list=None, keyrings=None):
+    def __init__(self, deb_arch, *, sources: List[str], keyrings: List[str]):
         self._deb_arch = deb_arch
-        self._sources_list = sources_list
-
-        if not keyrings:
-            keyrings = list()
+        self._sources = sources
         self._keyrings = keyrings
 
     def _setup_apt(self, cache_dir):
@@ -332,16 +329,20 @@ class _AptCache:
             self._collected_sources_list().encode(sys.getfilesystemencoding())
         ).hexdigest()
 
-    def _collected_sources_list(self):
-        if self._sources_list:
+    def _collected_sources_list(self) -> str:
+        sources = _get_local_sources_list()
+
+        # Append additionally configured repositories, if any.
+        if self._sources:
             release = os_release.OsRelease()
-            return _format_sources_list(
-                self._sources_list,
+            additional_sources = _format_sources_list(
+                "\n".join(self._sources),
                 deb_arch=self._deb_arch,
                 release=release.version_codename(),
             )
+            sources = "\n".join([sources, additional_sources])
 
-        return _get_local_sources_list()
+        return sources
 
 
 class Ubuntu(BaseRepo):
@@ -524,7 +525,11 @@ class Ubuntu(BaseRepo):
         return installed_packages
 
     def __init__(
-        self, rootdir, sources=None, keyrings=None, project_options=None
+        self,
+        rootdir,
+        sources: Optional[List[str]] = None,
+        keyrings: Optional[List[str]] = None,
+        project_options=None,
     ) -> None:
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, "download")
@@ -532,8 +537,14 @@ class Ubuntu(BaseRepo):
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
+        if sources is None:
+            sources = list()
+
+        if keyrings is None:
+            keyrings = list()
+
         self._apt = _AptCache(
-            project_options.deb_arch, sources_list=sources, keyrings=keyrings
+            project_options.deb_arch, sources=sources, keyrings=keyrings
         )
 
         self._cache = cache.AptStagePackageCache(
