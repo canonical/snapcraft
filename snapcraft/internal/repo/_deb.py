@@ -26,7 +26,7 @@ import string
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Set, Tuple  # noqa: F401
+from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
 import apt
 
@@ -40,8 +40,6 @@ from ._base import BaseRepo
 
 logger = logging.getLogger(__name__)
 
-
-_library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
     "adduser",
@@ -158,7 +156,7 @@ _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
 
 
 @functools.lru_cache(maxsize=256)
-def _run_dpkg_query_s(file_path: str) -> str:
+def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
@@ -182,13 +180,22 @@ def _run_dpkg_query_s(file_path: str) -> str:
     return provides_output.split(":")[0]
 
 
-class _AptCache:
-    def __init__(self, deb_arch, *, sources_list=None, keyrings=None):
-        self._deb_arch = deb_arch
-        self._sources_list = sources_list
+@functools.lru_cache(maxsize=256)
+def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
+    output = (
+        subprocess.check_output(["dpkg", "-L", package_name])
+        .decode(sys.getfilesystemencoding())
+        .strip()
+        .split()
+    )
 
-        if not keyrings:
-            keyrings = list()
+    return {i for i in output if ("lib" in i and os.path.isfile(i))}
+
+
+class _AptCache:
+    def __init__(self, deb_arch, *, sources: List[str], keyrings: List[str]):
+        self._deb_arch = deb_arch
+        self._sources = sources
         self._keyrings = keyrings
 
     def _setup_apt(self, cache_dir):
@@ -332,16 +339,20 @@ class _AptCache:
             self._collected_sources_list().encode(sys.getfilesystemencoding())
         ).hexdigest()
 
-    def _collected_sources_list(self):
-        if self._sources_list:
+    def _collected_sources_list(self) -> str:
+        sources = _get_local_sources_list()
+
+        # Append additionally configured repositories, if any.
+        if self._sources:
             release = os_release.OsRelease()
-            return _format_sources_list(
-                self._sources_list,
+            additional_sources = _format_sources_list(
+                "\n".join(self._sources),
                 deb_arch=self._deb_arch,
                 release=release.version_codename(),
             )
+            sources = "\n".join([sources, additional_sources])
 
-        return _get_local_sources_list()
+        return sources
 
     def fetch_binary(self, *, package_candidate, destination: str) -> str:
         # This is a workaround for the overly verbose python-apt we use.
@@ -378,24 +389,12 @@ class _AptCache:
 
 class Ubuntu(BaseRepo):
     @classmethod
-    def get_package_libraries(cls, package_name):
-        global _library_list
-        if package_name not in _library_list:
-            output = (
-                subprocess.check_output(["dpkg", "-L", package_name])
-                .decode(sys.getfilesystemencoding())
-                .strip()
-                .split()
-            )
-            _library_list[package_name] = {
-                i for i in output if ("lib" in i and os.path.isfile(i))
-            }
-
-        return _library_list[package_name].copy()
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
+        return _run_dpkg_query_list_files(package_name)
 
     @classmethod
     def get_package_for_file(cls, file_path: str) -> str:
-        return _run_dpkg_query_s(file_path)
+        return _run_dpkg_query_search(file_path)
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
@@ -556,7 +555,11 @@ class Ubuntu(BaseRepo):
         return installed_packages
 
     def __init__(
-        self, rootdir, sources=None, keyrings=None, project_options=None
+        self,
+        rootdir,
+        sources: Optional[List[str]] = None,
+        keyrings: Optional[List[str]] = None,
+        project_options=None,
     ) -> None:
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, "download")
@@ -564,8 +567,14 @@ class Ubuntu(BaseRepo):
         if not project_options:
             project_options = snapcraft.ProjectOptions()
 
+        if sources is None:
+            sources = list()
+
+        if keyrings is None:
+            keyrings = list()
+
         self._apt = _AptCache(
-            project_options.deb_arch, sources_list=sources, keyrings=keyrings
+            project_options.deb_arch, sources=sources, keyrings=keyrings
         )
 
         self._cache = cache.AptStagePackageCache(
@@ -576,7 +585,7 @@ class Ubuntu(BaseRepo):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
-    def get(self, package_names) -> None:
+    def get(self, package_names) -> List[str]:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
