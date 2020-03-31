@@ -43,8 +43,9 @@ from snapcraft.internal import errors
 from typing import List
 
 
-_DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/2.0/releases.json"  # noqa
+_DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"  # noqa
 _RUNTIME_DEFAULT = "2.0.9"
+_VERSION_DEFAULT = "2.0"
 
 # TODO extend for other architectures
 _SDK_ARCH = ["amd64"]
@@ -82,6 +83,10 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def schema(cls):
         schema = super().schema()
 
+        schema["properties"]["dotnet-version"] = {
+            "type": "number",
+            "default": _VERSION_DEFAULT,
+        }
         schema["properties"]["dotnet-runtime-version"] = {
             "type": "string",
             "default": _RUNTIME_DEFAULT,
@@ -94,7 +99,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ["dotnet-runtime-version"]
+        return ["dotnet-runtime-version", "dotnet-version"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -108,21 +113,21 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")
 
     def _setup_base_tools(self, base):
+        extra_packages = [
+            "libcurl3",
+            "libcurl3-gnutls",
+            "liblttng-ust0",
+            "libunwind8",
+            "lldb",
+            "libssl1.0.0",
+            "libgssapi-krb5-2",
+            "zlib1g",
+            "libgcc1",
+        ]
         if base in ("core", "core16"):
-            self.stage_packages.extend(
-                [
-                    "libcurl3",
-                    "libcurl3-gnutls",
-                    "libicu55",
-                    "liblttng-ust0",
-                    "libunwind8",
-                    "lldb",
-                    "libssl1.0.0",
-                    "libgssapi-krb5-2",
-                    "zlib1g",
-                    "libgcc1",
-                ]
-            )
+            self.stage_packages += extra_packages + ["libicu55"]
+        elif base in ("core18",):
+            self.stage_packages += extra_packages + ["libicu60"]
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
@@ -195,7 +200,10 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def _get_dotnet_release_metadata(self):
         package_metadata = []
 
-        req = urllib.request.Request(_DOTNET_RELEASE_METADATA_URL)
+        metadata_url = _DOTNET_RELEASE_METADATA_URL.format(
+            version=self.options.dotnet_version
+        )
+        req = urllib.request.Request(metadata_url)
         r = urllib.request.urlopen(req).read()
         package_metadata = json.loads(r.decode("utf-8"))
 
