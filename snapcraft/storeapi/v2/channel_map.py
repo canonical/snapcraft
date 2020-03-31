@@ -52,7 +52,7 @@ class Progressive:
         return {"key": self.key, "paused": self.paused, "percentage": self.percentage}
 
     def __repr__(self) -> str:
-        return f"<Progressive: {self.percentage!r}>"
+        return f"<{self.__class__.__name__}: {self.percentage!r}>"
 
     def __init__(
         self, *, key: Optional[str], paused: Optional[bool], percentage: Optional[float]
@@ -90,7 +90,7 @@ class MappedChannel:
         }
 
     def __repr__(self) -> str:
-        return f"<MappedChannel: {self.channel!r} for revision {self.revision!r} and architecture {self.architecture!r}>"
+        return f"<{self.__class__.__name__}: {self.channel!r} for revision {self.revision!r} and architecture {self.architecture!r}>"
 
     def __init__(
         self,
@@ -132,7 +132,7 @@ class Revision:
         }
 
     def __repr__(self) -> str:
-        return f"<Revision: {self.revision!r} for version {self.version!r} and architectures {self.architectures!r}>"
+        return f"<{self.__class__.__name__}: {self.revision!r} for version {self.version!r} and architectures {self.architectures!r}>"
 
     def __init__(
         self, *, revision: int, version: str, architectures: List[str]
@@ -173,7 +173,7 @@ class SnapChannel:
         }
 
     def __repr__(self) -> str:
-        return f"<SnapChannel: {self.name!r}>"
+        return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(
         self,
@@ -206,7 +206,7 @@ class Snap:
         return {"name": self.name, "channels": [sc.marshal() for sc in self.channels]}
 
     def __repr__(self) -> str:
-        return "<Snap: {!r}>".format(self.name)
+        return f"<{self.__class__.__name__}: {self.name!r}>"
 
     def __init__(self, *, name: str, channels: List[SnapChannel]) -> None:
         self.name = name
@@ -235,7 +235,7 @@ class ChannelMap:
         }
 
     def __repr__(self) -> str:
-        return "<ChannelMap: {!r}>".format(self.snap.name)
+        return "<{self.__class__.__name__}: {!r}>".format(self.snap.name)
 
     def __init__(
         self, *, channel_map: List[MappedChannel], revisions: List[Revision], snap: Snap
