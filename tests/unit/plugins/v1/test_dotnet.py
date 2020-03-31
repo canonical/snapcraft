@@ -45,7 +45,7 @@ class DotNetPluginPropertiesTest(unit.TestCase):
         self.assertThat(schema, Contains("required"))
 
     def test_get_pull_properties(self):
-        expected_pull_properties = ["dotnet-runtime-version"]
+        expected_pull_properties = ["dotnet-runtime-version", "dotnet-version"]
         self.assertThat(
             dotnet.DotNetPlugin.get_pull_properties(), Equals(expected_pull_properties)
         )
@@ -76,6 +76,7 @@ class DotNetProjectBaseTest(unit.TestCase):
         class Options:
             build_attributes = []
             dotnet_runtime_version = dotnet._RUNTIME_DEFAULT
+            dotnet_version = dotnet._VERSION_DEFAULT
 
         self.options = Options()
 
@@ -272,32 +273,3 @@ class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
             ),
         )
 
-
-class DotnetPluginUnsupportedBaseTest(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: dotnet-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
-
-        class Options:
-            source = "dir"
-
-        self.options = Options()
-
-    def test_unsupported_base_raises(self):
-        self.assertRaises(
-            errors.PluginBaseError,
-            dotnet.DotNetPlugin,
-            "test-part",
-            self.options,
-            self.project,
-        )
