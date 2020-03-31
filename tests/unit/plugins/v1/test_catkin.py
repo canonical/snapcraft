@@ -337,51 +337,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
         for property in expected_build_properties:
             self.assertIn(property, actual_build_properties)
 
-    def test_get_stage_sources_core(self):
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: catkin-snap
-                    base: core
-                    """
-                )
-            )
-        )
-
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
-
-    def test_get_stage_sources_core16(self):
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: catkin-snap
-                    base: core16
-                    """
-                )
-            )
-        )
-
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("xenial" in plugin.PLUGIN_STAGE_SOURCES)
-
-    def test_get_stage_sources_core18(self):
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: catkin-snap
-                    base: core18
-                    """
-                )
-            )
-        )
-
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
-        self.assertTrue("bionic" in plugin.PLUGIN_STAGE_SOURCES)
-
     def test_pull_invalid_dependency(self):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))

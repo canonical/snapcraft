@@ -289,27 +289,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
         return self.__pip
 
     @property
-    def PLUGIN_STAGE_SOURCES(self):
-        ros_repo = "http://packages.ros.org/ros/ubuntu/"
-        ubuntu_repo = "http://${prefix}.ubuntu.com/${suffix}/"
-        security_repo = "http://${security}.ubuntu.com/${suffix}/"
-
-        return textwrap.dedent(
-            """
-            deb {ros_repo} {codename} main
-            deb {ubuntu_repo} {codename} main universe
-            deb {ubuntu_repo} {codename}-updates main universe
-            deb {ubuntu_repo} {codename}-security main universe
-            deb {security_repo} {codename}-security main universe
-            """.format(
-                ros_repo=ros_repo,
-                ubuntu_repo=ubuntu_repo,
-                security_repo=security_repo,
-                codename=_BASE_TO_UBUNTU_RELEASE_MAP[
-                    self.project.info.get_build_base()
-                ],
-            )
-        )
+    def PLUGIN_STAGE_SOURCES(self) -> List[str]:
+        return ["deb http://packages.ros.org/ros/ubuntu/ ${release} main"]
 
     @property
     def PLUGIN_STAGE_KEYRINGS(self):
