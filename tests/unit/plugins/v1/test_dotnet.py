@@ -24,7 +24,6 @@ from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import errors
 from snapcraft.internal import sources
 from snapcraft.project import Project
 from snapcraft.plugins.v1 import dotnet
