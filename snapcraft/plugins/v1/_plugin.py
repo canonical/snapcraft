@@ -19,6 +19,7 @@ import logging
 import os
 import shlex
 from subprocess import CalledProcessError
+from typing import List
 
 from snapcraft.internal import common, errors
 
@@ -53,14 +54,14 @@ class PluginV1:
         return []
 
     @property
-    def PLUGIN_STAGE_SOURCES(self):
-        """Define alternative sources.list."""
-        return getattr(self, "_PLUGIN_STAGE_SOURCES", [])
+    def PLUGIN_STAGE_SOURCES(self) -> List[str]:
+        """Define additional deb source lines using templates variables."""
+        return []
 
     @property
-    def PLUGIN_STAGE_KEYRINGS(self):
+    def PLUGIN_STAGE_KEYRINGS(self) -> List[str]:
         """Define additional keyrings to trust for stage-packages."""
-        return getattr(self, "_PLUGIN_STAGE_KEYRINGS", [])
+        return []
 
     @property
     def stage_packages(self):
