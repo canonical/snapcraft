@@ -346,7 +346,7 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "SNAPU_STORE_DASHBOARD_ROOT_URL",
+                "SNAP_STORE_DASHBOARD_ROOT_URL",
                 "https://dashboard.staging.snapcraft.io/",
             )
         )
