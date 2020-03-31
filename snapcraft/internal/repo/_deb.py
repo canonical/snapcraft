@@ -587,7 +587,7 @@ class Ubuntu(BaseRepo):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
-    def get(self, package_names) -> None:
+    def get(self, package_names) -> List[str]:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
