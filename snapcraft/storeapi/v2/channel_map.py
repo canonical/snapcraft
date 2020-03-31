@@ -16,6 +16,10 @@
 
 from typing import Any, Dict, List, Optional, Set, Union
 
+import jsonschema
+
+from ._api_schema import CHANNEL_MAP_JSONSCHEMA
+
 """
 This module holds representations for results for the v2 channel-map
 API endpoint provided by the Snap Store.
@@ -31,21 +35,27 @@ class Progressive:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Union[str, bool]]) -> "Progressive":
+    def unmarshal(cls, payload: Dict[str, Union[str, Optional[bool]]]) -> "Progressive":
+        jsonschema.validate(
+            payload,
+            CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]["properties"][
+                "progressive"
+            ],
+        )
         return cls(
             key=payload["key"],
             paused=payload["paused"],
             percentage=payload["percentage"],
         )
 
-    def marshal(self) -> Dict[str, Union[str, bool]]:
+    def marshal(self) -> Dict[str, Union[str, Optional[bool]]]:
         return {"key": self.key, "paused": self.paused, "percentage": self.percentage}
 
     def __repr__(self) -> str:
         return f"<Progressive: {self.percentage!r}>"
 
     def __init__(
-        self, *, key: Optional[str], paused: bool, percentage: Optional[float]
+        self, *, key: Optional[str], paused: Optional[bool], percentage: Optional[float]
     ) -> None:
         self.key = key
         self.paused = paused
@@ -59,6 +69,9 @@ class MappedChannel:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "MappedChannel":
+        jsonschema.validate(
+            payload, CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]
+        )
         return cls(
             channel=payload["channel"],
             revision=payload["revision"],
@@ -102,6 +115,9 @@ class Revision:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Union[int, str, List[str]]]) -> "Revision":
+        jsonschema.validate(
+            payload, CHANNEL_MAP_JSONSCHEMA["properties"]["revisions"]["items"]
+        )
         return cls(
             revision=payload["revision"],
             version=payload["version"],
@@ -132,7 +148,13 @@ class SnapChannel:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Optional[str]]):
+    def unmarshal(cls, payload: Dict[str, Optional[str]]) -> "SnapChannel":
+        jsonschema.validate(
+            payload,
+            CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["channels"][
+                "items"
+            ],
+        )
         return cls(
             name=payload["name"],
             track=payload["track"],
@@ -174,6 +196,7 @@ class Snap:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
+        jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA["properties"]["snap"])
         return cls(
             name=payload["name"],
             channels=[SnapChannel.unmarshal(sc) for sc in payload["channels"]],
@@ -197,6 +220,7 @@ class ChannelMap:
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":
+        jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA)
         return cls(
             channel_map=[MappedChannel.unmarshal(c) for c in payload["channel-map"]],
             revisions=[Revision.unmarshal(r) for r in payload["revisions"]],
