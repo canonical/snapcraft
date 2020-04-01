@@ -193,8 +193,7 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
 
 
 class _AptCache:
-    def __init__(self, deb_arch, *, sources: List[str], keyrings: List[str]):
-        self._deb_arch = deb_arch
+    def __init__(self, *, sources: List[str], keyrings: List[str]):
         self._sources = sources
         self._keyrings = keyrings
 
@@ -344,12 +343,8 @@ class _AptCache:
 
         # Append additionally configured repositories, if any.
         if self._sources:
-            release = os_release.OsRelease()
-            additional_sources = _format_sources_list(
-                "\n".join(self._sources),
-                deb_arch=self._deb_arch,
-                release=release.version_codename(),
-            )
+
+            additional_sources = _format_sources_list("\n".join(self._sources))
             sources = "\n".join([sources, additional_sources])
 
         return sources
@@ -564,18 +559,13 @@ class Ubuntu(BaseRepo):
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, "download")
 
-        if not project_options:
-            project_options = snapcraft.ProjectOptions()
-
         if sources is None:
             sources = list()
 
         if keyrings is None:
             keyrings = list()
 
-        self._apt = _AptCache(
-            project_options.deb_arch, sources=sources, keyrings=keyrings
-        )
+        self._apt = _AptCache(sources=sources, keyrings=keyrings)
 
         self._cache = cache.AptStagePackageCache(
             sources_digest=self._apt.sources_digest()
@@ -706,7 +696,10 @@ def _get_local_sources_list():
     return sources
 
 
-def _format_sources_list(sources_list: str, *, deb_arch: str, release: str = "xenial"):
+def _format_sources_list(sources_list: str):
+    release = os_release.OsRelease().version_codename()
+    deb_arch = snapcraft.ProjectOptions().deb_arch
+
     if deb_arch in ("amd64", "i386"):
         prefix = "archive"
         suffix = "ubuntu"

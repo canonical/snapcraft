@@ -383,7 +383,6 @@ class ColconPlugin(snapcraft.BasePlugin):
                 ubuntudir,
                 sources=self.PLUGIN_STAGE_SOURCES,
                 keyrings=self.PLUGIN_STAGE_KEYRINGS,
-                project_options=self.project,
             )
 
             logger.info("Fetching apt dependencies...")
