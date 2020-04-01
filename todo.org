@@ -23,7 +23,7 @@
 - [ ] Toggle compression with =snap pack=
 *** STRT [[file:specifications/20200329-progressive-delivery.org][Progressive Delivery]] [/]
 - [x] Implement channel-map endpoint
-- [ ] Add support for the status command
+- [x] Add support for the status command
 - [ ] Add support for the release command
 - [ ] Add support for the close command
 - [ ] Add support for the promote command

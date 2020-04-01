@@ -26,7 +26,7 @@ When the flag is used, the following shall be displayed using
 =snapcraft.cli.echo.warning=:
 
 #+BEGIN_SRC sh
-*EXPERIMENTAL* progressive releases in use.
+*EXPERIMENTAL* progressive delivery in use.
 #+END_SRC
 
 * User Experience
