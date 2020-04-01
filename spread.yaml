@@ -433,7 +433,6 @@ suites:
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 100  # Run this test early so we're not waiting for it
    systems:
-     - ubuntu-16.04*
      - ubuntu-18.04*
    environment:
      # TODO: make generic
