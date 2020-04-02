@@ -271,7 +271,7 @@ class UbuntuTestCase(RepoBaseTestCase):
     @mock.patch(
         "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
     )
-    def test_sources_armhf_trusty(self, mock_version_codename):
+    def test_sources_formatting(self, mock_version_codename):
         sources_list = textwrap.dedent(
             """
             deb http://archive.ubuntu.com/ubuntu ${release} main restricted
