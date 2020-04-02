@@ -58,7 +58,6 @@ class WstoolTestCase(unit.TestCase):
                     self.wstool._wstool_path,
                     sources="sources",
                     keyrings=["keyring"],
-                    project_options=self.project,
                 ),
                 mock.call().get(["python-wstool"]),
                 mock.call().unpack(self.wstool._wstool_install_path),

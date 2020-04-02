@@ -65,7 +65,6 @@ class RosdepTestCase(unit.TestCase):
                     self.rosdep._rosdep_path,
                     sources="sources",
                     keyrings=["keyring"],
-                    project_options=self.project,
                 ),
                 mock.call().get(["python-rosdep"]),
                 mock.call().unpack(self.rosdep._rosdep_install_path),
