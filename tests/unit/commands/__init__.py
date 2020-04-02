@@ -24,6 +24,7 @@ from unittest import mock
 from click.testing import CliRunner
 
 from snapcraft import storeapi
+from snapcraft.storeapi.v2.channel_map import ChannelMap
 from snapcraft.cli._runner import run
 from tests import fixture_setup, unit
 
@@ -141,6 +142,13 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
+        # Our experimental environment variable is sticky
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES", None
+            )
+        )
+
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
 
@@ -196,6 +204,66 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi._sca_client.SCAClient, "register_key"
         )
         self.useFixture(self.fake_store_register_key)
+
+        # channel-map endpoint
+        self.channel_map = ChannelMap.unmarshal(
+            {
+                "channel-map": [
+                    {
+                        "architecture": "amd64",
+                        "channel": "2.1/beta",
+                        "expiration-date": None,
+                        "revision": 19,
+                        "progressive": {
+                            "key": None,
+                            "paused": None,
+                            "percentage": None,
+                        },
+                    }
+                ],
+                "revisions": [
+                    {"architectures": ["amd64"], "revision": 19, "version": "10"}
+                ],
+                "snap": {
+                    "name": "snap-test",
+                    "channels": [
+                        {
+                            "branch": None,
+                            "fallback": None,
+                            "name": "2.1/stable",
+                            "risk": "stable",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/stable",
+                            "name": "2.1/candidate",
+                            "risk": "candidate",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/candidate",
+                            "name": "2.1/beta",
+                            "risk": "beta",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/beta",
+                            "name": "2.1/edge",
+                            "risk": "edge",
+                            "track": "2.1",
+                        },
+                    ],
+                    "default-track": "2.1",
+                },
+            }
+        )
+        self.fake_store_get_snap_channel_map = fixtures.MockPatchObject(
+            storeapi.StoreClient, "get_snap_channel_map", return_value=self.channel_map
+        )
+        self.useFixture(self.fake_store_get_snap_channel_map)
 
         # Uploading
         self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)

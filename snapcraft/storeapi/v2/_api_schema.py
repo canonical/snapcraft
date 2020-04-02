@@ -76,7 +76,7 @@ CHANNEL_MAP_JSONSCHEMA = {
                     },
                     "attributes": {"type": "object"},
                     "base": {"type": "string"},
-                    "build-url": {"type": "string"},
+                    "build-url": {"type": ["string", "null"]},
                     "confinement": {
                         "enum": ["strict", "classic", "devmode"],
                         "type": "string",
@@ -88,12 +88,12 @@ CHANNEL_MAP_JSONSCHEMA = {
                             "read": {
                                 "items": {"type": "integer"},
                                 "minItems": 1,
-                                "type": "array",
+                                "type": ["array", "null"],
                             },
                             "write": {
                                 "items": {"type": "integer"},
                                 "minItems": 1,
-                                "type": "array",
+                                "type": ["array", "null"],
                             },
                         },
                         "required": ["read", "write"],
@@ -187,7 +187,7 @@ CHANNEL_MAP_JSONSCHEMA = {
                             "creation-date": {
                                 "description": "The track creation date, in ISO 8601 format.",
                                 "format": "date-time",
-                                "type": "string",
+                                "type": ["string", "null"],
                             },
                             "name": {
                                 "description": "The track name.",
@@ -198,7 +198,9 @@ CHANNEL_MAP_JSONSCHEMA = {
                                 "type": ["string", "null"],
                             },
                         },
-                        "required": ["name", "creation-date", "pattern"],
+                        # pattern is documented as required but is not returned,
+                        # version-pattern is returned instead.
+                        "required": ["name", "creation-date", "version-pattern"],
                         "type": "object",
                     },
                     "minItems": 1,

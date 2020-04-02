@@ -44,6 +44,7 @@ from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
+    from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
 
 
 logger = logging.getLogger(__name__)
@@ -321,6 +322,10 @@ class StoreClientCLI(storeapi.StoreClient):
         self, *, snap_id: str, channel_names: List[str]
     ) -> Dict[str, Any]:
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
+
+    @_login_wrapper
+    def get_snap_channel_map(self, *, snap_name: str) -> "SnapChannelMap":
+        return super().get_snap_channel_map(snap_name=snap_name)
 
     @_login_wrapper
     def get_account_information(self) -> Dict[str, Any]:

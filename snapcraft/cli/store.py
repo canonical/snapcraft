@@ -27,10 +27,12 @@ import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft._store import StoreClientCLI
 from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 from ._review import review_snap
+from ._channel_map import get_tabulated_channel_map
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -361,18 +363,38 @@ def close(snap_name, channels):
 
 @storecli.command()
 @click.option(
+    "--experimental-progressive-releases",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables 'progressive releases'.",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
+)
+@click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch):
+def status(snap_name, arch, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
-        snapcraft status my-snap --arch armhf
     """
-    snapcraft.status(snap_name, arch)
+    if experimental_progressive_releases:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
+
+    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
+    existing_architectures = snap_channel_map.get_existing_architectures()
+    if arch and arch not in existing_architectures:
+        echo.warning(f"No revisions for architecture {arch!r}.")
+    else:
+        if arch:
+            architectures = (arch,)
+        else:
+            architectures = existing_architectures
+        click.echo(
+            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+        )
 
 
 @storecli.command("list-revisions")
