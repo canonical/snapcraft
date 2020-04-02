@@ -262,15 +262,18 @@ class GoPlugin(snapcraft.BasePlugin):
         post_build_files = os.listdir(self._install_bin_dir)
 
         new_files = set(post_build_files) - set(pre_build_files)
-        if len(new_files) != 1:
-            raise RuntimeError(f"Expected one binary to be built, found: {new_files!r}")
-        binary_path = os.path.join(self._install_bin_dir, new_files.pop())
 
-        # Relink with system linker if executable is dynamic in order to be
-        # able to set rpath later on. This workaround can be removed after
-        # https://github.com/NixOS/patchelf/issues/146 is fixed.
-        if self._is_classic and elf.ElfFile(path=binary_path).is_dynamic:
-            self._run(relink_cmd, cwd=work_dir)
+        if len(new_files) == 0:
+            logger.warning(f"no binaries found from {build_cmd!r}")
+
+        for new_file in new_files:
+            binary_path = os.path.join(self._install_bin_dir, new_file)
+
+            # Relink with system linker if executable is dynamic in order to be
+            # able to set rpath later on. This workaround can be removed after
+            # https://github.com/NixOS/patchelf/issues/146 is fixed.
+            if self._is_classic and elf.ElfFile(path=binary_path).is_dynamic:
+                self._run(relink_cmd, cwd=work_dir)
 
     def _build_go_packages(self) -> None:
         if self.options.go_packages:
