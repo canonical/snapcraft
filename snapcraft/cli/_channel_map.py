@@ -96,7 +96,7 @@ def _get_channel_line(
         elif channel_info.branch is not None:
             channel_string = f"{channel_info.risk}/{channel_info.branch}"
             # This value can be None.
-            if mapped_channel.expiration_date:
+            if mapped_channel.expiration_date is not None:
                 expiration_date_string = mapped_channel.expiration_date
 
     if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY"):
