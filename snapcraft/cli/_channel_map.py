@@ -96,7 +96,6 @@ def _get_channel_line(
             channel_string = ""
         elif channel_info.branch is not None:
             channel_string = f"{channel_info.risk}/{channel_info.branch}"
-            # This value can be None.
             if mapped_channel.expiration_date is not None:
                 expiration_date_string = mapped_channel.expiration_date
 
