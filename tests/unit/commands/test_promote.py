@@ -52,6 +52,7 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
                 }
             }
         }
+        self.fake_store_release.mock.return_value = {"opened_channels": ["candidate"]}
 
     def test_upload_without_snap_must_raise_exception(self):
         result = self.run_command(["promote"])
@@ -96,37 +97,6 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_promote_confirm_yes(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["candidate"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {
-                                "channel": "candidate",
-                                "info": "specific",
-                                "revision": 1,
-                                "version": "0.1",
-                            },
-                            {
-                                "channel": "beta",
-                                "info": "specific",
-                                "revision": 2,
-                                "version": "0.1",
-                            },
-                            {
-                                "channel": "edge",
-                                "info": "specific",
-                                "revision": 5,
-                                "version": "0.1",
-                            },
-                        ]
-                    }
-                }
-            },
-        }
-
         result = self.run_command(
             [
                 "promote",
@@ -141,45 +111,10 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            snap_name="snap-test",
-            revision="2",
-            channels=["candidate"],
-            progressive_key=None,
-            progressive_percentage=None,
+            snap_name="snap-test", revision="2", channels=["candidate"]
         )
 
     def test_promote_yes_option(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["candidate"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {
-                                "channel": "candidate",
-                                "info": "specific",
-                                "revision": 1,
-                                "version": "0.1",
-                            },
-                            {
-                                "channel": "beta",
-                                "info": "specific",
-                                "revision": 2,
-                                "version": "0.1",
-                            },
-                            {
-                                "channel": "edge",
-                                "info": "specific",
-                                "revision": 5,
-                                "version": "0.1",
-                            },
-                        ]
-                    }
-                }
-            },
-        }
-
         result = self.run_command(
             [
                 "promote",
@@ -194,11 +129,7 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_release.mock.assert_called_once_with(
-            snap_name="snap-test",
-            revision="2",
-            channels=["candidate"],
-            progressive_key=None,
-            progressive_percentage=None,
+            snap_name="snap-test", revision="2", channels=["candidate"]
         )
 
     def test_promote_confirm_no(self):

@@ -24,9 +24,9 @@
 *** STRT [[file:specifications/20200329-progressive-releases.org][Progressive Releases]] [/]
 - [x] Implement channel-map endpoint
 - [x] Add support for the status command
-- [ ] Add support for the release command
+- [x] Add support for the release command
 - [ ] Add support for the close command
-- [ ] Add support for the promote command
+- [x] Add support for the promote command
 - [ ] Migrate promote away from using the state endpoint
 - [ ] Remove the state endpoint
 - [ ] Add support for metrics
