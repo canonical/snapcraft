@@ -269,75 +269,22 @@ class UbuntuTestCase(RepoBaseTestCase):
         )
 
     @mock.patch(
-        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="vivid"
+        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
     )
-    @mock.patch("snapcraft.ProjectOptions.deb_arch", new="amd64")
-    def test_sources_amd64_vivid(self, mock_version_codename):
-        self.maxDiff = None
-        sources_list = textwrap.dedent(
-            """
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-            """
-        )
-
-        sources_list = repo._deb._format_sources_list(sources_list)
-
-        expected_sources_list = textwrap.dedent(
-            """
-            deb http://archive.ubuntu.com/ubuntu/ vivid main restricted
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-            deb http://archive.ubuntu.com/ubuntu/ vivid universe
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates universe
-            deb http://archive.ubuntu.com/ubuntu/ vivid multiverse
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates multiverse
-            deb http://security.ubuntu.com/ubuntu vivid-security main restricted
-            deb http://security.ubuntu.com/ubuntu vivid-security universe
-            deb http://security.ubuntu.com/ubuntu vivid-security multiverse
-            """
-        )
-        self.assertThat(sources_list, Equals(expected_sources_list))
-
-    @mock.patch(
-        "snapcraft.internal.os_release.OsRelease.version_codename",
-        return_value="trusty",
-    )
-    @mock.patch("snapcraft.ProjectOptions.deb_arch", new="armhf")
     def test_sources_armhf_trusty(self, mock_version_codename):
         sources_list = textwrap.dedent(
             """
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-        """
+            deb http://archive.ubuntu.com/ubuntu ${release} main restricted
+            deb http://archive.ubuntu.com/ubuntu ${release}-updates main restricted
+            """
         )
 
         sources_list = repo._deb._format_sources_list(sources_list)
 
         expected_sources_list = textwrap.dedent(
             """
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
+            deb http://archive.ubuntu.com/ubuntu testy main restricted
+            deb http://archive.ubuntu.com/ubuntu testy-updates main restricted
             """
         )
         self.assertThat(sources_list, Equals(expected_sources_list))

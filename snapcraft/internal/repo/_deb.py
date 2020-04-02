@@ -30,7 +30,6 @@ from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
 import apt
 
-import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import cache, common, os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -698,20 +697,8 @@ def _get_local_sources_list():
 
 def _format_sources_list(sources_list: str):
     release = os_release.OsRelease().version_codename()
-    deb_arch = snapcraft.ProjectOptions().deb_arch
 
-    if deb_arch in ("amd64", "i386"):
-        prefix = "archive"
-        suffix = "ubuntu"
-        security = "security"
-    else:
-        prefix = "ports"
-        suffix = "ubuntu-ports"
-        security = "ports"
-
-    return string.Template(sources_list).substitute(
-        {"prefix": prefix, "release": release, "suffix": suffix, "security": security}
-    )
+    return string.Template(sources_list).substitute({"release": release})
 
 
 def _set_pkg_version(pkg, version):
