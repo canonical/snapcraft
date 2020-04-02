@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 import os
 from collections import OrderedDict
 from typing import List, Optional
@@ -197,18 +198,23 @@ def _get_channel_lines_for_channel(
 def _has_channels_for_architecture(
     snap_channel_map, architecture: str, channels: List[str]
 ) -> bool:
-    for channel_name in channels:
-        for progressive in (False, True):
-            try:
-                snap_channel_map.get_mapped_channel(
-                    channel_name=channel_name,
-                    architecture=architecture,
-                    progressive=progressive,
-                )
-                return True
-            except ValueError:
-                continue
-    return False
+    progressive = (False, True)
+    # channel_query = (channel_name, progressive)
+    for channel_query in itertools.product(channels, progressive):
+        try:
+            snap_channel_map.get_mapped_channel(
+                channel_name=channel_query[0],
+                architecture=architecture,
+                progressive=channel_query[1],
+            )
+            found_architecture = True
+            break
+        except ValueError:
+            continue
+    else:
+        found_architecture = False
+
+    return found_architecture
 
 
 def get_tabulated_channel_map(
