@@ -16,7 +16,8 @@
 
 import os
 from collections import OrderedDict
-from typing import List, NamedTuple, Optional
+from typing import List, Optional
+from typing_extensions import Final
 
 from tabulate import tabulate
 
@@ -28,16 +29,11 @@ from snapcraft.storeapi.v2.channel_map import (
 )
 
 
-_HINTS_T = NamedTuple(
-    "_HINTS_T",
-    [
-        ("CLOSED", str),
-        ("FOLLOWING", str),
-        ("NO_PROGRESS", str),
-        ("PROGRESSING_TO", str),
-    ],
-)
-_HINTS = _HINTS_T("-", "↑", "-", "→")
+class _HINTS:
+    CLOSED: Final[str] = "-"
+    FOLLOWING: Final[str] = "↑"
+    NO_PROGRESS: Final[str] = "-"
+    PROGRESSING_TO: Final[str] = "→"
 
 
 def _get_channel_hint(*, channel_map, fallback: str, architecture: str) -> str:
