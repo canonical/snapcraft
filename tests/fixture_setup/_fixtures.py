@@ -260,6 +260,11 @@ class FakeStore(fixtures.Fixture):
                 ),
             )
         )
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAP_STORE_DASHBOARD_ROOT_URL", self.fake_store_api_server_fixture.url
+            )
+        )
 
         self.fake_store_search_server_fixture = FakeStoreSearchServerRunning()
         self.useFixture(self.fake_store_search_server_fixture)
@@ -339,6 +344,12 @@ class FakeStoreSearchServerRunning(FakeServerRunning):
 class StagingStore(fixtures.Fixture):
     def setUp(self):
         super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAP_STORE_DASHBOARD_ROOT_URL",
+                "https://dashboard.staging.snapcraft.io/",
+            )
+        )
         self.useFixture(
             fixtures.EnvironmentVariable(
                 "UBUNTU_STORE_API_ROOT_URL",
