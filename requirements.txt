@@ -20,6 +20,7 @@ pysha3==1.0.2; python_version < '3.6'
 raven==6.5.0
 simplejson==3.8.2
 tabulate==0.7.5
+typing-extensions==3.7.4.1
 toml==0.10.0
 python-debian==0.1.28
 chardet==3.0.4
