@@ -99,7 +99,7 @@ def _get_channel_line(
             if mapped_channel.expiration_date is not None:
                 expiration_date_string = mapped_channel.expiration_date
 
-    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY"):
+    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"):
         return [
             channel_string,
             version_string,
@@ -186,7 +186,7 @@ def _get_channel_lines_for_channel(
         )
 
     if (
-        os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY")
+        os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES")
         and progressive_mapped_channel is not None
     ):
         channel_lines.append(progressive_mapped_channel_line)
@@ -253,7 +253,7 @@ def get_tabulated_channel_map(
                     architecture_string = ""
 
     headers = ["Track", "Arch", "Channel", "Version", "Revision"]
-    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY"):
+    if os.getenv("SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"):
         headers.append("Progress")
         # Item 6 is expiration_date when progressive releases are enabled.
         expires_column = 6

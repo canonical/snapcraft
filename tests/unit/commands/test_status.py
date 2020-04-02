@@ -71,7 +71,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.channel_map.channel_map[0].progressive.percentage = 10.0
 
         result = self.run_command(
-            ["status", "snap-test", "--experimental-progressive-delivery"]
+            ["status", "snap-test", "--experimental-progressive-releases"]
         )
 
         self.assertThat(result.exit_code, Equals(0))
@@ -80,7 +80,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Equals(
                 dedent(
                     """\
-            *EXPERIMENTAL* progressive delivery in use.
+            *EXPERIMENTAL* progressive releases in use.
             Track    Arch    Channel    Version    Revision    Progress
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
@@ -190,7 +190,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
         result = self.run_command(
-            ["status", "snap-test", "--experimental-progressive-delivery"]
+            ["status", "snap-test", "--experimental-progressive-releases"]
         )
 
         self.assertThat(result.exit_code, Equals(0))
@@ -199,7 +199,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             Equals(
                 dedent(
                     """\
-            *EXPERIMENTAL* progressive delivery in use.
+            *EXPERIMENTAL* progressive releases in use.
             Track    Arch    Channel         Version    Revision    Progress    Expires at
             2.1      amd64   stable          -          -           -
                              stable/hotfix1  10hotfix   20          → 20%       2020-02-03T20:58:37Z

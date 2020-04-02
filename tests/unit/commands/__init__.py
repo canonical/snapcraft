@@ -145,7 +145,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         # Our experimental environment variable is sticky
         self.useFixture(
             fixtures.EnvironmentVariable(
-                "SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY", None
+                "SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES", None
             )
         )
 

@@ -1,9 +1,9 @@
-#+TITLE: Progressive Delivery
+#+TITLE: Progressive Releases
 #+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
 #+DATE: [2020-03-29]
 
 * Scope
-*Progressive Delivery* is scoped to defining how /progressive releases/ are
+*Progressive Releases* is scoped to defining how /progressive releases/ are
 executed and how their /status/ is displayed.
 
 * Enabling the feature
@@ -14,19 +14,19 @@ Such that a /progressive/ =status= can only be shown or a /progressive/
 =release= executed if combined with the experimental flag:
 
 #+BEGIN_SRC sh
-snapcraft <status|release> --experimental-progressive-delivery
+snapcraft <status|release> --experimental-progressive-releases
 #+END_SRC
 
 Or with the following environment variable defined:
 #+BEGIN_SRC sh
-SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY=y snapcraft <status|release>
+SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES=y snapcraft <status|release>
 #+END_SRC
 
 When the flag is used, the following shall be displayed using
 =snapcraft.cli.echo.warning=:
 
 #+BEGIN_SRC sh
-*EXPERIMENTAL* progressive delivery in use.
+*EXPERIMENTAL* progressive releases in use.
 #+END_SRC
 
 * User Experience
@@ -79,7 +79,7 @@ place.
 
 * Implementation
 ** Snap Store API
-New API is required to implement the /progressive delivery/ feature. That is
+New API is required to implement the /progressive releases/ feature. That is
 provided by the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][channel-map]] endpoint.
 
 Use of the API shall be mediated by implementation following the code style used

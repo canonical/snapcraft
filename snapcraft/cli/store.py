@@ -363,25 +363,25 @@ def close(snap_name, channels):
 
 @storecli.command()
 @click.option(
-    "--experimental-progressive-delivery",
+    "--experimental-progressive-releases",
     is_flag=True,
     help="*EXPERIMENTAL* Enables 'progressive releases'.",
-    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
 )
 @click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch, experimental_progressive_delivery):
+def status(snap_name, arch, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
     """
-    if experimental_progressive_delivery:
-        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_DELIVERY"] = "Y"
-        echo.warning("*EXPERIMENTAL* progressive delivery in use.")
+    if experimental_progressive_releases:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
 
     snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
     existing_architectures = snap_channel_map.get_existing_architectures()
