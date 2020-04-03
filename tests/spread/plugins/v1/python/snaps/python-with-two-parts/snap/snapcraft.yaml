@@ -6,6 +6,7 @@ description: |
   https://bugs.launchpad.net/snapcraft/+bug/1663739
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   part1:

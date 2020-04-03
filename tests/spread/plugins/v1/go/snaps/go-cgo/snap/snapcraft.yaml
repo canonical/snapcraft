@@ -5,7 +5,10 @@ description: |
   This is a basic go snap that uses cgo to access C APIs.
   The name of the binary will be that of the directory containing it,
   just like it is seen when using `go build` or `go install`.
+
 confinement: strict
+grade: devel
+base: core18
 
 parts:
   go-cgo:

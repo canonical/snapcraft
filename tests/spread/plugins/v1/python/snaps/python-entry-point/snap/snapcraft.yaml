@@ -4,6 +4,7 @@ summary: Entry point test
 description: Test entry points with different versions of python
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   python2-test:

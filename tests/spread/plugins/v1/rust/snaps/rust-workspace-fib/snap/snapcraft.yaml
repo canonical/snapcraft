@@ -5,6 +5,7 @@ description: |
   This is a basic rust snap with workspaces.
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

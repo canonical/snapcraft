@@ -6,6 +6,7 @@ description: |
   a version pinned go package using go.mod.
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

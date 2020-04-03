@@ -6,6 +6,7 @@ description: |
   applications.
 
 grade: devel
+base: core18
 confinement: classic
 
 parts:

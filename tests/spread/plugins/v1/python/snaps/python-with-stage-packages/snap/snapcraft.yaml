@@ -5,6 +5,7 @@ description: |
     Install yamllint from pypi but use pyyaml as a stage-packages entry.
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   python2:

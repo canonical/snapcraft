@@ -5,6 +5,7 @@ description: |
   A ROS2 workspace containing a talker and a listener.
 
 grade: stable
+base: core18
 confinement: strict
 
 apps:

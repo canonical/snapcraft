@@ -5,6 +5,7 @@ description: |
   This is a sample dotnet 2.0.0 application
 
 grade: devel
+base: core16
 confinement: strict
 
 apps:

@@ -3,7 +3,10 @@ version: "1.0"
 summary: A simple rust project with conditional features.
 description: |
   Snap used to test conditional features in rust.
+
+base: core18
 confinement: strict
+grade: devel
 
 apps:
   rust-with-conditional:

@@ -6,6 +6,7 @@ description: |
     not break
 confinement: strict
 grade: devel
+base: core18
 
 parts:
   root:

@@ -3,6 +3,7 @@ version: 'test1'
 summary: test
 description: test
 grade: stable
+base: core18
 confinement: strict
 
 parts:

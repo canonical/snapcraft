@@ -7,6 +7,7 @@ description: |
     based plainbox-provider plugin.
 confinement: strict
 grade: devel
+base: core18
 
 parts:
     checkbox-ng-local:

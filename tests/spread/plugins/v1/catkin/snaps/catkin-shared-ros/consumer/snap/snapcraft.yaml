@@ -6,6 +6,7 @@ description: |
   used within the Catkin plugin is properly isolated.
 
 grade: devel
+base: core18
 confinement: strict
 
 parts:

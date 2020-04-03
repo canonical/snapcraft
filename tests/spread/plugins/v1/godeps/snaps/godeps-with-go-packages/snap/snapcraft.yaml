@@ -6,6 +6,7 @@ description: |
   while the bcrypt in the source does not
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

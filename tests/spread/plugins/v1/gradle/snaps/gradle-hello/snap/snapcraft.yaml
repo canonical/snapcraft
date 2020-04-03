@@ -5,6 +5,7 @@ description: this is not much more than an example
 
 confinement: strict
 grade: stable
+base: core18
 
 apps:
  gradle-hello:

@@ -6,6 +6,7 @@ description: |
 
 confinement: strict
 grade: devel
+base: core18
 
 apps:
   ant-hello:

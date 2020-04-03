@@ -4,6 +4,7 @@ summary: Create the hello snap
 description: Create the hello snap
 
 grade: devel
+base: core18
 confinement: strict
 
 apps:

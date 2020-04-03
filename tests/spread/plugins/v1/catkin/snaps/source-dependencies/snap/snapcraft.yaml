@@ -4,6 +4,9 @@ summary: ROS example with source dependencies
 description: Contains a ROS workspace with source dependencies
 confinement: strict
 
+grade: devel
+base: core18
+
 parts:
   ros-project:
     plugin: catkin
