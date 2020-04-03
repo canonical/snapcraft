@@ -137,7 +137,6 @@ class MultipassCommand:
         mem: str = None,
         disk: str = None,
         remote: str = None,
-        cloud_init: str = None
     ) -> None:
         """Passthrough for running multipass launch.
 
@@ -147,13 +146,10 @@ class MultipassCommand:
         :param str mem: amount of RAM to assign to the launched instance.
         :param str disk: amount of disk space the instance will see.
         :param str remote: the remote server to retrieve the image from.
-        :param str cloud_init_file: path to a user-data cloud-init configuration.
         """
         if remote is not None:
             image = "{}:{}".format(remote, image)
         cmd = [self.provider_cmd, "launch", image, "--name", instance_name]
-        if cloud_init is not None:
-            cmd.extend(["--cloud-init", cloud_init])
         if cpus is not None:
             cmd.extend(["--cpus", cpus])
         if mem is not None:
