@@ -18,12 +18,12 @@ import apt
 import os
 import textwrap
 from subprocess import CalledProcessError
+from unittest import mock
 from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 import fixtures
 
-import snapcraft
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from tests import fixture_setup, unit
@@ -50,8 +50,7 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_cache_update_failed(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         self.assertRaises(errors.CacheUpdateFailedError, ubuntu.get, ["fake-package"])
 
     @patch("shutil.rmtree")
@@ -64,8 +63,7 @@ class UbuntuTestCase(RepoBaseTestCase):
             ),
             DEFAULT,
         ]
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
     def test_get_pkg_name_parts_name_only(self):
@@ -99,8 +97,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
         mock_apt_pkg.assert_has_calls(
@@ -148,8 +145,7 @@ class UbuntuTestCase(RepoBaseTestCase):
             "foo"
         )
         self.mock_cache().is_virtual_package.return_value = False
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         raised = self.assertRaises(
             errors.PackageFetchError, ubuntu.get, ["fake-package"]
         )
@@ -167,8 +163,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
         mock_apt_pkg.assert_has_calls(
@@ -218,8 +213,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package:arch"])
 
         mock_apt_pkg.assert_has_calls(
@@ -253,71 +247,23 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
         )
 
-    def test_sources_amd64_vivid(self):
-        self.maxDiff = None
+    @mock.patch(
+        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
+    )
+    def test_sources_formatting(self, mock_version_codename):
         sources_list = textwrap.dedent(
             """
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+            deb http://archive.ubuntu.com/ubuntu ${release} main restricted
+            deb http://archive.ubuntu.com/ubuntu ${release}-updates main restricted
             """
         )
 
-        sources_list = repo._deb._format_sources_list(
-            sources_list, release="vivid", deb_arch="amd64"
-        )
+        sources_list = repo._deb._format_sources_list(sources_list)
 
         expected_sources_list = textwrap.dedent(
             """
-            deb http://archive.ubuntu.com/ubuntu/ vivid main restricted
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-            deb http://archive.ubuntu.com/ubuntu/ vivid universe
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates universe
-            deb http://archive.ubuntu.com/ubuntu/ vivid multiverse
-            deb http://archive.ubuntu.com/ubuntu/ vivid-updates multiverse
-            deb http://security.ubuntu.com/ubuntu vivid-security main restricted
-            deb http://security.ubuntu.com/ubuntu vivid-security universe
-            deb http://security.ubuntu.com/ubuntu vivid-security multiverse
-            """
-        )
-        self.assertThat(sources_list, Equals(expected_sources_list))
-
-    def test_sources_armhf_trusty(self):
-        sources_list = textwrap.dedent(
-            """
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-            deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-            deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-        """
-        )
-
-        sources_list = repo._deb._format_sources_list(
-            sources_list, deb_arch="armhf", release="trusty"
-        )
-
-        expected_sources_list = textwrap.dedent(
-            """
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
-            deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
+            deb http://archive.ubuntu.com/ubuntu testy main restricted
+            deb http://archive.ubuntu.com/ubuntu testy-updates main restricted
             """
         )
         self.assertThat(sources_list, Equals(expected_sources_list))
@@ -377,8 +323,7 @@ class AutokeepTestCase(RepoBaseTestCase):
             self.fake_apt_cache.cache["dependency"]
         ]
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["main-package", "conflicting-dependency"])
 
         # Verify that the package was actually fetched and copied into the
