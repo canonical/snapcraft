@@ -111,9 +111,7 @@ class ColconPluginTestBase(unit.TestCase):
         ).mock
         self.pip_mock.return_value.list.return_value = {}
 
-    def assert_rosdep_setup(
-        self, rosdistro, package_path, rosdep_path, ubuntu_distro, sources, keyrings
-    ):
+    def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path, ubuntu_distro):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
@@ -121,8 +119,6 @@ class ColconPluginTestBase(unit.TestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
-                    ubuntu_sources=sources,
-                    ubuntu_keyrings=keyrings,
                     project=self.project,
                 ),
                 mock.call().setup(),
@@ -946,8 +942,6 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -979,8 +973,6 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "subdir", "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -1009,8 +1001,6 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
-            plugin.PLUGIN_STAGE_SOURCES,
-            plugin.PLUGIN_STAGE_KEYRINGS,
         )
 
         self.assert_pip_setup(

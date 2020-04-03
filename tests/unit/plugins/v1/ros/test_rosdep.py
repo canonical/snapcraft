@@ -36,9 +36,6 @@ class RosdepTestCase(unit.TestCase):
             ros_package_path="package_path",
             rosdep_path="rosdep_path",
             ubuntu_distro="xenial",
-            ubuntu_sources="sources",
-            ubuntu_keyrings=["keyring"],
-            project=self.project,
         )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -61,9 +58,7 @@ class RosdepTestCase(unit.TestCase):
         self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
         self.ubuntu_mock.assert_has_calls(
             [
-                mock.call(
-                    self.rosdep._rosdep_path, sources="sources", keyrings=["keyring"]
-                ),
+                mock.call(self.rosdep._rosdep_path),
                 mock.call().get(["python-rosdep"]),
                 mock.call().unpack(self.rosdep._rosdep_install_path),
             ]

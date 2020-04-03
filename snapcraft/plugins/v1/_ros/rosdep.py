@@ -59,22 +59,12 @@ class RosdepInitializationError(errors.SnapcraftError):
 
 class Rosdep:
     def __init__(
-        self,
-        *,
-        ros_distro,
-        ros_package_path,
-        rosdep_path,
-        ubuntu_distro,
-        ubuntu_sources,
-        ubuntu_keyrings,
-        project
+        self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro, project
     ):
         self._ros_distro = ros_distro
         self._ros_package_path = ros_package_path
         self._rosdep_path = rosdep_path
         self._ubuntu_distro = ubuntu_distro
-        self._ubuntu_sources = ubuntu_sources
-        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
 
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
@@ -94,11 +84,7 @@ class Rosdep:
         # rosdep isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
         logger.info("Preparing to fetch rosdep...")
-        ubuntu = repo.Ubuntu(
-            self._rosdep_path,
-            sources=self._ubuntu_sources,
-            keyrings=self._ubuntu_keyrings,
-        )
+        ubuntu = repo.Ubuntu(self._rosdep_path)
 
         logger.info("Fetching rosdep...")
         ubuntu.get(["python-rosdep"])

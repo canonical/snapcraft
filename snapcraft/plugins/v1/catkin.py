@@ -101,7 +101,37 @@ _BASE_TO_UBUNTU_RELEASE_MAP = {"core": "xenial", "core16": "xenial", "core18": "
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
 
-_ROS_KEYRING_PATH = os.path.join(snapcraft.internal.common.get_keyringsdir(), "ros.gpg")
+_ROS_GPG_KEY = """
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xsFNBFzvJpYBEADY8l1YvO7iYW5gUESyzsTGnMvVUmlV3XarBaJz9bGRmgPXh7jc
+VFrQhE0L/HV7LOfoLI9H2GWYyHBqN5ERBlcA8XxG3ZvX7t9nAZPQT2Xxe3GT3tro
+u5oCR+SyHN9xPnUwDuqUSvJ2eqMYb9B/Hph3OmtjG30jSNq9kOF5bBTk1hOTGPH4
+K/AY0jzT6OpHfXU6ytlFsI47ZKsnTUhipGsKucQ1CXlyirndZ3V3k70YaooZ55rG
+aIoAWlx2H0J7sAHmqS29N9jV9mo135d+d+TdLBXI0PXtiHzE9IPaX+ctdSUrPnp+
+TwR99lxglpIG6hLuvOMAaxiqFBB/Jf3XJ8OBakfS6nHrWH2WqQxRbiITl0irkQoz
+pwNEF2Bv0+Jvs1UFEdVGz5a8xexQHst/RmKrtHLct3iOCvBNqoAQRbvWvBhPjO/p
+V5cYeUljZ5wpHyFkaEViClaVWqa6PIsyLqmyjsruPCWlURLsQoQxABcL8bwxX7UT
+hM6CtH6tGlYZ85RIzRifIm2oudzV5l+8oRgFr9yVcwyOFT6JCioqkwldW52P1pk/
+/SnuexC6LYqqDuHUs5NnokzzpfS6QaWfTY5P5tz4KHJfsjDIktly3mKVfY0fSPVV
+okdGpcUzvz2hq1fqjxB6MlB/1vtk0bImfcsoxBmF7H+4E9ZN1sX/tSb0KQARAQAB
+zSZPcGVuIFJvYm90aWNzIDxpbmZvQG9zcmZvdW5kYXRpb24ub3JnPsLBlAQTAQoA
+PhYhBMHPbjHmut6IaLFytPQu1vurF8ZUBQJc7yaWAhsDBQkDwmcABQsJCAcCBhUK
+CQgLAgQWAgMBAh4BAheAAAoJEPQu1vurF8ZUkhIP/RbZY1ErvCEUy8iLJm9aSpLQ
+nDZl5xILOxyZlzpg+Ml5bb0EkQDr92foCgcvLeANKARNCaGLyNIWkuyDovPV0xZJ
+rEy0kgBrDNb3++NmdI/+GA92pkedMXXioQvqdsxUagXAIB/sNGByJEhs37F05AnF
+vZbjUhceq3xTlvAMcrBWrgB4NwBivZY6IgLvl/CRQpVYwANShIQdbvHvZSxRonWh
+NXr6v/Wcf8rsp7g2VqJ2N2AcWT84aa9BLQ3Oe/SgrNx4QEhA1y7rc3oaqPVu5ZXO
+K+4O14JrpbEZ3Xs9YEjrcOuEDEpYktA8qqUDTdFyZrxb9S6BquUKrA6jZgT913kj
+J4e7YAZobC4rH0w4u0PrqDgYOkXA9Mo7L601/7ZaDJob80UcK+Z12ZSw73IgBix6
+DiJVfXuWkk5PM2zsFn6UOQXUNlZlDAOj5NC01V0fJ8P0v6GO9YOSSQx0j5UtkUbR
+fp/4W7uCPFvwAatWEHJhlM3sQNiMNStJFegr56xQu1a/cbJH7GdbseMhG/f0BaKQ
+qXCI3ffB5y5AOLc9Hw7PYiTFQsuY1ePRhE+J9mejgWRZxkjAH/FlAubqXkDgterC
+h+sLkzGf+my2IbsMCuc+3aeNMJ5Ej/vlXefCH/MpPWAHCqpQhe2DET/jRSaM53US
+AHNx8kw4MPUkxExgI7Sd
+=nDgR
+-----END PGP PUBLIC KEY BLOCK-----
+"""
 
 
 def _parse_cmake_arg(arg: str) -> str:
@@ -276,6 +306,14 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # change in the YAML Snapcraft will consider the build step dirty.
         return ["catkin-cmake-args"]
 
+    @classmethod
+    def get_required_repo_sources(self) -> List[str]:
+        return ["deb http://packages.ros.org/ros/ubuntu/ ${release} main"]
+
+    @classmethod
+    def get_required_repo_gpg_keys(self) -> List[str]:
+        return [_ROS_GPG_KEY]
+
     @property
     def _pip(self):
         if not self.__pip:
@@ -287,14 +325,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             )
 
         return self.__pip
-
-    @property
-    def PLUGIN_STAGE_SOURCES(self) -> List[str]:
-        return ["deb http://packages.ros.org/ros/ubuntu/ ${release} main"]
-
-    @property
-    def PLUGIN_STAGE_KEYRINGS(self):
-        return [_ROS_KEYRING_PATH]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -427,11 +457,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # with the pull.
         if self.options.rosinstall_files or self.options.recursive_rosinstall:
             wstool = _ros.wstool.Wstool(
-                self._ros_package_path,
-                self._wstool_path,
-                self.PLUGIN_STAGE_SOURCES,
-                self.PLUGIN_STAGE_KEYRINGS,
-                self.project,
+                self._ros_package_path, self._wstool_path, self.project
             )
             wstool.setup()
 
@@ -490,12 +516,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         # Use catkin_find to discover dependencies already in the underlay
         catkin = _Catkin(
-            self._rosdistro,
-            dependency_workspaces,
-            self._catkin_path,
-            self.PLUGIN_STAGE_SOURCES,
-            self.PLUGIN_STAGE_KEYRINGS,
-            self.project,
+            self._rosdistro, dependency_workspaces, self._catkin_path, self.project
         )
         catkin.setup()
 
@@ -507,8 +528,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
                 self.project.info.get_build_base()
             ],
-            ubuntu_sources=self.PLUGIN_STAGE_SOURCES,
-            ubuntu_keyrings=self.PLUGIN_STAGE_KEYRINGS,
             project=self.project,
         )
         rosdep.setup()
@@ -545,11 +564,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             os.makedirs(ubuntudir, exist_ok=True)
 
             logger.info("Preparing to fetch apt dependencies...")
-            ubuntu = repo.Ubuntu(
-                ubuntudir,
-                sources=self.PLUGIN_STAGE_SOURCES,
-                keyrings=self.PLUGIN_STAGE_KEYRINGS,
-            )
+            ubuntu = repo.Ubuntu(ubuntudir)
 
             logger.info("Fetching apt dependencies...")
             try:
@@ -970,15 +985,11 @@ class _Catkin:
         ros_distro: str,
         workspaces: List[str],
         catkin_path: str,
-        ubuntu_sources: str,
-        ubuntu_keyrings: str,
         project: "Project",
     ) -> None:
         self._ros_distro = ros_distro
         self._workspaces = workspaces
         self._catkin_path = catkin_path
-        self._ubuntu_sources = ubuntu_sources
-        self._ubuntu_keyrings = ubuntu_keyrings
         self._project = project
         self._catkin_install_path = os.path.join(self._catkin_path, "install")
 
@@ -988,11 +999,7 @@ class _Catkin:
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
         logger.info("Preparing to fetch catkin...")
-        ubuntu = repo.Ubuntu(
-            self._catkin_path,
-            sources=self._ubuntu_sources,
-            keyrings=self._ubuntu_keyrings,
-        )
+        ubuntu = repo.Ubuntu(self._catkin_path)
         logger.info("Fetching catkin...")
         ubuntu.get(["ros-{}-catkin".format(self._ros_distro)])
 
