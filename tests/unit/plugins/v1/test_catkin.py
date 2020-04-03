@@ -132,7 +132,6 @@ class CatkinPluginBaseTest(unit.TestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
-                    project=self.project,
                 ),
                 mock.call().setup(),
             ]
