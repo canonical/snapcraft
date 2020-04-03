@@ -46,24 +46,16 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.mock_package.candidate.fetch_binary.side_effect = _fetch_binary
         self.mock_cache.return_value.get_changes.return_value = [self.mock_package]
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_cache_update_failed(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_cache_update_failed(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
         ubuntu = repo.Ubuntu(self.tempdir)
         self.assertRaises(errors.CacheUpdateFailedError, ubuntu.get, ["fake-package"])
 
     @patch("shutil.rmtree")
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_cache_hashsum_mismatch(self, mock_apt_pkg, mock_fetch_binary, mock_rmtree):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_cache_hashsum_mismatch(self, mock_apt_pkg, mock_rmtree):
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = [
             apt.cache.FetchFailedException(
@@ -89,12 +81,8 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.assertThat(name, Equals("hello"))
         self.assertThat(version, Equals("2.10-1"))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_package(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
@@ -151,10 +139,11 @@ class UbuntuTestCase(RepoBaseTestCase):
         )
         self.assertThat(os.listdir(trusted_parts_dir), Equals(["trusted-part.gpg"]))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package_fetch_error(self, mock_apt_pkg, mock_fetch_binary):
-        mock_fetch_binary.side_effect = apt.package.FetchError("foo")
+    def test_get_package_fetch_error(self, mock_apt_pkg):
+        self.mock_package.candidate.fetch_binary.side_effect = apt.package.FetchError(
+            "foo"
+        )
         self.mock_cache().is_virtual_package.return_value = False
         ubuntu = repo.Ubuntu(self.tempdir)
         raised = self.assertRaises(
@@ -162,14 +151,8 @@ class UbuntuTestCase(RepoBaseTestCase):
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package_trusted_parts_already_imported(
-        self, mock_apt_pkg, mock_fetch_binary
-    ):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_package_trusted_parts_already_imported(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         def _fake_find_file(key: str):
@@ -214,12 +197,8 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
         )
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_multiarch_package(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_multiarch_package(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
