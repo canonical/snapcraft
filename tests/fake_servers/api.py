@@ -1134,7 +1134,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "architecture": "all",
                     "channel": "2.1/beta",
                     "expiration-date": None,
-                    "revision": 19,
+                    "revision": 1,
                     "progressive": {"key": None, "paused": None, "percentage": None},
                     "when": "2020-02-03T20:58:37Z",
                 }
@@ -1149,7 +1149,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                         "s390x",
                         "ppc64el",
                     ],
-                    "revision": 19,
+                    "revision": 1,
                     "version": "10",
                 }
             ],

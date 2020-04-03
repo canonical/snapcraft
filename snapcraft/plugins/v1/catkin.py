@@ -549,7 +549,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 ubuntudir,
                 sources=self.PLUGIN_STAGE_SOURCES,
                 keyrings=self.PLUGIN_STAGE_KEYRINGS,
-                project_options=self.project,
             )
 
             logger.info("Fetching apt dependencies...")
@@ -993,7 +992,6 @@ class _Catkin:
             self._catkin_path,
             sources=self._ubuntu_sources,
             keyrings=self._ubuntu_keyrings,
-            project_options=self._project,
         )
         logger.info("Fetching catkin...")
         ubuntu.get(["ros-{}-catkin".format(self._ros_distro)])

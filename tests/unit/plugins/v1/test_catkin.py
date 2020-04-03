@@ -1741,10 +1741,7 @@ class CatkinFindTestCase(unit.TestCase):
         self.ubuntu_mock.assert_has_calls(
             [
                 mock.call(
-                    self.catkin._catkin_path,
-                    sources="sources",
-                    keyrings=["keyring"],
-                    project_options=self.project,
+                    self.catkin._catkin_path, sources="sources", keyrings=["keyring"]
                 ),
                 mock.call().get(["ros-kinetic-catkin"]),
                 mock.call().unpack(self.catkin._catkin_install_path),

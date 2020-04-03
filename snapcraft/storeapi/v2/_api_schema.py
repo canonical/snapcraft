@@ -75,7 +75,7 @@ CHANNEL_MAP_JSONSCHEMA = {
                         "type": "array",
                     },
                     "attributes": {"type": "object"},
-                    "base": {"type": "string"},
+                    "base": {"type": ["string", "null"]},
                     "build-url": {"type": ["string", "null"]},
                     "confinement": {
                         "enum": ["strict", "classic", "devmode"],
