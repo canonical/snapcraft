@@ -62,9 +62,7 @@ class RosdepTestCase(unit.TestCase):
         self.ubuntu_mock.assert_has_calls(
             [
                 mock.call(
-                    self.rosdep._rosdep_path,
-                    sources="sources",
-                    keyrings=["keyring"],
+                    self.rosdep._rosdep_path, sources="sources", keyrings=["keyring"]
                 ),
                 mock.call().get(["python-rosdep"]),
                 mock.call().unpack(self.rosdep._rosdep_install_path),

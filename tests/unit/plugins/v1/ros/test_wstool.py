@@ -55,9 +55,7 @@ class WstoolTestCase(unit.TestCase):
         self.ubuntu_mock.assert_has_calls(
             [
                 mock.call(
-                    self.wstool._wstool_path,
-                    sources="sources",
-                    keyrings=["keyring"],
+                    self.wstool._wstool_path, sources="sources", keyrings=["keyring"]
                 ),
                 mock.call().get(["python-wstool"]),
                 mock.call().unpack(self.wstool._wstool_install_path),
