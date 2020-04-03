@@ -979,7 +979,7 @@ class UploadTestCase(StoreTestCase):
         )
 
 
-class ReleaseTestCase(StoreTestCase):
+class ReleaseTest(StoreTestCase):
     def test_release_without_login_raises_exception(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
@@ -1006,11 +1006,7 @@ class ReleaseTestCase(StoreTestCase):
     def test_progressive_release_snap(self):
         self.client.login("dummy", "test correct password")
         channel_map = self.client.release(
-            "test-snap",
-            "19",
-            ["beta"],
-            progressive_key="progressive_key",
-            progressive_percentage=10,
+            "test-snap", "19", ["beta"], progressive_percentage=10
         )
         expected_channel_map = {
             "opened_channels": ["beta"],

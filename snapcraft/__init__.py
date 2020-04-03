@@ -354,7 +354,6 @@ from snapcraft._store import (  # noqa
     push_metadata,
     register,
     register_key,
-    release,
     sign_build,
     status,
     validate,
