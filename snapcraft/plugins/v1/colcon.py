@@ -385,7 +385,6 @@ class ColconPlugin(snapcraft.BasePlugin):
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
                 self.project.info.get_build_base()
             ],
-            project=self.project,
         )
         rosdep.setup()
 

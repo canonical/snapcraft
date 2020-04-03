@@ -58,14 +58,11 @@ class RosdepInitializationError(errors.SnapcraftError):
 
 
 class Rosdep:
-    def __init__(
-        self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro, project
-    ):
+    def __init__(self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro):
         self._ros_distro = ros_distro
         self._ros_package_path = ros_package_path
         self._rosdep_path = rosdep_path
         self._ubuntu_distro = ubuntu_distro
-        self._project = project
 
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
         self._rosdep_sources_path = os.path.join(self._rosdep_path, "sources.list.d")
