@@ -16,7 +16,9 @@
 
 import apt
 import os
+import subprocess
 import textwrap
+from pathlib import Path
 from subprocess import CalledProcessError
 from unittest import mock
 from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
@@ -541,4 +543,70 @@ class PackageForFileTest(unit.TestCase):
             repo.errors.FileProviderNotFound,
             repo.Ubuntu.get_package_for_file,
             "/bin/not-found",
+        )
+
+
+class TestUbuntuInstallRepo(unit.TestCase):
+    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.refresh_build_packages")
+    def test_install(self, mock_refresh):
+        snapcraft_list = Path(self.path, "snapcraft.list")
+
+        with mock.patch(
+            "snapcraft.internal.repo._deb.Ubuntu._SNAPCRAFT_INSTALLED_SOURCES_LIST",
+            new=str(snapcraft_list),
+        ):
+            test_source = "deb http://source"
+            repo.Ubuntu.install_source(test_source)
+
+            self.assertThat(snapcraft_list.exists(), Equals(True))
+            self.assertThat(snapcraft_list.owner(), Equals("root"))
+            self.assertThat(snapcraft_list.group(), Equals("root"))
+            self.assertThat(snapcraft_list.stat().st_mode & 0o777, Equals(0o644))
+
+            installed_sources = snapcraft_list.read_text().splitlines()
+
+            self.assertThat(test_source in installed_sources, Equals(True))
+
+            test_source2 = "deb http://source2"
+            repo.Ubuntu.install_source(test_source2)
+
+            installed_sources = snapcraft_list.read_text().splitlines()
+            expected_sources = sorted([test_source, test_source2])
+
+            self.assertThat(installed_sources, Equals(expected_sources))
+
+    @mock.patch("subprocess.run")
+    def test_install_gpg(self, mock_run):
+        repo.Ubuntu.install_gpg_key("FAKEKEY")
+
+        self.assertThat(
+            mock_run.mock_calls,
+            Equals(
+                [
+                    call(
+                        [
+                            "sudo",
+                            "apt-key",
+                            "--keyring",
+                            repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+                            "add",
+                            "-",
+                        ],
+                        check=True,
+                        input=b"FAKEKEY",
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    )
+                ]
+            ),
+        )
+
+    @mock.patch("subprocess.run")
+    def test_apt_key_failure(self, mock_run):
+        mock_run.side_effect = CalledProcessError(
+            cmd=["foo"], returncode=1, output="some error"
+        )
+
+        self.assertRaises(
+            errors.AptGPGKeyInstallError, repo.Ubuntu.install_gpg_key, "FAKEKEY"
         )

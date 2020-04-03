@@ -26,7 +26,9 @@ import string
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
+from typing_extensions import Final
 
 import apt
 
@@ -191,6 +193,27 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
     return {i for i in output if ("lib" in i and os.path.isfile(i))}
 
 
+def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
+    """Workaround for writing to privileged files."""
+    with tempfile.NamedTemporaryFile() as src_f:
+        src_f.write(content)
+        src_f.flush()
+
+        try:
+            command = [
+                "sudo",
+                "install",
+                "--owner=root",
+                "--group=root",
+                "--mode=0644",
+                src_f.name,
+                str(dst_path),
+            ]
+            subprocess.check_call(command)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"failed to run: {command!r}")
+
+
 class _AptCache:
     def __init__(self, *, sources: List[str], keyrings: List[str]):
         self._sources = sources
@@ -350,6 +373,13 @@ class _AptCache:
 
 
 class Ubuntu(BaseRepo):
+    _SNAPCRAFT_INSTALLED_GPG_KEYRING: Final[
+        str
+    ] = "/etc/apt/trusted.gpg.d/snapcraft.gpg"
+    _SNAPCRAFT_INSTALLED_SOURCES_LIST: Final[
+        str
+    ] = "/etc/apt/sources.list.d/snapcraft.list"
+
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
         return _run_dpkg_query_list_files(package_name)
@@ -515,6 +545,58 @@ class Ubuntu(BaseRepo):
                         "{}={}".format(package.name, package.installed.version)
                     )
         return installed_packages
+
+    @classmethod
+    def install_gpg_key(cls, gpg_key: str) -> None:
+        cmd = [
+            "sudo",
+            "apt-key",
+            "--keyring",
+            cls._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+            "add",
+            "-",
+        ]
+        try:
+            subprocess.run(
+                cmd,
+                input=gpg_key.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except subprocess.CalledProcessError as error:
+            raise errors.AptGPGKeyInstallError(output=error.output, gpg_key=gpg_key)
+
+        logger.debug(f"Installed apt repository key:\n{gpg_key}")
+
+    @classmethod
+    def _get_snapcraft_installed_sources(cls) -> Set[str]:
+        sources: Set[str] = set()
+
+        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
+        if installed_path.exists():
+            sources = set(installed_path.read_text().splitlines())
+
+        return sources
+
+    @classmethod
+    def _set_snapcraft_installed_sources(cls, sources: Set[str]) -> None:
+        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
+        sources_content = "\n".join(sorted(sources)) + "\n"
+        _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
+
+    @classmethod
+    def install_source(cls, source_line: str) -> None:
+        """Add deb source line. Supports formatting tag for ${release}."""
+        expanded_source = _format_sources_list(source_line)
+
+        sources = cls._get_snapcraft_installed_sources()
+        sources.add(expanded_source)
+
+        cls._set_snapcraft_installed_sources(sources)
+        cls.refresh_build_packages()
+
+        logger.debug(f"Installed apt repository {expanded_source!r}")
 
     def __init__(
         self,
