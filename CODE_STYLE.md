@@ -11,10 +11,33 @@ Some of the rules are enforced with static tests. You can read the [TESTING][1]
 document for more information and details about how to run the static suite of
 tests. Some other rules are only socially enforced during code reviews.
 
-## black
+## Code Formatting
 
 This code base adheres to black[2].
 You can `snap install black --beta --devmode` to install the linter and formatter onto your host.
+
+## Conditionals
+
+* Always check for expected value e.g.; `if foo is True` instead of `if foo`
+  or `if foo is not None`.
+  
+## Methods
+
+* Return only once from a method unless it is through a guard.
+* Method names should start with a =verb= unless it is a `@property`.
+* Attribute names should be a `noun`.
+
+## Classes
+
+* `classmethods` should be defined before `__init__`.
+* Serialization/marshalling/dumping shall use methods named `marshal` and
+  `unmarshal` but if specific types are serialized we append the information
+  type, e.g.; `unmarshal_dict`.
+
+## Iterating
+
+* Always use generators, list comprehensions, reduce and functional resolution
+  when possible.
 
 ## Multiline strings
 

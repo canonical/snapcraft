@@ -14,8 +14,18 @@ set_base()
         exit 1
     fi
     
-    # Insert at the very top to be safe
-    sed -i "1ibase: $base"  "$snapcraft_yaml_path"
+    if grep -q "^base:" "$snapcraft_yaml_path"; then
+        sed -i "s/base:.*/base: $base/g" "$snapcraft_yaml_path"
+    else
+        # Insert at the very top to be safe
+        sed -i "1ibase: $base"  "$snapcraft_yaml_path"
+    fi
+}
+
+clear_base()
+{
+    snapcraft_yaml_path="$1"
+    sed -i '/^base:/d' "$snapcraft_yaml_path"
 }
 
 set_confinement()

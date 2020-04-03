@@ -30,6 +30,7 @@ import fixtures
 
 import snapcraft
 from snapcraft.internal import elf
+from snapcraft.internal.repo import _deb
 from tests.file_utils import get_snapcraft_path
 
 
@@ -103,7 +104,9 @@ class FakePlugin(fixtures.Fixture):
 
     def __init__(self, plugin_name, plugin_class):
         super().__init__()
-        self._import_name = "snapcraft.plugins.{}".format(plugin_name.replace("-", "_"))
+        self._import_name = "snapcraft.plugins.v1.{}".format(
+            plugin_name.replace("-", "_")
+        )
         self._plugin_class = plugin_class
 
     def _setUp(self):
@@ -518,23 +521,8 @@ class FakeAptCache(fixtures.Fixture):
         for package, version in self.packages:
             self.add_package(FakeAptCachePackage(package, version))
 
-        def fetch_binary(package_candidate, destination):
-            path = os.path.join(self.path, "{}.deb".format(package_candidate.name))
-            open(path, "w").close()
-            return path
-
-        patcher = mock.patch("snapcraft.repo._deb._AptCache.fetch_binary")
-        mock_fetch_binary = patcher.start()
-        mock_fetch_binary.side_effect = fetch_binary
-        self.addCleanup(patcher.stop)
-
         # Add all the packages in the manifest.
-        with open(
-            os.path.join(
-                get_snapcraft_path(), "snapcraft", "internal", "repo", "manifest.txt"
-            )
-        ) as manifest_file:
-            self.add_packages([line.strip() for line in manifest_file])
+        self.add_packages(_deb._DEFAULT_FILTERED_STAGE_PACKAGES)
 
     def add_package(self, package):
         package.temp_dir = self.path
@@ -595,6 +583,11 @@ class FakeAptCachePackage:
         self._version = version
         if version is not None:
             self.versions.update({version: self})
+
+    def fetch_binary(self, cache_dir):
+        path = os.path.join(cache_dir, f"{self.name}.deb")
+        open(path, "w").close()
+        return path
 
     def mark_install(self, *, auto_fix=True, from_user=True):
         if not self.installed:

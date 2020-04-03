@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2018,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -71,5 +71,5 @@ class PluginLoaderTestCase(unit.TestCase):
         plugin_mock.return_value = TestPlugin
         local_load_mock.side_effect = ImportError()
         self.load_part("mock-part", "mock")
-        import_mock.assert_called_with("snapcraft.plugins.mock")
+        import_mock.assert_called_with("snapcraft.plugins.v1.mock")
         local_load_mock.assert_called_with("x-mock", self.local_plugins_dir)

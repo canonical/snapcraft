@@ -8,6 +8,7 @@ description: |
   store.
 
 grade: devel
+base: core18
 confinement: devmode
 
 parts:

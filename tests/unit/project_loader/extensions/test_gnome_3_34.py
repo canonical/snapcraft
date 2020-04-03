@@ -120,6 +120,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "source-subdir": "gnome",
                         "plugin": "make",
                         "build-snaps": ["gnome-3-34-1804-sdk/latest/stable"],
+                        "build-packages": ["gcc"],
                     }
                 }
             ),
@@ -185,6 +186,8 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                             plugin: nil
                             build-environment: *id001
                           gnome-3-34-extension:
+                            build-packages:
+                            - gcc
                             build-snaps:
                             - gnome-3-34-1804-sdk/latest/stable
                             plugin: make
