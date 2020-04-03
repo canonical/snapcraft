@@ -92,7 +92,6 @@ class Wstool:
             self._wstool_path,
             sources=self._ubuntu_sources,
             keyrings=self._ubuntu_keyrings,
-            project_options=self._project,
         )
         logger.info("Fetching wstool...")
         ubuntu.get(["python-wstool"])

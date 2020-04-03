@@ -98,7 +98,6 @@ class Rosdep:
             self._rosdep_path,
             sources=self._ubuntu_sources,
             keyrings=self._ubuntu_keyrings,
-            project_options=self._project,
         )
 
         logger.info("Fetching rosdep...")
