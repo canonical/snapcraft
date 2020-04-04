@@ -53,14 +53,14 @@ class PluginV1:
     def get_build_properties(cls):
         return []
 
-    @property
-    def PLUGIN_STAGE_SOURCES(self) -> List[str]:
+    @classmethod
+    def get_required_repo_sources(self) -> List[str]:
         """Define additional deb source lines using templates variables."""
         return []
 
-    @property
-    def PLUGIN_STAGE_KEYRINGS(self) -> List[str]:
-        """Define additional keyrings to trust for stage-packages."""
+    @classmethod
+    def get_required_repo_gpg_keys(self) -> List[str]:
+        """Define additional GPG keys to trust for stage-packages."""
         return []
 
     @property
