@@ -55,12 +55,7 @@ class Wstool:
     """This class serves as a Python wrapper for the CLI utility wstool."""
 
     def __init__(
-        self,
-        ros_package_path: str,
-        wstool_path: str,
-        ubuntu_sources: List[str],
-        ubuntu_keyrings: List[str],
-        project: snapcraft.ProjectOptions,
+        self, ros_package_path: str, wstool_path: str, project: snapcraft.ProjectOptions
     ) -> None:
         """Create new Wstool
 
@@ -68,14 +63,10 @@ class Wstool:
                                      fetched.
         :param str wstool_path: Working directory for wstool (where it will be
                                 installed).
-        :param str ubuntu_sources: Ubuntu repositories from which wstool will
-                                   be installed.
         :param project: Instance of ProjectOptions for project-wide settings.
         :type project: snapcraft.ProjectOptions
         """
         self._ros_package_path = ros_package_path
-        self._ubuntu_sources = ubuntu_sources
-        self._ubuntu_keyrings = ubuntu_keyrings
         self._wstool_path = wstool_path
         self._wstool_install_path = os.path.join(wstool_path, "install")
         self._project = project
@@ -88,11 +79,7 @@ class Wstool:
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
         logger.info("Preparing to fetch wstool...")
-        ubuntu = repo.Ubuntu(
-            self._wstool_path,
-            sources=self._ubuntu_sources,
-            keyrings=self._ubuntu_keyrings,
-        )
+        ubuntu = repo.Ubuntu(self._wstool_path)
         logger.info("Fetching wstool...")
         ubuntu.get(["python-wstool"])
 

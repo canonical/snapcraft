@@ -191,12 +191,16 @@ class PartsConfig:
             "properties {!r}.".format(part_name, plugin_name, part_properties)
         )
 
-        sources = plugin.PLUGIN_STAGE_SOURCES
-        keyrings = plugin.PLUGIN_STAGE_KEYRINGS
+        sources = plugin.get_required_repo_sources()
+        keys = plugin.get_required_repo_gpg_keys()
 
-        stage_packages_repo = repo.Repo(
-            plugin.osrepodir, sources=sources, keyrings=keyrings
-        )
+        for key in keys:
+            repo.Repo.install_gpg_key(key)
+
+        for source in sources:
+            repo.Repo.install_source(source)
+
+        stage_packages_repo = repo.Repo(plugin.osrepodir)
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
