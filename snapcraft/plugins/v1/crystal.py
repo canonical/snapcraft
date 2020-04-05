@@ -35,14 +35,14 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import os
 import shutil
 
-import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import common, elf, errors
+from snapcraft.plugins.v1 import PluginV1
 
 _CRYSTAL_CHANNEL = "latest/stable"
 
 
-class CrystalPlugin(snapcraft.BasePlugin):
+class CrystalPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

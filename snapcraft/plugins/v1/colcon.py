@@ -64,11 +64,9 @@ import re
 import shutil
 import textwrap
 
-import snapcraft
-from snapcraft.plugins.v1 import _ros
-from snapcraft.plugins.v1 import _python
-from snapcraft import file_utils, repo
-from snapcraft.internal import errors, mangling
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
+from snapcraft import file_utils
+from snapcraft.internal import errors, mangling, repo
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +178,7 @@ class ColconPluginBaseError(errors.PluginBaseError):
         )
 
 
-class ColconPlugin(snapcraft.BasePlugin):
+class ColconPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()
@@ -599,7 +597,7 @@ class ColconPlugin(snapcraft.BasePlugin):
             )
 
         # Set the AMENT_CURRENT_PREFIX throughout to the in-snap prefix
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(r"(\${)(AMENT_CURRENT_PREFIX:=)(.*)(})"),
@@ -608,7 +606,7 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         # Set the COLCON_CURRENT_PREFIX (if it's in the installdir) to the in-snap
         # prefix
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(
@@ -619,7 +617,7 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         # Set the _colcon_prefix_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
         # prefix
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(r"()(_colcon_prefix_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
@@ -628,7 +626,7 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         # Set the _colcon_package_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
         # prefix
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(r"()(_colcon_package_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
@@ -637,7 +635,7 @@ class ColconPlugin(snapcraft.BasePlugin):
 
         # Set the _colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX throughout to the in-snap
         # prefix
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(r"()(_colcon_prefix_chain_sh_COLCON_CURRENT_PREFIX=)(.*)()"),
@@ -645,7 +643,7 @@ class ColconPlugin(snapcraft.BasePlugin):
         )
 
         # Set the _colcon_python_executable throughout to use the in-snap python
-        snapcraft.file_utils.replace_in_file(
+        file_utils.replace_in_file(
             self.installdir,
             re.compile(r""),
             re.compile(r"()(_colcon_python_executable=)(.*)()"),

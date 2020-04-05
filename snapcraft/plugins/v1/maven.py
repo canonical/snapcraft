@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2018 Canonical Ltd
+# Copyright (C) 2015, 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -58,10 +58,9 @@ from typing import Sequence
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
-import snapcraft
 from snapcraft import file_utils, formatting_utils
 from snapcraft.internal import errors, sources
-
+from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,7 @@ class UnsupportedJDKVersionError(errors.SnapcraftError):
         )
 
 
-class MavenPlugin(snapcraft.BasePlugin):
+class MavenPlugin(PluginV1):
     @classmethod
     def schema(cls):
 

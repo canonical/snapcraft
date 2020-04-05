@@ -36,15 +36,15 @@ import logging
 import os
 import re
 
-from snapcraft import BasePlugin, file_utils
+from snapcraft import file_utils
 from snapcraft.internal import errors
 from snapcraft.sources import Tar
-
+from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
 
 
-class RubyPlugin(BasePlugin):
+class RubyPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

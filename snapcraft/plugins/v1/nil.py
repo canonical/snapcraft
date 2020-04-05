@@ -20,9 +20,9 @@ Using this, parts can be defined purely by utilizing properties automatically
 included by Snapcraft, e.g. stage-packages.
 """
 
-import snapcraft
+from snapcraft.plugins.v1 import PluginV1
 
 
-class NilPlugin(snapcraft.BasePlugin):
+class NilPlugin(PluginV1):
     def enable_cross_compilation(self):
         pass

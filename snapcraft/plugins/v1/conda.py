@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,8 +30,8 @@ import shutil
 import subprocess
 from typing import Optional, Tuple
 
-import snapcraft
 from snapcraft.internal import errors, sources
+from snapcraft.plugins.v1 import PluginV1
 
 
 _MINICONDA_CHECKSUMS = {"4.6.14": "md5/718259965f234088d785cad1fbd7de03"}
@@ -44,7 +44,7 @@ def _get_miniconda_source(version: str) -> Tuple[str, Optional[str]]:
     return source, checksum
 
 
-class MinicondaBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
+class MinicondaBadArchitectureError(errors.SnapcraftError):
 
     fmt = (
         "Failed to fetch miniconda: "
@@ -55,7 +55,7 @@ class MinicondaBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
         super().__init__(architecture=architecture)
 
 
-class CondaPlugin(snapcraft.BasePlugin):
+class CondaPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

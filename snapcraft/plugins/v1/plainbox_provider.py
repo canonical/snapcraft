@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,12 +31,12 @@ For more information check the 'plugins' topic for the former and the
 
 import os
 
-import snapcraft
 from snapcraft.internal import errors
 from snapcraft.internal import mangling
+from snapcraft.plugins.v1 import PluginV1
 
 
-class PlainboxProviderPlugin(snapcraft.BasePlugin):
+class PlainboxProviderPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

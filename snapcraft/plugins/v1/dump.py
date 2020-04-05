@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,6 +29,7 @@ import os
 
 import snapcraft
 from snapcraft.internal import errors
+from snapcraft.plugins.v1 import PluginV1
 
 
 class DumpInvalidSymlinkError(errors.SnapcraftError):
@@ -41,7 +42,7 @@ class DumpInvalidSymlinkError(errors.SnapcraftError):
         super().__init__(path=path)
 
 
-class DumpPlugin(snapcraft.BasePlugin):
+class DumpPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

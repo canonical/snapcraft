@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -55,9 +55,9 @@ from glob import iglob
 from pkg_resources import parse_version
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-import snapcraft
 from snapcraft import common
 from snapcraft.internal import elf, errors
+from snapcraft.plugins.v1 import PluginV1
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -98,7 +98,7 @@ def _get_cgo_ldflags(library_paths: List[str]) -> str:
     return " ".join(cgo_ldflags)
 
 
-class GoPlugin(snapcraft.BasePlugin):
+class GoPlugin(PluginV1):
     @classmethod
     def schema(cls) -> Dict[str, Any]:
         schema = super().schema()

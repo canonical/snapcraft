@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -49,11 +49,10 @@ import shutil
 import subprocess
 import sys
 
-import snapcraft
 from snapcraft import sources
 from snapcraft.internal import errors
 from snapcraft.file_utils import link_or_copy, link_or_copy_tree
-
+from snapcraft.plugins.v1 import PluginV1
 
 _NODEJS_BASE = "node-v{version}-linux-{arch}"
 _NODEJS_VERSION = "8.12.0"
@@ -82,7 +81,7 @@ class NodejsPluginMissingPackageJsonError(errors.SnapcraftError):
     )
 
 
-class NodePlugin(snapcraft.BasePlugin):
+class NodePlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

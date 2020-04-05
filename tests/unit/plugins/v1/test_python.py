@@ -261,7 +261,7 @@ class PythonPluginTest(PythonPluginBaseTest):
         self.mock_pip.return_value.wheel.assert_not_called()
         self.mock_pip.return_value.install.assert_not_called()
 
-    @mock.patch.object(python.snapcraft.BasePlugin, "build")
+    @mock.patch.object(python.PluginV1, "build")
     def test_build(self, mock_base_build):
         self.options.requirements = ["requirements.txt"]
         self.options.constraints = ["constraints.txt"]
