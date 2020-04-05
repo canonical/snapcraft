@@ -46,7 +46,7 @@ class PlainboxProviderPlugin(PluginV1):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._setup_base_tools(project.info.get_build_base())
+        self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
         if base in ("core", "core16", "core18"):

@@ -17,7 +17,6 @@
 import json
 import os
 import tarfile
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
@@ -25,9 +24,9 @@ from testtools.matchers import Contains, DirExists, Equals, FileExists, Not
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import sources
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import dotnet
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 def _setup_dirs(plugin):
@@ -57,20 +56,9 @@ class DotNetPluginPropertiesTest(unit.TestCase):
         )
 
 
-class DotNetProjectBaseTest(unit.TestCase):
+class DotNetProjectBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: dotnet-snap
-            base: core16
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             build_attributes = []

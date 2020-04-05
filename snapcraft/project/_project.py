@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -66,6 +66,12 @@ class Project(ProjectOptions):
         # Ideally everywhere wold converge to operating on snap_meta, and ww
         # would only need to initialize it once (properly).
         self._snap_meta = Snap()
+
+    def _get_build_base(self) -> str:
+        """
+        Return name for type base or the base otherwise build-base is set
+        """
+        return self._snap_meta.get_build_base()
 
     def _get_project_directory_hash(self) -> str:
         m = hashlib.sha1()

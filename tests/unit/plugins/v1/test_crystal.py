@@ -25,27 +25,12 @@ from snapcraft.internal import errors
 from snapcraft.project import Project
 from snapcraft.plugins.v1 import crystal
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class CrystalPluginBaseTest(unit.TestCase):
-
-    deb_arch = None
-
+class CrystalPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: crystal-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(
-            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
-        )
 
         self.fake_run = fixtures.MockPatch("snapcraft.internal.common.run")
         self.useFixture(self.fake_run)

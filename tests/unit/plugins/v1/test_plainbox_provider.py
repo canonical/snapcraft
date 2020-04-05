@@ -24,6 +24,7 @@ from snapcraft.internal import errors
 from snapcraft.plugins.v1 import plainbox_provider
 from snapcraft.project import Project
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
 class PlainboxProviderPluginPropertiesTest(unit.TestCase):
@@ -62,20 +63,9 @@ class PlainboxProviderPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class PlainboxProviderPluginTest(unit.TestCase):
+class PlainboxProviderPluginTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: plainbox-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -447,7 +447,7 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual({"command-chain"}, snap.assumes)
 
-    def test_write_snap_yaml_skips_base_core(self):
+    def test_build_base_and_write_snap_yaml_skips_base_core(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
@@ -471,15 +471,43 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertFalse("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core")
 
-    def test_write_snap_yaml_with_base_core18(self):
+    def test_build_base_write_snap_yaml_skips_build_base(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
                 "version": "snap-version",
                 "summary": "snap-summary",
                 "description": "snap-description",
-                "base": "core18",
+                "base": "core20",
+                "build-base": "core18",
+                "grade": "devel",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertEqual(snap_dict, snap.to_dict())
+        self.assertFalse("build-base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
+
+    def test_build_base_and_write_snap_yaml_with_base_core20(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "base": "core20",
                 "grade": "devel",
             }
         )
@@ -496,6 +524,60 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertTrue("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core20")
+
+    def test_build_base_and_write_snap_yaml_type_base(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "core18",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "devel",
+                "type": "base",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertEqual(snap_dict, snap.to_dict())
+        self.assertTrue("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
+
+    def test_build_base_and_write_snap_yaml_type_base_with_build_base(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "core20",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "devel",
+                "build-base": "core18",
+                "type": "base",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertTrue("base" in written_snap_yaml)
+        self.assertFalse("build-base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
 
 
 class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):

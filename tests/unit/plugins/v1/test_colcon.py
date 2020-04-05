@@ -18,7 +18,6 @@ import logging
 import os
 import os.path
 import re
-import textwrap
 
 import fixtures
 from unittest import mock
@@ -33,11 +32,11 @@ from testtools.matchers import (
     Not,
 )
 
-import snapcraft
 from snapcraft import repo
 from snapcraft.plugins.v1 import colcon
 from snapcraft.plugins.v1 import _ros
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class _CompareContainers:
@@ -62,7 +61,7 @@ class _CompareContainers:
         return True
 
 
-class ColconPluginTestBase(unit.TestCase):
+class ColconPluginTestBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -80,17 +79,6 @@ class ColconPluginTestBase(unit.TestCase):
 
         self.properties = props()
         self.ubuntu_distro = "bionic"
-
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: colcon-snap
-                    base: core18
-                    """
-                )
-            )
-        )
 
         self.ubuntu_mock = self.useFixture(
             fixtures.MockPatch("snapcraft.repo.Ubuntu")
@@ -157,23 +145,14 @@ class ColconPluginTest(ColconPluginTestBase):
             self.assertThat(properties, Contains(prop))
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: cmake-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
             colcon.ColconPluginBaseError,
             colcon.ColconPlugin,
             "test-part",
             self.properties,
-            project,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))

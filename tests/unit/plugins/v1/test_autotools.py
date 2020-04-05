@@ -17,18 +17,17 @@
 
 import os
 import stat
-import textwrap
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
 import snapcraft
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import autotools, make
-from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class AutotoolsPluginTestCase(unit.TestCase):
+class AutotoolsPluginTestCase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -42,16 +41,6 @@ class AutotoolsPluginTestCase(unit.TestCase):
             artifacts = []
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: make-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
     def test_schema(self):
         schema = autotools.AutotoolsPlugin.schema()
@@ -404,30 +393,21 @@ class AutotoolsPluginTestCase(unit.TestCase):
         self.assertListEqual(expected_fileset, fileset)
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: cmake-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
             errors.PluginBaseError,
             autotools.AutotoolsPlugin,
             "test-part",
             self.options,
-            project,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))
         self.assertThat(raised.base, Equals("unsupported-base"))
 
 
-class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
+class AutotoolsCrossCompilePluginTestCase(PluginsV1BaseTestCase):
 
     scenarios = [
         ("armv7l", dict(deb_arch="armhf", triplet="arm-linux-gnueabihf")),
@@ -450,24 +430,15 @@ class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
             artifacts = []
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: make-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            "snapcraft.ProjectOptions.is_cross_compiling", return_value=True
+            "snapcraft.project.Project.is_cross_compiling", return_value=True
         )
         patcher.start()
         self.addCleanup(patcher.stop)

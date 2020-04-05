@@ -25,6 +25,7 @@ from snapcraft.internal import errors
 from snapcraft.project import Project
 from snapcraft.plugins.v1 import meson
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class MesonPluginPropertiesTest(unit.TestCase):
@@ -95,20 +96,9 @@ class MesonPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class MesonPluginBaseTest(unit.TestCase):
+class MesonPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: meson-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             """Internal Options Class matching the Meson plugin"""

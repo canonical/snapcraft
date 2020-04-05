@@ -24,6 +24,7 @@ from snapcraft.internal import errors
 from snapcraft.project import Project
 from snapcraft.plugins.v1 import scons
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class SconsPluginPropertiesTest(unit.TestCase):
@@ -93,22 +94,11 @@ class SconsPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class SconsPluginTest(unit.TestCase):
+class SconsPluginTest(PluginsV1BaseTestCase):
     """Plugin to provide snapcraft support for the scons build system"""
 
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: scons-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             """Internal Options Class matching the Scons plugin"""

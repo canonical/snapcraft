@@ -149,12 +149,12 @@ class MavenPlugin(PluginV1):
         super().__init__(name, options, project)
 
         self._setup_maven()
-        self._setup_base_tools(project.info.get_build_base())
+        self._setup_base_tools(project._get_build_base())
 
     def _setup_base_tools(self, base):
         if base not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(
-                part_name=self.name, base=self.project.info.get_build_base()
+                part_name=self.name, base=self.project._get_build_base()
             )
 
         if base in ("core", "core16"):
@@ -242,9 +242,9 @@ class MavenPlugin(PluginV1):
         self._create_symlinks()
 
     def _create_symlinks(self):
-        if self.project.info.get_build_base() not in ("core18", "core16", "core"):
+        if self.project._get_build_base() not in ("core18", "core16", "core"):
             raise errors.PluginBaseError(
-                part_name=self.name, base=self.project.info.get_build_base()
+                part_name=self.name, base=self.project._get_build_base()
             )
 
         os.makedirs(os.path.join(self.installdir, "bin"), exist_ok=True)
