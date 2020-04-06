@@ -15,14 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import plainbox_provider
-from snapcraft.project import Project
 from tests import fixture_setup, unit
 from . import PluginsV1BaseTestCase
 
