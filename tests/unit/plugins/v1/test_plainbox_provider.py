@@ -220,20 +220,11 @@ class PlainboxProviderPluginTest(PluginsV1BaseTestCase):
         self.assertListEqual(expected_fileset, fileset)
 
 
-class PlainboxProviderPluginUnsupportedBaseTest(unit.TestCase):
+class PlainboxProviderPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: plainbox-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"
