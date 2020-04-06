@@ -336,7 +336,11 @@ class ColconPlugin(PluginV1):
             raise ColconWorkspaceIsRootError()
 
     def env(self, root):
-        """Runtime environment for ROS binaries and services."""
+        """Build environment for ROS binaries and services."""
+
+        # TODO: split v1 plugins `env()` -> `env()` and `runtime_env()`.
+        if root != self.installdir:
+            return []
 
         env = [
             'AMENT_PYTHON_EXECUTABLE="{}"'.format(

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Save off parameters, the sourced setup scripts may manipulate them.
+original_args=("$@")
+
+export AMENT_PYTHON_EXECUTABLE="$SNAP/usr/bin/python3"
+export COLCON_PYTHON_EXECUTABLE="$SNAP/usr/bin/python3"
+export SNAP_COLCON_ROOT="$SNAP"
+
+# First, source the upstream ROS underlay, if it exists.
+if [ -f "/opt/ros/$SNAP_ROS_DISTRO/setup.sh" ]; then
+    # shellcheck source=/dev/null
+    source "/opt/ros/$SNAP_ROS_DISTRO/setup.sh"
+fi
+
+# Then source the overlay, if it exists.
+if [ -f "/opt/ros/snap/setup.sh" ]; then
+    # shellcheck source=/dev/null
+    source "/opt/ros/snap/setup.sh"
+fi
+
+exec "${original_args[@]}"

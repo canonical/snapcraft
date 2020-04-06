@@ -14,6 +14,7 @@ apps:
     plugs: [network, network-bind]
     environment:
       PYTHONUNBUFFERED: 1
+    extensions: [ros2-dashing]
 
   ros2:
     command: opt/ros/dashing/bin/ros2

@@ -660,7 +660,9 @@
                                 "enum": [
                                     "gnome-3-28",
                                     "gnome-3-34",
-                                    "kde-neon"
+                                    "kde-neon",
+                                    "ros2-dashing",
+                                    "ros2-eloquent"
                                 ]
                             }
                         }
