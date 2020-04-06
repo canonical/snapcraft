@@ -1,7 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -51,16 +51,16 @@ from typing import List, Optional
 
 import toml
 
-import snapcraft
 from snapcraft import sources
 from snapcraft import file_utils, shell_utils
 from snapcraft.internal import errors
+from snapcraft.plugins.v1 import PluginV1
 
 _RUSTUP = "https://sh.rustup.rs/"
 logger = logging.getLogger(__name__)
 
 
-class RustPlugin(snapcraft.BasePlugin):
+class RustPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

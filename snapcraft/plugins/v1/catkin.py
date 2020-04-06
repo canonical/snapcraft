@@ -82,10 +82,9 @@ import subprocess
 import textwrap
 from typing import List, Set, TYPE_CHECKING
 
-import snapcraft
-from snapcraft.plugins.v1 import _ros
-from snapcraft.plugins.v1 import _python
-from snapcraft import common, file_utils, formatting_utils, repo
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
+from snapcraft import file_utils, formatting_utils
+from snapcraft.internal import common, repo
 from snapcraft.internal import errors, mangling
 
 if TYPE_CHECKING:
@@ -231,7 +230,7 @@ class CatkinPackagePathNotFoundError(errors.SnapcraftError):
         super().__init__(path=path)
 
 
-class CatkinPlugin(snapcraft.BasePlugin):
+class CatkinPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

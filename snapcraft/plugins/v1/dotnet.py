@@ -35,12 +35,12 @@ import fnmatch
 import urllib.parse
 import urllib.request
 import json
+from typing import List
 
-import snapcraft
 from snapcraft import sources
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
-from typing import List
+from snapcraft.plugins.v1 import PluginV1
 
 
 _DOTNET_RELEASE_METADATA_URL = "http://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"  # noqa
@@ -51,7 +51,7 @@ _VERSION_DEFAULT = "2.0"
 _SDK_ARCH = ["amd64"]
 
 
-class DotNetBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
+class DotNetBadArchitectureError(errors.SnapcraftError):
 
     fmt = (
         "Failed to prepare the .NET SDK: "
@@ -66,7 +66,7 @@ class DotNetBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
         )
 
 
-class DotNetBadReleaseDataError(snapcraft.internal.errors.SnapcraftError):
+class DotNetBadReleaseDataError(errors.SnapcraftError):
 
     fmt = (
         "Failed to prepare the .NET SDK: "
@@ -78,7 +78,7 @@ class DotNetBadReleaseDataError(snapcraft.internal.errors.SnapcraftError):
         super().__init__(version=version)
 
 
-class DotNetPlugin(snapcraft.BasePlugin):
+class DotNetPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

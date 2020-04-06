@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2018 Canonical Ltd
+# Copyright (C) 2015, 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -65,8 +65,8 @@ from glob import glob
 from typing import Sequence
 from urllib.parse import urlsplit
 
-import snapcraft
 from snapcraft import formatting_utils
+from snapcraft.plugins.v1 import PluginV1
 from snapcraft.internal import errors, sources
 
 
@@ -97,7 +97,7 @@ class UnsupportedJDKVersionError(errors.SnapcraftError):
         )
 
 
-class AntPlugin(snapcraft.BasePlugin):
+class AntPlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()

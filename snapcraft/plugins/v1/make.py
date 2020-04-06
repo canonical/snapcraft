@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -48,12 +48,12 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import snapcraft
 import snapcraft.common
 from snapcraft.internal import errors
+from snapcraft.plugins.v1 import PluginV1
 
 
-class MakePlugin(snapcraft.BasePlugin):
+class MakePlugin(PluginV1):
     @classmethod
     def schema(cls):
         schema = super().schema()
