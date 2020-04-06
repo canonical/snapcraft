@@ -115,8 +115,9 @@ def remote_build(
     project = get_project()
 
     # TODO: use project.is_legacy() when available.
-    base = project.info.get_build_base()
-    if base is None:
+    try:
+        project._get_build_base()
+    except RuntimeError:
         raise errors.BaseRequiredError()
 
     # Use a hash of current working directory to distinguish between other
