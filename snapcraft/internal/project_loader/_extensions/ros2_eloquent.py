@@ -20,8 +20,8 @@ from ._ros2 import Ros2Extension
 
 
 class ExtensionImpl(Ros2Extension):
-    """ros2-dashing"""
+    """ros2-eloquent"""
 
     @classmethod
     def get_distro(cls) -> str:
-        return "dashing"
+        return "eloquent"
