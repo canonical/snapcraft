@@ -50,7 +50,7 @@ class Ros2Extension(Extension, ABC):
         }
 
         self.parts = {
-            "ros2-extension": {
+            f"ros2-{self.get_distro()}-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
                 "plugin": "nil",
                 "override-build": "snapcraftctl build && install -D -m 0755 ros2-launch $SNAPCRAFT_PART_INSTALL/snap/command-chain/ros2-launch",
