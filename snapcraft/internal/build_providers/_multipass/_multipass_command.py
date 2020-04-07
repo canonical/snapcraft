@@ -269,7 +269,7 @@ class MultipassCommand:
         source: str,
         target: str,
         uid_map: Dict[str, str] = None,
-        gid_map: Dict[str, str] = None
+        gid_map: Dict[str, str] = None,
     ) -> None:
         """Passthrough for running multipass mount.
 
