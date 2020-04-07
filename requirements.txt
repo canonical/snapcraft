@@ -1,5 +1,4 @@
 click==7.1.1
-click-config-file==0.5.0
 configparser==3.5.0
 jsonschema==2.5.1
 progressbar33==2.4
