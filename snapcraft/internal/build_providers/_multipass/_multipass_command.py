@@ -327,18 +327,17 @@ class MultipassCommand:
         assert isinstance(source, io.IOBase)
 
         # can't use std{in,out}=open(...) due to LP#1849753
-        data_to_read = True
-
         p = _popen(
             [self.provider_cmd, "transfer", "-", destination], stdin=subprocess.PIPE
         )
 
-        while data_to_read:
+        while True:
             read = source.read(bufsize)
-            p.stdin.write(read)
+            if read:
+                p.stdin.write(read)
             if len(read) < bufsize:
                 logger.debug("Finished streaming source file")
-                data_to_read = False
+                break
 
         while True:
             try:

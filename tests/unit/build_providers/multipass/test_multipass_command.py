@@ -508,7 +508,6 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
                     ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
                 ),
                 mock.call().stdin.write(b"read data"),
-                mock.call().stdin.write(b""),
                 mock.call().communicate(timeout=1),
                 mock.call().communicate(timeout=1),
             ],
