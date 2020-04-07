@@ -31,6 +31,7 @@ import fixtures
 import snapcraft
 from snapcraft.internal import elf
 from snapcraft.internal.repo import _deb
+from snapcraft.plugins._plugin_finder import get_plugin_for_base
 from tests.file_utils import get_snapcraft_path
 
 
@@ -104,19 +105,23 @@ class FakePlugin(fixtures.Fixture):
 
     def __init__(self, plugin_name, plugin_class):
         super().__init__()
-        self._import_name = "snapcraft.plugins.v1.{}".format(
-            plugin_name.replace("-", "_")
-        )
+        self._plugin_name = plugin_name
         self._plugin_class = plugin_class
 
     def _setUp(self):
-        plugin_module = ModuleType(self._import_name)
-        setattr(plugin_module, self._plugin_class.__name__, self._plugin_class)
-        sys.modules[self._import_name] = plugin_module
-        self.addCleanup(self._remove_module)
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.get_plugin_for_base", side_effect=self.get_plugin
+            )
+        )
 
-    def _remove_module(self):
-        del sys.modules[self._import_name]
+    def get_plugin(self, plugin_name, *, build_base):
+        if plugin_name == self._plugin_name:
+            plugin_class = self._plugin_class
+        else:
+            plugin_class = get_plugin_for_base(self._plugin_name, build_base=build_base)
+
+        return plugin_class
 
 
 def _fake_elffile_extract_attributes(self):

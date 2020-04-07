@@ -22,6 +22,7 @@ from typing import List
 
 import snapcraft
 from snapcraft.internal import errors, repo
+from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class Wstool:
     """This class serves as a Python wrapper for the CLI utility wstool."""
 
     def __init__(
-        self, ros_package_path: str, wstool_path: str, project: snapcraft.ProjectOptions
+        self, ros_package_path: str, wstool_path: str, project: Project
     ) -> None:
         """Create new Wstool
 
@@ -64,7 +65,7 @@ class Wstool:
         :param str wstool_path: Working directory for wstool (where it will be
                                 installed).
         :param project: Instance of ProjectOptions for project-wide settings.
-        :type project: snapcraft.ProjectOptions
+        :type project: Project
         """
         self._ros_package_path = ros_package_path
         self._wstool_path = wstool_path

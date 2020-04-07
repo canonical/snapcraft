@@ -34,7 +34,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
-from ._plugin_loader import load_plugin  # noqa
+from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
