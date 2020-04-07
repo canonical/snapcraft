@@ -591,6 +591,22 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
             destination.write.mock_calls,
         )
 
+    def test_buffered_pull_no_communicate_stdout(self):
+        source = "source-file"
+        destination = mock.MagicMock(spec=io.BufferedIOBase)
+
+        self.popen_mock.return_value.stdin = None
+        self.popen_mock.return_value.stdout.read.return_value = ""
+
+        self.popen_mock.return_value.communicate.side_effect = (
+            subprocess.TimeoutExpired("foo", 1),
+            (b"", b"error"),
+        )
+
+        self.multipass_command.pull_file(source=source, destination=destination)
+
+        destination.write.assert_not_called()
+
     def test_push_fails(self):
         # multipass can fail due to several reasons and will display the error
         # right above this exception message.

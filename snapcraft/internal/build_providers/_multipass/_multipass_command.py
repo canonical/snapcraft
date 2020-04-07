@@ -364,20 +364,19 @@ class MultipassCommand:
         assert isinstance(destination, io.IOBase)
 
         # can't use std{in,out}=open(...) due to LP#1849753
-        data_to_write = True
-
         p = _popen(
             [self.provider_cmd, "transfer", source, "-"],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
         )
 
-        while data_to_write:
+        while True:
             written = p.stdout.read(bufsize)
-            destination.write(written)
+            if written:
+                destination.write(written)
             if len(written) < bufsize:
                 logger.debug("Finished streaming standard output")
-                data_to_write = False
+                break
 
         while True:
             try:
@@ -385,7 +384,8 @@ class MultipassCommand:
             except subprocess.TimeoutExpired:
                 pass
             else:
-                destination.write(out)
+                if out:
+                    destination.write(out)
 
                 if p.returncode == 0:
                     logger.debug("Process completed")
