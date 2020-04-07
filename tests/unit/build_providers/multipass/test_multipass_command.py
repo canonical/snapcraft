@@ -473,15 +473,19 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
 
         self.multipass_command.push_file(source=source, destination=destination)
 
-        self.popen_mock.assert_called_once_with(
-            ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
-        )
-        source.read.assert_called_once_with(1024)
-        self.popen_mock.return_value.stdin.write.assert_called_once_with(b"read data")
         self.assertEqual(
-            self.popen_mock.return_value.communicate.call_args_list,
-            [mock.call(timeout=1), mock.call(timeout=1)],
+            [
+                mock.call(
+                    ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
+                ),
+                mock.call().stdin.write(b"read data"),
+                mock.call().communicate(timeout=1),
+                mock.call().communicate(timeout=1),
+            ],
+            self.popen_mock.mock_calls,
         )
+
+        source.read.assert_called_once_with(1024)
 
     def test_buffered_push(self):
         source = mock.MagicMock(spec=io.BufferedIOBase)
@@ -498,18 +502,20 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
             source=source, destination=destination, bufsize=9
         )
 
-        self.popen_mock.assert_called_once_with(
-            ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
-        )
-        self.assertEqual(source.read.call_args_list, [mock.call(9), mock.call(9)])
         self.assertEqual(
-            self.popen_mock.return_value.stdin.write.call_args_list,
-            [mock.call(b"read data"), mock.call(b"")],
+            [
+                mock.call(
+                    ["multipass", "transfer", "-", destination], stdin=subprocess.PIPE
+                ),
+                mock.call().stdin.write(b"read data"),
+                mock.call().stdin.write(b""),
+                mock.call().communicate(timeout=1),
+                mock.call().communicate(timeout=1),
+            ],
+            self.popen_mock.mock_calls,
         )
-        self.assertEqual(
-            self.popen_mock.return_value.communicate.call_args_list,
-            [mock.call(timeout=1), mock.call(timeout=1)],
-        )
+
+        self.assertEqual(source.read.mock_calls, [mock.call(9), mock.call(9)])
 
     def test_pull(self):
         source = "source-file"
@@ -524,18 +530,23 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
 
         self.multipass_command.pull_file(source=source, destination=destination)
 
-        self.popen_mock.assert_called_once_with(
-            ["multipass", "transfer", source, "-"],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-        )
         self.assertEqual(
-            self.popen_mock.return_value.communicate.call_args_list,
-            [mock.call(timeout=1), mock.call(timeout=1)],
+            [
+                mock.call(
+                    ["multipass", "transfer", source, "-"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                ),
+                mock.call().stdout.read(1024),
+                mock.call().communicate(timeout=1),
+                mock.call().communicate(timeout=1),
+            ],
+            self.popen_mock.mock_calls,
         )
+
         self.assertEqual(
-            destination.write.call_args_list,
             [mock.call(b"stdout data"), mock.call(b"communicate data")],
+            destination.write.mock_calls,
         )
 
     def test_buffered_pull(self):
@@ -557,22 +568,28 @@ class MultipassCommandTransferTest(MultipassCommandPassthroughBaseTest):
             source=source, destination=destination, bufsize=16
         )
 
-        self.popen_mock.assert_called_once_with(
-            ["multipass", "transfer", source, "-"],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-        )
         self.assertEqual(
-            self.popen_mock.return_value.communicate.call_args_list,
-            [mock.call(timeout=1), mock.call(timeout=1)],
+            [
+                mock.call(
+                    ["multipass", "transfer", source, "-"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                ),
+                mock.call().stdout.read(16),
+                mock.call().stdout.read(16),
+                mock.call().communicate(timeout=1),
+                mock.call().communicate(timeout=1),
+            ],
+            self.popen_mock.mock_calls,
         )
+
         self.assertEqual(
-            destination.write.call_args_list,
             [
                 mock.call(b"full stdout data"),
                 mock.call(b"stdout data"),
                 mock.call(b"communicate data"),
             ],
+            destination.write.mock_calls,
         )
 
     def test_push_fails(self):
