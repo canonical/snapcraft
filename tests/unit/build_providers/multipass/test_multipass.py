@@ -98,6 +98,10 @@ class MultipassTest(BaseProviderBaseTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("builtins.open", mock.mock_open())
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         # default data returned for info so launch is triggered
         self.multipass_cmd_mock().info.side_effect = [
             errors.ProviderInfoError(
@@ -244,6 +248,22 @@ class MultipassTest(BaseProviderBaseTest):
             image="snapcraft:core16",
         )
 
+    def test_push_file(self):
+        multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
+
+        multipass._push_file(source="src.txt", destination="dest.txt")
+
+        self.multipass_cmd_mock().push_file.assert_called_once_with(
+            destination="{}:dest.txt".format(self.instance_name),
+            source=self.open_mock.return_value.__enter__(),
+        )
+
+        self.open_mock.assert_called_once_with("src.txt", "rb")
+        self.open_mock.return_value.__exit__.assert_called()
+        self.multipass_cmd_mock().info.assert_not_called()
+        self.multipass_cmd_mock().stop.assert_not_called()
+        self.multipass_cmd_mock().delete.assert_not_called()
+
     def test_pull_file(self):
         multipass = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
 
@@ -264,10 +284,13 @@ class MultipassTest(BaseProviderBaseTest):
             instance_name="snapcraft-project-name",
         )
 
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            destination=self.open_mock.return_value.__enter__(),
+            source="{}:src.txt".format(self.instance_name),
         )
 
+        self.open_mock.assert_called_once_with("dest.txt", "wb")
+        self.open_mock.return_value.__exit__.assert_called()
         self.multipass_cmd_mock().info.assert_not_called()
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
@@ -277,8 +300,9 @@ class MultipassTest(BaseProviderBaseTest):
 
         multipass.pull_file("src.txt", "dest.txt", delete=True)
 
-        self.multipass_cmd_mock().copy_files.assert_called_once_with(
-            destination="dest.txt", source="{}:src.txt".format(self.instance_name)
+        self.multipass_cmd_mock().pull_file.assert_called_once_with(
+            destination=self.open_mock.return_value.__enter__(),
+            source="{}:src.txt".format(self.instance_name),
         )
 
         self.multipass_cmd_mock().execute.assert_has_calls(
@@ -312,6 +336,8 @@ class MultipassTest(BaseProviderBaseTest):
                 ),
             ]
         )
+        self.open_mock.assert_called_once_with("dest.txt", "wb")
+        self.open_mock.return_value.__exit__.assert_called()
         self.multipass_cmd_mock().info.assert_not_called()
         self.multipass_cmd_mock().stop.assert_not_called()
         self.multipass_cmd_mock().delete.assert_not_called()
@@ -415,6 +441,10 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 return b""
 
         self.multipass_cmd_mock().execute.side_effect = execute_effect
+
+        patcher = mock.patch("builtins.open", mock.mock_open())
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
         # default data returned for info so launch is triggered
         self.multipass_cmd_mock().info.side_effect = [
@@ -571,8 +601,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                 mock.call(instance_name=self.instance_name, output_format="json"),
             ]
         )
-        self.assertThat(self.multipass_cmd_mock().copy_files.call_count, Equals(2))
-        self.multipass_cmd_mock().copy_files.assert_has_calls(
+        self.assertThat(self.multipass_cmd_mock().push_file.call_count, Equals(2))
+        self.multipass_cmd_mock().push_file.assert_has_calls(
             [
                 mock.call(
                     source=mock.ANY,
