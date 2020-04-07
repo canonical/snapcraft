@@ -23,6 +23,7 @@ from typing import Dict, List, Optional
 from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt
 from snapcraft.internal import common, errors
+from snapcraft.internal.meta.snap import Snap
 
 
 class PromptOption(click.Option):
@@ -275,6 +276,10 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         is_managed_host=is_managed_host,
     )
+    # TODO: this should be automatic on get_project().
+    # This is not the complete meta parsed by the project loader.
+    project._snap_meta = Snap.from_dict(project.info.get_raw_snapcraft())
+
     return project
 
 

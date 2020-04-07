@@ -89,9 +89,9 @@ class CondaPlugin(PluginV1):
 
     def __init__(self, name, options, project) -> None:
         super().__init__(name, options, project)
-        if project.info.get_build_base() not in ("core", "core16", "core18"):
+        if project._get_build_base() not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(
-                part_name=self.name, base=project.info.get_build_base()
+                part_name=self.name, base=project._get_build_base()
             )
 
         self._conda_home = os.path.join(self.partdir, "miniconda")
@@ -135,7 +135,7 @@ class CondaPlugin(PluginV1):
 
         # conda needs to rewrite the prefixes in the python shebangs and binaries
         conda_target_prefix = os.path.join(
-            os.path.sep, "snap", self.project.info.name, "current"
+            os.path.sep, "snap", self.project._snap_meta.name, "current"
         )
 
         subprocess.check_call(

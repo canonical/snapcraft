@@ -15,31 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 
 from unittest import mock
 from testtools.matchers import Contains, Equals, HasLength, Not
 
 from snapcraft.internal import errors
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import godeps
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class GodepsPluginBaseTest(unit.TestCase):
+class GodepsPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: godeps-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -392,20 +380,11 @@ class GodepsPluginToolSetupTest(GodepsPluginBaseTest):
         self.assertThat(plugin.build_snaps, Not(Contains("go/latest/stable")))
 
 
-class GodepsPluginUnsupportedBaseTest(unit.TestCase):
+class GodepsPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: go-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"

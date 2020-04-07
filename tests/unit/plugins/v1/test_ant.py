@@ -16,7 +16,6 @@
 
 import os
 import tarfile
-from textwrap import dedent
 from unittest import mock
 
 import fixtures
@@ -24,8 +23,8 @@ from testtools.matchers import Contains, Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import ant
-from snapcraft.project import Project
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class AntPluginPropertiesTest(unit.TestCase):
@@ -86,7 +85,7 @@ class AntPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class AntPluginBaseTest(unit.TestCase):
+class AntPluginBaseTest(PluginsV1BaseTestCase):
     scenarios = (
         (
             "core java version 8 ",
@@ -129,16 +128,7 @@ class AntPluginBaseTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: test-snap
-            base: {base}
-        """
-            ).format(base=self.base)
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = self.base
 
         class Options:
             ant_properties = {}
@@ -292,20 +282,9 @@ class AntPluginBaseTest(unit.TestCase):
         )
 
 
-class AntPluginSnapTest(unit.TestCase):
+class AntPluginSnapTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-                name: test-snap
-                base: core18
-                """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             ant_properties = {}
@@ -380,20 +359,11 @@ class AntPluginSnapTest(unit.TestCase):
         self.assertEqual(plugin.build_snaps, ["ant/other/channel"])
 
 
-class AntPluginUnsupportedBase(unit.TestCase):
+class AntPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: ant-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             ant_properties = {}
@@ -415,7 +385,7 @@ class AntPluginUnsupportedBase(unit.TestCase):
         )
 
 
-class UnsupportedJDKVersionErrorTest(unit.TestCase):
+class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
 
     scenarios = (
         (
@@ -456,18 +426,7 @@ class UnsupportedJDKVersionErrorTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: ant-snap
-            base: {base}
-        """.format(
-                    base=self.base
-                )
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = self.base
 
         class Options:
             ant_properties = {}

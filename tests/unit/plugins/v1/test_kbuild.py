@@ -16,7 +16,6 @@
 
 import logging
 import os
-import textwrap
 
 import fixtures
 from testtools.matchers import Equals, HasLength
@@ -26,9 +25,10 @@ import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import kbuild
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class KBuildPluginTestCase(unit.TestCase):
+class KBuildPluginTestCase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -41,16 +41,6 @@ class KBuildPluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
     def test_schema(self):
         schema = kbuild.KBuildPlugin.schema()
@@ -311,17 +301,8 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta.base = "core"
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -359,23 +340,14 @@ class KBuildCrossCompilePluginTestCase(unit.TestCase):
         )
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
             errors.PluginBaseError,
             kbuild.KBuildPlugin,
             "test-part",
             self.options,
-            project,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))

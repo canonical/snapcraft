@@ -15,37 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Equals, FileExists, HasLength
 import fixtures
 
 from snapcraft.internal import errors
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import crystal
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class CrystalPluginBaseTest(unit.TestCase):
-
-    deb_arch = None
-
+class CrystalPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: crystal-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(
-            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
-        )
 
         self.fake_run = fixtures.MockPatch("snapcraft.internal.common.run")
         self.useFixture(self.fake_run)
@@ -239,20 +222,11 @@ class CrystalPluginTest(CrystalPluginBaseTest):
         self.assertRaises(errors.SnapcraftEnvironmentError, plugin.build)
 
 
-class CrystalPluginUnsupportedBase(unit.TestCase):
+class CrystalPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: crystal-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"

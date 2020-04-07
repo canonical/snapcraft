@@ -97,7 +97,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        return "snapcraft:{}".format(self.project.info.get_build_base())
+        return "snapcraft:{}".format(self.project._get_build_base())
 
     def _launch(self) -> None:
         image = self._get_disk_image()

@@ -184,9 +184,9 @@ class MultipassTest(BaseProviderBaseTest):
         )
 
     def test_launch_for_type_base(self):
-        self.project.info.name = "core18"
-        self.project.info.type = "base"
-        self.project.info.base = None
+        self.project._snap_meta.name = "core18"
+        self.project._snap_meta.type = "base"
+        self.project._snap_meta.base = None
 
         instance = MultipassTestImpl(project=self.project, echoer=self.echoer_mock)
         self.useFixture(

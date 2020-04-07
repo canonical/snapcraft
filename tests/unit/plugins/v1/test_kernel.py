@@ -18,7 +18,6 @@ import contextlib
 import logging
 import os
 import subprocess
-import textwrap
 
 import fixtures
 from testtools.matchers import Contains, Equals, FileContains, HasLength
@@ -28,12 +27,13 @@ from textwrap import dedent
 
 import snapcraft
 from snapcraft import storeapi
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import kernel
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class KernelPluginTestCase(unit.TestCase):
+class KernelPluginTestCase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -52,16 +52,6 @@ class KernelPluginTestCase(unit.TestCase):
             build_attributes = []
 
         self.options = Options()
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
         patcher = mock.patch("subprocess.check_call")
         self.check_call_mock = patcher.start()
@@ -1119,17 +1109,9 @@ ACCEPT=n
         )
 
     def test_enable_cross_compilation(self):
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
         plugin.enable_cross_compilation()
 
@@ -1149,17 +1131,9 @@ ACCEPT=n
         )
 
     def test_override_cross_compile(self):
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
         self.useFixture(
             fixtures.EnvironmentVariable("CROSS_COMPILE", "foo-bar-toolchain-")
@@ -1182,17 +1156,9 @@ ACCEPT=n
         )
 
     def test_override_cross_compile_empty(self):
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
         self.useFixture(fixtures.EnvironmentVariable("CROSS_COMPILE", ""))
         plugin.enable_cross_compilation()
@@ -1214,34 +1180,18 @@ ACCEPT=n
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {"arm64": "Image"}
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = "Image"
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
@@ -1258,17 +1208,9 @@ ACCEPT=n
             kernel_device_trees = []
             kernel_initrd_compression = "gz"
 
-        project = snapcraft.project.Project(
-            target_deb_arch="arm64",
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
+        project = snapcraft.project.Project(target_deb_arch="arm64")
+        project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         plugin = kernel.KernelPlugin("test-part", self.options, project)
 
         self.assertThat(plugin.make_targets, Equals(["bzImage", "modules", "dtbs"]))
@@ -1288,23 +1230,14 @@ ACCEPT=n
         )
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
             errors.PluginBaseError,
             kernel.KernelPlugin,
             "test-part",
             self.options,
-            project,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))
@@ -1336,19 +1269,10 @@ class KernelPluginDefaulTargetsTestCase(unit.TestCase):
             kernel_initrd_compression = "gz"
 
         self.options = Options()
+        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
     def test_default(self):
-        project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
-        plugin = kernel.KernelPlugin("test-part", self.options, project)
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
 
         self.assertThat(plugin.kernel_image_target, Equals(self.expected))
