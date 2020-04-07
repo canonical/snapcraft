@@ -16,17 +16,15 @@
 import os
 import os.path
 import re
-import textwrap
 
 from unittest import mock
 from testtools.matchers import Contains, Equals
 
-import snapcraft
 from snapcraft.plugins.v1 import catkin_tools
-from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class CatkinToolsPluginBaseTest(unit.TestCase):
+class CatkinToolsPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -43,16 +41,6 @@ class CatkinToolsPluginBaseTest(unit.TestCase):
             build_attributes = []
 
         self.properties = props()
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: catkin-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
         patcher = mock.patch("snapcraft.plugins.v1._python.Pip")
         self.pip_mock = patcher.start()

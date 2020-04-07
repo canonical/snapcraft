@@ -26,8 +26,8 @@ from testtools.matchers import Equals, FileExists, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import maven
-from snapcraft.project import Project
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class MavenPluginPropertiesTest(unit.TestCase):
@@ -131,7 +131,7 @@ class MavenPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class MavenPluginTest(unit.TestCase):
+class MavenPluginTest(PluginsV1BaseTestCase):
 
     scenarios = (
         (
@@ -175,16 +175,7 @@ class MavenPluginTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: maven-snap
-            base: {base}
-        """
-            ).format(base=self.base)
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = self.base
 
         class Options:
             maven_options = []
@@ -608,20 +599,11 @@ class MavenPluginTest(unit.TestCase):
         self.assertSettingsEqual(expected_content, settings_path)
 
 
-class MavenPluginUnsupportedBase(unit.TestCase):
+class MavenPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: maven-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"
@@ -641,7 +623,7 @@ class MavenPluginUnsupportedBase(unit.TestCase):
         )
 
 
-class UnsupportedJDKVersionErrorTest(unit.TestCase):
+class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
 
     scenarios = (
         (
@@ -682,18 +664,7 @@ class UnsupportedJDKVersionErrorTest(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: maven-snap
-            base: {base}
-        """.format(
-                    base=self.base
-                )
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = self.base
 
         class Options:
             maven_options = []

@@ -15,37 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import waf
 from snapcraft.project import Project
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class WafPluginBaseTest(unit.TestCase):
+class WafPluginBaseTest(PluginsV1BaseTestCase):
     """Plugin to provide snapcraft support for the waf build system"""
-
-    deb_arch = None
 
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: waf-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(
-            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
-        )
 
         class Options:
             """Internal Options Class matching the Waf plugin"""
@@ -158,20 +143,11 @@ class WafPluginTest(WafPluginBaseTest):
         )
 
 
-class WafPluginUnsupportedBase(unit.TestCase):
+class WafPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: waf-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             configflags = []
@@ -200,6 +176,9 @@ class WafCrossCompilePluginTestCase(WafPluginBaseTest):
 
     def setUp(self):
         super().setUp()
+
+        self.project = Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()

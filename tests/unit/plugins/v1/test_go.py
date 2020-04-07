@@ -16,37 +16,21 @@
 
 import os
 import jsonschema
-from textwrap import dedent
 from unittest import mock
 
 import fixtures
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.project import Project
 from snapcraft.plugins.v1 import go
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
-class GoPluginBaseTest(unit.TestCase):
-
-    deb_arch = None
-
+class GoPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: go-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(
-            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
-        )
 
         def fake_go_build(command, cwd, *args, **kwargs):
             if command[0] == "go" and command[1] == "build" and "-o" in command:
@@ -260,7 +244,6 @@ class MockElfFile:
 
 class GoPluginTest(GoPluginBaseTest):
     def setUp(self):
-
         super().setUp()
 
         self.useFixture(fixture_setup.CleanEnvironment())
@@ -660,7 +643,7 @@ class GoPluginTest(GoPluginBaseTest):
             go_buildtags = ""
 
         mock_elffile.return_value = MockElfFile(path="foo")
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.confinement = "classic"
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.sourcedir)
@@ -708,7 +691,7 @@ class GoPluginTest(GoPluginBaseTest):
         self.run_output_mock.return_value = "go version go13 linux/amd64"
 
         mock_elffile.return_value = MockElfFile(path="foo")
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.confinement = "classic"
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
         os.makedirs(plugin.builddir)
@@ -799,20 +782,11 @@ class GoPluginToolSetupTest(GoPluginBaseTest):
         self.assertThat(plugin.build_snaps, Not(Contains("go/latest/stable")))
 
 
-class GoPluginUnsupportedBase(unit.TestCase):
+class GoPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: go-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"
@@ -847,6 +821,10 @@ class GoPluginCrossCompileTest(GoPluginBaseTest):
     def setUp(self):
         super().setUp()
 
+        self.project = Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta = meta.snap.Snap(
+            name="test-snap", base="core18", confinement="strict"
+        )
         patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
         patcher.start()
         self.addCleanup(patcher.stop)

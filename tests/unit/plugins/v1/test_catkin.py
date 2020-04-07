@@ -41,6 +41,7 @@ from snapcraft import repo
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import catkin, _ros
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
 class _CompareContainers:
@@ -65,9 +66,12 @@ class _CompareContainers:
         return True
 
 
-class CatkinPluginBaseTest(unit.TestCase):
+class CatkinPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
+
+        # Most Catkin test use core.
+        self.project._snap_meta.base = "core"
 
         class props:
             catkin_packages = ["my_package"]
@@ -85,17 +89,6 @@ class CatkinPluginBaseTest(unit.TestCase):
         self.properties = props()
         self.ros_distro = "kinetic"
         self.ubuntu_distro = "xenial"
-
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: catkin-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()

@@ -328,7 +328,7 @@ class CatkinPlugin(PluginV1):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        base = self.project.info.get_build_base()
+        base = self.project._get_build_base()
         if base not in ("core", "core16", "core18"):
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
@@ -524,9 +524,7 @@ class CatkinPlugin(PluginV1):
             ros_distro=self._rosdistro,
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
-            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[
-                self.project.info.get_build_base()
-            ],
+            ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project._get_build_base()],
         )
         rosdep.setup()
 

@@ -15,19 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import textwrap
 
 from unittest import mock
 from testtools.matchers import Equals, HasLength
 
-import snapcraft
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import cmake
 from tests import fixture_setup, unit
 from typing import Any, Dict, List, Tuple
+from . import PluginsV1BaseTestCase
 
 
-class CMakeBaseTest(unit.TestCase):
+class CMakeBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -40,17 +39,6 @@ class CMakeBaseTest(unit.TestCase):
             build_snaps = []
 
         self.options = Options()
-
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: make-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
         patcher = mock.patch("snapcraft.internal.common.run")
         self.run_mock = patcher.start()
@@ -174,23 +162,14 @@ class CMakeTest(CMakeBaseTest):
                 )
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: cmake-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
             errors.PluginBaseError,
             cmake.CMakePlugin,
             "test-part",
             self.options,
-            project,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))

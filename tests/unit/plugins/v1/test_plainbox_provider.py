@@ -15,15 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import plainbox_provider
-from snapcraft.project import Project
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
 class PlainboxProviderPluginPropertiesTest(unit.TestCase):
@@ -62,20 +61,9 @@ class PlainboxProviderPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class PlainboxProviderPluginTest(unit.TestCase):
+class PlainboxProviderPluginTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: plainbox-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."
@@ -230,20 +218,11 @@ class PlainboxProviderPluginTest(unit.TestCase):
         self.assertListEqual(expected_fileset, fileset)
 
 
-class PlainboxProviderPluginUnsupportedBaseTest(unit.TestCase):
+class PlainboxProviderPluginUnsupportedBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: plainbox-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"

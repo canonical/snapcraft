@@ -17,15 +17,14 @@
 import collections
 import jsonschema
 import os
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import python
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
 def setup_directories(plugin, python_version, create_setup_py=True):
@@ -56,20 +55,9 @@ def setup_directories(plugin, python_version, create_setup_py=True):
         )
 
 
-class PythonPluginBaseTest(unit.TestCase):
+class PythonPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: python-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."
@@ -578,16 +566,7 @@ class PythonCore16Test(PythonPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: python-snap
-            base: {base}
-        """
-            ).format(base=self.base)
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = self.base
 
     def test_plugin_stage_packages_python2(self):
         self.options.python_version = "python2"
@@ -650,20 +629,11 @@ class PythonPluginWithURLTestCase(
         )
 
 
-class PythonPluginUnsupportedBase(unit.TestCase):
+class PythonPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: python-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             source = "dir"

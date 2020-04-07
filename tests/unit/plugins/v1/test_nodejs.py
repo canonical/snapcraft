@@ -18,7 +18,6 @@ import collections
 import json
 import os
 import tarfile
-from textwrap import dedent
 from unittest import mock
 
 import fixtures
@@ -27,24 +26,13 @@ from testtools.matchers import Equals, HasLength, FileExists
 
 from snapcraft.plugins.v1 import nodejs
 from snapcraft.internal import errors
-from snapcraft.project import Project
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
-class NodePluginBaseTest(unit.TestCase):
+class NodePluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
-
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: go-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
 
         class Options:
             source = "."

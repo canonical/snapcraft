@@ -40,7 +40,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
         self.assertThat(
             provider.snap_filename,
-            Equals("project-name_{}.snap".format(self.project.deb_arch)),
+            Equals("project-name_1.0_{}.snap".format(self.project.deb_arch)),
         )
 
     def test_context(self):
@@ -73,7 +73,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         destroy_mock.assert_called_once_with("destroy bad")
 
     def test_initialize_snap_filename_with_version(self):
-        self.project.info.version = "test-version"
+        self.project._snap_meta.version = "test-version"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
@@ -152,7 +152,7 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_ensure_base_same_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
+        provider.project._snap_meta.base = "core16"
 
         # Provider and project have the same base
         patcher = patch(
@@ -167,7 +167,7 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_ensure_base_new_base(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
+        provider.project._snap_meta.base = "core16"
 
         # Provider and project have different bases
         patcher = patch(
@@ -182,7 +182,7 @@ class BaseProviderTest(BaseProviderBaseTest):
 
     def test_ensure_base_no_base_clean(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
+        provider.project._snap_meta.base = "core16"
 
         # Provider has no base, project has base that's not core18
         # (assume provider has core18 for backward compatibility)
@@ -199,7 +199,7 @@ class BaseProviderTest(BaseProviderBaseTest):
     def test_ensure_base_no_base_keep(self):
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core18"
+        provider.project._snap_meta.base = "core18"
 
         # Provider has no base, project has base core18
         # (assume provider has core18 for backward compatibility)
@@ -410,8 +410,8 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_with_core(self):
-        self.project.info.base = "core"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -427,8 +427,8 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_for_classic_build(self):
-        self.project.info.base = "core18"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core18"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -446,7 +446,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
 class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
     def test_setup_snapcraft_with_base(self):
-        self.project.info.base = "core18"
+        self.project._snap_meta.base = "core18"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -470,30 +470,9 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
 
-    def test_setup_snapcraft_with_no_base(self):
-        self.project.info.base = None
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_snapcraft()
-
-        self.snap_injector_mock.assert_called_once_with(
-            registry_filepath=os.path.join(
-                provider.provider_project_dir, "snap-registry.yaml"
-            ),
-            snap_arch=self.project.deb_arch,
-            runner=provider._run,
-            file_pusher=provider._push_file,
-            inject_from_host=False,
-        )
-        self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core18"), call(snap_name="snapcraft")]
-        )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
-        self.snap_injector_mock().apply.assert_called_once_with()
-
     def test_setup_snapcraft_for_classic_build(self):
-        self.project.info.base = "core18"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core18"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()

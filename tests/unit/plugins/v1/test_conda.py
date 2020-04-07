@@ -15,40 +15,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import DirExists, Equals, HasLength, Not
 import fixtures
 
 from snapcraft.internal import errors
-from snapcraft.project import Project
 from snapcraft.plugins.v1 import conda
 from tests import unit
+from . import PluginsV1BaseTestCase
 
 
-class CondaPluginBaseTest(unit.TestCase):
+class CondaPluginBaseTest(PluginsV1BaseTestCase):
 
     deb_arch = None
 
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: conda-snap
-            base: core18
-        """
-            )
-        )
-
-        self.project = Project(
-            target_deb_arch=self.deb_arch, snapcraft_yaml_file_path=snapcraft_yaml_path
-        )
-
         if self.project.deb_arch != "amd64":
             self.skipTest("architecture is not supported by conda plugin")
+
+        self.project._snap_meta.name = "conda-snap"
 
         self.fake_check_call = fixtures.MockPatch("subprocess.check_call")
         self.useFixture(self.fake_check_call)
@@ -373,20 +361,11 @@ class CondaPluginTest(CondaPluginBaseTest):
         self.assertThat(plugin._conda_home, DirExists())
 
 
-class CondaPluginUnsupportedBase(unit.TestCase):
+class CondaPluginUnsupportedBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        snapcraft_yaml_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: conda-snap
-            base: unsupported-base
-        """
-            )
-        )
-
-        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path)
+        self.project._snap_meta.base = "unsupported-base"
 
         class Options:
             pass

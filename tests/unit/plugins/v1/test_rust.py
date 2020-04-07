@@ -19,19 +19,19 @@ import collections
 from pathlib import Path
 import os
 import subprocess
-import textwrap
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 from unittest import mock
 import toml
 
 import snapcraft
-from snapcraft.internal import errors
+from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import rust
 from tests import fixture_setup, unit
+from . import PluginsV1BaseTestCase
 
 
-class RustPluginBaseTest(unit.TestCase):
+class RustPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -66,17 +66,6 @@ class RustPluginBaseTest(unit.TestCase):
         patcher = mock.patch("os.path.exists", side_effect=exists_mock)
         patcher.start()
         self.addCleanup(patcher.stop)
-
-        self.project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            )
-        )
 
         self.plugin = rust.RustPlugin("test-part", self.options, self.project)
         os.makedirs(self.plugin.sourcedir)
@@ -149,6 +138,9 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
     def setUp(self):
         super().setUp()
 
+        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
+        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+
         patcher = mock.patch(
             "snapcraft.project.Project.is_cross_compiling", return_value=True
         )
@@ -157,18 +149,6 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
 
     @mock.patch("snapcraft.internal.sources._script.Script.download")
     def test_cross_compile(self, mock_download):
-        self.project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
-
         self.plugin = rust.RustPlugin("test-part", self.options, self.project)
         self.plugin.pull()
 
@@ -250,18 +230,6 @@ class RustPluginCrossCompileTest(RustPluginBaseTest):
 
     @mock.patch("snapcraft.internal.sources._script.Script.download")
     def test_cross_compile_with_rust_toolchain_file(self, mock_download):
-        self.project = snapcraft.project.Project(
-            target_deb_arch=self.deb_arch,
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: core16
-                    """
-                )
-            ),
-        )
-
         self.plugin = rust.RustPlugin("test-part", self.options, self.project)
         open(os.path.join(self.plugin.sourcedir, "rust-toolchain"), "w").close()
 
@@ -795,19 +763,14 @@ class RustPluginTest(RustPluginBaseTest):
         )
 
     def test_unsupported_base(self):
-        project = snapcraft.project.Project(
-            snapcraft_yaml_file_path=self.make_snapcraft_yaml(
-                textwrap.dedent(
-                    """\
-                    name: test-snap
-                    base: unsupported-base
-                    """
-                )
-            )
-        )
+        self.project._snap_meta.base = "unsupported-base"
 
         raised = self.assertRaises(
-            errors.PluginBaseError, rust.RustPlugin, "test-part", self.options, project
+            errors.PluginBaseError,
+            rust.RustPlugin,
+            "test-part",
+            self.options,
+            self.project,
         )
 
         self.assertThat(raised.part_name, Equals("test-part"))
