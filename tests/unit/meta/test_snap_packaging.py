@@ -105,7 +105,11 @@ class SnapPackagingRunnerTests(unit.TestCase):
         apps = dict(testapp=dict(command="echo"))
 
         sp = self._get_snap_packaging(
-            apps=apps, confinement="classic", type="snapd", base=None
+            apps=apps,
+            confinement="classic",
+            type="snapd",
+            base=None,
+            build_base="core18",
         )
         runner = sp._generate_snapcraft_runner()
 

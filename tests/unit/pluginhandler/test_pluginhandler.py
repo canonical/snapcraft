@@ -2091,8 +2091,8 @@ class IsDirtyTestCase(unit.TestCase):
 
     @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="amd64")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="amd64")
+        self.handler = self.load_part("test-part", project=project)
         self.handler.mark_build_done()
         self.assertFalse(
             self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
@@ -2103,8 +2103,8 @@ class IsDirtyTestCase(unit.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch="armhf")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="armhf")
+        self.handler = self.load_part("test-part", project=project)
         self.assertFalse(
             self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
         )
@@ -2148,8 +2148,8 @@ class IsDirtyTestCase(unit.TestCase):
 
     @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="amd64")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="amd64")
+        self.handler = self.load_part("test-part", project=project)
         self.handler.mark_pull_done()
         self.assertFalse(
             self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
@@ -2160,8 +2160,8 @@ class IsDirtyTestCase(unit.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch="armhf")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="armhf")
+        self.handler = self.load_part("test-part", project=project)
         self.assertFalse(
             self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
         )

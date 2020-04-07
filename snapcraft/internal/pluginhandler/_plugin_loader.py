@@ -17,36 +17,35 @@
 import contextlib
 import importlib
 import logging
-import os
 import sys
 
 import jsonschema
 
-import snapcraft
-from snapcraft.project.errors import YamlValidationError
+from snapcraft.project import errors as project_errors, Project
 from snapcraft.internal import errors
-from typing import Optional
+from snapcraft import plugins
+
 
 logger = logging.getLogger(__name__)
 
 
 def load_plugin(
-    plugin_name,
-    part_name,
-    project_options,
+    plugin_name: str,
+    part_name: str,
+    project: Project,
     properties,
     part_schema,
     definitions_schema,
-    local_plugins_dir: Optional[str] = None,
-):
-    if not local_plugins_dir:
-        local_plugins_dir = os.path.join(os.getcwd(), "snap", "plugins")
-
-    module_name = plugin_name.replace("-", "_")
-    module = _load_module(module_name, plugin_name, local_plugins_dir)
-    plugin_class = _get_plugin(module)
-    if not plugin_class:
-        raise errors.PluginError("no plugin found in module {!r}".format(plugin_name))
+) -> plugins.v1.PluginV1:
+    local_plugins_dir = project._get_local_plugins_dir()
+    if local_plugins_dir is not None:
+        plugin_class = _get_local_plugin_class(
+            plugin_name=plugin_name, local_plugins_dir=local_plugins_dir
+        )
+    if plugin_class is None:
+        plugin_class = plugins.get_plugin_for_base(
+            plugin_name, build_base=project._get_build_base()
+        )
 
     _validate_pull_and_build_properties(
         plugin_name, plugin_class, part_schema, definitions_schema
@@ -57,17 +56,17 @@ def load_plugin(
             part_schema, definitions_schema, properties, plugin_class.schema()
         )
     except jsonschema.ValidationError as e:
-        error = YamlValidationError.from_validation_error(e)
+        error = project_errors.YamlValidationError.from_validation_error(e)
         raise errors.PluginError(
             "properties failed to load for {}: {}".format(part_name, error.message)
         )
 
-    plugin = plugin_class(part_name, options, project_options)
+    plugin = plugin_class(part_name, options, project)
 
-    if project_options.is_cross_compiling:
+    if project.is_cross_compiling:
         logger.debug(
             "Setting {!r} as the compilation target for {!r}".format(
-                project_options.deb_arch, plugin_name
+                project.deb_arch, plugin_name
             )
         )
         plugin.enable_cross_compilation()
@@ -75,30 +74,9 @@ def load_plugin(
     return plugin
 
 
-def _load_module(module_name, plugin_name, local_plugins_dir):
-    module = None
-    with contextlib.suppress(ImportError):
-        module = _load_local("x-{}".format(plugin_name), local_plugins_dir)
-        logger.info("Loaded local plugin for %s", plugin_name)
-
-    if not module:
-        with contextlib.suppress(ImportError):
-            module = importlib.import_module(
-                "snapcraft.plugins.v1.{}".format(module_name)
-            )
-
-    if not module:
-        logger.info("Searching for local plugin for %s", plugin_name)
-        with contextlib.suppress(ImportError):
-            module = _load_local(module_name, local_plugins_dir)
-        if not module:
-            raise errors.PluginError("unknown plugin: {!r}".format(plugin_name))
-
-    return module
-
-
-def _load_local(module_name, local_plugin_dir):
+def _load_local(module_name: str, local_plugin_dir: str):
     sys.path = [local_plugin_dir] + sys.path
+    logger.debug(f"Loading plugin module {module_name!r} with sys.path {sys.path!r}")
     try:
         module = importlib.import_module(module_name)
     finally:
@@ -107,15 +85,22 @@ def _load_local(module_name, local_plugin_dir):
     return module
 
 
-def _get_plugin(module):
-    for attr in vars(module).values():
-        if not isinstance(attr, type):
-            continue
-        if not issubclass(attr, snapcraft.BasePlugin):
-            continue
-        if attr == snapcraft.BasePlugin:
-            continue
-        return attr
+def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
+    with contextlib.suppress(ImportError):
+        module_name = plugin_name.replace("-", "_")
+        module = _load_local(f"{module_name}", local_plugins_dir)
+        logger.info(f"Loaded local plugin for {plugin_name}")
+
+        for attr in vars(module).values():
+            if not isinstance(attr, type):
+                continue
+            if not issubclass(attr, plugins.v1.PluginV1):
+                continue
+            if attr == plugins.v1.PluginV1:
+                continue
+            return attr
+        else:
+            raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
 
 
 def _validate_pull_and_build_properties(

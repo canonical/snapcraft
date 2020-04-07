@@ -180,10 +180,9 @@ class PartsConfig:
             plugin_name=plugin_name,
             part_name=part_name,
             properties=part_properties,
-            project_options=self._project,
+            project=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
-            local_plugins_dir=self._project.local_plugins_dir,
         )
 
         logger.debug(
