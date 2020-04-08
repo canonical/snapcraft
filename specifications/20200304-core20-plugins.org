@@ -26,35 +26,42 @@ Custom plugins shall be declared on =snapcraft.yaml= with a prefix of =x-= and
 the plugin name. On the file system they shall be found on
 =snap/plugins/x_<plugin.name.py>=.
 The class name must be =PluginImpl= for the plugin to be easily found.
-* Core20 Base Plugin
-The base plugin for =core20=, an Abstract Base Class (inherits from =abc.ABC=)
-is required to create a plugin to be used with =core20=.
 
-The =core20= base plugin and the in-tree plugins implementing it must reside in
-the =snapcraft.plugins.core20= package, the base plugin shall be implemented
-with a class name of =Plugin= in a module with and import path of
-=snapcraft.plugins.core20._plugin=, for convenience,
-=snapcraft.plugins.core20.__init__.py= will import =Plugin= such that a plugin
-author could simply =import snapcraft.plugins.core20.Plugin=. This plugin
-defines the following:
+* Core20 Base Plugin
+A new plugin shall be implemented, =PluginV2= (inheriting from
+=abc.ABC=)) as a base for all plugins used that target base =core20=.
+
+A specific map shall exist to select these plugins when the
+=build-base= is set to =core20=.
+
+The =v2= base plugin and the in-tree
+plugins implementing it must reside in the =snapcraft.plugins.v2=
+package, the base plugin shall be implemented with a class name of
+=PluginV2= in a module with and import path of
+=snapcraft.plugins.v2._plugin=, for convenience,
+=snapcraft.plugins.v2.__init__.py= will import =PluginV2= such that a
+plugin author could simply =import
+snapcraft.plugins.v2.PluginV2=. This plugin defines the following:
 
 #+BEGIN_SRC  python
 import abc
-from typing import Any
+from typing import Any, Dict, List
 
-class Plugin(abc.ABC):
-    @abstactmethod
+
+class PluginV2(abc.ABC):
     @classmethod
+    @abc.abstractmethod
     def get_schema(cls) -> Dict[str, Any]:
         """Return a jsonschema compatible dictionary for the plugin properties."""
 
-    def __init__(self, properties: Dict[str, str]) -> None:
+    def __init__(self, part_name: str, part_properties: Dict[str, str]) -> None:
         """
-        :param properties: plugin defined properties.
+        :param str name: part names
+        :param dict properties: part defined properties.
         """
 
-    @abstactmethod
-    def get_build_environment(self) -> Dict[str, str]:
+    @abc.abstractmethod
+    def get_build_environment(self) -> List[Dict[str, str]]:
         """
         Return a dictionary with the environment to use in the build step.
 
@@ -63,7 +70,7 @@ class Plugin(abc.ABC):
         This method is called by the PluginHandler during the "build" step.
         """
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
         """
         Return a list of commands to run during the build step.
@@ -113,7 +120,7 @@ from typing import Any, Dict, List
 
 import snapcraft
 
-class SamuraiPlugin(snapcraft.plugins.core20.Plugin):
+class SamuraiPlugin(snapcraft.plugins.v2.PluginV2):
     def get_schema(cls) -> Dict[str, Any]:
         return dict()
 
@@ -137,6 +144,7 @@ class SamuraiPlugin(snapcraft.plugins.core20.Plugin):
 
         return commands
 #+END_SRC
+
 * CLI
 Wherever relevant, the Snapcraft commands shall default to the =base= declared
 in =snapcraft.yaml=, otherwise to the latest supported base.
@@ -149,18 +157,21 @@ would apply to different base than the one from the current project or default.
 
 The =--base= option is the preferred way to specify output targeting a specific
 base.
+
 ** Help
 #+BEGIN_SRC
 $ snapcraft help --base=core python
 Displaying help for the 'python' plugin for 'core20'
 <plugin-help>
 #+END_SRC
+
 ** Listing plugins
 #+BEGIN_SRC
 $ snapcraft list-plugins --base=core
 Displaying plugins available for core
 <plugin-list>
 #+END_SRC
+
 ** Expanding snapcraft.yaml
 This is a new command, meant to expose the plugins behavior in an easy way to
 the =snapcraft.yaml= author. Given the plugin described in [[*Example][Example]], with the

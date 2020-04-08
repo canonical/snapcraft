@@ -17,7 +17,7 @@
 import logging
 from typing import List, Optional, Sequence
 
-from snapcraft import config, storeapi
+from snapcraft import config, plugins, storeapi
 from snapcraft.internal import (
     common,
     errors,
@@ -306,8 +306,9 @@ class _Executor:
             notify_part_progress(part, "Preparing to {}".format(step.name), debug=True)
             preparation_function()
 
-        common.env = self.parts_config.build_env_for_part(part)
-        common.env.extend(self.config.project_env())
+        if isinstance(part.plugin, plugins.v1.PluginV1):
+            common.env = self.parts_config.build_env_for_part(part)
+            common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
 

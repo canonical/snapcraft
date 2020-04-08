@@ -15,14 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from typing import Type
+from typing import Dict, Type, Union, TYPE_CHECKING
 
 from snapcraft.internal import errors
-from . import v1
+from . import v1, v2
+
+PluginTypes = Union[Type[v1.PluginV1], Type[v2.PluginV2]]
 
 # TODO: segregate into base specific plugins.
-if sys.platform == "linux":
-    _PLUGINS = {
+if sys.platform == "linux" or TYPE_CHECKING:
+    _PLUGINS: Dict[str, Dict[str, PluginTypes]] = {
         "legacy": {
             "ant": v1.AntPlugin,
             "autotools": v1.AutotoolsPlugin,
@@ -51,14 +53,15 @@ if sys.platform == "linux":
             "rust": v1.RustPlugin,
             "scons": v1.SconsPlugin,
             "waf": v1.WafPlugin,
-        }
+        },
+        "core20": {"nil": v2.NilPlugin},
     }
 else:
     # We cannot import the plugins on anything but linux.
-    _PLUGINS = dict()
+    _PLUGINS = {"legacy": {}}
 
 
-def get_plugin_for_base(plugin_name: str, *, build_base: str) -> Type[v1.PluginV1]:
+def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
     """
     Return a suitable plugin implementation for build_base.
 
@@ -70,6 +73,7 @@ def get_plugin_for_base(plugin_name: str, *, build_base: str) -> Type[v1.PluginV
     if build_base in ("core", "core16", "core18"):
         build_base = "legacy"
     try:
-        return _PLUGINS[build_base][plugin_name]
+        plugin_classes = _PLUGINS[build_base]
+        return plugin_classes[plugin_name]
     except KeyError:
         raise errors.PluginError(f"unknown plugin: {plugin_name!r}")

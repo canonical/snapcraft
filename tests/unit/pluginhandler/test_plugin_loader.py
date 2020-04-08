@@ -23,6 +23,7 @@ import fixtures
 from testtools.matchers import Equals, IsInstance
 
 from snapcraft.plugins.v1 import PluginV1
+from snapcraft.plugins.v2 import PluginV2
 from snapcraft.plugins._plugin_finder import _PLUGINS
 from snapcraft.internal import errors
 from tests import unit
@@ -59,8 +60,8 @@ class NonLocalTest(unit.TestCase):
         self.load_part("test-part", plugin_name="x-local")
 
 
-class LegacyPluginsTest(unit.TestCase):
-    def test_all_known(self):
+class InTreePluginsTest(unit.TestCase):
+    def test_all_known_legacy(self):
         # We don't want validation to take place here.
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
         for plugin_name in _PLUGINS["legacy"]:
@@ -68,6 +69,14 @@ class LegacyPluginsTest(unit.TestCase):
                 "test-part", plugin_name=plugin_name, base="core18"
             )
             self.expectThat(plugin_handler.plugin, IsInstance(PluginV1))
+
+    def test_all_core20(self):
+        self.useFixture(fixtures.MockPatch("jsonschema.validate"))
+        for plugin_name in _PLUGINS["core20"]:
+            plugin_handler = self.load_part(
+                "test-part", plugin_name=plugin_name, base="core20"
+            )
+            self.expectThat(plugin_handler.plugin, IsInstance(PluginV2))
 
     def test_fail_on_schema(self):
         # conda requires some part_properties to be set.
