@@ -114,8 +114,9 @@ class PartsConfig:
 
         return sorted_parts
 
-    def get_dependencies(self, part_name, *, recursive=False):
-        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+    def get_dependencies(
+        self, part_name: str, *, recursive: bool = False
+    ) -> Set[pluginhandler.PluginHandler]:
         """Returns a set of all the parts upon which part_name depends."""
 
         dependency_names = set(self.after_requests.get(part_name, []))
@@ -131,8 +132,9 @@ class PartsConfig:
 
         return dependencies
 
-    def get_reverse_dependencies(self, part_name, *, recursive=False):
-        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+    def get_reverse_dependencies(
+        self, part_name: str, *, recursive: bool = False
+    ) -> Set[pluginhandler.PluginHandler]:
         """Returns a set of all the parts that depend upon part_name."""
 
         reverse_dependency_names = set()
@@ -199,7 +201,9 @@ class PartsConfig:
         for source in sources:
             repo.Repo.install_source(source)
 
-        stage_packages_repo = repo.Repo(plugin.osrepodir)
+        # TODO: rename with migration strategy.
+        repo_dir = path.join(self._project.parts_dir, part_name, "ubuntu")
+        stage_packages_repo = repo.Repo(repo_dir)
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
@@ -211,15 +215,12 @@ class PartsConfig:
         part = pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=part_properties,
-            project_options=self._project,
+            project=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
             snap_base_path=path.join("/", "snap", self._project.info.name, "current"),
-            base=self._project.info.base,
-            confinement=self._project.info.confinement,
-            snap_type=self._snap_type,
             soname_cache=self._soname_cache,
         )
 

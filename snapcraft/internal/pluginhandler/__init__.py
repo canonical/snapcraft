@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 import sys
-from glob import glob, iglob
+from glob import iglob
 from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
@@ -56,15 +56,12 @@ class PluginHandler:
         *,
         plugin,
         part_properties,
-        project_options: "Project",
+        project: "Project",
         part_schema,
         definitions_schema,
         stage_packages_repo,
         grammar_processor,
         snap_base_path,
-        base,
-        confinement,
-        snap_type,
         soname_cache,
     ) -> None:
         self.valid = False
@@ -74,24 +71,31 @@ class PluginHandler:
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
-        self._base = base
-        self._confinement = confinement
-        self._snap_type = snap_type
         self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
         if not self._source:
             self._source = part_schema["source"].get("default")
+
+        # Part specific directories
+        self.part_dir = os.path.join(project.parts_dir, self.name)
+        self.part_source_dir = os.path.join(self.part_dir, "src")
+        self.part_build_dir = os.path.join(self.part_dir, "build")
+        self.part_install_dir = os.path.join(self.part_dir, "install")
+        self.part_state_dir = os.path.join(self.part_dir, "state")
+        self.part_snaps_dir = os.path.join(self.part_dir, "snaps")
+        # The working directory for the build depends on the source-subdir
+        # part property.
+        self.part_build_work_dir = os.path.join(
+            self.part_build_dir, self._part_properties.get("source-subdir", "")
+        )
 
         self._pull_state: Optional[states.PullState] = None
         self._build_state: Optional[states.BuildState] = None
         self._stage_state: Optional[states.StageState] = None
         self._prime_state: Optional[states.PrimeState] = None
 
-        self._project_options = project_options
+        self._project = project
         self.deps: List[str] = list()
-
-        self.stagedir = project_options.stage_dir
-        self.primedir = project_options.prime_dir
 
         # We don't need to set the source_handler on systems where we do not
         # build
@@ -114,11 +118,11 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
-            partdir=self.plugin.partdir,
-            sourcedir=self.plugin.sourcedir,
-            builddir=self.plugin.build_basedir,
-            stagedir=self.stagedir,
-            primedir=self.primedir,
+            partdir=self._project.parts_dir,
+            sourcedir=self.part_source_dir,
+            builddir=self.part_build_dir,
+            stagedir=self._project.stage_dir,
+            primedir=self._project.prime_dir,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
                 steps.BUILD.name: self.plugin.build,
@@ -153,7 +157,7 @@ class PluginHandler:
         return self._prime_state
 
     def get_state(self, step) -> states.PartState:
-        return states.get_state(self.plugin.statedir, step)
+        return states.get_state(self.part_state_dir, step)
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -166,7 +170,7 @@ class PluginHandler:
             )
             source_handler = handler_class(
                 self._source,
-                self.plugin.sourcedir,
+                self.part_source_dir,
                 source_checksum=properties["source-checksum"],
                 source_branch=properties["source-branch"],
                 source_tag=properties["source-tag"],
@@ -207,7 +211,7 @@ class PluginHandler:
             latest_step = self.latest_step()
             required_steps = latest_step.previous_steps() + [latest_step]
             for other_step in reversed(required_steps):
-                state = states.get_state(self.plugin.statedir, other_step)
+                state = states.get_state(self.part_state_dir, other_step)
                 conflicts = metadata.overlap(state.scriptlet_metadata)
                 if len(conflicts) > 0:
                     raise errors.ScriptletDuplicateDataError(
@@ -230,12 +234,12 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.plugin.sourcedir,
-            self.plugin.builddir,
-            self.plugin.installdir,
-            self.plugin.statedir,
-            self.stagedir,
-            self.primedir,
+            self.part_source_dir,
+            self.part_build_dir,
+            self.part_install_dir,
+            self.part_state_dir,
+            self._project.stage_dir,
+            self._project.prime_dir,
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -249,30 +253,30 @@ class PluginHandler:
         # In previous versions of Snapcraft, the state directory was a file.
         # Rather than die if we're running on output from an old version,
         # migrate it for them.
-        if os.path.isfile(self.plugin.statedir):
-            with open(self.plugin.statedir, "r") as f:
+        if os.path.isfile(self.part_state_dir):
+            with open(self.part_state_dir, "r") as f:
                 step = f.read()
 
             if step:
-                os.remove(self.plugin.statedir)
-                os.makedirs(self.plugin.statedir)
+                os.remove(self.part_state_dir)
+                os.makedirs(self.part_state_dir)
                 self.mark_done(steps.get_step_by_name(step))
 
     def working_directory_for_step(self, step: steps.Step) -> str:
         if step == steps.PULL:
-            return self.plugin.sourcedir
+            return self.part_source_dir
         elif step == steps.BUILD:
-            return self.plugin.builddir
+            return self.part_build_dir
         elif step == steps.STAGE:
-            return self.stagedir
+            return self._project.stage_dir
         elif step == steps.PRIME:
-            return self.primedir
+            return self._project.prime_dir
 
         raise errors.InvalidStepError(step.name)
 
     def latest_step(self):
         for step in reversed(steps.STEPS):
-            if os.path.exists(states.get_step_state_file(self.plugin.statedir, step)):
+            if os.path.exists(states.get_step_state_file(self.part_state_dir, step)):
                 return step
 
         raise errors.NoLatestStepError(self.name)
@@ -358,7 +362,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = states.get_state(self.plugin.statedir, step)
+        state = states.get_state(self.part_state_dir, step)
         if state:
             # state.properties contains the old YAML that this step cares
             # about, and we're comparing it to those same keys in the current
@@ -370,7 +374,7 @@ class PluginHandler:
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            options = state.diff_project_options_of_interest(self._project_options)
+            options = state.diff_project_options_of_interest(self._project)
 
             if properties or options:
                 return DirtyReport(
@@ -385,7 +389,7 @@ class PluginHandler:
     def step_timestamp(self, step):
         try:
             return os.stat(
-                states.get_step_state_file(self.plugin.statedir, step)
+                states.get_step_state_file(self.part_state_dir, step)
             ).st_mtime
         except FileNotFoundError as e:
             raise errors.StepHasNotRunError(self.name, step) from e
@@ -394,22 +398,22 @@ class PluginHandler:
         if not state:
             state = {}
 
-        with open(states.get_step_state_file(self.plugin.statedir, step), "w") as f:
+        with open(states.get_step_state_file(self.part_state_dir, step), "w") as f:
             f.write(yaml_utils.dump(state))
 
     def mark_cleaned(self, step):
-        state_file = states.get_step_state_file(self.plugin.statedir, step)
+        state_file = states.get_step_state_file(self.part_state_dir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
-        if os.path.isdir(self.plugin.statedir) and not os.listdir(self.plugin.statedir):
-            os.rmdir(self.plugin.statedir)
+        if os.path.isdir(self.part_state_dir) and not os.listdir(self.part_state_dir):
+            os.rmdir(self.part_state_dir)
 
     def _fetch_stage_snaps(self):
         stage_snaps = self._grammar_processor.get_stage_snaps()
         if stage_snaps:
             repo.snaps.download_snaps(
-                snaps_list=stage_snaps, directory=self.plugin.snapsdir
+                snaps_list=stage_snaps, directory=self.part_snaps_dir
             )
 
     def _unpack_stage_snaps(self):
@@ -418,13 +422,13 @@ class PluginHandler:
             return
 
         logger.debug("Unpacking stage-snaps to {!r}".format(self.plugin.stage_snaps))
-        snap_files = iglob(os.path.join(self.plugin.snapsdir, "*.snap"))
+        snap_files = iglob(os.path.join(self.part_snaps_dir, "*.snap"))
         snap_sources = (
-            sources.Snap(source=s, source_dir=self.plugin.snapsdir) for s in snap_files
+            sources.Snap(source=s, source_dir=self.part_snaps_dir) for s in snap_files
         )
         for snap_source in snap_sources:
             snap_source.provision(
-                self.plugin.installdir, clean_target=False, keep_snap=True
+                self.part_install_dir, clean_target=False, keep_snap=True
             )
 
     def _fetch_stage_packages(self):
@@ -440,9 +444,9 @@ class PluginHandler:
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             logger.debug(
-                "Unpacking stage-packages to {!r}".format(self.plugin.installdir)
+                "Unpacking stage-packages to {!r}".format(self.part_install_dir)
             )
-            self._stage_packages_repo.unpack(self.plugin.installdir)
+            self._stage_packages_repo.unpack(self.part_install_dir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -453,19 +457,17 @@ class PluginHandler:
 
     def pull(self, force=False):
         # Ensure any previously-failed pull is cleared out before we try again
-        if os.path.islink(self.plugin.sourcedir) or os.path.isfile(
-            self.plugin.sourcedir
-        ):
-            os.remove(self.plugin.sourcedir)
-        elif os.path.isdir(self.plugin.sourcedir):
-            shutil.rmtree(self.plugin.sourcedir)
+        if os.path.islink(self.part_source_dir) or os.path.isfile(self.part_source_dir):
+            os.remove(self.part_source_dir)
+        elif os.path.isdir(self.part_source_dir):
+            shutil.rmtree(self.part_source_dir)
 
         self._do_runner_step(steps.PULL)
         self.mark_pull_done()
 
     def check_pull(self):
         # Check to see if pull needs to be updated
-        state_file = states.get_step_state_file(self.plugin.statedir, steps.PULL)
+        state_file = states.get_step_state_file(self.part_state_dir, steps.PULL)
 
         # Not all sources support checking for updates
         with contextlib.suppress(sources.errors.SourceUpdateUnsupportedError):
@@ -496,18 +498,16 @@ class PluginHandler:
         for parse_relpath in self._part_properties.get("parse-info", []):
             with contextlib.suppress(errors.MissingMetadataFileError):
                 metadata.update(
-                    extract_metadata(self.name, parse_relpath, self.plugin.sourcedir)
+                    extract_metadata(self.name, parse_relpath, self.part_source_dir)
                 )
-                metadata_files.append(
-                    os.path.join(self.plugin.sourcedir, parse_relpath)
-                )
+                metadata_files.append(os.path.join(self.part_source_dir, parse_relpath))
 
         self.mark_done(
             steps.PULL,
             states.PullState(
                 pull_properties,
                 part_properties=self._part_properties,
-                project=self._project_options,
+                project=self._project,
                 stage_packages=self.stage_packages,
                 build_snaps=part_build_snaps,
                 build_packages=part_build_packages,
@@ -522,19 +522,19 @@ class PluginHandler:
         if self.is_clean(steps.PULL):
             return
 
-        # Remove ubuntu cache (where stage packages are fetched)
-        if os.path.exists(self.plugin.osrepodir):
-            shutil.rmtree(self.plugin.osrepodir)
+        # Remove stage-packages cache (where stage packages are fetched)
+        if os.path.exists(self._stage_packages_repo.rootdir):
+            shutil.rmtree(self._stage_packages_repo.rootdir)
 
         # Remove snaps dir (where stage snaps are fetched)
-        if os.path.exists(self.plugin.snapsdir):
-            shutil.rmtree(self.plugin.snapsdir)
+        if os.path.exists(self.part_snaps_dir):
+            shutil.rmtree(self.part_snaps_dir)
 
-        if os.path.exists(self.plugin.sourcedir):
-            if os.path.islink(self.plugin.sourcedir):
-                os.remove(self.plugin.sourcedir)
+        if os.path.exists(self.part_source_dir):
+            if os.path.islink(self.part_source_dir):
+                os.remove(self.part_source_dir)
             else:
-                shutil.rmtree(self.plugin.sourcedir)
+                shutil.rmtree(self.part_source_dir)
 
         self.plugin.clean_pull()
         self.mark_cleaned(steps.PULL)
@@ -549,32 +549,12 @@ class PluginHandler:
         self.makedirs()
 
         if not self.plugin.out_of_source_build:
-            if os.path.exists(self.plugin.build_basedir):
-                shutil.rmtree(self.plugin.build_basedir)
-
-            # FIXME: It's not necessary to ignore here anymore since it's now
-            # done in the Local source. However, it's left here so that it
-            # continues to work on old snapcraft trees that still have src
-            # symlinks.
-            def ignore(directory, files):
-                if directory == self.plugin.sourcedir:
-                    snaps = glob(os.path.join(directory, "*.snap"))
-                    if snaps:
-                        snaps = [os.path.basename(s) for s in snaps]
-                        return common.SNAPCRAFT_FILES + snaps
-                    else:
-                        return common.SNAPCRAFT_FILES
-                else:
-                    return []
+            if os.path.exists(self.part_build_dir):
+                shutil.rmtree(self.part_build_dir)
 
             # No hard-links being used here in case the build process modifies
             # these files.
-            shutil.copytree(
-                self.plugin.sourcedir,
-                self.plugin.build_basedir,
-                symlinks=True,
-                ignore=ignore,
-            )
+            shutil.copytree(self.part_source_dir, self.part_build_dir, symlinks=True)
 
         self._do_build()
 
@@ -584,12 +564,10 @@ class PluginHandler:
             # file_utils.copy instead of link_or_copy, as the build process
             # may modify these files
             source = sources.Local(
-                self.plugin.sourcedir,
-                self.plugin.build_basedir,
-                copy_function=file_utils.copy,
+                self.part_source_dir, self.part_build_dir, copy_function=file_utils.copy
             )
             if not source.check(
-                states.get_step_state_file(self.plugin.statedir, steps.BUILD)
+                states.get_step_state_file(self.part_state_dir, steps.BUILD)
             ):
                 return
             source.update()
@@ -632,15 +610,15 @@ class PluginHandler:
             found_path = None
             with contextlib.suppress(errors.MissingMetadataFileError):
                 metadata.update(
-                    extract_metadata(self.name, parse_relpath, self.plugin.builddir)
+                    extract_metadata(self.name, parse_relpath, self.part_build_dir)
                 )
-                found_path = os.path.join(self.plugin.builddir, parse_relpath)
+                found_path = os.path.join(self.part_build_dir, parse_relpath)
 
             with contextlib.suppress(errors.MissingMetadataFileError):
                 metadata.update(
-                    extract_metadata(self.name, parse_relpath, self.plugin.installdir)
+                    extract_metadata(self.name, parse_relpath, self.part_install_dir)
                 )
-                found_path = os.path.join(self.plugin.installdir, parse_relpath)
+                found_path = os.path.join(self.part_install_dir, parse_relpath)
 
             if found_path is not None:
                 metadata_files.append(found_path)
@@ -657,7 +635,7 @@ class PluginHandler:
             states.BuildState(
                 property_names=build_properties,
                 part_properties=self._part_properties,
-                project=self._project_options,
+                project=self._project,
                 plugin_assets=plugin_manifest,
                 machine_assets=machine_manifest,
                 metadata=metadata,
@@ -705,11 +683,11 @@ class PluginHandler:
         if self.is_clean(steps.BUILD):
             return
 
-        if os.path.exists(self.plugin.build_basedir):
-            shutil.rmtree(self.plugin.build_basedir)
+        if os.path.exists(self.part_build_dir):
+            shutil.rmtree(self.part_build_dir)
 
-        if os.path.exists(self.plugin.installdir):
-            shutil.rmtree(self.plugin.installdir)
+        if os.path.exists(self.part_install_dir):
+            shutil.rmtree(self.part_install_dir)
 
         self.plugin.clean_build()
         self.mark_cleaned(steps.BUILD)
@@ -726,7 +704,7 @@ class PluginHandler:
 
         fileset.extend(plugin_fileset)
 
-        return _migratable_filesets(fileset, self.plugin.installdir)
+        return _migratable_filesets(fileset, self.part_install_dir)
 
     def _get_fileset(self, option, default=None):
         if default is None:
@@ -738,7 +716,7 @@ class PluginHandler:
     def _organize(self, *, overwrite=False):
         fileset = self._get_fileset("organize", {})
 
-        _organize_filesets(self.name, fileset.copy(), self.plugin.installdir, overwrite)
+        _organize_filesets(self.name, fileset.copy(), self.part_install_dir, overwrite)
 
     def stage(self, force=False):
         self._do_runner_step(steps.STAGE)
@@ -756,13 +734,15 @@ class PluginHandler:
                 return
             if not file_path.endswith(".pc"):
                 return
-            repo.fix_pkg_config(self.stagedir, file_path, self.plugin.installdir)
+            repo.fix_pkg_config(
+                self._project.stage_dir, file_path, self.part_install_dir
+            )
 
         _migrate_files(
             snap_files,
             snap_dirs,
-            self.plugin.installdir,
-            self.stagedir,
+            self.part_install_dir,
+            self._project.stage_dir,
             fixup_func=fixup_func,
         )
         # TODO once `snappy try` is in place we will need to copy
@@ -777,7 +757,7 @@ class PluginHandler:
                 snap_files,
                 snap_dirs,
                 self._part_properties,
-                self._project_options,
+                self._project,
                 self._scriptlet_metadata[steps.STAGE],
             ),
         )
@@ -786,10 +766,12 @@ class PluginHandler:
         if self.is_clean(steps.STAGE):
             return
 
-        state = states.get_state(self.plugin.statedir, steps.STAGE)
+        state = states.get_state(self.part_state_dir, steps.STAGE)
 
         try:
-            self._clean_shared_area(self.stagedir, state, project_staged_state)
+            self._clean_shared_area(
+                self._project.stage_dir, state, project_staged_state
+            )
         except AttributeError:
             raise errors.MissingStateCleanError(steps.STAGE)
 
@@ -806,7 +788,7 @@ class PluginHandler:
     def _get_primed_stage_packages(self, snap_files: Set[str]) -> Set[str]:
         primed_stage_packages: Set[str] = set()
         for snap_file in snap_files:
-            snap_file = os.path.join(self.primedir, snap_file)
+            snap_file = os.path.join(self._project.prime_dir, snap_file)
             stage_package = xattrs.read_origin_stage_package(snap_file)
             if stage_package:
                 primed_stage_packages.add(stage_package)
@@ -814,9 +796,14 @@ class PluginHandler:
 
     def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
+        _migrate_files(
+            snap_files, snap_dirs, self._project.stage_dir, self._project.prime_dir
+        )
 
-        if self._snap_type == "app" and self._base is not None:
+        if (
+            self._project._snap_meta.type in ("app", None)
+            and self._project._snap_meta.base is not None
+        ):
             dependency_paths = self._handle_elf(snap_files)
         else:
             dependency_paths = set()
@@ -827,29 +814,32 @@ class PluginHandler:
         )
 
     def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
-        elf_files = elf.get_elf_files(self.primedir, snap_files)
+        elf_files = elf.get_elf_files(self._project.prime_dir, snap_files)
         all_dependencies: Set[str] = set()
-        core_path = common.get_installed_snap_path(self._base)
+        if self._project._snap_meta.base is not None:
+            core_path = common.get_installed_snap_path(self._project._snap_meta.base)
+        else:
+            core_path = None
 
         # Clear the cache of all libs that aren't already in the primedir
-        self._soname_cache.reset_except_root(self.primedir)
+        self._soname_cache.reset_except_root(self._project.prime_dir)
 
         # Determine content directories.
-        content_dirs = self._project_options._get_provider_content_dirs()
+        content_dirs = self._project._get_provider_content_dirs()
 
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(
-                    root_path=self.primedir,
+                    root_path=self._project.prime_dir,
                     core_base_path=core_path,
                     content_dirs=content_dirs,
-                    arch_triplet=self._project_options.arch_triplet,
+                    arch_triplet=self._project.arch_triplet,
                     soname_cache=self._soname_cache,
                 )
             )
 
         # Split the necessary dependencies into their corresponding location.
-        search_paths = [self.primedir, core_path, *content_dirs]
+        search_paths = [self._project.prime_dir, core_path, *content_dirs]
         split_dependencies = _split_dependencies(all_dependencies, search_paths)
 
         logger.debug(f"_handle_elf: search_paths={search_paths!r}")
@@ -869,12 +859,8 @@ class PluginHandler:
         else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
-                project=self._project_options,
-                confinement=self._confinement,
-                core_base=self._base,
+                project=self._project,
                 snap_base_path=self._snap_base_path,
-                stagedir=self.stagedir,
-                primedir=self.primedir,
                 stage_packages=self._part_properties.get("stage-packages", []),
             )
             part_patcher.patch()
@@ -891,7 +877,7 @@ class PluginHandler:
                 snap_dirs,
                 dependency_paths,
                 self._part_properties,
-                self._project_options,
+                self._project,
                 self._scriptlet_metadata[steps.PRIME],
                 primed_stage_packages,
             ),
@@ -904,7 +890,9 @@ class PluginHandler:
         state = self.get_prime_state()
 
         try:
-            self._clean_shared_area(self.primedir, state, project_primed_state)
+            self._clean_shared_area(
+                self._project.prime_dir, state, project_primed_state
+            )
         except AttributeError:
             raise errors.MissingStateCleanError(steps.PRIME)
 
@@ -930,7 +918,7 @@ class PluginHandler:
     def _calculate_dependency_paths(
         self, split_dependencies: Dict[str, Set[str]]
     ) -> Set[str]:
-        part_dependencies = split_dependencies.get(self.primedir, set())
+        part_dependencies = split_dependencies.get(self._project.prime_dir, set())
         return {os.path.dirname(d) for d in part_dependencies}
 
     def _warn_missing_dependencies(self, split_dependencies: Dict[str, Set[str]]):
@@ -949,7 +937,9 @@ class PluginHandler:
         state = self.get_prime_state()
         if state:
             for path in state.dependency_paths:
-                dependency_paths.add(os.path.join(self.primedir, path.lstrip("/")))
+                dependency_paths.add(
+                    os.path.join(self._project.prime_dir, path.lstrip("/"))
+                )
 
         return dependency_paths
 
@@ -975,13 +965,13 @@ class PluginHandler:
                 raise
 
             logger.info("Cleaning up for part {!r}".format(self.name))
-            if os.path.exists(self.plugin.partdir):
-                shutil.rmtree(self.plugin.partdir)
+            if os.path.exists(self.part_dir):
+                shutil.rmtree(self.part_dir)
 
         # Remove the part directory if it's completely empty (i.e. all steps
         # have been cleaned).
-        if os.path.exists(self.plugin.partdir) and not os.listdir(self.plugin.partdir):
-            os.rmdir(self.plugin.partdir)
+        if os.path.exists(self.part_dir) and not os.listdir(self.part_dir):
+            os.rmdir(self.part_dir)
 
     def _clean_steps(self, project_staged_state, project_primed_state, step=None):
         if step:
@@ -1331,7 +1321,7 @@ def check_for_collisions(parts):
             common = part_contents & parts_files[other_part_name]["files"]
             conflict_files = []
             for f in common:
-                this = os.path.join(part.plugin.installdir, f)
+                this = os.path.join(part.part_install_dir, f)
                 other = os.path.join(parts_files[other_part_name]["installdir"], f)
 
                 if _paths_collide(this, other):
@@ -1347,7 +1337,7 @@ def check_for_collisions(parts):
         # And add our files to the list
         parts_files[part.name] = {
             "files": part_contents,
-            "installdir": part.plugin.installdir,
+            "installdir": part.part_install_dir,
         }
 
 

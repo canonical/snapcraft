@@ -178,7 +178,7 @@ class Library:
         soname: str,
         soname_path: str,
         search_paths: List[str],
-        core_base_path: str,
+        core_base_path: Optional[str],
         arch: ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
@@ -193,7 +193,7 @@ class Library:
         # Resolve path, if possible.
         self.path = self._crawl_for_path()
 
-        if self.path.startswith(core_base_path):
+        if core_base_path is not None and self.path.startswith(core_base_path):
             self.in_base_snap = True
         else:
             self.in_base_snap = False
@@ -396,7 +396,7 @@ class ElfFile:
     def load_dependencies(
         self,
         root_path: str,
-        core_base_path: str,
+        core_base_path: Optional[str],
         content_dirs: Set[str],
         arch_triplet: str,
         soname_cache: SonameCache = None,
@@ -419,7 +419,9 @@ class ElfFile:
 
         logger.debug("Getting dependencies for {!r}".format(self.path))
 
-        search_paths = [root_path, *content_dirs, core_base_path]
+        search_paths = [root_path, *content_dirs]
+        if core_base_path is not None:
+            search_paths.append(core_base_path)
 
         ld_library_paths: List[str] = list()
         for path in search_paths:
