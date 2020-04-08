@@ -42,8 +42,11 @@ class FakeLaunchpadObject:
 
 
 class BuildImpl(FakeLaunchpadObject):
-    def __init__(self):
-        self.getFileUrls_mock = mock.Mock(return_value=["url_for/snap_file_i386.snap"])
+    def __init__(self, fake_arch="i386"):
+        self._fake_arch = fake_arch
+        self.getFileUrls_mock = mock.Mock(
+            return_value=[f"url_for/snap_file_{self._fake_arch}.snap"]
+        )
 
     def getFileUrls(self, *args, **kw):
         return self.getFileUrls_mock(*args, **kw)
@@ -163,7 +166,6 @@ class LaunchpadImpl(FakeLaunchpadObject):
         self._login_mock = mock.Mock()
         self._load_mock = mock.Mock()
         self._rbi = SnapBuildReqImpl()
-        self._bi = BuildImpl()
 
         self.git_repositories = GitRepositoriesImpl()
         self.snaps = SnapsImpl()
@@ -177,9 +179,9 @@ class LaunchpadImpl(FakeLaunchpadObject):
         if "/+build-request/" in url:
             return self._rbi
         elif "http://build_self_link_1" in url:
-            return self._bi
+            return BuildImpl(fake_arch="i386")
         elif "http://build_self_link_2" in url:
-            return self._bi
+            return BuildImpl(fake_arch="amd64")
         else:
             return self._rbi.builds
 
@@ -318,16 +320,28 @@ class LaunchpadTestCase(unit.TestCase):
 
         self.lpc.start_build()
         self.lpc.monitor_build(interval=0)
-        mock_download_file.assert_has_calls(
-            [
-                mock.call(url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"),
-                mock.call(
-                    url="url_for/build_log_file_1", gunzip=True, dst="test_i386.2.txt"
-                ),
-                mock.call(
-                    url="url_for/build_log_file_2", gunzip=True, dst="test_amd64.txt"
-                ),
-            ]
+        self.assertThat(
+            mock_download_file.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"
+                    ),
+                    mock.call(
+                        url="url_for/build_log_file_1",
+                        gunzip=True,
+                        dst="test_i386.2.txt",
+                    ),
+                    mock.call(
+                        url="url_for/snap_file_amd64.snap", dst="snap_file_amd64.snap"
+                    ),
+                    mock.call(
+                        url="url_for/build_log_file_2",
+                        gunzip=True,
+                        dst="test_amd64.txt",
+                    ),
+                ]
+            ),
         )
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
