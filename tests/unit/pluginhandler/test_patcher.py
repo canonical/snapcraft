@@ -80,6 +80,27 @@ class StaticBasePatchingTest(unit.TestCase):
 
         self.fake_patchelf.mock.assert_not_called()
 
+    def test_no_base(self):
+        # The "bare" base is a static base, empty, so there is no linker loader to look for.
+        handler = self.load_part(
+            "test-part",
+            snap_type="app",
+            base=None,
+            build_base="core",
+            confinement=self.confinement,
+        )
+
+        patcher = PartPatcher(
+            elf_files=frozenset(["foo"]),
+            project=handler._project,
+            snap_base_path="/snap/test-snap/current",
+            stage_packages=[],
+        )
+
+        patcher.patch()
+
+        self.fake_patchelf.mock.assert_not_called()
+
 
 class PrimeTypeExcludesPatchingTestCase(unit.TestCase):
 
