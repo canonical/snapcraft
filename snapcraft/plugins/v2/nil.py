@@ -23,7 +23,12 @@ class NilPlugin(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         """Return a jsonschema compatible dictionary for the plugin properties."""
-        return dict()
+        return {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {},
+        }
 
     def get_build_environment(self) -> List[Dict[str, str]]:
         """
