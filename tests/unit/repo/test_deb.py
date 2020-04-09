@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import apt
+import collections
 import os
 import subprocess
 import textwrap
@@ -28,8 +29,196 @@ import fixtures
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
-from tests import fixture_setup, unit
+from tests import unit
 from . import RepoBaseTestCase
+
+
+class FakeAptCache(fixtures.Fixture):
+    class Cache:
+        def __init__(self):
+            super().__init__()
+            self.packages = collections.OrderedDict()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def __setitem__(self, key, item):
+            package_parts = key.split("=")
+            package_name = package_parts[0]
+            version = package_parts[1] if len(package_parts) > 1 else item.version
+            if package_name in self.packages:
+                self.packages[package_name].version = version
+            else:
+                if version and not item.version:
+                    item.version = version
+                self.packages[package_name] = item
+
+        def __getitem__(self, key):
+            if "=" in key:
+                key = key.split("=")[0]
+            return self.packages[key]
+
+        def __contains__(self, key):
+            return key in self.packages
+
+        def __iter__(self):
+            return iter(self.packages.values())
+
+        def open(self):
+            pass
+
+        def close(self):
+            pass
+
+        def update(self, *args, **kwargs):
+            pass
+
+        def get_changes(self):
+            return [
+                self.packages[package]
+                for package in self.packages
+                if self.packages[package].marked_install
+            ]
+
+        def get_providing_packages(self, package_name):
+            providing_packages = []
+            for package in self.packages:
+                if package_name in self.packages[package].provides:
+                    providing_packages.append(self.packages[package])
+            return providing_packages
+
+        def is_virtual_package(self, package_name):
+            is_virtual = False
+            if package_name not in self.packages:
+                for package in self.packages:
+                    if package_name in self.packages[package].provides:
+                        return True
+            return is_virtual
+
+    def __init__(self, packages=None):
+        super().__init__()
+        self.packages = packages if packages else []
+
+    def setUp(self):
+        super().setUp()
+        temp_dir_fixture = fixtures.TempDir()
+        self.useFixture(temp_dir_fixture)
+        self.path = temp_dir_fixture.path
+        patcher = mock.patch("snapcraft.repo._deb.apt.Cache")
+        self.mock_apt_cache = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.cache = self.Cache()
+        self.mock_apt_cache.return_value = self.cache
+        for package, version in self.packages:
+            self.add_package(FakeAptCachePackage(package, version))
+
+        # Add all the packages in the manifest.
+        self.add_packages(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES)
+
+    def add_package(self, package):
+        package.temp_dir = self.path
+        self.cache[package.name] = package
+
+    def add_packages(self, package_names):
+        for name in package_names:
+            self.cache[name] = FakeAptCachePackage(name)
+
+
+class FakeAptCachePackage:
+    def __init__(
+        self,
+        name,
+        version=None,
+        installed=None,
+        temp_dir=None,
+        provides=None,
+        priority="non-essential",
+    ):
+        super().__init__()
+        self.temp_dir = temp_dir
+        self.name = name
+        self._version = None
+        self.versions = {}
+        self.version = version
+        self.candidate = self
+        self.dependencies = []
+        self.conflicts = []
+        self.provides = provides if provides else []
+        if installed:
+            # XXX The installed attribute requires some values that the fake
+            # package also requires. The shortest path to do it that I found
+            # was to get installed to return the same fake package.
+            self.installed = self
+        else:
+            self.installed = None
+        self.priority = priority
+        self.marked_install = False
+        self.is_auto_installed = False
+
+    def __str__(self):
+        if "=" in self.name:
+            return self.name
+        else:
+            return "{}={}".format(self.name, self.version)
+
+    @property
+    def is_auto_removable(self):
+        return self.marked_install and self.is_auto_installed
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, version):
+        self._version = version
+        if version is not None:
+            self.versions.update({version: self})
+
+    def fetch_binary(self, cache_dir):
+        path = os.path.join(cache_dir, f"{self.name}.deb")
+        open(path, "w").close()
+        return path
+
+    def mark_install(self, *, auto_fix=True, from_user=True):
+        if not self.installed:
+            # First, verify dependencies are valid. If not, bail.
+            for or_set in self.dependencies:
+                for dep in or_set:
+                    if "broken" in dep.name:
+                        return
+
+            for or_set in self.dependencies:
+                if or_set and or_set[0].target_versions:
+                    # Install the first target version of the first OR
+                    or_set[0].target_versions[0].mark_install(
+                        auto_fix=auto_fix, from_user=from_user
+                    )
+            for conflict in self.conflicts:
+                conflict.mark_keep()
+
+            self.marked_install = True
+            self.is_auto_installed = not from_user
+
+    def mark_auto(self, auto=True):
+        self.is_auto_installed = auto
+
+    def mark_keep(self):
+        self.marked_install = False
+        self.is_auto_installed = False
+
+    def get_dependencies(self, _):
+        return []
+
+
+class FakeAptBaseDependency:
+    def __init__(self, name, target_versions):
+        self.name = name
+        self.target_versions = target_versions
 
 
 class UbuntuTestCase(RepoBaseTestCase):
@@ -274,7 +463,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
     def setUp(self):
         super().setUp()
-        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.fake_apt_cache = FakeAptCache()
         self.useFixture(self.fake_apt_cache)
 
     def test_get_installed_packages(self):
@@ -283,7 +472,7 @@ class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
             ("test-not-installed-package", "dummy", False),
         ):
             self.fake_apt_cache.add_package(
-                fixture_setup.FakeAptCachePackage(name, version, installed=installed)
+                FakeAptCachePackage(name, version, installed=installed)
             )
 
         self.assertThat(
@@ -294,7 +483,7 @@ class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
 
 class AutokeepTestCase(RepoBaseTestCase):
     def test_autokeep(self):
-        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.fake_apt_cache = FakeAptCache()
         self.useFixture(self.fake_apt_cache)
         self.test_packages = (
             "main-package",
@@ -305,10 +494,10 @@ class AutokeepTestCase(RepoBaseTestCase):
         self.fake_apt_cache.add_packages(self.test_packages)
         self.fake_apt_cache.cache["main-package"].dependencies = [
             [
-                fixture_setup.FakeAptBaseDependency(
+                FakeAptBaseDependency(
                     "dependency", [self.fake_apt_cache.cache["dependency"]]
                 ),
-                fixture_setup.FakeAptBaseDependency(
+                FakeAptBaseDependency(
                     "conflicting-dependency",
                     [self.fake_apt_cache.cache["conflicting-dependency"]],
                 ),
@@ -316,7 +505,7 @@ class AutokeepTestCase(RepoBaseTestCase):
         ]
         self.fake_apt_cache.cache["dependency"].dependencies = [
             [
-                fixture_setup.FakeAptBaseDependency(
+                FakeAptBaseDependency(
                     "sub-dependency", [self.fake_apt_cache.cache["sub-dependency"]]
                 )
             ]
@@ -352,7 +541,7 @@ class AutokeepTestCase(RepoBaseTestCase):
 class BuildPackagesTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.fake_apt_cache = FakeAptCache()
         self.useFixture(self.fake_apt_cache)
         self.test_packages = (
             "package-not-installed",
@@ -462,7 +651,7 @@ class BuildPackagesTestCase(unit.TestCase):
     def test_broken_package_requested(self, mock_check_call):
         self.fake_apt_cache.add_packages(("package-not-installable",))
         self.fake_apt_cache.cache["package-not-installable"].dependencies = [
-            [fixture_setup.FakeAptBaseDependency("broken-dependency", [])]
+            [FakeAptBaseDependency("broken-dependency", [])]
         ]
         self.assertRaises(
             errors.PackageBrokenError,
