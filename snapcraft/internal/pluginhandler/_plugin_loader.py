@@ -58,6 +58,9 @@ def load_plugin(
         _validate_pull_and_build_properties(
             plugin_name, plugin_class, part_schema, definitions_schema
         )
+        options = _make_options(
+            part_name, part_schema, definitions_schema, properties, plugin_schema
+        )
         plugin = plugin_class(part_name, options, project)
 
         if project.is_cross_compiling:
