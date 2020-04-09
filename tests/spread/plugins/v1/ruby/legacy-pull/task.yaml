@@ -3,8 +3,6 @@ summary: |
   The plugin can be tested without bases in full through the legacy release of
   snapcraft.
 
-systems: [ubuntu-*]
-
 environment:
   SNAP_DIR: ../snaps/ruby-hello
 
