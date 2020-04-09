@@ -268,6 +268,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         project=None,
         stage_packages_repo=None,
         base="core18",
+        build_base=None,
         confinement="strict",
         snap_type="app",
     ):
@@ -282,6 +283,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         project._snap_meta.type = snap_type
         project._snap_meta.confinement = confinement
         project._snap_meta.base = base
+        if build_base is not None:
+            project._snap_meta.build_base = build_base
 
         validator = _schema.Validator()
         schema = validator.part_schema
@@ -297,6 +300,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         if not stage_packages_repo:
             stage_packages_repo = mock.Mock()
+            stage_packages_repo.rootdir = "ubuntu"
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=properties,
@@ -307,15 +311,12 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         return snapcraft.internal.pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=properties,
-            project_options=project,
+            project=project,
             part_schema=schema,
             definitions_schema=definitions_schema,
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
             snap_base_path="/snap/fake-name/current",
-            base=base,
-            confinement=confinement,
-            snap_type=snap_type,
             soname_cache=elf.SonameCache(),
         )
 
