@@ -1,0 +1,15 @@
+name: make-with-lib
+version: "1.0"
+summary: Test make rebuilds
+description: Test make rebuilds
+
+grade: devel
+base: core18
+confinement: strict
+
+parts:
+  my-part:
+    source: src/
+    plugin: make
+    build-packages:
+    - g++

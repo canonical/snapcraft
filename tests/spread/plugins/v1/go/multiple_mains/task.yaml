@@ -1,0 +1,61 @@
+summary: Build Go snap with multiple main packages
+
+environment:
+  SNAP_DIR: ../snaps/go-with-multiple-main-packages
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Ensure that all mains get built and installed
+  snapcraft stage
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -s golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
+    exit 1
+  fi
+
+  [ -f stage/bin/main1 ]
+  [ -f stage/bin/main2 ]
+  [ -f stage/bin/main3 ]
+  snapcraft clean
+
+  # Now run the same test, but using go.mod support.
+  go mod init io.snapcraft.maintests
+  snapcraft stage
+  [ -f stage/bin/main1 ]
+  [ -f stage/bin/main2 ]
+  [ -f stage/bin/main3 ]
+  snapcraft clean
+  rm go.mod
+
+  # Now run the same test again, but with multiple go-packages
+  cat << EOF >> snap/snapcraft.yaml
+        go-packages:
+            - main/main1
+            - main/main2
+            - main/main3
+  EOF
+
+  snapcraft stage
+  [ -f stage/bin/main1 ]
+  [ -f stage/bin/main2 ]
+  [ -f stage/bin/main3 ]

@@ -34,7 +34,7 @@ def list_plugins():
     This command has an alias of `plugins`.
     """
     plugins = []
-    for _, modname, _ in pkgutil.iter_modules(snapcraft.plugins.__path__):
+    for _, modname, _ in pkgutil.iter_modules(snapcraft.plugins.v1.__path__):
         # Only add non-private modules/packages to the plugin list
         if not modname.startswith("_"):
             plugins.append(modname.replace("_", "-"))

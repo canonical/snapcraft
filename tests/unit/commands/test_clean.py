@@ -20,9 +20,8 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
-import snapcraft
 from snapcraft.internal import errors, steps
-from snapcraft.project import errors as project_errors
+from snapcraft.project import Project, errors as project_errors
 from . import CommandBaseTestCase
 
 
@@ -54,13 +53,14 @@ class CleanCommandBaseTestCase(CommandBaseTestCase):
             part_name = "clean{}".format(i)
 
             properties = {"plugin": "nil"}
-            project_options = snapcraft.ProjectOptions()
+            project = Project()
+            project._snap_meta.base = "core18"
 
             handler = self.load_part(
                 part_name=part_name,
                 plugin_name="nil",
                 part_properties=properties,
-                project_options=project_options,
+                project=project,
             )
 
             parts.append({"part_dir": handler.plugin.partdir})

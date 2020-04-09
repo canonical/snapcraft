@@ -1,0 +1,21 @@
+name: maven-hello
+version: "1.0"
+summary: test the maven plugin
+description: |
+ Test maven builds.
+
+confinement: strict
+grade: devel
+base: core18
+
+apps:
+  maven-hello:
+    command: bin/java -cp $SNAP/jar/my-app-1.0-SNAPSHOT.jar com.mycompany.app.App
+
+parts:
+  maven:
+    plugin: maven
+    maven-openjdk-version: "8"
+    maven-options:
+      - -DskipTests
+    source: my-app

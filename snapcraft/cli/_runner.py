@@ -23,7 +23,6 @@ import click
 import snapcraft
 from snapcraft.internal import log
 from .assertions import assertionscli
-from ._config import enable_snapcraft_config_file
 from .containers import containerscli
 from .discovery import discoverycli
 from .legacy import legacycli
@@ -67,7 +66,6 @@ command_groups = [
 @click.pass_context
 @add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
-@enable_snapcraft_config_file()
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 

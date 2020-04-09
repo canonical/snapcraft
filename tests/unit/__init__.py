@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -265,9 +265,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         part_name,
         plugin_name=None,
         part_properties=None,
-        project_options=None,
+        project=None,
         stage_packages_repo=None,
         base="core18",
+        build_base=None,
         confinement="strict",
         snap_type="app",
     ):
@@ -276,8 +277,14 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         properties = {"plugin": plugin_name}
         if part_properties:
             properties.update(part_properties)
-        if not project_options:
-            project_options = snapcraft.ProjectOptions()
+        if not project:
+            project = snapcraft.project.Project()
+
+        project._snap_meta.type = snap_type
+        project._snap_meta.confinement = confinement
+        project._snap_meta.base = base
+        if build_base is not None:
+            project._snap_meta.build_base = build_base
 
         validator = _schema.Validator()
         schema = validator.part_schema
@@ -286,32 +293,30 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             part_name=part_name,
             plugin_name=plugin_name,
             properties=properties,
-            project_options=project_options,
+            project=project,
             part_schema=schema,
             definitions_schema=definitions_schema,
         )
 
         if not stage_packages_repo:
             stage_packages_repo = mock.Mock()
+            stage_packages_repo.rootdir = "ubuntu"
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=properties,
-            project=project_options,
+            project=project,
             repo=stage_packages_repo,
         )
 
         return snapcraft.internal.pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=properties,
-            project_options=project_options,
+            project=project,
             part_schema=schema,
             definitions_schema=definitions_schema,
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
             snap_base_path="/snap/fake-name/current",
-            base=base,
-            confinement=confinement,
-            snap_type=snap_type,
             soname_cache=elf.SonameCache(),
         )
 

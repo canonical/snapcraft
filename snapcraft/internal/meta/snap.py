@@ -42,6 +42,7 @@ class Snap:
         architectures: Optional[Sequence[str]] = None,
         assumes: Optional[Set[str]] = None,
         base: Optional[str] = None,
+        build_base: Optional[str] = None,
         confinement: Optional[str] = None,
         description: Optional[str] = None,
         environment: Optional[Dict[str, Any]] = None,
@@ -78,6 +79,7 @@ class Snap:
             self.assumes = assumes
 
         self.base = base
+        self.build_base = build_base
         self.confinement = confinement
         self.description = description
 
@@ -148,6 +150,28 @@ class Snap:
                 return True
 
         return False
+
+    def get_build_base(self) -> str:
+        """
+        Return the base to use to create the snap.
+
+        Returns build-base if set, but if not, name is returned if the
+        snap is of type base. For all other snaps, the base is returned
+        as the build-base.
+        """
+        build_base: Optional[str] = None
+        if self.build_base is not None:
+            build_base = self.build_base
+        elif self.name is not None and self.type == "base":
+            build_base = self.name
+        else:
+            build_base = self.base
+
+        # The schema does not allow for this when loaded from snapcraft.yaml.
+        if build_base is None:
+            raise RuntimeError("'build_base' cannot be None")
+
+        return build_base
 
     def get_content_plugs(self) -> List[ContentPlug]:
         """Get list of content plugs."""
@@ -262,6 +286,7 @@ class Snap:
         assumes = set(snap_dict.pop("assumes", set()))
 
         base = snap_dict.pop("base", None)
+        build_base = snap_dict.pop("build-base", None)
         confinement = snap_dict.pop("confinement", None)
         description = snap_dict.pop("description", None)
         environment = snap_dict.pop("environment", None)
@@ -327,6 +352,7 @@ class Snap:
             apps=apps,
             assumes=assumes,
             base=base,
+            build_base=build_base,
             confinement=confinement,
             description=description,
             environment=environment,
@@ -380,6 +406,9 @@ class Snap:
 
         if self.base is not None:
             snap_dict["base"] = self.base
+
+        if self.build_base is not None:
+            snap_dict["build-base"] = self.build_base
 
         if self.confinement is not None:
             snap_dict["confinement"] = self.confinement
@@ -439,6 +468,7 @@ class Snap:
             snap_dict.pop("base")
 
         # Remove keys that are not for snap.yaml.
+        snap_dict.pop("build-base", None)
         snap_dict.pop("adopt-info", None)
 
         # Apply passthrough keys.
@@ -452,7 +482,7 @@ class Snap:
         snap_dict = self.to_snap_yaml_dict()
 
         with open(path, "w") as f:
-            yaml_utils.dump(snap_dict, stream=f)
+            yaml_utils.dump(snap_dict, stream=f, sort_keys=False)
 
     def __repr__(self) -> str:
         return repr(self.__dict__)

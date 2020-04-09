@@ -19,9 +19,9 @@ import os
 from typing import FrozenSet, List
 from typing import Dict  # noqa: F401
 
-from snapcraft import ProjectOptions
 from snapcraft.internal import elf
 from snapcraft.internal import errors
+from snapcraft.project import Project
 
 
 logger = logging.getLogger(__name__)
@@ -34,41 +34,26 @@ class PartPatcher:
         self,
         *,
         elf_files: FrozenSet[elf.ElfFile],
-        project: ProjectOptions,
-        confinement: str,  # TODO remove once project has this
-        core_base: str,  # TODO remove once project has this
-        snap_base_path: str,  # TODO remove once project has this
+        project: Project,
+        snap_base_path: str,
         stage_packages: List[str],
-        stagedir: str,
-        primedir: str
     ) -> None:
         """Initialize PartPatcher.
 
         :param elf_files: the list of elf files to analyze.
         :param project: the project instance from the part.
-        :param confinement: the confinement value the snapcraft project is
-                            using (i.e.; devmode, strict, classic).
-        :param core_base: the base the snap will use during runtime
-                          (e.g.; core, core18).
         :param snap_base_path: the root path of the snap during runtime,
                                necessary when using a in-snap libc6 provided
                                as a stage-packages entry.
         :param stage_packages: the stage-packages a part is set to use.
-        :param stagedir: the general stage directory for the snapcraft project.
-                         This is used to locate an alternate patchelf binary
-                         to use.
-        :param primedir: the general prime directory for the snapcraft project.
         """
         self._elf_files = elf_files
         self._project = project
-        self._is_classic = confinement == "classic"
-        self._core_base = core_base
+        self._is_classic = project._snap_meta.confinement == "classic"
         self._snap_base_path = snap_base_path
         # If libc6 is staged, to avoid symbol mixups we will resort to
         # glibc mangling.
         self._is_libc6_staged = "libc6" in stage_packages
-        self._stagedir = stagedir
-        self._primedir = primedir
 
     def _get_glibc_compatibility(self, linker_version: str) -> Dict[str, str]:
         linker_incompat = dict()  # type: Dict[str, str]
@@ -80,7 +65,7 @@ class PartPatcher:
     def _get_preferred_patchelf_path(self):
         # TODO revisit if we need to support variations and permutations
         #  of this
-        staged_patchelf_path = os.path.join(self._stagedir, "bin", "patchelf")
+        staged_patchelf_path = os.path.join(self._project.stage_dir, "bin", "patchelf")
         if not os.path.exists(staged_patchelf_path):
             staged_patchelf_path = None
         return staged_patchelf_path
@@ -90,7 +75,7 @@ class PartPatcher:
 
         elf_patcher = elf.Patcher(
             dynamic_linker=dynamic_linker,
-            root_path=self._primedir,
+            root_path=self._project.prime_dir,
             preferred_patchelf_path=preferred_patchelf_path,
         )
 
@@ -112,7 +97,12 @@ class PartPatcher:
                 raise patch_error
 
     def _verify_compat(self) -> None:
-        linker_version = self._project._get_linker_version_for_base(self._core_base)
+        if self._project._snap_meta.base is None:
+            return
+
+        linker_version = self._project._get_linker_version_for_base(
+            self._project._snap_meta.base
+        )
         linker_incompat = self._get_glibc_compatibility(linker_version)
         logger.debug(
             "List of files incompatible with {!r}: {!r}".format(
@@ -122,7 +112,7 @@ class PartPatcher:
         # Even though we do this in patch, it does not hurt to check again
         if linker_incompat and not self._is_libc6_staged:
             raise errors.IncompatibleBaseError(
-                base=self._core_base,
+                base=self._project._snap_meta.base,
                 linker_version=linker_version,
                 file_list=linker_incompat,
             )
@@ -150,12 +140,15 @@ class PartPatcher:
         :raises errors.SnapcraftEnvironementError:
             if something is horribly wrong.
         """
-        # Just return if this is a static base and libc6 has not been staged.
-        if self._project.is_static_base(self._core_base) and not self._is_libc6_staged:
+        # Just return if base is None or a static base and libc6 has not been staged.
+        if self._project._snap_meta.base is None or (
+            self._project.is_static_base(self._project._snap_meta.base)
+            and not self._is_libc6_staged
+        ):
             return
         if not (
-            self._project.is_static_base(self._core_base)
-            or self._project.is_host_compatible_with_base(self._core_base)
+            self._project.is_static_base(self._project._snap_meta.base)
+            or self._project.is_host_compatible_with_base(self._project._snap_meta.base)
         ):
             logger.debug("Host is not compatible with base")
             self._verify_compat()
@@ -166,7 +159,7 @@ class PartPatcher:
 
         if self._is_libc6_staged:
             dynamic_linker = elf.find_linker(
-                root_path=self._primedir, snap_base_path=self._snap_base_path
+                root_path=self._project.prime_dir, snap_base_path=self._snap_base_path
             )
             logger.warning(
                 "libc6 has been staged into the snap: only do this if you know what "
@@ -174,7 +167,7 @@ class PartPatcher:
             )
         elif self._is_classic:
             dynamic_linker = self._project.get_core_dynamic_linker(
-                self._core_base, expand=False
+                self._project._snap_meta.base, expand=False
             )
         else:
             raise errors.SnapcraftEnvironmentError(

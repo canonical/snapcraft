@@ -16,11 +16,12 @@
 
 from typing import Sequence
 
+from snapcraft.internal.errors import SnapcraftException
 from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
-from typing import List
+from typing import List, Optional
 
 
 class RepoError(errors.SnapcraftError):
@@ -194,3 +195,30 @@ class SnapdConnectionError(RepoError):
 
     def __init__(self, snap_name: str, url: str) -> None:
         super().__init__(snap_name=snap_name, url=url)
+
+
+class AptGPGKeyInstallError(SnapcraftException):
+    def __init__(self, *, output: str, gpg_key: str) -> None:
+        self._gpg_key = gpg_key
+        self._output = output
+        self._message: str = self._parse_apt_key_output()
+
+    def _parse_apt_key_output(self) -> str:
+        """Convert apt-key's output into a more user-friendly message."""
+        message = self._output.replace(
+            "Warning: apt-key output should not be parsed (stdout is not a terminal)",
+            "",
+        ).strip()
+
+        return message
+
+    def get_brief(self) -> str:
+        return f"Failed to install GPG key: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Verify any configured GPG keys."
+
+    def get_details(self) -> Optional[str]:
+        if self._gpg_key:
+            return f"GPG key:\n{self._gpg_key}"
+        return None

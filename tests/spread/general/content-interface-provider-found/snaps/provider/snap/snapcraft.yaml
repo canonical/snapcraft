@@ -6,6 +6,7 @@ description: |
   listed under default-provider.
 
 grade: devel
+base: core18
 confinement: devmode
 
 plugs:

@@ -16,13 +16,16 @@
 
 import apt
 import os
+import subprocess
+import textwrap
+from pathlib import Path
 from subprocess import CalledProcessError
+from unittest import mock
 from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 import fixtures
 
-import snapcraft
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from tests import fixture_setup, unit
@@ -45,25 +48,16 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.mock_package.candidate.fetch_binary.side_effect = _fetch_binary
         self.mock_cache.return_value.get_changes.return_value = [self.mock_package]
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_cache_update_failed(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_cache_update_failed(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         self.assertRaises(errors.CacheUpdateFailedError, ubuntu.get, ["fake-package"])
 
     @patch("shutil.rmtree")
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_cache_hashsum_mismatch(self, mock_apt_pkg, mock_fetch_binary, mock_rmtree):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_cache_hashsum_mismatch(self, mock_apt_pkg, mock_rmtree):
         self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = [
             apt.cache.FetchFailedException(
@@ -71,8 +65,7 @@ class UbuntuTestCase(RepoBaseTestCase):
             ),
             DEFAULT,
         ]
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
     def test_get_pkg_name_parts_name_only(self):
@@ -90,12 +83,8 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.assertThat(name, Equals("hello"))
         self.assertThat(version, Equals("2.10-1"))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_package(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
@@ -110,8 +99,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
         mock_apt_pkg.assert_has_calls(
@@ -153,26 +141,20 @@ class UbuntuTestCase(RepoBaseTestCase):
         )
         self.assertThat(os.listdir(trusted_parts_dir), Equals(["trusted-part.gpg"]))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package_fetch_error(self, mock_apt_pkg, mock_fetch_binary):
-        mock_fetch_binary.side_effect = apt.package.FetchError("foo")
+    def test_get_package_fetch_error(self, mock_apt_pkg):
+        self.mock_package.candidate.fetch_binary.side_effect = apt.package.FetchError(
+            "foo"
+        )
         self.mock_cache().is_virtual_package.return_value = False
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         raised = self.assertRaises(
             errors.PackageFetchError, ubuntu.get, ["fake-package"]
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_package_trusted_parts_already_imported(
-        self, mock_apt_pkg, mock_fetch_binary
-    ):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_package_trusted_parts_already_imported(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         def _fake_find_file(key: str):
@@ -183,8 +165,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package"])
 
         mock_apt_pkg.assert_has_calls(
@@ -218,12 +199,8 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
         )
 
-    @patch("snapcraft.internal.repo._deb._AptCache.fetch_binary")
     @patch("snapcraft.internal.repo._deb.apt.apt_pkg")
-    def test_get_multiarch_package(self, mock_apt_pkg, mock_fetch_binary):
-        fake_package_path = os.path.join(self.path, "fake-package.deb")
-        open(fake_package_path, "w").close()
-        mock_fetch_binary.return_value = fake_package_path
+    def test_get_multiarch_package(self, mock_apt_pkg):
         self.mock_cache().is_virtual_package.return_value = False
 
         fake_trusted_parts_path = os.path.join(self.path, "fake-trusted-parts")
@@ -238,8 +215,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.config.find_file.side_effect = _fake_find_file
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["fake-package:arch"])
 
         mock_apt_pkg.assert_has_calls(
@@ -273,87 +249,26 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, "download", "fake-package.deb"), FileExists()
         )
 
-    @patch("snapcraft.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_is_none_uses_default(self, mock_cc):
-        mock_cc.return_value = "ar"
-
-        self.maxDiff = None
-        sources_list = repo._deb._format_sources_list(
-            "", use_geoip=True, deb_arch="amd64"
+    @mock.patch(
+        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
+    )
+    def test_sources_formatting(self, mock_version_codename):
+        sources_list = textwrap.dedent(
+            """
+            deb http://archive.ubuntu.com/ubuntu ${release} main restricted
+            deb http://archive.ubuntu.com/ubuntu ${release}-updates main restricted
+            """
         )
 
-        expected_sources_list = """deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial universe
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates universe
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates multiverse
-deb http://security.ubuntu.com/ubuntu xenial-security main restricted
-deb http://security.ubuntu.com/ubuntu xenial-security universe
-deb http://security.ubuntu.com/ubuntu xenial-security multiverse
-"""
-        self.assertThat(sources_list, Equals(expected_sources_list))
+        sources_list = repo._deb._format_sources_list(sources_list)
 
-    def test_no_geoip_uses_default_archive(self):
-        sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES, deb_arch="amd64", use_geoip=False
+        expected_sources_list = textwrap.dedent(
+            """
+            deb http://archive.ubuntu.com/ubuntu testy main restricted
+            deb http://archive.ubuntu.com/ubuntu testy-updates main restricted
+            """
         )
-
-        expected_sources_list = """deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted
-deb http://archive.ubuntu.com/ubuntu/ xenial universe
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe
-deb http://archive.ubuntu.com/ubuntu/ xenial multiverse
-deb http://archive.ubuntu.com/ubuntu/ xenial-updates multiverse
-deb http://security.ubuntu.com/ubuntu xenial-security main restricted
-deb http://security.ubuntu.com/ubuntu xenial-security universe
-deb http://security.ubuntu.com/ubuntu xenial-security multiverse
-"""
-
         self.assertThat(sources_list, Equals(expected_sources_list))
-
-    @patch("snapcraft.internal.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_amd64_vivid(self, mock_cc):
-        self.maxDiff = None
-        mock_cc.return_value = "ar"
-
-        sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES,
-            deb_arch="amd64",
-            use_geoip=True,
-            release="vivid",
-        )
-
-        expected_sources_list = """deb http://ar.archive.ubuntu.com/ubuntu/ vivid main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates main restricted
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid universe
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates universe
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ vivid-updates multiverse
-deb http://security.ubuntu.com/ubuntu vivid-security main restricted
-deb http://security.ubuntu.com/ubuntu vivid-security universe
-deb http://security.ubuntu.com/ubuntu vivid-security multiverse
-"""
-        self.assertThat(sources_list, Equals(expected_sources_list))
-
-    @patch("snapcraft.repo._deb._get_geoip_country_code_prefix")
-    def test_sources_armhf_trusty(self, mock_cc):
-        sources_list = repo._deb._format_sources_list(
-            repo._deb._DEFAULT_SOURCES, deb_arch="armhf", release="trusty"
-        )
-
-        expected_sources_list = """deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates main restricted
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty universe
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates universe
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty multiverse
-deb http://ports.ubuntu.com/ubuntu-ports/ trusty-updates multiverse
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
-deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
-"""
-        self.assertThat(sources_list, Equals(expected_sources_list))
-        self.assertFalse(mock_cc.called)
 
 
 class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
@@ -410,8 +325,7 @@ class AutokeepTestCase(RepoBaseTestCase):
             self.fake_apt_cache.cache["dependency"]
         ]
 
-        project_options = snapcraft.ProjectOptions()
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir)
         ubuntu.get(["main-package", "conflicting-dependency"])
 
         # Verify that the package was actually fetched and copied into the
@@ -629,4 +543,70 @@ class PackageForFileTest(unit.TestCase):
             repo.errors.FileProviderNotFound,
             repo.Ubuntu.get_package_for_file,
             "/bin/not-found",
+        )
+
+
+class TestUbuntuInstallRepo(unit.TestCase):
+    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.refresh_build_packages")
+    def test_install(self, mock_refresh):
+        snapcraft_list = Path(self.path, "snapcraft.list")
+
+        with mock.patch(
+            "snapcraft.internal.repo._deb.Ubuntu._SNAPCRAFT_INSTALLED_SOURCES_LIST",
+            new=str(snapcraft_list),
+        ):
+            test_source = "deb http://source"
+            repo.Ubuntu.install_source(test_source)
+
+            self.assertThat(snapcraft_list.exists(), Equals(True))
+            self.assertThat(snapcraft_list.owner(), Equals("root"))
+            self.assertThat(snapcraft_list.group(), Equals("root"))
+            self.assertThat(snapcraft_list.stat().st_mode & 0o777, Equals(0o644))
+
+            installed_sources = snapcraft_list.read_text().splitlines()
+
+            self.assertThat(test_source in installed_sources, Equals(True))
+
+            test_source2 = "deb http://source2"
+            repo.Ubuntu.install_source(test_source2)
+
+            installed_sources = snapcraft_list.read_text().splitlines()
+            expected_sources = sorted([test_source, test_source2])
+
+            self.assertThat(installed_sources, Equals(expected_sources))
+
+    @mock.patch("subprocess.run")
+    def test_install_gpg(self, mock_run):
+        repo.Ubuntu.install_gpg_key("FAKEKEY")
+
+        self.assertThat(
+            mock_run.mock_calls,
+            Equals(
+                [
+                    call(
+                        [
+                            "sudo",
+                            "apt-key",
+                            "--keyring",
+                            repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+                            "add",
+                            "-",
+                        ],
+                        check=True,
+                        input=b"FAKEKEY",
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    )
+                ]
+            ),
+        )
+
+    @mock.patch("subprocess.run")
+    def test_apt_key_failure(self, mock_run):
+        mock_run.side_effect = CalledProcessError(
+            cmd=["foo"], returncode=1, output="some error"
+        )
+
+        self.assertRaises(
+            errors.AptGPGKeyInstallError, repo.Ubuntu.install_gpg_key, "FAKEKEY"
         )

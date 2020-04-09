@@ -22,45 +22,142 @@ import logging
 import os
 import re
 import shutil
-import stat
 import string
 import subprocess
 import sys
 import tempfile
-import urllib
-import urllib.request
-from typing import Dict, Set, List, Tuple  # noqa: F401
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
+from typing_extensions import Final
 
 import apt
-from xml.etree import ElementTree
 
-import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common, os_release
+from snapcraft.internal import cache, common, os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
-from ._base import BaseRepo
-from . import errors
 
+from . import errors
+from ._base import BaseRepo
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_SOURCES = """deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-"""
-_GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
-_library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
+_DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
+    "adduser",
+    "apt",
+    "apt-utils",
+    "base-files",
+    "base-passwd",
+    "bash",
+    "bsdutils",
+    "coreutils",
+    "dash",
+    "debconf",
+    "debconf-i18n",
+    "debianutils",
+    "diffutils",
+    "dmsetup",
+    "dpkg",
+    "e2fslibs",
+    "e2fsprogs",
+    "file",
+    "findutils",
+    "gcc-4.9-base",
+    "gcc-5-base",
+    "gnupg",
+    "gpgv",
+    "grep",
+    "gzip",
+    "hostname",
+    "init",
+    "initscripts",
+    "insserv",
+    "libacl1",
+    "libapparmor1",
+    "libapt",
+    "libapt-inst1.5",
+    "libapt-pkg4.12",
+    "libattr1",
+    "libaudit-common",
+    "libaudit1",
+    "libblkid1",
+    "libbz2-1.0",
+    "libc-bin",
+    "libc6",
+    "libcap2",
+    "libcap2-bin",
+    "libcomerr2",
+    "libcryptsetup4",
+    "libdb5.3",
+    "libdebconfclient0",
+    "libdevmapper1.02.1",
+    "libgcc1",
+    "libgcrypt20",
+    "libgpg-error0",
+    "libgpm2",
+    "libkmod2",
+    "liblocale-gettext-perl",
+    "liblzma5",
+    "libmagic1",
+    "libmount1",
+    "libncurses5",
+    "libncursesw5",
+    "libpam-modules",
+    "libpam-modules-bin",
+    "libpam-runtime",
+    "libpam0g",
+    "libpcre3",
+    "libprocps3",
+    "libreadline6",
+    "libselinux1",
+    "libsemanage-common",
+    "libsemanage1",
+    "libsepol1",
+    "libslang2",
+    "libsmartcols1",
+    "libss2",
+    "libstdc++6",
+    "libsystemd0",
+    "libtext-charwidth-perl",
+    "libtext-iconv-perl",
+    "libtext-wrapi18n-perl",
+    "libtinfo5",
+    "libudev1",
+    "libusb-0.1-4",
+    "libustr-1.0-1",
+    "libuuid1",
+    "locales",
+    "login",
+    "lsb-base",
+    "makedev",
+    "manpages",
+    "manpages-dev",
+    "mawk",
+    "mount",
+    "multiarch-support",
+    "ncurses-base",
+    "ncurses-bin",
+    "passwd",
+    "perl-base",
+    "procps",
+    "readline-common",
+    "sed",
+    "sensible-utils",
+    "systemd",
+    "systemd-sysv",
+    "sysv-rc",
+    "sysvinit-utils",
+    "tar",
+    "tzdata",
+    "ubuntu-keyring",
+    "udev",
+    "util-linux",
+    "zlib1g",
+]
 
 
 @functools.lru_cache(maxsize=256)
-def _run_dpkg_query_s(file_path: str) -> str:
+def _run_dpkg_query_search(file_path: str) -> str:
     try:
         output = (
             subprocess.check_output(
@@ -84,14 +181,42 @@ def _run_dpkg_query_s(file_path: str) -> str:
     return provides_output.split(":")[0]
 
 
-class _AptCache:
-    def __init__(self, deb_arch, *, sources_list=None, keyrings=None, use_geoip=False):
-        self._deb_arch = deb_arch
-        self._sources_list = sources_list
-        self._use_geoip = use_geoip
+@functools.lru_cache(maxsize=256)
+def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
+    output = (
+        subprocess.check_output(["dpkg", "-L", package_name])
+        .decode(sys.getfilesystemencoding())
+        .strip()
+        .split()
+    )
 
-        if not keyrings:
-            keyrings = list()
+    return {i for i in output if ("lib" in i and os.path.isfile(i))}
+
+
+def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
+    """Workaround for writing to privileged files."""
+    with tempfile.NamedTemporaryFile() as src_f:
+        src_f.write(content)
+        src_f.flush()
+
+        try:
+            command = [
+                "sudo",
+                "install",
+                "--owner=root",
+                "--group=root",
+                "--mode=0644",
+                src_f.name,
+                str(dst_path),
+            ]
+            subprocess.check_call(command)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"failed to run: {command!r}")
+
+
+class _AptCache:
+    def __init__(self, *, sources: List[str], keyrings: List[str]):
+        self._sources = sources
         self._keyrings = keyrings
 
     def _setup_apt(self, cache_dir):
@@ -235,71 +360,33 @@ class _AptCache:
             self._collected_sources_list().encode(sys.getfilesystemencoding())
         ).hexdigest()
 
-    def _collected_sources_list(self):
-        if self._use_geoip or self._sources_list:
-            release = os_release.OsRelease()
-            return _format_sources_list(
-                self._sources_list,
-                deb_arch=self._deb_arch,
-                use_geoip=self._use_geoip,
-                release=release.version_codename(),
-            )
+    def _collected_sources_list(self) -> str:
+        sources = _get_local_sources_list()
 
-        return _get_local_sources_list()
+        # Append additionally configured repositories, if any.
+        if self._sources:
 
-    def fetch_binary(self, *, package_candidate, destination: str) -> str:
-        # This is a workaround for the overly verbose python-apt we use.
-        # There is an unreleased patch which once released could replace
-        # this code https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc  # noqa
-        # What follows is almost a tit for tat implementation of upstream's
-        # fetch_binary logic.
-        base = os.path.basename(package_candidate._records.filename)
-        destfile = os.path.join(destination, base)
-        if apt.package._file_is_same(
-            destfile, package_candidate.size, package_candidate._records.md5_hash
-        ):
-            logging.debug("Ignoring already existing file: {}".format(destfile))
-            return os.path.abspath(destfile)
-        acq = apt.apt_pkg.Acquire(self.progress)
-        acqfile = apt.apt_pkg.AcquireFile(
-            acq,
-            package_candidate.uri,
-            package_candidate._records.md5_hash,
-            package_candidate.size,
-            base,
-            destfile=destfile,
-        )
-        acq.run()
+            additional_sources = _format_sources_list("\n".join(self._sources))
+            sources = "\n".join([sources, additional_sources])
 
-        if acqfile.status != acqfile.STAT_DONE:
-            raise apt.package.FetchError(
-                "The item %r could not be fetched: %s"
-                % (acqfile.destfile, acqfile.error_text)
-            )
-
-        return os.path.abspath(destfile)
+        return sources
 
 
 class Ubuntu(BaseRepo):
-    @classmethod
-    def get_package_libraries(cls, package_name):
-        global _library_list
-        if package_name not in _library_list:
-            output = (
-                subprocess.check_output(["dpkg", "-L", package_name])
-                .decode(sys.getfilesystemencoding())
-                .strip()
-                .split()
-            )
-            _library_list[package_name] = {
-                i for i in output if ("lib" in i and os.path.isfile(i))
-            }
+    _SNAPCRAFT_INSTALLED_GPG_KEYRING: Final[
+        str
+    ] = "/etc/apt/trusted.gpg.d/snapcraft.gpg"
+    _SNAPCRAFT_INSTALLED_SOURCES_LIST: Final[
+        str
+    ] = "/etc/apt/sources.list.d/snapcraft.list"
 
-        return _library_list[package_name].copy()
+    @classmethod
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
+        return _run_dpkg_query_list_files(package_name)
 
     @classmethod
     def get_package_for_file(cls, file_path: str) -> str:
-        return _run_dpkg_query_s(file_path)
+        return _run_dpkg_query_search(file_path)
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
@@ -459,18 +546,75 @@ class Ubuntu(BaseRepo):
                     )
         return installed_packages
 
+    @classmethod
+    def install_gpg_key(cls, gpg_key: str) -> None:
+        cmd = [
+            "sudo",
+            "apt-key",
+            "--keyring",
+            cls._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+            "add",
+            "-",
+        ]
+        try:
+            subprocess.run(
+                cmd,
+                input=gpg_key.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except subprocess.CalledProcessError as error:
+            raise errors.AptGPGKeyInstallError(output=error.output, gpg_key=gpg_key)
+
+        logger.debug(f"Installed apt repository key:\n{gpg_key}")
+
+    @classmethod
+    def _get_snapcraft_installed_sources(cls) -> Set[str]:
+        sources: Set[str] = set()
+
+        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
+        if installed_path.exists():
+            sources = set(installed_path.read_text().splitlines())
+
+        return sources
+
+    @classmethod
+    def _set_snapcraft_installed_sources(cls, sources: Set[str]) -> None:
+        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
+        sources_content = "\n".join(sorted(sources)) + "\n"
+        _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
+
+    @classmethod
+    def install_source(cls, source_line: str) -> None:
+        """Add deb source line. Supports formatting tag for ${release}."""
+        expanded_source = _format_sources_list(source_line)
+
+        sources = cls._get_snapcraft_installed_sources()
+        sources.add(expanded_source)
+
+        cls._set_snapcraft_installed_sources(sources)
+        cls.refresh_build_packages()
+
+        logger.debug(f"Installed apt repository {expanded_source!r}")
+
     def __init__(
-        self, rootdir, sources=None, keyrings=None, project_options=None
+        self,
+        rootdir,
+        sources: Optional[List[str]] = None,
+        keyrings: Optional[List[str]] = None,
+        project_options=None,
     ) -> None:
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, "download")
 
-        if not project_options:
-            project_options = snapcraft.ProjectOptions()
+        if sources is None:
+            sources = list()
 
-        self._apt = _AptCache(
-            project_options.deb_arch, sources_list=sources, keyrings=keyrings
-        )
+        if keyrings is None:
+            keyrings = list()
+
+        self._apt = _AptCache(sources=sources, keyrings=keyrings)
 
         self._cache = cache.AptStagePackageCache(
             sources_digest=self._apt.sources_digest()
@@ -480,7 +624,7 @@ class Ubuntu(BaseRepo):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
-    def get(self, package_names) -> None:
+    def get(self, package_names) -> List[str]:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
@@ -492,9 +636,13 @@ class Ubuntu(BaseRepo):
             if package.is_auto_removable:
                 package.mark_keep()
 
-    def _filter_base_packages(self, apt_cache, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt_cache)
+    def _is_filtered_package(self, package_name: str) -> bool:
+        # Filter out packages provided by the core snap.
+        # TODO: use manifest found in core snap, if found at:
+        # <core-snap>/usr/share/snappy/dpkg.list
+        return package_name in _DEFAULT_FILTERED_STAGE_PACKAGES
 
+    def _filter_base_packages(self, apt_cache, package_names):
         skipped_essential = []
         skipped_blacklisted = []
 
@@ -510,7 +658,7 @@ class Ubuntu(BaseRepo):
                 skipped_essential.append(pkg.name)
                 pkg.mark_keep()
                 continue
-            if pkg.name in manifest_dep_names and pkg.name not in package_names:
+            if self._is_filtered_package(pkg.name) and pkg.name not in package_names:
                 skipped_blacklisted.append(pkg.name)
                 pkg.mark_keep()
                 continue
@@ -527,29 +675,14 @@ class Ubuntu(BaseRepo):
             )
 
     def _get(self, apt_cache):
-        # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
-        # mangle some package names on disk such that we can't match it up to
-        # the archive later. We could get around this a few different ways:
-        #
-        # 1. Store each stage package in the cache named by a hash instead of
-        #    its name from the archive.
-        # 2. Download packages in a different manner.
-        #
-        # In the end, (2) was chosen for minimal overhead and a simpler cache
-        # implementation. So we're using fetch_binary() here instead.
-        # Downloading each package individually has the drawback of witholding
-        # any clue of how long the whole pulling process will take, but that's
-        # something we'll have to live with.
         pkg_list = []
         for package in apt_cache.get_changes():
             pkg_list.append(str(package.candidate))
             try:
-                source = self._apt.fetch_binary(
-                    package_candidate=package.candidate,
-                    destination=self._cache.packages_dir,
-                )
+                source = package.candidate.fetch_binary(self._cache.packages_dir)
             except apt.package.FetchError as e:
                 raise errors.PackageFetchError(str(e))
+
             destination = os.path.join(self._downloaddir, os.path.basename(source))
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
@@ -584,17 +717,6 @@ class Ubuntu(BaseRepo):
                 file_utils.link_or_copy_tree(temp_dir, unpackdir)
         self.normalize(unpackdir)
 
-    def _manifest_dep_names(self, apt_cache):
-        manifest_dep_names = set()
-
-        with open(os.path.abspath(os.path.join(__file__, "..", "manifest.txt"))) as f:
-            for line in f:
-                pkg = line.strip()
-                if pkg in apt_cache:
-                    manifest_dep_names.add(pkg)
-
-        return manifest_dep_names
-
 
 def _get_local_sources_list():
     sources_list = glob.glob("/etc/apt/sources.list.d/*.list")
@@ -608,61 +730,10 @@ def _get_local_sources_list():
     return sources
 
 
-def _get_geoip_country_code_prefix():
-    try:
-        with urllib.request.urlopen(_GEOIP_SERVER) as f:
-            xml_data = f.read()
-        et = ElementTree.fromstring(xml_data)
-        cc = et.find("CountryCode")
-        if cc is None:
-            return ""
-        return cc.text.lower()
-    except (ElementTree.ParseError, urllib.error.URLError):
-        pass
-    return ""
+def _format_sources_list(sources_list: str):
+    release = os_release.OsRelease().version_codename()
 
-
-def _format_sources_list(sources_list, *, deb_arch, use_geoip=False, release="xenial"):
-    if not sources_list:
-        sources_list = _DEFAULT_SOURCES
-
-    if deb_arch in ("amd64", "i386"):
-        if use_geoip:
-            geoip_prefix = _get_geoip_country_code_prefix()
-            prefix = "{}.archive".format(geoip_prefix)
-        else:
-            prefix = "archive"
-        suffix = "ubuntu"
-        security = "security"
-    else:
-        prefix = "ports"
-        suffix = "ubuntu-ports"
-        security = "ports"
-
-    return string.Template(sources_list).substitute(
-        {"prefix": prefix, "release": release, "suffix": suffix, "security": security}
-    )
-
-
-def _fix_filemode(path):
-    mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
-    if mode & 0o4000 or mode & 0o2000:
-        logger.warning("Removing suid/guid from {}".format(path))
-        os.chmod(path, mode & 0o1777)
-
-
-def _try_copy_local(path, target):
-    real_path = os.path.realpath(path)
-    if os.path.exists(real_path):
-        logger.warning(
-            "Copying needed target link from the system {}".format(real_path)
-        )
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copyfile(os.readlink(path), target)
-        return True
-    else:
-        logger.warning("{} will be a dangling symlink".format(path))
-        return False
+    return string.Template(sources_list).substitute({"release": release})
 
 
 def _set_pkg_version(pkg, version):

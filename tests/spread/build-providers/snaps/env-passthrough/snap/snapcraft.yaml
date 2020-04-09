@@ -5,6 +5,7 @@ description: |
   Help verify environment passthrough variables are set.
 
 grade: devel
+base: core18
 confinement: devmode
 
 parts:

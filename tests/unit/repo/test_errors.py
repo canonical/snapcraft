@@ -39,3 +39,44 @@ class ErrorFormattingTestCase(unit.TestCase):
         self.assertThat(
             str(self.exception(**self.kwargs)), Equals(self.expected_message)
         )
+
+
+class AptGPGKeyInstallErrorTests(unit.TestCase):
+
+    scenarios = [
+        (
+            "AptGPGKeyInstallError basic",
+            {
+                "exception": errors.AptGPGKeyInstallError,
+                "kwargs": {"output": "some error", "gpg_key": "fake key"},
+                "expected_brief": "Failed to install GPG key: some error",
+                "expected_resolution": "Verify any configured GPG keys.",
+                "expected_details": "GPG key:\nfake key",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
+            "AptGPGKeyInstallError basic with warning",
+            {
+                "exception": errors.AptGPGKeyInstallError,
+                "kwargs": {
+                    "output": "Warning: apt-key output should not be parsed (stdout is not a terminal)\nsome error",
+                    "gpg_key": "fake key",
+                },
+                "expected_brief": "Failed to install GPG key: some error",
+                "expected_resolution": "Verify any configured GPG keys.",
+                "expected_details": "GPG key:\nfake key",
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+    ]
+
+    def test_snapcraft_exception_handling(self):
+        exception = self.exception(**self.kwargs)
+        self.assertThat(exception.get_brief(), Equals(self.expected_brief))
+        self.assertThat(exception.get_resolution(), Equals(self.expected_resolution))
+        self.assertThat(exception.get_details(), Equals(self.expected_details))
+        self.assertThat(exception.get_docs_url(), Equals(self.expected_docs_url))
+        self.assertThat(exception.get_reportable(), Equals(self.expected_reportable))

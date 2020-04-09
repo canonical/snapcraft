@@ -1,0 +1,13 @@
+name: nil-with-additional-properties
+version: "1.0"
+summary: Use additional property with nil
+description: Use additional property with nil (which should error out)
+
+grade: devel
+base: core18
+confinement: strict
+
+parts:
+  nil-part:
+    plugin: nil
+    extra-property: foo

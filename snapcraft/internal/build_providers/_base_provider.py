@@ -92,21 +92,21 @@ class Provider(abc.ABC):
         self.echoer = echoer
         self._is_ephemeral = is_ephemeral
 
-        self.instance_name = "snapcraft-{}".format(project.info.name)
+        self.instance_name = "snapcraft-{}".format(project._snap_meta.name)
 
-        if project.info.version:
+        if project._snap_meta.version:
             self.snap_filename = "{}_{}_{}.snap".format(
-                project.info.name, project.info.version, project.deb_arch
+                project._snap_meta.name, project._snap_meta.version, project.deb_arch
             )
         else:
             self.snap_filename = "{}_{}.snap".format(
-                project.info.name, project.deb_arch
+                project._snap_meta.name, project.deb_arch
             )
 
         self.provider_project_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"),
             "projects",
-            project.info.name,
+            project._snap_meta.name,
             self._get_provider_name(),
         )
 
@@ -282,10 +282,10 @@ class Provider(abc.ABC):
     def _ensure_base(self) -> None:
         info = self._load_info()
         provider_base = info["base"] if "base" in info else None
-        if self._base_has_changed(self.project.info.get_build_base(), provider_base):
+        if self._base_has_changed(self.project._get_build_base(), provider_base):
             self.echoer.warning(
                 "Project base changed from {!r} to {!r}, cleaning build instance.".format(
-                    provider_base, self.project.info.get_build_base()
+                    provider_base, self.project._get_build_base()
                 )
             )
             self.clean_project()
@@ -319,7 +319,7 @@ class Provider(abc.ABC):
         self._run(["snapcraft", "refresh"])
 
     def _setup_snapcraft(self) -> None:
-        self._save_info(base=self.project.info.get_build_base())
+        self._save_info(base=self.project._get_build_base())
 
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
@@ -347,7 +347,7 @@ class Provider(abc.ABC):
         # Check for None as this build can be driven from a non snappy enabled
         # system, so we may find ourselves in a situation where the base is not
         # set like on OSX or Windows.
-        build_base = self.project.info.get_build_base()
+        build_base = self.project._get_build_base()
         if build_base is not None and build_base != "core":
             snap_injector.add(snap_name="snapd")
 

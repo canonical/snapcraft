@@ -1,5 +1,4 @@
 click==7.1.1
-click-config-file==0.5.0
 configparser==3.5.0
 jsonschema==2.5.1
 progressbar33==2.4
@@ -7,7 +6,7 @@ PyYAML==5.3
 pyxdg==0.26
 requests==2.20.0
 requests_unixsocket==0.1.5
-https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz; sys_platform == 'linux'
+https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/1.6.0/python-apt_1.6.0.tar.xz; sys_platform == 'linux'
 https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz
 requests-toolbelt==0.8.0
 responses==0.5.1
@@ -20,6 +19,7 @@ pysha3==1.0.2; python_version < '3.6'
 raven==6.5.0
 simplejson==3.8.2
 tabulate==0.7.5
+typing-extensions==3.7.4.1
 toml==0.10.0
 python-debian==0.1.28
 chardet==3.0.4

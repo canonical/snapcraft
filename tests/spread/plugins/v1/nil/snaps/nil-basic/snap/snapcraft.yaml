@@ -1,0 +1,12 @@
+name: nil-basic
+version: "1.0"
+summary: Create the empty snap
+description: Create an empty snap with nothing to pull
+
+grade: devel
+base: core18
+confinement: strict
+
+parts:
+  nil-part:
+    plugin: nil

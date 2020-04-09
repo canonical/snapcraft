@@ -183,16 +183,14 @@ class SCAClient(Client):
         revision,
         channels,
         delta_format=None,
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ):
         data = {"name": snap_name, "revision": str(revision), "channels": channels}
         if delta_format:
             data["delta_format"] = delta_format
-        if progressive_percentage is not None and progressive_key is not None:
+        if progressive_percentage is not None:
             data["progressive"] = {
                 "percentage": progressive_percentage,
-                "key": progressive_key,
                 "paused": False,
             }
         auth = _macaroon_auth(self.conf)

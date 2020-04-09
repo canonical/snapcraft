@@ -1,0 +1,17 @@
+name: crystal-hello
+version: "1.0"
+summary: Create the hello snap
+description: Create the hello snap
+
+grade: devel
+base: core18
+confinement: strict
+
+apps:
+  crystal-hello:
+    command: bin/hello
+
+parts:
+  crystal-hello:
+    source: hello
+    plugin: crystal

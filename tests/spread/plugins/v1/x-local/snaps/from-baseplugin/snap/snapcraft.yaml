@@ -1,0 +1,12 @@
+name: test-local-plugins
+base: core18
+version: "0.1"
+summary: local plugin in snap/plugins
+description: Tests if local plugins load and can build
+confinement: strict
+grade: devel
+
+parts:
+    x-local-plugin:
+      plugin: x-local-plugin
+      source: .

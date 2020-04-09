@@ -1,0 +1,19 @@
+name: gradle-hello
+version: "1.0"
+summary: A java example
+description: this is not much more than an example
+
+confinement: strict
+grade: devel
+base: core18
+
+apps:
+ gradle-hello:
+   command: bin/java -jar $SNAP/jar/snapcraft-gradle-demo-1.0.0.jar
+
+parts:
+    local:
+        source: .
+        plugin: gradle
+        gradle-options: [--debug]
+        gradle-openjdk-version: "8"

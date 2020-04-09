@@ -97,7 +97,7 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        return "snapcraft:{}".format(self.project.info.get_build_base())
+        return "snapcraft:{}".format(self.project._get_build_base())
 
     def _launch(self) -> None:
         image = self._get_disk_image()
@@ -135,7 +135,8 @@ class Multipass(Provider):
 
     def _push_file(self, *, source: str, destination: str) -> None:
         destination = "{}:{}".format(self.instance_name, destination)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        with open(source, "rb") as file:
+            self._multipass_cmd.push_file(source=file, destination=destination)
 
     def __init__(
         self,
@@ -222,7 +223,8 @@ class Multipass(Provider):
 
         # copy file from instance
         source = "{}:{}".format(self.instance_name, name)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        with open(destination, "wb") as file:
+            self._multipass_cmd.pull_file(source=source, destination=file)
         if delete:
             self._run(command=["rm", name])
 

@@ -19,7 +19,7 @@ from typing import Optional
 from unittest import mock
 
 from snapcraft.project import Project
-
+from snapcraft.internal.meta.snap import Snap
 from tests import fixture_setup, unit
 from snapcraft.internal.build_providers._base_provider import Provider
 
@@ -124,11 +124,11 @@ class ProviderImpl(Provider):
 
 
 def get_project(base: str = "core16") -> Project:
-    with open("snapcraft.yaml", "w") as snapcraft_file:
-        print("name: project-name", file=snapcraft_file)
-        print("base: {}".format(base), file=snapcraft_file)
-
-    return Project(snapcraft_yaml_file_path="snapcraft.yaml")
+    project = Project()
+    project._snap_meta = Snap(
+        name="project-name", base=base, version="1.0", confinement="strict"
+    )
+    return project
 
 
 class BaseProviderBaseTest(unit.TestCase):

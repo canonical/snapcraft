@@ -117,7 +117,7 @@ def _topic_help(module_name, devel):
 
 def _module_help(module_name, devel):
     module = importlib.import_module(
-        "snapcraft.plugins.{}".format(module_name.replace("-", "_"))
+        "snapcraft.plugins.v1.{}".format(module_name.replace("-", "_"))
     )
     if module.__doc__ and devel:
         help(module)

@@ -24,7 +24,7 @@ import re
 import shutil
 import stat
 
-from typing import List, Set
+from typing import List, Optional, Set
 
 from snapcraft import file_utils
 from snapcraft.internal import mangling, xattrs
@@ -52,7 +52,7 @@ class BaseRepo:
     adapt the artifacts downloaded to be generic enough for building a snap."""
 
     @classmethod
-    def get_package_libraries(cls, package_name):
+    def get_package_libraries(cls, package_name: str) -> Set[str]:
         """Return a list of libraries in package_name.
 
         Given the contents of package_name, return the subset of what are
@@ -78,7 +78,7 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type):
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         """Return a list of packages required to to work with source_type.
 
         source_type can be any of the following:
@@ -139,7 +139,7 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def build_package_is_valid(cls, package_name):
+    def build_package_is_valid(cls, package_name: str) -> bool:
         """Check that a given package is valid on the host.
 
         :param package_name: a package name to check.
@@ -148,7 +148,7 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def is_package_installed(cls, package_name):
+    def is_package_installed(cls, package_name: str) -> bool:
         """Return a bool indicating if package_name is installed.
 
         :param str package_name: the package name to query.
@@ -158,14 +158,24 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def get_installed_packages(cls):
+    def get_installed_packages(cls) -> List[str]:
         """Return a list of the installed packages and their versions
 
         :rtype: list of strings with the form package=version.
         """
         raise errors.NoNativeBackendError()
 
-    def __init__(self, rootdir, *args, **kwargs):
+    @classmethod
+    def install_gpg_key(cls, gpg_key: str) -> None:
+        """Install trusted GPG key."""
+        raise errors.NoNativeBackendError()
+
+    @classmethod
+    def install_source(cls, source_line: str) -> None:
+        """Install repository source location."""
+        raise errors.NoNativeBackendError()
+
+    def __init__(self, rootdir: str, *args, **kwargs):
         """Initialize a repository handler.
 
         :param str rootdir: the root directory to work on. This may well be to
@@ -174,7 +184,7 @@ class BaseRepo:
         """
         self.rootdir = rootdir
 
-    def get(self, package_names):
+    def get(self, package_names: List[str]) -> List[str]:
         """Get the packages.
 
         This method needs to be implemented by the inheriting class. It
@@ -190,7 +200,7 @@ class BaseRepo:
         """
         raise errors.NoNativeBackendError()
 
-    def unpack(self, unpackdir):
+    def unpack(self, unpackdir: str) -> None:
         """Unpack obtained packages into unpackdir.
 
         This method needs to be implemented by the inheriting class. It
@@ -203,7 +213,7 @@ class BaseRepo:
         """
         raise errors.NoNativeBackendError()
 
-    def normalize(self, unpackdir):
+    def normalize(self, unpackdir: str) -> None:
         """Normalize artifacts in unpackdir.
 
         Repo specific packages are generally created to live in a specific
@@ -235,7 +245,7 @@ class BaseRepo:
 
         return file_list
 
-    def _remove_useless_files(self, unpackdir):
+    def _remove_useless_files(self, unpackdir: str) -> None:
         """Remove files that aren't useful or will clash with other parts."""
         sitecustomize_files = glob.glob(
             os.path.join(unpackdir, "usr", "lib", "python*", "sitecustomize.py")
@@ -243,7 +253,7 @@ class BaseRepo:
         for sitecustomize_file in sitecustomize_files:
             os.remove(sitecustomize_file)
 
-    def _fix_artifacts(self, unpackdir):
+    def _fix_artifacts(self, unpackdir: str) -> None:
         """Perform various modifications to unpacked artifacts.
 
         Sometimes distro packages will contain absolute symlinks (e.g. if the
@@ -266,7 +276,7 @@ class BaseRepo:
                 if path.endswith(".pc") and not os.path.islink(path):
                     fix_pkg_config(unpackdir, path)
 
-    def _fix_xml_tools(self, unpackdir):
+    def _fix_xml_tools(self, unpackdir: str) -> None:
         xml2_config_path = os.path.join(unpackdir, "usr", "bin", "xml2-config")
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
@@ -283,7 +293,7 @@ class BaseRepo:
                 "prefix={}/usr".format(unpackdir),
             )
 
-    def _fix_symlink(self, path, unpackdir, root):
+    def _fix_symlink(self, path: str, unpackdir: str, root: str) -> None:
         host_target = os.readlink(path)
         if host_target in self.get_package_libraries("libc6"):
             logger.debug(
@@ -297,17 +307,18 @@ class BaseRepo:
         os.remove(path)
         os.symlink(os.path.relpath(target, root), path)
 
-    def _fix_shebangs(self, unpackdir):
+    def _fix_shebangs(self, unpackdir: str) -> None:
         """Change hard-coded shebangs in unpacked files to use env."""
         mangling.rewrite_python_shebangs(unpackdir)
 
 
 class DummyRepo(BaseRepo):
-    def get_packages_for_source_type(*args, **kwargs):
+    @classmethod
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
         return set()
 
 
-def _try_copy_local(path, target):
+def _try_copy_local(path: str, target: str) -> bool:
     real_path = os.path.realpath(path)
     if os.path.exists(real_path):
         logger.warning(
@@ -321,7 +332,9 @@ def _try_copy_local(path, target):
         return False
 
 
-def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
+def fix_pkg_config(
+    root: str, pkg_config_file: str, prefix_trim: Optional[str] = None
+) -> None:
     """Opens a pkg_config_file and prefixes the prefix with root."""
     pattern_trim = None
     if prefix_trim:
@@ -331,9 +344,9 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
             match = pattern.search(line)
-            if prefix_trim:
+            if prefix_trim is not None and pattern_trim is not None:
                 match_trim = pattern_trim.search(line)
-            if prefix_trim and match_trim:
+            if prefix_trim is not None and match_trim is not None:
                 print("prefix={}{}".format(root, match_trim.group("prefix")))
             elif match:
                 print("prefix={}{}".format(root, match.group("prefix")))
@@ -341,7 +354,7 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
                 print(line, end="")
 
 
-def _fix_filemode(path):
+def _fix_filemode(path: str) -> None:
     mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
     if mode & 0o4000 or mode & 0o2000:
         logger.warning("Removing suid/guid from {}".format(path))
