@@ -297,6 +297,10 @@ suites:
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
+   # TODO: enable once we have python plugin support for core20.
+   systems:
+   - ubuntu-16.04-64
+   - ubuntu-18.04-64
 
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
