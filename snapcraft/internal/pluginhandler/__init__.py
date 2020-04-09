@@ -567,6 +567,7 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
 
+
         if not (
             isinstance(self.plugin, plugins.v1.PluginV1)
             and self.plugin.out_of_source_build

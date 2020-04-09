@@ -140,10 +140,8 @@ class PartPatcher:
         :raises errors.SnapcraftEnvironementError:
             if something is horribly wrong.
         """
-        # Just return if this is None or a static base and libc6 has not been staged.
-        if self._project._snap_meta.base is None:
-            return
-        if (
+        # Just return if base is None or a static base and libc6 has not been staged.
+        if self._project._snap_meta.base is None or (
             self._project.is_static_base(self._project._snap_meta.base)
             and not self._is_libc6_staged
         ):
