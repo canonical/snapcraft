@@ -79,13 +79,10 @@ class Wstool:
 
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
-        logger.info("Preparing to fetch wstool...")
-        ubuntu = repo.Ubuntu(self._wstool_path)
-        logger.info("Fetching wstool...")
-        ubuntu.get(["python-wstool"])
-
         logger.info("Installing wstool...")
-        ubuntu.unpack(self._wstool_install_path)
+        repo.Ubuntu.install_stage_packages(
+            package_names=["python-wstool"], install_dir=self._wstool_install_path
+        )
 
         logger.info("Initializing workspace (if necessary)...")
         try:

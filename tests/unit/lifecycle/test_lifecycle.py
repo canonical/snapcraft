@@ -798,7 +798,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         )
 
     @mock.patch(
-        "snapcraft.repo.Repo.get",
+        "snapcraft.repo.Repo.install_stage_packages",
         return_value=["test-package1=test-version1", "test-package2=test-version2"],
     )
     def test_prime_with_stage_packages(self, mock_stage_packages):
