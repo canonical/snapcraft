@@ -23,7 +23,7 @@ from unittest.mock import call, patch, Mock
 from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import errors
+from snapcraft.internal.build_providers import _base_provider, errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -96,19 +96,19 @@ class BaseProviderTest(BaseProviderBaseTest):
         self.assertThat(provider.run_mock.call_count, Equals(7))
         provider.run_mock.assert_has_calls(
             [
-                call(["snapcraft", "refresh"]),
-                call(["mv", "/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                call(["mv", "/var/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
                 call(["chown", "root:root", "/root/.bashrc"]),
                 call(["chmod", "0600", "/root/.bashrc"]),
                 call(
                     [
                         "mv",
-                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
                         "/bin/_snapcraft_prompt",
                     ]
                 ),
                 call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
                 call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+                call(["snapcraft", "refresh"]),
             ]
         )
 
@@ -229,7 +229,9 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        provider._setup_environment(tempfile_func=get_tempfile)
+        provider._setup_environment_files(
+            files=_base_provider._SNAPCRAFT_FILES, tempfile_func=get_tempfile
+        )
 
         self.expectThat(
             "bashrc",

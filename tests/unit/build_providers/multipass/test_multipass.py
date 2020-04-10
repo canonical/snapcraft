@@ -482,21 +482,8 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                         "-i",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "refresh",
-                    ],
-                    hide_output=False,
-                    instance_name="snapcraft-project-name",
-                ),
-                mock.call(
-                    command=[
-                        "sudo",
-                        "-H",
-                        "-i",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/tmp/L3Jvb3QvLmJhc2hyYw==",
+                        "/var/tmp/L3Jvb3QvLmJhc2hyYw==",
                         "/root/.bashrc",
                     ],
                     hide_output=False,
@@ -538,7 +525,7 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
                         "/bin/_snapcraft_prompt",
                     ],
                     hide_output=False,
@@ -580,6 +567,19 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "snapcraft",
+                        "refresh",
+                    ],
+                    hide_output=False,
+                    instance_name="snapcraft-project-name",
+                ),
+                mock.call(
+                    command=[
+                        "sudo",
+                        "-H",
+                        "-i",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "snapcraft",
                         "pull",
                     ],
                     hide_output=False,
@@ -606,11 +606,11 @@ class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
             [
                 mock.call(
                     source=mock.ANY,
-                    destination="snapcraft-project-name:/tmp/L3Jvb3QvLmJhc2hyYw==",
+                    destination="snapcraft-project-name:/var/tmp/L3Jvb3QvLmJhc2hyYw==",
                 ),
                 mock.call(
                     source=mock.ANY,
-                    destination="snapcraft-project-name:/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                    destination="snapcraft-project-name:/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
                 ),
             ]
         )
