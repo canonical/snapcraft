@@ -120,10 +120,10 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
-            build_step_function = self._do_v2_build
-            build_env_generator = self._generate_env
+            build_step_run_callable = self._do_v2_build
+            build_env_generator = self._generate_build_env
         else:
-            build_step_function = self.plugin.build
+            build_step_run_callable = self.plugin.build
             build_env_generator = common.assemble_env
             self._migrate_state_file()
 
@@ -137,7 +137,7 @@ class PluginHandler:
             build_env_generator=build_env_generator,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
-                steps.BUILD.name: build_step_function,
+                steps.BUILD.name: build_step_run_callable,
                 steps.STAGE.name: self._do_stage,
                 steps.PRIME.name: self._do_prime,
                 "set-version": self._set_version,
@@ -596,11 +596,11 @@ class PluginHandler:
 
         self._do_build(update=True)
 
-    def _generate_env(self) -> str:
+    def _generate_build_env(self) -> str:
         """
         Generates an environment suitable to run during a step.
 
-        :returns: io.StringIO at the beginning of the stream.
+        :returns: str with the build step environment.
         """
         if isinstance(self.plugin, plugins.v1.PluginV1):
             raise RuntimeError("PluginV1 not supported.")
@@ -614,23 +614,21 @@ class PluginHandler:
         part_build_environment = self._part_properties["build-environment"]
 
         # Create the script.
-        run_environment = io.StringIO()
-        print("#!/bin/sh", file=run_environment)
+        with io.StringIO() as run_environment:
+            print("#!/bin/sh", file=run_environment)
 
-        print("# Environment", file=run_environment)
-        print("## Plugin Environment", file=run_environment)
-        for env in plugin_build_environment:
-            for k, v in env.items():
-                print(f'export {k}="{v}"', file=run_environment)
-        print("## Part Environment", file=run_environment)
-        for env in part_build_environment:
-            for k, v in env.items():
-                print(f'export {k}="{v}"', file=run_environment)
+            print("# Environment", file=run_environment)
+            print("## Plugin Environment", file=run_environment)
+            for env in plugin_build_environment:
+                for k, v in env.items():
+                    print(f'export {k}="{v}"', file=run_environment)
+            print("## Part Environment", file=run_environment)
+            for env in part_build_environment:
+                for k, v in env.items():
+                    print(f'export {k}="{v}"', file=run_environment)
 
-        run_environment.seek(0)
-
-        # Return something suitable for Runner.
-        return run_environment.read(-1)
+            # Return something suitable for Runner.
+            return run_environment.getvalue()
 
     def _do_v2_build(self):
         if isinstance(self.plugin, plugins.v1.PluginV1):
@@ -645,7 +643,7 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_env(), file=run_file)
+            print(self._generate_build_env(), file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
