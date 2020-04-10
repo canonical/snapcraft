@@ -11,8 +11,8 @@ parts:
   nil-part:
     plugin: nil
     build-environment:
-            - foo: bar
+      - foo: bar
     override-build: |
-            env
-            snapcraftctl build
-            env
+      env | grep foo
+      snapcraftctl build
+

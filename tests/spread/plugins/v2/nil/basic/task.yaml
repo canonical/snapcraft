@@ -16,6 +16,12 @@ execute: |
   }
 
   cd "$SNAP_DIR"
+  # Validate build-environment from the plugin makes it
+  # to override-build.
+  snapcraft build | MATCH "foo=bar"
+
+  # Go all the way to prime, this will test going over the
+  # pull and build steps again.
   snapcraft prime
 
   # Verify that the only thing here is the snap metadata
