@@ -609,19 +609,9 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.repo._deb.Ubuntu._extract_deb_name_version",
-                return_value="test-1.0",
+                "snapcraft.internal.repo.Repo.get_installed_packages",
+                return_value=["patchelf=0.9"],
             )
-        )
-
-        self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo._deb.Ubuntu._extract_deb")
-        )
-
-        self.fake_apt_cache = fixture_setup.FakeAptCache()
-        self.useFixture(self.fake_apt_cache)
-        self.fake_apt_cache.add_package(
-            fixture_setup.FakeAptCachePackage("patchelf", "0.9", installed=True)
         )
 
         self.fake_snapd.snaps_result = [
@@ -744,15 +734,16 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             FileContains(expected),
         )
 
-    def test_prime_with_installed_packages(self):
+    @mock.patch(
+        "snapcraft.internal.repo.Repo.get_installed_packages",
+        return_value=[
+            "patchelf=0.9",
+            "test-package1=test-version1",
+            "test-package2=test-version2",
+        ],
+    )
+    def test_prime_with_installed_packages(self, mock_installed_packages):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        for name, version in [
-            ("test-package1", "test-version1"),
-            ("test-package2", "test-version2"),
-        ]:
-            self.fake_apt_cache.add_package(
-                fixture_setup.FakeAptCachePackage(name, version, installed=True)
-            )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -806,15 +797,12 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             FileContains(expected),
         )
 
-    def test_prime_with_stage_packages(self):
+    @mock.patch(
+        "snapcraft.repo.Repo.get",
+        return_value=["test-package1=test-version1", "test-package2=test-version2"],
+    )
+    def test_prime_with_stage_packages(self, mock_stage_packages):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        for name, version in [
-            ("test-package1", "test-version1"),
-            ("test-package2", "test-version2"),
-        ]:
-            self.fake_apt_cache.add_package(
-                fixture_setup.FakeAptCachePackage(name, version)
-            )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -865,21 +853,21 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 project_config.project.deb_arch
             )
         )
+
         self.assertThat(
             os.path.join(steps.PRIME.name, "snap", "manifest.yaml"),
             FileContains(expected),
         )
 
     @mock.patch("subprocess.check_call")
-    def test_prime_with_global_build_packages(self, _):
+    @mock.patch(
+        "snapcraft.repo.Repo.install_build_packages",
+        return_value=["test-package1=test-version1", "test-package2=test-version2"],
+    )
+    def test_prime_with_global_build_packages(
+        self, mock_build_packages, mock_check_call
+    ):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        for name, version in [
-            ("test-package1", "test-version1"),
-            ("test-package2", "test-version2"),
-        ]:
-            self.fake_apt_cache.add_package(
-                fixture_setup.FakeAptCachePackage(name, version)
-            )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -934,13 +922,17 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             os.path.join(steps.PRIME.name, "snap", "manifest.yaml"),
             FileContains(expected),
         )
+        self.assertThat(
+            mock_build_packages.mock_calls,
+            Equals([mock.call({"test-package1=test-version1", "test-package2"})]),
+        )
 
     @mock.patch("subprocess.check_call")
-    def test_prime_with_source_details(self, _):
+    @mock.patch(
+        "snapcraft.repo.Repo.install_build_packages", return_value=["git=testversion"]
+    )
+    def test_prime_with_source_details(self, mock_build_packages, mock_check_call):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        self.fake_apt_cache.add_package(
-            fixture_setup.FakeAptCachePackage("git", "testversion")
-        )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -1004,11 +996,14 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         )
 
     @mock.patch("subprocess.check_call")
-    def test_prime_with_build_package_with_any_architecture(self, _):
+    @mock.patch(
+        "snapcraft.repo.Repo.install_build_packages",
+        return_value=["test-package=test-version"],
+    )
+    def test_prime_with_build_package_with_any_architecture(
+        self, mock_build_packages, mock_check_call
+    ):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        self.fake_apt_cache.add_package(
-            fixture_setup.FakeAptCachePackage("test-package", "test-version")
-        )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -1065,15 +1060,14 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         )
 
     @mock.patch("subprocess.check_call")
-    def test_prime_with_virtual_build_package(self, _):
+    @mock.patch(
+        "snapcraft.repo.Repo.install_build_packages",
+        return_value=["test-provider-package=test-version"],
+    )
+    def test_prime_with_virtual_build_package(
+        self, mock_build_packages, mock_check_call
+    ):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", "1"))
-        self.fake_apt_cache.add_package(
-            fixture_setup.FakeAptCachePackage(
-                "test-provider-package",
-                "test-version",
-                provides=["test-virtual-package"],
-            )
-        )
 
         project_config = self.make_snapcraft_project(
             textwrap.dedent(
@@ -1127,6 +1121,11 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         self.assertThat(
             os.path.join(steps.PRIME.name, "snap", "manifest.yaml"),
             FileContains(expected),
+        )
+
+        self.assertThat(
+            mock_build_packages.mock_calls,
+            Equals([mock.call({"test-virtual-package"})]),
         )
 
     @mock.patch("snapcraft.plugins.nil.NilPlugin.get_manifest")
