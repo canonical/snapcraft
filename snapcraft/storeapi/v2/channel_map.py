@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set
 
 import jsonschema
 
@@ -35,7 +35,7 @@ class Progressive:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Union[str, Optional[bool]]]) -> "Progressive":
+    def unmarshal(cls, payload: Dict[str, Any]) -> "Progressive":
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]["properties"][
@@ -48,7 +48,7 @@ class Progressive:
             percentage=payload["percentage"],
         )
 
-    def marshal(self) -> Dict[str, Union[str, Optional[bool]]]:
+    def marshal(self) -> Dict[str, Any]:
         return {"key": self.key, "paused": self.paused, "percentage": self.percentage}
 
     def __repr__(self) -> str:
@@ -114,7 +114,7 @@ class Revision:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Union[int, str, List[str]]]) -> "Revision":
+    def unmarshal(cls, payload: Dict[str, Any]) -> "Revision":
         jsonschema.validate(
             payload, CHANNEL_MAP_JSONSCHEMA["properties"]["revisions"]["items"]
         )
@@ -124,7 +124,7 @@ class Revision:
             architectures=payload["architectures"],
         )
 
-    def marshal(self) -> Dict[str, Union[int, str, List[str]]]:
+    def marshal(self) -> Dict[str, Any]:
         return {
             "revision": self.revision,
             "version": self.version,
@@ -148,7 +148,7 @@ class SnapChannel:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Optional[str]]) -> "SnapChannel":
+    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["channels"][
@@ -163,7 +163,7 @@ class SnapChannel:
             fallback=payload["fallback"],
         )
 
-    def marshal(self) -> Dict[str, Optional[str]]:
+    def marshal(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "track": self.track,
@@ -235,7 +235,7 @@ class ChannelMap:
         }
 
     def __repr__(self) -> str:
-        return "<{self.__class__.__name__}: {!r}>".format(self.snap.name)
+        return f"<{self.__class__.__name__}: {self.snap.name!r}>"
 
     def __init__(
         self, *, channel_map: List[MappedChannel], revisions: List[Revision], snap: Snap
