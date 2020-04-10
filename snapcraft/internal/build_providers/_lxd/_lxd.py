@@ -379,16 +379,20 @@ class LXD(Provider):
         self._run(command=["/bin/bash"])
 
     def _wait_for_network(self) -> None:
-        while True:
-            if self._container is None:
-                raise RuntimeError("Attempted to use container before starting.")
-            if any(
-                a["address"]
-                for a in self._container.state().network["eth0"]["addresses"]
-                if a["family"] == "inet"
-            ):
+        for i in range(5):
+            try:
+                self._run(["getent", "hosts", "snapcraft.io"])
                 break
-            sleep(0.1)
+            except errors.ProviderExecError:
+                sleep(0.5)
+        else:
+            logger.warning("Failed to setup networking")
+
+    def _get_code_name_from_build_base(self):
+        # TODO fix this with generalized mechanism.
+        build_base = self.project._get_build_base()
+
+        return {"core": "xenial", "core18": "bionic", "core20": "focal"}[build_base]
 
     def _setup_environment(self) -> None:
         if self._container is None:
@@ -396,8 +400,41 @@ class LXD(Provider):
 
         # Setup networking before anything else.
         super()._setup_environment_files(files=_SNAPCRAFT_FILES)
+        super()._setup_environment_files(
+            files=[
+                {
+                    "path": "/etc/hostname",
+                    "content": self.instance_name,
+                    "permissions": "0644",
+                },
+                {
+                    "path": "/etc/resolv.conf",
+                    "content": f"nameserver {os.getenv('SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER', '1.1.1.1')}",
+                    "permissions": "0644",
+                },
+                {
+                    "path": "/etc/apt/sources.list",
+                    "content": dedent(
+                        """\
+                         deb http://{mirror}archive.ubuntu.com/ubuntu/ {code_name} main universe restricted
+                         deb http://{mirror}archive.ubuntu.com/ubuntu/ {code_name}-updates main universe restricted
+                         deb http://{mirror}security.ubuntu.com/ubuntu {code_name}-security main universe restricted
+                         """
+                    ).format(
+                        code_name=self._get_code_name_from_build_base(),
+                        mirror=os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MIRROR", ""),
+                    ),
+                    "permissions": "06444",
+                },
+            ]
+        )
 
         self._container.restart(wait=True)
+
+        # the system needs networking
+        self._run(["systemctl", "enable", "systemd-networkd"])
+        self._run(["systemctl", "start", "systemd-networkd"])
+
         self._wait_for_network()
 
         # Setup snapd to bootstrap.
@@ -405,10 +442,6 @@ class LXD(Provider):
 
         # First install fuse and udev, snapd requires them.
         self._run(["apt-get", "install", "udev", "fuse", "--yes"])
-
-        # udev running is a snapd requirement.
-        self._run(["systemctl", "enable", "systemd-udevd"])
-        self._run(["systemctl", "start", "systemd-udevd"])
 
         # And only then install snapd.
         self._run(["apt-get", "install", "snapd", "sudo", "--yes"])

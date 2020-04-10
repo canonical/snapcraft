@@ -300,7 +300,8 @@ class Provider(abc.ABC):
                 # Push to a location that can be written to by all backends
                 # with unique files depending on path.
                 remote_file = os.path.join(
-                    "/tmp", base64.b64encode(snapcraft_file["path"].encode()).decode()
+                    "/var/tmp",
+                    base64.b64encode(snapcraft_file["path"].encode()).decode(),
                 )
                 self._push_file(source=temp_file.name, destination=remote_file)
                 self._run(["mv", remote_file, snapcraft_file["path"]])
