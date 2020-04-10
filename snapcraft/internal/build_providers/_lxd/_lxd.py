@@ -392,7 +392,12 @@ class LXD(Provider):
         # TODO fix this with generalized mechanism.
         build_base = self.project._get_build_base()
 
-        return {"core": "xenial", "core18": "bionic", "core20": "focal"}[build_base]
+        return {
+            "core": "xenial",
+            "core16": "xenial",
+            "core18": "bionic",
+            "core20": "focal",
+        }[build_base]
 
     def _setup_environment(self) -> None:
         if self._container is None:

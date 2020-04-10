@@ -184,8 +184,8 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(container.sync_mock.call_count, Equals(20))
-        self.assertThat(self.check_call_mock.call_count, Equals(16))
+        self.assertThat(container.sync_mock.call_count, Equals(34))
+        self.assertThat(self.check_call_mock.call_count, Equals(27))
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
@@ -197,7 +197,7 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/tmp/L2V0Yy9zeXN0ZW1kL25ldHdvcmsvMTAtZXRoMC5uZXR3b3Jr",
+                        "/var/tmp/L2V0Yy9zeXN0ZW1kL25ldHdvcmsvMTAtZXRoMC5uZXR3b3Jr",
                         "/etc/systemd/network/10-eth0.network",
                     ]
                 ),
@@ -235,6 +235,162 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/var/tmp/L2V0Yy9ob3N0bmFtZQ==",
+                        "/etc/hostname",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/etc/hostname",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0644",
+                        "/etc/hostname",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/var/tmp/L2V0Yy9yZXNvbHYuY29uZg==",
+                        "/etc/resolv.conf",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/etc/resolv.conf",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "0644",
+                        "/etc/resolv.conf",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "mv",
+                        "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
+                        "/etc/apt/sources.list",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chown",
+                        "root:root",
+                        "/etc/apt/sources.list",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "chmod",
+                        "06444",
+                        "/etc/apt/sources.list",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "enable",
+                        "systemd-networkd",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "start",
+                        "systemd-networkd",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
                         "apt-get",
                         "update",
                     ]
@@ -252,32 +408,6 @@ class LXDInitTest(LXDBaseTest):
                         "udev",
                         "fuse",
                         "--yes",
-                    ]
-                ),
-                mock.call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "enable",
-                        "systemd-udevd",
-                    ]
-                ),
-                mock.call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "systemctl",
-                        "start",
-                        "systemd-udevd",
                     ]
                 ),
                 mock.call(
@@ -317,7 +447,7 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/tmp/L3Jvb3QvLmJhc2hyYw==",
+                        "/var/tmp/L3Jvb3QvLmJhc2hyYw==",
                         "/root/.bashrc",
                     ]
                 ),
@@ -356,7 +486,7 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
                         "/bin/_snapcraft_prompt",
                     ]
                 ),
@@ -384,6 +514,19 @@ class LXDInitTest(LXDBaseTest):
                         "chmod",
                         "0755",
                         "/bin/_snapcraft_prompt",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
                     ]
                 ),
                 mock.call(

@@ -96,13 +96,13 @@ class BaseProviderTest(BaseProviderBaseTest):
         self.assertThat(provider.run_mock.call_count, Equals(7))
         provider.run_mock.assert_has_calls(
             [
-                call(["mv", "/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                call(["mv", "/var/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
                 call(["chown", "root:root", "/root/.bashrc"]),
                 call(["chmod", "0600", "/root/.bashrc"]),
                 call(
                     [
                         "mv",
-                        "/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                        "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
                         "/bin/_snapcraft_prompt",
                     ]
                 ),
