@@ -37,7 +37,9 @@ class _HINTS:
     PROGRESSING_TO: Final[str] = "→"
 
 
-def _get_channel_hint(*, channel_map, fallback: Optional[str], architecture: str) -> str:
+def _get_channel_hint(
+    *, channel_map, fallback: Optional[str], architecture: str
+) -> str:
     tick = _HINTS.CLOSED
     for c in channel_map:
         if c.channel == fallback and c.architecture == architecture:
@@ -151,10 +153,7 @@ def _get_channel_lines_for_channel(
             percentage = progressive_mapped_channel.progressive.percentage
         # Setup progress for the actually released revision, this needs to be
         # calculated. But only show it if the channel is open.
-        progress_string = "{} {:.0f}%".format(
-            _HINTS.PROGRESSING_TO,
-            100 - percentage,
-        )
+        progress_string = "{} {:.0f}%".format(_HINTS.PROGRESSING_TO, 100 - percentage)
     else:
         progress_string = _HINTS.NO_PROGRESS
 
