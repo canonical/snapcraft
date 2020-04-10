@@ -1,7 +1,5 @@
 summary: Build a snap that is missing a library dependency
 
-systems: [ubuntu-*]
-
 environment:
   SNAP_DIR: snaps/missing-lib
 
