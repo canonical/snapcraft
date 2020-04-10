@@ -16,7 +16,6 @@
 
 import fixtures
 import json
-import os
 import subprocess
 from textwrap import dedent
 from unittest import mock
@@ -95,39 +94,52 @@ class CommandBaseTestCase(unit.TestCase):
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
+    def setUp(self):
+        super().setUp()
 
-    yaml_template = """name: {step}-test
-version: "1.0"
-summary: test {step}
-description: if the {step} is successful the state file will be updated
-confinement: strict
-grade: stable
-base: {base}
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT"))
 
-parts:
-{parts}"""
+        self.fake_lifecycle_clean = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.clean"
+        )
+        self.useFixture(self.fake_lifecycle_clean)
 
-    yaml_part = """  {step}{iter:d}:
-    plugin: nil"""
+        self.fake_lifecycle_execute = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.execute"
+        )
+        self.useFixture(self.fake_lifecycle_execute)
 
-    def make_snapcraft_yaml(
-        self, step, n=1, yaml_part=None, create=False, base="core18"
-    ):
-        if not yaml_part:
-            yaml_part = self.yaml_part
+        self.fake_lifecycle_pack = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.pack", return_value="foo.snap"
+        )
+        self.useFixture(self.fake_lifecycle_pack)
 
-        parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
-        super().make_snapcraft_yaml(
-            self.yaml_template.format(step=step, parts=parts, base=base)
+        self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path,
+            parts={
+                "part0": {"plugin": "nil"},
+                "part1": {"plugin": "nil"},
+                "part2": {"plugin": "nil"},
+            },
+        )
+        self.useFixture(self.snapcraft_yaml)
+
+        self.provider_class_mock = mock.MagicMock()
+        self.provider_mock = mock.MagicMock()
+        self.provider_class_mock.return_value.__enter__.return_value = (
+            self.provider_mock
         )
 
-        parts = []
-        for i in range(n):
-            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
-            state_dir = os.path.join(part_dir, "state")
-            parts.append({"part_dir": part_dir, "state_dir": state_dir})
+        self.fake_get_provider_for = fixtures.MockPatch(
+            "snapcraft.internal.build_providers.get_provider_for",
+            return_value=self.provider_class_mock,
+        )
+        self.useFixture(self.fake_get_provider_for)
 
-        return parts
+    def assert_clean_not_called(self):
+        self.fake_lifecycle_clean.mock.assert_not_called()
+        self.provider_mock.clean.assert_not_called()
+        self.provider_mock.clean_project.assert_not_called()
 
 
 class StoreCommandsBaseTestCase(CommandBaseTestCase):

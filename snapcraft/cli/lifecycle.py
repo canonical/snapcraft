@@ -58,7 +58,7 @@ def _execute(  # noqa: C901
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
-    **kwargs
+    **kwargs,
 ) -> "Project":
     # Cleanup any previous errors.
     _clean_provider_error()
@@ -136,7 +136,7 @@ def _execute(  # noqa: C901
 
 def _pack(directory: str, *, output: Optional[str]) -> None:
     snap_name = lifecycle.pack(directory, output)
-    echo.info("Snapped {}".format(snap_name))
+    echo.info(f"Snapped {snap_name!r}")
 
 
 def _clean_provider_error() -> None:
@@ -269,7 +269,7 @@ def snap(directory, output, **kwargs):
         deprecations.handle_deprecation_notice("dn6")
         _pack(directory, output=output)
     else:
-        _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
+        _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
