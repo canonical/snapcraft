@@ -567,16 +567,16 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
 
-        if not (
+        if (
             isinstance(self.plugin, plugins.v1.PluginV1)
-            and self.plugin.out_of_source_build
+            and not self.plugin.out_of_source_build
+            and os.path.exists(self.part_build_dir)
         ):
-            if os.path.exists(self.part_build_dir):
-                shutil.rmtree(self.part_build_dir)
+            shutil.rmtree(self.part_build_dir)
 
-            # No hard-links being used here in case the build process modifies
-            # these files.
-            shutil.copytree(self.part_source_dir, self.part_build_dir, symlinks=True)
+        # No hard-links being used here in case the build process modifies
+        # these files.
+        shutil.copytree(self.part_source_dir, self.part_build_dir, symlinks=True)
 
         self._do_build()
 
