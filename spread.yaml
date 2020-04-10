@@ -186,7 +186,7 @@ prepare: |
   fi
 
   # Exit now if we are preparing for unit tests.
-  if [ "$SNAPCRAFT_UNIT_TESTS = "Y" ]; then
+  if [ "$SNAPCRAFT_UNIT_TESTS" = "Y" ]; then
       exit 0
   fi
 
