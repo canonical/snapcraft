@@ -18,7 +18,10 @@
 # Snapcraft does not have been commented out from this schema originally
 # imported from
 # https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
-CHANNEL_MAP_JSONSCHEMA = {
+
+from typing import Any, Dict
+
+CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
     "additionalProperties": False,
     "properties": {
         "channel-map": {
