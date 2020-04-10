@@ -60,13 +60,16 @@ class FakeContainer:
         class FakeContainerFiles:
             delete_available = True
 
+            @staticmethod
             def get(file_name) -> bytes:
                 self.files_get_mock(file_name=file_name)
                 return b"fake-pull"
 
+            @staticmethod
             def put(destination: str, contents: bytes) -> None:
                 self.files_put_mock(destination=destination, contents=contents)
 
+            @staticmethod
             def delete(file_name) -> None:
                 self.files_delete_mock(file_name=file_name)
 
