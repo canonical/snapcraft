@@ -379,14 +379,15 @@ class LXD(Provider):
         self._run(command=["/bin/bash"])
 
     def _wait_for_network(self) -> None:
-        for i in range(5):
+        self.echoer.wrapped("Waiting for network to be ready...")
+        for i in range(40):
             try:
                 self._run(["getent", "hosts", "snapcraft.io"])
                 break
             except errors.ProviderExecError:
                 sleep(0.5)
         else:
-            logger.warning("Failed to setup networking")
+            self.echoer.warning("Failed to setup networking.")
 
     def _get_code_name_from_build_base(self):
         # TODO fix this with generalized mechanism.
