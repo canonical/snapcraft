@@ -1,22 +1,20 @@
 project: snapcraft
 
 environment:
-  SPREAD_DEBUG_JOURNAL: "$(HOST: echo ${SPREAD_DEBUG_JOURNAL:-false})"
-
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
   # Generate manifest when building snaps.
   SNAPCRAFT_BUILD_INFO: "1"
 
-  # This variable can be set to either "deb" or "snap". It defaults to "snap".
-  SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
-
   # If SNAPCRAFT_PACKAGE_TYPE is "snap" and this variable is defined, spread
   # will install snapcraft from that channel. Otherwise, it'll look for a snap
   # in the source tree. If SNAPCRAFT_PACKAGE_TYPE is "deb" this variable does
   # nothing.
   SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
+
+  # Are these unit tests.
+  SNAPCRAFT_UNIT_TESTS: "$(HOST: echo ${SNAPCRAFT_UNIT_TESTS})"
 
   # Show error tracebacks
   SNAPCRAFT_MANAGED_HOST: "yes"
@@ -36,10 +34,11 @@ environment:
 backends:
   lxd:
     systems:
+      # -native is added for clarity and for ubuntu-20.04* to match.
       - ubuntu-16.04
       - ubuntu-18.04
+      - ubuntu-20.04
   google:
-    key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
@@ -48,6 +47,9 @@ backends:
       - ubuntu-18.04-64:
           workers: 18
           image: ubuntu-1804-64
+      - ubuntu-20.04-64:
+          workers: 18
+          image: ubuntu-2004-64
   multipass:
     type: adhoc
     allocate: |
@@ -137,6 +139,22 @@ backends:
       - ubuntu-18.04-arm64:
           username: ubuntu
           password: ubuntu
+      # Bionic
+      - ubuntu-20.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-arm64:
+          username: ubuntu
+          password: ubuntu
 
 exclude: [snaps-cache/]
 
@@ -168,7 +186,7 @@ prepare: |
   fi
 
   # Exit now if we are preparing for unit tests.
-  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "none" ]; then
+  if [ "$SNAPCRAFT_UNIT_TESTS" = "Y" ]; then
       exit 0
   fi
 
@@ -184,42 +202,30 @@ prepare: |
       lxd init --auto
       # Add the ubuntu user to the lxd group.
       adduser ubuntu lxd
+  elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      snap install lxd
+      lxd waitready --timeout=30
+      lxd init --auto
+      # Add the ubuntu user to the lxd group.
+      adduser ubuntu lxd
   fi
 
-  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
-      apt-get install -y snapcraft
-  elif [ "$SNAPCRAFT_PACKAGE_TYPE" = "snap" ]; then
-      # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
-      # Otherwise, look for it in /snapcraft/.
-      if [ -z "$SNAPCRAFT_CHANNEL" ]; then
-          if stat /snapcraft/*.snap 2>/dev/null; then
-              snap install --classic --dangerous /snapcraft/*.snap
-          else
-              echo "Expected a snap to exist in /snapcraft/. If your intention"\
-                   "was to install from the store, set \$SNAPCRAFT_CHANNEL."
-              exit 1
-          fi
-      else
-          snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
-      fi
+  # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
+  # Otherwise, look for it in /snapcraft/.
+  if [ -z "$SNAPCRAFT_CHANNEL" ]; then
+    if stat /snapcraft/*.snap 2>/dev/null; then
+      snap install --classic --dangerous /snapcraft/*.snap
+    else
+      echo "Expected a snap to exist in /snapcraft/. If your intention"\
+           "was to install from the store, set \$SNAPCRAFT_CHANNEL."
+      exit 1
+    fi
   else
-    echo "'$SNAPCRAFT_PACKAGE_TYPE' is not a supported snapcraft package type."\
-         " Supported types are 'deb' and 'snap'."
-    exit 1
-  fi
-
-debug: |
-  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
-    journalctl -xe
+    snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
   fi
 
 restore-each: |
   "$TOOLS_DIR"/restore.sh
-
-debug-each: |
-  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
-    journalctl -xe
-  fi
 
 suites:
  # Unit tests
@@ -273,6 +279,10 @@ suites:
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
+   # TODO: enable once we have python plugin support for core20.
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
 
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
@@ -287,6 +297,9 @@ suites:
  # Plugin-specific suites
  tests/spread/plugins/v1/ant/:
    summary: tests of snapcraft's Ant plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    systems:
@@ -298,6 +311,9 @@ suites:
    kill-timeout: 360m
  tests/spread/plugins/v1/autotools/:
    summary: tests of snapcraft's Autotools plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
@@ -334,8 +350,14 @@ suites:
    # - ubuntu-16.04-amd64
  tests/spread/plugins/v1/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/crystal/:
    summary: tests of snapcraft's Crystal plugin
    systems:
@@ -354,35 +376,74 @@ suites:
    - ubuntu-16.04-amd64
  tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/godeps/:
    summary: tests of snapcraft's Godeps plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
  tests/spread/plugins/v1/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/make/:
    summary: tests of snapcraft's Make plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/maven/:
    summary: tests of snapcraft's Maven plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/meson/:
    summary: tests of snapcraft's Meson plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/nil/:
    summary: tests of snapcraft's Nil plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
  tests/spread/plugins/v1/python/:
    summary: tests of snapcraft's Python plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/qmake/:
    summary: tests of snapcraft's qmake plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/ruby/:
    summary: tests of snapcraft's Ruby plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    kill-timeout: 180m
  tests/spread/plugins/v1/rust/:
    summary: tests of snapcraft's Rust plugin
@@ -401,14 +462,23 @@ suites:
    - ubuntu-16.04-s390x
  tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/waf/:
    summary: tests of snapcraft's Waf plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
  tests/spread/plugins/v1/x-local/:
    summary: tests of snapcraft's local plugins
- 
-# Extensions tests
+
+ # Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
 
@@ -437,6 +507,7 @@ suites:
    environment:
      # TODO: make generic
      PIP_COMMAND: "/root/.local/bin/pip"
+     SNAPCRAFT_PACKAGE_TYPE: "snap"
    prepare: |
      apt-get update
      apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion libxml2-dev libxslt-dev
