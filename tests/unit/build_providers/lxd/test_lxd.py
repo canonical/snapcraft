@@ -172,7 +172,7 @@ class LXDInitTest(LXDBaseTest):
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
                 "name": "snapcraft-project-name",
-                "raw.idmap": "both 1000 0",
+                "raw.idmap": f"both {os.getuid()} 0",
                 "source": {
                     "mode": "pull",
                     "type": "image",
@@ -590,7 +590,7 @@ class LXDInitTest(LXDBaseTest):
         self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
             config={
                 "name": "snapcraft-core18",
-                "raw.idmap": "both 1000 0",
+                "raw.idmap": f"both {os.getuid()} 0",
                 "source": {
                     "mode": "pull",
                     "type": "image",
