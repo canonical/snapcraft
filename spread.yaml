@@ -48,14 +48,18 @@ backends:
           workers: 18
           image: ubuntu-1804-64
       - ubuntu-20.04-64:
-          workers: 18
+          workers: 4
           image: ubuntu-2004-64
+
   multipass:
     type: adhoc
     allocate: |
       if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
         image="18.04"
         instance_name="spread-18-04"
+      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+        image="20.04"
+        instance_name="spread-20-04"
       else
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
@@ -76,8 +80,9 @@ backends:
       ADDRESS "$ip:22"
     discard: |
       if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
-        image="18.04"
         instance_name="spread-18-04"
+      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+        instance_name="spread-20-04"
       else
         FATAL "$SPREAD_SYSTEM is not supported!"
       fi
@@ -88,6 +93,11 @@ backends:
           workers: 1
           username: root
           password: ubuntu
+      - ubuntu-20.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
+
   autopkgtest:
     type: adhoc
     allocate: |
@@ -139,7 +149,7 @@ backends:
       - ubuntu-18.04-arm64:
           username: ubuntu
           password: ubuntu
-      # Bionic
+      # Focal
       - ubuntu-20.04-amd64:
           username: ubuntu
           password: ubuntu
@@ -192,7 +202,7 @@ prepare: |
 
   apt-get install -y snapd
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
@@ -477,8 +487,15 @@ suites:
    - ubuntu-18.04*
  tests/spread/plugins/v1/x-local/:
    summary: tests of snapcraft's local plugins
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v2/nil/:
+   summary: tests of snapcraft's v2 Nil plugin
+   systems:
+   - ubuntu-20.04*
 
- # Extensions tests
+# Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
 

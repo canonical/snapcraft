@@ -81,7 +81,6 @@ class StaticBasePatchingTest(unit.TestCase):
         self.fake_patchelf.mock.assert_not_called()
 
     def test_no_base(self):
-        # The "bare" base is a static base, empty, so there is no linker loader to look for.
         handler = self.load_part(
             "test-part",
             snap_type="app",

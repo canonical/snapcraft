@@ -56,18 +56,18 @@ class ExecutionTestCase(LifecycleTestBase):
         class Plugin:
             def __init__(self):
                 self.options = Options()
-                self.sourcedir = "/tmp"
-                self.builddir = "/tmp"
-                self.installdir = "/tmp"
 
         class Part:
             def __init__(self):
                 self.plugin = Plugin()
+                self.part_source_dir = "/tmp"
+                self.part_build_dir = "/tmp"
+                self.part_install_dir = "/tmp"
 
         part = Part()
         new_part = _replace_in_part(part)
 
-        self.assertThat(new_part.plugin.options.source, Equals(part.plugin.installdir))
+        self.assertThat(new_part.plugin.options.source, Equals(part.part_install_dir))
 
     @mock.patch("snapcraft.repo.snaps.install_snaps")
     def test_dependency_is_staged_when_required(self, mock_install_build_snaps):

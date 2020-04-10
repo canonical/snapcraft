@@ -18,8 +18,10 @@ import collections
 import contextlib
 import copy
 import filecmp
+import io
 import logging
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -27,7 +29,7 @@ from glob import iglob
 from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
 
 import snapcraft.extractors
-from snapcraft import file_utils, yaml_utils
+from snapcraft import file_utils, plugins, yaml_utils
 from snapcraft.internal import common, elf, errors, repo, sources, states, steps, xattrs
 from snapcraft.internal.mangling import clear_execstack
 
@@ -116,6 +118,15 @@ class PluginHandler:
         self._scriptlet_metadata: Dict[
             steps.Step, snapcraft.extractors.ExtractedMetadata
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
+
+        if isinstance(plugin, plugins.v2.PluginV2):
+            build_step_run_callable = self._do_v2_build
+            build_env_generator = self._generate_build_env
+        else:
+            build_step_run_callable = self.plugin.build
+            build_env_generator = common.assemble_env
+            self._migrate_state_file()
+
         self._runner = Runner(
             part_properties=self._part_properties,
             partdir=self._project.parts_dir,
@@ -123,9 +134,10 @@ class PluginHandler:
             builddir=self.part_build_dir,
             stagedir=self._project.stage_dir,
             primedir=self._project.prime_dir,
+            build_env_generator=build_env_generator,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
-                steps.BUILD.name: self.plugin.build,
+                steps.BUILD.name: build_step_run_callable,
                 steps.STAGE.name: self._do_stage,
                 steps.PRIME.name: self._do_prime,
                 "set-version": self._set_version,
@@ -133,7 +145,6 @@ class PluginHandler:
             },
         )
 
-        self._migrate_state_file()
         self._current_step: Optional[steps.Step] = None
 
     def get_pull_state(self) -> states.PullState:
@@ -483,10 +494,18 @@ class PluginHandler:
     def _do_pull(self):
         if self.source_handler:
             self.source_handler.pull()
-        self.plugin.pull()
+
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            self.plugin.pull()
 
     def mark_pull_done(self):
-        pull_properties = self.plugin.get_pull_properties()
+        # Send an empty pull_properties for state. This makes it easy
+        # to keep using what we have or to back out of not doing any
+        # pulling in the plugins.
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            pull_properties = self.plugin.get_pull_properties()
+        else:
+            pull_properties = dict()
 
         # Add the processed list of build packages and snaps.
         part_build_packages = self._grammar_processor.get_build_packages()
@@ -548,7 +567,10 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
 
-        if not self.plugin.out_of_source_build:
+        if not (
+            isinstance(self.plugin, plugins.v1.PluginV1)
+            and self.plugin.out_of_source_build
+        ):
             if os.path.exists(self.part_build_dir):
                 shutil.rmtree(self.part_build_dir)
 
@@ -574,6 +596,63 @@ class PluginHandler:
 
         self._do_build(update=True)
 
+    def _generate_build_env(self) -> str:
+        """
+        Generates an environment suitable to run during a step.
+
+        :returns: str with the build step environment.
+        """
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            raise RuntimeError("PluginV1 not supported.")
+
+        # TODO add Snapcraft's environment.
+
+        # Plugin's say.
+        plugin_build_environment = self.plugin.get_build_environment()
+
+        # Part's (user) say.
+        part_build_environment = self._part_properties["build-environment"]
+
+        # Create the script.
+        with io.StringIO() as run_environment:
+            print("#!/bin/sh", file=run_environment)
+
+            print("# Environment", file=run_environment)
+            print("## Plugin Environment", file=run_environment)
+            for env in plugin_build_environment:
+                for k, v in env.items():
+                    print(f'export {k}="{v}"', file=run_environment)
+            print("## Part Environment", file=run_environment)
+            for env in part_build_environment:
+                for k, v in env.items():
+                    print(f'export {k}="{v}"', file=run_environment)
+
+            # Return something suitable for Runner.
+            return run_environment.getvalue()
+
+    def _do_v2_build(self):
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            raise RuntimeError("PluginV1 not supported.")
+
+        # Save script executed by snapcraft.
+        build_script_path = pathlib.Path(self.part_dir) / "run" / "build.sh"
+        build_script_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+        # Plugin commands.
+        plugin_build_commands = self.plugin.get_build_commands()
+
+        # TODO expand this in Runner.
+        with build_script_path.open("w") as run_file:
+            print(self._generate_build_env(), file=run_file)
+
+            for build_command in plugin_build_commands:
+                print(build_command, file=run_file)
+
+            run_file.flush()
+
+        build_script_path.chmod(0o755)
+        subprocess.run([build_script_path])
+
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
 
@@ -598,8 +677,12 @@ class PluginHandler:
         self.mark_build_done()
 
     def mark_build_done(self):
-        build_properties = self.plugin.get_build_properties()
-        plugin_manifest = self.plugin.get_manifest()
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            build_properties = self.plugin.get_build_properties()
+            plugin_manifest = self.plugin.get_manifest()
+        else:
+            build_properties = dict()
+            plugin_manifest = dict()
         machine_manifest = self._get_machine_manifest()
 
         # Extract any requested metadata available in the build directory,
@@ -680,6 +763,10 @@ class PluginHandler:
         }
 
     def clean_build(self):
+        # Only relevant for PluginV1.
+        if not isinstance(self.plugin, plugins.v1.PluginV1):
+            return
+
         if self.is_clean(steps.BUILD):
             return
 
@@ -693,7 +780,10 @@ class PluginHandler:
         self.mark_cleaned(steps.BUILD)
 
     def migratable_fileset_for(self, step):
-        plugin_fileset = self.plugin.snap_fileset()
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            plugin_fileset = self.plugin.snap_fileset()
+        else:
+            plugin_fileset = list()
         fileset = self._get_fileset(step.name).copy()
         includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime

@@ -47,29 +47,29 @@ def load_plugin(
             plugin_name, build_base=project._get_build_base()
         )
 
-    _validate_pull_and_build_properties(
-        plugin_name, plugin_class, part_schema, definitions_schema
-    )
-
-    try:
+    if issubclass(plugin_class, plugins.v2.PluginV2):
+        plugin_schema = plugin_class.get_schema()
         options = _make_options(
-            part_schema, definitions_schema, properties, plugin_class.schema()
+            part_name, part_schema, definitions_schema, properties, plugin_schema
         )
-    except jsonschema.ValidationError as e:
-        error = project_errors.YamlValidationError.from_validation_error(e)
-        raise errors.PluginError(
-            "properties failed to load for {}: {}".format(part_name, error.message)
+        plugin = plugin_class(part_name=part_name, options=options)
+    else:
+        plugin_schema = plugin_class.schema()
+        _validate_pull_and_build_properties(
+            plugin_name, plugin_class, part_schema, definitions_schema
         )
+        options = _make_options(
+            part_name, part_schema, definitions_schema, properties, plugin_schema
+        )
+        plugin = plugin_class(part_name, options, project)
 
-    plugin = plugin_class(part_name, options, project)
-
-    if project.is_cross_compiling:
-        logger.debug(
-            "Setting {!r} as the compilation target for {!r}".format(
-                project.deb_arch, plugin_name
+        if project.is_cross_compiling:
+            logger.debug(
+                "Setting {!r} as the compilation target for {!r}".format(
+                    project.deb_arch, plugin_name
+                )
             )
-        )
-        plugin.enable_cross_compilation()
+            plugin.enable_cross_compilation()
 
     return plugin
 
@@ -137,7 +137,9 @@ def _validate_step_properties(step_properties, schema_properties):
     return invalid_properties
 
 
-def _make_options(part_schema, definitions_schema, properties, plugin_schema):
+def _make_options(
+    part_name, part_schema, definitions_schema, properties, plugin_schema
+):
     # Make copies as these dictionaries are tampered with
     part_schema = part_schema.copy()
     properties = properties.copy()
@@ -146,11 +148,15 @@ def _make_options(part_schema, definitions_schema, properties, plugin_schema):
         part_schema, definitions_schema, plugin_schema
     )
 
-    jsonschema.validate(properties, plugin_schema)
+    try:
+        jsonschema.validate(properties, plugin_schema)
+    except jsonschema.ValidationError as e:
+        error = project_errors.YamlValidationError.from_validation_error(e)
+        raise errors.PluginError(
+            "properties failed to load for {}: {}".format(part_name, error.message)
+        )
 
-    options = _populate_options(properties, plugin_schema)
-
-    return options
+    return _populate_options(properties, plugin_schema)
 
 
 def _merged_part_and_plugin_schemas(part_schema, definitions_schema, plugin_schema):

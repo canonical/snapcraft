@@ -22,6 +22,7 @@ from typing import Set  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
+from snapcraft import plugins
 from ._env import (
     build_env,
     build_env_for_stage,
@@ -192,14 +193,15 @@ class PartsConfig:
             "properties {!r}.".format(part_name, plugin_name, part_properties)
         )
 
-        sources = plugin.get_required_repo_sources()
-        keys = plugin.get_required_repo_gpg_keys()
+        if isinstance(plugin, plugins.v1.PluginV1):
+            sources = plugin.get_required_repo_sources()
+            keys = plugin.get_required_repo_gpg_keys()
 
-        for key in keys:
-            repo.Repo.install_gpg_key(key)
+            for key in keys:
+                repo.Repo.install_gpg_key(key)
 
-        for source in sources:
-            repo.Repo.install_source(source)
+            for source in sources:
+                repo.Repo.install_source(source)
 
         # TODO: rename with migration strategy.
         repo_dir = path.join(self._project.parts_dir, part_name, "ubuntu")
@@ -247,11 +249,11 @@ class PartsConfig:
 
         if root_part:
             # this has to come before any {}/usr/bin
-            env += part.env(part.plugin.installdir)
-            env += runtime_env(part.plugin.installdir, self._project.arch_triplet)
+            env += part.env(part.part_install_dir)
+            env += runtime_env(part.part_install_dir, self._project.arch_triplet)
             env += runtime_env(stagedir, self._project.arch_triplet)
             env += build_env(
-                part.plugin.installdir,
+                part.part_install_dir,
                 self._project.info.name,
                 self._project.arch_triplet,
             )

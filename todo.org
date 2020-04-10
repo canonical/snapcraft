@@ -8,9 +8,10 @@
 - [X] Move =BasePlugin= to a v1 import path
 - [X] Add backwards compatibility for =BasePlugin=
 - [X] Rework in-tree plugin importing into a map
-- [ ] Add dictionary =build-environment= support to the schema for =core20=
-- [ ] Introduce =snapcraft.plugins.core20.plugin=
-- [ ] Add =PluginHandler= logic for the =core20= plugin
+- [X] Introduce =snapcraft.plugins.v2.PluginV2=
+- [X] Add =PluginHandler= logic for the =core20= plugin
+- [ ] Plugin manifest generation.
+- [ ] Detection of property changes for rebuilds.
 - [ ] Add CLI support for =help=
 - [ ] Add CLI support for =list-plugins=
 - [ ] Add CLI support for =expand-plugins=
