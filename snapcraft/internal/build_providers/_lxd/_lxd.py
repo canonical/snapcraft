@@ -448,6 +448,10 @@ class LXD(Provider):
         # First install fuse and udev, snapd requires them.
         self._run(["apt-get", "install", "udev", "fuse", "--yes"])
 
+        # the system needs networking
+        self._run(["systemctl", "enable", "systemd-udevd"])
+        self._run(["systemctl", "start", "systemd-udevd"])
+
         # And only then install snapd.
         self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
         self._run(["systemctl", "start", "snapd"])

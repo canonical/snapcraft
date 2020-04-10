@@ -187,8 +187,8 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(container.sync_mock.call_count, Equals(34))
-        self.assertThat(self.check_call_mock.call_count, Equals(27))
+        self.assertThat(container.sync_mock.call_count, Equals(36))
+        self.assertThat(self.check_call_mock.call_count, Equals(29))
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
@@ -411,6 +411,32 @@ class LXDInitTest(LXDBaseTest):
                         "udev",
                         "fuse",
                         "--yes",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "enable",
+                        "systemd-udevd",
+                    ]
+                ),
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "start",
+                        "systemd-udevd",
                     ]
                 ),
                 mock.call(
