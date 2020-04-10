@@ -1,7 +1,5 @@
 summary: Build and run a basic SCons snap with no base
 
-systems: [ubuntu-*]
-
 environment:
   SNAP_DIR: ../snaps/scons-hello
 

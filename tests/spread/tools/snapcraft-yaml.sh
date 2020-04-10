@@ -4,7 +4,9 @@ set_base()
 {
     snapcraft_yaml_path="$1"
 
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+        base="core20"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
         base="core18"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
         # Use core instead of core16 (LP: #1819290)

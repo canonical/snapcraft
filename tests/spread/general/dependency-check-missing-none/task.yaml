@@ -1,7 +1,5 @@
 summary: Build a snap that stages an application w/ required library.
 
-systems: [ubuntu-*]
-
 environment:
   SNAP_DIR: snaps/missing-none
 
