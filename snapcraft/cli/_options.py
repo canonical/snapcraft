@@ -124,6 +124,22 @@ _PROVIDER_OPTIONS = [
         supported_providers=["host", "lxd", "managed-host", "multipass"],
         hidden=True,
     ),
+    dict(
+        param_decls="--generate-manifest",
+        is_flag=True,
+        help="Generate snap manifest.",
+        envvar="SNAPCRAFT_BUILD_INFO",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--manifest-image-information",
+        metavar="<json string>",
+        help="Set snap manifest image-info",
+        envvar="SNAPCRAFT_IMAGE_INFO",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
 ]
 
 
@@ -233,6 +249,7 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
 
     for option in _PROVIDER_OPTIONS:
         key: str = option["param_decls"]  # type: ignore
+        is_flag: bool = option.get("is_flag", False)  # type: ignore
         envvar: Optional[str] = option.get("envvar")  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
@@ -244,8 +261,12 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         if build_provider not in supported_providers:
             continue
 
-        # Add build provider flag using envvar as key.
+        # Skip boolean flags that have not been set.
         key_formatted = _param_decls_to_kwarg(key)
+        if is_flag and not kwargs.get(key_formatted):
+            continue
+
+        # Add build provider flag using envvar as key.
         if envvar is not None and key_formatted in kwargs:
             build_provider_flags[envvar] = kwargs[key_formatted]
 

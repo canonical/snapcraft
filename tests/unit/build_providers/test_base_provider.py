@@ -339,7 +339,10 @@ class BaseProviderTest(BaseProviderBaseTest):
     def test_passthrough_environment_flags_all(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.build_provider_flags = dict(
-            http_proxy="http://127.0.0.1:8080", https_proxy="http://127.0.0.1:8080"
+            http_proxy="http://127.0.0.1:8080",
+            https_proxy="http://127.0.0.1:8080",
+            SNAPCRAFT_BUILD_INFO=True,
+            SNAPCRAFT_IMAGE_INFO='{"build_url":"https://example.com"}',
         )
 
         results = provider._get_env_command()
@@ -355,6 +358,8 @@ class BaseProviderTest(BaseProviderBaseTest):
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=http://127.0.0.1:8080",
                     "https_proxy=http://127.0.0.1:8080",
+                    "SNAPCRAFT_BUILD_INFO=True",
+                    'SNAPCRAFT_IMAGE_INFO={"build_url":"https://example.com"}',
                 ]
             ),
         )
