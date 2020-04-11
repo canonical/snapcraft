@@ -441,14 +441,26 @@ class _SnapPackaging:
             # https://bugs.launchpad.net/snapd/+bug/1860369
             return ""
 
-        common.env = self._project_config.snap_env()
-        assembled_env = common.assemble_env()
-        common.reset_env()
+        env = list()
+        if self._project_config.project._snap_meta.base in ("core", "core16", "core18"):
+            common.env = self._project_config.snap_env()
+            assembled_env = common.assemble_env()
+            common.reset_env()
 
-        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-        ld_library_env = "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-        return "\n".join([assembled_env, ld_library_env])
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            env.append(self._install_path_pattern.sub("$SNAP", assembled_env))
+        else:
+            # TODO use something local to the meta package and
+            # only add paths for directory items that actually exist.
+            runtime_env = project_loader.runtime_env(
+                self._prime_dir, self._project_config.project.arch_triplet
+            )
+            for e in runtime_env:
+                env.append(re.sub(self._prime_dir, "$SNAP", e))
+
+        env.append("export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH")
+
+        return "\n".join(env)
 
     def _generate_snapcraft_runner(self) -> Optional[str]:
         """Create runner if required.

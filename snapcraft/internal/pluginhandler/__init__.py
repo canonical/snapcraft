@@ -36,11 +36,13 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
+from ._part_build_environment import get_part_build_environment
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._outdated_report import OutdatedReport
+
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -581,7 +583,10 @@ class PluginHandler:
         self._do_build()
 
     def update_build(self):
-        if not self.plugin.out_of_source_build:
+        if not (
+            isinstance(self.plugin, plugins.v1.PluginV1)
+            and self.plugin.out_of_source_build
+        ):
             # Use the local source to update. It's important to use
             # file_utils.copy instead of link_or_copy, as the build process
             # may modify these files
@@ -605,25 +610,29 @@ class PluginHandler:
         if isinstance(self.plugin, plugins.v1.PluginV1):
             raise RuntimeError("PluginV1 not supported.")
 
-        # TODO add Snapcraft's environment.
+        # Snapcraft's say.
+        part_build_environment = get_part_build_environment(self)
 
         # Plugin's say.
         plugin_build_environment = self.plugin.get_build_environment()
 
         # Part's (user) say.
-        part_build_environment = self._part_properties["build-environment"]
+        user_build_environment = self._part_properties["build-environment"]
 
         # Create the script.
         with io.StringIO() as run_environment:
             print("#!/bin/sh", file=run_environment)
 
             print("# Environment", file=run_environment)
+            print("## Part Environment", file=run_environment)
+            for k, v in part_build_environment.items():
+                print(f'export {k}="{v}"', file=run_environment)
             print("## Plugin Environment", file=run_environment)
             for env in plugin_build_environment:
                 for k, v in env.items():
                     print(f'export {k}="{v}"', file=run_environment)
-            print("## Part Environment", file=run_environment)
-            for env in part_build_environment:
+            print("## User Environment", file=run_environment)
+            for env in user_build_environment:
                 for k, v in env.items():
                     print(f'export {k}="{v}"', file=run_environment)
 

@@ -17,11 +17,8 @@
 from typing import cast, Dict, List, Union
 from typing import TYPE_CHECKING
 
-from ._env import (  # noqa: F401
-    environment_to_replacements,
-    snapcraft_global_environment,
-    snapcraft_part_environment,
-)
+from ._env import environment_to_replacements, runtime_env  # noqa: F401
+
 from ._parts_config import PartsConfig  # noqa: F401
 from ._extensions import (  # noqa: F401
     apply_extensions,
