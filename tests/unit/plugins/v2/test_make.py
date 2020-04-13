@@ -31,15 +31,7 @@ class MakePluginTest(TestCase):
                     "$schema": "http://json-schema.org/draft-04/schema#",
                     "type": "object",
                     "additionalProperties": False,
-                    "properties": {
-                        "make-parameters": {
-                            "type": "array",
-                            "minitems": 1,
-                            "uniqueItems": True,
-                            "items": {"type": "string"},
-                            "default": [],
-                        }
-                    },
+                    "properties": {},
                 }
             ),
         )

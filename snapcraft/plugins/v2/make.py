@@ -46,15 +46,7 @@ class MakePlugin(PluginV2):
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
             "additionalProperties": False,
-            "properties": {
-                "make-parameters": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                }
-            },
+            "properties": {},
         }
 
     def get_build_packages(self) -> Set[str]:
