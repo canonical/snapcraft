@@ -36,7 +36,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
-from ._part_build_environment import get_part_build_environment
+from ._part_build_environment import get_snapcraft_build_environment
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
@@ -611,7 +611,7 @@ class PluginHandler:
             raise RuntimeError("PluginV1 not supported.")
 
         # Snapcraft's say.
-        part_build_environment = get_part_build_environment(self)
+        snapcraft_build_environment = get_snapcraft_build_environment(self)
 
         # Plugin's say.
         plugin_build_environment = self.plugin.get_build_environment()
@@ -625,7 +625,7 @@ class PluginHandler:
 
             print("# Environment", file=run_environment)
             print("## Part Environment", file=run_environment)
-            for k, v in part_build_environment.items():
+            for k, v in snapcraft_build_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## Plugin Environment", file=run_environment)
             for env in plugin_build_environment:

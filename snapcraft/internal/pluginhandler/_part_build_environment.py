@@ -61,7 +61,7 @@ def get_snapcraft_part_environment(part: "PluginHandler") -> Dict[str, str]:
     }
 
 
-def get_part_build_environment(part: "PluginHandler") -> Dict[str, str]:
+def get_snapcraft_build_environment(part: "PluginHandler") -> Dict[str, str]:
     """Return Snapcraft provided build environment."""
     part_environment = get_snapcraft_global_environment(part._project)
     part_environment.update(get_snapcraft_part_environment(part))
