@@ -24,6 +24,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 from typing_extensions import Final
@@ -192,6 +193,17 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
     return {i for i in output if ("lib" in i and os.path.isfile(i))}
 
 
+def _sudo_rm_file(path: Path) -> None:
+    """Workaround for removing privileged files."""
+    try:
+        command = ["sudo", "rm", "-f", str(path)]
+        subprocess.run(
+            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"failed to run: {command!r}")
+
+
 def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
     """Workaround for writing to privileged files."""
     with tempfile.NamedTemporaryFile() as src_f:
@@ -208,7 +220,9 @@ def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
                 src_f.name,
                 str(dst_path),
             ]
-            subprocess.check_call(command)
+            subprocess.run(
+                command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            )
         except subprocess.CalledProcessError:
             raise RuntimeError(f"failed to run: {command!r}")
 
@@ -569,6 +583,78 @@ class Ubuntu(BaseRepo):
         logger.debug(f"Installed apt repository {expanded_source!r}")
 
     @classmethod
+    def _initialize_main_sources(cls) -> None:
+        # Install /etc/apt/sources.list.d/main.sources (deb822 format).
+        main_sources = _format_sources_list(
+            textwrap.dedent(
+                """
+                Types: deb deb-src
+                URIs: http://archive.ubuntu.com/ubuntu
+                Suites: ${release} ${release}-updates
+                Components: main multiverse restricted universe
+                """
+            )
+        )
+
+        _sudo_write_file(
+            dst_path=Path("/etc/apt/sources.list.d/main.sources"),
+            content=main_sources.encode(),
+        )
+
+    @classmethod
+    def _initialize_security_sources(cls) -> None:
+        # Install /etc/apt/sources.list.d/security.sources (deb822 format).
+        security_sources = _format_sources_list(
+            textwrap.dedent(
+                """
+                Types: deb deb-src
+                URIs: http://security.ubuntu.com/ubuntu
+                Suites: ${release}-security
+                Components: main multiverse restricted universe
+                """
+            )
+        )
+
+        _sudo_write_file(
+            dst_path=Path("/etc/apt/sources.list.d/security.sources"),
+            content=security_sources.encode(),
+        )
+
+    @classmethod
+    def _remove_existing_sources(cls) -> None:
+        # Remove /etc/apt/sources.list, /etc/apt/sources.list.d/*
+        config_paths = [
+            Path("/etc/apt/sources.list"),
+            *Path("/etc/apt/sources.list.d").glob("*"),
+        ]
+        for config_path in config_paths:
+            if config_path.exists():
+                logger.debug(f"unlinking {config_path}")
+                try:
+                    config_path.unlink()
+                except PermissionError:
+                    _sudo_rm_file(config_path)
+
+    @classmethod
+    def _initialize_apt_options(cls) -> None:
+        options = textwrap.dedent(
+            """
+            Apt::Install-Recommends "false";
+            """
+        )
+
+        _sudo_write_file(
+            dst_path=Path("/etc/apt/apt.conf.d/00-snapcraft"), content=options.encode()
+        )
+
+    @classmethod
+    def initialize_snapcraft_defaults(cls) -> None:
+        cls._remove_existing_sources()
+        cls._initialize_main_sources()
+        cls._initialize_security_sources()
+        cls._initialize_apt_options()
+
+    @classmethod
     def _is_filtered_package(cls, package_name: str) -> bool:
         # Filter out packages provided by the core snap.
         # TODO: use manifest found in core snap, if found at:
@@ -601,6 +687,9 @@ def _get_local_sources_list():
 
     sources = ""
     for source in sources_list:
+        if not os.path.exists(source):
+            continue
+
         with open(source) as f:
             sources += f.read()
 

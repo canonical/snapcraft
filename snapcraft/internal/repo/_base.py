@@ -183,6 +183,11 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
+    def initialize_snapcraft_defaults(cls) -> None:
+        """Initialize repository configuration."""
+        raise errors.NoNativeBackendError()
+
+    @classmethod
     def normalize(cls, unpackdir: str) -> None:
         """Normalize artifacts in unpackdir.
 

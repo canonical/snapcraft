@@ -36,6 +36,7 @@ from snapcraft.internal import (
     errors,
     lifecycle,
     project_loader,
+    repo,
     steps,
 )
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
@@ -74,6 +75,11 @@ def _execute(  # noqa: C901
     if build_provider in ["host", "managed-host"]:
         apply_host_provider_flags(build_provider_flags)
         project_config = project_loader.load_config(project)
+        if is_managed_host:
+            # Managed hosts repositories are configured with defaults
+            # set by snapcraft.
+            repo.Repo.initialize_snapcraft_defaults()
+
         lifecycle.execute(step, project_config, parts)
         if pack_project:
             _pack(project.prime_dir, output=output)

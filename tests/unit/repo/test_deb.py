@@ -472,3 +472,191 @@ class TestUbuntuInstallRepo(unit.TestCase):
         self.assertRaises(
             errors.AptGPGKeyInstallError, repo.Ubuntu.install_gpg_key, "FAKEKEY"
         )
+
+    @mock.patch("subprocess.run")
+    @mock.patch("pathlib.Path.unlink")
+    def test_initialize_snapcraft_defaults(self, mock_unlink, mock_run):
+        def _path_exists(path_self):
+            return str(self) in [
+                "/etc/apt/sources.list",
+                "/etc/apt/sources.list.d/test.list",
+            ]
+
+        self.useFixture(fixtures.MockPatchObject(Path, "exists", _path_exists))
+
+        def _path_glob(path_self, pattern):
+            self.assertThat(str(path_self), Equals("/etc/apt/sources.list.d"))
+            self.assertThat(pattern, Equals("*"))
+            yield Path("/etc/apt/sources.list.d/test.list")
+
+        self.useFixture(fixtures.MockPatchObject(Path, "glob", _path_glob))
+
+        repo.Ubuntu.initialize_snapcraft_defaults()
+
+        # self.assertThat(mock_run.mock_calls, Equals("X"))
+
+
+class TestInitializeSnapcraftDefaults(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_run = self.useFixture(fixtures.MockPatch("subprocess.run")).mock
+
+        self.useFixture(fixtures.MockPatchObject(Path, "exists", return_value=True))
+
+        def _path_glob(path_self, pattern):
+            self.assertThat(str(path_self), Equals("/etc/apt/sources.list.d"))
+            self.assertThat(pattern, Equals("*"))
+            yield Path("/etc/apt/sources.list.d/test.list")
+            yield Path("/etc/apt/sources.list.d/test2.list")
+
+        self.useFixture(fixtures.MockPatchObject(Path, "glob", _path_glob))
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.os_release.OsRelease.version_codename",
+                return_value="testy",
+            )
+        )
+
+    def test_standard_unlink(self):
+        unlinked_paths = list()
+        installed_files = dict()
+
+        def _fake_run(command, **kwargs):
+            self.assertThat(kwargs["check"], Equals(True))
+            self.assertThat(kwargs["stdout"], Equals(subprocess.PIPE))
+            self.assertThat(kwargs["stderr"], Equals(subprocess.STDOUT))
+            self.assertThat(len(command), Equals(7))
+            self.assertThat(
+                command[0:5],
+                Equals(
+                    ["sudo", "install", "--owner=root", "--group=root", "--mode=0644"]
+                ),
+            )
+
+            # Record written file.
+            temp_file = command[5]
+            target_file = command[6]
+            target_contents = Path(temp_file).read_text()
+            installed_files[target_file] = target_contents
+
+        self.useFixture(fixtures.MockPatch("subprocess.run", _fake_run))
+
+        def _path_unlink(path_self):
+            unlinked_paths.append(str(path_self))
+
+        self.useFixture(fixtures.MockPatchObject(Path, "unlink", _path_unlink))
+
+        repo.Ubuntu.initialize_snapcraft_defaults()
+
+        self.assertThat(
+            unlinked_paths,
+            Equals(
+                [
+                    "/etc/apt/sources.list",
+                    "/etc/apt/sources.list.d/test.list",
+                    "/etc/apt/sources.list.d/test2.list",
+                ]
+            ),
+        )
+
+        self.assertThat(
+            installed_files,
+            Equals(
+                {
+                    "/etc/apt/apt.conf.d/00-snapcraft": '\nApt::Install-Recommends "false";\n',
+                    "/etc/apt/sources.list.d/main.sources": textwrap.dedent(
+                        """
+                        Types: deb deb-src
+                        URIs: http://archive.ubuntu.com/ubuntu
+                        Suites: testy testy-updates
+                        Components: main multiverse restricted universe
+                        """
+                    ),
+                    "/etc/apt/sources.list.d/security.sources": textwrap.dedent(
+                        """
+                        Types: deb deb-src
+                        URIs: http://security.ubuntu.com/ubuntu
+                        Suites: testy-security
+                        Components: main multiverse restricted universe
+                        """
+                    ),
+                }
+            ),
+        )
+
+    def test_fallback_sudo_rm(self):
+        self.useFixture(
+            fixtures.MockPatchObject(Path, "unlink", side_effect=PermissionError)
+        )
+
+        repo.Ubuntu.initialize_snapcraft_defaults()
+
+        self.assertThat(
+            self.fake_run.mock_calls,
+            Equals(
+                [
+                    call(
+                        ["sudo", "rm", "-f", "/etc/apt/sources.list"],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                    call(
+                        ["sudo", "rm", "-f", "/etc/apt/sources.list.d/test.list"],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                    call(
+                        ["sudo", "rm", "-f", "/etc/apt/sources.list.d/test2.list"],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                    call(
+                        [
+                            "sudo",
+                            "install",
+                            "--owner=root",
+                            "--group=root",
+                            "--mode=0644",
+                            mock.ANY,
+                            "/etc/apt/sources.list.d/main.sources",
+                        ],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                    call(
+                        [
+                            "sudo",
+                            "install",
+                            "--owner=root",
+                            "--group=root",
+                            "--mode=0644",
+                            mock.ANY,
+                            "/etc/apt/sources.list.d/security.sources",
+                        ],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                    call(
+                        [
+                            "sudo",
+                            "install",
+                            "--owner=root",
+                            "--group=root",
+                            "--mode=0644",
+                            mock.ANY,
+                            "/etc/apt/apt.conf.d/00-snapcraft",
+                        ],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                    ),
+                ]
+            ),
+        )
