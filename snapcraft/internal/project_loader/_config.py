@@ -27,15 +27,13 @@ from snapcraft import project, formatting_utils
 from snapcraft.internal import common, deprecations, repo, states, steps
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.pluginhandler._part_build_environment import (
+    get_snapcraft_global_environment,
+)
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
-from ._env import (
-    build_env_for_stage,
-    runtime_env,
-    snapcraft_global_environment,
-    environment_to_replacements,
-)
+from ._env import build_env_for_stage, runtime_env, environment_to_replacements
 from . import errors, grammar_processing, replace_attr
 
 
@@ -322,7 +320,9 @@ class Config:
     def project_env(self):
         return [
             '{}="{}"'.format(variable, value)
-            for variable, value in snapcraft_global_environment(self.project).items()
+            for variable, value in get_snapcraft_global_environment(
+                self.project
+            ).items()
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -332,7 +332,7 @@ class Config:
                 continue
 
             replacements = environment_to_replacements(
-                snapcraft_global_environment(self.project)
+                get_snapcraft_global_environment(self.project)
             )
 
             snapcraft_yaml[key] = replace_attr(snapcraft_yaml[key], replacements)

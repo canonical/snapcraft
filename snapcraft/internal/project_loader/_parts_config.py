@@ -22,14 +22,12 @@ from typing import Set  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
-from snapcraft import plugins
-from ._env import (
-    build_env,
-    build_env_for_stage,
-    runtime_env,
-    snapcraft_global_environment,
-    snapcraft_part_environment,
+from snapcraft.internal.pluginhandler._part_build_environment import (
+    get_snapcraft_global_environment,
+    get_snapcraft_part_environment,
 )
+from snapcraft import plugins
+from ._env import build_env, build_env_for_stage, runtime_env
 from . import errors, grammar_processing
 
 logger = logging.getLogger(__name__)
@@ -227,6 +225,9 @@ class PartsConfig:
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
 
+        if not isinstance(part.plugin, plugins.v1.PluginV1):
+            self.build_tools |= part.plugin.get_build_packages()
+
         # TODO: this should not pass in command but the required package,
         #       where the required package is to be determined by the
         #       source handler.
@@ -259,8 +260,8 @@ class PartsConfig:
                 stagedir, self._project.info.name, self._project.arch_triplet
             )
 
-            global_env = snapcraft_global_environment(self._project)
-            part_env = snapcraft_part_environment(part)
+            global_env = get_snapcraft_global_environment(self._project)
+            part_env = get_snapcraft_part_environment(part)
 
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))

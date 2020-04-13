@@ -17,31 +17,44 @@
 from testtools.matchers import Equals
 from testtools import TestCase
 
-from snapcraft.plugins.v2.nil import NilPlugin
+from snapcraft.plugins.v2.make import MakePlugin
 
 
-class NilPluginTest(TestCase):
+class MakePluginTest(TestCase):
     def test_schema(self):
-        schema = NilPlugin.get_schema()
+        schema = MakePlugin.get_schema()
 
         self.assertThat(
-            schema["$schema"], Equals("http://json-schema.org/draft-04/schema#")
+            schema,
+            Equals(
+                {
+                    "$schema": "http://json-schema.org/draft-04/schema#",
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {},
+                }
+            ),
         )
-        self.assertThat(schema["type"], Equals("object"))
-        self.assertFalse(schema["additionalProperties"])
-        self.assertFalse(schema["properties"])
 
     def test_get_build_packages(self):
-        plugin = NilPlugin(part_name="my-part", options=lambda: None)
+        plugin = MakePlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_packages(), Equals(set()))
+        self.assertThat(plugin.get_build_packages(), Equals({"gcc", "make"}))
 
     def test_get_build_environment(self):
-        plugin = NilPlugin(part_name="my-part", options=lambda: None)
+        plugin = MakePlugin(part_name="my-part", options=lambda: None)
 
         self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
-        plugin = NilPlugin(part_name="my-part", options=lambda: None)
+        plugin = MakePlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_commands(), Equals(list()))
+        self.assertThat(
+            plugin.get_build_commands(),
+            Equals(
+                [
+                    'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
+                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                ]
+            ),
+        )

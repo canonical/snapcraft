@@ -14,31 +14,47 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import abc
+"""The make plugin is useful for building make based parts.
+
+Make based projects are projects that have a Makefile that drives the
+build.
+
+This plugin always runs 'make' followed by 'make install', except when
+the 'artifacts' keyword is used.
+
+This plugin uses the common plugin keywords as well as those for "sources".
+For more information check the 'plugins' topic for the former and the
+'sources' topic for the latter.
+
+Additionally, this plugin uses the following plugin-specific keywords:
+
+    - make-parameters:
+      (list of strings)
+      Pass the given parameters to the make command.
+"""
+
 from typing import Any, Dict, List, Set
 
+from snapcraft.plugins.v2 import PluginV2
 
-class PluginV2(abc.ABC):
+
+class MakePlugin(PluginV2):
     @classmethod
-    @abc.abstractmethod
     def get_schema(cls) -> Dict[str, Any]:
         """Return a jsonschema compatible dictionary for the plugin properties."""
+        return {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {},
+        }
 
-    def __init__(self, *, part_name: str, options) -> None:
-        """
-        :param str part_name: part names
-        :param options: an object representing part defined properties.
-        """
-        self.name = part_name
-        self.options = options
-
-    @abc.abstractmethod
     def get_build_packages(self) -> Set[str]:
         """
-        Return a list of required packages to install in the build environment.
+        Return a set of required packages to install in the build environment.
         """
+        return {"gcc", "make"}
 
-    @abc.abstractmethod
     def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
@@ -47,8 +63,8 @@ class PluginV2(abc.ABC):
 
         This method is called by the PluginHandler during the "build" step.
         """
+        return dict()
 
-    @abc.abstractmethod
     def get_build_commands(self) -> List[str]:
         """
         Return a list of commands to run during the build step.
@@ -60,3 +76,7 @@ class PluginV2(abc.ABC):
         snapcraftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
+        return [
+            'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
+            'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+        ]

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from snapcraft.plugins.v2 import PluginV2
 
@@ -30,7 +30,13 @@ class NilPlugin(PluginV2):
             "properties": {},
         }
 
-    def get_build_environment(self) -> List[Dict[str, str]]:
+    def get_build_packages(self) -> Set[str]:
+        """
+        Return a set of required packages to install in the build environment.
+        """
+        return set()
+
+    def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
 
@@ -38,7 +44,7 @@ class NilPlugin(PluginV2):
 
         This method is called by the PluginHandler during the "build" step.
         """
-        return list()
+        return dict()
 
     def get_build_commands(self) -> List[str]:
         """

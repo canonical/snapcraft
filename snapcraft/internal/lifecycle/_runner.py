@@ -27,6 +27,9 @@ from snapcraft.internal import (
     states,
     steps,
 )
+from snapcraft.internal.pluginhandler._part_build_environment import (
+    get_snapcraft_part_environment,
+)
 from snapcraft.internal.meta._snap_packaging import create_snap_packaging
 
 from ._status_cache import StatusCache
@@ -146,7 +149,7 @@ def execute(
 def _replace_in_part(part):
     for key, value in part.plugin.options.__dict__.items():
         replacements = project_loader.environment_to_replacements(
-            project_loader.snapcraft_part_environment(part)
+            get_snapcraft_part_environment(part)
         )
 
         value = project_loader.replace_attr(value, replacements)
