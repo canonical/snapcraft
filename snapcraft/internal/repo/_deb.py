@@ -14,14 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
+
 import functools
 import glob
-import hashlib
 import logging
 import os
 import re
-import shutil
 import string
 import subprocess
 import sys
@@ -31,9 +29,10 @@ from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 from typing_extensions import Final
 
 import apt
+from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.internal import cache, common, os_release, repo
+from snapcraft.internal import os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 
 from . import errors
@@ -214,164 +213,6 @@ def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
             raise RuntimeError(f"failed to run: {command!r}")
 
 
-class _AptCache:
-    def __init__(self, *, sources: List[str], keyrings: List[str]):
-        self._sources = sources
-        self._keyrings = keyrings
-
-    def _setup_apt(self, cache_dir):
-        # Do not install recommends
-        apt.apt_pkg.config.set("Apt::Install-Recommends", "False")
-
-        # Ensure repos are provided by trusted third-parties
-        apt.apt_pkg.config.set("Acquire::AllowInsecureRepositories", "False")
-
-        # Methods and solvers dir for when in the SNAP
-        if common.is_snap():
-            snap_dir = os.getenv("SNAP")
-            apt_dir = os.path.join(snap_dir, "usr", "lib", "apt")
-            apt.apt_pkg.config.set("Dir", apt_dir)
-            # yes apt is broken like that we need to append os.path.sep
-            methods_dir = os.path.join(apt_dir, "methods")
-            apt.apt_pkg.config.set("Dir::Bin::methods", methods_dir + os.path.sep)
-            solvers_dir = os.path.join(apt_dir, "solvers")
-            apt.apt_pkg.config.set("Dir::Bin::solvers::", solvers_dir + os.path.sep)
-            apt_key_path = os.path.join(snap_dir, "usr", "bin", "apt-key")
-            apt.apt_pkg.config.set("Dir::Bin::apt-key", apt_key_path)
-            gpgv_path = os.path.join(snap_dir, "usr", "bin", "gpgv")
-            apt.apt_pkg.config.set("Apt::Key::gpgvcommand", gpgv_path)
-            apt.apt_pkg.config.set("Dir::Etc::Trusted", "/etc/apt/trusted.gpg")
-            apt.apt_pkg.config.set("Dir::Etc::TrustedParts", "/etc/apt/trusted.gpg.d/")
-
-        # Make sure we always use the system GPG configuration, even with
-        # apt.Cache(rootdir). However, we also want to be able to add keys to it
-        # without root, so symlink back to the system's, but maintain our own.
-        # We'll leave Trusted alone and just fiddle with TrustedParts (Trusted is the
-        # one modified by apt-key, so add-apt-repository should still work).
-        apt.apt_pkg.config.set(
-            "Dir::Etc::Trusted", apt.apt_pkg.config.find_file("Dir::Etc::Trusted")
-        )
-        apt_config_path = os.path.join(cache_dir, "etc", "apt", "apt.conf")
-        trusted_parts_path = apt.apt_pkg.config.find_file("Dir::Etc::TrustedParts")
-        if not trusted_parts_path.startswith(cache_dir):
-            cached_trusted_parts = os.path.join(
-                cache_dir, trusted_parts_path.lstrip("/")
-            )
-            with contextlib.suppress(FileNotFoundError):
-                shutil.rmtree(cached_trusted_parts)
-            os.makedirs(cached_trusted_parts)
-            for trusted_part in os.scandir(trusted_parts_path):
-                os.symlink(
-                    os.path.join(trusted_parts_path, trusted_part.name),
-                    os.path.join(cached_trusted_parts, trusted_part.name),
-                )
-
-            apt.apt_pkg.config.set("Dir::Etc::TrustedParts", cached_trusted_parts)
-
-            # The above config is all that is needed on bionic, but xenial
-            # requires this configuration file
-            os.makedirs(os.path.dirname(apt_config_path), exist_ok=True)
-            with open(apt_config_path, "w") as f:
-                f.write("Dir::Etc::TrustedParts {};\n".format(cached_trusted_parts))
-
-            # Now copy in any requested keyrings
-            for keyring in self._keyrings:
-                shutil.copy2(keyring, cached_trusted_parts)
-
-        # Clear up apt's Post-Invoke-Success as we are not running
-        # on the system.
-        apt.apt_pkg.config.clear("APT::Update::Post-Invoke-Success")
-
-        self.progress = apt.progress.text.AcquireProgress()
-        if is_dumb_terminal():
-            # Make output more suitable for logging.
-            self.progress.pulse = lambda owner: True
-            self.progress._width = 0
-
-        sources_list_file = os.path.join(cache_dir, "etc", "apt", "sources.list")
-
-        os.makedirs(os.path.dirname(sources_list_file), exist_ok=True)
-        with open(sources_list_file, "w") as f:
-            f.write(self._collected_sources_list())
-
-        # dpkg also needs to be in the rootdir in order to support multiarch
-        # (apt calls dpkg --print-foreign-architectures).
-        dpkg_path = shutil.which("dpkg")
-        if dpkg_path:
-            # Symlink it into place
-            destination = os.path.join(cache_dir, dpkg_path[1:])
-            if not os.path.exists(destination):
-                os.makedirs(os.path.dirname(destination), exist_ok=True)
-                os.symlink(dpkg_path, destination)
-        else:
-            logger.warning("Cannot find 'dpkg' command needed to support multiarch")
-
-        old_apt_config = os.environ.get("APT_CONFIG")
-        try:
-            # Only xenial needs this. If snapcraft changes to core18, this
-            # variable is unnecessary.
-            os.environ["APT_CONFIG"] = apt_config_path
-            return self._create_cache(cache_dir, sources_list_file)
-        finally:
-            if old_apt_config is None:
-                del os.environ["APT_CONFIG"]
-            else:
-                os.environ["APT_CONFIG"] = old_apt_config
-
-    def _create_cache(self, cache_dir: str, sources_list_file: str) -> apt.Cache:
-        apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
-        try:
-            apt_cache.update(
-                fetch_progress=self.progress, sources_list=sources_list_file
-            )
-        except apt.cache.FetchFailedException as e:
-            # In case of a hashsum mismatch, clear the index and try again.
-            # Re-raise the error if that failed.
-            if re.match(_HASHSUM_MISMATCH_PATTERN, str(e)):
-                try:
-                    index = apt.apt_pkg.config.find_dir("Dir::State::Lists")
-                    shutil.rmtree(index)
-                    apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
-                    apt_cache.update(
-                        fetch_progress=self.progress, sources_list=sources_list_file
-                    )
-                except apt.cache.FetchFailedException as retry:
-                    raise errors.CacheUpdateFailedError(str(retry))
-            else:
-                raise errors.CacheUpdateFailedError(str(e))
-        return apt_cache
-
-    @contextlib.contextmanager
-    def archive(self, cache_dir):
-        try:
-            apt_cache = self._setup_apt(cache_dir)
-            apt_cache.open()
-
-            try:
-                yield apt_cache
-            finally:
-                apt_cache.close()
-        except Exception as e:
-            logger.debug("Exception occurred: {!r}".format(e))
-            raise e
-
-    def sources_digest(self):
-        return hashlib.sha384(
-            self._collected_sources_list().encode(sys.getfilesystemencoding())
-        ).hexdigest()
-
-    def _collected_sources_list(self) -> str:
-        sources = _get_local_sources_list()
-
-        # Append additionally configured repositories, if any.
-        if self._sources:
-
-            additional_sources = _format_sources_list("\n".join(self._sources))
-            sources = "\n".join([sources, additional_sources])
-
-        return sources
-
-
 class Ubuntu(BaseRepo):
     _SNAPCRAFT_INSTALLED_GPG_KEYRING: Final[
         str
@@ -379,6 +220,21 @@ class Ubuntu(BaseRepo):
     _SNAPCRAFT_INSTALLED_SOURCES_LIST: Final[
         str
     ] = "/etc/apt/sources.list.d/snapcraft.list"
+
+    _cache_dir: str = BaseDirectory.save_cache_path("snapcraft", "download")
+    _cache: Optional[apt.Cache] = None
+
+    @classmethod
+    def _get_apt_cache(cls) -> apt.Cache:
+        if cls._cache is None:
+            cls._cache = apt.Cache()
+        return cls._cache
+
+    @classmethod
+    def _refresh_cache(cls) -> None:
+        if cls._cache is not None:
+            cls._cache.close()
+        cls._cache = apt.Cache()
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
@@ -418,6 +274,8 @@ class Ubuntu(BaseRepo):
                 "failed to run apt update"
             ) from call_error
 
+        cls._refresh_cache()
+
     @classmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
@@ -433,62 +291,41 @@ class Ubuntu(BaseRepo):
         :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
             if installing the packages on the host failed.
         """
-        new_packages = []  # type: List[Tuple[str, str]]
-        with apt.Cache() as apt_cache:
-            try:
-                cls._mark_install(apt_cache, package_names)
-            except errors.PackageNotFoundError as e:
-                raise errors.BuildPackageNotFoundError(e.package_name)
-            for package in apt_cache.get_changes():
-                new_packages.append((package.name, package.candidate.version))
+        if not package_names:
+            return list()
 
-        if new_packages:
-            cls._install_new_build_packages([package[0] for package in new_packages])
-        return ["{}={}".format(package[0], package[1]) for package in new_packages]
+        # Make sure all packages are valid and remove already installed.
+        install_packages = list()
+        for name in sorted(package_names):
+            package_name, _ = repo.get_pkg_name_parts(name)
 
-    @classmethod
-    def _mark_install(cls, apt_cache: apt.Cache, package_names: List[str]) -> None:
-        for name in package_names:
-            if name.endswith(":any"):
-                name = name[:-4]
-            if apt_cache.is_virtual_package(name):
-                name = apt_cache.get_providing_packages(name)[0].name
-            logger.debug(
-                "Marking {!r} (and its dependencies) to be fetched".format(name)
-            )
-            name_arch, version = repo.get_pkg_name_parts(name)
-            try:
-                if version:
-                    _set_pkg_version(apt_cache[name_arch], version)
-                # Disable automatic resolving of broken packages here
-                # because if that fails it raises a SystemError and the
-                # API doesn't expose enough information about he problem.
-                # Instead we let apt-get show a verbose error message later.
-                # Also, make sure this package is marked as auto-installed,
-                # which will propagate to its dependencies.
-                apt_cache[name_arch].mark_install(auto_fix=False, from_user=False)
+            if not cls.build_package_is_valid(package_name):
+                raise errors.BuildPackageNotFoundError(name)
 
-                # Now mark this package as NOT automatically installed, which
-                # will leave its dependencies marked as auto-installed, which
-                # allows us to clean them up if necessary.
-                apt_cache[name_arch].mark_auto(False)
+            if not cls.is_package_installed(package_name):
+                install_packages.append(name)
 
-                cls._verify_marked_install(apt_cache[name_arch])
-            except KeyError:
-                raise errors.PackageNotFoundError(name)
+        # Install packages, if any.
+        if install_packages:
+            cls._install_packages(install_packages)
+
+        # Return installed packages with version info.
+        return [
+            f"{name}={cls._get_installed_package_version(name)}"
+            for name in install_packages
+        ]
 
     @classmethod
-    def _verify_marked_install(cls, package: apt.Package):
-        if not package.installed and not package.marked_install:
-            broken_deps = []  # type: List[str]
-            for deps in package.candidate.dependencies:
-                for dep in deps:
-                    if not dep.target_versions:
-                        broken_deps.append(dep.name)
-            raise errors.PackageBrokenError(package.name, broken_deps)
+    def _get_installed_package_version(cls, package_name: str) -> Optional[str]:
+        try:
+            package = cls._get_apt_cache()[package_name]
+        except KeyError:
+            return None
+
+        return package.installed.version if package.installed else None
 
     @classmethod
-    def _install_new_build_packages(cls, package_names: List[str]) -> None:
+    def _install_packages(cls, package_names: List[str]) -> None:
         package_names.sort()
         logger.info("Installing build dependencies: %s", " ".join(package_names))
         env = os.environ.copy()
@@ -523,27 +360,160 @@ class Ubuntu(BaseRepo):
                 "Impossible to mark packages as auto-installed: {}".format(e)
             )
 
+        cls._refresh_cache()
+
+    @classmethod
+    def _resolve_virtual_package(cls, package_name: str) -> str:
+        if cls._get_apt_cache().is_virtual_package(package_name):
+            package_name = (
+                cls._get_apt_cache().get_providing_packages(package_name)[0].name
+            )
+        return package_name
+
+    @classmethod
+    def _get_cached_package(cls, package_name: str) -> apt.package.Package:
+        # Strip ":any" that may come from dependency names.
+        if package_name.endswith(":any"):
+            package_name = package_name[:-4]
+
+        # Resolve virtual package, if it is one.
+        package_name = cls._resolve_virtual_package(package_name)
+
+        try:
+            return cls._get_apt_cache()[package_name]
+        except KeyError:
+            raise errors.PackageNotFoundError(package_name)
+
+    @classmethod
+    def _set_package_version(cls, package, version: Optional[str] = None) -> None:
+        """Set cadidate version to a specific version if available"""
+        if version in package.versions:
+            version = package.versions.get(version)
+            package.candidate = version
+        else:
+            raise errors.PackageNotFoundError("{}={}".format(package.name, version))
+
+    @classmethod
+    def _mark_package_dependencies(
+        cls,
+        *,
+        package: apt.package.Package,
+        marked_packages: Dict[str, apt.package.Version],
+        skipped_blacklisted: Set[str],
+        skipped_essential: Set[str],
+        unfiltered_packages: List[str],
+    ) -> None:
+        if package.name in marked_packages:
+            # already marked, ignore.
+            return
+
+        # If package is not explicitly asked for in unfiltered packages,
+        # we will filter out base packages using the base's manifest and
+        # essential priority.
+        if package.name not in unfiltered_packages:
+            if cls._is_filtered_package(package.name):
+                skipped_blacklisted.add(package.name)
+                return
+
+            if package.candidate.priority == "essential":
+                skipped_essential.add(package.name)
+                return
+
+        # We have to mark it first or risk recursion depth exceeded...
+        marked_packages[package.name] = package.candidate
+
+        for pkg_dep in package.candidate.dependencies:
+            dep_pkg = pkg_dep.target_versions[0].package
+            cls._mark_package_dependencies(
+                package=dep_pkg,
+                marked_packages=marked_packages,
+                skipped_blacklisted=skipped_blacklisted,
+                skipped_essential=skipped_essential,
+                unfiltered_packages=unfiltered_packages,
+            )
+
+    @classmethod
+    def install_stage_packages(
+        cls, *, package_names: List[str], install_dir: str
+    ) -> List[str]:
+        marked_packages: Dict[str, apt.package.Version] = dict()
+        skipped_blacklisted: Set[str] = set()
+        skipped_essential: Set[str] = set()
+
+        # First scan all packages and set desired version, if specified.
+        # We do this all at once in case it gets added as a dependency
+        # along the way.
+        for name in package_names:
+            name, specified_version = repo.get_pkg_name_parts(name)
+            if specified_version:
+                package = cls._get_cached_package(name)
+                cls._set_package_version(package, specified_version)
+
+        for name in package_names:
+            name, _ = repo.get_pkg_name_parts(name)
+            package = cls._get_cached_package(name)
+            cls._mark_package_dependencies(
+                package=package,
+                marked_packages=marked_packages,
+                skipped_blacklisted=skipped_blacklisted,
+                skipped_essential=skipped_essential,
+                unfiltered_packages=package_names,
+            )
+
+        marked = sorted(marked_packages.keys())
+        logger.debug(f"Marked staged packages: {marked!r}")
+
+        if skipped_blacklisted:
+            blacklisted = sorted(skipped_blacklisted)
+            logger.debug(f"Skipping blacklisted packages: {blacklisted!r}")
+
+        if skipped_essential:
+            essential = sorted(skipped_essential)
+            logger.debug(f"Skipping priority essential packages: {essential!r}")
+
+        for pkg_name, pkg_version in marked_packages.items():
+            try:
+                dl_path = pkg_version.fetch_binary(cls._cache_dir)
+            except apt.package.FetchError as e:
+                raise errors.PackageFetchError(str(e))
+
+            logger.debug(f"Extracting stage package: {pkg_name}")
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # Extract deb package.
+                cls._extract_deb(dl_path, temp_dir)
+
+                # Mark source of files.
+                marked_name = f"{pkg_name}:{pkg_version.version}"
+                cls._mark_origin_stage_package(temp_dir, marked_name)
+
+                # Stage files to install_dir.
+                file_utils.link_or_copy_tree(temp_dir, install_dir)
+
+        cls.normalize(install_dir)
+
+        return [
+            f"{pkg_name}={pkg_version}"
+            for pkg_name, pkg_version in marked_packages.items()
+        ]
+
     @classmethod
     def build_package_is_valid(cls, package_name):
-        with apt.Cache() as apt_cache:
-            return package_name in apt_cache
+        return package_name in cls._get_apt_cache()
 
     @classmethod
     def is_package_installed(cls, package_name):
-        with apt.Cache() as apt_cache:
-            if package_name not in apt_cache:
-                return False
-            return apt_cache[package_name].installed
+        if package_name not in cls._get_apt_cache():
+            return False
+        return cls._get_apt_cache()[package_name].installed is not None
 
     @classmethod
-    def get_installed_packages(cls):
+    def get_installed_packages(cls) -> List[str]:
         installed_packages = []
-        with apt.Cache() as apt_cache:
-            for package in apt_cache:
-                if package.installed:
-                    installed_packages.append(
-                        "{}={}".format(package.name, package.installed.version)
-                    )
+        for package in cls._get_apt_cache():
+            if package.installed:
+                installed_packages.append(
+                    "{}={}".format(package.name, package.installed.version)
+                )
         return installed_packages
 
     @classmethod
@@ -598,99 +568,15 @@ class Ubuntu(BaseRepo):
 
         logger.debug(f"Installed apt repository {expanded_source!r}")
 
-    def __init__(
-        self,
-        rootdir,
-        sources: Optional[List[str]] = None,
-        keyrings: Optional[List[str]] = None,
-        project_options=None,
-    ) -> None:
-        super().__init__(rootdir)
-        self._downloaddir = os.path.join(rootdir, "download")
-
-        if sources is None:
-            sources = list()
-
-        if keyrings is None:
-            keyrings = list()
-
-        self._apt = _AptCache(sources=sources, keyrings=keyrings)
-
-        self._cache = cache.AptStagePackageCache(
-            sources_digest=self._apt.sources_digest()
-        )
-
-    def is_valid(self, package_name):
-        with self._apt.archive(self._cache.base_dir) as apt_cache:
-            return package_name in apt_cache
-
-    def get(self, package_names) -> List[str]:
-        with self._apt.archive(self._cache.base_dir) as apt_cache:
-            self._mark_install(apt_cache, package_names)
-            self._filter_base_packages(apt_cache, package_names)
-            self._autokeep_packages(apt_cache)
-            return self._get(apt_cache)
-
-    def _autokeep_packages(self, apt_cache):
-        for package in apt_cache.get_changes():
-            if package.is_auto_removable:
-                package.mark_keep()
-
-    def _is_filtered_package(self, package_name: str) -> bool:
+    @classmethod
+    def _is_filtered_package(cls, package_name: str) -> bool:
         # Filter out packages provided by the core snap.
         # TODO: use manifest found in core snap, if found at:
         # <core-snap>/usr/share/snappy/dpkg.list
         return package_name in _DEFAULT_FILTERED_STAGE_PACKAGES
 
-    def _filter_base_packages(self, apt_cache, package_names):
-        skipped_essential = []
-        skipped_blacklisted = []
-
-        # unmark some base packages here
-        # note that this will break the consistency check inside apt_cache
-        # (apt_cache.broken_count will be > 0)
-        # but that is ok as it was consistent before we excluded
-        # these base package
-        for pkg in apt_cache:
-            # those should be already on each system, it also prevents
-            # diving into downloading libc6
-            if pkg.candidate.priority in "essential" and pkg.name not in package_names:
-                skipped_essential.append(pkg.name)
-                pkg.mark_keep()
-                continue
-            if self._is_filtered_package(pkg.name) and pkg.name not in package_names:
-                skipped_blacklisted.append(pkg.name)
-                pkg.mark_keep()
-                continue
-
-        if skipped_essential:
-            logger.debug(
-                "Skipping priority essential packages: "
-                "{!r}".format(skipped_essential)
-            )
-        if skipped_blacklisted:
-            logger.debug(
-                "Skipping blacklisted from manifest packages: "
-                "{!r}".format(skipped_blacklisted)
-            )
-
-    def _get(self, apt_cache):
-        pkg_list = []
-        for package in apt_cache.get_changes():
-            pkg_list.append(str(package.candidate))
-            try:
-                source = package.candidate.fetch_binary(self._cache.packages_dir)
-            except apt.package.FetchError as e:
-                raise errors.PackageFetchError(str(e))
-
-            destination = os.path.join(self._downloaddir, os.path.basename(source))
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(destination)
-            file_utils.link_or_copy(source, destination)
-
-        return pkg_list
-
-    def _extract_deb_name_version(self, deb_path: str) -> str:
+    @classmethod
+    def _extract_deb_name_version(cls, deb_path: str) -> str:
         try:
             output = subprocess.check_output(
                 ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
@@ -700,22 +586,13 @@ class Ubuntu(BaseRepo):
 
         return output.decode().strip()
 
-    def _extract_deb(self, deb_path: str, extract_dir: str) -> None:
+    @classmethod
+    def _extract_deb(cls, deb_path: str, extract_dir: str) -> None:
         """Extract deb and return `<package-name>=<version>`."""
         try:
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
         except subprocess.CalledProcessError:
             raise errors.UnpackError(deb_path)
-
-    def unpack(self, unpackdir) -> None:
-        pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, "*.deb"))
-        for pkg in pkgs_abs_path:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                self._extract_deb(pkg, temp_dir)
-                deb_name = self._extract_deb_name_version(pkg)
-                self._mark_origin_stage_package(temp_dir, deb_name)
-                file_utils.link_or_copy_tree(temp_dir, unpackdir)
-        self.normalize(unpackdir)
 
 
 def _get_local_sources_list():
@@ -734,12 +611,3 @@ def _format_sources_list(sources_list: str):
     release = os_release.OsRelease().version_codename()
 
     return string.Template(sources_list).substitute({"release": release})
-
-
-def _set_pkg_version(pkg, version):
-    """Set cadidate version to a specific version if available"""
-    if version in pkg.versions:
-        version = pkg.versions.get(version)
-        pkg.candidate = version
-    else:
-        raise errors.PackageNotFoundError("{}={}".format(pkg.name, version))

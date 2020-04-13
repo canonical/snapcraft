@@ -203,9 +203,7 @@ class PartsConfig:
             for source in sources:
                 repo.Repo.install_source(source)
 
-        # TODO: rename with migration strategy.
-        repo_dir = path.join(self._project.parts_dir, part_name, "ubuntu")
-        stage_packages_repo = repo.Repo(repo_dir)
+        stage_packages_repo = repo.Repo
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,

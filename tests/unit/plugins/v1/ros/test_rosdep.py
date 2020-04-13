@@ -53,15 +53,16 @@ class RosdepTestCase(unit.TestCase):
         self.rosdep.setup()
 
         # Verify that only rosdep was installed (no other .debs)
-        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
-        self.ubuntu_mock.assert_has_calls(
-            [
-                mock.call(self.rosdep._rosdep_path),
-                mock.call().get(["python-rosdep"]),
-                mock.call().unpack(self.rosdep._rosdep_install_path),
-            ]
+        self.assertThat(
+            self.ubuntu_mock.mock_calls,
+            Equals(
+                [
+                    mock.call.install_stage_packages(
+                        install_dir="rosdep_path/install",
+                        package_names=["python-rosdep"],
+                    )
+                ]
+            ),
         )
 
         # Verify that rosdep was initialized and updated

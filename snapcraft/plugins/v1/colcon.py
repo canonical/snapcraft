@@ -397,21 +397,16 @@ class ColconPlugin(PluginV1):
         self._setup_pip_dependencies(system_dependencies.get("pip"))
 
     def _setup_apt_dependencies(self, apt_dependencies):
-        if apt_dependencies:
-            ubuntudir = os.path.join(self.partdir, "ubuntu")
-            os.makedirs(ubuntudir, exist_ok=True)
+        if not apt_dependencies:
+            return
 
-            logger.info("Preparing to fetch apt dependencies...")
-            ubuntu = repo.Ubuntu(ubuntudir)
-
-            logger.info("Fetching apt dependencies...")
-            try:
-                ubuntu.get(apt_dependencies)
-            except repo.errors.PackageNotFoundError as e:
-                raise ColconAptDependencyFetchError(e.message)
-
-            logger.info("Installing apt dependencies...")
-            ubuntu.unpack(self.installdir)
+        logger.info("Installing apt dependencies...")
+        try:
+            repo.Ubuntu.install_stage_packages(
+                package_names=apt_dependencies, install_dir=self.installdir
+            )
+        except repo.errors.PackageNotFoundError as e:
+            raise ColconAptDependencyFetchError(e.message)
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:
