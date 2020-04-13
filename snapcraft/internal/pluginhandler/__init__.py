@@ -628,9 +628,8 @@ class PluginHandler:
             for k, v in snapcraft_build_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## Plugin Environment", file=run_environment)
-            for env in plugin_build_environment:
-                for k, v in env.items():
-                    print(f'export {k}="{v}"', file=run_environment)
+            for k, v in plugin_build_environment.items():
+                print(f'export {k}="{v}"', file=run_environment)
             print("## User Environment", file=run_environment)
             for env in user_build_environment:
                 for k, v in env.items():

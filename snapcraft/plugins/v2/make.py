@@ -55,7 +55,7 @@ class MakePlugin(PluginV2):
         """
         return {"gcc", "make"}
 
-    def get_build_environment(self) -> List[Dict[str, str]]:
+    def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
 
@@ -63,7 +63,7 @@ class MakePlugin(PluginV2):
 
         This method is called by the PluginHandler during the "build" step.
         """
-        return list()
+        return dict()
 
     def get_build_commands(self) -> List[str]:
         """

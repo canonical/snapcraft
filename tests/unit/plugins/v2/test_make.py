@@ -44,7 +44,7 @@ class MakePluginTest(TestCase):
     def test_get_build_environment(self):
         plugin = MakePlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_environment(), Equals(list()))
+        self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
         plugin = MakePlugin(part_name="my-part", options=lambda: None)

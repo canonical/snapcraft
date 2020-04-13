@@ -36,7 +36,7 @@ class NilPlugin(PluginV2):
         """
         return set()
 
-    def get_build_environment(self) -> List[Dict[str, str]]:
+    def get_build_environment(self) -> Dict[str, str]:
         """
         Return a dictionary with the environment to use in the build step.
 
@@ -44,7 +44,7 @@ class NilPlugin(PluginV2):
 
         This method is called by the PluginHandler during the "build" step.
         """
-        return list()
+        return dict()
 
     def get_build_commands(self) -> List[str]:
         """
