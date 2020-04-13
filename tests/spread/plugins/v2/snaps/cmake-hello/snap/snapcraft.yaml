@@ -7,14 +7,14 @@ description: |
   Make a new one.
 
 grade: devel
-base: core18
+base: core20
 confinement: strict
 
 build-packages: [gcc, libc6-dev]
 
 apps:
   cmake-hello:
-    command: cmake-hello
+    command: bin/cmake-hello
 
 parts:
   cmake-project:
