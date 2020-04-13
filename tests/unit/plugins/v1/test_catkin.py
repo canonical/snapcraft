@@ -44,28 +44,6 @@ from tests import unit
 from . import PluginsV1BaseTestCase
 
 
-class _CompareContainers:
-    def __init__(self, test, expected):
-        self.test = test
-        self.expected = expected
-
-    def __eq__(self, container):
-        self.test.assertThat(
-            len(container),
-            Equals(len(self.expected)),
-            "Expected {} items to be in container, "
-            "got {}".format(len(self.expected), len(container)),
-        )
-
-        for expectation in self.expected:
-            self.test.assertTrue(
-                expectation in container,
-                'Expected "{}" to be in container'.format(expectation),
-            )
-
-        return True
-
-
 class CatkinPluginBaseTest(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -328,8 +306,9 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        mock_instance = self.ubuntu_mock.return_value
-        mock_instance.get.side_effect = repo.errors.PackageNotFoundError("foo")
+        self.ubuntu_mock.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+            "foo"
+        )
 
         raised = self.assertRaises(catkin.CatkinAptDependencyFetchError, plugin.pull)
 
@@ -979,10 +958,17 @@ class PullTestCase(CatkinPluginBaseTest):
         self.assertThat(self.dependencies_mock.call_args[0][0], Equals({"my_package"}))
 
         # Verify that the dependencies were installed
-        self.ubuntu_mock.return_value.get.assert_called_with(
-            _CompareContainers(self, ["foo", "bar", "baz"])
+        self.assertThat(
+            self.ubuntu_mock.install_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        install_dir=plugin.installdir,
+                        package_names={"bar", "baz", "foo"},
+                    )
+                ]
+            ),
         )
-        self.ubuntu_mock.return_value.unpack.assert_called_with(plugin.installdir)
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_local_dependencies(self, generate_setup_mock):
@@ -1061,8 +1047,17 @@ class PullTestCase(CatkinPluginBaseTest):
             generate_setup_mock.assert_not_called()
 
         # Verify that roscore was installed
-        self.ubuntu_mock.return_value.get.assert_called_with({"ros-core-dependency"})
-        self.ubuntu_mock.return_value.unpack.assert_called_with(plugin.installdir)
+        self.assertThat(
+            self.ubuntu_mock.install_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        install_dir=plugin.installdir,
+                        package_names={"ros-core-dependency"},
+                    )
+                ]
+            ),
+        )
 
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_with_rosinstall_files(self, generate_setup_mock):
@@ -1703,14 +1698,12 @@ class CatkinFindTestCase(unit.TestCase):
         self.catkin.setup()
 
         # Verify that only rospack was installed (no other .debs)
-        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
         self.ubuntu_mock.assert_has_calls(
             [
-                mock.call(self.catkin._catkin_path),
-                mock.call().get(["ros-kinetic-catkin"]),
-                mock.call().unpack(self.catkin._catkin_install_path),
+                mock.call.install_stage_packages(
+                    install_dir="catkin_path/install",
+                    package_names=["ros-kinetic-catkin"],
+                )
             ]
         )
 
