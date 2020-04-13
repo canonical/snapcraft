@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from snapcraft.plugins.v2 import PluginV2
 
@@ -29,6 +29,12 @@ class NilPlugin(PluginV2):
             "additionalProperties": False,
             "properties": {},
         }
+
+    def get_build_packages(self) -> Set[str]:
+        """
+        Return a set of required packages to install in the build environment.
+        """
+        return set()
 
     def get_build_environment(self) -> List[Dict[str, str]]:
         """

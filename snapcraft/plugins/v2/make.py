@@ -33,7 +33,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Pass the given parameters to the make command.
 """
 
-import os
 from typing import Any, Dict, List, Set
 
 from snapcraft.plugins.v2 import PluginV2
@@ -59,6 +58,9 @@ class MakePlugin(PluginV2):
         }
 
     def get_build_packages(self) -> Set[str]:
+        """
+        Return a set of required packages to install in the build environment.
+        """
         return {"gcc", "make"}
 
     def get_build_environment(self) -> List[Dict[str, str]]:
@@ -83,6 +85,6 @@ class MakePlugin(PluginV2):
         specific functionality.
         """
         return [
-            f"make -j{os.getenv('SNAPCRAFT_PARALLEL_BUILD_COUNT', '1')}",
-            "make install DESTDIR=$SNAPCRAFT_PART_INSTALL",
+            'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
+            'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
         ]

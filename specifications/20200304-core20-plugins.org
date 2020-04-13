@@ -45,7 +45,7 @@ snapcraft.plugins.v2.PluginV2=. This plugin defines the following:
 
 #+BEGIN_SRC  python
 import abc
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 
 class PluginV2(abc.ABC):
@@ -58,6 +58,12 @@ class PluginV2(abc.ABC):
         """
         :param str name: part names
         :param dict properties: part defined properties.
+        """
+
+    @abc.abstractmethod
+    def get_build_packages(self) -> Set[str]:
+        """
+        Return a set of required packages to install in the build environment.
         """
 
     @abc.abstractmethod

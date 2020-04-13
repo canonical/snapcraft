@@ -31,6 +31,11 @@ class NilPluginTest(TestCase):
         self.assertFalse(schema["additionalProperties"])
         self.assertFalse(schema["properties"])
 
+    def test_get_build_packages(self):
+        plugin = NilPlugin(part_name="my-part", options=lambda: None)
+
+        self.assertThat(plugin.get_build_packages(), Equals(set()))
+
     def test_get_build_environment(self):
         plugin = NilPlugin(part_name="my-part", options=lambda: None)
 

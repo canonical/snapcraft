@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 
 class PluginV2(abc.ABC):
@@ -31,6 +31,12 @@ class PluginV2(abc.ABC):
         """
         self.name = part_name
         self.options = options
+
+    @abc.abstractmethod
+    def get_build_packages(self) -> Set[str]:
+        """
+        Return a list of required packages to install in the build environment.
+        """
 
     @abc.abstractmethod
     def get_build_environment(self) -> List[Dict[str, str]]:
