@@ -491,11 +491,11 @@ suites:
    - ubuntu-16.04*
    - ubuntu-18.04*
  tests/spread/plugins/v2/make/:
-   summary: tests of snapcraft's v2 Nil plugin
+   summary: tests of snapcraft's v2 Make plugin
    systems:
    - ubuntu-20.04*
  tests/spread/plugins/v2/nil/:
-   summary: tests of snapcraft's v2 Make plugin
+   summary: tests of snapcraft's v2 Nil plugin
    systems:
    - ubuntu-20.04*
 
