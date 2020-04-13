@@ -473,28 +473,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
             errors.AptGPGKeyInstallError, repo.Ubuntu.install_gpg_key, "FAKEKEY"
         )
 
-    @mock.patch("subprocess.run")
-    @mock.patch("pathlib.Path.unlink")
-    def test_initialize_snapcraft_defaults(self, mock_unlink, mock_run):
-        def _path_exists(path_self):
-            return str(self) in [
-                "/etc/apt/sources.list",
-                "/etc/apt/sources.list.d/test.list",
-            ]
-
-        self.useFixture(fixtures.MockPatchObject(Path, "exists", _path_exists))
-
-        def _path_glob(path_self, pattern):
-            self.assertThat(str(path_self), Equals("/etc/apt/sources.list.d"))
-            self.assertThat(pattern, Equals("*"))
-            yield Path("/etc/apt/sources.list.d/test.list")
-
-        self.useFixture(fixtures.MockPatchObject(Path, "glob", _path_glob))
-
-        repo.Ubuntu.initialize_snapcraft_defaults()
-
-        # self.assertThat(mock_run.mock_calls, Equals("X"))
-
 
 class TestInitializeSnapcraftDefaults(unit.TestCase):
     def setUp(self):
