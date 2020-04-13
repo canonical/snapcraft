@@ -401,18 +401,23 @@ class Ubuntu(BaseRepo):
         marked_packages: Dict[str, apt.package.Version],
         skipped_blacklisted: Set[str],
         skipped_essential: Set[str],
+        unfiltered_packages: List[str],
     ) -> None:
         if package.name in marked_packages:
             # already marked, ignore.
             return
 
-        if cls._is_filtered_package(package.name):
-            skipped_blacklisted.add(package.name)
-            return
+        # If package is not explicitly asked for in unfiltered packages,
+        # we will filter out base packages using the base's manifest and
+        # essential priority.
+        if package.name not in unfiltered_packages:
+            if cls._is_filtered_package(package.name):
+                skipped_blacklisted.add(package.name)
+                return
 
-        if package.candidate.priority == "essential":
-            skipped_essential.add(package.name)
-            return
+            if package.candidate.priority == "essential":
+                skipped_essential.add(package.name)
+                return
 
         # We have to mark it first or risk recursion depth exceeded...
         marked_packages[package.name] = package.candidate
@@ -424,6 +429,7 @@ class Ubuntu(BaseRepo):
                 marked_packages=marked_packages,
                 skipped_blacklisted=skipped_blacklisted,
                 skipped_essential=skipped_essential,
+                unfiltered_packages=unfiltered_packages,
             )
 
     @classmethod
@@ -451,6 +457,7 @@ class Ubuntu(BaseRepo):
                 marked_packages=marked_packages,
                 skipped_blacklisted=skipped_blacklisted,
                 skipped_essential=skipped_essential,
+                unfiltered_packages=package_names,
             )
 
         marked = sorted(marked_packages.keys())
