@@ -517,10 +517,6 @@ class PluginHandler:
         if self.is_clean(steps.PULL):
             return
 
-        # Remove stage-packages cache (where stage packages are fetched)
-        if os.path.exists(self._stage_packages_repo.rootdir):
-            shutil.rmtree(self._stage_packages_repo.rootdir)
-
         # Remove snaps dir (where stage snaps are fetched)
         if os.path.exists(self.part_snaps_dir):
             shutil.rmtree(self.part_snaps_dir)
