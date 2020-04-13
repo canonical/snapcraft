@@ -444,28 +444,23 @@ class PluginHandler:
                 self.part_install_dir, clean_target=False, keep_snap=True
             )
 
-    def _fetch_stage_packages(self):
-        stage_packages = self._grammar_processor.get_stage_packages()
-        if stage_packages:
-            logger.debug("Fetching stage-packages {!r}".format(stage_packages))
-            try:
-                self.stage_packages = self._stage_packages_repo.get(stage_packages)
-            except repo.errors.PackageNotFoundError as e:
-                raise errors.StagePackageDownloadError(self.name, e.message)
-
-    def _unpack_stage_packages(self):
+    def _install_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             logger.debug(
-                "Unpacking stage-packages to {!r}".format(self.part_install_dir)
+                f"Installing {stage_packages!r} stage-packages to {self.plugin.installdir!r}"
             )
-            self._stage_packages_repo.unpack(self.part_install_dir)
+            try:
+                self.stage_packages = self._stage_packages_repo.install_stage_packages(
+                    package_names=stage_packages, install_dir=self.plugin.installdir
+                )
+            except repo.errors.PackageNotFoundError as e:
+                raise errors.StagePackageDownloadError(self.name, e.message)
 
     def prepare_pull(self, force=False):
         self.makedirs()
-        self._fetch_stage_packages()
+        self._install_stage_packages()
         self._fetch_stage_snaps()
-        self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
     def pull(self, force=False):
@@ -543,10 +538,6 @@ class PluginHandler:
         if self.is_clean(steps.PULL):
             return
 
-        # Remove stage-packages cache (where stage packages are fetched)
-        if os.path.exists(self._stage_packages_repo.rootdir):
-            shutil.rmtree(self._stage_packages_repo.rootdir)
-
         # Remove snaps dir (where stage snaps are fetched)
         if os.path.exists(self.part_snaps_dir):
             shutil.rmtree(self.part_snaps_dir)
@@ -564,7 +555,7 @@ class PluginHandler:
         self.makedirs()
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
-        self._unpack_stage_packages()
+        self._install_stage_packages()
 
     def build(self, force=False):
         self.makedirs()

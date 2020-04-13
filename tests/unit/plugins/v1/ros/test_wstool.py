@@ -47,14 +47,11 @@ class WstoolTestCase(unit.TestCase):
         self.wstool.setup()
 
         # Verify that only wstool was installed (no other .debs)
-        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
         self.ubuntu_mock.assert_has_calls(
             [
-                mock.call(self.wstool._wstool_path),
-                mock.call().get(["python-wstool"]),
-                mock.call().unpack(self.wstool._wstool_install_path),
+                mock.call.install_stage_packages(
+                    install_dir="wstool_path/install", package_names=["python-wstool"]
+                )
             ]
         )
 

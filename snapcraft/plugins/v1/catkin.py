@@ -555,21 +555,16 @@ class CatkinPlugin(PluginV1):
         self._setup_pip_dependencies(system_dependencies.get("pip"))
 
     def _setup_apt_dependencies(self, apt_dependencies):
-        if apt_dependencies:
-            ubuntudir = os.path.join(self.partdir, "ubuntu")
-            os.makedirs(ubuntudir, exist_ok=True)
+        if not apt_dependencies:
+            return
 
-            logger.info("Preparing to fetch apt dependencies...")
-            ubuntu = repo.Ubuntu(ubuntudir)
-
-            logger.info("Fetching apt dependencies...")
-            try:
-                ubuntu.get(apt_dependencies)
-            except repo.errors.PackageNotFoundError as e:
-                raise CatkinAptDependencyFetchError(e.message)
-
-            logger.info("Installing apt dependencies...")
-            ubuntu.unpack(self.installdir)
+        logger.info("Installing apt dependencies...")
+        try:
+            repo.Ubuntu.install_stage_packages(
+                package_names=apt_dependencies, install_dir=self.installdir
+            )
+        except repo.errors.PackageNotFoundError as e:
+            raise CatkinAptDependencyFetchError(e.message)
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:
@@ -994,13 +989,11 @@ class _Catkin:
 
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
-        logger.info("Preparing to fetch catkin...")
-        ubuntu = repo.Ubuntu(self._catkin_path)
-        logger.info("Fetching catkin...")
-        ubuntu.get(["ros-{}-catkin".format(self._ros_distro)])
-
         logger.info("Installing catkin...")
-        ubuntu.unpack(self._catkin_install_path)
+        repo.Ubuntu.install_stage_packages(
+            package_names=["ros-{}-catkin".format(self._ros_distro)],
+            install_dir=self._catkin_install_path,
+        )
 
     def find(self, package_name):
         with contextlib.suppress(subprocess.CalledProcessError):

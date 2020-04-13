@@ -382,7 +382,7 @@ class LXD(Provider):
         self.echoer.wrapped("Waiting for network to be ready...")
         for i in range(40):
             try:
-                self._run(["getent", "hosts", "snapcraft.io"])
+                self._run(["getent", "hosts", "snapcraft.io"], hide_output=True)
                 break
             except errors.ProviderExecError:
                 sleep(0.5)

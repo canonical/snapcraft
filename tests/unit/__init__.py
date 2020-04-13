@@ -300,7 +300,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         if not stage_packages_repo:
             stage_packages_repo = mock.Mock()
-            stage_packages_repo.rootdir = "ubuntu"
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=properties,

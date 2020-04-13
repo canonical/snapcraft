@@ -39,28 +39,6 @@ from tests import unit
 from . import PluginsV1BaseTestCase
 
 
-class _CompareContainers:
-    def __init__(self, test, expected):
-        self.test = test
-        self.expected = expected
-
-    def __eq__(self, container):
-        self.test.assertThat(
-            len(container),
-            Equals(len(self.expected)),
-            "Expected {} items to be in container, "
-            "got {}".format(len(self.expected), len(container)),
-        )
-
-        for expectation in self.expected:
-            self.test.assertTrue(
-                expectation in container,
-                'Expected "{}" to be in container'.format(expectation),
-            )
-
-        return True
-
-
 class ColconPluginTestBase(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -316,8 +294,9 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        mock_instance = self.ubuntu_mock.return_value
-        mock_instance.get.side_effect = repo.errors.PackageNotFoundError("foo")
+        self.ubuntu_mock.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+            "foo"
+        )
 
         raised = self.assertRaises(colcon.ColconAptDependencyFetchError, plugin.pull)
 
@@ -929,10 +908,17 @@ class PullTestCase(ColconPluginTestBase):
         self.assertThat(self.dependencies_mock.call_args[0][0], Equals({"my_package"}))
 
         # Verify that the dependencies were installed
-        self.ubuntu_mock.return_value.get.assert_called_with(
-            _CompareContainers(self, ["foo", "bar", "baz"])
+        self.assertThat(
+            self.ubuntu_mock.install_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        install_dir=plugin.installdir,
+                        package_names={"bar", "baz", "foo"},
+                    )
+                ]
+            ),
         )
-        self.ubuntu_mock.return_value.unpack.assert_called_with(plugin.installdir)
 
     def test_pull_local_dependencies(self):
         self.properties.colcon_packages.append("package_2")

@@ -80,14 +80,10 @@ class Rosdep:
 
         # rosdep isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
-        logger.info("Preparing to fetch rosdep...")
-        ubuntu = repo.Ubuntu(self._rosdep_path)
-
-        logger.info("Fetching rosdep...")
-        ubuntu.get(["python-rosdep"])
-
         logger.info("Installing rosdep...")
-        ubuntu.unpack(self._rosdep_install_path)
+        repo.Ubuntu.install_stage_packages(
+            package_names=["python-rosdep"], install_dir=self._rosdep_install_path
+        )
 
         logger.info("Initializing rosdep database...")
         try:

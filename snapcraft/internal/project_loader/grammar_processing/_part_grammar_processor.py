@@ -148,7 +148,7 @@ class PartGrammarProcessor:
             processor = grammar.GrammarProcessor(
                 getattr(self._plugin, "stage_packages", []),
                 self._project,
-                self._repo.is_valid,
+                self._repo.build_package_is_valid,
                 transformer=package_transformer,
             )
             self.__stage_packages = processor.process()

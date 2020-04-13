@@ -166,6 +166,13 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
+    def install_stage_packages(
+        cls, *, package_names: List[str], install_dir: str
+    ) -> List[str]:
+        """Install stage packages to install_dir."""
+        raise errors.NoNativeBackendError()
+
+    @classmethod
     def install_gpg_key(cls, gpg_key: str) -> None:
         """Install trusted GPG key."""
         raise errors.NoNativeBackendError()
@@ -175,45 +182,8 @@ class BaseRepo:
         """Install repository source location."""
         raise errors.NoNativeBackendError()
 
-    def __init__(self, rootdir: str, *args, **kwargs):
-        """Initialize a repository handler.
-
-        :param str rootdir: the root directory to work on. This may well be to
-                            create repo handling specific caches or download
-                            artifacts.
-        """
-        self.rootdir = rootdir
-
-    def get(self, package_names: List[str]) -> List[str]:
-        """Get the packages.
-
-        This method needs to be implemented by the inheriting class. It
-        is called all along the core of snapcraft to obtain the
-        package_names and store them in some repo defined location to
-        later unpack.
-
-        :param str package_names: list of packages to obtain.
-        :returns: list of packages obtained, versioned if possible.
-        :rtype: list of strings.
-        :raises snapcraft.repo.errors.PackageNotFoundError:
-            when a package in package_names is not found.
-        """
-        raise errors.NoNativeBackendError()
-
-    def unpack(self, unpackdir: str) -> None:
-        """Unpack obtained packages into unpackdir.
-
-        This method needs to be implemented by the inheriting class. It
-        is called all along the core of snapcraft to unpack the previously
-        obtained package_names in get into unpackdir.
-
-        After the unpack logic is executed, normalize should be called.
-
-        :param str unpackdir: target directory to unpack packages to.
-        """
-        raise errors.NoNativeBackendError()
-
-    def normalize(self, unpackdir: str) -> None:
+    @classmethod
+    def normalize(cls, unpackdir: str) -> None:
         """Normalize artifacts in unpackdir.
 
         Repo specific packages are generally created to live in a specific
@@ -223,13 +193,14 @@ class BaseRepo:
 
         :param str unpackdir: directory where files where unpacked.
         """
-        self._remove_useless_files(unpackdir)
-        self._fix_artifacts(unpackdir)
-        self._fix_xml_tools(unpackdir)
-        self._fix_shebangs(unpackdir)
+        cls._remove_useless_files(unpackdir)
+        cls._fix_artifacts(unpackdir)
+        cls._fix_xml_tools(unpackdir)
+        cls._fix_shebangs(unpackdir)
 
+    @classmethod
     def _mark_origin_stage_package(
-        self, sources_dir: str, stage_package: str
+        cls, sources_dir: str, stage_package: str
     ) -> Set[str]:
         """Mark all files in sources_dir as coming from stage_package."""
         file_list = set()
@@ -245,7 +216,8 @@ class BaseRepo:
 
         return file_list
 
-    def _remove_useless_files(self, unpackdir: str) -> None:
+    @classmethod
+    def _remove_useless_files(cls, unpackdir: str) -> None:
         """Remove files that aren't useful or will clash with other parts."""
         sitecustomize_files = glob.glob(
             os.path.join(unpackdir, "usr", "lib", "python*", "sitecustomize.py")
@@ -253,7 +225,8 @@ class BaseRepo:
         for sitecustomize_file in sitecustomize_files:
             os.remove(sitecustomize_file)
 
-    def _fix_artifacts(self, unpackdir: str) -> None:
+    @classmethod
+    def _fix_artifacts(cls, unpackdir: str) -> None:
         """Perform various modifications to unpacked artifacts.
 
         Sometimes distro packages will contain absolute symlinks (e.g. if the
@@ -269,14 +242,15 @@ class BaseRepo:
             for entry in itertools.chain(files, dirs):
                 path = os.path.join(root, entry)
                 if os.path.islink(path) and os.path.isabs(os.readlink(path)):
-                    self._fix_symlink(path, unpackdir, root)
+                    cls._fix_symlink(path, unpackdir, root)
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
                 if path.endswith(".pc") and not os.path.islink(path):
                     fix_pkg_config(unpackdir, path)
 
-    def _fix_xml_tools(self, unpackdir: str) -> None:
+    @classmethod
+    def _fix_xml_tools(cls, unpackdir: str) -> None:
         xml2_config_path = os.path.join(unpackdir, "usr", "bin", "xml2-config")
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
@@ -293,9 +267,10 @@ class BaseRepo:
                 "prefix={}/usr".format(unpackdir),
             )
 
-    def _fix_symlink(self, path: str, unpackdir: str, root: str) -> None:
+    @classmethod
+    def _fix_symlink(cls, path: str, unpackdir: str, root: str) -> None:
         host_target = os.readlink(path)
-        if host_target in self.get_package_libraries("libc6"):
+        if host_target in cls.get_package_libraries("libc6"):
             logger.debug(
                 "Not fixing symlink {!r}: it's pointing to libc".format(host_target)
             )
@@ -307,7 +282,8 @@ class BaseRepo:
         os.remove(path)
         os.symlink(os.path.relpath(target, root), path)
 
-    def _fix_shebangs(self, unpackdir: str) -> None:
+    @classmethod
+    def _fix_shebangs(cls, unpackdir: str) -> None:
         """Change hard-coded shebangs in unpacked files to use env."""
         mangling.rewrite_python_shebangs(unpackdir)
 
