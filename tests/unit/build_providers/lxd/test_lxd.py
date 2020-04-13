@@ -205,6 +205,7 @@ class LXDInitTest(LXDBaseTest):
                     ]
                 )
             ]
+            * 2
         )
         self.assertThat(self.check_call_mock.call_count, Equals(27))
         self.check_call_mock.assert_has_calls(
@@ -725,6 +726,7 @@ class LXDLaunchedTest(LXDBaseTest):
                     ]
                 )
             ]
+            * 2
         )
 
     def test_mount_prime_directory(self):
@@ -763,6 +765,7 @@ class LXDLaunchedTest(LXDBaseTest):
                     ]
                 )
             ]
+            * 2
         )
 
     def test_run(self):
