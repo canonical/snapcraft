@@ -435,7 +435,7 @@ class PluginHandler:
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             logger.debug(
-                "Installing stage-packages to {!r}".format(self.plugin.installdir)
+                f"Installing {stage_packages!r} stage-packages to {self.plugin.installdir!r}"
             )
             try:
                 self.stage_packages = self._stage_packages_repo.install_stage_packages(
