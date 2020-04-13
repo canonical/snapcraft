@@ -188,7 +188,26 @@ class LXDInitTest(LXDBaseTest):
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
         self.assertThat(container.sync_mock.call_count, Equals(36))
-        self.assertThat(self.check_call_mock.call_count, Equals(29))
+        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.check_output_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
+                    ]
+                )
+            ]
+            * 2
+        )
+        self.assertThat(self.check_call_mock.call_count, Equals(27))
         self.check_call_mock.assert_has_calls(
             [
                 mock.call(
@@ -381,19 +400,6 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
-                    ]
-                ),
-                mock.call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
                         "apt-get",
                         "update",
                     ]
@@ -543,19 +549,6 @@ class LXDInitTest(LXDBaseTest):
                         "chmod",
                         "0755",
                         "/bin/_snapcraft_prompt",
-                    ]
-                ),
-                mock.call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
                     ]
                 ),
                 mock.call(
@@ -716,7 +709,25 @@ class LXDLaunchedTest(LXDBaseTest):
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.check_output_mock.assert_not_called()
+        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.check_output_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
+                    ]
+                )
+            ]
+            * 2
+        )
 
     def test_mount_prime_directory(self):
         self.check_output_mock.return_value = b"/root"
@@ -737,7 +748,25 @@ class LXDLaunchedTest(LXDBaseTest):
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.check_output_mock.assert_not_called()
+        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.check_output_mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
+                    ]
+                )
+            ]
+            * 2
+        )
 
     def test_run(self):
         self.instance._run(["ls", "/root/project"])
