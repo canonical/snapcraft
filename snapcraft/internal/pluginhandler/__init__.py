@@ -612,7 +612,7 @@ class PluginHandler:
 
         # Create the script.
         with io.StringIO() as run_environment:
-            print("#!/bin/sh", file=run_environment)
+            print("#!/bin/sh -e", file=run_environment)
 
             print("# Environment", file=run_environment)
             print("## Part Environment", file=run_environment)

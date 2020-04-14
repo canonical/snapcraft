@@ -59,6 +59,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "cmake": v2.CMakePlugin,
             "make": v2.MakePlugin,
             "nil": v2.NilPlugin,
+            "python": v2.PythonPlugin,
         },
     }
 else:

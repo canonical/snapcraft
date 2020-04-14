@@ -4,6 +4,7 @@ environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
   SNAP/make: make-hello
+  SNAP/python: python-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -15,8 +16,12 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-  # Undo changes to hello.c
-  git checkout hello.c
+  # Undo changes to hello
+  if [ "${SNAP}" = "python-hello" ]; then
+    git checkout hello
+  else
+    git checkout hello.c
+  fi
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -31,7 +36,11 @@ execute: |
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
-  sed -i hello.c -e 's/hello world/hello rebuilt world/'
+  if [ "${SNAP}" = "python-hello" ]; then
+    sed -i hello -e 's/hello world/hello rebuilt world/'
+  else
+    sed -i hello.c -e 's/hello world/hello rebuilt world/'
+  fi
   snapcraft | MATCH "Updating build step for "
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello rebuilt world" ]
