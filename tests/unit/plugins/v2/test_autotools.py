@@ -47,7 +47,10 @@ class AutotoolsPluginTest(TestCase):
     def test_get_build_packages(self):
         plugin = AutotoolsPlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_packages(), Equals({"autoconf", "automake", "autopoint", "gcc", "libtool"}))
+        self.assertThat(
+            plugin.get_build_packages(),
+            Equals({"autoconf", "automake", "autopoint", "gcc", "libtool"}),
+        )
 
     def test_get_build_environment(self):
         plugin = AutotoolsPlugin(part_name="my-part", options=lambda: None)
@@ -77,10 +80,7 @@ class AutotoolsPluginTest(TestCase):
 
     def test_get_build_commands_with_configflags(self):
         class Options:
-            configflags = [
-                "--with-foo=true",
-                "--prefix=/foo",
-            ]
+            configflags = ["--with-foo=true", "--prefix=/foo"]
 
         plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 
