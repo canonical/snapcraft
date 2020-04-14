@@ -88,9 +88,9 @@ class CMakePlugin(PluginV2):
         if not any(
             c.startswith("-DCMAKE_INSTALL_PREFIX=") for c in self.options.configflags
         ):
-            cmake_configure_cmd = f'{cmake_configure_cmd} -DCMAKE_INSTALL_PREFIX="$SNAPCRAFT_CMAKE_INSTALL_PREFIX"'
+            cmake_configure_cmd = f'{cmake_configure_cmd} -DCMAKE_INSTALL_PREFIX="${{SNAPCRAFT_CMAKE_INSTALL_PREFIX}}"'
         return [
             cmake_configure_cmd,
-            'cmake --build . -- -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-            'cmake --build . --target install -- DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+            'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+            'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
         ]
