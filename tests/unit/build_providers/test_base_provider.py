@@ -20,10 +20,11 @@ import pathlib
 from textwrap import dedent
 from unittest.mock import call, patch, Mock
 
-from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
+import fixtures
+from testtools.matchers import Equals, EndsWith, DirExists, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
-from snapcraft.internal.build_providers import _base_provider, errors
+from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -93,23 +94,69 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.start_mock.assert_any_call()
         provider.save_info_mock.assert_called_once_with({"base": "core16"})
 
-        self.assertThat(provider.run_mock.call_count, Equals(7))
-        provider.run_mock.assert_has_calls(
-            [
-                call(["mv", "/var/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
-                call(["chown", "root:root", "/root/.bashrc"]),
-                call(["chmod", "0600", "/root/.bashrc"]),
-                call(
-                    [
-                        "mv",
-                        "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
-                        "/bin/_snapcraft_prompt",
-                    ]
-                ),
-                call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
-                call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
-                call(["snapcraft", "refresh"]),
-            ]
+        self.assertThat(
+            provider.run_mock.mock_calls,
+            Equals(
+                [
+                    call(["mv", "/var/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                    call(["chown", "root:root", "/root/.bashrc"]),
+                    call(["chmod", "0600", "/root/.bashrc"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                            "/bin/_snapcraft_prompt",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
+                    call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
+                            "/etc/apt/sources.list",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/etc/apt/sources.list"]),
+                    call(["chmod", "0644", "/etc/apt/sources.list"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvbWFpbi5zb3VyY2Vz",
+                            "/etc/apt/sources.list.d/main.sources",
+                        ]
+                    ),
+                    call(
+                        ["chown", "root:root", "/etc/apt/sources.list.d/main.sources"]
+                    ),
+                    call(["chmod", "0644", "/etc/apt/sources.list.d/main.sources"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvc2VjdXJpdHkuc291cmNlcw==",
+                            "/etc/apt/sources.list.d/security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chown",
+                            "root:root",
+                            "/etc/apt/sources.list.d/security.sources",
+                        ]
+                    ),
+                    call(["chmod", "0644", "/etc/apt/sources.list.d/security.sources"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
+                            "/etc/apt/apt.conf.d/00-snapcraft",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/etc/apt/apt.conf.d/00-snapcraft"]),
+                    call(["chmod", "0644", "/etc/apt/apt.conf.d/00-snapcraft"]),
+                    call(["snapcraft", "refresh"]),
+                ]
+            ),
         )
 
         self.assertThat(provider.provider_project_dir, DirExists())
@@ -214,55 +261,64 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.clean_project_mock.assert_not_called()
 
     def test_setup_environment_content(self):
-        @contextlib.contextmanager
-        def get_tempfile():
-            try:
-                with open(
-                    get_tempfile.temp_files[get_tempfile.index], "wb"
-                ) as fake_temp_file:
-                    yield fake_temp_file
-            finally:
-                get_tempfile.index += 1
+        recorded_files = dict()
 
-        get_tempfile.temp_files = ["bashrc", "prompt"]
-        get_tempfile.index = 0
+        @contextlib.contextmanager
+        def fake_namedtempfile(*, suffix: str, **kwargs):
+            # Usage hides the file basename in the suffix.
+            tmp_path = os.path.join(self.path, "tmpfile")
+            with open(tmp_path, "wb") as f_write:
+                yield f_write
+            with open(tmp_path, "r") as f_read:
+                recorded_files[suffix] = f_read.read()
+
+        self.useFixture(
+            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
+        )
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-
-        provider._setup_environment_files(
-            files=_base_provider._SNAPCRAFT_FILES, tempfile_func=get_tempfile
-        )
+        provider._setup_environment()
 
         self.expectThat(
-            "bashrc",
-            FileContains(
-                dedent(
-                    """\
-            #!/bin/bash
-            export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
-        """
-                )
-            ),
-        )
-        self.expectThat(
-            "prompt",
-            FileContains(
-                dedent(
-                    """\
-            #!/bin/bash
-            if [[ "$PWD" =~ ^$HOME.* ]]; then
-                path="${PWD/#$HOME/\\ ..}"
-                if [[ "$path" == " .." ]]; then
-                    ps1=""
-                else
-                    ps1="$path"
-                fi
-            else
-                ps1="$PWD"
-            fi
-            echo -n $ps1
-        """
-                )
+            recorded_files,
+            Equals(
+                {
+                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+                    "_snapcraft_prompt": dedent(
+                        """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+                    ),
+                    "main.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://archive.ubuntu.com/ubuntu
+                        Suites: xenial xenial-updates
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "security.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://security.ubuntu.com/ubuntu
+                        Suites: xenial-security
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "sources.list": "",
+                }
             ),
         )
 
@@ -273,7 +329,9 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.start_mock.assert_any_call()
-        provider.run_mock.assert_not_called()
+        self.assertThat(
+            provider.run_mock.mock_calls, Equals([call(["snapcraft", "refresh"])])
+        )
 
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)

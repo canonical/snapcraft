@@ -25,7 +25,7 @@ import sys
 import tempfile
 from textwrap import dedent
 from typing import Optional, Sequence
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from xdg import BaseDirectory
 
@@ -40,40 +40,6 @@ logger = logging.getLogger(__name__)
 
 def _get_platform() -> str:
     return sys.platform
-
-
-_SNAPCRAFT_FILES = [
-    {
-        "path": "/root/.bashrc",
-        "content": dedent(
-            """\
-            #!/bin/bash
-            export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
-            """
-        ),
-        "permissions": "0600",
-    },
-    {
-        "path": "/bin/_snapcraft_prompt",
-        "content": dedent(
-            """\
-            #!/bin/bash
-            if [[ "$PWD" =~ ^$HOME.* ]]; then
-                path="${PWD/#$HOME/\\ ..}"
-                if [[ "$path" == " .." ]]; then
-                    ps1=""
-                else
-                    ps1="$path"
-                fi
-            else
-                ps1="$PWD"
-            fi
-            echo -n $ps1
-            """
-        ),
-        "permissions": "0755",
-    },
-]
 
 
 class Provider(abc.ABC):
@@ -274,10 +240,13 @@ class Provider(abc.ABC):
             # and do first boot related things and if any failure occurs,
             # then clean up.
             self._setup_environment()
-        else:
-            # We always setup snapcraft after a start to bring it up to speed with
-            # what is on the host
-            self._setup_snapcraft()
+
+        # We always setup snapcraft after a start to bring it up to speed with
+        # what is on the host
+        self._setup_snapcraft()
+
+        # Ensure package cache is ready.
+        self._run(["snapcraft", "refresh"])
 
     def _ensure_base(self) -> None:
         info = self._load_info()
@@ -290,34 +259,117 @@ class Provider(abc.ABC):
             )
             self.clean_project()
 
-    def _setup_environment_files(
-        self, *, files: List[Dict[str, Any]], tempfile_func=tempfile.NamedTemporaryFile
-    ) -> None:
-        for snapcraft_file in files:
-            with tempfile_func() as temp_file:
-                temp_file.write(snapcraft_file["content"].encode())
-                temp_file.flush()
-                # Push to a location that can be written to by all backends
-                # with unique files depending on path.
-                remote_file = os.path.join(
-                    "/var/tmp",
-                    base64.b64encode(snapcraft_file["path"].encode()).decode(),
-                )
-                self._push_file(source=temp_file.name, destination=remote_file)
-                self._run(["mv", remote_file, snapcraft_file["path"]])
-                # This chown is not necessarily needed. but does keep things
-                # consistent.
-                self._run(["chown", "root:root", snapcraft_file["path"]])
-                self._run(
-                    ["chmod", snapcraft_file["permissions"], snapcraft_file["path"]]
-                )
+    def _install_file(self, *, path: str, content: str, permissions: str) -> None:
+        basename = os.path.basename(path)
+
+        with tempfile.NamedTemporaryFile(suffix=basename) as temp_file:
+            temp_file.write(content.encode())
+            temp_file.flush()
+            # Push to a location that can be written to by all backends
+            # with unique files depending on path.
+            remote_file = os.path.join(
+                "/var/tmp", base64.b64encode(path.encode()).decode()
+            )
+            self._push_file(source=temp_file.name, destination=remote_file)
+            self._run(["mv", remote_file, path])
+            # This chown is not necessarily needed. but does keep things
+            # consistent.
+            self._run(["chown", "root:root", path])
+            self._run(["chmod", permissions, path])
+
+    def _get_code_name_from_build_base(self):
+        # TODO fix this with generalized mechanism.
+        build_base = self.project._get_build_base()
+
+        return {
+            "core": "xenial",
+            "core16": "xenial",
+            "core18": "bionic",
+            "core20": "focal",
+        }[build_base]
 
     def _setup_environment(self) -> None:
-        self._setup_environment_files(files=_SNAPCRAFT_FILES)
+        self._install_file(
+            path="/root/.bashrc",
+            content=dedent(
+                """\
+                        #!/bin/bash
+                        export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
+                        """
+            ),
+            permissions="0600",
+        )
 
-        # We need to setup snapcraft now to be able to refresh
-        self._setup_snapcraft()
-        self._run(["snapcraft", "refresh"])
+        self._install_file(
+            path="/bin/_snapcraft_prompt",
+            content=dedent(
+                """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+            ),
+            permissions="0755",
+        )
+
+        self._install_file(path="/etc/apt/sources.list", content="", permissions="0644")
+
+        self._install_file(
+            path="/etc/apt/sources.list.d/main.sources",
+            content=dedent(
+                """\
+                    Types: deb deb-src
+                    URIs: {primary_mirror}
+                    Suites: {release} {release}-updates
+                    Components: main multiverse restricted universe
+                    """.format(
+                    primary_mirror=os.getenv(
+                        "SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR",
+                        "http://archive.ubuntu.com/ubuntu",
+                    ),
+                    release=self._get_code_name_from_build_base(),
+                )
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/apt/sources.list.d/security.sources",
+            content=dedent(
+                """\
+                        Types: deb deb-src
+                        URIs: {security_mirror}
+                        Suites: {release}-security
+                        Components: main multiverse restricted universe
+                        """.format(
+                    security_mirror=os.getenv(
+                        "SNAPCRAFT_BUILD_ENVIRONMENT_SECURITY_MIRROR",
+                        "http://security.ubuntu.com/ubuntu",
+                    ),
+                    release=self._get_code_name_from_build_base(),
+                )
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/apt/apt.conf.d/00-snapcraft",
+            content=dedent(
+                """\
+                    Apt::Install-Recommends "false";
+                    """
+            ),
+            permissions="0644",
+        )
 
     def _setup_snapcraft(self) -> None:
         self._save_info(base=self.project._get_build_base())
