@@ -54,7 +54,12 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "scons": v1.SconsPlugin,
             "waf": v1.WafPlugin,
         },
-        "core20": {"cmake": v2.CMakePlugin, "make": v2.MakePlugin, "nil": v2.NilPlugin},
+        "core20": {
+            "autotools": v2.AutotoolsPlugin,
+            "cmake": v2.CMakePlugin,
+            "make": v2.MakePlugin,
+            "nil": v2.NilPlugin,
+        },
     }
 else:
     # We cannot import the plugins on anything but linux.

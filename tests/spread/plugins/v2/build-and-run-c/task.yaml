@@ -1,6 +1,7 @@
 summary: Build, rebuild and run hello.c with different plugin configurations
 
 environment:
+  SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
   SNAP/make: make-hello
 
