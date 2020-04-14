@@ -1,0 +1,36 @@
+summary: Build a snap that has virtual stage and build packages
+
+environment:
+  SNAP_DIR: snaps/virtual-packages-test
+
+systems:
+  - ubuntu-16*
+  - ubuntu-18*
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  test_file="/usr/lib/nodejs/uglify-js/bin/uglifyjs"
+
+  if [ -f "${test_file}" ]; then
+    echo "uglifyjs already installed?"
+    exit 1
+  fi
+
+  cd "$SNAP_DIR"
+  snapcraft build
+
+  if [ ! -f "${test_file}" ]; then
+    echo "failed to install uglifyjs build package"
+    exit 1
+  fi
+
+  snapcraft prime
+
+  if [ ! -f "prime/${test_file}" ]; then
+    echo "failed to install uglifyjs stage package"
+    exit 1
+  fi
