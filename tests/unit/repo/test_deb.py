@@ -126,8 +126,9 @@ class FakeAptCache:
     def is_virtual_package(self, package_name):
         return package_name.startswith("virtual-")
 
-    def get_providing_package(self, package_name):
-        return package_name.replace("virtual-", "nonvirtual-")
+    def get_providing_packages(self, package_name):
+        resolved_package = self.packages[package_name.replace("virtual-", "")]
+        return [resolved_package]
 
     def close(self):
         pass
@@ -159,6 +160,16 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_install_stage_package(self):
         repo.Ubuntu.install_stage_packages(
             package_names=["fake-package"], install_dir=self.path
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["fake-package"].mock_calls,
+            Contains(call.candidate.fetch_binary(self.path)),
+        )
+
+    def test_install_virtual_stage_package(self):
+        repo.Ubuntu.install_stage_packages(
+            package_names=["virtual-fake-package"], install_dir=self.path
         )
 
         self.assertThat(
@@ -270,6 +281,28 @@ class BuildPackagesTestCase(UbuntuTestCase):
                     "sudo --preserve-env apt-get --no-install-recommends -y "
                     "-o Dpkg::Progress-Fancy=1 install".split()
                     + sorted(set(installable)),
+                    env={
+                        "DEBIAN_FRONTEND": "noninteractive",
+                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                        "DEBIAN_PRIORITY": "critical",
+                    },
+                )
+            ]
+        )
+
+    @patch("snapcraft.repo._deb.is_dumb_terminal")
+    @patch("subprocess.check_call")
+    def test_install_virtual_build_package(
+        self, mock_check_call, mock_is_dumb_terminal
+    ):
+        mock_is_dumb_terminal.return_value = False
+        self.install_test_packages(["virtual-package-not-installed"])
+
+        mock_check_call.assert_has_calls(
+            [
+                call(
+                    "sudo --preserve-env apt-get --no-install-recommends -y "
+                    "-o Dpkg::Progress-Fancy=1 install package-not-installed".split(),
                     env={
                         "DEBIAN_FRONTEND": "noninteractive",
                         "DEBCONF_NONINTERACTIVE_SEEN": "true",

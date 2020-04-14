@@ -297,12 +297,25 @@ class Ubuntu(BaseRepo):
         # Make sure all packages are valid and remove already installed.
         install_packages = list()
         for name in sorted(package_names):
-            package_name, _ = repo.get_pkg_name_parts(name)
+            name, version = repo.get_pkg_name_parts(name)
 
-            if not cls.build_package_is_valid(package_name):
+            try:
+                package = cls._get_resolved_package(name)
+            except errors.PackageNotFoundError:
                 raise errors.BuildPackageNotFoundError(name)
 
-            if not cls.is_package_installed(package_name):
+            if name != package.name:
+                logger.info(
+                    f"virtual build-package {name!r} resolved to {package.name!r}"
+                )
+
+            # Reconstruct resolved package name, if version used.
+            if version:
+                name = f"{package.name}={version}"
+            else:
+                name = package.name
+
+            if package.installed is None:
                 install_packages.append(name)
 
         # Install packages, if any.
@@ -363,29 +376,26 @@ class Ubuntu(BaseRepo):
         cls._refresh_cache()
 
     @classmethod
-    def _resolve_virtual_package(cls, package_name: str) -> str:
-        if cls._get_apt_cache().is_virtual_package(package_name):
-            package_name = (
-                cls._get_apt_cache().get_providing_packages(package_name)[0].name
-            )
-        return package_name
-
-    @classmethod
-    def _get_cached_package(cls, package_name: str) -> apt.package.Package:
+    def _get_resolved_package(cls, package_name: str) -> apt.package.Package:
         # Strip ":any" that may come from dependency names.
         if package_name.endswith(":any"):
             package_name = package_name[:-4]
 
-        # Resolve virtual package, if it is one.
-        package_name = cls._resolve_virtual_package(package_name)
+        cache = cls._get_apt_cache()
+        if cache.is_virtual_package(package_name):
+            package = cache.get_providing_packages(package_name)[0]
+            logger.debug(f"package {package_name!r} resolved to {package.name!r}")
+            return package
 
         try:
-            return cls._get_apt_cache()[package_name]
+            return cache[package_name]
         except KeyError:
             raise errors.PackageNotFoundError(package_name)
 
     @classmethod
-    def _set_package_version(cls, package, version: Optional[str] = None) -> None:
+    def _set_package_version(
+        cls, package: apt.package.Package, version: Optional[str] = None
+    ) -> None:
         """Set cadidate version to a specific version if available"""
         if version in package.versions:
             version = package.versions.get(version)
@@ -445,13 +455,19 @@ class Ubuntu(BaseRepo):
         # along the way.
         for name in package_names:
             name, specified_version = repo.get_pkg_name_parts(name)
+
+            package = cls._get_resolved_package(name)
+            if name != package.name:
+                logger.info(
+                    f"virtual stage-package {name!r} resolved to {package.name!r}"
+                )
+
             if specified_version:
-                package = cls._get_cached_package(name)
                 cls._set_package_version(package, specified_version)
 
         for name in package_names:
             name, _ = repo.get_pkg_name_parts(name)
-            package = cls._get_cached_package(name)
+            package = cls._get_resolved_package(name)
             cls._mark_package_dependencies(
                 package=package,
                 marked_packages=marked_packages,
@@ -498,19 +514,26 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def build_package_is_valid(cls, package_name):
-        return package_name in cls._get_apt_cache()
+        try:
+            _ = cls._get_resolved_package(package_name)
+        except errors.PackageNotFoundError:
+            return False
+        return True
 
     @classmethod
     def is_package_installed(cls, package_name):
-        if package_name not in cls._get_apt_cache():
+        try:
+            package = cls._get_resolved_package(package_name)
+        except errors.PackageNotFoundError:
             return False
-        return cls._get_apt_cache()[package_name].installed is not None
+
+        return package.installed is not None
 
     @classmethod
     def get_installed_packages(cls) -> List[str]:
         installed_packages = []
         for package in cls._get_apt_cache():
-            if package.installed:
+            if package.installed is not None:
                 installed_packages.append(
                     "{}={}".format(package.name, package.installed.version)
                 )
