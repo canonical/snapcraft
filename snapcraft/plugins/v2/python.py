@@ -80,7 +80,7 @@ class PythonPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-            }
+            },
         }
 
     def get_build_packages(self) -> Set[str]:
@@ -89,7 +89,7 @@ class PythonPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return {
             "SNAPCRAFT_PYTHON_HOST_INTERPRETER": "/usr/bin/python3",
-            "SNAPCRAFT_PYTHON_VENV_ARGS": ""
+            "SNAPCRAFT_PYTHON_VENV_ARGS": "",
         }
 
     def get_build_commands(self) -> List[str]:
@@ -122,8 +122,8 @@ class PythonPlugin(PluginV2):
             'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do '
             'if head -1 "${e}" | grep -q "python" ; then '
             'sed -r "1 s|#\!.*python3?$|#\!/usr/bin/env python|" -i "${e}"; '
-            'fi ; '
-            'done'
+            "fi ; "
+            "done"
         )
 
         return build_commands

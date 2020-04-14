@@ -24,4 +24,4 @@ if sys.platform == "linux":
     from .cmake import CMakePlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
-    from .python import PythonPlugin  #noqa: F401
+    from .python import PythonPlugin  # noqa: F401
