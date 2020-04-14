@@ -71,7 +71,11 @@ jobs:
             - libssl-dev
             - libyaml-dev
             - python3.6-dev
-      script: snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+      script:
+        - snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo snap install "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --dangerous --classic
+        - snapcraft clean --destructive-mode
+        - snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
