@@ -121,7 +121,7 @@ class PythonPlugin(PluginV2):
         build_commands.append(
             'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do '
             'if head -1 "${e}" | grep -q "python" ; then '
-            'sed -r "1 s|#\!.*python3?$|#\!/usr/bin/env python|" -i "${e}"; '
+            'sed -r "1 s|#\\!.*python3?$|#\\!/usr/bin/env python|" -i "${e}"; '
             "fi ; "
             "done"
         )
