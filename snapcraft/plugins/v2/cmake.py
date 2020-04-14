@@ -19,9 +19,6 @@
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
-If the part has a list of build-snaps listed, the part will be set up in
-such a way that the paths to those snaps are used as paths for find_package
-and find_library by use of `CMAKE_FIND_ROOT_PATH``.
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
@@ -41,7 +38,6 @@ from snapcraft.plugins.v2 import PluginV2
 class CMakePlugin(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
-        """Return a jsonschema compatible dictionary for the plugin properties."""
         return {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
@@ -58,32 +54,12 @@ class CMakePlugin(PluginV2):
         }
 
     def get_build_packages(self) -> Set[str]:
-        """
-        Return a set of required packages to install in the build environment.
-        """
         return {"gcc", "cmake"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        """
-        Return a dictionary with the environment to use in the build step.
-
-        For consistency, the keys should be defined as SNAPCRAFT_<PLUGIN>_<KEY>.
-
-        This method is called by the PluginHandler during the "build" step.
-        """
         return {"SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/"}
 
     def get_build_commands(self) -> List[str]:
-        """
-        Return a list of commands to run during the build step.
-
-        This method is called by the PluginHandler during the "build" step.
-        These commands are run in a single shell instance. This means
-        that commands run before do affect the commands that follow.
-
-        snapcraftctl can be used in the script to call out to snapcraft
-        specific functionality.
-        """
         cmake_configure_cmd = "cmake ."
         if self.options.configflags:
             configflags = " ".join(self.options.configflags)
@@ -91,9 +67,9 @@ class CMakePlugin(PluginV2):
         if not any(
             c.startswith("-DCMAKE_INSTALL_PREFIX=") for c in self.options.configflags
         ):
-            cmake_configure_cmd = f'{cmake_configure_cmd} -DCMAKE_INSTALL_PREFIX="$SNAPCRAFT_CMAKE_INSTALL_PREFIX"'
+            cmake_configure_cmd = f'{cmake_configure_cmd} -DCMAKE_INSTALL_PREFIX="${{SNAPCRAFT_CMAKE_INSTALL_PREFIX}}"'
         return [
             cmake_configure_cmd,
-            'cmake --build . -- -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-            'cmake --build . --target install -- DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+            'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+            'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
         ]
