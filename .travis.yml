@@ -58,7 +58,7 @@ jobs:
       addons:
         snaps:
           - name: snapcraft
-            channel: edge
+            channel: stable
             classic: true
           - name: transfer
           - name: http
