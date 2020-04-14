@@ -70,11 +70,11 @@ class AutotoolsPlugin(PluginV2):
             configure_cmd = f"{configure_cmd} {configflags}"
         if not any(c.startswith("--prefix=") for c in self.options.configflags):
             configure_cmd = (
-                f'{configure_cmd} --prefix="$SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX"'
+                f'{configure_cmd} --prefix="${{SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}}"'
             )
         return [
             "[ ! -f ./configure ] && autoreconf --install",
             configure_cmd,
-            'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-            'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+            'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+            'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
         ]

@@ -71,9 +71,9 @@ class AutotoolsPluginTest(TestCase):
             Equals(
                 [
                     "[ ! -f ./configure ] && autoreconf --install",
-                    './configure --prefix="$SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX"',
-                    'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                    './configure --prefix="${SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}"',
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+                    'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]
             ),
         )
@@ -90,8 +90,8 @@ class AutotoolsPluginTest(TestCase):
                 [
                     "[ ! -f ./configure ] && autoreconf --install",
                     "./configure --with-foo=true --prefix=/foo",
-                    'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+                    'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]
             ),
         )
