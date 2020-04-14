@@ -64,7 +64,6 @@ class AutotoolsPlugin(PluginV2):
         return {"SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX": "/"}
 
     def get_build_commands(self) -> List[str]:
-        autoconf_cmd = "[ ! -f ./configure ] && autoreconf --install"
         configure_cmd = "./configure"
         if self.options.configflags:
             configflags = " ".join(self.options.configflags)
@@ -74,7 +73,7 @@ class AutotoolsPlugin(PluginV2):
                 f'{configure_cmd} --prefix="$SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX"'
             )
         return [
-            autoconf_cmd,
+            "[ ! -f ./configure ] && autoreconf --install",
             configure_cmd,
             'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
             'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
