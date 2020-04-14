@@ -16,6 +16,7 @@
 
 import abc
 import base64
+import datetime
 import os
 import pathlib
 import logging
@@ -222,6 +223,7 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
+        print("LAUNCH START:", datetime.datetime.now())
         # Check provider base and clean project if base has changed.
         if os.path.exists(self.provider_project_dir):
             self._ensure_base()
@@ -237,16 +239,16 @@ class Provider(abc.ABC):
             os.makedirs(self.provider_project_dir)
             # then launch
             self._launch()
-            # and do first boot related things and if any failure occurs,
-            # then clean up.
+
+            # Configure environment for snapcraft use.
             self._setup_environment()
+
+            # Refresh repository caches.
+            self._run(["snapcraft", "refresh"])
 
         # We always setup snapcraft after a start to bring it up to speed with
         # what is on the host
         self._setup_snapcraft()
-
-        # Ensure package cache is ready.
-        self._run(["snapcraft", "refresh"])
 
     def _ensure_base(self) -> None:
         info = self._load_info()
@@ -278,7 +280,6 @@ class Provider(abc.ABC):
             self._run(["chmod", permissions, path])
 
     def _get_code_name_from_build_base(self):
-        # TODO fix this with generalized mechanism.
         build_base = self.project._get_build_base()
 
         return {
