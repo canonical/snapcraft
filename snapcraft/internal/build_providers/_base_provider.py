@@ -223,7 +223,6 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
-        print("LAUNCH START:", datetime.datetime.now())
         # Check provider base and clean project if base has changed.
         if os.path.exists(self.provider_project_dir):
             self._ensure_base()
