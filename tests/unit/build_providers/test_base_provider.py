@@ -329,9 +329,7 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.start_mock.assert_any_call()
-        self.assertThat(
-            provider.run_mock.mock_calls, Equals([call(["snapcraft", "refresh"])])
-        )
+        provider.run_mock.assert_not_called()
 
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)
