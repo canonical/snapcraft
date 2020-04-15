@@ -12,7 +12,7 @@ confinement: strict
 
 apps:
   python-hello:
-    command: hello
+    command: bin/hello
 
 parts:
   python-part:

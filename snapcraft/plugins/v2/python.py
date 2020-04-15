@@ -39,11 +39,25 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of dependencies to get from PyPI. If needed, pip,
       setuptools and wheel can be upgraded here.
 
-If the plugin finds a python interpreter with a basename that matches
-`python-version` in the <stage> directory on the following fixed path:
-`<stage-dir>/usr/bin/<python-interpreter>` then this interpreter would
-be preferred instead and no interpreter would be brought in through
-`stage-packages` mechanisms.
+This plugin also interprets these specific build-environment entries:
+
+    - SNAPCRAFT_PYTHON_INTERPRETER
+      (default: python3)
+      The interpreter binary to search for in PATH.
+    - SNAPCRAFT_PYTHON_VENV_ARGS
+      Additional arguments for venv.
+
+By default this plugin uses python from the base, if a part using
+this plugin uses a build-base other than that of the base, or a
+different interpreter is desired, it must be bundled in the snap
+(including venv) and must be in PATH.
+
+It is required to bundle python when creating a snap that uses
+classic confinement, this can be accomplished on Ubuntu by
+adding stage-packages for python.
+
+Use of python3-<python-package> in stage-packages will force the
+inclusion of the python interpreter.
 """
 
 from typing import Any, Dict, List, Set
@@ -88,13 +102,15 @@ class PythonPlugin(PluginV2):
 
     def get_build_environment(self) -> Dict[str, str]:
         return {
-            "SNAPCRAFT_PYTHON_HOST_INTERPRETER": "/usr/bin/python3",
+            "SNAPCRAFT_PYTHON_INTERPRETER": "python3",
             "SNAPCRAFT_PYTHON_VENV_ARGS": "",
         }
 
     def get_build_commands(self) -> List[str]:
         build_commands = [
-            '"${SNAPCRAFT_PYTHON_HOST_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" '
+            '-m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+            '"${SNAPCRAFT_PART_INSTALL}"',
             '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
         ]
 
