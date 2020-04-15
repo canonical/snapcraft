@@ -60,6 +60,7 @@ Use of python3-<python-package> in stage-packages will force the
 inclusion of the python interpreter.
 """
 
+from textwrap import dedent
 from typing import Any, Dict, List, Set
 
 from snapcraft.plugins.v2 import PluginV2
@@ -129,29 +130,46 @@ class PythonPlugin(PluginV2):
             requirements_cmd = f"pip install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append("[ -f setup.py ] && pip install .")
+        build_commands.append(f"[ -f setup.py ] && pip install {constraints} .")
 
         # Now fix shebangs.
         # TODO: replace with snapcraftctl once the two scripts are consolidated
         # and use mangling.rewrite_python_shebangs.
         build_commands.append(
-            'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do '
-            'if head -1 "${e}" | grep -q "python" ; then '
-            'sed -r "1 s|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" '
-            '-i "${e}"; '
-            "fi ; "
-            "done"
+            dedent(
+                """\
+            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
+            do
+                if head -1 "${e}" | grep -q "python" ; then
+                    sed \\
+                        -r '1 s|#\\!.*python3?$|#\\!/usr/bin/env '${SNAPCRAFT_PYTHON_INTERPRETER}'|' \\
+                        -i "${e}"
+                fi
+            done
+        """
+            )
         )
 
         # Lastly, fix the symlink to the "real" python3 interpreter.
         # TODO: replace with snapcraftctl (create_relative_symlinks).
         build_commands.append(
-            '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
-            "new_link=$(realpath --strip "
-            '--relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
-            '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) && '
-            'rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && '
-            'ln -s "${new_link}" "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"'
+            dedent(
+                """\
+            interp_path="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"
+            if [ -f "${interp_path}" ]; then
+                current_link=$(readlink "${interp_path}")
+                # Do nothing if in the base.
+                if [ "${current_link}" != "/usr/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ]; then
+                    new_link=$(realpath \\
+                               --strip \\
+                               --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" \\
+                              "${current_link}")
+                    rm "${interp_path}"
+                    ln -s "${new_link}" "${interp_path}"
+                fi
+            fi
+        """
+            )
         )
 
         return build_commands

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
 from testtools.matchers import Equals
 from testtools import TestCase
 
@@ -21,6 +22,38 @@ from snapcraft.plugins.v2.python import PythonPlugin
 
 
 class PythonPluginTest(TestCase):
+    _FIXUP_BUILD_COMMANDS = [
+        dedent(
+            """\
+            for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
+            do
+                if head -1 "${e}" | grep -q "python" ; then
+                    sed \\
+                        -r '1 s|#\\!.*python3?$|#\\!/usr/bin/env '${SNAPCRAFT_PYTHON_INTERPRETER}'|' \\
+                        -i "${e}"
+                fi
+            done
+        """
+        ),
+        dedent(
+            """\
+            interp_path="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"
+            if [ -f "${interp_path}" ]; then
+                current_link=$(readlink "${interp_path}")
+                # Do nothing if in the base.
+                if [ "${current_link}" != "/usr/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ]; then
+                    new_link=$(realpath \\
+                               --strip \\
+                               --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" \\
+                              "${current_link}")
+                    rm "${interp_path}"
+                    ln -s "${new_link}" "${interp_path}"
+                fi
+            fi
+        """
+        ),
+    ]
+
     def test_schema(self):
         schema = PythonPlugin.get_schema()
 
@@ -95,18 +128,9 @@ class PythonPluginTest(TestCase):
                     '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
                     '"${SNAPCRAFT_PART_INSTALL}"',
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
-                    "[ -f setup.py ] && pip install .",
-                    'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do if head '
-                    '-1 "${e}" | grep -q "python" ; then sed -r "1 '
-                    's|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" -i '
-                    '"${e}"; fi ; done',
-                    '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
-                    'new_link=$(realpath --strip --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
-                    '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) '
-                    '&& rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && ln '
-                    '-s "${new_link}" '
-                    '"${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
+                    "[ -f setup.py ] && pip install  .",
                 ]
+                + self._FIXUP_BUILD_COMMANDS
             ),
         )
 
@@ -127,17 +151,8 @@ class PythonPluginTest(TestCase):
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
                     "pip install -c 'constraints.txt' -U pip",
                     "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-                    "[ -f setup.py ] && pip install .",
-                    'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do if head '
-                    '-1 "${e}" | grep -q "python" ; then sed -r "1 '
-                    's|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" -i '
-                    '"${e}"; fi ; done',
-                    '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
-                    'new_link=$(realpath --strip --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
-                    '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) '
-                    '&& rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && ln '
-                    '-s "${new_link}" '
-                    '"${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
+                    "[ -f setup.py ] && pip install -c 'constraints.txt' .",
                 ]
+                + self._FIXUP_BUILD_COMMANDS
             ),
         )
