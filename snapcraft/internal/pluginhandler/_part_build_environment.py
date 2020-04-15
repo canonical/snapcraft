@@ -73,7 +73,10 @@ def get_snapcraft_build_environment(part: "PluginHandler") -> Dict[str, str]:
         bin_paths.extend(common.get_bin_paths(root=path, existing_only=True))
 
     if bin_paths:
-        part_environment["PATH"] = formatting_utils.combine_paths(paths=bin_paths, separator=":")
+        bin_paths.append("$PATH")
+        part_environment["PATH"] = formatting_utils.combine_paths(
+            paths=bin_paths, prepend="", separator=":"
+        )
 
     include_paths = list()
     for path in paths:
