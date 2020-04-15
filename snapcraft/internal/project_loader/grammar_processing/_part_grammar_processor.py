@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Set
 
 from snapcraft import project, BasePlugin
 from snapcraft.internal.project_loader import grammar
@@ -110,11 +110,11 @@ class PartGrammarProcessor:
                 self.__source = source_array.pop()
         return self.__source
 
-    def _get_property(self, attr: str) -> List[str]:
+    def _get_property(self, attr: str) -> grammar.typing.Grammar:
         if hasattr(self._plugin, attr):
             prop = getattr(self._plugin, attr.replace("-", "_"))
         else:
-            prop = self._properties.get(attr, [])
+            prop = self._properties.get(attr, set())
 
         return prop
 
