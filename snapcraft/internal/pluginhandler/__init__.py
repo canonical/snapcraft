@@ -447,9 +447,6 @@ class PluginHandler:
     def _install_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug(
-                f"Installing {stage_packages!r} stage-packages to {self.plugin.installdir!r}"
-            )
             try:
                 self.stage_packages = self._stage_packages_repo.install_stage_packages(
                     package_names=stage_packages, install_dir=self.plugin.installdir
@@ -650,7 +647,7 @@ class PluginHandler:
             run_file.flush()
 
         build_script_path.chmod(0o755)
-        subprocess.run([build_script_path])
+        subprocess.run([build_script_path], cwd=self.part_build_work_dir)
 
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
