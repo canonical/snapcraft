@@ -137,6 +137,20 @@ class SnapTests(unit.TestCase):
             "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
             "layout": {"/target": {"bind": "$SNAP/foo"}},
             "license": "GPL",
+            "package-repositories": [
+                {"type": "apt", "ppa": "test/ppa"},
+                {
+                    "type": "apt",
+                    "architectures": ["amd64", "i386"],
+                    "components": ["main"],
+                    "deb-types": ["deb"],
+                    "key-id": "test-key-id",
+                    "key-server": "test-key-server.com",
+                    "name": "test-name",
+                    "suites": ["xenial"],
+                    "url": "http://archive.ubuntu.com",
+                },
+            ],
             "passthrough": {"test": "value"},
             "plugs": {"test-plug": {"interface": "some-value"}},
             "slots": {"test-slot": {"interface": "some-value"}},
@@ -151,6 +165,7 @@ class SnapTests(unit.TestCase):
         expected_dict = snap_dict.copy()
         expected_dict.pop("adopt-info")
         expected_dict.pop("base")
+        expected_dict.pop("package-repositories")
         expected_dict.update(expected_dict.pop("passthrough"))
 
         self.assertEqual(expected_dict, snap.to_snap_yaml_dict())
