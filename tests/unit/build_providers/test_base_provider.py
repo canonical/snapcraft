@@ -260,7 +260,8 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider._ensure_base()
         provider.clean_project_mock.assert_not_called()
 
-    def test_setup_environment_content(self):
+    def test_setup_environment_content_amd64(self):
+        self.useFixture(fixtures.MockPatch("platform.machine", return_value="x86_64"))
         recorded_files = dict()
 
         @contextlib.contextmanager
@@ -313,6 +314,69 @@ class BaseProviderTest(BaseProviderBaseTest):
                         """\
                         Types: deb deb-src
                         URIs: http://security.ubuntu.com/ubuntu
+                        Suites: xenial-security
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "sources.list": "",
+                }
+            ),
+        )
+
+    def test_setup_environment_content_arm64(self):
+        self.useFixture(fixtures.MockPatch("platform.machine", return_value="aarch64"))
+        recorded_files = dict()
+
+        @contextlib.contextmanager
+        def fake_namedtempfile(*, suffix: str, **kwargs):
+            # Usage hides the file basename in the suffix.
+            tmp_path = os.path.join(self.path, "tmpfile")
+            with open(tmp_path, "wb") as f_write:
+                yield f_write
+            with open(tmp_path, "r") as f_read:
+                recorded_files[suffix] = f_read.read()
+
+        self.useFixture(
+            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
+        )
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_environment()
+
+        self.expectThat(
+            recorded_files,
+            Equals(
+                {
+                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+                    "_snapcraft_prompt": dedent(
+                        """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+                    ),
+                    "main.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://ports.ubuntu.com/ubuntu-ports
+                        Suites: xenial xenial-updates
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "security.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://ports.ubuntu.com/ubuntu-ports
                         Suites: xenial-security
                         Components: main multiverse restricted universe
                     """
