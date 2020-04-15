@@ -291,8 +291,7 @@ class Ubuntu(BaseRepo):
         :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
             if installing the packages on the host failed.
         """
-        if not package_names:
-            return list()
+        logger.debug(f"Requested build-packages: {sorted(package_names)!r}")
 
         # Make sure all packages are valid and remove already installed.
         install_packages = list()
@@ -450,6 +449,8 @@ class Ubuntu(BaseRepo):
         skipped_blacklisted: Set[str] = set()
         skipped_essential: Set[str] = set()
 
+        logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
+
         # First scan all packages and set desired version, if specified.
         # We do this all at once in case it gets added as a dependency
         # along the way.
@@ -477,7 +478,7 @@ class Ubuntu(BaseRepo):
             )
 
         marked = sorted(marked_packages.keys())
-        logger.debug(f"Marked staged packages: {marked!r}")
+        logger.debug(f"Installing staged-packages {marked!r} to {install_dir!r}")
 
         if skipped_blacklisted:
             blacklisted = sorted(skipped_blacklisted)

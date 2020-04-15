@@ -42,28 +42,6 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", module="pylxd.models.operation")
 
 
-_SNAPCRAFT_FILES = [
-    {
-        "path": "/etc/systemd/network/10-eth0.network",
-        "content": dedent(
-            """\
-            [Match]
-            Name=eth0
-
-            [Network]
-            DHCP=ipv4
-            LinkLocalAddressing=ipv6
-
-            [DHCP]
-            RouteMetric=100
-            UseMTU=true
-            """
-        ),
-        "permissions": "0644",
-    }
-]
-
-
 class LXD(Provider):
     """A LXD provider for snapcraft to execute its lifecycle."""
 
@@ -389,50 +367,39 @@ class LXD(Provider):
         else:
             self.echoer.warning("Failed to setup networking.")
 
-    def _get_code_name_from_build_base(self):
-        # TODO fix this with generalized mechanism.
-        build_base = self.project._get_build_base()
-
-        return {
-            "core": "xenial",
-            "core16": "xenial",
-            "core18": "bionic",
-            "core20": "focal",
-        }[build_base]
-
     def _setup_environment(self) -> None:
         if self._container is None:
             raise RuntimeError("Attempted to use container before starting.")
 
-        # Setup networking before anything else.
-        super()._setup_environment_files(files=_SNAPCRAFT_FILES)
-        super()._setup_environment_files(
-            files=[
-                {
-                    "path": "/etc/hostname",
-                    "content": self.instance_name,
-                    "permissions": "0644",
-                },
-                {
-                    "path": "/etc/resolv.conf",
-                    "content": f"nameserver {os.getenv('SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER', '1.1.1.1')}",
-                    "permissions": "0644",
-                },
-                {
-                    "path": "/etc/apt/sources.list",
-                    "content": dedent(
-                        """\
-                         deb http://{mirror}archive.ubuntu.com/ubuntu/ {code_name} main universe restricted
-                         deb http://{mirror}archive.ubuntu.com/ubuntu/ {code_name}-updates main universe restricted
-                         deb http://{mirror}security.ubuntu.com/ubuntu {code_name}-security main universe restricted
-                         """
-                    ).format(
-                        code_name=self._get_code_name_from_build_base(),
-                        mirror=os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_MIRROR", ""),
-                    ),
-                    "permissions": "06444",
-                },
-            ]
+        super()._setup_environment()
+
+        self._install_file(
+            path="/etc/systemd/network/10-eth0.network",
+            content=dedent(
+                """
+                [Match]
+                Name=eth0
+
+                [Network]
+                DHCP=ipv4
+                LinkLocalAddressing=ipv6
+
+                [DHCP]
+                RouteMetric=100
+                UseMTU=true
+                """
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/hostname", content=self.instance_name, permissions="0644"
+        )
+
+        self._install_file(
+            path="/etc/resolv.conf",
+            content=f"nameserver {os.getenv('SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER', '1.1.1.1')}",
+            permissions="0644",
         )
 
         self._container.restart(wait=True)
@@ -456,9 +423,6 @@ class LXD(Provider):
         # And only then install snapd.
         self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
         self._run(["systemctl", "start", "snapd"])
-
-        # Only then continue setting up.
-        super()._setup_environment()
 
     def _setup_snapcraft(self):
         self._wait_for_network()
