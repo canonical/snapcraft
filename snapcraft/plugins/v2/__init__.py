@@ -20,5 +20,6 @@ from ._plugin import PluginV2  # noqa: F401
 
 # The plugin code requires imports that are platform specific.
 if sys.platform == "linux":
+    from .cmake import CMakePlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
