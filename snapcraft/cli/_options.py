@@ -46,6 +46,21 @@ class PromptOption(click.Option):
         )
 
 
+class SimpleBoolParamType(click.ParamType):
+    name = "boolean"
+
+    def convert(self, value, param, ctx):
+        """Convert option string to value.
+
+        Unlike click's BoolParamType, any non-empty string is treated
+        as True.
+        """
+        return bool(value)
+
+    def __repr__(self):
+        return "BOOL"
+
+
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
@@ -127,6 +142,7 @@ _PROVIDER_OPTIONS = [
     dict(
         param_decls="--generate-manifest",
         is_flag=True,
+        type=SimpleBoolParamType(),
         help="Generate snap manifest.",
         envvar="SNAPCRAFT_BUILD_INFO",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
