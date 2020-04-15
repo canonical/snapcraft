@@ -609,7 +609,8 @@ class PluginHandler:
 
         # Create the script.
         with io.StringIO() as run_environment:
-            print("#!/bin/sh -e", file=run_environment)
+            print("#!/bin/sh", file=run_environment)
+            print("set -e", file=run_environment)
 
             print("# Environment", file=run_environment)
             print("## Part Environment", file=run_environment)
@@ -647,7 +648,7 @@ class PluginHandler:
             run_file.flush()
 
         build_script_path.chmod(0o755)
-        subprocess.run([build_script_path], cwd=self.part_build_work_dir)
+        subprocess.run([build_script_path], check=True, cwd=self.part_build_work_dir)
 
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
