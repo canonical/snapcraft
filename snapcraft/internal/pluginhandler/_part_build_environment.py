@@ -69,7 +69,8 @@ def get_snapcraft_build_environment(part: "PluginHandler") -> Dict[str, str]:
     paths = [part.part_install_dir, part._project.stage_dir]
 
     bin_paths = list()
-    for path in paths:
+    # Add "/" to paths mostly to support snapcraft development in venv.
+    for path in paths + ["/"]:
         bin_paths.extend(common.get_bin_paths(root=path, existing_only=True))
 
     if bin_paths:
