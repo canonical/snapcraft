@@ -74,7 +74,7 @@ class PythonPluginTest(TestCase):
             plugin.get_build_environment(),
             Equals(
                 {
-                    "SNAPCRAFT_PYTHON_HOST_INTERPRETER": "/usr/bin/python3",
+                    "SNAPCRAFT_PYTHON_INTERPRETER": "python3",
                     "SNAPCRAFT_PYTHON_VENV_ARGS": "",
                 }
             ),
@@ -92,13 +92,20 @@ class PythonPluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    '"${SNAPCRAFT_PYTHON_HOST_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+                    '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
                     '"${SNAPCRAFT_PART_INSTALL}"',
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
                     "[ -f setup.py ] && pip install .",
                     'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do if head '
                     '-1 "${e}" | grep -q "python" ; then sed -r "1 '
-                    's|#\\!.*python3?$|#\\!/usr/bin/env python|" -i "${e}"; fi ; done',
+                    's|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" -i '
+                    '"${e}"; fi ; done',
+                    '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
+                    'new_link=$(realpath --strip --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
+                    '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) '
+                    '&& rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && ln '
+                    '-s "${new_link}" '
+                    '"${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
                 ]
             ),
         )
@@ -115,7 +122,7 @@ class PythonPluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    '"${SNAPCRAFT_PYTHON_HOST_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+                    '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
                     '"${SNAPCRAFT_PART_INSTALL}"',
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
                     "pip install -c 'constraints.txt' -U pip",
@@ -123,7 +130,14 @@ class PythonPluginTest(TestCase):
                     "[ -f setup.py ] && pip install .",
                     'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do if head '
                     '-1 "${e}" | grep -q "python" ; then sed -r "1 '
-                    's|#\\!.*python3?$|#\\!/usr/bin/env python|" -i "${e}"; fi ; done',
+                    's|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" -i '
+                    '"${e}"; fi ; done',
+                    '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
+                    'new_link=$(realpath --strip --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
+                    '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) '
+                    '&& rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && ln '
+                    '-s "${new_link}" '
+                    '"${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"',
                 ]
             ),
         )

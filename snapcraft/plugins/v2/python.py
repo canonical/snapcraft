@@ -54,7 +54,7 @@ different interpreter is desired, it must be bundled in the snap
 
 It is required to bundle python when creating a snap that uses
 classic confinement, this can be accomplished on Ubuntu by
-adding stage-packages for python.
+adding stage-packages (i.e.; python3-venv).
 
 Use of python3-<python-package> in stage-packages will force the
 inclusion of the python interpreter.
@@ -109,7 +109,7 @@ class PythonPlugin(PluginV2):
     def get_build_commands(self) -> List[str]:
         build_commands = [
             '"${SNAPCRAFT_PYTHON_INTERPRETER}" '
-            '-m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+            "-m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "
             '"${SNAPCRAFT_PART_INSTALL}"',
             '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
         ]
@@ -137,9 +137,21 @@ class PythonPlugin(PluginV2):
         build_commands.append(
             'for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable); do '
             'if head -1 "${e}" | grep -q "python" ; then '
-            'sed -r "1 s|#\\!.*python3?$|#\\!/usr/bin/env python|" -i "${e}"; '
+            'sed -r "1 s|#\\!.*python3?$|#\\!/usr/bin/env "${SNAPCRAFT_PYTHON_INTERPRETER}"|" '
+            '-i "${e}"; '
             "fi ; "
             "done"
+        )
+
+        # Lastly, fix the symlink to the "real" python3 interpreter.
+        # TODO: replace with snapcraftctl (create_relative_symlinks).
+        build_commands.append(
+            '[ -f "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ] && '
+            "new_link=$(realpath --strip "
+            '--relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" '
+            '$(readlink "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}")) && '
+            'rm "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" && '
+            'ln -s "${new_link}" "${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"'
         )
 
         return build_commands
