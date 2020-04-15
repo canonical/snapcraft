@@ -99,7 +99,7 @@ class PythonPlugin(PluginV2):
         ]
 
         if self.options.constraints:
-            constraints = "-c ".join(self.options.constraints)
+            constraints = " ".join(f"-c {c!r}" for c in self.options.constraints)
         else:
             constraints = ""
 
@@ -109,7 +109,7 @@ class PythonPlugin(PluginV2):
             build_commands.append(python_packages_cmd)
 
         if self.options.requirements:
-            requirements = " ".join(self.options.requirements)
+            requirements = " ".join(f"-r {r!r}" for r in self.options.requirements)
             requirements_cmd = f"pip install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
