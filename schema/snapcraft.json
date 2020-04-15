@@ -115,6 +115,100 @@
                 ]
             }
         },
+        "apt-deb": {
+            "type": "object",
+            "description": "deb repositories",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "apt"
+                    ]
+                },
+                "architectures": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
+                    }
+                },
+                "deb-types": {
+                    "type": "array",
+                    "description": "deb types to enable.  Defaults to [deb, deb-src].",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "deb",
+                            "deb-src"
+                        ]
+                    }
+                },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
+                    }
+                },
+                "key-id": {
+                    "type": "string",
+                    "description": "GPG key identifier. Use to match key file in <project>/snap/keys/<key-id>.asc",
+                    "pattern": "^[a-zA-Z0-9-_]*$"
+                },
+                "key-server": {
+                    "type": "string",
+                    "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Unique name for repository, reserved names include 'default' and 'default-security'.",
+                    "pattern": "^[a-zA-Z0-9-_]*$"
+                },
+                "suites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$release' variable for snapcraft to populate base release name (e.g. 'xenial')."
+                    }
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'"
+                }
+            },
+            "required": [
+                "type",
+                "components",
+                "key-id",
+                "name",
+                "suites",
+                "url"
+            ],
+            "validation-failure": "{!r} is not properly configured deb repository"
+        },
+        "apt-ppa": {
+            "type": "object",
+            "description": "PPA repository",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "apt"
+                    ]
+                },
+                "ppa": {
+                    "type": "string",
+                    "description": "ppa path: e.g. 'canonical-kernel-team/unstable'"
+                }
+            },
+            "required": [
+                "type",
+                "ppa"
+            ],
+            "validation-failure": "{!r} is not properly configured PPA repository"
+        },
         "system-username-scope": {
             "type": "string",
             "description": "short-form user configuration (<username>: <scope>)",
@@ -339,6 +433,24 @@
         "layout": {
             "type": "object",
             "description": "layout property to be passed into the snap.yaml as-is"
+        },
+        "package-repositories": {
+            "type": "array",
+            "description": "additional repository configuration.",
+            "minItems": 0,
+            "uniqueItems": true,
+            "items": [
+                {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/apt-deb"
+                        },
+                        {
+                            "$ref": "#/definitions/apt-ppa"
+                        }
+                    ]
+                }
+            ]
         },
         "system-usernames": {
             "type": "object",
