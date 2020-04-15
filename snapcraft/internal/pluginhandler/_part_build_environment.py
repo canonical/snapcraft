@@ -61,23 +61,26 @@ def get_snapcraft_part_environment(part: "PluginHandler") -> Dict[str, str]:
     }
 
 
-def get_snapcraft_build_environment(part: "PluginHandler") -> Dict[str, str]:
+def get_snapcraft_build_environment(
+    part: "PluginHandler", add_path: bool = False
+) -> Dict[str, str]:
     """Return Snapcraft provided build environment."""
     part_environment = get_snapcraft_global_environment(part._project)
     part_environment.update(get_snapcraft_part_environment(part))
 
     paths = [part.part_install_dir, part._project.stage_dir]
 
-    bin_paths = list()
-    # Add "/" to paths mostly to support snapcraft development in venv.
-    for path in paths + ["/"]:
-        bin_paths.extend(common.get_bin_paths(root=path, existing_only=True))
+    if add_path:
+        bin_paths = list()
+        # Add "/" to paths mostly to support snapcraft development in venv.
+        for path in paths + ["/"]:
+            bin_paths.extend(common.get_bin_paths(root=path, existing_only=True))
 
-    if bin_paths:
-        bin_paths.append("$PATH")
-        part_environment["PATH"] = formatting_utils.combine_paths(
-            paths=bin_paths, prepend="", separator=":"
-        )
+        if bin_paths:
+            bin_paths.append("$PATH")
+            part_environment["PATH"] = formatting_utils.combine_paths(
+                paths=bin_paths, prepend="", separator=":"
+            )
 
     include_paths = list()
     for path in paths:
