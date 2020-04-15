@@ -650,7 +650,7 @@ class PluginHandler:
             run_file.flush()
 
         build_script_path.chmod(0o755)
-        subprocess.run([build_script_path])
+        subprocess.run([build_script_path], cwd=self.part_build_work_dir)
 
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
