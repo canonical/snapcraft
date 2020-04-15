@@ -687,8 +687,8 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "snapcraft",
-                        "refresh",
+                        "apt-get",
+                        "update",
                     ]
                 ),
             ]

@@ -242,7 +242,7 @@ class Provider(abc.ABC):
             self._setup_environment()
 
             # Refresh repository caches.
-            self._run(["snapcraft", "refresh"])
+            self._run(["apt-get", "update"])
 
         # We always setup snapcraft after a start to bring it up to speed with
         # what is on the host
