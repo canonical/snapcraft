@@ -599,9 +599,7 @@ class PluginHandler:
             raise RuntimeError("PluginV1 not supported.")
 
         # Snapcraft's say.
-        snapcraft_build_environment = get_snapcraft_build_environment(
-            self, add_path=True
-        )
+        snapcraft_build_environment = get_snapcraft_build_environment(self)
 
         # Plugin's say.
         plugin_build_environment = self.plugin.get_build_environment()
