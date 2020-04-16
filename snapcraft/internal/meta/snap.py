@@ -25,6 +25,7 @@ from snapcraft.internal import common
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.application import Application
 from snapcraft.internal.meta.hooks import Hook
+from snapcraft.internal.meta.package_repository import PackageRepository
 from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from snapcraft.internal.meta.slots import ContentSlot, Slot
 from snapcraft.internal.meta.system_user import SystemUser
@@ -52,6 +53,7 @@ class Snap:
         layout: Optional[Dict[str, Any]] = None,
         license: Optional[str] = None,
         name: Optional[str] = None,
+        package_repositories: Optional[List[PackageRepository]] = None,
         passthrough: Optional[Dict[str, Any]] = None,
         plugs: Optional[Dict[str, Plug]] = None,
         slots: Optional[Dict[str, Slot]] = None,
@@ -103,6 +105,11 @@ class Snap:
 
         self.license = license
         self.name = name
+
+        if package_repositories is None:
+            self.package_repositories: List[PackageRepository] = list()
+        else:
+            self.package_repositories = package_repositories
 
         if passthrough is None:
             self.passthrough: Dict[str, Any] = dict()
@@ -308,6 +315,16 @@ class Snap:
         layout = snap_dict.pop("layout", None)
         license = snap_dict.pop("license", None)
         name = snap_dict.pop("name", None)
+
+        raw_repositories = snap_dict.pop("package-repositories", None)
+        if raw_repositories is None:
+            package_repositories = None
+        else:
+            logger.warning("*EXPERIMENTAL* package-repositories in use")
+            package_repositories = PackageRepository.unmarshal_package_repositories(
+                raw_repositories
+            )
+
         passthrough = snap_dict.pop("passthrough", None)
 
         # Process plugs into Plugs.
@@ -363,6 +380,7 @@ class Snap:
             license=license,
             name=name,
             passthrough=passthrough,
+            package_repositories=package_repositories,
             plugs=plugs,
             slots=slots,
             summary=summary,
@@ -433,6 +451,10 @@ class Snap:
         if self.license is not None:
             snap_dict["license"] = self.license
 
+        package_repos = [repo.marshal() for repo in self.package_repositories]
+        if package_repos:
+            snap_dict["package-repositories"] = package_repos
+
         if self.passthrough:
             snap_dict["passthrough"] = deepcopy(self.passthrough)
 
@@ -470,6 +492,7 @@ class Snap:
         # Remove keys that are not for snap.yaml.
         snap_dict.pop("build-base", None)
         snap_dict.pop("adopt-info", None)
+        snap_dict.pop("package-repositories", None)
 
         # Apply passthrough keys.
         passthrough = snap_dict.pop("passthrough", dict())
