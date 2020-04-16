@@ -40,8 +40,8 @@ class PythonPluginTest(TestCase):
             interp_path="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"
             if [ -f "${interp_path}" ]; then
                 current_link=$(readlink "${interp_path}")
-                # Do nothing if in the base.
-                if [ "${current_link}" != "/usr/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ]; then
+                # Change link if in $SNAPCRAFT_PART_INSTALL
+                if echo "${current_link}" | grep -q "${SNAPCRAFT_PART_INSTALL}" ; then
                     new_link=$(realpath \\
                                --strip \\
                                --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" \\
@@ -128,7 +128,7 @@ class PythonPluginTest(TestCase):
                     '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
                     '"${SNAPCRAFT_PART_INSTALL}"',
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
-                    "[ -f setup.py ] && pip install  .",
+                    "[ -f setup.py ] && pip install  -U .",
                 ]
                 + self._FIXUP_BUILD_COMMANDS
             ),
@@ -151,7 +151,7 @@ class PythonPluginTest(TestCase):
                     '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
                     "pip install -c 'constraints.txt' -U pip",
                     "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-                    "[ -f setup.py ] && pip install -c 'constraints.txt' .",
+                    "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
                 ]
                 + self._FIXUP_BUILD_COMMANDS
             ),

@@ -128,7 +128,7 @@ class PythonPlugin(PluginV2):
             requirements_cmd = f"pip install {constraints} -U {requirements}"
             build_commands.append(requirements_cmd)
 
-        build_commands.append(f"[ -f setup.py ] && pip install {constraints} .")
+        build_commands.append(f"[ -f setup.py ] && pip install {constraints} -U .")
 
         # Now fix shebangs.
         # TODO: replace with snapcraftctl once the two scripts are consolidated
@@ -156,8 +156,8 @@ class PythonPlugin(PluginV2):
             interp_path="${SNAPCRAFT_PART_INSTALL}/bin/${SNAPCRAFT_PYTHON_INTERPRETER}"
             if [ -f "${interp_path}" ]; then
                 current_link=$(readlink "${interp_path}")
-                # Do nothing if in the base.
-                if [ "${current_link}" != "/usr/bin/${SNAPCRAFT_PYTHON_INTERPRETER}" ]; then
+                # Change link if in $SNAPCRAFT_PART_INSTALL
+                if echo "${current_link}" | grep -q "${SNAPCRAFT_PART_INSTALL}" ; then
                     new_link=$(realpath \\
                                --strip \\
                                --relative-to="${SNAPCRAFT_PART_INSTALL}/bin/" \\
