@@ -111,12 +111,8 @@ class PartGrammarProcessor:
         return self.__source
 
     def _get_property(self, attr: str) -> grammar.typing.Grammar:
-        if hasattr(self._plugin, attr):
-            prop = getattr(self._plugin, attr.replace("-", "_"))
-        else:
-            prop = self._properties.get(attr, set())
-
-        return prop
+        prop = self._properties.get(attr, set())
+        return getattr(self._plugin, attr.replace("-", "_"), prop)
 
     def get_build_snaps(self) -> Set[str]:
         if not self.__build_snaps:
