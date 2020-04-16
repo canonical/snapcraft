@@ -509,7 +509,7 @@ class Ubuntu(BaseRepo):
         cls.normalize(install_dir)
 
         return [
-            f"{pkg_name}={pkg_version}"
+            f"{pkg_name}={pkg_version.version}"
             for pkg_name, pkg_version in marked_packages.items()
         ]
 
