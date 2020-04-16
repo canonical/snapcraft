@@ -18,6 +18,7 @@ import abc
 import base64
 import os
 import pathlib
+import platform
 import logging
 import shlex
 import shutil
@@ -287,6 +288,28 @@ class Provider(abc.ABC):
             "core20": "focal",
         }[build_base]
 
+    def _get_primary_mirror(self) -> str:
+        primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
+
+        if primary_mirror is None:
+            if platform.machine() in ["i686", "x86_64"]:
+                primary_mirror = "http://archive.ubuntu.com/ubuntu"
+            else:
+                primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
+
+        return primary_mirror
+
+    def _get_security_mirror(self) -> str:
+        security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
+
+        if security_mirror is None:
+            if platform.machine() in ["i686", "x86_64"]:
+                security_mirror = "http://security.ubuntu.com/ubuntu"
+            else:
+                security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
+
+        return security_mirror
+
     def _setup_environment(self) -> None:
         self._install_file(
             path="/root/.bashrc",
@@ -331,10 +354,7 @@ class Provider(abc.ABC):
                     Suites: {release} {release}-updates
                     Components: main multiverse restricted universe
                     """.format(
-                    primary_mirror=os.getenv(
-                        "SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR",
-                        "http://archive.ubuntu.com/ubuntu",
-                    ),
+                    primary_mirror=self._get_primary_mirror(),
                     release=self._get_code_name_from_build_base(),
                 )
             ),
@@ -350,10 +370,7 @@ class Provider(abc.ABC):
                         Suites: {release}-security
                         Components: main multiverse restricted universe
                         """.format(
-                    security_mirror=os.getenv(
-                        "SNAPCRAFT_BUILD_ENVIRONMENT_SECURITY_MIRROR",
-                        "http://security.ubuntu.com/ubuntu",
-                    ),
+                    security_mirror=self._get_security_mirror(),
                     release=self._get_code_name_from_build_base(),
                 )
             ),
