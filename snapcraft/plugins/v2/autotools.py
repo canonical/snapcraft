@@ -57,6 +57,9 @@ class AutotoolsPlugin(PluginV2):
             },
         }
 
+    def get_build_snaps(self) -> Set[str]:
+        return set()
+
     def get_build_packages(self) -> Set[str]:
         return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 

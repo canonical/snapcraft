@@ -22,7 +22,6 @@ from snapcraft.plugins.v2 import PluginV2
 class NilPlugin(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
-        """Return a jsonschema compatible dictionary for the plugin properties."""
         return {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
@@ -30,31 +29,14 @@ class NilPlugin(PluginV2):
             "properties": {},
         }
 
+    def get_build_snaps(self) -> Set[str]:
+        return set()
+
     def get_build_packages(self) -> Set[str]:
-        """
-        Return a set of required packages to install in the build environment.
-        """
         return set()
 
     def get_build_environment(self) -> Dict[str, str]:
-        """
-        Return a dictionary with the environment to use in the build step.
-
-        For consistency, the keys should be defined as SNAPCRAFT_<PLUGIN>_<KEY>.
-
-        This method is called by the PluginHandler during the "build" step.
-        """
         return dict()
 
     def get_build_commands(self) -> List[str]:
-        """
-        Return a list of commands to run during the build step.
-
-        This method is called by the PluginHandler during the "build" step.
-        These commands are run in a single shell instance. This means
-        that commands run before do affect the commands that follow.
-
-        snapcraftctl can be used in the script to call out to snapcraft
-        specific functionality.
-        """
         return list()

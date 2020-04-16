@@ -98,6 +98,9 @@ class PythonPlugin(PluginV2):
             },
         }
 
+    def get_build_snaps(self) -> Set[str]:
+        return set()
+
     def get_build_packages(self) -> Set[str]:
         return {"findutils", "python3-dev", "python3-venv"}
 

@@ -6,6 +6,7 @@ environment:
   SNAP/make: make-hello
   SNAP/python: python-hello
   SNAP/python_staged: python-hello-staged-python
+  SNAP/go_mod: go-mod-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -20,6 +21,8 @@ restore: |
   # Undo changes to hello
   if [[ "${SNAP}" =~ "python-hello" ]]; then
     git checkout hello
+  elif [[ "${SNAP}" =~ "go-" ]]; then
+      git checkout main.go
   else
     git checkout hello.c
   fi
@@ -39,6 +42,8 @@ execute: |
   # Make sure that what we built runs with the changes applied.
   if [[ "${SNAP}" =~ "python-hello" ]]; then
     sed -i hello -e 's/hello world/hello rebuilt world/'
+  elif [[ "${SNAP}" =~ "go-" ]]; then
+    sed -i main.go -e 's/hello world/hello rebuilt world/'
   else
     sed -i hello.c -e 's/hello world/hello rebuilt world/'
   fi

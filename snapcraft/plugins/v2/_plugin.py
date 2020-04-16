@@ -33,9 +33,15 @@ class PluginV2(abc.ABC):
         self.options = options
 
     @abc.abstractmethod
+    def get_build_snaps(self) -> Set[str]:
+        """
+        Return a set of required packages to install in the build environment.
+        """
+
+    @abc.abstractmethod
     def get_build_packages(self) -> Set[str]:
         """
-        Return a list of required packages to install in the build environment.
+        Return a set of required packages to install in the build environment.
         """
 
     @abc.abstractmethod
