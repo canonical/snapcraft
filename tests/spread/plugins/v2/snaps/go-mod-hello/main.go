@@ -21,7 +21,7 @@ package main
 
 import (
 	"fmt"
-	// imported just kick the go.mod tires.
+	// imported to just kick the go.mod tires.
 	"rsc.io/quote"
 )
 
