@@ -34,4 +34,4 @@ execute: |
   fi
 
   sudo snap install go-mod-hello_*.snap --dangerous
-  [ "$(go-mod-hello)" = "Ahoy, world!" ]
+  [ "$(go-mod-hello)" = "hello world" ]
