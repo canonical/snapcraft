@@ -122,12 +122,8 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
-
-            def assemble_env():
-                return self._generate_build_env()
-
             build_step_run_callable = self._do_v2_build
-            build_env_generator = assemble_env
+            build_env_generator = self._generate_build_env
         else:
             build_step_run_callable = self.plugin.build
             build_env_generator = common.assemble_env
@@ -593,7 +589,7 @@ class PluginHandler:
 
         self._do_build(update=True)
 
-    def _generate_build_env(self, add_path: bool = False) -> str:
+    def _generate_build_env(self) -> str:
         """
         Generates an environment suitable to run during a step.
 
@@ -604,7 +600,7 @@ class PluginHandler:
 
         # Snapcraft's say.
         snapcraft_build_environment = get_snapcraft_build_environment(
-            self, add_path=add_path
+            self, add_path=True
         )
 
         # Plugin's say.
@@ -646,7 +642,7 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_build_env(add_path=True), file=run_file)
+            print(self._generate_build_env(), file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
