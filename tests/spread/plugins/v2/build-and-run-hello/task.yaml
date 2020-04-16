@@ -22,7 +22,7 @@ restore: |
   if [[ "${SNAP}" =~ "python-hello" ]]; then
     git checkout hello
   elif [[ "${SNAP}" =~ "go-" ]]; then
-      git checkout main.go
+    git checkout main.go
   else
     git checkout hello.c
   fi
