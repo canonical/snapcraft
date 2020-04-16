@@ -18,7 +18,7 @@ restore: |
   rm -f ./*.snap
 
   # Undo changes to hello
-  if [ "${SNAP}" = "python-hello" ]; then
+  if [[ "${SNAP}" =~ "python-hello" ]]; then
     git checkout hello
   else
     git checkout hello.c
@@ -37,7 +37,7 @@ execute: |
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
-  if [ "${SNAP}" = "python-hello" ]; then
+  if [[ "${SNAP}" =~ "python-hello" ]]; then
     sed -i hello -e 's/hello world/hello rebuilt world/'
   else
     sed -i hello.c -e 's/hello world/hello rebuilt world/'
