@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, MatchesRegex
 
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
@@ -118,10 +118,7 @@ class DebTests(unit.TestCase):
             RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
         )
         self.assertThat(
-            str(error),
-            Equals(
-                "invalid deb repository object: {'architectures': ['amd64', 'i386'], 'components': ['main', 'multiverse'], 'deb-types': ['deb', 'deb-src'], 'key-id': 'test-key-id', 'key-server': 'keyserver.ubuntu.com', 'name': 'test-name', 'suites': ['xenial', 'xenial-updates'], 'type': 'aptx', 'url': 'http://archive.ubuntu.com/ubuntu'}"
-            ),
+            str(error), MatchesRegex("invalid deb repository object:.*(invalid type)")
         )
 
     def test_invalid_key(self):
@@ -141,10 +138,7 @@ class DebTests(unit.TestCase):
             RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
         )
         self.assertThat(
-            str(error),
-            Equals(
-                "invalid deb repository object: {'architectures': ['amd64', 'i386'], 'components': ['main', 'multiverse'], 'deb-types': ['deb', 'deb-src'], 'key-id': 'test-key-id', 'key-server': 'keyserver.ubuntu.com', 'name': 'test-name', 'suites': ['xenial', 'xenial-updates'], 'type': 'apt', 'xurl': 'http://archive.ubuntu.com/ubuntu'}"
-            ),
+            str(error), MatchesRegex("invalid deb repository object:.*(invalid url)")
         )
 
     def test_invalid_apt_extra_key(self):
@@ -165,10 +159,7 @@ class DebTests(unit.TestCase):
             RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
         )
         self.assertThat(
-            str(error),
-            Equals(
-                "invalid deb repository object: {'architectures': ['amd64', 'i386'], 'components': ['main', 'multiverse'], 'deb-types': ['deb', 'deb-src'], 'key-id': 'test-key-id', 'key-server': 'keyserver.ubuntu.com', 'name': 'test-name', 'suites': ['xenial', 'xenial-updates'], 'type': 'apt', 'url': 'http://archive.ubuntu.com/ubuntu', 'foo': 'bar'} (extra keys)"
-            ),
+            str(error), MatchesRegex("invalid deb repository object:.*(extra keys)")
         )
 
 

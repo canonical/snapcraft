@@ -123,7 +123,7 @@ class PackageRepositoryAptDeb(PackageRepository):
 
         return data
 
-    @classmethod
+    @classmethod  # noqa: C901
     def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryAptDeb":
         if not isinstance(data, dict):
             raise RuntimeError(f"invalid deb repository object: {data!r}")
@@ -140,33 +140,55 @@ class PackageRepositoryAptDeb(PackageRepository):
         url = data_copy.pop("url", None)
         repo_type = data_copy.pop("type", None)
 
-        if (
-            repo_type != "apt"
-            or (
-                architectures is not None
-                and (
-                    not isinstance(architectures, list)
-                    or not all(isinstance(x, str) for x in architectures)
-                )
+        if repo_type != "apt":
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid type)"
             )
-            or (
-                not isinstance(components, list)
-                or not all(isinstance(x, str) for x in components)
-            )
-            or (
-                deb_types is not None
-                and any(deb_type not in ["deb", "deb-src"] for deb_type in deb_types)
-            )
-            or not isinstance(key_id, str)
-            or (key_server is not None and not isinstance(key_server, str))
-            or not isinstance(name, str)
-            or (
-                not isinstance(suites, list)
-                or not all(isinstance(x, str) for x in suites)
-            )
-            or not isinstance(url, str)
+
+        if architectures is not None and (
+            not isinstance(architectures, list)
+            or not all(isinstance(x, str) for x in architectures)
         ):
-            raise RuntimeError(f"invalid deb repository object: {data!r}")
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid architectures)"
+            )
+
+        if not isinstance(components, list) or not all(
+            isinstance(x, str) for x in components
+        ):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid components)"
+            )
+
+        if deb_types is not None and any(
+            deb_type not in ["deb", "deb-src"] for deb_type in deb_types
+        ):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid deb-types)"
+            )
+
+        if not isinstance(key_id, str):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid key-id)"
+            )
+
+        if key_server is not None and not isinstance(key_server, str):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid key-server)"
+            )
+
+        if not isinstance(name, str):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid name)"
+            )
+
+        if not isinstance(suites, list) or not all(isinstance(x, str) for x in suites):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (invalid suites)"
+            )
+
+        if not isinstance(url, str):
+            raise RuntimeError(f"invalid deb repository object: {data!r} (invalid url)")
 
         if data_copy:
             raise RuntimeError(f"invalid deb repository object: {data!r} (extra keys)")
