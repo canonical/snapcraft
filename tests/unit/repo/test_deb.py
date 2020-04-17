@@ -224,8 +224,8 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_sources_formatting(self, mock_version_codename):
         sources_list = textwrap.dedent(
             """
-            deb http://archive.ubuntu.com/ubuntu ${release} main restricted
-            deb http://archive.ubuntu.com/ubuntu ${release}-updates main restricted
+            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE main restricted
+            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE-updates main restricted
             """
         )
 

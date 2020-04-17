@@ -1910,7 +1910,7 @@ class PackageManagement(ProjectBaseTest):
                     components: [main, multiverse]
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
-                    suites: [$release, $release-updates]
+                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
                 """
             )
         )
