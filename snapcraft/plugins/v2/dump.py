@@ -14,23 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The make plugin is useful for building make based parts.
+"""This plugin just dumps the content from a specified source.
 
-Make based projects are projects that have a Makefile that drives the
-build.
-
-This plugin always runs 'make' followed by 'make install', except when
-the 'artifacts' keyword is used.
-
-This plugin uses the common plugin keywords as well as those for "sources".
+This plugin uses the common plugin keywords as well as those for 'sources'.
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.
 
-Additionally, this plugin uses the following plugin-specific keywords:
-
-    - make-parameters:
-      (list of strings)
-      Pass the given parameters to the make command.
+In the cases where dumping the content needs some mangling or organizing
+one would take advantage of the core functionalities available to plugins
+such as: `filesets`, `stage`, `snap` and `organize`.
 """
 
 from typing import Any, Dict, List, Set
