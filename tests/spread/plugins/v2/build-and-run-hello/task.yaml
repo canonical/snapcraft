@@ -7,6 +7,7 @@ environment:
   SNAP/python: python-hello
   SNAP/python_staged: python-hello-staged-python
   SNAP/go_mod: go-mod-hello
+  SNAP/dump: dump-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -19,13 +20,9 @@ restore: |
   rm -f ./*.snap
 
   # Undo changes to hello
-  if [[ "${SNAP}" =~ "python-hello" ]]; then
-    git checkout hello
-  elif [[ "${SNAP}" =~ "go-" ]]; then
-    git checkout main.go
-  else
-    git checkout hello.c
-  fi
+  [ -f hello ] && git checkout hello
+  [ -f hello.c ] && git checkout hello.c
+  [ -f main.go ] && git checkout main.go
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -40,13 +37,18 @@ execute: |
   [ "$($SNAP)" = "hello world" ]
 
   # Make sure that what we built runs with the changes applied.
-  if [[ "${SNAP}" =~ "python-hello" ]]; then
-    sed -i hello -e 's/hello world/hello rebuilt world/'
-  elif [[ "${SNAP}" =~ "go-" ]]; then
-    sed -i main.go -e 's/hello world/hello rebuilt world/'
+  if [ -f hello ]; then
+    modified_file=hello
+  elif [ -f hello.c ]; then
+    modified_file=hello.c
+  elif [ -f main.go ]; then
+    modified_file=main.go
   else
-    sed -i hello.c -e 's/hello world/hello rebuilt world/'
+    FATAL "Cannot setup ${SNAP} for rebuilding"
   fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
   snapcraft | MATCH "Updating build step for "
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello rebuilt world" ]
