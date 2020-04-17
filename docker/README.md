@@ -25,3 +25,5 @@ strictly needed if a proper docker bridge is setup):
 You can push that image with:
 
     docker push snapcore/snapcraft:<risk>
+
+Note: if you are looking for the docker snap's project it's over here: https://code.launchpad.net/~docker/+git/snap
