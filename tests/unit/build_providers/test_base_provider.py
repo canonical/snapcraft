@@ -122,29 +122,39 @@ class BaseProviderTest(BaseProviderBaseTest):
                     call(
                         [
                             "mv",
-                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvbWFpbi5zb3VyY2Vz",
-                            "/etc/apt/sources.list.d/main.sources",
-                        ]
-                    ),
-                    call(
-                        ["chown", "root:root", "/etc/apt/sources.list.d/main.sources"]
-                    ),
-                    call(["chmod", "0644", "/etc/apt/sources.list.d/main.sources"]),
-                    call(
-                        [
-                            "mv",
-                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvc2VjdXJpdHkuc291cmNlcw==",
-                            "/etc/apt/sources.list.d/security.sources",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
+                            "/etc/apt/sources.list.d/default.sources",
                         ]
                     ),
                     call(
                         [
                             "chown",
                             "root:root",
-                            "/etc/apt/sources.list.d/security.sources",
+                            "/etc/apt/sources.list.d/default.sources",
                         ]
                     ),
-                    call(["chmod", "0644", "/etc/apt/sources.list.d/security.sources"]),
+                    call(["chmod", "0644", "/etc/apt/sources.list.d/default.sources"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chown",
+                            "root:root",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chmod",
+                            "0644",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
                     call(
                         [
                             "mv",
@@ -302,7 +312,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                         echo -n $ps1
                         """
                     ),
-                    "main.sources": dedent(
+                    "default.sources": dedent(
                         """\
                         Types: deb deb-src
                         URIs: http://archive.ubuntu.com/ubuntu
@@ -310,7 +320,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                         Components: main multiverse restricted universe
                     """
                     ),
-                    "security.sources": dedent(
+                    "default-security.sources": dedent(
                         """\
                         Types: deb deb-src
                         URIs: http://security.ubuntu.com/ubuntu
@@ -365,7 +375,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                         echo -n $ps1
                         """
                     ),
-                    "main.sources": dedent(
+                    "default.sources": dedent(
                         """\
                         Types: deb deb-src
                         URIs: http://ports.ubuntu.com/ubuntu-ports
@@ -373,7 +383,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                         Components: main multiverse restricted universe
                     """
                     ),
-                    "security.sources": dedent(
+                    "default-security.sources": dedent(
                         """\
                         Types: deb deb-src
                         URIs: http://ports.ubuntu.com/ubuntu-ports
