@@ -63,6 +63,7 @@ import logging
 import re
 import shutil
 import textwrap
+from typing import Dict
 
 from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils
@@ -252,12 +253,12 @@ class ColconPlugin(PluginV1):
         ]
 
     @classmethod
-    def get_required_repo_sources(self):
-        return ["deb http://repo.ros2.org/ubuntu/main ${release} main"]
+    def get_required_repo_sources(self) -> Dict[str, str]:
+        return dict(ros2="deb http://repo.ros2.org/ubuntu/main ${release} main")
 
     @classmethod
     def get_required_repo_gpg_keys(self):
-        return [_ROS2_GPG_KEY]
+        return dict(C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654=_ROS2_GPG_KEY)
 
     @property
     def _pip(self):

@@ -173,12 +173,12 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_gpg_key(cls, gpg_key: str) -> None:
+    def install_gpg_key(cls, *, key_id: str, key: str) -> None:
         """Install trusted GPG key."""
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_source(cls, source_line: str) -> None:
+    def install_source(cls, *, name: str, source: str) -> None:
         """Install repository source location."""
         raise errors.NoNativeBackendError()
 
