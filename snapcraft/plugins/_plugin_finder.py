@@ -56,6 +56,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
         },
         "core20": {
             "autotools": v2.AutotoolsPlugin,
+            "dump": v2.DumpPlugin,
             "cmake": v2.CMakePlugin,
             "make": v2.MakePlugin,
             "go": v2.GoPlugin,
