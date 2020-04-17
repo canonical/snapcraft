@@ -27,6 +27,7 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^snapcraft.yaml$"),
     re.compile(r"^.snapcraft([/|\\]state)?$"),
     re.compile(r"^hooks([/|\\].*)?$"),
+    re.compile(r"^keys([/|\\].*\.(asc))?$"),
     re.compile(r"^local([/|\\].*)?$"),
     re.compile(r"^plugins([/|\\].*)?$"),
     re.compile(r"^gui([/|\\].*\.(png|svg|desktop))?$"),

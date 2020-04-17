@@ -17,6 +17,7 @@
 import hashlib
 import os
 from datetime import datetime
+from pathlib import Path
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
@@ -103,6 +104,11 @@ class Project(ProjectOptions):
             return os.path.join(self._project_dir, "build-aux", "snap")
         else:
             return os.path.join(self._project_dir, "snap")
+
+    def _get_keys_path(self) -> Path:
+        # Directory containing <KEY_ID>.asc keys for use with
+        # package-repositories, relative to 'snap' assets.
+        return Path(self._get_snapcraft_assets_dir(), "keys")
 
     def _get_local_plugins_dir(self) -> str:
         deprecated_plugins_dir = os.path.join(self._parts_dir, "plugins")
