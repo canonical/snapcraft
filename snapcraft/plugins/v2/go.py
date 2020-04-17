@@ -75,4 +75,7 @@ class GoPlugin(PluginV2):
         else:
             tags = ""
 
-        return ["go mod download", f"go install {tags} ${{SNAPCRAFT_GO_LDFLAGS}} ./..."]
+        return [
+            "go mod download",
+            f'go install -p "${{SNAPCRAFT_PARALLEL_BUILD_COUNT}}" {tags} ${{SNAPCRAFT_GO_LDFLAGS}} ./...',
+        ]

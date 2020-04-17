@@ -81,7 +81,12 @@ class GoPluginTest(TestCase):
 
         self.assertThat(
             plugin.get_build_commands(),
-            Equals(["go mod download", "go install  ${SNAPCRAFT_GO_LDFLAGS} ./..."]),
+            Equals(
+                [
+                    "go mod download",
+                    'go install -p "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"  ${SNAPCRAFT_GO_LDFLAGS} ./...',
+                ]
+            ),
         )
 
     def test_get_build_commands_with_buildtags(self):
@@ -95,7 +100,7 @@ class GoPluginTest(TestCase):
             Equals(
                 [
                     "go mod download",
-                    "go install -tags=dev,debug ${SNAPCRAFT_GO_LDFLAGS} ./...",
+                    'go install -p "${SNAPCRAFT_PARALLEL_BUILD_COUNT}" -tags=dev,debug ${SNAPCRAFT_GO_LDFLAGS} ./...',
                 ]
             ),
         )
