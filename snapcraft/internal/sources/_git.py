@@ -222,8 +222,11 @@ class Git(Base):
                 **self._call_kwargs
             )
 
+    def is_local(self):
+        return os.path.exists(os.path.join(self.source_dir, ".git"))
+
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".git")):
+        if self.is_local():
             self._pull_existing()
         else:
             self._clone_new()
