@@ -100,7 +100,7 @@ class FakeAptCache:
             self.dependencies.get(name) for name in dependency_names
         ]
 
-        version = MagicMock(
+        apt_version = MagicMock(
             wraps=FakeAptVersion(
                 version=version,
                 priority=priority,
@@ -108,17 +108,25 @@ class FakeAptCache:
                 dependencies=package_dependencies,
             )
         )
-        self.versions[name] = version
+
+        type(apt_version).version = PropertyMock(return_value=version)
+        type(apt_version).priority = PropertyMock(return_value=priority)
+        type(apt_version).package = PropertyMock(return_value=package)
+        type(apt_version).dependencies = PropertyMock(return_value=package_dependencies)
+
+        self.versions[name] = apt_version
 
         # Wire up coupled package properties.
-        package.candidate = version
+        type(package).candidate = PropertyMock(return_value=apt_version)
         if installed:
-            package.installed = version
+            type(package).installed = PropertyMock(return_value=apt_version)
         else:
-            package.installed = None
+            type(package).installed = PropertyMock(return_value=None)
 
         # Create matching dependency, even if unused.
-        dependency = MagicMock(wraps=FakeAptDependency(target_versions=[version]))
+        dependency = MagicMock(wraps=FakeAptDependency(target_versions=[apt_version]))
+        type(dependency).target_versions = PropertyMock(return_value=[apt_version])
+
         self.dependencies[name] = dependency
 
         return package
@@ -158,24 +166,28 @@ class UbuntuTestCase(RepoBaseTestCase):
         repo.Ubuntu._cache = None
 
     def test_install_stage_package(self):
-        repo.Ubuntu.install_stage_packages(
+        installed_packages = repo.Ubuntu.install_stage_packages(
             package_names=["fake-package"], install_dir=self.path
         )
 
         self.assertThat(
-            self.fake_apt_cache["fake-package"].mock_calls,
-            Contains(call.candidate.fetch_binary(self.path)),
+            self.fake_apt_cache["fake-package"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
         )
 
+        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
+
     def test_install_virtual_stage_package(self):
-        repo.Ubuntu.install_stage_packages(
+        installed_packages = repo.Ubuntu.install_stage_packages(
             package_names=["virtual-fake-package"], install_dir=self.path
         )
 
         self.assertThat(
-            self.fake_apt_cache["fake-package"].mock_calls,
-            Contains(call.candidate.fetch_binary(self.path)),
+            self.fake_apt_cache["fake-package"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
         )
+
+        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
 
     def test_get_package_fetch_error(self):
         self.fake_apt_cache.packages[
@@ -195,14 +207,16 @@ class UbuntuTestCase(RepoBaseTestCase):
             name="fake-package:arch", dependency_names=[]
         )
 
-        repo.Ubuntu.install_stage_packages(
+        installed_packages = repo.Ubuntu.install_stage_packages(
             package_names=["fake-package:arch"], install_dir=self.path
         )
 
         self.assertThat(
-            self.fake_apt_cache.packages["fake-package:arch"].mock_calls,
-            Contains(call.candidate.fetch_binary(self.path)),
+            self.fake_apt_cache.packages["fake-package:arch"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
         )
+
+        self.assertThat(installed_packages, Equals(["fake-package:arch=1.0"]))
 
     @mock.patch(
         "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
