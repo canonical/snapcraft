@@ -20,7 +20,6 @@ import glob
 import logging
 import os
 import re
-import string
 import subprocess
 import sys
 import tempfile
@@ -581,7 +580,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_source(cls, *, name: str, source: str) -> None:
-        """Add deb source line. Supports formatting tag for ${release}."""
+        """Add deb source line. Supports $SNAPCRAFT_APT_RELEASE."""
         expanded_source = _format_sources_list(source)
 
         sources = cls._get_snapcraft_installed_sources()
@@ -634,4 +633,4 @@ def _get_local_sources_list():
 def _format_sources_list(sources_list: str):
     release = os_release.OsRelease().version_codename()
 
-    return string.Template(sources_list).substitute({"release": release})
+    return sources_list.replace("$SNAPCRAFT_APT_RELEASE", release)

@@ -254,7 +254,9 @@ class ColconPlugin(PluginV1):
 
     @classmethod
     def get_required_repo_sources(self) -> Dict[str, str]:
-        return dict(ros2="deb http://repo.ros2.org/ubuntu/main ${release} main")
+        return dict(
+            ros2="deb http://repo.ros2.org/ubuntu/main $SNAPCRAFT_APT_RELEASE main"
+        )
 
     @classmethod
     def get_required_repo_gpg_keys(self):

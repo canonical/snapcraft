@@ -307,7 +307,9 @@ class CatkinPlugin(PluginV1):
 
     @classmethod
     def get_required_repo_sources(self) -> Dict[str, str]:
-        return dict(ros1="deb http://packages.ros.org/ros/ubuntu/ ${release} main")
+        return dict(
+            ros1="deb http://packages.ros.org/ros/ubuntu/ $SNAPCRAFT_APT_RELEASE main"
+        )
 
     @classmethod
     def get_required_repo_gpg_keys(self) -> Dict[str, str]:
