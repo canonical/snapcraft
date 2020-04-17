@@ -1,7 +1,9 @@
+// +build hello
+
 // -*- Mode: Go; indent-tabs-mode: t -*-
 
 /*
- * Copyright (C) 2014-2019 Canonical Ltd
+ * Copyright (C) 2020 Canonical Ltd
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
@@ -21,13 +23,8 @@ package main
 
 import (
 	"fmt"
-	"rsc.io/quote"
 )
 
-func hello() string {
-	return quote.Hello()
-}
-
-func main() {
-	fmt.Println(hello())
+func say() {
+	fmt.Println("hello world")
 }
