@@ -101,6 +101,34 @@ class DebTests(unit.TestCase):
             ),
         )
 
+    def test_valid_default_name(self):
+        repo = PackageRepositoryAptDeb(
+            architectures=["amd64", "i386"],
+            components=["main", "multiverse"],
+            deb_types=["deb", "deb-src"],
+            key_id="test-key-id",
+            key_server="keyserver.ubuntu.com",
+            suites=["xenial", "xenial-updates"],
+            url="http://archive.ubuntu.com/ubuntu",
+        )
+
+        self.assertThat(
+            repo.marshal(),
+            Equals(
+                {
+                    "architectures": ["amd64", "i386"],
+                    "components": ["main", "multiverse"],
+                    "deb-types": ["deb", "deb-src"],
+                    "key-id": "test-key-id",
+                    "key-server": "keyserver.ubuntu.com",
+                    "name": "httparchiveubuntucomubuntu",
+                    "suites": ["xenial", "xenial-updates"],
+                    "type": "apt",
+                    "url": "http://archive.ubuntu.com/ubuntu",
+                }
+            ),
+        )
+
     def test_invalid_type(self):
         test_dict = {
             "architectures": ["amd64", "i386"],

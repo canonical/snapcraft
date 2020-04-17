@@ -16,6 +16,7 @@
 
 from copy import deepcopy
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ class PackageRepositoryAptDeb(PackageRepository):
         deb_types: Optional[List[str]] = None,
         key_id: str,
         key_server: Optional[str] = None,
-        name: str,
+        name: Optional[str] = None,
         suites: List[str],
         url: str,
     ) -> None:
@@ -97,7 +98,13 @@ class PackageRepositoryAptDeb(PackageRepository):
         self.deb_types = deb_types
         self.key_id = key_id
         self.key_server = key_server
-        self.name = name
+
+        if name is None:
+            # Default name is URL, stripping non-alphanumeric characters.
+            self.name: str = re.sub(r"\W+", "", url)
+        else:
+            self.name = name
+
         self.suites = suites
         self.url = url
 
@@ -177,7 +184,7 @@ class PackageRepositoryAptDeb(PackageRepository):
                 f"invalid deb repository object: {data!r} (invalid key-server)"
             )
 
-        if not isinstance(name, str):
+        if name is not None and not isinstance(name, str):
             raise RuntimeError(
                 f"invalid deb repository object: {data!r} (invalid name)"
             )
