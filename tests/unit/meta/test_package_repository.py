@@ -121,7 +121,7 @@ class DebTests(unit.TestCase):
                     "deb-types": ["deb", "deb-src"],
                     "key-id": "test-key-id",
                     "key-server": "keyserver.ubuntu.com",
-                    "name": "httparchiveubuntucomubuntu",
+                    "name": "http_archive_ubuntu_com_ubuntu",
                     "suites": ["xenial", "xenial-updates"],
                     "type": "apt",
                     "url": "http://archive.ubuntu.com/ubuntu",

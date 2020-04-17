@@ -101,7 +101,7 @@ class PackageRepositoryAptDeb(PackageRepository):
 
         if name is None:
             # Default name is URL, stripping non-alphanumeric characters.
-            self.name: str = re.sub(r"\W+", "", url)
+            self.name: str = re.sub(r"\W+", "_", url)
         else:
             self.name = name
 
