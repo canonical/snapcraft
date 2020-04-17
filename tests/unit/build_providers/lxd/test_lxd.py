@@ -14,17 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import os
 import subprocess
 from typing import Any, Dict
 from unittest import mock
 from unittest.mock import call
 
+import fixtures
+from testtools import TestCase
 from testtools.matchers import Equals, FileContains, FileExists
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import _base_provider, errors
 from snapcraft.internal.build_providers._lxd import LXD
+from snapcraft.internal.build_providers._lxd._lxd import _get_resolv_conf_content
 from snapcraft.internal.repo.errors import SnapdConnectionError
 from tests.unit.build_providers import BaseProviderBaseTest
 
@@ -138,6 +142,49 @@ class FakePyLXDClient:
         self.containers = FakeContainers()
 
 
+class ResolvConfTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        temp_dir = fixtures.TempDir()
+        self.useFixture(temp_dir)
+        self.temp_dir = pathlib.Path(temp_dir.path)
+
+    def test_get_resolv_conf_file(self):
+        resolv_conf_content = "nameserver 1.2.3.4"
+        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
+        with resolv_conf_path.open("w") as resolv_conf_file:
+            print(resolv_conf_content, file=resolv_conf_file, end="")
+
+        self.assertThat(
+            _get_resolv_conf_content(resolv_conf_path), Equals(resolv_conf_content)
+        )
+
+    def test_get_resolv_conf_file_default_nameserver(self):
+        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
+
+        self.assertThat(
+            _get_resolv_conf_content(resolv_conf_path), Equals("nameserver 1.1.1.1")
+        )
+
+    def test_get_resolv_conf_file_from_environment_preferred(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER", "9.9.9.9"
+            )
+        )
+
+        resolv_conf_content = "nameserver 1.2.3.4"
+        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
+        with resolv_conf_path.open("w") as resolv_conf_file:
+            print(resolv_conf_content, file=resolv_conf_file, end="")
+
+        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
+
+        self.assertThat(
+            _get_resolv_conf_content(resolv_conf_path), Equals("nameserver 9.9.9.9")
+        )
+
+
 class LXDBaseTest(BaseProviderBaseTest):
     def setUp(self):
         super().setUp()
@@ -159,7 +206,26 @@ class LXDBaseTest(BaseProviderBaseTest):
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("subprocess.check_output", spec=subprocess.check_output)
+        def check_output_effect(command: str, *arch, **kwargs) -> bytes:
+            if "is-system-running" in command:
+                raise subprocess.CalledProcessError(
+                    returncode=1,
+                    cmd=["systemctl", "is-system-running"],
+                    output="degraded\n".encode(),
+                )
+
+            if "getent" in command:
+                output = "2001:67c:1562::20 snapcraft.io"
+            else:
+                output = ""
+
+            return output.encode()
+
+        patcher = mock.patch(
+            "subprocess.check_output",
+            spec=subprocess.check_output,
+            side_effect=check_output_effect,
+        )
         self.check_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -188,10 +254,10 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.assertThat(self.check_output_mock.call_count, Equals(3))
         self.check_output_mock.assert_has_calls(
             [
-                call(
+                mock.call(
                     [
                         "/snap/bin/lxc",
                         "exec",
@@ -199,25 +265,27 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
+                        "systemctl",
+                        "is-system-running",
                     ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "getent",
-                        "hosts",
-                        "snapcraft.io",
-                    ]
-                ),
+                )
             ]
+            + [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "getent",
+                        "hosts",
+                        "snapcraft.io",
+                    ]
+                )
+            ]
+            * 2
         )
         self.check_call_mock.assert_has_calls(
             [
@@ -821,8 +889,6 @@ class LXDLaunchedTest(LXDBaseTest):
         )
 
     def test_mount_project(self):
-        self.check_output_mock.return_value = b"/root"
-
         self.instance.mount_project()
 
         self.assertThat(
@@ -837,9 +903,23 @@ class LXDLaunchedTest(LXDBaseTest):
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.assertThat(self.check_output_mock.call_count, Equals(3))
         self.check_output_mock.assert_has_calls(
             [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "is-system-running",
+                    ]
+                )
+            ]
+            + [
                 mock.call(
                     [
                         "/snap/bin/lxc",
@@ -876,9 +956,23 @@ class LXDLaunchedTest(LXDBaseTest):
         )
         self.assertThat(self.fake_container.sync_mock.call_count, Equals(1))
         self.fake_container.save_mock.assert_called_once_with(wait=True)
-        self.assertThat(self.check_output_mock.call_count, Equals(2))
+        self.assertThat(self.check_output_mock.call_count, Equals(3))
         self.check_output_mock.assert_has_calls(
             [
+                mock.call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "is-system-running",
+                    ]
+                )
+            ]
+            + [
                 mock.call(
                     [
                         "/snap/bin/lxc",
