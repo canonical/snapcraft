@@ -1,5 +1,11 @@
 #!/bin/sh -e
 
+# Remove any snapcraft-configured apt GPG keys.
+rm -f /etc/apt/trusted.gpg.d/snapcraft.gpg
+
+# Remove any snapcraft-configured apt sources.
+rm -f /etc/apt/sources.list.d/snapraft-*
+
 # Remove all auto-installed packages
 apt-get autoremove --purge -y
 

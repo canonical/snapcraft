@@ -195,11 +195,22 @@ class PartsConfig:
             sources = plugin.get_required_repo_sources()
             keys = plugin.get_required_repo_gpg_keys()
 
-            for key_id, key in keys.items():
-                repo.Repo.install_gpg_key(key_id=key_id, key=key)
+            keys_updated = any(
+                [
+                    repo.Repo.install_gpg_key(key_id=key_id, key=key)
+                    for key_id, key in keys.items()
+                ]
+            )
 
-            for name, source in sources.items():
-                repo.Repo.install_source(name=name, source=source)
+            sources_updated = any(
+                [
+                    repo.Repo.install_source(name=name, source=source)
+                    for name, source in sources.items()
+                ]
+            )
+
+            if keys_updated or sources_updated:
+                repo.Repo.refresh_build_packages()
 
         stage_packages_repo = repo.Repo
 

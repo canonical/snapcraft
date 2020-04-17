@@ -456,8 +456,7 @@ class PackageForFileTest(unit.TestCase):
 
 
 class TestUbuntuInstallRepo(unit.TestCase):
-    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.refresh_build_packages")
-    def test_install(self, mock_refresh):
+    def test_install(self):
         snapcraft_list = Path(self.path, "snapcraft.list")
 
         with mock.patch(
@@ -488,27 +487,104 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_gpg(self, mock_run):
         repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
 
+        mock_run.assert_has_calls(
+            [
+                call(
+                    [
+                        "sudo",
+                        "apt-key",
+                        "--keyring",
+                        repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+                        "add",
+                        "-",
+                    ],
+                    check=True,
+                    input=b"FAKEKEY",
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+            ]
+        )
+
+    @mock.patch("snapcraft.internal.repo._deb._sudo_write_file")
+    def test_install_sources(self, mock_write):
+        new_sources = repo.Ubuntu.install_sources(
+            architectures=["amd64", "arm64"],
+            components=["test-component"],
+            deb_types=["deb", "deb-src"],
+            name="test-name",
+            suites=["test-suite1", "test-suite2"],
+            url="http://test.url/ubuntu",
+        )
+
         self.assertThat(
-            mock_run.mock_calls,
+            mock_write.mock_calls,
             Equals(
                 [
                     call(
-                        [
-                            "sudo",
-                            "apt-key",
-                            "--keyring",
-                            repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
-                            "add",
-                            "-",
-                        ],
-                        check=True,
-                        input=b"FAKEKEY",
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
+                        content=b"Types: deb deb-src\nURIs: http://test.url/ubuntu\nSuites: test-suite1 test-suite2\nComponents: test-component\nArchitectures: amd64 arm64\n",
+                        dst_path=Path("/etc/apt/sources.list.d/snapcraft-test-name.sources"),
                     )
                 ]
             ),
         )
+
+        self.assertThat(new_sources, Equals(True))
+
+    @mock.patch("subprocess.run")
+    @mock.patch("snapcraft.internal.repo._deb.Launchpad")
+    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
+    def test_install_ppa(self, mock_install_sources, mock_launchpad, mock_run):
+        mock_launchpad.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
+            "FAKE-SIGNING-KEY"
+        )
+        repo.Ubuntu.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
+
+        mock_run.assert_has_calls(
+            [
+                call(
+                    [
+                        "sudo",
+                        "apt-key",
+                        "--keyring",
+                        "/etc/apt/trusted.gpg.d/snapcraft.gpg",
+                        "adv",
+                        "--keyserver",
+                        "keyserver.ubuntu.com",
+                        "--recv-keys",
+                        "FAKE-SIGNING-KEY",
+                    ],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+            ]
+        )
+
+        self.assertThat(
+            mock_install_sources.mock_calls,
+            Equals(
+                [
+                    call(
+                        components=["main"],
+                        deb_types=["deb"],
+                        name="ppa-test_ppa",
+                        suites=["$SNAPCRAFT_APT_RELEASE"],
+                        url="http://ppa.launchpad.net/test/ppa/ubuntu",
+                    )
+                ]
+            ),
+        )
+
+    def test_install_ppa_invalid(self):
+        raised = self.assertRaises(
+            errors.AptPPAInstallError,
+            repo.Ubuntu.install_ppa,
+            keys_path=Path(self.path),
+            ppa="testppa",
+        )
+
+        self.assertThat(raised._ppa, Equals("testppa"))
 
     @mock.patch("subprocess.run")
     def test_apt_key_failure(self, mock_run):
