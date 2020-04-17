@@ -130,7 +130,7 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
+                        "description": "Architectures to enable, or restrict to, for this repository.  Supports '$SNAPCRAFT_APT_HOST_ARCH' variable.  Defaults to host architecture."
                     }
                 },
                 "deb-types": {
@@ -169,12 +169,12 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$release' variable for snapcraft to populate base release name (e.g. 'xenial')."
+                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$SNAPCRAFT_APT_RELEASE' variable for snapcraft to populate base release name (e.g. 'xenial')."
                     }
                 },
                 "url": {
                     "type": "string",
-                    "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'"
+                    "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'."
                 }
             },
             "required": [
