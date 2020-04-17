@@ -346,7 +346,7 @@ class Provider(abc.ABC):
         self._install_file(path="/etc/apt/sources.list", content="", permissions="0644")
 
         self._install_file(
-            path="/etc/apt/sources.list.d/main.sources",
+            path="/etc/apt/sources.list.d/default.sources",
             content=dedent(
                 """\
                     Types: deb deb-src
@@ -362,7 +362,7 @@ class Provider(abc.ABC):
         )
 
         self._install_file(
-            path="/etc/apt/sources.list.d/security.sources",
+            path="/etc/apt/sources.list.d/default-security.sources",
             content=dedent(
                 """\
                         Types: deb deb-src

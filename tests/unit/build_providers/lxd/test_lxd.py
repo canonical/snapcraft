@@ -347,8 +347,8 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvbWFpbi5zb3VyY2Vz",
-                        "/etc/apt/sources.list.d/main.sources",
+                        "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
+                        "/etc/apt/sources.list.d/default.sources",
                     ]
                 ),
                 call(
@@ -361,7 +361,7 @@ class LXDInitTest(LXDBaseTest):
                         "SNAPCRAFT_HAS_TTY=False",
                         "chown",
                         "root:root",
-                        "/etc/apt/sources.list.d/main.sources",
+                        "/etc/apt/sources.list.d/default.sources",
                     ]
                 ),
                 call(
@@ -374,7 +374,7 @@ class LXDInitTest(LXDBaseTest):
                         "SNAPCRAFT_HAS_TTY=False",
                         "chmod",
                         "0644",
-                        "/etc/apt/sources.list.d/main.sources",
+                        "/etc/apt/sources.list.d/default.sources",
                     ]
                 ),
                 call(
@@ -386,8 +386,8 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "mv",
-                        "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvc2VjdXJpdHkuc291cmNlcw==",
-                        "/etc/apt/sources.list.d/security.sources",
+                        "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
+                        "/etc/apt/sources.list.d/default-security.sources",
                     ]
                 ),
                 call(
@@ -400,7 +400,7 @@ class LXDInitTest(LXDBaseTest):
                         "SNAPCRAFT_HAS_TTY=False",
                         "chown",
                         "root:root",
-                        "/etc/apt/sources.list.d/security.sources",
+                        "/etc/apt/sources.list.d/default-security.sources",
                     ]
                 ),
                 call(
@@ -413,7 +413,7 @@ class LXDInitTest(LXDBaseTest):
                         "SNAPCRAFT_HAS_TTY=False",
                         "chmod",
                         "0644",
-                        "/etc/apt/sources.list.d/security.sources",
+                        "/etc/apt/sources.list.d/default-security.sources",
                     ]
                 ),
                 call(
