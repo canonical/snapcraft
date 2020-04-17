@@ -226,6 +226,7 @@ class PartsConfig:
         self.build_tools |= grammar_processor.get_build_packages()
 
         if not isinstance(part.plugin, plugins.v1.PluginV1):
+            self.build_snaps |= part.plugin.get_build_snaps()
             self.build_tools |= part.plugin.get_build_packages()
 
         # TODO: this should not pass in command but the required package,

@@ -22,6 +22,7 @@ from ._plugin import PluginV2  # noqa: F401
 if sys.platform == "linux":
     from .autotools import AutotoolsPlugin  # noqa: F401
     from .cmake import CMakePlugin  # noqa: F401
+    from .go import GoPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
     from .python import PythonPlugin  # noqa: F401

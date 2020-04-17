@@ -14,13 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The make plugin is useful for building make based parts.
-
-Make based projects are projects that have a Makefile that drives the
-build.
-
-This plugin always runs 'make' followed by 'make install', except when
-the 'artifacts' keyword is used.
+"""The go plugin can be used for go projects using go.mod.
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -28,9 +22,13 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - make-parameters:
+    - go-channel:
+      (string, default: latest/stable)
+      The Snap Store channel to install go from.
+
+    - go-buildtags:
       (list of strings)
-      Pass the given parameters to the make command.
+      Tags to use during the go build. Default is not to use any build tags.
 """
 
 from typing import Any, Dict, List, Set
@@ -38,27 +36,46 @@ from typing import Any, Dict, List, Set
 from snapcraft.plugins.v2 import PluginV2
 
 
-class MakePlugin(PluginV2):
+class GoPlugin(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
             "additionalProperties": False,
-            "properties": {},
+            "properties": {
+                "go-channel": {"type": "string", "default": "latest/stable"},
+                "go-buildtags": {
+                    "type": "array",
+                    "minitems": 1,
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
+            },
+            "required": ["source"],
         }
 
     def get_build_snaps(self) -> Set[str]:
-        return set()
+        return {f"go/{self.options.go_channel}"}
 
     def get_build_packages(self) -> Set[str]:
-        return {"gcc", "make"}
+        return {"gcc"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return dict()
+        return {
+            "SNAPCRAFT_GO_LDFLAGS": "-ldflags -linkmode=external",
+            "CGO_ENABLED": "1",
+            "GOBIN": "${SNAPCRAFT_PART_INSTALL}/bin",
+        }
 
     def get_build_commands(self) -> List[str]:
+        if self.options.go_buildtags:
+            tags = "-tags={}".format(",".join(self.options.go_buildtags))
+        else:
+            tags = ""
+
         return [
-            'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
-            'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+            "go mod download",
+            f'go install -p "${{SNAPCRAFT_PARALLEL_BUILD_COUNT}}" {tags} ${{SNAPCRAFT_GO_LDFLAGS}} ./...',
         ]

@@ -58,6 +58,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "autotools": v2.AutotoolsPlugin,
             "cmake": v2.CMakePlugin,
             "make": v2.MakePlugin,
+            "go": v2.GoPlugin,
             "nil": v2.NilPlugin,
             "python": v2.PythonPlugin,
         },
