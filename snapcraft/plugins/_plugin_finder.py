@@ -59,6 +59,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "dump": v2.DumpPlugin,
             "cmake": v2.CMakePlugin,
             "make": v2.MakePlugin,
+            "meson": v2.MesonPlugin,
             "go": v2.GoPlugin,
             "nil": v2.NilPlugin,
             "python": v2.PythonPlugin,

@@ -8,6 +8,7 @@ environment:
   SNAP/python_staged: python-hello-staged-python
   SNAP/go_mod: go-mod-hello
   SNAP/dump: dump-hello
+  SNAP/meson: meson-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

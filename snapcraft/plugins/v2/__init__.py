@@ -25,5 +25,6 @@ if sys.platform == "linux":
     from .dump import DumpPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401
+    from .meson import MesonPlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
     from .python import PythonPlugin  # noqa: F401

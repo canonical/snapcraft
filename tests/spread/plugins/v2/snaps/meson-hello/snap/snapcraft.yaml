@@ -12,7 +12,7 @@ confinement: strict
 
 apps:
   meson-hello:
-    command: hello
+    command: bin/hello
 
 parts:
   meson-project:
@@ -21,4 +21,3 @@ parts:
     meson-version: "0.48.0"
     meson-parameters:
       - --prefix=/
-    build-packages: [gcc, libc6-dev]
