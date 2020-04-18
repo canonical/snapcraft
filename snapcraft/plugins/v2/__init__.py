@@ -27,4 +27,5 @@ if sys.platform == "linux":
     from .make import MakePlugin  # noqa: F401
     from .meson import MesonPlugin  # noqa: F401
     from .nil import NilPlugin  # noqa: F401
+    from .npm import NpmPlugin  # noqa: F401
     from .python import PythonPlugin  # noqa: F401

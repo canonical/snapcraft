@@ -62,6 +62,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "meson": v2.MesonPlugin,
             "go": v2.GoPlugin,
             "nil": v2.NilPlugin,
+            "npm": v2.NpmPlugin,
             "python": v2.PythonPlugin,
         },
     }
