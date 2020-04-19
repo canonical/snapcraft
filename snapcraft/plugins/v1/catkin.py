@@ -80,7 +80,7 @@ import shlex
 import shutil
 import subprocess
 import textwrap
-from typing import List, Set, TYPE_CHECKING
+from typing import Dict, List, Set, TYPE_CHECKING
 
 from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils, formatting_utils
@@ -306,12 +306,14 @@ class CatkinPlugin(PluginV1):
         return ["catkin-cmake-args"]
 
     @classmethod
-    def get_required_repo_sources(self) -> List[str]:
-        return ["deb http://packages.ros.org/ros/ubuntu/ ${release} main"]
+    def get_required_repo_sources(self) -> Dict[str, str]:
+        return dict(
+            ros1="deb http://packages.ros.org/ros/ubuntu/ $SNAPCRAFT_APT_RELEASE main"
+        )
 
     @classmethod
-    def get_required_repo_gpg_keys(self) -> List[str]:
-        return [_ROS_GPG_KEY]
+    def get_required_repo_gpg_keys(self) -> Dict[str, str]:
+        return dict(C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654=_ROS_GPG_KEY)
 
     @property
     def _pip(self):

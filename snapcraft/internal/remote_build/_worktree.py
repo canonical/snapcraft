@@ -169,9 +169,13 @@ class WorkTree:
 
         # Skip non-local sources (the remote builder can fetch those directly),
         # unless configured to package all sources.
-        if not self._package_all_sources and not isinstance(
+        is_local_source = isinstance(
             source_handler, snapcraft.internal.sources.Local
-        ):
+        ) or (
+            isinstance(source_handler, snapcraft.internal.sources.Git)
+            and source_handler.is_local()
+        )
+        if not self._package_all_sources and not is_local_source:
             logger.debug("passing through source for {}: {}".format(print_name, source))
             return source
 

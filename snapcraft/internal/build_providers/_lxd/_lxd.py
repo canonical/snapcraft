@@ -17,6 +17,7 @@
 from textwrap import dedent
 import logging
 import os
+import pathlib
 import subprocess
 import sys
 import urllib.parse
@@ -40,6 +41,21 @@ logger = logging.getLogger(__name__)
 # Filter out attribute setting warnings for properties that exist in LXD operations
 # but are unhandled in pylxd.
 warnings.filterwarnings("ignore", module="pylxd.models.operation")
+
+
+def _get_resolv_conf_content(
+    resolv_conf_path: pathlib.Path = pathlib.Path("/run/systemd/resolve/resolv.conf"),
+) -> str:
+    environment_nameserver = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER")
+    if environment_nameserver is not None:
+        resolv_conf_content = f"nameserver {environment_nameserver}"
+    elif resolv_conf_path.exists():
+        with resolv_conf_path.open() as resolv_conf_file:
+            resolv_conf_content = resolv_conf_file.read(-1)
+    else:
+        resolv_conf_content = "nameserver 1.1.1.1"
+
+    return resolv_conf_content
 
 
 class LXD(Provider):
@@ -180,6 +196,7 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(),
                 command=command,
                 exit_code=process_error.returncode,
+                output=process_error.output,
             ) from process_error
 
         return output
@@ -356,6 +373,25 @@ class LXD(Provider):
     def shell(self) -> None:
         self._run(command=["/bin/bash"])
 
+    def _wait_for_systemd(self) -> None:
+        # systemctl states we care about here are:
+        # - running: The system is fully operational. Process returncode: 0
+        # - degraded: The system is operational but one or more units failed.
+        #             Process returncode: 1
+        for i in range(40):
+            try:
+                self._run(["systemctl", "is-system-running"], hide_output=True)
+                break
+            except errors.ProviderExecError as exec_error:
+                if exec_error.output is not None:
+                    running_state = exec_error.output.decode().strip()
+                    if running_state == "degraded":
+                        break
+                    logger.debug(f"systemctl is-system-running: {running_state!r}")
+                sleep(0.5)
+        else:
+            self.echoer.warning("Timed out waiting for systemd to be ready...")
+
     def _wait_for_network(self) -> None:
         self.echoer.wrapped("Waiting for network to be ready...")
         for i in range(40):
@@ -398,11 +434,12 @@ class LXD(Provider):
 
         self._install_file(
             path="/etc/resolv.conf",
-            content=f"nameserver {os.getenv('SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER', '1.1.1.1')}",
+            content=_get_resolv_conf_content(),
             permissions="0644",
         )
 
         self._container.restart(wait=True)
+        self._wait_for_systemd()
 
         # the system needs networking
         self._run(["systemctl", "enable", "systemd-networkd"])

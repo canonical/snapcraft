@@ -20,7 +20,6 @@ import glob
 import logging
 import os
 import re
-import string
 import subprocess
 import sys
 import tempfile
@@ -541,7 +540,7 @@ class Ubuntu(BaseRepo):
         return installed_packages
 
     @classmethod
-    def install_gpg_key(cls, gpg_key: str) -> None:
+    def install_gpg_key(cls, *, key_id: str, key: str) -> None:
         cmd = [
             "sudo",
             "apt-key",
@@ -553,15 +552,15 @@ class Ubuntu(BaseRepo):
         try:
             subprocess.run(
                 cmd,
-                input=gpg_key.encode(),
+                input=key.encode(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
             )
         except subprocess.CalledProcessError as error:
-            raise errors.AptGPGKeyInstallError(output=error.output, gpg_key=gpg_key)
+            raise errors.AptGPGKeyInstallError(output=error.output, gpg_key=key)
 
-        logger.debug(f"Installed apt repository key:\n{gpg_key}")
+        logger.debug(f"Installed apt repository key:\n{key}")
 
     @classmethod
     def _get_snapcraft_installed_sources(cls) -> Set[str]:
@@ -580,9 +579,9 @@ class Ubuntu(BaseRepo):
         _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
 
     @classmethod
-    def install_source(cls, source_line: str) -> None:
-        """Add deb source line. Supports formatting tag for ${release}."""
-        expanded_source = _format_sources_list(source_line)
+    def install_source(cls, *, name: str, source: str) -> None:
+        """Add deb source line. Supports $SNAPCRAFT_APT_RELEASE."""
+        expanded_source = _format_sources_list(source)
 
         sources = cls._get_snapcraft_installed_sources()
         sources.add(expanded_source)
@@ -590,7 +589,7 @@ class Ubuntu(BaseRepo):
         cls._set_snapcraft_installed_sources(sources)
         cls.refresh_build_packages()
 
-        logger.debug(f"Installed apt repository {expanded_source!r}")
+        logger.debug(f"Installed apt repository {name!r}: {expanded_source}")
 
     @classmethod
     def _is_filtered_package(cls, package_name: str) -> bool:
@@ -634,4 +633,4 @@ def _get_local_sources_list():
 def _format_sources_list(sources_list: str):
     release = os_release.OsRelease().version_codename()
 
-    return string.Template(sources_list).substitute({"release": release})
+    return sources_list.replace("$SNAPCRAFT_APT_RELEASE", release)

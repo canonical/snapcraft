@@ -1910,7 +1910,7 @@ class PackageManagement(ProjectBaseTest):
                     components: [main, multiverse]
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
-                    suites: [$release, $release-updates]
+                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
                 """
             )
         )
@@ -1975,22 +1975,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     - type: apt
                       components: [main, multiverse]
                       name: test-name
-                      url: http://archive.ubuntu.com/ubuntu
-                      suites: [test, test-updates, test-security]
-                    """
-                ),
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
-            "deb missing field: name",
-            dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      key-id: test-key-id
                       url: http://archive.ubuntu.com/ubuntu
                       suites: [test, test-updates, test-security]
                     """

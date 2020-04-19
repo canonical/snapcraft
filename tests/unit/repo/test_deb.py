@@ -224,8 +224,8 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_sources_formatting(self, mock_version_codename):
         sources_list = textwrap.dedent(
             """
-            deb http://archive.ubuntu.com/ubuntu ${release} main restricted
-            deb http://archive.ubuntu.com/ubuntu ${release}-updates main restricted
+            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE main restricted
+            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE-updates main restricted
             """
         )
 
@@ -465,7 +465,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
             new=str(snapcraft_list),
         ):
             test_source = "deb http://source"
-            repo.Ubuntu.install_source(test_source)
+            repo.Ubuntu.install_source(name="test", source=test_source)
 
             self.assertThat(snapcraft_list.exists(), Equals(True))
             self.assertThat(snapcraft_list.owner(), Equals("root"))
@@ -477,7 +477,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
             self.assertThat(test_source in installed_sources, Equals(True))
 
             test_source2 = "deb http://source2"
-            repo.Ubuntu.install_source(test_source2)
+            repo.Ubuntu.install_source(name="test", source=test_source2)
 
             installed_sources = snapcraft_list.read_text().splitlines()
             expected_sources = sorted([test_source, test_source2])
@@ -486,7 +486,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
 
     @mock.patch("subprocess.run")
     def test_install_gpg(self, mock_run):
-        repo.Ubuntu.install_gpg_key("FAKEKEY")
+        repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
 
         self.assertThat(
             mock_run.mock_calls,
@@ -517,5 +517,8 @@ class TestUbuntuInstallRepo(unit.TestCase):
         )
 
         self.assertRaises(
-            errors.AptGPGKeyInstallError, repo.Ubuntu.install_gpg_key, "FAKEKEY"
+            errors.AptGPGKeyInstallError,
+            repo.Ubuntu.install_gpg_key,
+            key_id="FAKE_KEYID",
+            key="FAKEKEY",
         )
