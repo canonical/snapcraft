@@ -458,7 +458,7 @@ class _SnapPackaging:
             for e in runtime_env:
                 env.append(re.sub(self._prime_dir, "$SNAP", e))
 
-        env.append("export LD_LIBRARY_PATH=\"$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\"")
+        env.append('export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"')
 
         return "\n".join(env)
 
