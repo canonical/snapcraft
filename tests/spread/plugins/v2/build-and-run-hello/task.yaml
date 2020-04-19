@@ -10,6 +10,9 @@ environment:
   SNAP/dump: dump-hello
   SNAP/meson: meson-hello
   SNAP/npm: npm-hello
+  SNAP/rust: rust-hello
+  SNAP/rust_features: rust-hello-features
+  SNAP/rust_workspace: rust-hello-workspace
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -26,6 +29,8 @@ restore: |
   [ -f hello.c ] && git checkout hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
+  [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -48,6 +53,10 @@ execute: |
     modified_file=hello.js
   elif [ -f main.go ]; then
     modified_file=main.go
+  elif [ -f src/main.rs ]; then
+    modified_file=src/main.rs
+  elif [ -f say/src/lib.rs ]; then
+    modified_file=say/src/lib.rs
   else
     FATAL "Cannot setup ${SNAP} for rebuilding"
   fi

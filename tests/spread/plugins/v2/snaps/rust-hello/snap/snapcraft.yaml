@@ -1,4 +1,4 @@
-name: rust-hello-with-cargo-lock
+name: rust-hello
 version: "1.0"
 summary: Test the rust plugin
 description: |
@@ -7,7 +7,7 @@ description: |
   Make a new one.
 
 grade: devel
-base: core18
+base: core20
 confinement: strict
 
 apps:

@@ -13,7 +13,7 @@ systems:
   - ubuntu-16.04-armhf
 
 environment:
-  SNAP_DIR: ../snaps/rust-with-conditional
+  SNAP_DIR: ../snaps/rust-hello-features
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -32,5 +32,5 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   snapcraft
-  sudo snap install rust-with-conditional_*.snap --dangerous
-  [ "$(rust-with-conditional)" = "Conditional features work!" ]
+  sudo snap install rust-hello-features_*.snap --dangerous
+  [ "$(rust-hello-features)" = "hello world" ]
