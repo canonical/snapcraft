@@ -15,5 +15,5 @@ Suggests: lxd, snapd (>= 2.15~)
 Description: easily craft snaps
  Snapcraft aims to make upstream developers' lives easier and as such is not
  a single toolset, but instead is a collection of tools that enable the
- natural workflow of an upstream to be extended with a simple release step
- into Snappy.
+ natural workflow of an upstream to be extended with a simple release
+ process.
