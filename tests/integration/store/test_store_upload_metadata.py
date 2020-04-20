@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2019 Canonical Ltd
+# Copyright 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,7 +22,7 @@ from testtools.matchers import Contains, FileExists
 from tests import integration
 
 
-class PushMetadataTestCase(integration.StoreTestCase):
+class UploadMetadataTestCase(integration.StoreTestCase):
     def _build_snap(self):
         """Build a snap file and return its name and path."""
         name = self.get_unique_name()
@@ -48,17 +48,17 @@ class PushMetadataTestCase(integration.StoreTestCase):
         name, snap_file_path = self._build_snap()
         self.register(name)
 
-        # Push the snap
-        output = self.run_snapcraft(["push", snap_file_path])
+        # Upload the snap
+        output = self.run_snapcraft(["upload", snap_file_path])
 
-        # Now push the metadata
-        output = self.run_snapcraft(["push-metadata", snap_file_path])
-        expected = "Pushing metadata to the Store (force=False)"
+        # Now upload the metadata
+        output = self.run_snapcraft(["upload-metadata", snap_file_path])
+        expected = "Uploading metadata to the Store (force=False)"
         self.assertThat(output, Contains(expected))
-        expected = "The metadata has been pushed"
+        expected = "The metadata has been uploaded"
         self.assertThat(output, Contains(expected))
 
-    def test_no_push_needed_first(self):
+    def test_no_upload_needed_first(self):
         self.addCleanup(self.logout)
         self.login()
 
@@ -70,9 +70,9 @@ class PushMetadataTestCase(integration.StoreTestCase):
         name, snap_file_path = self._build_snap()
         self.register(name)
 
-        # Now push the metadata
-        output = self.run_snapcraft(["push-metadata", snap_file_path])
-        expected = "Pushing metadata to the Store (force=False)"
+        # Now upload the metadata
+        output = self.run_snapcraft(["upload-metadata", snap_file_path])
+        expected = "Uploading metadata to the Store (force=False)"
         self.assertThat(output, Contains(expected))
-        expected = "The metadata has been pushed"
+        expected = "The metadata has been uploaded"
         self.assertThat(output, Contains(expected))

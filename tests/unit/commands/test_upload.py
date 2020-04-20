@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest import mock
 
@@ -32,7 +33,7 @@ import tests
 from . import FakeStoreCommandsBaseTestCase
 
 
-class PushCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
+class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -69,16 +70,16 @@ class PushCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
         self.useFixture(self.fake_review_tools_is_available)
 
 
-class PushCommandTestCase(PushCommandBaseTestCase):
-    def test_push_without_snap_must_raise_exception(self):
-        result = self.run_command(["push"])
+class UploadCommandTestCase(UploadCommandBaseTestCase):
+    def test_upload_without_snap_must_raise_exception(self):
+        result = self.run_command(["upload"])
 
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_push_a_snap(self):
+    def test_upload_a_snap(self):
         # Upload
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertRegexpMatches(
@@ -96,7 +97,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
 
     def test_review_tools_not_available(self):
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -108,17 +109,17 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
         self.fake_review_tools_run.mock.assert_not_called()
 
-    def test_push_a_snap_review_tools_run_success(self):
+    def test_upload_a_snap_review_tools_run_success(self):
         self.fake_review_tools_is_available.mock.return_value = True
 
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_review_tools_run.mock.assert_called_once_with(
             snap_filename=self.snap_file
         )
 
-    def test_push_a_snap_review_tools_run_fail(self):
+    def test_upload_a_snap_review_tools_run_fail(self):
         self.fake_review_tools_is_available.mock.return_value = True
         self.fake_review_tools_run.mock.side_effect = review_tools.errors.ReviewError(
             {
@@ -135,7 +136,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             }
         )
 
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -152,13 +153,13 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             snap_filename=self.snap_file
         )
 
-    def test_push_with_started_at(self):
+    def test_upload_with_started_at(self):
         snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap-with-started-at.snap"
         )
 
         # Upload
-        result = self.run_command(["push", snap_file])
+        result = self.run_command(["upload", snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertRegexpMatches(
@@ -175,26 +176,26 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             target_hash=None,
         )
 
-    def test_push_without_login_must_ask(self):
+    def test_upload_without_login_must_ask(self):
         self.fake_store_push_precheck.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
             None,
         ]
 
         result = self.run_command(
-            ["push", self.snap_file], input="\n\n\n\nuser@example.com\nsecret\n"
+            ["upload", self.snap_file], input="\n\n\n\nuser@example.com\nsecret\n"
         )
 
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
 
-    def test_push_nonexisting_snap_must_raise_exception(self):
-        result = self.run_command(["push", "test-unexisting-snap"])
+    def test_upload_nonexisting_snap_must_raise_exception(self):
+        result = self.run_command(["upload", "test-unexisting-snap"])
 
         self.assertThat(result.exit_code, Equals(2))
 
-    def test_push_invalid_snap_must_raise_exception(self):
+    def test_upload_invalid_snap_must_raise_exception(self):
         snap_path = os.path.join(
             os.path.dirname(tests.__file__), "data", "invalid.snap"
         )
@@ -202,12 +203,12 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         raised = self.assertRaises(
             internal.errors.SnapDataExtractionError,
             self.run_command,
-            ["push", snap_path],
+            ["upload", snap_path],
         )
 
         self.assertThat(str(raised), Contains("Cannot read data from snap"))
 
-    def test_push_unregistered_snap_must_ask(self):
+    def test_upload_unregistered_snap_must_ask(self):
         class MockResponse:
             status_code = 404
 
@@ -226,7 +227,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             None,
         ]
 
-        result = self.run_command(["push", self.snap_file], input="y\n")
+        result = self.run_command(["upload", self.snap_file], input="y\n")
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
@@ -237,7 +238,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             "basic", is_private=False, series="16", store_id=None
         )
 
-    def test_push_unregistered_snap_must_raise_exception_if_not_registering(self):
+    def test_upload_unregistered_snap_must_raise_exception_if_not_registering(self):
         class MockResponse:
             status_code = 404
 
@@ -257,7 +258,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         ]
 
         raised = self.assertRaises(
-            storeapi.errors.StorePushError, self.run_command, ["push", self.snap_file]
+            storeapi.errors.StorePushError, self.run_command, ["upload", self.snap_file]
         )
 
         self.assertThat(
@@ -266,7 +267,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         )
         self.fake_store_register.mock.assert_not_called()
 
-    def test_push_with_updown_error(self):
+    def test_upload_with_updown_error(self):
         # We really don't know of a reason why this would fail
         # aside from a 5xx style error on the server.
         class MockResponse:
@@ -276,17 +277,25 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.fake_store_upload.mock.side_effect = StoreUploadError(MockResponse())
 
         self.assertRaises(
-            storeapi.errors.StoreUploadError, self.run_command, ["push", self.snap_file]
+            storeapi.errors.StoreUploadError,
+            self.run_command,
+            ["upload", self.snap_file],
         )
 
-    def test_upload_raises_deprecation_warning(self):
-        # Upload
-        result = self.run_command(["upload", self.snap_file])
+    def test_push_raises_deprecation_warning(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        # Push
+        result = self.run_command(["push", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
         self.assertThat(
-            result.output, Contains("DEPRECATED: Use 'push' instead of 'upload'")
+            fake_logger.output,
+            Contains(
+                "DEPRECATED: The 'push' set of commands have been replaced with 'upload'."
+            ),
         )
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
@@ -299,9 +308,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             target_hash=None,
         )
 
-    def test_push_and_release_a_snap(self):
+    def test_upload_and_release_a_snap(self):
         # Upload
-        result = self.run_command(["push", self.snap_file, "--release", "beta"])
+        result = self.run_command(["upload", self.snap_file, "--release", "beta"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
@@ -316,10 +325,10 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             target_hash=None,
         )
 
-    def test_push_and_release_a_snap_to_N_channels(self):
+    def test_upload_and_release_a_snap_to_N_channels(self):
         # Upload
         result = self.run_command(
-            ["push", self.snap_file, "--release", "edge,beta,candidate"]
+            ["upload", self.snap_file, "--release", "edge,beta,candidate"]
         )
 
         self.assertThat(result.exit_code, Equals(0))
@@ -335,21 +344,21 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             target_hash=None,
         )
 
-    def test_push_displays_humanized_message(self):
+    def test_upload_displays_humanized_message(self):
         result = self.run_command(
-            ["push", self.snap_file, "--release", "edge,beta,candidate"]
+            ["upload", self.snap_file, "--release", "edge,beta,candidate"]
         )
 
         self.assertThat(
             result.output,
             Contains(
-                "After pushing, the resulting snap revision will be released to "
+                "After uploading, the resulting snap revision will be released to "
                 "'beta', 'candidate', and 'edge' when it passes the Snap Store review."
             ),
         )
 
 
-class PushCommandDeltasTestCase(PushCommandBaseTestCase):
+class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -364,9 +373,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             "revision": self.new_snap_revision,
         }
 
-    def test_push_revision_cached_with_experimental_deltas(self):
+    def test_upload_revision_cached_with_experimental_deltas(self):
         # Upload
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         snap_cache = os.path.join(
@@ -383,26 +392,26 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
         self.assertThat(cached_snap, FileExists())
 
-    def test_push_revision_uses_available_delta(self):
-        # Push
-        result = self.run_command(["push", self.snap_file])
+    def test_upload_revision_uses_available_delta(self):
+        # Upload
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
 
-        # Push again
-        result = self.run_command(["push", self.snap_file])
+        # Upload again
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         _, kwargs = self.fake_store_upload.mock.call_args
         self.assertThat(kwargs.get("delta_format"), Equals("xdelta3"))
 
-    def test_push_with_delta_generation_failure_falls_back(self):
+    def test_upload_with_delta_generation_failure_falls_back(self):
         # Upload and ensure fallback is called
         with mock.patch(
-            "snapcraft._store._push_delta",
+            "snapcraft._store._upload_delta",
             side_effect=StoreDeltaApplicationError("error"),
         ):
-            result = self.run_command(["push", self.snap_file])
+            result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_upload.mock.assert_called_once_with(
@@ -416,9 +425,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             target_hash=None,
         )
 
-    def test_push_with_delta_upload_failure_falls_back(self):
+    def test_upload_with_delta_upload_failure_falls_back(self):
         # Upload
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
 
@@ -432,7 +441,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         ]
 
         # Upload and ensure fallback is called
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_upload.mock.assert_has_calls(
@@ -460,9 +469,9 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             ]
         )
 
-    def test_push_with_disabled_delta_falls_back(self):
+    def test_upload_with_disabled_delta_falls_back(self):
         # Upload
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
 
@@ -486,7 +495,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
         # Upload and ensure fallback is called
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push", self.snap_file])
+            result = self.run_command(["upload", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         self.fake_store_upload.mock.assert_has_calls(
             [
@@ -514,7 +523,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         )
 
 
-class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
+class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
 
     scenarios = [
         (
@@ -538,7 +547,7 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
         ),
     ]
 
-    def test_push_revision_prune_snap_cache(self):
+    def test_upload_revision_prune_snap_cache(self):
         snap_revision = 9
 
         self.mock_tracker.track.return_value = {
@@ -566,7 +575,7 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
             open(os.path.join(snap_cache, cached_snap), "a").close()
 
         # Upload
-        result = self.run_command(["push", self.snap_file])
+        result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
 

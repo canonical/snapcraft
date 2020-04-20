@@ -82,7 +82,7 @@ def register_key(key_name: str) -> None:
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
 @click.option(
-    "--local", is_flag=True, help="Do not push the generated assertion to the store"
+    "--local", is_flag=True, help="Do not upload the generated assertion to the store"
 )
 def sign_build(snap_file: str, key_name: str, local: bool) -> None:
     """Sign a built snap file and assert it using the developer's key."""
