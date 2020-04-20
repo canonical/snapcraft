@@ -57,11 +57,11 @@ class SignBuildTestCase(integration.StoreTestCase):
             snap_build_path, FileContains(matcher=Contains("type: snap-build"))
         )
 
-    def test_successful_sign_build_push(self):
+    def test_successful_sign_build_upload(self):
         if not self.is_store_fake():
             # https://bugs.launchpad.net/bugs/1621441
             self.skipTest(
-                "Cannot push signed assertion against staging/production "
+                "Cannot upload signed assertion against staging/production "
                 "until we have a way to delete them again."
             )
 
