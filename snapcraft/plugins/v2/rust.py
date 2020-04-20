@@ -32,7 +32,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings, default [.])
       Build specific workspace crates
       Only one item is currently supported.
-
 """
 
 from textwrap import dedent
