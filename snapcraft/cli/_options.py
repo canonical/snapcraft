@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.util
 import os
 import sys
 
@@ -46,16 +47,21 @@ class PromptOption(click.Option):
         )
 
 
-class SimpleBoolParamType(click.ParamType):
+class BoolParamType(click.ParamType):
     name = "boolean"
 
     def convert(self, value, param, ctx):
         """Convert option string to value.
 
-        Unlike click's BoolParamType, any non-empty string is treated
-        as True.
+        Unlike click's BoolParamType, use distutils.util.strtobool to
+        convert values.
         """
-        return bool(value)
+        if isinstance(value, bool):
+            return value
+        try:
+            return bool(distutils.util.strtobool(value))
+        except ValueError:
+            self.fail("%r is not a valid boolean" % value, param, ctx)
 
     def __repr__(self):
         return "BOOL"
@@ -142,7 +148,7 @@ _PROVIDER_OPTIONS = [
     dict(
         param_decls="--enable-manifest",
         is_flag=True,
-        type=SimpleBoolParamType(),
+        type=BoolParamType(),
         help="Generate snap manifest.",
         envvar="SNAPCRAFT_BUILD_INFO",
         supported_providers=["host", "lxd", "managed-host", "multipass"],

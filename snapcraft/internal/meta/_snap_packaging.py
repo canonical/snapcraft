@@ -16,6 +16,7 @@
 
 import copy
 import contextlib
+import distutils.util
 import itertools
 import logging
 import os
@@ -496,7 +497,7 @@ class _SnapPackaging:
             os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
-        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(
