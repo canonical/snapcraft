@@ -487,6 +487,9 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_gpg(self, mock_run):
         repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
 
+        env = os.environ.copy()
+        env["LANG"] = "C.UTF-8"
+
         mock_run.assert_has_calls(
             [
                 call(
@@ -502,6 +505,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                     input=b"FAKEKEY",
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
+                    env=env,
                 )
             ]
         )

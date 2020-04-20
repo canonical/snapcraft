@@ -596,12 +596,15 @@ class Ubuntu(BaseRepo):
         ]
         try:
             logger.debug(f"Executing: {cmd!r}")
+            env = os.environ.copy()
+            env["LANG"] = "C.UTF-8"
             subprocess.run(
                 cmd,
                 input=key.encode(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
+                env=env,
             )
         except subprocess.CalledProcessError as error:
             raise errors.AptGPGKeyInstallError(output=error.output, key=key)
