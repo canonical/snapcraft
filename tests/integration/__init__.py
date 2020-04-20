@@ -585,8 +585,8 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         return process.wait()
 
-    def list_registered(self, expected_snaps):
-        process = self.spawn_snapcraft(["list-registered"])
+    def list_registred(self, expected_snaps):
+        process = self.spawn_snapcraft(["list"])
 
         for name, visibility, price, notes in expected_snaps:
             # Ignores 'since' to avoid confusion on fake and actual stores.
