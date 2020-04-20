@@ -47,13 +47,13 @@ class TestProviderOptions(unit.TestCase):
             "host build info",
             dict(
                 provider="host",
-                kwargs=dict(generate_manifest=True),
+                kwargs=dict(enable_manifest=True),
                 flags=dict(SNAPCRAFT_BUILD_INFO=True),
             ),
         ),
         (
             "host build info off",
-            dict(provider="host", kwargs=dict(generate_manifest=False), flags=dict()),
+            dict(provider="host", kwargs=dict(enable_manifest=False), flags=dict()),
         ),
         (
             "host image info",
@@ -92,7 +92,7 @@ class TestProviderOptions(unit.TestCase):
             "lxd build info",
             dict(
                 provider="lxd",
-                kwargs=dict(generate_manifest=True),
+                kwargs=dict(enable_manifest=True),
                 flags=dict(SNAPCRAFT_BUILD_INFO=True),
             ),
         ),
@@ -111,7 +111,7 @@ class TestProviderOptions(unit.TestCase):
                 kwargs=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
-                    generate_manifest=True,
+                    enable_manifest=True,
                     manifest_image_information="{}",
                 ),
                 flags=dict(
@@ -146,7 +146,7 @@ class TestProviderOptions(unit.TestCase):
             "managed-host build info",
             dict(
                 provider="managed-host",
-                kwargs=dict(generate_manifest=True),
+                kwargs=dict(enable_manifest=True),
                 flags=dict(SNAPCRAFT_BUILD_INFO=True),
             ),
         ),
@@ -165,7 +165,7 @@ class TestProviderOptions(unit.TestCase):
                 kwargs=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
-                    generate_manifest=True,
+                    enable_manifest=True,
                     manifest_image_information="{}",
                 ),
                 flags=dict(
@@ -197,7 +197,7 @@ class TestProviderOptions(unit.TestCase):
             "multipass build info",
             dict(
                 provider="multipass",
-                kwargs=dict(generate_manifest=True),
+                kwargs=dict(enable_manifest=True),
                 flags=dict(SNAPCRAFT_BUILD_INFO=True),
             ),
         ),
@@ -216,7 +216,7 @@ class TestProviderOptions(unit.TestCase):
                 kwargs=dict(
                     http_proxy="1.1.1.1",
                     https_proxy="1.1.1.1",
-                    generate_manifest=True,
+                    enable_manifest=True,
                     manifest_image_information="{}",
                 ),
                 flags=dict(

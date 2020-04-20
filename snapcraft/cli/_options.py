@@ -140,7 +140,7 @@ _PROVIDER_OPTIONS = [
         hidden=True,
     ),
     dict(
-        param_decls="--generate-manifest",
+        param_decls="--enable-manifest",
         is_flag=True,
         type=SimpleBoolParamType(),
         help="Generate snap manifest.",
