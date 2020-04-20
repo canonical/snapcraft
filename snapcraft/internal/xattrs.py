@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.util
 import os
 import sys
 from typing import Optional
@@ -76,7 +77,7 @@ def read_origin_stage_package(path: str) -> Optional[str]:
         return _read_snapcraft_xattr(path, "origin_stage_package")
     except XAttributeError:
         # Ignore error if origin stage package not required.
-        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             raise
         return None
 
@@ -87,5 +88,5 @@ def write_origin_stage_package(path: str, value: str) -> None:
         _write_snapcraft_xattr(path, "origin_stage_package", value)
     except XAttributeError:
         # Ignore error if origin stage package not required.
-        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             raise
