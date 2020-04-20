@@ -585,7 +585,7 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         return process.wait()
 
-    def list_registred(self, expected_snaps):
+    def list_registered(self, expected_snaps):
         process = self.spawn_snapcraft(["list"])
 
         for name, visibility, price, notes in expected_snaps:
@@ -689,7 +689,7 @@ class StoreTestCase(TestCase):
                 )
             else:
                 process.expect(
-                    "Build assertion .*{}-build pushed.".format(snap_filename)
+                    "Build assertion .*{}-build uploaded.".format(snap_filename)
                 )
 
         process.expect(pexpect.EOF)
