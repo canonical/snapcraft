@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.util
 import os
 import sys
 
@@ -44,6 +45,26 @@ class PromptOption(click.Option):
             confirmation_prompt=self.confirmation_prompt,
             value_proc=lambda x: self.process_value(ctx, x),
         )
+
+
+class BoolParamType(click.ParamType):
+    name = "boolean"
+
+    def convert(self, value, param, ctx):
+        """Convert option string to value.
+
+        Unlike click's BoolParamType, use distutils.util.strtobool to
+        convert values.
+        """
+        if isinstance(value, bool):
+            return value
+        try:
+            return bool(distutils.util.strtobool(value))
+        except ValueError:
+            self.fail("%r is not a valid boolean" % value, param, ctx)
+
+    def __repr__(self):
+        return "BOOL"
 
 
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
@@ -121,6 +142,23 @@ _PROVIDER_OPTIONS = [
         is_flag=True,
         help="Enable developer debug logging.",
         envvar="SNAPCRAFT_ENABLE_DEVELOPER_DEBUG",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--enable-manifest",
+        is_flag=True,
+        type=BoolParamType(),
+        help="Generate snap manifest.",
+        envvar="SNAPCRAFT_BUILD_INFO",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--manifest-image-information",
+        metavar="<json string>",
+        help="Set snap manifest image-info",
+        envvar="SNAPCRAFT_IMAGE_INFO",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
         hidden=True,
     ),
@@ -233,6 +271,7 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
 
     for option in _PROVIDER_OPTIONS:
         key: str = option["param_decls"]  # type: ignore
+        is_flag: bool = option.get("is_flag", False)  # type: ignore
         envvar: Optional[str] = option.get("envvar")  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
@@ -244,8 +283,12 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         if build_provider not in supported_providers:
             continue
 
-        # Add build provider flag using envvar as key.
+        # Skip boolean flags that have not been set.
         key_formatted = _param_decls_to_kwarg(key)
+        if is_flag and not kwargs.get(key_formatted):
+            continue
+
+        # Add build provider flag using envvar as key.
         if envvar is not None and key_formatted in kwargs:
             build_provider_flags[envvar] = kwargs[key_formatted]
 
