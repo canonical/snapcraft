@@ -17,7 +17,7 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
 
 import pymacaroons
 import requests
@@ -136,7 +136,7 @@ class StoreClient:
 
         return account_data
 
-    def acl(self) -> Dict[str, Union[List[str], str, None]]:
+    def acl(self) -> Dict[str, Any]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}

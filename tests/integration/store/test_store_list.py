@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2018,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +18,7 @@ from tests import integration
 
 
 class RegisteredTestCase(integration.StoreTestCase):
-    def test_registered_status_and_privacy_private(self):
+    def test_list_status_and_privacy_private(self):
         self.login()
 
         snap_private = self.get_unique_name()
@@ -27,7 +27,7 @@ class RegisteredTestCase(integration.StoreTestCase):
         expected_snaps = [(snap_private, "private", "-", "-")]
         self.list_registered(expected_snaps)
 
-    def test_registered_status_and_privacy_public(self):
+    def test_list_status_and_privacy_public(self):
         self.login()
 
         snap_public = self.get_unique_name()

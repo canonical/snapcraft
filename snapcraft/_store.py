@@ -623,16 +623,16 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     if not local:
         store_client.push_snap_build(snap_id, snap_build_content.decode())
-        logger.info("Build assertion {} pushed to the Store.".format(snap_build_path))
+        logger.info("Build assertion {} uploaded to the Store.".format(snap_build_path))
 
 
-def push_metadata(snap_filename, force):
-    """Push only the metadata to the server.
+def upload_metadata(snap_filename, force):
+    """Upload only the metadata to the server.
 
     If force=True it will force the local metadata into the Store,
     ignoring any possible conflict.
     """
-    logger.debug("Pushing metadata to the Store (force=%s)", force)
+    logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
     snap_yaml = _get_data_from_snap_file(snap_filename)
@@ -659,15 +659,15 @@ def push_metadata(snap_filename, force):
         metadata = {"icon": icon}
         store_client.push_binary_metadata(snap_name, metadata, force)
 
-    logger.info("The metadata has been pushed")
+    logger.info("The metadata has been uploaded")
 
 
-def push(snap_filename, release_channels=None):
-    """Push a snap_filename to the store.
+def upload(snap_filename, release_channels=None):
+    """Upload a snap_filename to the store.
 
     If a cached snap is available, a delta will be generated from
     the cached snap to the new target snap and uploaded instead. In the
-    case of a delta processing or upload failure, push will fall back to
+    case of a delta processing or upload failure, upload will fall back to
     uploading the full snap.
 
     If release_channels is defined it also releases it to those channels if the
@@ -678,7 +678,7 @@ def push(snap_filename, release_channels=None):
     built_at = snap_yaml.get("snapcraft-started-at")
 
     logger.debug(
-        "Run push precheck and verify cached data for {!r}.".format(snap_filename)
+        "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
     store_client.push_precheck(snap_name=snap_name)
@@ -696,7 +696,7 @@ def push(snap_filename, release_channels=None):
     result: Dict[str, Any] = None
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(
+            result = _upload_delta(
                 store_client,
                 snap_name=snap_name,
                 snap_filename=snap_filename,
@@ -707,16 +707,16 @@ def push(snap_filename, release_channels=None):
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
-                "Falling back to pushing full snap...".format(str(e))
+                "Falling back to uploading full snap...".format(str(e))
             )
         except storeapi.errors.StorePushError as push_error:
             logger.warning(
-                "Unable to push delta to store: {}\n"
-                "Falling back to pushing full snap...".format(push_error.error_list)
+                "Unable to upload delta to store: {}\n"
+                "Falling back to uploading full snap...".format(push_error.error_list)
             )
 
     if result is None:
-        result = _push_snap(
+        result = _upload_snap(
             store_client,
             snap_name=snap_name,
             snap_filename=snap_filename,
@@ -732,7 +732,7 @@ def push(snap_filename, release_channels=None):
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
 
 
-def _push_snap(
+def _upload_snap(
     store_client,
     *,
     snap_name: str,
@@ -751,7 +751,7 @@ def _push_snap(
     return result
 
 
-def _push_delta(
+def _upload_delta(
     store_client,
     *,
     snap_name: str,
@@ -779,7 +779,7 @@ def _push_delta(
     }
 
     try:
-        logger.debug("Pushing delta {!r}.".format(delta_filename))
+        logger.debug("Uploading delta {!r}.".format(delta_filename))
         delta_tracker = store_client.upload(
             snap_name=snap_name,
             snap_filename=delta_filename,

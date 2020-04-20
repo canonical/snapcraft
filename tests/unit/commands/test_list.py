@@ -22,9 +22,10 @@ from snapcraft import storeapi
 from . import FakeStoreCommandsBaseTestCase
 
 
-class ListRegisteredTestCase(FakeStoreCommandsBaseTestCase):
+class ListTest(FakeStoreCommandsBaseTestCase):
 
     scenarios = [
+        ("list", {"command_name": "list"}),
         ("list-registered", {"command_name": "list-registered"}),
         ("registered alias", {"command_name": "registered"}),
     ]
@@ -45,7 +46,7 @@ class ListRegisteredTestCase(FakeStoreCommandsBaseTestCase):
             result.output, Contains("You are required to login before continuing.")
         )
 
-    def test_list_registered_empty(self):
+    def test_list_empty(self):
         self.fake_store_account_info.mock.return_value = {
             "account_id": "abcd",
             "snaps": dict(),
@@ -56,7 +57,7 @@ class ListRegisteredTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains("There are no registered snaps."))
 
-    def test_list_registered_successfully(self):
+    def test_list_successfully(self):
         self.fake_store_account_info.mock.return_value = {
             "snaps": {
                 "16": {

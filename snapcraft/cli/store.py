@@ -82,17 +82,20 @@ def storecli():
     pass
 
 
-def _human_readable_acls(store: storeapi.StoreClient) -> str:
-    acl = store.acl()
+def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
+    acl = store_client.acl()
     snap_names = []
     snap_ids = acl["snap_ids"]
-    if snap_ids:
-        if not isinstance(snap_ids, list):
-            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
 
-        for snap_id in snap_ids:
-            snap_names.append(store.get_snap_name_for_id(snap_id))
-    acl["snap_names"] = snap_names
+    if snap_ids is not None:
+        try:
+            for snap_id in snap_ids:
+                snap_names.append(store_client.get_snap_name_for_id(snap_id))
+        except TypeError:
+            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
+        acl["snap_names"] = snap_names
+    else:
+        acl["snap_names"] = None
 
     human_readable_acl: Dict[str, Union[str, List[str], None]] = {
         "expires": str(acl["expires"])
@@ -149,8 +152,8 @@ def register(snap_name, private, store):
     metavar="<snap-file>",
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
-def push(snap_file, release):
-    """Push <snap-file> to the store.
+def upload(snap_file, release):
+    """Upload <snap-file> to the store.
 
     By passing --release with a comma separated list of channels the snap would
     be released to the selected channels if the store review passes for this
@@ -164,15 +167,15 @@ def push(snap_file, release):
 
     \b
     Examples:
-        snapcraft push my-snap_0.1_amd64.snap
-        snapcraft push my-snap_0.2_amd64.snap --release edge
-        snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
+        snapcraft upload my-snap_0.1_amd64.snap
+        snapcraft upload my-snap_0.2_amd64.snap --release edge
+        snapcraft upload my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
+    click.echo("Preparing to upload {!r}.".format(os.path.basename(snap_file)))
     if release:
         channel_list = release.split(",")
         click.echo(
-            "After pushing, the resulting snap revision will be released to "
+            "After uploading, the resulting snap revision will be released to "
             "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
@@ -180,10 +183,10 @@ def push(snap_file, release):
         channel_list = None
 
     review_snap(snap_file=snap_file)
-    snapcraft.push(snap_file, channel_list)
+    snapcraft.upload(snap_file, channel_list)
 
 
-@storecli.command("push-metadata")
+@storecli.command("upload-metadata")
 @click.option(
     "--force",
     is_flag=True,
@@ -194,8 +197,8 @@ def push(snap_file, release):
     metavar="<snap-file>",
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
-def push_metadata(snap_file, force):
-    """Push metadata from <snap-file> to the store.
+def upload_metadata(snap_file, force):
+    """Upload metadata from <snap-file> to the store.
 
     The following information will be retrieved from <snap-file> and used
     to update the store:
@@ -210,11 +213,11 @@ def push_metadata(snap_file, force):
 
     \b
     Examples:
-        snapcraft push-metadata my-snap_0.1_amd64.snap
-        snapcraft push-metadata my-snap_0.1_amd64.snap --force
+        snapcraft upload-metadata my-snap_0.1_amd64.snap
+        snapcraft upload-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo("Pushing metadata from {!r}".format(os.path.basename(snap_file)))
-    snapcraft.push_metadata(snap_file, force)
+    click.echo("Uploading metadata from {!r}".format(os.path.basename(snap_file)))
+    snapcraft.upload_metadata(snap_file, force)
 
 
 @storecli.command()
@@ -487,16 +490,13 @@ def list_revisions(snap_name, arch):
     snapcraft.revisions(snap_name, arch)
 
 
-@storecli.command("list-registered")
-def list_registered():
+@storecli.command("list")
+def list():
     """List snap names registered or shared with you.
-
-    This command has an alias of `registered`.
 
     \b
     Examples:
-        snapcraft list-registered
-        snapcraft registered
+        snapcraft list
     """
     snapcraft.list_registered()
 
@@ -559,9 +559,9 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if acls:
         acl_list = acls.split(",")
 
-    store = storeapi.StoreClient()
+    store_client = storeapi.StoreClient()
     if not snapcraft.login(
-        store=store,
+        store=store_client,
         packages=snap_list,
         channels=channel_list,
         acls=acl_list,
@@ -573,7 +573,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
-        store.conf.save(config_fd=sys.stdout, encode=True)
+        store_client.conf.save(config_fd=sys.stdout, encode=True)
         print()
 
         preamble = "Login successfully exported and printed above"
@@ -584,7 +584,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
 
         # mypy doesn't have the opener arg in its stub. Ignore its warning
         with open(login_file, "w", opener=private_open) as f:  # type: ignore
-            store.conf.save(config_fd=f)
+            store_client.conf.save(config_fd=f)
 
         # Now that the file has been written, we can just make it
         # owner-readable
@@ -607,7 +607,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
             )
         )
     )
-    echo.info(_human_readable_acls(store))
+    echo.info(_human_readable_acls(store_client))
     echo.warning(
         "This exported login is not encrypted. Do not commit it to version control!"
     )
@@ -627,15 +627,15 @@ def login(login_file):
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store = storeapi.StoreClient()
-    if not snapcraft.login(store=store, config_fd=login_file):
+    store_client = storeapi.StoreClient()
+    if not snapcraft.login(store=store_client, config_fd=login_file):
         sys.exit(1)
 
     print()
 
     if login_file:
         echo.info("Login successful. You now have these capabilities:\n")
-        echo.info(_human_readable_acls(store))
+        echo.info(_human_readable_acls(store_client))
     else:
         echo.info("Login successful.")
 

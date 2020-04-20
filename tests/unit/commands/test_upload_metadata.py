@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017-2019 Canonical Ltd
+# Copyright 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from unittest import mock
 
@@ -26,7 +27,7 @@ import tests
 from . import CommandBaseTestCase
 
 
-class PushMetadataCommandTestCase(CommandBaseTestCase):
+class UploadMetadataCommandTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
@@ -34,10 +35,10 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.pushed_icon = None
+        self.uploaded_icon = None
 
         def _save_updated_icon(snap_name, metadata, force):
-            self.pushed_icon = metadata["icon"].read() if metadata["icon"] else None
+            self.uploaded_icon = metadata["icon"].read() if metadata["icon"] else None
 
         patcher = mock.patch.object(
             storeapi.StoreClient, "push_binary_metadata", side_effect=_save_updated_icon
@@ -69,7 +70,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             b'<rect width="256" height="256" style="fill:rgb(0,0,255)" />\n'
             b"</svg>"
         )
-        self.assertEqual(self.pushed_icon, expected_icon)
+        self.assertEqual(self.uploaded_icon, expected_icon)
         self.assertEqual(args[2], force)
 
     def test_without_snap_must_raise_exception(self):
@@ -83,15 +84,16 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
-        # push metadata
+        # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push-metadata", self.snap_file])
+            result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertThat(
-            result.output, Not(Contains("Pushing metadata to the Store (force=False)"))
+            result.output,
+            Not(Contains("Uploading metadata to the Store (force=False)")),
         )
-        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
         self.assert_expected_metadata_calls(force=False)
 
     def test_with_license_and_title(self):
@@ -105,15 +107,16 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "test-snap-with-icon-license-title.snap",
         )
 
-        # push metadata
+        # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push-metadata", self.snap_file])
+            result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertThat(
-            result.output, Not(Contains("Pushing metadata to the Store (force=False)"))
+            result.output,
+            Not(Contains("Uploading metadata to the Store (force=False)")),
         )
-        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
         self.assert_expected_metadata_calls(
             force=False, optional_text_metadata={"title": "Basic", "license": "GPL-3.0"}
         )
@@ -126,18 +129,18 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
-        # push metadata
+        # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push-metadata", self.snap_file])
+            result = self.run_command(["upload-metadata", self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertThat(
-            result.output, Contains("Pushing metadata to the Store (force=False)")
+            result.output, Contains("Uploading metadata to the Store (force=False)")
         )
-        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
         self.assert_expected_metadata_calls(force=False)
 
-    def test_push_metadata_without_login_must_ask(self):
+    def test_upload_metadata_without_login_must_ask(self):
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
 
@@ -170,14 +173,14 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.useFixture(self.fake_store_push_metadata)
 
         result = self.run_command(
-            ["push-metadata", self.snap_file], input="user@example.com\nsecret\n"
+            ["upload-metadata", self.snap_file], input="user@example.com\nsecret\n"
         )
         self.assertThat(
             result.output, Contains("You are required to login before continuing.")
         )
 
     def test_nonexisting_snap_must_raise_exception(self):
-        result = self.run_command(["push-metadata", "test-unexisting-snap"])
+        result = self.run_command(["upload-metadata", "test-unexisting-snap"])
         self.assertThat(result.exit_code, Equals(2))
 
     def test_unregistered_snap_must_raise_exception(self):
@@ -202,7 +205,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         raised = self.assertRaises(
             storeapi.errors.StorePushError,
             self.run_command,
-            ["push-metadata", self.snap_file],
+            ["upload-metadata", self.snap_file],
         )
 
         self.assertThat(
@@ -219,12 +222,12 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
 
-        result = self.run_command(["push-metadata", self.snap_file, "--force"])
+        result = self.run_command(["upload-metadata", self.snap_file, "--force"])
 
         self.assertThat(
-            result.output, Contains("Pushing metadata to the Store (force=True)")
+            result.output, Contains("Uploading metadata to the Store (force=True)")
         )
-        self.assertThat(result.output, Contains("The metadata has been pushed"))
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
         self.assert_expected_metadata_calls(force=True)
 
     def test_snap_without_icon(self):
@@ -236,11 +239,30 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
         )
 
-        # push metadata
+        # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
-            result = self.run_command(["push-metadata", snap_file])
+            result = self.run_command(["upload-metadata", snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
-        self.assertThat(result.output, Contains("The metadata has been pushed"))
-        # icon pushed to store is None
-        self.assertIsNone(self.pushed_icon)
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
+        # icon uploaded to store is None
+        self.assertIsNone(self.uploaded_icon)
+
+    def test_push_raises_deprecation_warning(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # upload metadata
+        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(["push-metadata", self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            fake_logger.output,
+            Contains(
+                "DEPRECATED: The 'push' set of commands have been replaced with 'upload'."
+            ),
+        )
