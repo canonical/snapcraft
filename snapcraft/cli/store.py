@@ -87,13 +87,15 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
     snap_names = []
     snap_ids = acl["snap_ids"]
 
-    try:
-        for snap_id in snap_ids:
-            snap_names.append(store_client.get_snap_name_for_id(snap_id))
-    except TypeError:
-        raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
-
-    acl["snap_names"] = snap_names
+    if snap_ids is not None:
+        try:
+            for snap_id in snap_ids:
+                snap_names.append(store_client.get_snap_name_for_id(snap_id))
+        except TypeError:
+            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
+        acl["snap_names"] = snap_names
+    else:
+        acl["snap_names"] = None
 
     human_readable_acl: Dict[str, Union[str, List[str], None]] = {
         "expires": str(acl["expires"])
