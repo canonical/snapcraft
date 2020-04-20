@@ -4,7 +4,7 @@
 rm -f /etc/apt/trusted.gpg.d/snapcraft.gpg
 
 # Remove any snapcraft-configured apt sources.
-rm -f /etc/apt/sources.list.d/snapraft-*
+rm -f /etc/apt/sources.list.d/snapcraft-*
 
 # Remove all auto-installed packages
 apt-get autoremove --purge -y
