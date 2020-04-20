@@ -68,7 +68,10 @@ class AutotoolsPlugin(PluginV2):
 
     def _get_configure_command(self) -> str:
         cmd = ["./configure"] + self.options.autotools_configure_parameters
-        if not any(c.startswith("--prefix=") for c in self.options.autotools_configure_parameters):
+        if not any(
+            c.startswith("--prefix=")
+            for c in self.options.autotools_configure_parameters
+        ):
             cmd.append('--prefix="${SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}"')
 
         return " ".join(cmd)
