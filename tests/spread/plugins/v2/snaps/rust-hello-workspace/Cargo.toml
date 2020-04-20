@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "fib",
-    "calc-fib"
+    "hello",
+    "say",
 ]

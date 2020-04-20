@@ -1,7 +1,6 @@
 [package]
-name = "rust-with-conditional"
+name = "rust-hello-features"
 version = "1.0.0"
-authors = ["Marius Gripsgard <mariogrip@ubuntu.com>"]
 
 [features]
 conditional-feature-present = []
