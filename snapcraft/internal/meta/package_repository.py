@@ -117,7 +117,7 @@ class PackageRepositoryAptDeb(PackageRepository):
         if name is None:
             # Default name is URL, stripping non-alphanumeric characters.
             # We also prepend snapcraft- as a prefix.
-            self.name: str = "snapcraft-" + re.sub(r"\W+", "_", url)
+            self.name: str = re.sub(r"\W+", "_", url)
         else:
             self.name = name
 
