@@ -33,10 +33,6 @@ class RustPluginTest(TestCase):
                     "$schema": "http://json-schema.org/draft-04/schema#",
                     "additionalProperties": False,
                     "properties": {
-                        "rust-channel": {
-                            "enum": ["stable", "beta", "nightly"],
-                            "type": "string",
-                        },
                         "rust-features": {
                             "default": [],
                             "items": {"type": "string"},
@@ -52,7 +48,6 @@ class RustPluginTest(TestCase):
                             "type": "array",
                             "uniqueItems": True,
                         },
-                        "rust-revision": {"type": "string"},
                     },
                     "required": ["source"],
                     "type": "object",
@@ -93,37 +88,8 @@ class RustPluginTest(TestCase):
                     fi
                         """
                     ),
-                    dedent(
-                        """\
-                    if [ -f rust-toolchain ]; then
-                        rustup toolchain install stable
-                        rustup default stable
-                    fi
-                    """
-                    ),
-                    "[ -f Cargo.lock ] && cargo fetch --locked || cargo fetch",
-                    'cargo install --offline --path . --root "${SNAPCRAFT_PART_INSTALL}" --force',
+                    'cargo install --locked --path . --root "${SNAPCRAFT_PART_INSTALL}" --force',
                 ]
-            ),
-        )
-
-    def test_get_toolchain_command_with_channel(self):
-        class Options:
-            rust_channel = "nightly"
-            rust_path = ["."]
-            rust_features = []
-
-        plugin = RustPlugin(part_name="my-part", options=Options())
-
-        self.assertThat(
-            plugin._get_toolchain_command(),
-            Equals(
-                dedent(
-                    """\
-            rustup toolchain install nightly
-            rustup default nightly
-            """
-                )
             ),
         )
 
@@ -138,6 +104,6 @@ class RustPluginTest(TestCase):
         self.assertThat(
             plugin._get_install_command(),
             Equals(
-                "cargo install --offline --path path --root \"${SNAPCRAFT_PART_INSTALL}\" --force --features 'my-feature your-feature'"
+                "cargo install --locked --path path --root \"${SNAPCRAFT_PART_INSTALL}\" --force --features 'my-feature your-feature'"
             ),
         )

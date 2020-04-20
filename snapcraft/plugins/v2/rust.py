@@ -24,10 +24,6 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - rust-channel
-      (string)
-      select rust channel (stable, beta, nightly)
-
     - rust-features
       (list of strings)
       Features used to build optional dependencies
@@ -37,10 +33,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Build specific workspace crates
       Only one item is currently supported.
 
-If a rust-toolchain file is found, the toolchain specified there will
-be used unless rust-channel is set which will override the rust-toolchain
-file. If neither rust-toolchain exists nor rust-channel is set, the latest
-stable toolchain will be used.
 """
 
 from textwrap import dedent
@@ -57,10 +49,6 @@ class RustPlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "rust-channel": {
-                    "type": "string",
-                    "enum": ["stable", "beta", "nightly"],
-                },
                 "rust-path": {
                     "type": "array",
                     "minItems": 1,
@@ -70,7 +58,6 @@ class RustPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": ["."],
                 },
-                "rust-revision": {"type": "string"},
                 "rust-features": {
                     "type": "array",
                     "minItems": 1,
@@ -101,31 +88,11 @@ class RustPlugin(PluginV2):
         """
         )
 
-    def _get_toolchain_command(self) -> str:
-        if self.options.rust_channel:
-            cmd = dedent(
-                f"""\
-            rustup toolchain install {self.options.rust_channel}
-            rustup default {self.options.rust_channel}
-                """
-            )
-        else:
-            cmd = dedent(
-                """\
-                if [ -f rust-toolchain ]; then
-                    rustup toolchain install stable
-                    rustup default stable
-                fi
-                """
-            )
-
-        return cmd
-
     def _get_install_command(self) -> str:
         cmd = [
             "cargo",
             "install",
-            "--offline",
+            "--locked",
             "--path",
             self.options.rust_path[0],
             "--root",
@@ -141,9 +108,4 @@ class RustPlugin(PluginV2):
         return " ".join(cmd)
 
     def get_build_commands(self) -> List[str]:
-        return [
-            self._get_rustup_command(),
-            self._get_toolchain_command(),
-            "[ -f Cargo.lock ] && cargo fetch --locked || cargo fetch",
-            self._get_install_command(),
-        ]
+        return [self._get_rustup_command(), self._get_install_command()]
