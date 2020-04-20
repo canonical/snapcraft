@@ -7,7 +7,7 @@ description: |
   Make a new one.
 
 grade: devel
-base: core18
+base: core20
 confinement: strict
 
 apps:

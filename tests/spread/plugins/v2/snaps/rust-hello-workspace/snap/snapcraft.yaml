@@ -1,18 +1,19 @@
-name: calc-fib
+name: rust-hello-workspace
 version: "1.0"
 summary: Test the rust plugin with sworkspaces.
 description: |
   This is a basic rust snap with workspaces.
 
 grade: devel
-base: core18
+base: core20
 confinement: strict
 
 apps:
-  calc-fib:
-    command: bin/calc-fib
+  rust-hello-workspace:
+    command: bin/rust-hello-workspace
 
 parts:
-  calc-fib:
+  hello:
     plugin: rust
     source: .
+    rust-path: ["hello"]

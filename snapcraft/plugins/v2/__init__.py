@@ -29,3 +29,4 @@ if sys.platform == "linux":
     from .nil import NilPlugin  # noqa: F401
     from .npm import NpmPlugin  # noqa: F401
     from .python import PythonPlugin  # noqa: F401
+    from .rust import RustPlugin  # noqa: F401
