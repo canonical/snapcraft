@@ -12,9 +12,11 @@ confinement: strict
 
 apps:
   autotools-hello:
-    command: bin/hello
+    command: usr/bin/hello
 
 parts:
   autotools-project:
     plugin: autotools
     source: .
+    autotools-configure-parameters:
+      - --prefix=/usr
