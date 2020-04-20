@@ -12,9 +12,11 @@ confinement: strict
 
 apps:
   cmake-hello:
-    command: bin/cmake-hello
+    command: usr/bin/cmake-hello
 
 parts:
   cmake-project:
     plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
     source: .
