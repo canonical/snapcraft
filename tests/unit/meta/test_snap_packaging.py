@@ -71,7 +71,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
             """
             #!/bin/sh
             export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
             exec "$@"
             """
         ).lstrip()
@@ -138,7 +138,7 @@ class SnapPackagingRunnerTests(unit.TestCase):
         expected_env = textwrap.dedent(
             """
             export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
             """
         ).strip()
 
