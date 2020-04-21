@@ -128,7 +128,7 @@
                 },
                 "architectures": {
                     "type": "array",
-                    "minItems": 0,
+                    "minItems": 1,
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
@@ -138,7 +138,7 @@
                 "deb-types": {
                     "type": "array",
                     "description": "deb types to enable.  Defaults to [deb, deb-src].",
-                    "minItems": 0,
+                    "minItems": 1,
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
@@ -177,7 +177,7 @@
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
-                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$SNAPCRAFT_APT_RELEASE' variable for snapcraft to populate base release name (e.g. 'xenial')."
+                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$SNAPCRAFT_APT_RELEASE' variable for snapcraft to populate base's release name (e.g. 'xenial')."
                     }
                 },
                 "url": {
