@@ -34,7 +34,6 @@ class CMakePluginTest(TestCase):
                     "properties": {
                         "cmake-parameters": {
                             "type": "array",
-                            "minitems": 1,
                             "uniqueItems": True,
                             "items": {"type": "string"},
                             "default": [],
@@ -54,7 +53,12 @@ class CMakePluginTest(TestCase):
 
         self.assertThat(
             plugin.get_build_environment(),
-            Equals({"SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/"}),
+            Equals(
+                {
+                    "SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/",
+                    "SNAPCRAFT_CMAKE_BUILD_TYPE": "Release",
+                }
+            ),
         )
 
     def test_get_build_commands(self):
@@ -67,7 +71,7 @@ class CMakePluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    'cmake . -DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}"',
+                    'cmake . -DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}" -DCMAKE_BUILD_TYPE="${SNAPCRAFT_CMAKE_BUILD_TYPE}"',
                     'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
                     'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]
@@ -93,7 +97,8 @@ class CMakePluginTest(TestCase):
                     "-DVERBOSE=1 "
                     "-DCMAKE_INSTALL_PREFIX=/foo "
                     '-DCMAKE_SPACED_ARGS="foo bar" '
-                    '-DCMAKE_USING_ENV="$SNAPCRAFT_PART_INSTALL"/bar',
+                    '-DCMAKE_USING_ENV="$SNAPCRAFT_PART_INSTALL"/bar '
+                    '-DCMAKE_BUILD_TYPE="${SNAPCRAFT_CMAKE_BUILD_TYPE}"',
                     'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
                     'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]
