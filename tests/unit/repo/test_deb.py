@@ -527,7 +527,9 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 [
                     call(
                         content=b"Types: deb deb-src\nURIs: http://test.url/ubuntu\nSuites: test-suite1 test-suite2\nComponents: test-component\nArchitectures: amd64 arm64\n",
-                        dst_path=Path("/etc/apt/sources.list.d/snapcraft-test-name.sources"),
+                        dst_path=Path(
+                            "/etc/apt/sources.list.d/snapcraft-test-name.sources"
+                        ),
                     )
                 ]
             ),
