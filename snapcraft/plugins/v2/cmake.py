@@ -28,8 +28,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - cmake-parameters
       (list of strings)
       parameters to pass to the build using the common cmake semantics.
-      '-DCMAKE_INSTALL_PREFIX' is set to / and '-DCMAKE_BUILD_TYPE' is
-      set to Release if not explicitly set.
+      '-DCMAKE_INSTALL_PREFIX' is set to '/' if not explicitly set.
 """
 
 from typing import Any, Dict, List, Set
@@ -71,11 +70,6 @@ class CMakePlugin(PluginV2):
             for c in self.options.cmake_parameters
         ):
             cmd.append("-DCMAKE_INSTALL_PREFIX=/")
-
-        if not any(
-            c.startswith("-DCMAKE_BUILD_TYPE=") for c in self.options.cmake_parameters
-        ):
-            cmd.append("-DCMAKE_BUILD_TYPE=Release")
 
         return " ".join(cmd)
 
