@@ -70,7 +70,7 @@ from snapcraft import file_utils
 from snapcraft.internal import errors, mangling, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
-    PackageRepositoryAptDeb,
+    PackageRepositoryApt,
 )
 
 logger = logging.getLogger(__name__)
@@ -227,7 +227,7 @@ class ColconPlugin(PluginV1):
     @classmethod
     def get_required_package_repositories(self) -> List[PackageRepository]:
         return [
-            PackageRepositoryAptDeb(
+            PackageRepositoryApt(
                 deb_types=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",

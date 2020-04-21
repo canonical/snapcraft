@@ -18,7 +18,7 @@ from testtools.matchers import Equals, MatchesRegex
 
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
-    PackageRepositoryAptDeb,
+    PackageRepositoryApt,
     PackageRepositoryAptPpa,
 )
 from tests import unit
@@ -73,7 +73,7 @@ class PpaTests(unit.TestCase):
 
 class DebTests(unit.TestCase):
     def test_valid_apt_deb(self):
-        repo = PackageRepositoryAptDeb(
+        repo = PackageRepositoryApt(
             architectures=["amd64", "i386"],
             components=["main", "multiverse"],
             deb_types=["deb", "deb-src"],
@@ -102,7 +102,7 @@ class DebTests(unit.TestCase):
         )
 
     def test_valid_default_name(self):
-        repo = PackageRepositoryAptDeb(
+        repo = PackageRepositoryApt(
             architectures=["amd64", "i386"],
             components=["main", "multiverse"],
             deb_types=["deb", "deb-src"],
@@ -143,7 +143,7 @@ class DebTests(unit.TestCase):
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
+            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
         )
         self.assertThat(
             str(error), MatchesRegex("invalid deb repository object:.*(invalid type)")
@@ -163,7 +163,7 @@ class DebTests(unit.TestCase):
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
+            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
         )
         self.assertThat(
             str(error), MatchesRegex("invalid deb repository object:.*(invalid url)")
@@ -184,7 +184,7 @@ class DebTests(unit.TestCase):
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptDeb.unmarshal, test_dict
+            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
         )
         self.assertThat(
             str(error), MatchesRegex("invalid deb repository object:.*(extra keys)")

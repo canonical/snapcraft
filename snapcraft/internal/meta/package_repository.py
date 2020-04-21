@@ -43,7 +43,7 @@ class PackageRepository(abc.ABC):
         if "ppa" in data:
             return PackageRepositoryAptPpa.unmarshal(data)
 
-        return PackageRepositoryAptDeb.unmarshal(data)
+        return PackageRepositoryApt.unmarshal(data)
 
     @classmethod
     def unmarshal_package_repositories(cls, data: Any) -> List["PackageRepository"]:
@@ -94,7 +94,7 @@ class PackageRepositoryAptPpa(PackageRepository):
         return cls(ppa=ppa)
 
 
-class PackageRepositoryAptDeb(PackageRepository):
+class PackageRepositoryApt(PackageRepository):
     def __init__(
         self,
         *,
@@ -165,7 +165,7 @@ class PackageRepositoryAptDeb(PackageRepository):
         return data
 
     @classmethod  # noqa: C901
-    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryAptDeb":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
         if not isinstance(data, dict):
             raise RuntimeError(f"invalid deb repository object: {data!r}")
 
