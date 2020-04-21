@@ -16,7 +16,9 @@
 
 
 import functools
-import glob
+import gnupg
+import io
+import lazr.restfulclient.errors
 import logging
 import os
 import re
@@ -28,9 +30,11 @@ from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 from typing_extensions import Final
 
 import apt
+from launchpadlib.launchpad import Launchpad
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
+from snapcraft.project._project_options import ProjectOptions
 from snapcraft.internal import os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -267,7 +271,9 @@ class Ubuntu(BaseRepo):
     @classmethod
     def refresh_build_packages(cls) -> None:
         try:
-            subprocess.check_call(["sudo", "--preserve-env", "apt-get", "update"])
+            cmd = ["sudo", "--preserve-env", "apt-get", "update"]
+            logger.debug(f"Executing: {cmd!r}")
+            subprocess.check_call(cmd)
         except subprocess.CalledProcessError as call_error:
             raise errors.CacheUpdateFailedError(
                 "failed to run apt update"
@@ -540,7 +546,46 @@ class Ubuntu(BaseRepo):
         return installed_packages
 
     @classmethod
-    def install_gpg_key(cls, *, key_id: str, key: str) -> None:
+    def _get_key_fingerprints(cls, key: str) -> List[str]:
+        with tempfile.NamedTemporaryFile(suffix="keyring") as temp_file:
+            return (
+                gnupg.GPG(keyring=temp_file.name).import_keys(key_data=key).fingerprints
+            )
+
+    @classmethod
+    def _is_key_id_installed(cls, key_id: str) -> bool:
+        # Check if key is installed by attempting to export the key.
+        # Unfortunately, apt-key does not exit with error, and
+        # we have to do our best to parse the output.
+        try:
+            proc = subprocess.run(
+                ["sudo", "apt-key", "export", key_id],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+            )
+        except subprocess.CalledProcessError as error:
+            # Export shouldn't exit with failure based on testing,
+            # but assume the key is not installed and log a warning.
+            logger.warning(f"Unexpected apt-key failure: {error.output}")
+            return False
+
+        apt_key_output = proc.stdout.decode()
+
+        if "BEGIN PGP PUBLIC KEY BLOCK" in apt_key_output:
+            return True
+
+        if "nothing exported" in apt_key_output:
+            return False
+
+        # The two strings above have worked in testing, but if neither is
+        # present for whatever reason, assume the key is not installed
+        # and log a warning.
+        logger.warning(f"Unexpected apt-key output: {apt_key_output}")
+        return False
+
+    @classmethod
+    def _install_gpg_key(cls, *, key_id: str, key: str) -> None:
         cmd = [
             "sudo",
             "apt-key",
@@ -550,46 +595,215 @@ class Ubuntu(BaseRepo):
             "-",
         ]
         try:
+            logger.debug(f"Executing: {cmd!r}")
+            env = os.environ.copy()
+            env["LANG"] = "C.UTF-8"
             subprocess.run(
                 cmd,
                 input=key.encode(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
+                env=env,
             )
         except subprocess.CalledProcessError as error:
-            raise errors.AptGPGKeyInstallError(output=error.output, gpg_key=key)
+            raise errors.AptGPGKeyInstallError(output=error.output, key=key)
 
         logger.debug(f"Installed apt repository key:\n{key}")
 
     @classmethod
-    def _get_snapcraft_installed_sources(cls) -> Set[str]:
-        sources: Set[str] = set()
+    def install_gpg_key(cls, *, key_id: str, key: str) -> bool:
+        if cls._is_key_id_installed(key_id):
+            # Already installed, nothing to do.
+            return False
 
-        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
-        if installed_path.exists():
-            sources = set(installed_path.read_text().splitlines())
-
-        return sources
-
-    @classmethod
-    def _set_snapcraft_installed_sources(cls, sources: Set[str]) -> None:
-        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
-        sources_content = "\n".join(sorted(sources)) + "\n"
-        _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
+        cls._install_gpg_key(key_id=key_id, key=key)
+        return True
 
     @classmethod
-    def install_source(cls, *, name: str, source: str) -> None:
-        """Add deb source line. Supports $SNAPCRAFT_APT_RELEASE."""
-        expanded_source = _format_sources_list(source)
+    def _install_gpg_key_id_from_keyserver(
+        cls, *, key_id: str, key_server: Optional[str] = None
+    ) -> None:
+        # Default to keyserver.ubuntu.com.
+        if key_server is None:
+            key_server = "keyserver.ubuntu.com"
 
-        sources = cls._get_snapcraft_installed_sources()
-        sources.add(expanded_source)
+        cmd = [
+            "sudo",
+            "apt-key",
+            "--keyring",
+            cls._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+            "adv",
+            "--keyserver",
+            key_server,
+            "--recv-keys",
+            key_id,
+        ]
 
-        cls._set_snapcraft_installed_sources(sources)
-        cls.refresh_build_packages()
+        try:
+            logger.debug(f"Executing: {cmd!r}")
+            subprocess.run(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+            )
+        except subprocess.CalledProcessError as error:
+            raise errors.AptGPGKeyInstallError(
+                output=error.output, key_id=key_id, key_server=key_server
+            )
 
-        logger.debug(f"Installed apt repository {name!r}: {expanded_source}")
+    @classmethod
+    def _find_asset_with_key_id(
+        cls, *, key_id: str, keys_path: Path
+    ) -> Tuple[str, Optional[Path]]:
+        # First look for any key asset that matches the key_id fingerprint.
+        for key_path in keys_path.glob(pattern="*.asc"):
+            key = key_path.read_text()
+            if key_id in cls._get_key_fingerprints(key=key):
+                return key_id, key_path
+
+        # Handle case where user uses 'key_id' as the name of the key asset.
+        # In this case we translate the key name to a proper key ID.
+        key_path = keys_path / f"{key_id}.asc"
+        if key_path.exists():
+            fingerprints = cls._get_key_fingerprints(key=key_path.read_text())
+            if len(fingerprints) == 0:
+                logger.warning(f"Error reading key file: {key_path}")
+                return key_id, None
+            elif len(fingerprints) > 1:
+                logger.warning(f"Found multiple key fingerprints in: {key_path}")
+            return fingerprints[0], key_path
+
+        return key_id, None
+
+    @classmethod
+    def install_gpg_key_id(
+        cls, *, key_id: str, keys_path: Path, key_server: Optional[str] = None
+    ) -> bool:
+        # If key_id references a local asset, we search and replace the local
+        # key_id reference with the actual fingerprint suitable for checking
+        # if it is installed.
+        key_id, key_path = cls._find_asset_with_key_id(
+            key_id=key_id, keys_path=keys_path
+        )
+
+        # If key is already installed, nothing to do.
+        if cls._is_key_id_installed(key_id):
+            return False
+
+        # Install key if it is available as a local asset.
+        if key_path is not None:
+            cls._install_gpg_key(key_id=key_id, key=key_path.read_text())
+            return True
+
+        # Finally attempt to install from keyserver.
+        cls._install_gpg_key_id_from_keyserver(key_id=key_id, key_server=key_server)
+        logger.debug(f"Installed apt repository key ID: {key_id}")
+        return True
+
+    @classmethod
+    def _get_ppa_parts(cls, ppa: str) -> Tuple[str, str]:
+        ppa_split = ppa.split("/")
+        if len(ppa_split) != 2:
+            raise errors.AptPPAInstallError(ppa=ppa, reason="invalid PPA format")
+        return ppa_split[0], ppa_split[1]
+
+    @classmethod
+    def _get_launchpad_ppa_key_id(cls, ppa: str) -> str:
+        owner, name = cls._get_ppa_parts(ppa)
+        launchpad = Launchpad.login_anonymously("snapcraft", "production")
+        launchpad_url = f"~{owner}/+archive/{name}"
+
+        logger.debug(f"Loading launchpad url: {launchpad_url}")
+        try:
+            key_id = launchpad.load(launchpad_url).signing_key_fingerprint
+        except lazr.restfulclient.errors.NotFound as error:
+            raise errors.AptPPAInstallError(
+                ppa=ppa, reason="not found on launchpad"
+            ) from error
+
+        logger.debug(f"Retrieved launchpad PPA key ID: {key_id}")
+        return key_id
+
+    @classmethod
+    def install_ppa(cls, *, keys_path: Path, ppa: str) -> bool:
+        owner, name = cls._get_ppa_parts(ppa)
+        key_id = cls._get_launchpad_ppa_key_id(ppa)
+
+        return any(
+            [
+                cls.install_gpg_key_id(keys_path=keys_path, key_id=key_id),
+                cls.install_sources(
+                    components=["main"],
+                    deb_types=["deb"],
+                    name=f"ppa-{owner}_{name}",
+                    suites=["$SNAPCRAFT_APT_RELEASE"],
+                    url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
+                ),
+            ]
+        )
+
+    @classmethod
+    def _construct_deb822_source(
+        cls,
+        *,
+        architectures: Optional[List[str]] = None,
+        components: List[str],
+        deb_types: Optional[List[str]] = None,
+        suites: List[str],
+        url: str,
+    ) -> str:
+        with io.StringIO() as deb822:
+            if deb_types:
+                deb_text = " ".join(deb_types)
+                print(f"Types: {deb_text}", file=deb822)
+
+            url_text = _format_sources_list(url)
+            print(f"URIs: {url_text}", file=deb822)
+
+            suites_text = _format_sources_list(" ".join(suites))
+            print(f"Suites: {suites_text}", file=deb822)
+
+            components_text = " ".join(components)
+            print(f"Components: {components_text}", file=deb822)
+
+            if architectures:
+                arch_text = " ".join(architectures)
+                host_arch = ProjectOptions().deb_arch
+                arch_text = arch_text.replace("$SNAPCRAFT_APT_HOST_ARCH", host_arch)
+                print(f"Architectures: {arch_text}", file=deb822)
+
+            return deb822.getvalue()
+
+    @classmethod
+    def install_sources(
+        cls,
+        *,
+        architectures: Optional[List[str]] = None,
+        components: List[str],
+        deb_types: Optional[List[str]] = None,
+        name: str,
+        suites: List[str],
+        url: str,
+    ) -> bool:
+        config = cls._construct_deb822_source(
+            architectures=architectures,
+            components=components,
+            deb_types=deb_types,
+            suites=suites,
+            url=url,
+        )
+
+        if name not in ["default", "default-security"]:
+            name = "snapcraft-" + name
+
+        config_path = Path(f"/etc/apt/sources.list.d/{name}.sources")
+        if config_path.exists() and config_path.read_text() == config:
+            # Already installed and matches, nothing to do.
+            logger.debug(f"Ignoring unchanged sources: {config_path}")
+            return False
+
+        _sudo_write_file(dst_path=config_path, content=config.encode())
+        logger.debug(f"Installed sources: {config_path}")
+        return True
 
     @classmethod
     def _is_filtered_package(cls, package_name: str) -> bool:
@@ -616,18 +830,6 @@ class Ubuntu(BaseRepo):
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
         except subprocess.CalledProcessError:
             raise errors.UnpackError(deb_path)
-
-
-def _get_local_sources_list():
-    sources_list = glob.glob("/etc/apt/sources.list.d/*.list")
-    sources_list.append("/etc/apt/sources.list")
-
-    sources = ""
-    for source in sources_list:
-        with open(source) as f:
-            sources += f.read()
-
-    return sources
 
 
 def _format_sources_list(sources_list: str):

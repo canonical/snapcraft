@@ -61,6 +61,7 @@ parts:
         - apt-utils
         - binutils
         - execstack
+        - gpg
         - gpgv
         - libffi6
         - libsodium23

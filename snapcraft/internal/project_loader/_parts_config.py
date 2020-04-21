@@ -192,14 +192,15 @@ class PartsConfig:
         )
 
         if isinstance(plugin, plugins.v1.PluginV1):
-            sources = plugin.get_required_repo_sources()
-            keys = plugin.get_required_repo_gpg_keys()
+            keys_path = self._project._get_keys_path()
 
-            for key_id, key in keys.items():
-                repo.Repo.install_gpg_key(key_id=key_id, key=key)
-
-            for name, source in sources.items():
-                repo.Repo.install_source(name=name, source=source)
+            if any(
+                [
+                    package_repo.install(keys_path=keys_path)
+                    for package_repo in plugin.get_required_package_repositories()
+                ]
+            ):
+                repo.Repo.refresh_build_packages()
 
         stage_packages_repo = repo.Repo
 

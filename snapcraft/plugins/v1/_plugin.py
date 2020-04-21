@@ -19,10 +19,10 @@ import logging
 import os
 import shlex
 from subprocess import CalledProcessError
-from typing import Dict
+from typing import List
 
 from snapcraft.internal import common, errors
-
+from snapcraft.internal.meta.package_repository import PackageRepository
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +54,9 @@ class PluginV1:
         return []
 
     @classmethod
-    def get_required_repo_sources(self) -> Dict[str, str]:
+    def get_required_package_repositories(self) -> List[PackageRepository]:
         """Define additional deb source lines using templates variables."""
-        return {}
-
-    @classmethod
-    def get_required_repo_gpg_keys(self) -> Dict[str, str]:
-        """Define additional GPG keys to trust for stage-packages."""
-        return {}
+        return list()
 
     @property
     def stage_packages(self):
