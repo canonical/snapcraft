@@ -17,5 +17,7 @@ apps:
 parts:
   make-project:
     plugin: make
+    make-parameters:
+      - HELLO=1
     source: .
 

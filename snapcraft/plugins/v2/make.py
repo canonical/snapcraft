@@ -45,7 +45,14 @@ class MakePlugin(PluginV2):
             "$schema": "http://json-schema.org/draft-04/schema#",
             "type": "object",
             "additionalProperties": False,
-            "properties": {},
+            "properties": {
+                "make-parameters": {
+                    "type": "array",
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                }
+            },
         }
 
     def get_build_snaps(self) -> Set[str]:
@@ -57,8 +64,16 @@ class MakePlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return dict()
 
+    def _get_make_command(self) -> str:
+        cmd = [
+            "make",
+            '-j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+        ] + self.options.make_parameters
+
+        return " ".join(cmd)
+
     def get_build_commands(self) -> List[str]:
         return [
-            'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
+            self._get_make_command(),
             'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
         ]

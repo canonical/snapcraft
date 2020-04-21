@@ -31,7 +31,14 @@ class MakePluginTest(TestCase):
                     "$schema": "http://json-schema.org/draft-04/schema#",
                     "type": "object",
                     "additionalProperties": False,
-                    "properties": {},
+                    "properties": {
+                        "make-parameters": {
+                            "type": "array",
+                            "uniqueItems": True,
+                            "items": {"type": "string"},
+                            "default": [],
+                        }
+                    },
                 }
             ),
         )
@@ -47,13 +54,32 @@ class MakePluginTest(TestCase):
         self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
-        plugin = MakePlugin(part_name="my-part", options=lambda: None)
+        class Options:
+            make_parameters = list()
+
+        plugin = MakePlugin(part_name="my-part", options=Options())
 
         self.assertThat(
             plugin.get_build_commands(),
             Equals(
                 [
-                    'make -j"$SNAPCRAFT_PARALLEL_BUILD_COUNT"',
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                ]
+            ),
+        )
+
+    def test_get_build_commands_with_make_parameters(self):
+        class Options:
+            make_parameters = ["FLAVOR=gtk3"]
+
+        plugin = MakePlugin(part_name="my-part", options=Options())
+
+        self.assertThat(
+            plugin.get_build_commands(),
+            Equals(
+                [
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" FLAVOR=gtk3',
                     'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
                 ]
             ),
