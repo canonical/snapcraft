@@ -25,20 +25,11 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - cmake-parameters:
+    - cmake-parameters
       (list of strings)
       parameters to pass to the build using the common cmake semantics.
-
-This plugin also interprets these specific build-environment entries:
-
-    - SNAPCRAFT_CMAKE_INSTALL_PREFIX
-      (default: /)
-      The default -DCMAKE_INSTALL_PREFIX.
-      Not considered if -DCMAKE_INSTALL_PREFIX is part of cmake-parameters.
-    - SNAPCRAFT_CMAKE_BUILD_TYPE
-      (default: Release)
-      The default -DCMAKE_BUILD_TYPE.
-      Not considered if -DCMAKE_BUILD_TYPE is part of cmake-parameters.
+      '-DCMAKE_INSTALL_PREFIX' is set to / and '-DCMAKE_BUILD_TYPE' is
+      set to Release if not explicitly set.
 """
 
 from typing import Any, Dict, List, Set
@@ -70,10 +61,7 @@ class CMakePlugin(PluginV2):
         return {"gcc", "cmake"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {
-            "SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/",
-            "SNAPCRAFT_CMAKE_BUILD_TYPE": "Release",
-        }
+        return dict()
 
     def _get_cmake_configure_command(self) -> str:
         cmd = ["cmake", "."] + self.options.cmake_parameters
@@ -82,12 +70,12 @@ class CMakePlugin(PluginV2):
             c.startswith("-DCMAKE_INSTALL_PREFIX=")
             for c in self.options.cmake_parameters
         ):
-            cmd.append('-DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}"')
+            cmd.append("-DCMAKE_INSTALL_PREFIX=/")
 
         if not any(
             c.startswith("-DCMAKE_BUILD_TYPE=") for c in self.options.cmake_parameters
         ):
-            cmd.append('-DCMAKE_BUILD_TYPE="${SNAPCRAFT_CMAKE_BUILD_TYPE}"')
+            cmd.append("-DCMAKE_BUILD_TYPE=Release")
 
         return " ".join(cmd)
 
