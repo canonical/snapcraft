@@ -23,20 +23,14 @@ This plugin leverages ninja to build and install.
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - meson-version:
+    - meson-version
       (string)
       The version of meson to install from PyPI.
       If unspecified, the latest released version of meson will be used.
-    - meson-parameters:
+
+    - meson-parameters
       (list of strings)
       Configure flags to pass to the build using the common meson semantics.
-
-This plugin also interprets these specific build-environment entries:
-
-    - SNAPCRAFT_MESON_BUILDTYPE
-      (default: release)
-      Use as the default --buildtype for meson when not explicitly set in
-      meson-parameters.
 """
 
 from typing import Any, Dict, List, Set
@@ -54,7 +48,6 @@ class MesonPlugin(PluginV2):
             "properties": {
                 "meson-parameters": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
@@ -77,7 +70,7 @@ class MesonPlugin(PluginV2):
         }
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {"SNAPCRAFT_MESON_BUILDTYPE": "release"}
+        return dict()
 
     def get_build_commands(self) -> List[str]:
         if self.options.meson_version:
@@ -88,8 +81,6 @@ class MesonPlugin(PluginV2):
         meson_cmd = ["meson"]
         if self.options.meson_parameters:
             meson_cmd.append(" ".join(self.options.meson_parameters))
-        if not any(c.startswith("--buildtype=") for c in self.options.meson_parameters):
-            meson_cmd.append("--buildtype=${SNAPCRAFT_MESON_BUILDTYPE}")
         meson_cmd.append(".snapbuild")
 
         return [

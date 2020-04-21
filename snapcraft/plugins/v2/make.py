@@ -28,7 +28,7 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - make-parameters:
+    - make-parameters
       (list of strings)
       Pass the given parameters to the make command.
 """

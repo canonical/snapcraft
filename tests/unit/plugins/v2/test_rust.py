@@ -36,7 +36,6 @@ class RustPluginTest(TestCase):
                         "rust-features": {
                             "default": [],
                             "items": {"type": "string"},
-                            "minItems": 1,
                             "type": "array",
                             "uniqueItems": True,
                         },

@@ -28,13 +28,15 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - requirements:
+    - requirements
       (list of strings)
       List of paths to requirements files.
-    - constraints:
+
+    - constraints
       (list of strings)
       List of paths to constraint files.
-    - python-packages:
+
+    - python-packages
       (list)
       A list of dependencies to get from PyPI. If needed, pip,
       setuptools and wheel can be upgraded here.
@@ -44,6 +46,7 @@ This plugin also interprets these specific build-environment entries:
     - SNAPCRAFT_PYTHON_INTERPRETER
       (default: python3)
       The interpreter binary to search for in PATH.
+
     - SNAPCRAFT_PYTHON_VENV_ARGS
       Additional arguments for venv.
 
@@ -76,21 +79,18 @@ class PythonPlugin(PluginV2):
             "properties": {
                 "requirements": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "constraints": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "python-packages": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],

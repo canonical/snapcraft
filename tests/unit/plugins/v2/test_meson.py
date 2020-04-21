@@ -34,7 +34,6 @@ class MesonPluginTest(TestCase):
                         "meson-parameters": {
                             "default": [],
                             "items": {"type": "string"},
-                            "minitems": 1,
                             "type": "array",
                             "uniqueItems": True,
                         },
@@ -65,10 +64,7 @@ class MesonPluginTest(TestCase):
     def test_get_build_environment(self):
         plugin = MesonPlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(
-            plugin.get_build_environment(),
-            Equals({"SNAPCRAFT_MESON_BUILDTYPE": "release"}),
-        )
+        self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
         class Options:
@@ -82,7 +78,7 @@ class MesonPluginTest(TestCase):
             Equals(
                 [
                     "python3 -m pip install -U meson",
-                    "[ ! -d .snapbuild ] && meson --buildtype=${SNAPCRAFT_MESON_BUILDTYPE} .snapbuild",
+                    "[ ! -d .snapbuild ] && meson .snapbuild",
                     "(cd .snapbuild && ninja)",
                     '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
                 ]

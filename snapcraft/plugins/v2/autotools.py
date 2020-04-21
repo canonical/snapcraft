@@ -49,7 +49,6 @@ class AutotoolsPlugin(PluginV2):
             "properties": {
                 "autotools-configure-parameters": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
@@ -64,15 +63,10 @@ class AutotoolsPlugin(PluginV2):
         return {"autoconf", "automake", "autopoint", "gcc", "libtool"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {"SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX": "/"}
+        return dict()
 
     def _get_configure_command(self) -> str:
         cmd = ["./configure"] + self.options.autotools_configure_parameters
-        if not any(
-            c.startswith("--prefix=")
-            for c in self.options.autotools_configure_parameters
-        ):
-            cmd.append('--prefix="${SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}"')
 
         return " ".join(cmd)
 

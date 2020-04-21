@@ -68,21 +68,18 @@ class PythonPluginTest(TestCase):
                         "constraints": {
                             "default": [],
                             "items": {"type": "string"},
-                            "minitems": 1,
                             "type": "array",
                             "uniqueItems": True,
                         },
                         "python-packages": {
                             "default": [],
                             "items": {"type": "string"},
-                            "minitems": 1,
                             "type": "array",
                             "uniqueItems": True,
                         },
                         "requirements": {
                             "default": [],
                             "items": {"type": "string"},
-                            "minitems": 1,
                             "type": "array",
                             "uniqueItems": True,
                         },

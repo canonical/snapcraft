@@ -59,7 +59,6 @@ class RustPlugin(PluginV2):
                 },
                 "rust-features": {
                     "type": "array",
-                    "minItems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],

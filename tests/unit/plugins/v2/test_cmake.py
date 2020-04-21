@@ -34,7 +34,6 @@ class CMakePluginTest(TestCase):
                     "properties": {
                         "cmake-parameters": {
                             "type": "array",
-                            "minitems": 1,
                             "uniqueItems": True,
                             "items": {"type": "string"},
                             "default": [],
@@ -52,10 +51,7 @@ class CMakePluginTest(TestCase):
     def test_get_build_environment(self):
         plugin = CMakePlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(
-            plugin.get_build_environment(),
-            Equals({"SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/"}),
-        )
+        self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
         class Options:
@@ -67,7 +63,7 @@ class CMakePluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    'cmake . -DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}"',
+                    "cmake .",
                     'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
                     'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]

@@ -25,7 +25,7 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - cmake-parameters:
+    - cmake-parameters
       (list of strings)
       parameters to pass to the build using the common cmake semantics.
 """
@@ -45,7 +45,6 @@ class CMakePlugin(PluginV2):
             "properties": {
                 "cmake-parameters": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
@@ -60,16 +59,10 @@ class CMakePlugin(PluginV2):
         return {"gcc", "cmake"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {"SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/"}
+        return dict()
 
     def _get_cmake_configure_command(self) -> str:
         cmd = ["cmake", "."] + self.options.cmake_parameters
-
-        if not any(
-            c.startswith("-DCMAKE_INSTALL_PREFIX=")
-            for c in self.options.cmake_parameters
-        ):
-            cmd.append('-DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}"')
 
         return " ".join(cmd)
 

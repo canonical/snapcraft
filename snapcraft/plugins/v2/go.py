@@ -22,11 +22,11 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - go-channel:
+    - go-channel
       (string, default: latest/stable)
       The Snap Store channel to install go from.
 
-    - go-buildtags:
+    - go-buildtags
       (list of strings)
       Tags to use during the go build. Default is not to use any build tags.
 """
@@ -47,7 +47,6 @@ class GoPlugin(PluginV2):
                 "go-channel": {"type": "string", "default": "latest/stable"},
                 "go-buildtags": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
