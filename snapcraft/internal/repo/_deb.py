@@ -607,7 +607,7 @@ class Ubuntu(BaseRepo):
                 env=env,
             )
         except subprocess.CalledProcessError as error:
-            raise errors.AptGPGKeyInstallError(output=error.output, key=key)
+            raise errors.AptGPGKeyInstallError(output=error.output.decode(), key=key)
 
         logger.debug(f"Installed apt repository key:\n{key}")
 
@@ -628,6 +628,9 @@ class Ubuntu(BaseRepo):
         if key_server is None:
             key_server = "keyserver.ubuntu.com"
 
+        env = os.environ.copy()
+        env["LANG"] = "C.UTF-8"
+
         cmd = [
             "sudo",
             "apt-key",
@@ -643,11 +646,15 @@ class Ubuntu(BaseRepo):
         try:
             logger.debug(f"Executing: {cmd!r}")
             subprocess.run(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+                env=env,
             )
         except subprocess.CalledProcessError as error:
             raise errors.AptGPGKeyInstallError(
-                output=error.output, key_id=key_id, key_server=key_server
+                output=error.output.decode(), key_id=key_id, key_server=key_server
             )
 
     @classmethod
