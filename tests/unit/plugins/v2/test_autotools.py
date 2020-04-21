@@ -10,7 +10,6 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -32,7 +31,7 @@ class AutotoolsPluginTest(TestCase):
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "configflags": {
+                        "autotools-configure-parameters": {
                             "type": "array",
                             "minitems": 1,
                             "uniqueItems": True,
@@ -62,7 +61,7 @@ class AutotoolsPluginTest(TestCase):
 
     def test_get_build_commands(self):
         class Options:
-            configflags = list()
+            autotools_configure_parameters = list()
 
         plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 
@@ -78,9 +77,9 @@ class AutotoolsPluginTest(TestCase):
             ),
         )
 
-    def test_get_build_commands_with_configflags(self):
+    def test_get_build_commands_with_configure_parameters(self):
         class Options:
-            configflags = ["--with-foo=true", "--prefix=/foo"]
+            autotools_configure_parameters = ["--with-foo=true", "--prefix=/foo"]
 
         plugin = AutotoolsPlugin(part_name="my-part", options=Options())
 

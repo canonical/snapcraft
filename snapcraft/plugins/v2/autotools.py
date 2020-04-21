@@ -28,7 +28,7 @@ For more information check the 'plugins' topic for the former and the
 
 In addition, this plugin uses the following plugin-specific keywords:
 
-    - configflags:
+    - autotools-configure-parameters
       (list of strings)
       configure flags to pass to the build such as those shown by running
       './configure --help'
@@ -47,7 +47,7 @@ class AutotoolsPlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "configflags": {
+                "autotools-configure-parameters": {
                     "type": "array",
                     "minitems": 1,
                     "uniqueItems": True,
@@ -66,18 +66,20 @@ class AutotoolsPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return {"SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX": "/"}
 
+    def _get_configure_command(self) -> str:
+        cmd = ["./configure"] + self.options.autotools_configure_parameters
+        if not any(
+            c.startswith("--prefix=")
+            for c in self.options.autotools_configure_parameters
+        ):
+            cmd.append('--prefix="${SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}"')
+
+        return " ".join(cmd)
+
     def get_build_commands(self) -> List[str]:
-        configure_cmd = "./configure"
-        if self.options.configflags:
-            configflags = " ".join(self.options.configflags)
-            configure_cmd = f"{configure_cmd} {configflags}"
-        if not any(c.startswith("--prefix=") for c in self.options.configflags):
-            configure_cmd = (
-                f'{configure_cmd} --prefix="${{SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}}"'
-            )
         return [
             "[ ! -f ./configure ] && autoreconf --install",
-            configure_cmd,
+            self._get_configure_command(),
             'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
             'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
         ]
