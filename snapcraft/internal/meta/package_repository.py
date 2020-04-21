@@ -14,15 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import deepcopy
+import abc
 import logging
 import re
+from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from snapcraft.internal import repo
 
 logger = logging.getLogger(__name__)
 
 
-class PackageRepository:
+class PackageRepository(abc.ABC):
+    @abc.abstractmethod
+    def install(self, *, keys_path: Path) -> bool:
+        ...
+
+    @abc.abstractmethod
+    def marshal(self) -> Dict[str, Any]:
+        ...
+
     @classmethod
     def unmarshal(cls, data: Dict[str, str]) -> "PackageRepository":
         if not isinstance(data, dict):
@@ -31,7 +43,7 @@ class PackageRepository:
         if "ppa" in data:
             return PackageRepositoryAptPpa.unmarshal(data)
 
-        return PackageRepositoryAptDeb.unmarshal(data)
+        return PackageRepositoryApt.unmarshal(data)
 
     @classmethod
     def unmarshal_package_repositories(cls, data: Any) -> List["PackageRepository"]:
@@ -41,8 +53,8 @@ class PackageRepository:
             if not isinstance(data, list):
                 raise RuntimeError(f"invalid package-repositories: {data!r}")
 
-            for repo in data:
-                package_repo = cls.unmarshal(repo)
+            for repository in data:
+                package_repo = cls.unmarshal(repository)
                 repositories.append(package_repo)
 
         return repositories
@@ -53,7 +65,10 @@ class PackageRepositoryAptPpa(PackageRepository):
         self.type = "apt"
         self.ppa = ppa
 
-    def marshal(self):
+    def install(self, *, keys_path: Path) -> bool:
+        return repo.Ubuntu.install_ppa(keys_path=keys_path, ppa=self.ppa)
+
+    def marshal(self) -> Dict[str, Any]:
         data = dict(type="apt")
         data["ppa"] = self.ppa
         return data
@@ -79,7 +94,7 @@ class PackageRepositoryAptPpa(PackageRepository):
         return cls(ppa=ppa)
 
 
-class PackageRepositoryAptDeb(PackageRepository):
+class PackageRepositoryApt(PackageRepository):
     def __init__(
         self,
         *,
@@ -108,8 +123,26 @@ class PackageRepositoryAptDeb(PackageRepository):
         self.suites = suites
         self.url = url
 
-    def marshal(self):
-        data = {"type": "apt"}
+    def install(self, keys_path: Path) -> bool:
+        # First install associated GPG key.
+        new_key: bool = repo.Ubuntu.install_gpg_key_id(
+            keys_path=keys_path, key_id=self.key_id, key_server=self.key_server
+        )
+
+        # Now install sources file.
+        new_sources: bool = repo.Ubuntu.install_sources(
+            architectures=self.architectures,
+            components=self.components,
+            deb_types=self.deb_types,
+            name=self.name,
+            suites=self.suites,
+            url=self.url,
+        )
+
+        return new_key or new_sources
+
+    def marshal(self) -> Dict[str, Any]:
+        data: Dict[str, Any] = {"type": "apt"}
 
         if self.architectures:
             data["architectures"] = self.architectures
@@ -131,7 +164,7 @@ class PackageRepositoryAptDeb(PackageRepository):
         return data
 
     @classmethod  # noqa: C901
-    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryAptDeb":
+    def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
         if not isinstance(data, dict):
             raise RuntimeError(f"invalid deb repository object: {data!r}")
 

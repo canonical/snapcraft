@@ -63,11 +63,15 @@ import logging
 import re
 import shutil
 import textwrap
-from typing import Dict
+from typing import List
 
 from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils
 from snapcraft.internal import errors, mangling, repo
+from snapcraft.internal.meta.package_repository import (
+    PackageRepository,
+    PackageRepositoryApt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -90,38 +94,6 @@ _EOL_ROSDISTROS = ["bouncy", "crystal"]
 _BASE_TO_UBUNTU_RELEASE_MAP = {"core18": "bionic"}
 
 _SUPPORTED_DEPENDENCY_TYPES = {"apt", "pip"}
-
-_ROS2_GPG_KEY = """
------BEGIN PGP PUBLIC KEY BLOCK-----
-
-mQINBFzvJpYBEADY8l1YvO7iYW5gUESyzsTGnMvVUmlV3XarBaJz9bGRmgPXh7jc
-VFrQhE0L/HV7LOfoLI9H2GWYyHBqN5ERBlcA8XxG3ZvX7t9nAZPQT2Xxe3GT3tro
-u5oCR+SyHN9xPnUwDuqUSvJ2eqMYb9B/Hph3OmtjG30jSNq9kOF5bBTk1hOTGPH4
-K/AY0jzT6OpHfXU6ytlFsI47ZKsnTUhipGsKucQ1CXlyirndZ3V3k70YaooZ55rG
-aIoAWlx2H0J7sAHmqS29N9jV9mo135d+d+TdLBXI0PXtiHzE9IPaX+ctdSUrPnp+
-TwR99lxglpIG6hLuvOMAaxiqFBB/Jf3XJ8OBakfS6nHrWH2WqQxRbiITl0irkQoz
-pwNEF2Bv0+Jvs1UFEdVGz5a8xexQHst/RmKrtHLct3iOCvBNqoAQRbvWvBhPjO/p
-V5cYeUljZ5wpHyFkaEViClaVWqa6PIsyLqmyjsruPCWlURLsQoQxABcL8bwxX7UT
-hM6CtH6tGlYZ85RIzRifIm2oudzV5l+8oRgFr9yVcwyOFT6JCioqkwldW52P1pk/
-/SnuexC6LYqqDuHUs5NnokzzpfS6QaWfTY5P5tz4KHJfsjDIktly3mKVfY0fSPVV
-okdGpcUzvz2hq1fqjxB6MlB/1vtk0bImfcsoxBmF7H+4E9ZN1sX/tSb0KQARAQAB
-tCZPcGVuIFJvYm90aWNzIDxpbmZvQG9zcmZvdW5kYXRpb24ub3JnPokCVAQTAQoA
-PhYhBMHPbjHmut6IaLFytPQu1vurF8ZUBQJc7yaWAhsDBQkDwmcABQsJCAcCBhUK
-CQgLAgQWAgMBAh4BAheAAAoJEPQu1vurF8ZUkhIP/RbZY1ErvCEUy8iLJm9aSpLQ
-nDZl5xILOxyZlzpg+Ml5bb0EkQDr92foCgcvLeANKARNCaGLyNIWkuyDovPV0xZJ
-rEy0kgBrDNb3++NmdI/+GA92pkedMXXioQvqdsxUagXAIB/sNGByJEhs37F05AnF
-vZbjUhceq3xTlvAMcrBWrgB4NwBivZY6IgLvl/CRQpVYwANShIQdbvHvZSxRonWh
-NXr6v/Wcf8rsp7g2VqJ2N2AcWT84aa9BLQ3Oe/SgrNx4QEhA1y7rc3oaqPVu5ZXO
-K+4O14JrpbEZ3Xs9YEjrcOuEDEpYktA8qqUDTdFyZrxb9S6BquUKrA6jZgT913kj
-J4e7YAZobC4rH0w4u0PrqDgYOkXA9Mo7L601/7ZaDJob80UcK+Z12ZSw73IgBix6
-DiJVfXuWkk5PM2zsFn6UOQXUNlZlDAOj5NC01V0fJ8P0v6GO9YOSSQx0j5UtkUbR
-fp/4W7uCPFvwAatWEHJhlM3sQNiMNStJFegr56xQu1a/cbJH7GdbseMhG/f0BaKQ
-qXCI3ffB5y5AOLc9Hw7PYiTFQsuY1ePRhE+J9mejgWRZxkjAH/FlAubqXkDgterC
-h+sLkzGf+my2IbsMCuc+3aeNMJ5Ej/vlXefCH/MpPWAHCqpQhe2DET/jRSaM53US
-AHNx8kw4MPUkxExgI7Sd
-=4Ofr
------END PGP PUBLIC KEY BLOCK-----
-"""
 
 
 class ColconInvalidSystemDependencyError(errors.SnapcraftError):
@@ -253,14 +225,16 @@ class ColconPlugin(PluginV1):
         ]
 
     @classmethod
-    def get_required_repo_sources(self) -> Dict[str, str]:
-        return dict(
-            ros2="deb http://repo.ros2.org/ubuntu/main $SNAPCRAFT_APT_RELEASE main"
-        )
-
-    @classmethod
-    def get_required_repo_gpg_keys(self):
-        return dict(C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654=_ROS2_GPG_KEY)
+    def get_required_package_repositories(self) -> List[PackageRepository]:
+        return [
+            PackageRepositoryApt(
+                deb_types=["deb"],
+                components=["main"],
+                key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
+                url="http://repo.ros2.org/ubuntu/main",
+                suites=["$SNAPCRAFT_APT_RELEASE"],
+            )
+        ]
 
     @property
     def _pip(self):
