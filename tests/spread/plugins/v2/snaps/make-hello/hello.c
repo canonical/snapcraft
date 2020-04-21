@@ -1,7 +1,13 @@
 #include <stdio.h>
 
+#if HELLO == 1
+static char *say = "hello world";
+#else
+static char *say = "goodbye world";
+#endif
+
 int main()
 {
-	printf("hello world\n");
-	return 0;
+  printf("%s\n", say);
+  return 0;
 }
