@@ -700,22 +700,6 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _get_snapcraft_installed_sources(cls) -> Set[str]:
-        sources: Set[str] = set()
-
-        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
-        if installed_path.exists():
-            sources = set(installed_path.read_text().splitlines())
-
-        return sources
-
-    @classmethod
-    def _set_snapcraft_installed_sources(cls, sources: Set[str]) -> None:
-        installed_path = Path(cls._SNAPCRAFT_INSTALLED_SOURCES_LIST)
-        sources_content = "\n".join(sorted(sources)) + "\n"
-        _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
-
-    @classmethod
     def _get_ppa_parts(cls, ppa: str) -> List[str]:
         ppa_split = ppa.split("/")
         if len(ppa_split) != 2:
@@ -724,9 +708,9 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _get_launchpad_ppa_key_id(cls, ppa: str) -> str:
-        ppa_split = cls._get_ppa_parts(ppa)
+        owner, name = cls._get_ppa_parts(ppa)
         launchpad = Launchpad.login_anonymously("snapcraft", "production")
-        launchpad_url = f"~{ppa_split[0]}/+archive/{ppa_split[1]}"
+        launchpad_url = f"~{owner}/+archive/{name}"
 
         logger.debug(f"Loading launchpad url: {launchpad_url}")
         try:
@@ -741,7 +725,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_ppa(cls, *, keys_path: Path, ppa: str) -> bool:
-        ppa_split = cls._get_ppa_parts(ppa)
+        owner, name = cls._get_ppa_parts(ppa)
         key_id = cls._get_launchpad_ppa_key_id(ppa)
 
         return any(
@@ -750,9 +734,9 @@ class Ubuntu(BaseRepo):
                 cls.install_sources(
                     components=["main"],
                     deb_types=["deb"],
-                    name=f"ppa-{ppa_split[0]}_{ppa_split[1]}",
+                    name=f"ppa-{owner}_{name}",
                     suites=["$SNAPCRAFT_APT_RELEASE"],
-                    url=f"http://ppa.launchpad.net/{ppa_split[0]}/{ppa_split[1]}/ubuntu",
+                    url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
                 ),
             ]
         )
