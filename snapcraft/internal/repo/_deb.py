@@ -700,11 +700,11 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _get_ppa_parts(cls, ppa: str) -> List[str]:
+    def _get_ppa_parts(cls, ppa: str) -> Tuple[str, str]:
         ppa_split = ppa.split("/")
         if len(ppa_split) != 2:
             raise errors.AptPPAInstallError(ppa=ppa, reason="invalid PPA format")
-        return ppa_split
+        return ppa_split[0], ppa_split[1]
 
     @classmethod
     def _get_launchpad_ppa_key_id(cls, ppa: str) -> str:
