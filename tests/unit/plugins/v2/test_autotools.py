@@ -33,7 +33,6 @@ class AutotoolsPluginTest(TestCase):
                     "properties": {
                         "autotools-configure-parameters": {
                             "type": "array",
-                            "minitems": 1,
                             "uniqueItems": True,
                             "items": {"type": "string"},
                             "default": [],
@@ -54,10 +53,7 @@ class AutotoolsPluginTest(TestCase):
     def test_get_build_environment(self):
         plugin = AutotoolsPlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(
-            plugin.get_build_environment(),
-            Equals({"SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX": "/"}),
-        )
+        self.assertThat(plugin.get_build_environment(), Equals(dict()))
 
     def test_get_build_commands(self):
         class Options:
@@ -70,7 +66,7 @@ class AutotoolsPluginTest(TestCase):
             Equals(
                 [
                     "[ ! -f ./configure ] && autoreconf --install",
-                    './configure --prefix="${SNAPCRAFT_AUTOTOOLS_INSTALL_PREFIX}"',
+                    "./configure",
                     'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
                     'make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]

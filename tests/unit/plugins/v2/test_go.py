@@ -35,7 +35,6 @@ class GoPluginTest(TestCase):
                         "go-channel": {"type": "string", "default": "latest/stable"},
                         "go-buildtags": {
                             "type": "array",
-                            "minitems": 1,
                             "uniqueItems": True,
                             "items": {"type": "string"},
                             "default": [],
