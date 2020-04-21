@@ -1906,7 +1906,6 @@ class PackageManagement(ProjectBaseTest):
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [test, test-updates, test-security]
                   - type: apt
-                    name: test-name2
                     components: [main, multiverse]
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
@@ -2026,6 +2025,7 @@ class InvalidAptConfigurations(ProjectBaseTest):
                       name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
                     """
                 ),
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
@@ -2042,6 +2042,7 @@ class InvalidAptConfigurations(ProjectBaseTest):
                       name: ../foo
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
                     """
                 ),
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
@@ -2058,6 +2059,58 @@ class InvalidAptConfigurations(ProjectBaseTest):
                       name: test-name
                       key-id: \\*\\*
                       suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty architectures",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      name: test-name
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                      architectures: []
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty components",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: []
+                      name: test-name
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty suites",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main]
+                      key-id: test-key-id
+                      suites: []
+                      url: http://test-url.com/ubuntu
                     """
                 ),
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
