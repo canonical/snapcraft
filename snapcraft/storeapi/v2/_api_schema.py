@@ -26,7 +26,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
     "properties": {
         "channel-map": {
             "items": {
-                "additionalProperties": False,
                 "properties": {
                     "architecture": {"type": "string"},
                     "channel": {
@@ -39,7 +38,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                         "type": ["string", "null"],
                     },
                     "progressive": {
-                        "additionalProperties": False,
                         "properties": {
                             "key": {"type": ["string", "null"]},
                             "paused": {"type": ["boolean", "null"]},
@@ -70,7 +68,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
         },
         "revisions": {
             "items": {
-                "additionalProperties": False,
                 "properties": {
                     "architectures": {
                         "items": {"type": "string"},
@@ -86,7 +83,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                     },
                     "created-at": {"format": "date-time", "type": "string"},
                     "epoch": {
-                        "additionalProperties": False,
                         "properties": {
                             "read": {
                                 "items": {"type": "integer"},
@@ -129,7 +125,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
             "type": "array",
         },
         "snap": {
-            "additionalProperties": False,
             "description": "Metadata about the requested snap.",
             "introduced_at": 6,
             "properties": {
@@ -137,7 +132,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                     "description": "The list of most relevant channels for this snap. Branches are only included if there is a release for it.",
                     "introduced_at": 9,
                     "items": {
-                        "additionalProperties": False,
                         "description": "A list of channels and their metadata for the requested snap.",
                         "properties": {
                             "branch": {
@@ -184,7 +178,6 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                     "description": "An ordered list of most relevant tracks for this snap.",
                     "introduced_at": 9,
                     "items": {
-                        "additionalProperties": False,
                         "description": "An ordered list of tracks and their metadata for this snap.",
                         "properties": {
                             "creation-date": {
