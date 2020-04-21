@@ -32,7 +32,7 @@ class CMakePluginTest(TestCase):
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "configflags": {
+                        "cmake-parameters": {
                             "type": "array",
                             "minitems": 1,
                             "uniqueItems": True,
@@ -59,7 +59,7 @@ class CMakePluginTest(TestCase):
 
     def test_get_build_commands(self):
         class Options:
-            configflags = list()
+            cmake_parameters = list()
 
         plugin = CMakePlugin(part_name="my-part", options=Options())
 
@@ -74,9 +74,9 @@ class CMakePluginTest(TestCase):
             ),
         )
 
-    def test_get_build_commands_with_configflags(self):
+    def test_get_build_commands_with_cmake_parameters(self):
         class Options:
-            configflags = [
+            cmake_parameters = [
                 "-DVERBOSE=1",
                 "-DCMAKE_INSTALL_PREFIX=/foo",
                 '-DCMAKE_SPACED_ARGS="foo bar"',

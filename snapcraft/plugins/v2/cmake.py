@@ -25,9 +25,9 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - configflags:
+    - cmake-parameters:
       (list of strings)
-      configure flags to pass to the build using the common cmake semantics.
+      parameters to pass to the build using the common cmake semantics.
 """
 
 from typing import Any, Dict, List, Set
@@ -43,7 +43,7 @@ class CMakePlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "configflags": {
+                "cmake-parameters": {
                     "type": "array",
                     "minitems": 1,
                     "uniqueItems": True,
@@ -62,17 +62,20 @@ class CMakePlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return {"SNAPCRAFT_CMAKE_INSTALL_PREFIX": "/"}
 
-    def get_build_commands(self) -> List[str]:
-        cmake_configure_cmd = "cmake ."
-        if self.options.configflags:
-            configflags = " ".join(self.options.configflags)
-            cmake_configure_cmd = f"{cmake_configure_cmd} {configflags}"
+    def _get_cmake_configure_command(self) -> str:
+        cmd = ["cmake", "."] + self.options.cmake_parameters
+
         if not any(
-            c.startswith("-DCMAKE_INSTALL_PREFIX=") for c in self.options.configflags
+            c.startswith("-DCMAKE_INSTALL_PREFIX=")
+            for c in self.options.cmake_parameters
         ):
-            cmake_configure_cmd = f'{cmake_configure_cmd} -DCMAKE_INSTALL_PREFIX="${{SNAPCRAFT_CMAKE_INSTALL_PREFIX}}"'
+            cmd.append('-DCMAKE_INSTALL_PREFIX="${SNAPCRAFT_CMAKE_INSTALL_PREFIX}"')
+
+        return " ".join(cmd)
+
+    def get_build_commands(self) -> List[str]:
         return [
-            cmake_configure_cmd,
+            self._get_cmake_configure_command(),
             'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
             'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
         ]

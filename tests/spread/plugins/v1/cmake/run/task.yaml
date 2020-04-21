@@ -8,6 +8,9 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  # Rename v2 option back.
+  sed -i "$SNAP_DIR/snap/snapcraft.yaml" -e "s/cmake-parameters:/configflags:/"
+
 restore: |
   cd "$SNAP_DIR"
   snapcraft clean
