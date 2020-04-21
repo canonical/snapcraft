@@ -456,33 +456,6 @@ class PackageForFileTest(unit.TestCase):
 
 
 class TestUbuntuInstallRepo(unit.TestCase):
-    def test_install(self):
-        snapcraft_list = Path(self.path, "snapcraft.list")
-
-        with mock.patch(
-            "snapcraft.internal.repo._deb.Ubuntu._SNAPCRAFT_INSTALLED_SOURCES_LIST",
-            new=str(snapcraft_list),
-        ):
-            test_source = "deb http://source"
-            repo.Ubuntu.install_source(name="test", source=test_source)
-
-            self.assertThat(snapcraft_list.exists(), Equals(True))
-            self.assertThat(snapcraft_list.owner(), Equals("root"))
-            self.assertThat(snapcraft_list.group(), Equals("root"))
-            self.assertThat(snapcraft_list.stat().st_mode & 0o777, Equals(0o644))
-
-            installed_sources = snapcraft_list.read_text().splitlines()
-
-            self.assertThat(test_source in installed_sources, Equals(True))
-
-            test_source2 = "deb http://source2"
-            repo.Ubuntu.install_source(name="test", source=test_source2)
-
-            installed_sources = snapcraft_list.read_text().splitlines()
-            expected_sources = sorted([test_source, test_source2])
-
-            self.assertThat(installed_sources, Equals(expected_sources))
-
     @mock.patch("subprocess.run")
     def test_install_gpg(self, mock_run):
         repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")

@@ -716,23 +716,6 @@ class Ubuntu(BaseRepo):
         _sudo_write_file(dst_path=installed_path, content=sources_content.encode())
 
     @classmethod
-    def install_source(cls, *, name: str, source: str) -> bool:
-        """Add deb source line. Supports $SNAPCRAFT_APT_RELEASE."""
-        expanded_source = _format_sources_list(source)
-
-        sources = cls._get_snapcraft_installed_sources()
-        if expanded_source in sources:
-            return False
-
-        logger.debug(f"Existing sources: {sources!r}")
-        sources.add(expanded_source)
-
-        cls._set_snapcraft_installed_sources(sources)
-        logger.debug(f"Installed apt repository {name!r}: {expanded_source}")
-
-        return True
-
-    @classmethod
     def _get_ppa_parts(cls, ppa: str) -> List[str]:
         ppa_split = ppa.split("/")
         if len(ppa_split) != 2:

@@ -178,11 +178,6 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_source(cls, *, name: str, source: str) -> bool:
-        """Install repository source location."""
-        raise errors.NoNativeBackendError()
-
-    @classmethod
     def normalize(cls, unpackdir: str) -> None:
         """Normalize artifacts in unpackdir.
 
