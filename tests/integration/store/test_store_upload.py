@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,8 +22,8 @@ from testtools.matchers import FileExists, MatchesRegex
 from tests import integration
 
 
-class PushTestCase(integration.StoreTestCase):
-    def test_push_with_login(self):
+class UploadTestCase(integration.StoreTestCase):
+    def test_upload_with_login(self):
         # Make a snap
         self.addCleanup(self.logout)
         self.login()
@@ -42,11 +42,11 @@ class PushTestCase(integration.StoreTestCase):
         snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(["push", snap_file_path])
+        output = self.run_snapcraft(["upload", snap_file_path])
         expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
-    def test_push_and_release(self):
+    def test_upload_and_release(self):
         # Make a snap
         self.addCleanup(self.logout)
         self.login()
@@ -72,29 +72,6 @@ class PushTestCase(integration.StoreTestCase):
         snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(["push", snap_file_path, "--release", "edge"])
+        output = self.run_snapcraft(["upload", snap_file_path, "--release", "edge"])
         expected = r".*edge *{version}.*".format(version=version)
-        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
-
-    def test_push_with_deprecated_upload(self):
-        # Make a snap
-        self.addCleanup(self.logout)
-        self.login()
-
-        # Change to a random name and version.
-        name = self.get_unique_name()
-        version = self.get_unique_version()
-        self.copy_project_to_cwd("basic")
-        self.update_name_and_version(name, version)
-
-        self.run_snapcraft("snap")
-
-        # Register the snap
-        self.register(name)
-        # Upload the snap
-        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
-        self.assertThat(os.path.join(snap_file_path), FileExists())
-
-        output = self.run_snapcraft(["upload", snap_file_path])
-        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

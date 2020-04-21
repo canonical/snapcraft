@@ -9,7 +9,12 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  deb_arch=$(dpkg --print-architecture)
+  sed -i state-pull -e"s/\(.*deb_arch:\) @EXPECTED_ARCHITECTURE@$/\1 $deb_arch/"
+
 restore: |
+  expected_pull_state="$(pwd)/state-pull"
+
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -17,6 +22,8 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
+
+  git checkout "${expected_pull_state}"
 
 execute: |
   expected_pull_state="$(pwd)/state-pull"

@@ -798,7 +798,7 @@ class KeyNotRegisteredError(StoreError):
     fmt = (
         "The key {key_name!r} is not registered in the Store.\nPlease "
         "register it with `snapcraft register-key {key_name!r}` before "
-        "signing and pushing signatures to the Store."
+        "signing and uploading signatures to the Store."
     )
 
     def __init__(self, key_name):
