@@ -25,17 +25,25 @@ if TYPE_CHECKING:
 
 
 def get_snapcraft_global_environment(project: "Project") -> Dict[str, str]:
-    if project.info.name:
+    # The triple check is mostly for unit tests support until we completely
+    # get rid of project.info.
+    if project._snap_meta.name:
+        name = project._snap_meta.name
+    elif project.info is not None and project.info.name:
         name = project.info.name
     else:
         name = ""
 
-    if project.info.version:
+    if project._snap_meta.version:
+        version = project._snap_meta.version
+    elif project.info is not None and project.info.version:
         version = project.info.version
     else:
         version = ""
 
-    if project.info.grade:
+    if project._snap_meta.grade:
+        grade = project._snap_meta.grade
+    elif project.info is not None and project.info.grade:
         grade = project.info.grade
     else:
         grade = ""
