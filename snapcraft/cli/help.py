@@ -123,20 +123,18 @@ def _topic_help(module_name, devel):
         click.echo(_TOPICS[module_name].__doc__)
 
 
-def _module_help(module_name: str, devel: bool, base: str):
-    module_name = module_name.replace("-", "_")
+def _module_help(plugin_name: str, devel: bool, base: str):
+    module_name = plugin_name.replace("-", "_")
 
     if base is None:
         try:
-            if get_project()._snap_meta.get_build_base() == "core20":
-                plugin_version = "v2"
-            else:
-                plugin_version = "v1"
+            base = get_project()._snap_meta.get_build_base()
         except (errors.ProjectNotFoundError, project_errors.MissingSnapcraftYamlError):
-            plugin_version = "v2"
-    elif base == "core20":
+            base = "core20"
+
+    if base == "core20":
         plugin_version = "v2"
-    elif base:
+    else:
         plugin_version = "v1"
 
     module = importlib.import_module(
@@ -145,6 +143,9 @@ def _module_help(module_name: str, devel: bool, base: str):
     if module.__doc__ and devel:
         help(module)
     elif module.__doc__:
-        click.echo_via_pager(module.__doc__)
+        click.echo_via_pager(
+            f"Displaying help for the {plugin_name!r} plugin for {base!r}.\n\n"
+            + module.__doc__
+        )
     else:
         click.echo("The plugin has no documentation")

@@ -62,7 +62,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
     def test_print_module_help_for_valid_plugin_default_base(self):
         result = self.run_command(["help", "nil"])
 
-        expected = "The nil plugin is"
+        expected = "Displaying help for the 'nil' plugin for 'core20'."
         output = result.output[: len(expected)]
         self.assertThat(
             output,
@@ -75,7 +75,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         for base in ("core", "core18", "core20"):
             result = self.run_command(["help", "nil", "--base", base])
 
-            expected = "The nil plugin is"
+            expected = f"Displaying help for the 'nil' plugin for {base!r}."
             output = result.output[: len(expected)]
             self.expectThat(
                 output,
@@ -94,7 +94,10 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         )
         result = self.run_command(["help", "python", "--base", "core18"])
 
-        expected = "The python plugin can be used for python 2 or 3 based parts"
+        expected = (
+            "Displaying help for the 'python' plugin for 'core18'.\n\n"
+            "The python plugin can be used for"
+        )
         output = result.output[: len(expected)]
         self.assertThat(
             output,
@@ -106,7 +109,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
     def test_print_module_named_with_dashes_help_for_valid_plugin(self):
         result = self.run_command(["help", "plainbox-provider", "--base", "core18"])
 
-        expected = " Create parts"
+        expected = "Displaying help for the 'plainbox-provider' plugin for 'core18'."
         self.assertThat(result.output, StartsWith(expected))
 
     def test_show_module_help_with_devel_for_valid_plugin(self):
