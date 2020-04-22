@@ -40,7 +40,13 @@ execute: |
   cd "../snaps/$SNAP"
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  if ! snapcraft; then
+    ls -la /snapcraft/tests/spread/plugins/v2/snaps/python-hello-staged-python/parts/python-part/install/usr/bin/ || true
+    ls -la /snapcraft/tests/spread/plugins/v2/snaps/python-hello-staged-python/parts/python-part/install/bin/ || true
+    cat /snapcraft/tests/spread/plugins/v2/snaps/python-hello-staged-python/parts/python-part/run/build.sh
+    exit 1
+  fi
+
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello world" ]
 

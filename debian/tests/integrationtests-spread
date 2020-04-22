@@ -45,7 +45,7 @@ snap remove go
 . /etc/os-release
 export SNAPCRAFT_PACKAGE_TYPE="snap"
 export SNAPCRAFT_CHANNEL="latest/edge"
-/tmp/go/bin/spread -v "autopkgtest:${ID}-${VERSION_ID}-$(dpkg --print-architecture)"
+/tmp/go/bin/spread -v "autopkgtest:${ID}-${VERSION_ID}-$(dpkg --print-architecture):tests/spread/plugins/v2/build-and-run-hello:python_staged"
 
 # store journal info for inspection
 journalctl --sync
