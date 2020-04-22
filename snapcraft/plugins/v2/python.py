@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The python plugin can be used for python 2 or 3 based parts.
+"""The python plugin can be used for 3 based parts.
 
 It can be used for python projects where you would want to do:
 

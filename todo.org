@@ -4,7 +4,7 @@
 
 * Specifications
 ** 2020
-*** STRT [[file:specifications/20200304-core20-plugins.org][Snapcraft Core20 Plugins]] [/]
+*** STRT [[file:specifications/20200304-core20-plugins.org][Snapcraft Core20 Plugins]] [6/11]
 - [X] Move =BasePlugin= to a v1 import path
 - [X] Add backwards compatibility for =BasePlugin=
 - [X] Rework in-tree plugin importing into a map
@@ -12,7 +12,7 @@
 - [X] Add =PluginHandler= logic for the =core20= plugin
 - [ ] Plugin manifest generation.
 - [ ] Detection of property changes for rebuilds.
-- [ ] Add CLI support for =help=
+- [X] Add CLI support for =help=
 - [ ] Add CLI support for =list-plugins=
 - [ ] Add CLI support for =expand-plugins=
 - [ ] Introduce new custom plugin loading logic for =core20=

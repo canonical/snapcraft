@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""The nil plugin is useful for parts with no source.
+
+Using this, parts can be defined purely by utilizing properties automatically
+included by Snapcraft, e.g. stage-packages.
+"""
+
 from typing import Any, Dict, List, Set
 
 from snapcraft.plugins.v2 import PluginV2
