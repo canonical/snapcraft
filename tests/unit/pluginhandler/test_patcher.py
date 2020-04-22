@@ -104,15 +104,16 @@ class StaticBasePatchingTest(unit.TestCase):
 class PrimeTypeExcludesPatchingTestCase(unit.TestCase):
 
     scenarios = (
-        ("kernel", dict(snap_type="kernel")),
-        ("gadget", dict(snap_type="gadget")),
-        ("base", dict(snap_type="base")),
-        ("os", dict(snap_type="os")),
+        ("kernel", dict(snap_type="kernel", snap_name="test-snap")),
+        ("gadget", dict(snap_type="gadget", snap_name="test-snap")),
+        ("base", dict(snap_type="base", snap_name="core18")),
+        ("os", dict(snap_type="os", snap_name="test-snap")),
     )
 
     def test_no_patcher_called(self):
         handler = self.load_part(
             "test-part",
+            snap_name=self.snap_name,
             part_properties={"source-subdir": "src"},
             snap_type=self.snap_type,
         )

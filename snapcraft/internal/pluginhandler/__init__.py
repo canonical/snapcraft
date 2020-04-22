@@ -545,7 +545,8 @@ class PluginHandler:
             else:
                 shutil.rmtree(self.part_source_dir)
 
-        self.plugin.clean_pull()
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            self.plugin.clean_pull()
         self.mark_cleaned(steps.PULL)
 
     def prepare_build(self, force=False):
@@ -773,7 +774,8 @@ class PluginHandler:
         if os.path.exists(self.part_install_dir):
             shutil.rmtree(self.part_install_dir)
 
-        self.plugin.clean_build()
+        if isinstance(self.plugin, plugins.v1.PluginV1):
+            self.plugin.clean_build()
         self.mark_cleaned(steps.BUILD)
 
     def migratable_fileset_for(self, step):

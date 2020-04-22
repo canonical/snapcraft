@@ -267,6 +267,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         part_properties=None,
         project=None,
         stage_packages_repo=None,
+        snap_name="test-snap",
         base="core18",
         build_base=None,
         confinement="strict",
@@ -277,9 +278,14 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         properties = {"plugin": plugin_name}
         if part_properties:
             properties.update(part_properties)
+        if "build-environment" not in properties:
+            properties["build-environment"] = list()
         if not project:
             project = snapcraft.project.Project()
 
+        project._snap_meta.name = snap_name
+        project._snap_meta.version = "1.0"
+        project._snap_meta.grade = "devel"
         project._snap_meta.type = snap_type
         project._snap_meta.confinement = confinement
         project._snap_meta.base = base

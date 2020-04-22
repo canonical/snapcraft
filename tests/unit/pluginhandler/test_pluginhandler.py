@@ -41,7 +41,7 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
-from snapcraft.plugins.v1 import nil
+from snapcraft import plugins
 from snapcraft.project import Project
 from tests import fixture_setup, unit
 
@@ -970,7 +970,7 @@ class StateBaseTestCase(unit.TestCase):
             )
         ).mock
 
-        self.handler = self.load_part("test_part")
+        self.handler = self.load_part("test_part", base=self.base)
         self.handler.makedirs()
 
         self.get_elf_files_mock = self.useFixture(
@@ -987,6 +987,8 @@ class StateBaseTestCase(unit.TestCase):
 
 
 class PullStateTestCase(StateBaseTestCase):
+    scenarios = (("v1 plugin", dict(base="core18")), ("v2 plugin", dict(base="core20")))
+
     def test_pull_build_packages_without_grammar_properties(self):
         self.handler = self.load_part(
             "test_part", part_properties={"build-packages": ["package1"]}
@@ -1026,6 +1028,8 @@ class PullStateTestCase(StateBaseTestCase):
 
 
 class StateTestCase(StateBaseTestCase):
+    scenarios = (("v1 plugin", dict(base="core18")), ("v2 plugin", dict(base="core20")))
+
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state(self, repo_mock):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -1192,12 +1196,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected pull to save state YAML")
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertTrue("foo" in state.properties)
-        self.assertThat(state.properties["foo"], Equals("bar"))
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.assertTrue("foo" in state.properties)
+            self.assertThat(state.properties["foo"], Equals("bar"))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch.object(nil.NilPlugin, "clean_pull")
+    @patch.object(plugins.v1.nil.NilPlugin, "clean_pull")
     def test_clean_pull_state(self, mock_clean_pull):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
@@ -1207,12 +1212,16 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_pull()
 
         # Verify that the plugin had clean_pull() called
-        mock_clean_pull.assert_called_once_with()
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            mock_clean_pull.assert_called_once_with()
 
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
     def test_build_state(self):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
@@ -1341,6 +1350,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(metadata.get_version(), Equals("override-version"))
 
     def test_build_state_with_properties(self):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.get_build_properties_mock.return_value = ["foo"]
         self.handler.plugin.options.foo = "bar"
         self.handler._part_properties = {"foo": "bar"}
@@ -1362,8 +1374,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch.object(nil.NilPlugin, "clean_build")
+    @patch.object(plugins.v1.nil.NilPlugin, "clean_build")
     def test_clean_build_state(self, mock_clean_build):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
 
         self.handler.mark_done(steps.PULL)
@@ -1371,8 +1386,9 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_build()
 
-        # Verify that the plugin had clean_build() called
-        mock_clean_build.assert_called_once_with()
+        # Verify that the plugin had clean_build() called for v1.
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            mock_clean_build.assert_called_once_with()
 
         self.assertThat(self.handler.latest_step(), Equals(steps.PULL))
         self.assertThat(self.handler.next_step(), Equals(steps.BUILD))
@@ -1991,7 +2007,7 @@ class StateTestCase(StateBaseTestCase):
 
 
 class StateFileMigrationTestCase(StateBaseTestCase):
-
+    base = "core18"
     scenarios = [(step.name, dict(step=step)) for step in steps.STEPS]
 
     def test_state_file_migration(self):
