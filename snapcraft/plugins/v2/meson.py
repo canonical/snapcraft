@@ -84,7 +84,7 @@ class MesonPlugin(PluginV2):
         meson_cmd.append(".snapbuild")
 
         return [
-            f"python3 -m pip install -U {meson_package}",
+            f"/usr/bin/python3 -m pip install -U {meson_package}",
             "[ ! -d .snapbuild ] && {}".format(" ".join(meson_cmd)),
             "(cd .snapbuild && ninja)",
             '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',

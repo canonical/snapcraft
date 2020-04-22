@@ -9,6 +9,7 @@ environment:
   SNAP/go_mod: go-mod-hello
   SNAP/dump: dump-hello
   SNAP/meson: meson-hello
+  SNAP/meson_staged_python: meson-hello-staged-python
   SNAP/npm: npm-hello
   SNAP/rust: rust-hello
   SNAP/rust_features: rust-hello-features
