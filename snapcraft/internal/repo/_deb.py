@@ -380,21 +380,72 @@ class Ubuntu(BaseRepo):
         cls._refresh_cache()
 
     @classmethod
-    def _get_resolved_package(cls, package_name: str) -> apt.package.Package:
-        # Strip ":any" that may come from dependency names.
-        if package_name.endswith(":any"):
-            package_name = package_name[:-4]
+    def _package_name_parts(
+        cls, package_name: str
+    ) -> Tuple[str, Optional[str], Optional[str]]:
+        split_version = package_name.split("=")
+        if len(split_version) > 1:
+            version: Optional[str] = split_version[1]
+        else:
+            version = None
+
+        # Purge possible ":any" architecture tag, then split for arch.
+        any_filtered = split_version[0].replace(":any", "")
+        split_arch = any_filtered.split(":")
+        if len(split_arch) > 1:
+            arch: Optional[str] = split_arch[1]
+        else:
+            arch = None
+
+        return (split_arch[0], arch, version)
+
+    @classmethod
+    def _get_package_for_arch(
+        cls, *, package_name: str, target_arch: str
+    ) -> apt.Package:
+        name, arch, version = cls._package_name_parts(package_name)
 
         cache = cls._get_apt_cache()
-        if cache.is_virtual_package(package_name):
-            package = cache.get_providing_packages(package_name)[0]
-            logger.debug(f"package {package_name!r} resolved to {package.name!r}")
+
+        # Check for explicit <package-name>:<arch> first.
+        target_package_name = f"{name}:{target_arch}"
+        if target_package_name in cache:
+            return cache[target_package_name]
+
+        # Now check if package is :all in case it is not arch-specific.
+        target_package_name = f"{name}:all"
+        if target_package_name in cache:
+            return cache[target_package_name]
+
+        # Failing these, try the name in best effort scenario.
+        if name in cache:
+            package = cache[name]
+            if package.architecture != target_arch:
+                logger.warning(
+                    f"Possible incorrect architecture for package {name!r}. "
+                    f"Found architecture {package.architecture!r}, "
+                    f"intended architecture is {target_arch!r}."
+                )
             return package
 
-        try:
-            return cache[package_name]
-        except KeyError:
-            raise errors.PackageNotFoundError(package_name)
+        raise errors.PackageNotFoundError(package_name)
+
+    @classmethod
+    def _get_resolved_package(
+        cls, package_name: str, *, target_arch: Optional[str] = None
+    ) -> apt.package.Package:
+        # Default to host architecture if unspecified.
+        if target_arch is None:
+            target_arch = ProjectOptions().deb_arch
+
+        name, arch, version = cls._package_name_parts(package_name)
+
+        cache = cls._get_apt_cache()
+        if cache.is_virtual_package(name) is True:
+            name = cache.get_providing_packages(name)[0].name
+            logger.info(f"Virtual package {package_name!r} resolved to {name!r}")
+
+        return cls._get_package_for_arch(package_name=name, target_arch=target_arch)
 
     @classmethod
     def _set_package_version(
@@ -411,12 +462,14 @@ class Ubuntu(BaseRepo):
     def _mark_package_dependencies(
         cls,
         *,
-        package: apt.package.Package,
+        package_name: str,
         marked_packages: Dict[str, apt.package.Version],
         skipped_blacklisted: Set[str],
         skipped_essential: Set[str],
         unfiltered_packages: List[str],
+        target_arch: Optional[str],
     ) -> None:
+        package = cls._get_resolved_package(package_name, target_arch=target_arch)
         if package.name in marked_packages:
             # already marked, ignore.
             return
@@ -437,13 +490,14 @@ class Ubuntu(BaseRepo):
         marked_packages[package.name] = package.candidate
 
         for pkg_dep in package.candidate.dependencies:
-            dep_pkg = pkg_dep.target_versions[0].package
+            dep_name = pkg_dep.or_dependencies[0].name
             cls._mark_package_dependencies(
-                package=dep_pkg,
+                package_name=dep_name,
                 marked_packages=marked_packages,
                 skipped_blacklisted=skipped_blacklisted,
                 skipped_essential=skipped_essential,
                 unfiltered_packages=unfiltered_packages,
+                target_arch=target_arch,
             )
 
     @classmethod
@@ -460,30 +514,25 @@ class Ubuntu(BaseRepo):
         # We do this all at once in case it gets added as a dependency
         # along the way.
         for name in package_names:
-            name, specified_version = repo.get_pkg_name_parts(name)
-
-            package = cls._get_resolved_package(name)
-            if name != package.name:
-                logger.info(
-                    f"virtual stage-package {name!r} resolved to {package.name!r}"
-                )
-
-            if specified_version:
-                cls._set_package_version(package, specified_version)
+            name, arch, version = cls._package_name_parts(name)
+            package = cls._get_resolved_package(name, target_arch=arch)
+            if version:
+                cls._set_package_version(package, version)
 
         for name in package_names:
-            name, _ = repo.get_pkg_name_parts(name)
-            package = cls._get_resolved_package(name)
+            name, arch, _ = cls._package_name_parts(name)
+            package = cls._get_resolved_package(name, target_arch=arch)
             cls._mark_package_dependencies(
-                package=package,
+                package_name=name,
                 marked_packages=marked_packages,
                 skipped_blacklisted=skipped_blacklisted,
                 skipped_essential=skipped_essential,
                 unfiltered_packages=package_names,
+                target_arch=arch,
             )
 
         marked = sorted(marked_packages.keys())
-        logger.debug(f"Installing staged-packages {marked!r} to {install_dir!r}")
+        logger.debug(f"Installing stage-packages {marked!r} to {install_dir!r}")
 
         if skipped_blacklisted:
             blacklisted = sorted(skipped_blacklisted)

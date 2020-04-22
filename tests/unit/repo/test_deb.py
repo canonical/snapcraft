@@ -33,11 +33,6 @@ from tests import unit
 from . import RepoBaseTestCase
 
 
-class FakeAptDependency:
-    def __init__(self, *, target_versions: List[MagicMock]) -> None:
-        self.target_versions = target_versions
-
-
 class FakeAptVersion:
     def __init__(
         self,
@@ -124,8 +119,12 @@ class FakeAptCache:
             type(package).installed = PropertyMock(return_value=None)
 
         # Create matching dependency, even if unused.
-        dependency = MagicMock(wraps=FakeAptDependency(target_versions=[apt_version]))
-        type(dependency).target_versions = PropertyMock(return_value=[apt_version])
+        # Dependency will require a fake apt.package.BaseDependency.
+        base_dependency = MagicMock(spec=["name"])
+        type(base_dependency).name = PropertyMock(return_value=name)
+
+        dependency = MagicMock(spec=["or_dependencies"])
+        type(dependency).or_dependencies = PropertyMock(return_value=[base_dependency])
 
         self.dependencies[name] = dependency
 
@@ -135,7 +134,8 @@ class FakeAptCache:
         return package_name.startswith("virtual-")
 
     def get_providing_packages(self, package_name):
-        resolved_package = self.packages[package_name.replace("virtual-", "")]
+        package_name = package_name.replace("virtual-", "")
+        resolved_package = self.packages[package_name]
         return [resolved_package]
 
     def close(self):
@@ -188,6 +188,73 @@ class UbuntuTestCase(RepoBaseTestCase):
         )
 
         self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
+
+    def test_install_stage_package_with_deps(self):
+        self.fake_apt_cache.add_fake_package(
+            name="package-installed",
+            priority="normal",
+            version="0.1",
+            installed=True,
+            dependency_names=[],
+        )
+
+        self.fake_apt_cache.add_fake_package(
+            name="package-not-installed",
+            priority="normal",
+            version="0.2",
+            installed=False,
+            dependency_names=[],
+        )
+
+        self.fake_apt_cache.add_fake_package(
+            name="package-essential",
+            priority="essential",
+            version="0.3",
+            installed=False,
+            dependency_names=[],
+        )
+
+        self.fake_apt_cache.add_fake_package(
+            name="package-with-deps",
+            priority="normal",
+            version="0.4",
+            installed=False,
+            dependency_names=["package-installed", "package-not-installed"],
+        )
+
+        installed_packages = repo.Ubuntu.install_stage_packages(
+            package_names=["package-with-deps"], install_dir=self.path
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["package-not-installed"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["package-installed"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["package-with-deps"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["package-essential"].candidate.mock_calls, Equals([])
+        )
+
+        self.assertThat(
+            installed_packages,
+            Equals(
+                [
+                    "package-with-deps=0.4",
+                    "package-installed=0.1",
+                    "package-not-installed=0.2",
+                ]
+            ),
+        )
 
     def test_get_package_fetch_error(self):
         self.fake_apt_cache.packages[
@@ -268,40 +335,55 @@ class BuildPackagesTestCase(UbuntuTestCase):
             dependency_names=[],
         )
 
-        self.test_packages = [
-            "package-installed",
-            "package-not-installed",
-            "versioned-package=0.2",
-        ]
-
-    def get_installable_packages(self, packages):
-        return ["package-not-installed", "versioned-package=0.2"]
-
-    @patch("os.environ")
-    def install_test_packages(self, test_pkgs, mock_env):
-        mock_env.copy.return_value = {}
-        repo.Ubuntu.install_build_packages(test_pkgs)
+        self.useFixture(fixtures.MockPatch("os.environ.copy", return_value={}))
 
     @patch("snapcraft.repo._deb.is_dumb_terminal")
     @patch("subprocess.check_call")
     def test_install_build_package(self, mock_check_call, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = False
-        self.install_test_packages(self.test_packages)
+        repo.Ubuntu.install_build_packages(
+            ["package-installed", "package-not-installed", "versioned-package=0.2"]
+        )
 
-        installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls(
-            [
-                call(
-                    "sudo --preserve-env apt-get --no-install-recommends -y "
-                    "-o Dpkg::Progress-Fancy=1 install".split()
-                    + sorted(set(installable)),
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                )
-            ]
+        self.assertThat(
+            mock_check_call.mock_calls,
+            Equals(
+                [
+                    call(
+                        [
+                            "sudo",
+                            "--preserve-env",
+                            "apt-get",
+                            "--no-install-recommends",
+                            "-y",
+                            "-o",
+                            "Dpkg::Progress-Fancy=1",
+                            "install",
+                            "package-not-installed",
+                            "versioned-package=0.2",
+                        ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                    call(
+                        [
+                            "sudo",
+                            "apt-mark",
+                            "auto",
+                            "package-not-installed",
+                            "versioned-package=0.2",
+                        ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                ]
+            ),
         )
 
     @patch("snapcraft.repo._deb.is_dumb_terminal")
@@ -310,7 +392,7 @@ class BuildPackagesTestCase(UbuntuTestCase):
         self, mock_check_call, mock_is_dumb_terminal
     ):
         mock_is_dumb_terminal.return_value = False
-        self.install_test_packages(["virtual-package-not-installed"])
+        repo.Ubuntu.install_build_packages(["virtual-package-not-installed"])
 
         mock_check_call.assert_has_calls(
             [
@@ -332,46 +414,48 @@ class BuildPackagesTestCase(UbuntuTestCase):
         self, mock_check_call, mock_is_dumb_terminal
     ):
         mock_is_dumb_terminal.return_value = True
-        self.install_test_packages(self.test_packages)
-
-        installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls(
-            [
-                call(
-                    "sudo --preserve-env apt-get --no-install-recommends -y install".split()
-                    + sorted(set(installable)),
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                )
-            ]
+        repo.Ubuntu.install_build_packages(
+            ["package-installed", "package-not-installed", "versioned-package=0.2"]
         )
 
-    @patch("subprocess.check_call")
-    def test_install_buid_package_marks_auto_installed(self, mock_check_call):
-        self.install_test_packages(self.test_packages)
-
-        installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls(
-            [
-                call(
-                    "sudo apt-mark auto".split() + sorted(set(installable)),
-                    env={
-                        "DEBIAN_FRONTEND": "noninteractive",
-                        "DEBCONF_NONINTERACTIVE_SEEN": "true",
-                        "DEBIAN_PRIORITY": "critical",
-                    },
-                )
-            ]
+        self.assertThat(
+            mock_check_call.mock_calls,
+            Equals(
+                [
+                    call(
+                        [
+                            "sudo",
+                            "--preserve-env",
+                            "apt-get",
+                            "--no-install-recommends",
+                            "-y",
+                            "install",
+                            "package-not-installed",
+                            "versioned-package=0.2",
+                        ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                    call(
+                        [
+                            "sudo",
+                            "apt-mark",
+                            "auto",
+                            "package-not-installed",
+                            "versioned-package=0.2",
+                        ],
+                        env={
+                            "DEBIAN_FRONTEND": "noninteractive",
+                            "DEBCONF_NONINTERACTIVE_SEEN": "true",
+                            "DEBIAN_PRIORITY": "critical",
+                        },
+                    ),
+                ]
+            ),
         )
-
-    @patch("subprocess.check_call")
-    def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
-        error = CalledProcessError(101, "bad-cmd")
-        mock_check_call.side_effect = lambda c, env: error if "apt-mark" in c else None
-        self.install_test_packages(["package-not-installed"])
 
     def test_invalid_package_requested(self):
         self.assertRaises(
