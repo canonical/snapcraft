@@ -389,10 +389,13 @@ class LaunchpadClient:
     def _download_log(self, build: Dict[str, Any]) -> None:
         url = build["build_log_url"]
         arch = build["arch_tag"]
-        log_name = self._get_logfile_name(arch)
-        self._download_file(url=url, dst=log_name, gunzip=True)
+        if url is None:
+            logger.info(f"No build log available for {arch!r}.")
+        else:
+            log_name = self._get_logfile_name(arch)
+            self._download_file(url=url, dst=log_name, gunzip=True)
+            logger.info(f"Build log available at {log_name!r}")
 
-        logger.info(f"Build log available at {log_name!r}")
         if _is_build_status_failure(build):
             logger.error(f"Build failed for arch {arch!r}.")
 
