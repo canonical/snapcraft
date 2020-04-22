@@ -76,6 +76,12 @@ class SnapBuildsImpl(FakeLaunchpadObject):
                 self_link="http://build_self_link_2",
                 build_log_url="url_for/build_log_file_2",
             ),
+            SnapBuildEntryImpl(
+                arch_tag="arm64",
+                buildstate="Failed to build",
+                self_link="http://build_self_link_2",
+                build_log_url=None,
+            ),
         ],
     ):
         self.entries = entries
@@ -325,20 +331,23 @@ class LaunchpadTestCase(unit.TestCase):
             Equals(
                 [
                     mock.call(
-                        url="url_for/snap_file_i386.snap", dst="snap_file_i386.snap"
+                        dst="snap_file_i386.snap", url="url_for/snap_file_i386.snap"
                     ),
                     mock.call(
-                        url="url_for/build_log_file_1",
-                        gunzip=True,
                         dst="test_i386.2.txt",
-                    ),
-                    mock.call(
-                        url="url_for/snap_file_amd64.snap", dst="snap_file_amd64.snap"
-                    ),
-                    mock.call(
-                        url="url_for/build_log_file_2",
                         gunzip=True,
+                        url="url_for/build_log_file_1",
+                    ),
+                    mock.call(
+                        dst="snap_file_amd64.snap", url="url_for/snap_file_amd64.snap"
+                    ),
+                    mock.call(
                         dst="test_amd64.txt",
+                        gunzip=True,
+                        url="url_for/build_log_file_2",
+                    ),
+                    mock.call(
+                        dst="snap_file_amd64.snap", url="url_for/snap_file_amd64.snap"
                     ),
                 ]
             ),
@@ -359,7 +368,18 @@ class LaunchpadTestCase(unit.TestCase):
                 )
             ]
         )
-        mock_log.assert_called_with("Build failed for arch 'amd64'.")
+        self.assertThat(
+            mock_log.mock_calls,
+            Equals(
+                [
+                    mock.call("Snap file not available for arch 'i386'."),
+                    mock.call("Snap file not available for arch 'amd64'."),
+                    mock.call("Build failed for arch 'amd64'."),
+                    mock.call("Snap file not available for arch 'arm64'."),
+                    mock.call("Build failed for arch 'arm64'."),
+                ]
+            ),
+        )
 
     @mock.patch("snapcraft.internal.remote_build.LaunchpadClient._download_file")
     @mock.patch("time.time", return_value=500)
@@ -378,7 +398,13 @@ class LaunchpadTestCase(unit.TestCase):
         build_status = self.lpc.get_build_status()
         self.assertThat(
             build_status,
-            Equals({"i386": "Successfully built", "amd64": "Failed to build"}),
+            Equals(
+                {
+                    "amd64": "Failed to build",
+                    "arm64": "Failed to build",
+                    "i386": "Successfully built",
+                }
+            ),
         )
 
     def _make_snapcraft_project(self):
