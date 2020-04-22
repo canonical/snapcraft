@@ -64,7 +64,7 @@ class MakePluginTest(TestCase):
             Equals(
                 [
                     'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
                 ]
             ),
         )
@@ -80,7 +80,7 @@ class MakePluginTest(TestCase):
             Equals(
                 [
                     'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" FLAVOR=gtk3',
-                    'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+                    'make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" install FLAVOR=gtk3 DESTDIR="$SNAPCRAFT_PART_INSTALL"',
                 ]
             ),
         )
