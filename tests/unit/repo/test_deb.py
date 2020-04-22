@@ -83,11 +83,15 @@ class FakeAptCache:
         priority: str = "normal",
         version: str = "1.0",
         installed: bool = False,
+        architecture: Optional[str] = None,
         dependency_names: List[str],
     ) -> MagicMock:
+        if architecture is None:
+            architecture = repo._deb._get_host_arch()
+
         package = MagicMock(wraps=FakeAptPackage(name=name))
-        package_name_mock = PropertyMock(return_value=name)
-        type(package).name = package_name_mock
+        type(package).name = PropertyMock(return_value=name)
+        type(package).architecture = PropertyMock(return_value=architecture)
 
         self.packages[name] = package
 

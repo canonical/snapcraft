@@ -34,7 +34,6 @@ from launchpadlib.launchpad import Launchpad
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.project._project_options import ProjectOptions
 from snapcraft.internal import os_release, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -193,6 +192,25 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
     )
 
     return {i for i in output if ("lib" in i and os.path.isfile(i))}
+
+
+@functools.lru_cache(maxsize=256)
+def _run_dpkg_architecture_query(deb_property: str) -> str:
+
+    return (
+        subprocess.run(
+            ["dpkg-architecture", "-q", deb_property],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+
+def _get_host_arch():
+    return _run_dpkg_architecture_query("DEB_HOST_ARCH")
 
 
 def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
@@ -436,7 +454,7 @@ class Ubuntu(BaseRepo):
     ) -> apt.package.Package:
         # Default to host architecture if unspecified.
         if target_arch is None:
-            target_arch = ProjectOptions().deb_arch
+            target_arch = _get_host_arch()
 
         name, arch, version = cls._package_name_parts(package_name)
 
@@ -823,7 +841,7 @@ class Ubuntu(BaseRepo):
 
             if architectures:
                 arch_text = " ".join(architectures)
-                host_arch = ProjectOptions().deb_arch
+                host_arch = _get_host_arch()
                 arch_text = arch_text.replace("$SNAPCRAFT_APT_HOST_ARCH", host_arch)
                 print(f"Architectures: {arch_text}", file=deb822)
 
