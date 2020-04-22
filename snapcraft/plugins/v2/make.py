@@ -64,16 +64,20 @@ class MakePlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         return dict()
 
-    def _get_make_command(self) -> str:
-        cmd = [
-            "make",
-            '-j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        ] + self.options.make_parameters
+    def _get_make_command(self, target: str = "") -> str:
+        cmd = ["make", '-j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"']
+
+        if target:
+            cmd.append(target)
+
+        cmd.extend(self.options.make_parameters)
 
         return " ".join(cmd)
 
     def get_build_commands(self) -> List[str]:
         return [
             self._get_make_command(),
-            'make install DESTDIR="$SNAPCRAFT_PART_INSTALL"',
+            '{} DESTDIR="$SNAPCRAFT_PART_INSTALL"'.format(
+                self._get_make_command(target="install")
+            ),
         ]
