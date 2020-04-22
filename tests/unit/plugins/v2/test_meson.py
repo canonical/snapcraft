@@ -77,7 +77,7 @@ class MesonPluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    "python3 -m pip install -U meson",
+                    "/usr/bin/python3 -m pip install -U meson",
                     "[ ! -d .snapbuild ] && meson .snapbuild",
                     "(cd .snapbuild && ninja)",
                     '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
@@ -96,7 +96,7 @@ class MesonPluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    "python3 -m pip install -U meson==2.2",
+                    "/usr/bin/python3 -m pip install -U meson==2.2",
                     "[ ! -d .snapbuild ] && meson --buildtype=release .snapbuild",
                     "(cd .snapbuild && ninja)",
                     '(cd .snapbuild && DESTDIR="${SNAPCRAFT_PART_INSTALL}" ninja install)',
