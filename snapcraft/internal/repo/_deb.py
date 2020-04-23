@@ -405,43 +405,42 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _get_package_for_arch(
-        cls, *, package_name: str, target_arch: str
+        cls, *, package_name: str, target_arch: Optional[str]
     ) -> apt.Package:
         name, arch, version = cls._package_name_parts(package_name)
+        logger.debug(f"Getting package {package_name!r} for {target_arch!r}.")
 
         cache = cls._get_apt_cache()
 
-        # Check for explicit <package-name>:<arch> first.
-        target_package_name = f"{name}:{target_arch}"
-        if target_package_name in cache:
-            return cache[target_package_name]
-
-        # Now check if package is :all in case it is not arch-specific.
-        target_package_name = f"{name}:all"
-        if target_package_name in cache:
-            return cache[target_package_name]
-
-        # Failing these, try the name in best effort scenario.
-        if name in cache:
+        if target_arch is not None and f"{name}:{target_arch}" in cache:
+            # First check for explicit <package-name>:<arch>.
+            package = cache[f"{name}:{target_arch}"]
+        elif f"{name}:all" in cache:
+            # Then check if package is :all in case it is not arch-specific.
+            package = cache[f"{name}:all"]
+        elif f"{name}:{arch}" in cache:
+            # Then rely on the arch that was specified in the name.
+            package = cache[f"{name}:{arch}"]
+        elif name in cache:
+            # Rely on the default selected by apt.Cache(), we'll check/warn
+            # on the architecture below if we think it might be incorrect.
             package = cache[name]
-            if package.architecture != target_arch:
-                logger.warning(
-                    f"Possible incorrect architecture for package {name!r}. "
-                    f"Found architecture {package.architecture!r}, "
-                    f"intended architecture is {target_arch!r}."
-                )
-            return package
+        else:
+            raise errors.PackageNotFoundError(package_name)
 
-        raise errors.PackageNotFoundError(package_name)
+        if target_arch is not None and package.architecture() != target_arch:
+            logger.debug(
+                f"Possible incorrect architecture for package {name!r}. "
+                f"Found architecture {package.architecture()!r}, "
+                f"intended architecture is {target_arch!r}."
+            )
+
+        return package
 
     @classmethod
     def _get_resolved_package(
         cls, package_name: str, *, target_arch: Optional[str] = None
     ) -> apt.package.Package:
-        # Default to host architecture if unspecified.
-        if target_arch is None:
-            target_arch = _get_host_arch()
-
         name, arch, version = cls._package_name_parts(package_name)
 
         cache = cls._get_apt_cache()
@@ -473,7 +472,21 @@ class Ubuntu(BaseRepo):
         unfiltered_packages: List[str],
         target_arch: Optional[str],
     ) -> None:
+        # If we come across a package that explicitly requests a target arch
+        # via <package-name>:<arch>, update target_arch as we are crossing
+        # an architecture boundary.
+        _, arch, _ = cls._package_name_parts(package_name)
+        if arch:
+            target_arch = arch
+
         package = cls._get_resolved_package(package_name, target_arch=target_arch)
+
+        # Virtual packages may resolve to a foreign architecture. For
+        # example: 'wine-devel-i386' resolved to 'wine-devel-i386:i386'
+        # Use the resolved package's architecture as the target arch.
+        if target_arch is None:
+            target_arch = package.architecture()
+
         if package.name in marked_packages:
             # already marked, ignore.
             return
@@ -494,7 +507,7 @@ class Ubuntu(BaseRepo):
         marked_packages[package.name] = package.candidate
 
         for pkg_dep in package.candidate.dependencies:
-            dep_name = pkg_dep.or_dependencies[0].name
+            dep_name = pkg_dep.target_versions[0].package.name
             cls._mark_package_dependencies(
                 package_name=dep_name,
                 marked_packages=marked_packages,
@@ -514,6 +527,11 @@ class Ubuntu(BaseRepo):
 
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
+        # Some projects will modify apt configuration directly.  To ensure
+        # our cache is up-to-date, refresh the cache whenever stage-packages
+        # are requested.
+        cls._refresh_cache()
+
         # First scan all packages and set desired version, if specified.
         # We do this all at once in case it gets added as a dependency
         # along the way.
@@ -524,8 +542,9 @@ class Ubuntu(BaseRepo):
                 cls._set_package_version(package, version)
 
         for name in package_names:
+            logger.debug(f"Marking package dependencies for {name!r}.")
             name, arch, _ = cls._package_name_parts(name)
-            package = cls._get_resolved_package(name, target_arch=arch)
+
             cls._mark_package_dependencies(
                 package_name=name,
                 marked_packages=marked_packages,
@@ -546,7 +565,13 @@ class Ubuntu(BaseRepo):
             essential = sorted(skipped_essential)
             logger.debug(f"Skipping priority essential packages: {essential!r}")
 
-        for pkg_name, pkg_version in marked_packages.items():
+        # Install the package in reverse sorted manner.  This way, packages
+        # that are cross-arch, e.g. "foo:i386", will get installed before the
+        # native "foo".  In this manner, host-arch will will be the last
+        # written file in case there are overlapping paths (e.g. i386 bins).
+        # TODO: detect and warn when we are overwriting a staged file with
+        # another one.
+        for pkg_name, pkg_version in sorted(marked_packages.items(), reverse=True):
             try:
                 dl_path = pkg_version.fetch_binary(cls._cache_dir)
             except apt.package.FetchError as e:
