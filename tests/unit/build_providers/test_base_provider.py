@@ -165,6 +165,7 @@ class BaseProviderTest(BaseProviderBaseTest):
                     call(["chown", "root:root", "/etc/apt/apt.conf.d/00-snapcraft"]),
                     call(["chmod", "0644", "/etc/apt/apt.conf.d/00-snapcraft"]),
                     call(["apt-get", "update"]),
+                    call(["apt-get", "dist-upgrade", "--yes"]),
                 ]
             ),
         )

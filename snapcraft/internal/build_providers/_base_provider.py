@@ -245,6 +245,9 @@ class Provider(abc.ABC):
             # Refresh repository caches.
             self._run(["apt-get", "update"])
 
+            # And make sure we are using the latest from that cache.
+            self._run(["apt-get", "dist-upgrade", "--yes"])
+
         # We always setup snapcraft after a start to bring it up to speed with
         # what is on the host
         self._setup_snapcraft()
