@@ -56,12 +56,17 @@ class FakeAptPackage:
         self,
         *,
         name: str,
+        architecture: str,
         candidate: Optional[MagicMock] = None,
         installed: Optional[MagicMock] = None,
     ) -> None:
         self.name = name
         self.candidate = candidate
         self.installed = installed
+        self._architecture = architecture
+
+    def architecture(self):
+        return self._architecture
 
 
 class FakeAptCache:
@@ -89,11 +94,12 @@ class FakeAptCache:
         if architecture is None:
             architecture = repo._deb._get_host_arch()
 
-        package = MagicMock(wraps=FakeAptPackage(name=name))
+        package = MagicMock(wraps=FakeAptPackage(name=name, architecture=architecture))
         type(package).name = PropertyMock(return_value=name)
-        type(package).architecture = PropertyMock(return_value=architecture)
+        package.architecture.return_value = architecture
 
         self.packages[name] = package
+        self.packages[f"{name}:{architecture}"] = package
 
         package_dependencies = [
             self.dependencies.get(name) for name in dependency_names
@@ -127,8 +133,8 @@ class FakeAptCache:
         base_dependency = MagicMock(spec=["name"])
         type(base_dependency).name = PropertyMock(return_value=name)
 
-        dependency = MagicMock(spec=["or_dependencies"])
-        type(dependency).or_dependencies = PropertyMock(return_value=[base_dependency])
+        dependency = MagicMock(spec=["target_versions"])
+        type(dependency).target_versions = PropertyMock(return_value=[apt_version])
 
         self.dependencies[name] = dependency
 
@@ -258,6 +264,50 @@ class UbuntuTestCase(RepoBaseTestCase):
                     "package-not-installed=0.2",
                 ]
             ),
+        )
+
+    def test_install_virtual_package_with_implicit_arch(self):
+        self.fake_apt_cache.add_fake_package(
+            name="package-dep",
+            priority="normal",
+            version="0.1",
+            installed=True,
+            dependency_names=[],
+            architecture="i737",
+        )
+
+        self.fake_apt_cache.add_fake_package(
+            name="package-i737",
+            priority="normal",
+            version="0.1",
+            installed=True,
+            dependency_names=["package-dep"],
+            architecture="i737",
+        )
+
+        self.fake_apt_cache.add_fake_package(
+            name="virtual-package-i737",
+            priority="normal",
+            version="0.2",
+            installed=False,
+            dependency_names=[],
+        )
+
+        installed_packages = repo.Ubuntu.install_stage_packages(
+            package_names=["virtual-package-i737"], install_dir=self.path
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["package-i737:i737"].candidate.mock_calls,
+            Contains(call.fetch_binary(self.path)),
+        )
+
+        self.assertThat(
+            self.fake_apt_cache["virtual-package-i737"].candidate.mock_calls, Equals([])
+        )
+
+        self.assertThat(
+            installed_packages, Equals(["package-i737=0.1", "package-dep=0.1"])
         )
 
     def test_get_package_fetch_error(self):
