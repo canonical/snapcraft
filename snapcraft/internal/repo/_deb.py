@@ -429,7 +429,7 @@ class Ubuntu(BaseRepo):
             raise errors.PackageNotFoundError(package_name)
 
         if target_arch is not None and package.architecture() != target_arch:
-            logger.warning(
+            logger.debug(
                 f"Possible incorrect architecture for package {name!r}. "
                 f"Found architecture {package.architecture()!r}, "
                 f"intended architecture is {target_arch!r}."
