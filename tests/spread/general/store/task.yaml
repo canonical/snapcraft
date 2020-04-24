@@ -1,0 +1,73 @@
+summary: Test the store workflow
+
+systems:
+  # core20 is not on the Staging Store.
+  - ubuntu-18.04*
+
+manual: true
+
+environment:
+  SNAP: dump-hello
+  SNAP_STORE_MACAROON: "$(HOST: echo ${SNAP_STORE_MACAROON})"
+  SNAP_STORE_DASHBOARD_ROOT_URL: https://dashboard.staging.snapcraft.io/
+  UBUNTU_STORE_API_ROOT_URL: https://dashboard.staging.snapcraft.io/dev/api/
+  UBUNTU_STORE_SEARCH_ROOT_URL: https://api.staging.snapcraft.io/
+  UBUNTU_STORE_UPLOAD_ROOT_URL: https://upload.apps.staging.ubuntu.com/
+  UBUNTU_SSO_API_ROOT_URL: https://login.staging.ubuntu.com/api/v2/
+
+prepare: |
+  # Install the review tools to make sure we do not break anything
+  # assumed in there.
+  # TODO: requires running inside $HOME.
+  # snap install review-tools
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
+  # Do not change the test-snapcraft- prefix. Ensure that you
+  # notify the store team if you need to use a different value when
+  # working with the production store.     
+  name="test-snapcraft-$(shuf -i 1-1000000000 -n 1)"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+  set_name "../snaps/$SNAP/snap/snapcraft.yaml" "${name}"
+  set_grade "../snaps/$SNAP/snap/snapcraft.yaml" stable
+
+  # Build what we have and verify the snap runs as expected.
+  cd "../snaps/$SNAP"
+  snapcraft
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  # Get information about our snap.
+  cd "../snaps/$SNAP"
+  snap_file=$(ls ./*.snap)
+  snap_name=$(grep "name: " snap/snapcraft.yaml | sed -e "s/name: \(.*$\)/\1/")
+
+  # Login
+  echo "${SNAP_STORE_MACAROON}" | snapcraft login --with -
+
+  # Register
+  snapcraft register --yes "${snap_name}"
+
+  # Take a look at registered snaps.
+  snapcraft list
+
+  # Push and Release
+  snapcraft upload "${snap_file}" --release edge
+
+  # Show revisions
+  snapcraft list-revisions "${snap_name}"
+
+  # Release
+  snapcraft release "${snap_name}" 1 edge
+
+  # Progressive Release
+  snapcraft release --experimental-progressive-releases --progressive 50 "${snap_name}" 1 candidate

@@ -122,7 +122,8 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
 @click.argument("snap-name", metavar="<snap-name>")
 @click.option("--private", is_flag=True, help="Register the snap as a private one")
 @click.option("--store", metavar="<store>", help="Store to register with")
-def register(snap_name, private, store):
+@click.option("--yes", is_flag=True)
+def register(snap_name, private, store, yes):
     """Register <snap-name> with the store.
 
     You can use this command to register an available <snap-name> and become
@@ -134,7 +135,7 @@ def register(snap_name, private, store):
     """
     if private:
         click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
-    if echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
+    if yes or echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
         snapcraft.register(snap_name, is_private=private, store_id=store)
         click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
     else:

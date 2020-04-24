@@ -30,6 +30,14 @@ clear_base()
     sed -i '/^base:/d' "$snapcraft_yaml_path"
 }
 
+set_name()
+{
+    snapcraft_yaml_path="$1"
+    name="$2"
+
+    sed -i -e "s/name: .*$/name: $name/" "$snapcraft_yaml_path"
+}
+
 set_confinement()
 {
     snapcraft_yaml_path="$1"
@@ -39,6 +47,18 @@ set_confinement()
         sed -i -e "s/confinement: \w*$/confinement: $confinement/" "$snapcraft_yaml_path"
     else
         sed -i "1iconfinement: $confinement"  "$snapcraft_yaml_path"
+    fi
+}
+
+set_grade()
+{
+    snapcraft_yaml_path="$1"
+    grade="$2"
+
+    if grep -q "^grade: " "$snapcraft_yaml_path"; then
+        sed -i -e "s/grade: \w*$/grade: $grade/" "$snapcraft_yaml_path"
+    else
+        sed -i "1igrade: $grade"  "$snapcraft_yaml_path"
     fi
 }
 
