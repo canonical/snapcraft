@@ -20,12 +20,13 @@ import subprocess
 import textwrap
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import Dict, List, Optional
 from unittest import mock
 from unittest.mock import call, patch, MagicMock, PropertyMock
 
+import testtools
 from testtools.matchers import Contains, Equals
 import fixtures
-from typing import Dict, List, Optional
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
@@ -765,3 +766,59 @@ class TestUbuntuInstallRepo(unit.TestCase):
         )
 
         self.assertThat(raised._output, Equals("some error"))
+
+
+class TestGetPackagesInBase(testtools.TestCase):
+    def test_hardcoded_bases(self):
+        for base in ("core", "core16", "core18"):
+            self.expectThat(
+                repo._deb.get_packages_in_base(base=base),
+                Equals(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
+            )
+
+    @mock.patch.object(repo._deb, "_get_dpkg_list_path")
+    def test_package_list_from_dpkg_list(self, mock_dpkg_list_path):
+        temp_dir = self.useFixture(fixtures.TempDir())
+        dpkg_list_path = Path(f"{temp_dir.path}/dpkg.list")
+        mock_dpkg_list_path.return_value = dpkg_list_path
+        with dpkg_list_path.open("w") as dpkg_list_file:
+            print(
+                textwrap.dedent(
+                    """\
+            Desired=Unknown/Install/Remove/Purge/Hold
+            | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+            |/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+            ||/ Name                          Version                    Architecture Description
+            +++-=============================-==========================-============-===========
+            ii  adduser                       3.118ubuntu1               all          add and rem
+            ii  apparmor                      2.13.3-7ubuntu2            amd64        user-space
+            ii  apt                           2.0.1                      amd64        commandline
+            ii  base-files                    11ubuntu4                  amd64        Debian base
+            ii  base-passwd                   3.5.47                     amd64        Debian base
+            ii  zlib1g:amd64                  1:1.2.11.dfsg-2ubuntu1     amd64        compression
+            """
+                ),
+                file=dpkg_list_file,
+            )
+
+        self.expectThat(
+            repo._deb.get_packages_in_base(base="core20"),
+            Equals(
+                [
+                    "adduser",
+                    "apparmor",
+                    "apt",
+                    "base-files",
+                    "base-passwd",
+                    "zlib1g:amd64",
+                ]
+            ),
+        )
+
+    @mock.patch.object(repo._deb, "_get_dpkg_list_path")
+    def test_package_empty_list_from_missing_dpkg_list(self, mock_dpkg_list_path):
+        temp_dir = self.useFixture(fixtures.TempDir())
+        dpkg_list_path = Path(f"{temp_dir.path}/dpkg.list")
+        mock_dpkg_list_path.return_value = dpkg_list_path
+
+        self.expectThat(repo._deb.get_packages_in_base(base="core22"), Equals(list()))

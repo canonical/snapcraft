@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import fileinput
 import functools
 import gnupg
 import io
@@ -197,6 +197,32 @@ def _run_dpkg_query_list_files(package_name: str) -> Set[str]:
 
 def _get_host_arch() -> str:
     return ProjectOptions().deb_arch
+
+
+def _get_dpkg_list_path(base: str) -> Path:
+    return Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
+
+
+def get_packages_in_base(*, base: str) -> List[str]:
+    # We do not want to break what we already have.
+    if base in ("core", "core16", "core18"):
+        return _DEFAULT_FILTERED_STAGE_PACKAGES
+
+    base_package_list_path = _get_dpkg_list_path(base)
+    if not base_package_list_path.exists():
+        return list()
+
+    # Lines we care about in dpkg.list had the following format:
+    # ii adduser 3.118ubuntu1 all add and rem
+    package_list = list()
+    with fileinput.input(str(base_package_list_path)) as fp:
+        for line in fp:
+            if not line.startswith("ii "):
+                continue
+            package_list.append(line.split()[1])
+
+    # format of package_list is <package_name>[:<architecture>]
+    return package_list
 
 
 def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
