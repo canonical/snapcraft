@@ -103,31 +103,9 @@ jobs:
       name: store
       workspaces:
         use: snaps
-      addons:
-        apt:
-          packages:
-            - git
-            - libapt-pkg-dev
-            - libffi-dev
-            - libnacl-dev
-            - libsodium-dev
-            - libssl-dev
-            - libxml2-dev
-            - libxslt-dev
-            - libyaml-dev
-            - python3-yaml
-            - python3.6-dev
-            - rpm2cpio
-            - squashfs-tools
-            - xdelta3
-      install:
-        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
-        - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
-        - ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --dangerous --classic}
-      before_script:
-        - rm -rf snapcraft
+      if: head_repo = "snapcore/snapcraft"
       script:
-        - SNAPCRAFT_PACKAGE_TYPE=snap ./runtests.sh tests/integration/store
+        - ./runtests.sh spread "google:"
 
     - stage: docker
       env:
