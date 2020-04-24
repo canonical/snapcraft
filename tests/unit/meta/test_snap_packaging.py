@@ -17,7 +17,7 @@
 import textwrap
 from pathlib import Path
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, FileContains, Is
 
 from snapcraft.internal.meta._snap_packaging import _SnapPackaging
 from snapcraft.internal.project_loader import load_config
@@ -78,28 +78,37 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
         self.assertThat(snapcraft_runner, Equals(expected_runner))
 
-    def test_classic_app(self):
+    def test_classic_app_with_snapd_workaround(self):
+        """Test workaround for classic (LP: #1860369)."""
         apps = dict(testapp=dict(command="echo"))
 
-        sp = self._get_snap_packaging(apps=apps, confinement="classic")
-        runner = sp._generate_snapcraft_runner()
+        for base in ("core", "core16", "core18"):
+            sp = self._get_snap_packaging(apps=apps, base=base, confinement="classic")
+            runner = sp._generate_snapcraft_runner()
 
-        self.assertThat(runner, Equals("snap/command-chain/snapcraft-runner"))
-
-        runner_path = Path(self.path, "prime", runner)
-
-        with open(runner_path, "r") as f:
-            snapcraft_runner = f.read()
-
-        expected_runner = textwrap.dedent(
-            """
+            self.expectThat(runner, Equals("snap/command-chain/snapcraft-runner"))
+            runner_path = Path(self.path, "prime", runner)
+            self.expectThat(
+                runner_path,
+                FileContains(
+                    textwrap.dedent(
+                        """
             #!/bin/sh
 
             exec "$@"
             """
-        ).lstrip()
+                    ).lstrip()
+                ),
+            )
 
-        self.assertThat(snapcraft_runner, Equals(expected_runner))
+    def test_classic_app_without_snapd_workaround(self):
+        """Test no workaround for classic (LP: #1860369)."""
+        apps = dict(testapp=dict(command="echo"))
+
+        sp = self._get_snap_packaging(apps=apps, base="core20", confinement="classic")
+        runner = sp._generate_snapcraft_runner()
+
+        self.expectThat(runner, Is(None))
 
     def test_snapd(self):
         apps = dict(testapp=dict(command="echo"))

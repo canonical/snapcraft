@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -470,6 +470,14 @@ class _SnapPackaging:
 
         # If there are no apps, or type is snapd, no need to create a runner.
         if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
+        # No more command-chain for core20 and classic confinement.
+        # This was a workaround for LP: #1860369.
+        if (
+            self._snap_meta.base not in ("core", "core16", "core18", None)
+            and self._snap_meta.confinement == "classic"
+        ):
             return None
 
         assembled_env = self._assemble_runtime_environment()
