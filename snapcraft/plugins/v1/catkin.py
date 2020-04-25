@@ -431,7 +431,10 @@ class CatkinPlugin(PluginV1):
         # with the pull.
         if self.options.rosinstall_files or self.options.recursive_rosinstall:
             wstool = _ros.wstool.Wstool(
-                self._ros_package_path, self._wstool_path, self.project
+                self._ros_package_path,
+                self._wstool_path,
+                self.project,
+                self.project._get_build_base(),
             )
             wstool.setup()
 
@@ -500,6 +503,7 @@ class CatkinPlugin(PluginV1):
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project._get_build_base()],
+            base=self.project._get_build_base(),
         )
         rosdep.setup()
 
@@ -536,7 +540,9 @@ class CatkinPlugin(PluginV1):
         logger.info("Installing apt dependencies...")
         try:
             repo.Ubuntu.install_stage_packages(
-                package_names=apt_dependencies, install_dir=self.installdir
+                package_names=apt_dependencies,
+                install_dir=self.installdir,
+                base=self.project._get_build_base(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise CatkinAptDependencyFetchError(e.message)
@@ -968,6 +974,7 @@ class _Catkin:
         repo.Ubuntu.install_stage_packages(
             package_names=["ros-{}-catkin".format(self._ros_distro)],
             install_dir=self._catkin_install_path,
+            base=self._project._get_build_base(),
         )
 
     def find(self, package_name):

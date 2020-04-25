@@ -77,7 +77,9 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         ).mock
         self.pip_mock.return_value.list.return_value = {}
 
-    def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path, ubuntu_distro):
+    def assert_rosdep_setup(
+        self, rosdistro, package_path, rosdep_path, ubuntu_distro, base
+    ):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
@@ -85,6 +87,7 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
+                    base=base,
                 ),
                 mock.call().setup(),
             ]
@@ -899,6 +902,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.project._get_build_base(),
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -915,6 +919,7 @@ class PullTestCase(ColconPluginTestBase):
                     mock.call(
                         install_dir=plugin.installdir,
                         package_names={"bar", "baz", "foo"},
+                        base=plugin.project._get_build_base(),
                     )
                 ]
             ),
@@ -937,6 +942,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "subdir", "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.project._get_build_base(),
         )
 
         # Verify that dependencies were found as expected. TODO: Would really
@@ -965,6 +971,7 @@ class PullTestCase(ColconPluginTestBase):
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
+            plugin.project._get_build_base(),
         )
 
         self.assert_pip_setup(

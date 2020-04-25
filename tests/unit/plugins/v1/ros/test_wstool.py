@@ -30,7 +30,7 @@ class WstoolTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.project = snapcraft.ProjectOptions()
-        self.wstool = wstool.Wstool("package_path", "wstool_path", self.project)
+        self.wstool = wstool.Wstool("package_path", "wstool_path", self.project, "core")
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
@@ -50,7 +50,9 @@ class WstoolTestCase(unit.TestCase):
         self.ubuntu_mock.assert_has_calls(
             [
                 mock.call.install_stage_packages(
-                    install_dir="wstool_path/install", package_names=["python-wstool"]
+                    install_dir="wstool_path/install",
+                    package_names=["python-wstool"],
+                    base="core",
                 )
             ]
         )

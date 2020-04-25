@@ -449,7 +449,9 @@ class PluginHandler:
         if stage_packages:
             try:
                 self.stage_packages = self._stage_packages_repo.install_stage_packages(
-                    package_names=stage_packages, install_dir=self.part_install_dir
+                    package_names=stage_packages,
+                    install_dir=self.part_install_dir,
+                    base=self._project._get_build_base(),
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)

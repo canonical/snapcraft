@@ -58,11 +58,14 @@ class RosdepInitializationError(errors.SnapcraftError):
 
 
 class Rosdep:
-    def __init__(self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro):
+    def __init__(
+        self, *, ros_distro, ros_package_path, rosdep_path, ubuntu_distro, base
+    ):
         self._ros_distro = ros_distro
         self._ros_package_path = ros_package_path
         self._rosdep_path = rosdep_path
         self._ubuntu_distro = ubuntu_distro
+        self._base = base
 
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
         self._rosdep_sources_path = os.path.join(self._rosdep_path, "sources.list.d")
@@ -82,7 +85,9 @@ class Rosdep:
         # it off to the side and use it from there.
         logger.info("Installing rosdep...")
         repo.Ubuntu.install_stage_packages(
-            package_names=["python-rosdep"], install_dir=self._rosdep_install_path
+            package_names=["python-rosdep"],
+            install_dir=self._rosdep_install_path,
+            base=self._base,
         )
 
         logger.info("Initializing rosdep database...")

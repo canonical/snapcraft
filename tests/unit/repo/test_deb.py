@@ -70,7 +70,7 @@ class TestPackages(unit.TestCase):
         ]
 
         installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["fake-package"], install_dir=self.path
+            package_names=["fake-package"], install_dir=self.path, base="core"
         )
 
         self.fake_apt_cache.assert_has_calls(
@@ -97,7 +97,7 @@ class TestPackages(unit.TestCase):
         ]
 
         installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["virtual-fake-package"], install_dir=self.path
+            package_names=["virtual-fake-package"], install_dir=self.path, base="core"
         )
 
         self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
@@ -109,7 +109,7 @@ class TestPackages(unit.TestCase):
         ]
 
         installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["fake-package"], install_dir=self.path
+            package_names=["fake-package"], install_dir=self.path, base="core"
         )
 
         self.assertThat(
@@ -127,6 +127,7 @@ class TestPackages(unit.TestCase):
             repo.Ubuntu.install_stage_packages,
             package_names=["fake-package"],
             install_dir=self.path,
+            base="core",
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
 

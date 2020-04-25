@@ -56,7 +56,7 @@ class Wstool:
     """This class serves as a Python wrapper for the CLI utility wstool."""
 
     def __init__(
-        self, ros_package_path: str, wstool_path: str, project: Project
+        self, ros_package_path: str, wstool_path: str, project: Project, base: str
     ) -> None:
         """Create new Wstool
 
@@ -71,6 +71,7 @@ class Wstool:
         self._wstool_path = wstool_path
         self._wstool_install_path = os.path.join(wstool_path, "install")
         self._project = project
+        self._base = base
 
     def setup(self) -> None:
         """Download/install wstool, and initialize workspace."""
@@ -81,7 +82,9 @@ class Wstool:
         # somewhere else, and use it from there.
         logger.info("Installing wstool...")
         repo.Ubuntu.install_stage_packages(
-            package_names=["python-wstool"], install_dir=self._wstool_install_path
+            package_names=["python-wstool"],
+            install_dir=self._wstool_install_path,
+            base=self._base,
         )
 
         logger.info("Initializing workspace (if necessary)...")
