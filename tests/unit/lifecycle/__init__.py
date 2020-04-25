@@ -75,6 +75,7 @@ class LifecycleTestBase(unit.TestCase):
         )
 
         self.useFixture(self.fake_storeapi_get_info)
+        self.useFixture(fixtures.MockPatch("apt.Cache"))
 
     def make_snapcraft_project(self, parts, snap_type=""):
         yaml = textwrap.dedent(
