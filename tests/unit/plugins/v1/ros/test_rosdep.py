@@ -36,6 +36,7 @@ class RosdepTestCase(unit.TestCase):
             ros_package_path="package_path",
             rosdep_path="rosdep_path",
             ubuntu_distro="xenial",
+            base="core",
         )
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -60,6 +61,7 @@ class RosdepTestCase(unit.TestCase):
                     mock.call.install_stage_packages(
                         install_dir="rosdep_path/install",
                         package_names=["python-rosdep"],
+                        base="core",
                     )
                 ]
             ),

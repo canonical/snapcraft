@@ -103,6 +103,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
+                    base="core",
                 ),
                 mock.call().setup(),
             ]
@@ -110,7 +111,10 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
 
     def assert_wstool_setup(self, package_path, wstool_path):
         self.wstool_mock.assert_has_calls(
-            [mock.call(package_path, wstool_path, self.project), mock.call().setup()]
+            [
+                mock.call(package_path, wstool_path, self.project, "core"),
+                mock.call().setup(),
+            ]
         )
 
     def assert_pip_setup(self, python_major_version, part_dir, install_dir, stage_dir):
@@ -965,6 +969,7 @@ class PullTestCase(CatkinPluginBaseTest):
                     mock.call(
                         install_dir=plugin.installdir,
                         package_names={"bar", "baz", "foo"},
+                        base=plugin.project._get_build_base(),
                     )
                 ]
             ),
@@ -1054,6 +1059,7 @@ class PullTestCase(CatkinPluginBaseTest):
                     mock.call(
                         install_dir=plugin.installdir,
                         package_names={"ros-core-dependency"},
+                        base=self.project._get_build_base(),
                     )
                 ]
             ),
@@ -1679,6 +1685,7 @@ class CatkinFindTestCase(unit.TestCase):
         super().setUp()
 
         self.project = snapcraft.project.Project()
+        self.project._snap_meta.build_base = "core"
         self.catkin = catkin._Catkin(
             "kinetic", "workspace_path", "catkin_path", self.project
         )
@@ -1703,6 +1710,7 @@ class CatkinFindTestCase(unit.TestCase):
                 mock.call.install_stage_packages(
                     install_dir="catkin_path/install",
                     package_names=["ros-kinetic-catkin"],
+                    base=self.project._get_build_base(),
                 )
             ]
         )

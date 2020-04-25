@@ -167,7 +167,7 @@ class BaseRepo:
 
     @classmethod
     def install_stage_packages(
-        cls, *, package_names: List[str], install_dir: str
+        cls, *, package_names: List[str], install_dir: str, base: str
     ) -> List[str]:
         """Install stage packages to install_dir."""
         raise errors.NoNativeBackendError()

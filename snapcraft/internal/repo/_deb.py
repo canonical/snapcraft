@@ -375,18 +375,18 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_stage_packages(
-        cls, *, package_names: List[str], install_dir: str
+        cls, *, package_names: List[str], install_dir: str, base: str
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
 
         with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
+            filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
             apt_cache.mark_packages(set(package_names))
             apt_cache.unmark_packages(
-                required_names=set(package_names),
-                filtered_names=set(_DEFAULT_FILTERED_STAGE_PACKAGES),
+                required_names=set(package_names), filtered_names=filter_packages
             )
             for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
                 _DEB_CACHE_DIR
