@@ -1,0 +1,24 @@
+name: python-hello-with-stage-package-dep
+version: "1.0"
+summary: A simple hello world in python
+description: |
+  This is a basic python snap that relies on a stage-package dep.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  python-hello-with-stage-package-dep:
+    command: bin/hello
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
+
+parts:
+  python-part:
+    source: .
+    plugin: python
+    stage-packages:
+      - python3-appdirs
+    python-packages:
+      - pip==20.0.2
