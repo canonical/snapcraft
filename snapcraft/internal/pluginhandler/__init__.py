@@ -552,6 +552,12 @@ class PluginHandler:
         self.mark_cleaned(steps.PULL)
 
     def prepare_build(self, force=False):
+        # TODO cleanup entire rebuilding and cleanup logic.
+        if not isinstance(self.plugin, plugins.v1.PluginV1) and os.path.exists(
+            self.part_install_dir
+        ):
+            shutil.rmtree(self.part_install_dir)
+
         self.makedirs()
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
