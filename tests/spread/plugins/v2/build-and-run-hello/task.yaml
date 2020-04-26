@@ -64,6 +64,6 @@ execute: |
 
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft | MATCH "Updating build step for "
+  snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello rebuilt world" ]
