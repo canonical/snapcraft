@@ -252,6 +252,9 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
                         project_config.project.arch_triplet
                     ),
+                    'SNAPCRAFT_BUILD_BASE="{}"'.format(
+                        project_config.project._get_build_base()
+                    ),
                     'SNAPCRAFT_EXTENSIONS_DIR="{}"'.format(common.get_extensionsdir()),
                     'SNAPCRAFT_PARALLEL_BUILD_COUNT="2"',
                     'SNAPCRAFT_PART_BUILD="{}/parts/main/build"'.format(self.path),

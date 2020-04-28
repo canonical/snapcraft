@@ -207,6 +207,7 @@ class Config:
 
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
+        project._snap_meta = Snap.from_dict(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
 
         self.data["architectures"] = _process_architectures(

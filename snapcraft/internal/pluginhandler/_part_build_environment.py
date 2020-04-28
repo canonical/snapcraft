@@ -50,6 +50,7 @@ def get_snapcraft_global_environment(project: "Project") -> Dict[str, str]:
 
     return {
         "SNAPCRAFT_ARCH_TRIPLET": project.arch_triplet,
+        "SNAPCRAFT_BUILD_BASE": project._get_build_base(),
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": str(project.parallel_build_count),
         "SNAPCRAFT_PROJECT_NAME": name,
         "SNAPCRAFT_PROJECT_VERSION": version,
