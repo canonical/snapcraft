@@ -20,20 +20,9 @@ from textwrap import dedent
 
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft.internal import errors
-from snapcraft.internal.repo import BaseRepo, check_for_command, get_pkg_name_parts
+from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
 from tests import unit
 from . import RepoBaseTestCase
-
-
-class CommandCheckTestCase(unit.TestCase):
-    def test_check_for_command_not_installed(self):
-        self.assertRaises(
-            errors.MissingCommandError, check_for_command, "missing-command"
-        )
-
-    def test_check_for_command_installed(self):
-        check_for_command("sh")
 
 
 class FixXmlToolsTestCase(RepoBaseTestCase):

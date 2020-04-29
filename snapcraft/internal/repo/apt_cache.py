@@ -23,9 +23,10 @@ from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from snapcraft.internal import common, repo
+from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.repo import errors
+from snapcraft.internal.repo._base import get_pkg_name_parts
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +183,7 @@ class AptCache(ContextDecorator):
                 "Marking {!r} (and its dependencies) to be fetched".format(name)
             )
 
-            name_arch, version = repo.get_pkg_name_parts(name)
+            name_arch, version = get_pkg_name_parts(name)
             if name_arch not in self.cache:
                 raise errors.PackageNotFoundError(name_arch)
 
