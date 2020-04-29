@@ -5,6 +5,7 @@ environment:
   SNAP/test_apt_key_name: test-apt-key-name
   SNAP/test_apt_keyserver: test-apt-keyserver
   SNAP/test_apt_ppa: test-apt-ppa
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 systems:
   - ubuntu-16*
@@ -18,7 +19,7 @@ prepare: |
 
 restore: |
   cd "../snaps/$SNAP"
-  snapcraft clean
+  snapcraft clean --use-lxd
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -29,7 +30,7 @@ execute: |
   cd "../snaps/$SNAP"
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft --use-lxd
   snap install "${SNAP}"_1.0_*.snap --dangerous
   snap_executable="${SNAP}.test-ppa"
   [ "$("${snap_executable}")" = "hello!" ]
