@@ -1897,7 +1897,6 @@ class PackageManagement(ProjectBaseTest):
                   - type: apt
                     ppa: user/test-ppa
                   - type: apt
-                    name: test-name
                     architectures: [amd64, i386]
                     components: [main, multiverse]
                     deb-types: [deb, deb-src]
@@ -1939,7 +1938,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main]
-                      name: test-name
                       key-id: test-key-id
                       url: http://archive.ubuntu.com/ubuntu
                       suites: [test, test-updates, test-security]
@@ -1956,7 +1954,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     """\
                     package-repositories:
                     - type: apt
-                      name: test-name
                       key-id: test-key-id
                       url: http://archive.ubuntu.com/ubuntu
                       suites: [test, test-updates, test-security]
@@ -1973,7 +1970,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       url: http://archive.ubuntu.com/ubuntu
                       suites: [test, test-updates, test-security]
                     """
@@ -1989,7 +1985,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: test-key-id
                       url: http://archive.ubuntu.com/ubuntu
                     """
@@ -2005,7 +2000,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                     """
@@ -2022,24 +2016,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     - type: apt
                       deb-type: [invalid]
                       components: [main, multiverse]
-                      name: test-name
-                      key-id: test-key-id
-                      suites: [test, test-updates, test-security]
-                      url: http://test-url.com/ubuntu
-                    """
-                ),
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
-            "deb invalid name",
-            dict(
-                packages=dedent(
-                    """\
-                    package-repositories:
-                    - type: apt
-                      components: [main, multiverse]
-                      name: ../foo
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                       url: http://test-url.com/ubuntu
@@ -2056,7 +2032,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: \\*\\*
                       suites: [test, test-updates, test-security]
                       url: http://test-url.com/ubuntu
@@ -2073,7 +2048,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                       architectures: []
@@ -2091,7 +2065,6 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: []
-                      name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                       url: http://test-url.com/ubuntu
@@ -2139,12 +2112,10 @@ class InvalidAptConfigurations(ProjectBaseTest):
                     package-repositories:
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                     - type: apt
                       components: [main, multiverse]
-                      name: test-name
                       key-id: test-key-id
                       suites: [test, test-updates, test-security]
                     """

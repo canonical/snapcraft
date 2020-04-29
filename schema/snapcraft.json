@@ -166,11 +166,6 @@
                     "type": "string",
                     "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
                 },
-                "name": {
-                    "type": "string",
-                    "description": "Unique name for repository, reserved names include 'default' and 'default-security'.",
-                    "pattern": "^[a-zA-Z0-9-_]*$"
-                },
                 "suites": {
                     "type": "array",
                     "minItems": 1,

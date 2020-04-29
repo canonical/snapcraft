@@ -160,23 +160,6 @@ stable.
 
     - =key-server: hkp://keyserver.ubuntu.com:80=
 
-** Property: name (optional)
-
-  - *Type:* string
-
-  - *Description:* optional unique name for repository.
-
-  - *Notes:*
-
-    - Reserved names include =default= and =default-security=.
-
-    - Name will be prefixed with =snapcraft-=, unless using reserved name.
-
-    - Source configuration is written to /etc/apt/sources.list.d/<name>.sources.
-
-  - *Format:* alphanumeric, dash =-=, and underscores =_= permitted.
-
-
 ** Property: suites (required)
 
   - *Type:* string
@@ -226,21 +209,21 @@ package-repositories:
 
   - type: apt
     deb-types: [deb, deb-src]
-    name: default
     components: [main, multiverse, restricted, universe]
     suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
     key-id: test-key
     url: http://archive.ubuntu.com/ubuntu
 #+END_SRC
 
-* Overriding default snapcraft image sources configuration
+* Exploratory: overriding default snapcraft image sources configuration
 
-The default repositories that ship with snapcraft can be overridden by
-specifying =name: default= and =name: default-security=.  This is an
-exploratory measure, we need to decide whether or not we want to support
-this.  This will only override sources if using a snapcraft managed
-build environment (i.e. Multipass or LXD). Snapcraft does not modify the
-host's apt repository configuration when using destructive mode.
+The default repositories that ship with snapcraft could be overridden by
+adding a =name= field.  Default names currently shipped are =default=
+and =default-security=.  This would only override sources if using a snapcraft
+managed build environment (i.e. Multipass or LXD). Snapcraft does not modify
+the host's apt repository configuration when using destructive mode.
+
+E.g.:
 
 #+BEGIN_SRC yaml
 package-repositories:
