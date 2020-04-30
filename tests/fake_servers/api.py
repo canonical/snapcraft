@@ -1135,7 +1135,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "channel": "2.1/beta",
                     "expiration-date": None,
                     "revision": 1,
-                    "progressive": {"key": None, "paused": None, "percentage": None},
+                    "progressive": {"paused": None, "percentage": None},
                     "when": "2020-02-03T20:58:37Z",
                 }
             ],
