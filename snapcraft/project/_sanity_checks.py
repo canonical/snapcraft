@@ -18,6 +18,7 @@ import logging
 import os
 import re
 
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,14 @@ def conduct_project_sanity_check(project: Project) -> None:
     if os.path.isdir(snap_dir_path):
         # TODO: move this check to the ProjectInfo class.
         _check_snap_dir(snap_dir_path)
+
+    if project._snap_meta.package_repositories and not os.getenv(
+        "SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"
+    ):
+        raise SnapcraftEnvironmentError(
+            "*EXPERIMENTAL* 'package-repositories' configured, but not enabled. "
+            "Enable with '--enable-experimental-package-repositories' flag."
+        )
 
 
 def _check_snap_dir(snap_dir_path: str) -> None:
