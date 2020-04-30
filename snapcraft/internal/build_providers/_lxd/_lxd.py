@@ -451,7 +451,8 @@ class LXD(Provider):
         self._run(["apt-get", "update"])
 
         # First install fuse and udev, snapd requires them.
-        self._run(["apt-get", "install", "udev", "fuse", "--yes"])
+        # Snapcraft requires dirmngr
+        self._run(["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"])
 
         # the system needs networking
         self._run(["systemctl", "enable", "systemd-udevd"])

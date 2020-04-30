@@ -688,6 +688,7 @@ class LXDInitTest(LXDBaseTest):
                         "SNAPCRAFT_HAS_TTY=False",
                         "apt-get",
                         "install",
+                        "dirmngr",
                         "udev",
                         "fuse",
                         "--yes",
