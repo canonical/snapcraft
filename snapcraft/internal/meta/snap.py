@@ -320,7 +320,6 @@ class Snap:
         if raw_repositories is None:
             package_repositories = None
         else:
-            logger.warning("*EXPERIMENTAL* package-repositories in use")
             package_repositories = PackageRepository.unmarshal_package_repositories(
                 raw_repositories
             )
