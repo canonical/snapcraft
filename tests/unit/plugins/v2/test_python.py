@@ -104,6 +104,7 @@ class PythonPluginTest(TestCase):
             plugin.get_build_environment(),
             Equals(
                 {
+                    "PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}",
                     "SNAPCRAFT_PYTHON_INTERPRETER": "python3",
                     "SNAPCRAFT_PYTHON_VENV_ARGS": "",
                 }
