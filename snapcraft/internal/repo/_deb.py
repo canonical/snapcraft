@@ -302,10 +302,15 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
-        # If any requested package is not installed, return False. Will check
-        # versions if using <pkg_name>=<pkg_version> syntax parsed by
-        # get_pkg_name_parts().  Used as an optimization to skip installation
-        # and cache refresh if dependencies are already satisfied.
+        """Check if all given packages are installed.
+
+        Will check versions if using <pkg_name>=<pkg_version> syntax parsed by
+        get_pkg_name_parts().  Used as an optimization to skip installation
+        and cache refresh if dependencies are already satisfied.
+
+        :return True if _all_ packages are installed (with correct versions).
+        """
+
         with AptCache() as apt_cache:
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
