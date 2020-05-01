@@ -330,3 +330,14 @@ def _fix_filemode(path: str) -> None:
     if mode & 0o4000 or mode & 0o2000:
         logger.warning("Removing suid/guid from {}".format(path))
         os.chmod(path, mode & 0o1777)
+
+
+def get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = None
+    with contextlib.suppress(ValueError):
+        name, version = pkg_name.split("=")
+
+    return name, version

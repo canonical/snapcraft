@@ -129,18 +129,6 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
         ),
         (
-            "MissingCommandError",
-            {
-                "exception": errors.MissingCommandError,
-                "kwargs": {"required_commands": ["test-command1", "test-command2"]},
-                "expected_message": (
-                    "Failed to run command: "
-                    "One or more packages are missing, please install:"
-                    " ['test-command1', 'test-command2']"
-                ),
-            },
-        ),
-        (
             "InvalidWikiEntryError",
             {
                 "exception": errors.InvalidWikiEntryError,
