@@ -30,7 +30,7 @@ execute: |
   cd "../snaps/$SNAP"
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft --use-lxd
+  snapcraft --use-lxd --enable-experimental-package-repositories
   snap install "${SNAP}"_1.0_*.snap --dangerous
   snap_executable="${SNAP}.test-ppa"
   [ "$("${snap_executable}")" = "hello!" ]

@@ -146,7 +146,6 @@ class SnapTests(unit.TestCase):
                     "deb-types": ["deb"],
                     "key-id": "test-key-id",
                     "key-server": "test-key-server.com",
-                    "name": "test-name",
                     "suites": ["xenial"],
                     "url": "http://archive.ubuntu.com",
                 },
