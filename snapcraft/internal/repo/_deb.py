@@ -39,7 +39,7 @@ from snapcraft.internal.indicators import is_dumb_terminal
 
 from . import errors
 from .apt_cache import AptCache
-from ._base import BaseRepo
+from ._base import BaseRepo, get_pkg_name_parts
 
 
 logger = logging.getLogger(__name__)
@@ -301,6 +301,39 @@ class Ubuntu(BaseRepo):
             ) from call_error
 
     @classmethod
+    def _check_if_all_packages_installed(cls, package_names: List[str]) -> bool:
+        """Check if all given packages are installed.
+
+        Will check versions if using <pkg_name>=<pkg_version> syntax parsed by
+        get_pkg_name_parts().  Used as an optimization to skip installation
+        and cache refresh if dependencies are already satisfied.
+
+        :return True if _all_ packages are installed (with correct versions).
+        """
+
+        with AptCache() as apt_cache:
+            for package in package_names:
+                pkg_name, pkg_version = get_pkg_name_parts(package)
+                installed_version = apt_cache.get_installed_version(pkg_name)
+
+                if installed_version is None or (
+                    pkg_version is not None and installed_version != pkg_version
+                ):
+                    return False
+
+        return True
+
+    @classmethod
+    def _get_marked_packages(cls, package_names: List[str]) -> List[Tuple[str, str]]:
+        with AptCache() as apt_cache:
+            try:
+                apt_cache.mark_packages(set(package_names))
+            except errors.PackageNotFoundError as error:
+                raise errors.BuildPackageNotFoundError(error.package_name)
+
+            return apt_cache.get_marked_packages()
+
+    @classmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
 
@@ -317,29 +350,27 @@ class Ubuntu(BaseRepo):
         """
         logger.debug(f"Requested build-packages: {sorted(package_names)!r}")
 
-        # Make sure all packages are valid and remove already installed.
-        with AptCache() as apt_cache:
-            try:
-                apt_cache.mark_packages(set(package_names))
-            except errors.PackageNotFoundError as error:
-                raise errors.BuildPackageNotFoundError(error.package_name)
+        if cls._check_if_all_packages_installed(package_names):
+            # To get the version list required to return, we mark the installed
+            # packages, but no refresh is required.
+            marked_packages = cls._get_marked_packages(package_names)
+        else:
+            # Ensure we have an up-to-date cache first.
+            cls.refresh_build_packages()
 
-            marked_packages = apt_cache.get_marked_packages()
+            marked_packages = cls._get_marked_packages(package_names)
 
             # TODO: this matches prior behavior, but the version is not
             # being passed along to apt-get install, even if prescribed
             # by the user.  We should specify it upon user request.
             install_packages = sorted([name for name, _ in marked_packages])
 
-            # Install packages, if any.
-            if install_packages:
-                cls._install_packages(install_packages)
+            cls._install_packages(install_packages)
 
         return sorted([f"{name}={version}" for name, version in marked_packages])
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
-        package_names.sort()
         logger.info("Installing build dependencies: %s", " ".join(package_names))
         env = os.environ.copy()
         env.update(

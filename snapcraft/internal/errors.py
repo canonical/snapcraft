@@ -269,18 +269,6 @@ class SnapcraftOrganizeError(SnapcraftError):
         super().__init__(part_name=part_name, message=message)
 
 
-class MissingCommandError(SnapcraftError):
-
-    fmt = (
-        "Failed to run command: "
-        "One or more packages are missing, please install:"
-        " {required_commands!r}"
-    )
-
-    def __init__(self, required_commands):
-        super().__init__(required_commands=required_commands)
-
-
 class InvalidWikiEntryError(SnapcraftError):
 
     fmt = (
