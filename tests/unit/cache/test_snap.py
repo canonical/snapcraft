@@ -55,39 +55,6 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
         self.assertTrue(os.path.isfile(cached_snap_path))
 
     def test_snap_cache_get_latest(self):
-        self.useFixture(
-            fixtures.MockPatchObject(
-                cache.SnapCache, "_get_snap_deb_arch", return_value="amd64"
-            )
-        )
-        # Create snaps
-        snap_file_1 = pathlib.Path("snap_01_amd64.snap")
-        snap_file_2 = pathlib.Path("snap_02_amd64.snap")
-
-        for snap_file in (snap_file_1, snap_file_2):
-            with snap_file.open("w") as f:
-                # Add whatever content
-                print(snap_file.as_posix(), file=f)
-
-        snap_cache = cache.SnapCache(project_name="snap")
-        snap_file_1_path = snap_cache.cache(snap_filename=snap_file_1)
-        _, snap_file_1_hash = os.path.split(snap_file_1_path)
-
-        snap_file_2_path = snap_cache.cache(snap_filename=snap_file_2)
-        snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
-
-        latest_hash = file_utils.calculate_sha3_384(snap_file_2)
-
-        # get latest
-        latest_snap = snap_cache.get(deb_arch="amd64")
-
-        expected_snap_path = os.path.join(
-            snap_cache.snap_cache_root, "amd64", latest_hash
-        )
-
-        self.assertThat(latest_snap, Equals(expected_snap_path))
-
-    def test_snap_cache_get_latest_no_architectures(self):
         # Create snaps
         meta_dir = os.path.join(self.path, "prime", "meta")
         os.makedirs(meta_dir)
