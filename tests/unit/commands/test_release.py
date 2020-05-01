@@ -114,7 +114,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 architecture="amd64",
                 expiration_date="2020-02-03T20:58:37Z",
                 revision=20,
-                progressive=Progressive(key=None, paused=None, percentage=None),
+                progressive=Progressive(paused=None, percentage=None),
             )
         )
         self.channel_map.revisions.append(
@@ -167,7 +167,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 architecture="amd64",
                 expiration_date="2020-02-03T20:58:37Z",
                 revision=20,
-                progressive=Progressive(key="foo", paused=None, percentage=80.0),
+                progressive=Progressive(paused=None, percentage=80.0),
             )
         )
         self.channel_map.revisions.append(

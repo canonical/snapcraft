@@ -226,11 +226,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                         "channel": "2.1/beta",
                         "expiration-date": None,
                         "revision": 19,
-                        "progressive": {
-                            "key": None,
-                            "paused": None,
-                            "percentage": None,
-                        },
+                        "progressive": {"paused": None, "percentage": None},
                     }
                 ],
                 "revisions": [

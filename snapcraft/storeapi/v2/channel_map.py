@@ -42,22 +42,15 @@ class Progressive:
                 "progressive"
             ],
         )
-        return cls(
-            key=payload["key"],
-            paused=payload["paused"],
-            percentage=payload["percentage"],
-        )
+        return cls(paused=payload["paused"], percentage=payload["percentage"])
 
     def marshal(self) -> Dict[str, Any]:
-        return {"key": self.key, "paused": self.paused, "percentage": self.percentage}
+        return {"paused": self.paused, "percentage": self.percentage}
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: {self.percentage!r}>"
 
-    def __init__(
-        self, *, key: Optional[str], paused: Optional[bool], percentage: Optional[float]
-    ) -> None:
-        self.key = key
+    def __init__(self, *, paused: Optional[bool], percentage: Optional[float]) -> None:
         self.paused = paused
         self.percentage = percentage
 

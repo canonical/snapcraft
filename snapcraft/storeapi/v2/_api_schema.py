@@ -39,11 +39,10 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                     },
                     "progressive": {
                         "properties": {
-                            "key": {"type": ["string", "null"]},
                             "paused": {"type": ["boolean", "null"]},
                             "percentage": {"type": ["number", "null"]},
                         },
-                        "required": ["key", "paused", "percentage"],
+                        "required": ["paused", "percentage"],
                         "type": "object",
                     },
                     "revision": {"type": "integer"},

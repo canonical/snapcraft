@@ -22,23 +22,21 @@ from tests import unit
 
 class ProgressiveTest(unit.TestCase):
     def test_progressive(self):
-        payload = {"key": "my-key", "paused": False, "percentage": 83.3}
+        payload = {"paused": False, "percentage": 83.3}
 
         p = channel_map.Progressive.unmarshal(payload)
 
         self.expectThat(repr(p), Equals(f"<Progressive: 83.3>"))
-        self.expectThat(p.key, Equals(payload["key"]))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
 
     def test_none(self):
-        payload = {"key": None, "paused": None, "percentage": None}
+        payload = {"paused": None, "percentage": None}
 
         p = channel_map.Progressive.unmarshal(payload)
 
         self.expectThat(repr(p), Equals(f"<Progressive: None>"))
-        self.expectThat(p.key, Equals(payload["key"]))
         self.expectThat(p.paused, Equals(payload["paused"]))
         self.expectThat(p.percentage, Equals(payload["percentage"]))
         self.expectThat(p.marshal(), Equals(payload))
@@ -52,7 +50,7 @@ class MappedChannelTest(unit.TestCase):
             "architecture": "amd64",
             "channel": "latest/stable",
             "expiration-date": None,
-            "progressive": {"key": None, "paused": None, "percentage": None},
+            "progressive": {"paused": None, "percentage": None},
             "revision": 2,
         }
 
@@ -203,28 +201,28 @@ class ChannelMapTest(unit.TestCase):
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"key": None, "paused": None, "percentage": None},
+                    "progressive": {"paused": None, "percentage": None},
                     "revision": 2,
                 },
                 {
                     "architecture": "amd64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"key": None, "paused": None, "percentage": 33.3},
+                    "progressive": {"paused": None, "percentage": 33.3},
                     "revision": 3,
                 },
                 {
                     "architecture": "arm64",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"key": None, "paused": None, "percentage": None},
+                    "progressive": {"paused": None, "percentage": None},
                     "revision": 2,
                 },
                 {
                     "architecture": "i386",
                     "channel": "latest/stable",
                     "expiration-date": None,
-                    "progressive": {"key": None, "paused": None, "percentage": None},
+                    "progressive": {"paused": None, "percentage": None},
                     "revision": 4,
                 },
             ],
