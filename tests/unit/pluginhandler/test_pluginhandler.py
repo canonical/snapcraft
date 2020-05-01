@@ -766,6 +766,21 @@ class OrganizeTestCase(unit.TestCase):
 
 
 class RealStageTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
+
     def make_snapcraft_project(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(
