@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-import apt_pkg
 import base64
 import os
 import pathlib
@@ -257,8 +256,11 @@ class Provider(abc.ABC):
 
     def _is_compatible_version(self, built_by: str) -> bool:
         """Return True if running version is >= built-by version."""
-        apt_pkg.init_system()
-        return apt_pkg.version_compare(snapcraft._get_version(), built_by) >= 0
+
+        # We use a bit a of naive string check here.  Re-using Python
+        # versioning comparisons cannot be used because we don't follow
+        # their spec. Apt version comparison would require running on Linux.
+        return snapcraft._get_version() >= built_by
 
     def _ensure_compatible_build_environment(self) -> None:
         """Force clean of build-environment if project is not compatible."""
