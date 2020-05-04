@@ -111,7 +111,7 @@ if sys.platform == "linux":
         "snap": Snap,
         "": Local,
     }
-elif sys.platform == "win32":
+else:
     from ._git import Git  # noqa
     from ._local import Local  # noqa
     from ._tar import Tar  # noqa
