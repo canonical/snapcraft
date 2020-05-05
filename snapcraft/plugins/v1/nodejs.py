@@ -68,7 +68,7 @@ _NODEJS_ARCHES = {
 _YARN_LATEST_URL = "https://yarnpkg.com/latest.tar.gz"
 # e.g.; https://github.com/yarnpkg/yarn/releases/download/v1.12.0/yarn-v1.12.0.tar.gz
 _YARN_VERSION_URL = (
-    "https://github.com/yarnpkg/yarn/releases/download/{version}/yarn-{version}.tar.gz"
+    "https://github.com/yarnpkg/yarn/releases/download/v{version}/yarn-v{version}.tar.gz"
 )
 
 
