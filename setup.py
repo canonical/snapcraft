@@ -33,30 +33,18 @@ def recursive_data_files(directory, install_directory):
 def get_git_describe():
     return (
         subprocess.run(
-            ["git", "describe", "--dirty"], check=True, stdout=subprocess.PIPE
+            ["git", "describe", "--always"], check=True, stdout=subprocess.PIPE
         )
         .stdout.decode()
         .strip()
     )
 
 
-def is_git_clean():
-    return (
-        len(
-            subprocess.run(
-                ["git", "status", "--porcelain"], check=True, stdout=subprocess.PIPE
-            )
-            .stdout.decode()
-            .strip()
-        )
-        == 0
-    )
-
-
 def determine_version():
+    # 4.0rc1-23-g6f6016573 -> 4.0rc1+git23.g6f6016573
     version = get_git_describe()
-    if "dirty" not in version and not is_git_clean():
-        version += "-dirty"
+    version = version.replace("-", "+git", 1)
+    version = version.replace("-", ".")
     return version
 
 
