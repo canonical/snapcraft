@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import codecs
 import os
-import re
+import subprocess
 import sys
 
 from setuptools import setup, find_namespace_packages
@@ -31,9 +30,26 @@ def recursive_data_files(directory, install_directory):
     return data_files
 
 
+def get_git_describe():
+    return (
+        subprocess.run(
+            ["git", "describe", "--always"], check=True, stdout=subprocess.PIPE
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+
+def determine_version():
+    # 4.0rc1-23-g6f6016573 -> 4.0rc1+git23.g6f6016573
+    version = get_git_describe()
+    version = version.replace("-", "+git", 1)
+    version = version.replace("-", ".")
+    return version
+
+
 # Common distribution data
 name = "snapcraft"
-version = "devel"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
@@ -52,15 +68,6 @@ classifiers = [
     "Topic :: System :: Software Distribution",
 ]
 
-# look/set what version we have
-changelog = "debian/changelog"
-if os.path.exists(changelog):
-    head = codecs.open(changelog, encoding="utf-8").readline()
-    match = re.compile(r".*\((.*)\).*").match(head)
-    if match:
-        version = match.group(1)
-
-
 # snapcraftctl is not in console_scripts because we need a clean environment.
 # Only include it for Linux.
 if sys.platform == "linux":
@@ -70,7 +77,7 @@ else:
 
 setup(
     name=name,
-    version=version,
+    version=determine_version(),
     description=description,
     author_email=author_email,
     url=url,
