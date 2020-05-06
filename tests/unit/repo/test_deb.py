@@ -32,7 +32,7 @@ from snapcraft.internal.repo import errors
 from tests import unit
 
 
-class TestPackages(unit.TestCase):
+class BaseDebTestSetup(unit.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -48,8 +48,23 @@ class TestPackages(unit.TestCase):
         self.debs_path = Path(self.path, "debs")
         self.debs_path.mkdir(parents=True, exist_ok=False)
 
-        repo._deb._DEB_CACHE_DIR = self.debs_path
-        repo._deb._STAGE_CACHE_DIR = self.stage_cache_path
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.repo._deb._DEB_CACHE_DIR", new=self.debs_path
+            )
+        )
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.repo._deb._STAGE_CACHE_DIR",
+                new=self.stage_cache_path,
+            )
+        )
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.repo._deb._STAGE_PCACHE",
+                new=Path(self.stage_cache_path, "pcache"),
+            )
+        )
 
         @contextlib.contextmanager
         def fake_tempdir(*, suffix: str, **kwargs):
@@ -129,7 +144,28 @@ class TestPackages(unit.TestCase):
             install_dir=self.path,
             base="core",
         )
+
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
+
+    def test_install_stage_package_cached(self):
+        self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
+            ("fake-package", "1.0", Path(self.path))
+        ]
+
+        installed_packages = repo.Ubuntu.install_stage_packages(
+            package_names=["fake-package"], install_dir=self.path, base="core"
+        )
+
+        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
+        self.fake_apt_cache.assert_called()
+        self.fake_apt_cache.reset_mock()
+
+        installed_packages = repo.Ubuntu.install_stage_packages(
+            package_names=["fake-package"], install_dir=self.path, base="core"
+        )
+
+        self.fake_apt_cache.assert_not_called()
+        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
 
 
 class TestSourcesFormatting(unit.TestCase):

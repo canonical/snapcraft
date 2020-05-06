@@ -36,6 +36,7 @@ from snapcraft import file_utils
 from snapcraft.project._project_options import ProjectOptions
 from snapcraft.internal import os_release
 from snapcraft.internal.indicators import is_dumb_terminal
+from snapcraft.internal.pcache import pcache
 
 from . import errors
 from .apt_cache import AptCache
@@ -44,10 +45,13 @@ from ._base import BaseRepo, get_pkg_name_parts
 
 logger = logging.getLogger(__name__)
 
-_DEB_CACHE_DIR: Path = Path(BaseDirectory.save_cache_path("snapcraft", "download"))
-_STAGE_CACHE_DIR: Path = Path(
+_DEB_CACHE_DIR: Final[Path] = Path(
+    BaseDirectory.save_cache_path("snapcraft", "download")
+)
+_STAGE_CACHE_DIR: Final[Path] = Path(
     BaseDirectory.save_cache_path("snapcraft", "stage-packages")
 )
+_STAGE_PCACHE: Final[Path] = Path(_STAGE_CACHE_DIR, "stage-packages.pcache")
 
 _HASHSUM_MISMATCH_PATTERN = re.compile(r"(E:Failed to fetch.+Hash Sum mismatch)+")
 _DEFAULT_FILTERED_STAGE_PACKAGES: List[str] = [
@@ -405,38 +409,46 @@ class Ubuntu(BaseRepo):
             )
 
     @classmethod
+    @pcache(path_func=lambda: _STAGE_PCACHE, expiry_secs=86400)
+    def _fetch_stage_packages(
+        cls, *, package_names: List[str], filtered_names: List[str]
+    ) -> List[Tuple[str, str, Path]]:
+        logger.debug(f"Fetching stage-packages: {package_names!r}")
+        with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
+            apt_cache.update()
+            apt_cache.mark_packages(set(package_names))
+            apt_cache.unmark_packages(
+                required_names=set(package_names), filtered_names=set(filtered_names)
+            )
+            return apt_cache.fetch_archives(_DEB_CACHE_DIR)
+
+    @classmethod
     def install_stage_packages(
         cls, *, package_names: List[str], install_dir: str, base: str
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
+        filtered_names = sorted(get_packages_in_base(base=base))
+        packages = cls._fetch_stage_packages(
+            package_names=package_names, filtered_names=filtered_names
+        )
 
-        installed: Set[str] = set()
+        for pkg_name, pkg_version, pkg_path in packages:
+            logger.debug(f"Extracting stage package: {pkg_name}")
+            with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
+                # Extract deb package.
+                cls._extract_deb(str(pkg_path), extract_dir)
 
-        with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
-            filter_packages = set(get_packages_in_base(base=base))
-            apt_cache.update()
-            apt_cache.mark_packages(set(package_names))
-            apt_cache.unmark_packages(
-                required_names=set(package_names), filtered_names=filter_packages
-            )
-            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                _DEB_CACHE_DIR
-            ):
-                logger.debug(f"Extracting stage package: {pkg_name}")
-                installed.add(f"{pkg_name}={pkg_version}")
-                with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
-                    # Extract deb package.
-                    cls._extract_deb(str(dl_path), extract_dir)
+                # Mark source of files.
+                marked_name = f"{pkg_name}={pkg_version}"
+                cls._mark_origin_stage_package(extract_dir, marked_name)
 
-                    # Mark source of files.
-                    marked_name = f"{pkg_name}={pkg_version}"
-                    cls._mark_origin_stage_package(extract_dir, marked_name)
-
-                    # Stage files to install_dir.
-                    file_utils.link_or_copy_tree(extract_dir, install_dir)
+                # Stage files to install_dir.
+                file_utils.link_or_copy_tree(extract_dir, install_dir)
 
         cls.normalize(install_dir)
-        return sorted(installed)
+        return sorted(
+            [f"{pkg_name}={pkg_version}" for pkg_name, pkg_version, _ in packages]
+        )
 
     @classmethod
     def build_package_is_valid(cls, package_name) -> bool:
