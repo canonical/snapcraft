@@ -298,8 +298,10 @@ class ElfFile:
         self.elf_type: str = "ET_NONE"
 
         try:
+            logger.debug("Extracting ELF attributes:", path)
             self._extract_attributes()
         except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
+            logger.debug("Extracting ELF attributes exception: ", str(exception))
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
@@ -335,8 +337,15 @@ class ElfFile:
                         self.execstack_set = True
                 elif isinstance(segment, elftools.elf.segments.InterpSegment):
                     self.interp = segment.get_interp_name()
-                elif isinstance(segment, elftools.elf.segments.NoteSegment):
-                    for note in segment.iter_notes():
+
+            # We cannot rely on iterating on the notes via the note segment.
+            # Patchelf may move note sections into other segments, and worse
+            # yet, possibly leave the note segment standing with invalid data.
+            # Here we instead iterate over each section and (more) reliably
+            # gather the note information.
+            for section in elf.iter_sections():
+                if isinstance(section, elftools.elf.sections.NoteSection):
+                    for note in section.iter_notes():
                         if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
                             self.build_id = _ensure_str(note.n_desc)
 
