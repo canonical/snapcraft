@@ -30,6 +30,7 @@ from typing import Any, Dict
 
 from xdg import BaseDirectory
 
+import snapcraft
 from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
@@ -223,9 +224,10 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
-        # Check provider base and clean project if base has changed.
+        # Clean project if we cannot trust existing environment, or it
+        # no longer matches project target.
         if os.path.exists(self.provider_project_dir):
-            self._ensure_base()
+            self._ensure_compatible_build_environment()
 
         try:
             # An ProviderStartError exception here means we need to create
@@ -252,14 +254,35 @@ class Provider(abc.ABC):
         # what is on the host
         self._setup_snapcraft()
 
-    def _ensure_base(self) -> None:
+    def _is_compatible_version(self, built_by: str) -> bool:
+        """Return True if running version is >= built-by version."""
+
+        # We use a bit a of naive string check here.  Re-using Python
+        # versioning comparisons cannot be used because we don't follow
+        # their spec. Apt version comparison would require running on Linux.
+        return snapcraft._get_version() >= built_by
+
+    def _ensure_compatible_build_environment(self) -> None:
+        """Force clean of build-environment if project is not compatible."""
+
         info = self._load_info()
-        provider_base = info["base"] if "base" in info else None
-        if self._base_has_changed(self.project._get_build_base(), provider_base):
+        provider_base = info.get("base")
+        built_by = info.get("created-by-snapcraft-version")
+        if self.project._get_build_base() != provider_base:
             self.echoer.warning(
                 "Project base changed from {!r} to {!r}, cleaning build instance.".format(
                     provider_base, self.project._get_build_base()
                 )
+            )
+            self.clean_project()
+        elif built_by is None:
+            self.echoer.warning(
+                f"Build environment was created with unknown snapcraft version {built_by!r}, cleaning."
+            )
+            self.clean_project()
+        elif not self._is_compatible_version(built_by):
+            self.echoer.warning(
+                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning."
             )
             self.clean_project()
 
@@ -391,7 +414,12 @@ class Provider(abc.ABC):
         )
 
     def _setup_snapcraft(self) -> None:
-        self._save_info(base=self.project._get_build_base())
+        self._save_info(
+            data={
+                "base": self.project._get_build_base(),
+                "created-by-snapcraft-version": snapcraft._get_version(),
+            }
+        )
 
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
@@ -468,15 +496,6 @@ class Provider(abc.ABC):
         """Get user's home directory path."""
         return pathlib.Path("/root")
 
-    def _base_has_changed(self, base: str, provider_base: str) -> bool:
-        # Make it backwards compatible with instances without project info
-        if base == "core18" and provider_base is None:
-            return False
-        elif base != provider_base:
-            return True
-
-        return False
-
     def _load_info(self) -> Dict[str, Any]:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
         if not os.path.exists(filepath):
@@ -489,7 +508,7 @@ class Provider(abc.ABC):
         cmd_string = " ".join([shlex.quote(c) for c in command])
         logger.debug(f"Running: {cmd_string}")
 
-    def _save_info(self, **data: Dict[str, Any]) -> None:
+    def _save_info(self, *, data: Dict[str, Any]) -> None:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
 
         dirpath = os.path.dirname(filepath)

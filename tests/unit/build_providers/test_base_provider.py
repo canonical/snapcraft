@@ -84,6 +84,8 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
 
     def test_launch_instance(self):
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "4.0"))
+
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.start_mock.side_effect = errors.ProviderInstanceNotFoundError(
             instance_name=self.instance_name
@@ -92,7 +94,9 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_any_call()
         provider.start_mock.assert_any_call()
-        provider.save_info_mock.assert_called_once_with({"base": "core16"})
+        provider.save_info_mock.assert_called_once_with(
+            {"data": {"base": "core16", "created-by-snapcraft-version": "4.0"}}
+        )
 
         self.assertThat(
             provider.run_mock.mock_calls,
@@ -207,69 +211,6 @@ class BaseProviderTest(BaseProviderBaseTest):
                 call("/home/user/.ssh", "/root/.ssh"),
             ]
         )
-
-    def test_ensure_base_same_base(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project._snap_meta.base = "core16"
-
-        # Provider and project have the same base
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={"base": "core16"},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_not_called()
-
-    def test_ensure_base_new_base(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project._snap_meta.base = "core16"
-
-        # Provider and project have different bases
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={"base": "core18"},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_called_once_with()
-
-    def test_ensure_base_no_base_clean(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project._snap_meta.base = "core16"
-
-        # Provider has no base, project has base that's not core18
-        # (assume provider has core18 for backward compatibility)
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_called_once_with()
-
-    def test_ensure_base_no_base_keep(self):
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project._snap_meta.base = "core18"
-
-        # Provider has no base, project has base core18
-        # (assume provider has core18 for backward compatibility)
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_not_called()
 
     def test_setup_environment_content_amd64(self):
         self.useFixture(fixtures.MockPatch("platform.machine", return_value="x86_64"))
@@ -633,3 +574,93 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
         self.snap_injector_mock().apply.assert_called_once_with()
+
+
+class CompatibilityCleanTests(BaseProviderBaseTest):
+    scenarios = [
+        (
+            "same-base-no-clean",
+            dict(
+                base="core16",
+                loaded_info={"base": "core16", "created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=False,
+            ),
+        ),
+        (
+            "different-base-clean",
+            dict(
+                base="core16",
+                loaded_info={"base": "core18", "created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "unspecified-base-clean",
+            dict(
+                base="core20",
+                loaded_info={"created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "unspecified-created-version-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "downgrade-version-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "same-version-no-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="2.0",
+                expect_clean=False,
+            ),
+        ),
+        (
+            "upgrade-version-no-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="3.0",
+                expect_clean=False,
+            ),
+        ),
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", self.version))
+
+    def test_scenario(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project._snap_meta.base = self.base
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+                return_value=self.loaded_info,
+            )
+        )
+
+        provider._ensure_compatible_build_environment()
+
+        if self.expect_clean:
+            provider.clean_project_mock.assert_called_once_with()
+        else:
+            provider.clean_project_mock.assert_not_called()
