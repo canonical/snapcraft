@@ -20,6 +20,7 @@ import os
 import subprocess
 import textwrap
 
+import fixtures
 import testtools
 from testtools.matchers import Equals
 from testscenarios.scenarios import multiply_scenarios
@@ -62,6 +63,18 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
 
         os.mkdir("src")
         open(os.path.join("src", "version.txt"), "w").write("v1.0")
+
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
 
     def test_scriptlet_after_repull(self):
         self.run_command(["prime"])
