@@ -288,7 +288,7 @@ class Config:
         for part in self.all_parts:
             build_snaps |= part._grammar_processor.get_build_snaps()
             if not isinstance(part.plugin, plugins.v1.PluginV1):
-                self.build_snaps |= part.plugin.get_build_snaps()
+                build_snaps |= part.plugin.get_build_snaps()
 
         return build_snaps
 
