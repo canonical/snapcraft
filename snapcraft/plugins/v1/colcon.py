@@ -231,7 +231,7 @@ class ColconPlugin(PluginV1):
                 deb_types=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
-                url="http://repo.ros2.org/ubuntu/main",
+                url="http://packages.ros.org/ros2/ubuntu",
                 suites=["$SNAPCRAFT_APT_RELEASE"],
             )
         ]

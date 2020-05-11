@@ -17,6 +17,7 @@
 import pathlib
 import os
 import subprocess
+import sys
 from typing import Any, Dict
 from unittest import mock
 from unittest.mock import call
@@ -31,6 +32,10 @@ from snapcraft.internal.build_providers._lxd import LXD
 from snapcraft.internal.build_providers._lxd._lxd import _get_resolv_conf_content
 from snapcraft.internal.repo.errors import SnapdConnectionError
 from tests.unit.build_providers import BaseProviderBaseTest
+
+
+if sys.platform == "linux":
+    import pylxd
 
 
 class GetEnv(_base_provider.Provider):
@@ -124,11 +129,13 @@ class FakeContainers:
     def __init__(self):
         self._containers = dict()  # type: Dict[str, FakeContainer]
         self.create_mock = mock.Mock()
+        self.get_mock = mock.Mock()
 
     def exists(self, container_name: str) -> bool:
         return container_name in self._containers
 
     def get(self, container_name: str) -> FakeContainer:
+        self.get_mock(container_name)
         return self._containers[container_name]
 
     def create(self, config: Dict[str, Any], wait: bool) -> FakeContainer:
@@ -788,6 +795,14 @@ class LXDInitTest(LXDBaseTest):
         container.stop_mock.assert_not_called()
         container.delete_mock.assert_called_once_with(wait=True)
         self.assertThat(instance.clean_project(), Equals(True))
+
+    def test_clean_when_missing(self):
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+        self.fake_pylxd_client.containers.get_mock.side_effect = pylxd.exceptions.NotFound(
+            "not found"
+        )
+
+        instance.clean_project()
 
     def test_destroy_when_not_created(self):
         instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
