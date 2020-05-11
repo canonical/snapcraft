@@ -106,14 +106,17 @@ class PythonPlugin(PluginV2):
 
     def get_build_environment(self) -> Dict[str, str]:
         return {
+            # Add PATH to the python interpreter we always intend to use with
+            # this plugin. It can be user overridden, but that is an explicit
+            # choice made by a user.
+            "PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}",
             "SNAPCRAFT_PYTHON_INTERPRETER": "python3",
             "SNAPCRAFT_PYTHON_VENV_ARGS": "",
         }
 
     def get_build_commands(self) -> List[str]:
         build_commands = [
-            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"',
-            '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} "${SNAPCRAFT_PART_INSTALL}"'
         ]
 
         if self.options.constraints:
