@@ -210,7 +210,7 @@ prepare: |
       # Install and setup the lxd snap
       snap install lxd
       echo "PATH=$PATH"
-      which lxd
+      echo "which lxd: $(command -v lxd)"
       stat /snap/bin/lxd
       lxd waitready --timeout=30
       lxd init --auto
