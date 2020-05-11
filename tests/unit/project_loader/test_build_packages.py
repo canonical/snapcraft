@@ -23,6 +23,34 @@ from testtools.matchers import Contains, Equals
 from . import ProjectLoaderBaseTest
 
 
+class TestBuildPackagesFromSnapcraftYaml(ProjectLoaderBaseTest):
+    def test_build_packages(self):
+        snapcraft_yaml = dedent(
+            """\
+            name: test
+            base: core18
+            version: "1.0"
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            build-packages: [foobar]
+
+            parts:
+              part1:
+                plugin: nil
+                build-packages: [foo, bar]
+            """
+        )
+
+        project_config = self.make_snapcraft_project(snapcraft_yaml)
+
+        self.assertThat(
+            project_config.get_build_packages(), Equals({"foobar", "foo", "bar"})
+        )
+
+
 class VCSBuildPackagesTest(ProjectLoaderBaseTest):
 
     scenarios = [
@@ -64,7 +92,9 @@ class VCSBuildPackagesTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(snapcraft_yaml)
 
         if self.expected_package:
-            self.assertThat(project_config.build_tools, Contains(self.expected_package))
+            self.assertThat(
+                project_config.get_build_packages(), Contains(self.expected_package)
+            )
 
 
 class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
@@ -101,7 +131,7 @@ class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
         project_config = self.make_snapcraft_project(snapcraft_yaml)
 
         if self.package:
-            self.assertThat(project_config.build_tools, Contains(self.package))
+            self.assertThat(project_config.get_build_packages(), Contains(self.package))
 
 
 class XCompileTest(ProjectLoaderBaseTest):
@@ -136,16 +166,16 @@ class XCompileTest(ProjectLoaderBaseTest):
             )
 
         self.assertThat(
-            project_config.parts.build_tools, Contains("gcc-arm-linux-gnueabihf")
+            project_config.get_build_packages(), Contains("gcc-arm-linux-gnueabihf")
         ),
         self.assertThat(
-            project_config.parts.build_tools, Contains("libc6-dev-armhf-cross")
+            project_config.get_build_packages(), Contains("libc6-dev-armhf-cross")
         ),
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)
 
-        self.assertThat(project_config.parts.build_tools, Equals(set()))
+        self.assertThat(project_config.get_build_packages(), Equals(set()))
 
 
 class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
@@ -168,4 +198,4 @@ class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
 
         project_config = self.make_snapcraft_project(snapcraft_yaml)
 
-        self.assertThat(project_config.build_tools, Contains("git"))
+        self.assertThat(project_config.get_build_packages(), Contains("git"))

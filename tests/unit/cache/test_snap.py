@@ -16,9 +16,11 @@
 
 import glob
 import os
+import pathlib
 from textwrap import dedent
 
-from testtools.matchers import Equals
+import fixtures
+from testtools.matchers import Contains, Equals, Not
 
 import snapcraft
 import tests
@@ -53,71 +55,6 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
         self.assertTrue(os.path.isfile(cached_snap_path))
 
     def test_snap_cache_get_latest(self):
-        # Create snaps
-        with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            print(
-                dedent(
-                    """\
-                name: my-snap-name
-                summary: test cached snap
-                description: test cached snap
-                base: core18
-                architectures: ['{}']
-                confinement: devmode
-                grade: devel
-                version: '0.1'
-
-                parts:
-                    my-part:
-                      plugin: nil
-                """
-                ).format(self.deb_arch),
-                file=f,
-            )
-        result = self.run_command(["snap"])
-        self.assertThat(result.exit_code, Equals(0))
-        snap_file = glob.glob("*0.1*.snap")[0]
-
-        snap_cache = cache.SnapCache(project_name="my-snap-name")
-        snap_cache.cache(snap_filename=snap_file)
-
-        with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            print(
-                dedent(
-                    """\
-                name: my-snap-name
-                summary: test cached snap
-                description: test cached snap
-                base: core18
-                architectures: ['{}']
-                confinement: devmode
-                grade: devel
-                version: '0.2'
-
-                parts:
-                    my-part:
-                      plugin: nil
-                """
-                ).format(self.deb_arch),
-                file=f,
-            )
-        result = self.run_command(["snap"])
-        self.assertThat(result.exit_code, Equals(0))
-        snap_file_latest = glob.glob("*0.2*.snap")[0]
-
-        snap_cache.cache(snap_filename=snap_file_latest)
-        latest_hash = file_utils.calculate_sha3_384(snap_file_latest)
-
-        # get latest
-        latest_snap = snap_cache.get(deb_arch=self.deb_arch)
-
-        expected_snap_path = os.path.join(
-            snap_cache.snap_cache_root, self.deb_arch, latest_hash
-        )
-
-        self.assertThat(latest_snap, Equals(expected_snap_path))
-
-    def test_snap_cache_get_latest_no_architectures(self):
         # Create snaps
         meta_dir = os.path.join(self.path, "prime", "meta")
         os.makedirs(meta_dir)
@@ -189,58 +126,24 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
 
 class SnapCachePruneTestCase(SnapCacheBaseTestCase):
     def test_prune_snap_cache(self):
+        self.useFixture(
+            fixtures.MockPatchObject(
+                cache.SnapCache, "_get_snap_deb_arch", return_value="amd64"
+            )
+        )
         # Create snaps
-        with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            print(
-                dedent(
-                    """\
-                name: my-snap-name
-                summary: test cached snap
-                description: test cached snap
-                base: core18
-                architectures: ['{}']
-                confinement: devmode
-                grade: devel
-                version: '0.1'
+        snap_file_1 = pathlib.Path("snap_01_amd64.snap")
+        snap_file_2 = pathlib.Path("snap_02_amd64.snap")
 
-                parts:
-                    my-part:
-                      plugin: nil
-                """
-                ).format(self.deb_arch),
-                file=f,
-            )
-        result = self.run_command(["snap"])
-        self.assertThat(result.exit_code, Equals(0))
-        snap_file = glob.glob("*0.1_*.snap")[0]
+        for snap_file in (snap_file_1, snap_file_2):
+            with snap_file.open("w") as f:
+                # Add whatever content
+                print(snap_file.as_posix(), file=f)
 
-        snap_cache = cache.SnapCache(project_name="my-snap-name")
-        snap_file_path = snap_cache.cache(snap_filename=snap_file)
-        _, snap_file_hash = os.path.split(snap_file_path)
+        snap_cache = cache.SnapCache(project_name="snap")
+        snap_file_1_path = snap_cache.cache(snap_filename=snap_file_1)
+        _, snap_file_1_hash = os.path.split(snap_file_1_path)
 
-        with open(os.path.join(self.path, "snapcraft.yaml"), "w") as f:
-            print(
-                dedent(
-                    """\
-                name: my-snap-name
-                summary: test cached snap
-                description: test cached snap
-                base: core18
-                architectures: ['{}']
-                confinement: devmode
-                grade: devel
-                version: '0.2'
-
-                parts:
-                    my-part:
-                      plugin: nil
-                """
-                ).format(self.deb_arch),
-                file=f,
-            )
-        result = self.run_command(["snap"])
-        self.assertThat(result.exit_code, Equals(0))
-        snap_file_2 = glob.glob("*0.2*.snap")[0]
         snap_file_2_path = snap_cache.cache(snap_filename=snap_file_2)
         snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
@@ -253,10 +156,16 @@ class SnapCachePruneTestCase(SnapCacheBaseTestCase):
         )
 
         self.assertThat(len(pruned_files), Equals(1))
-        self.assertIn(
-            os.path.join(snap_cache.snap_cache_root, self.deb_arch, snap_file_hash),
+        self.assertThat(
             pruned_files,
+            Contains(
+                os.path.join(
+                    snap_cache.snap_cache_root, self.deb_arch, snap_file_1_hash
+                )
+            ),
         )
-        self.assertNotIn(
-            os.path.join(snap_cache.snap_cache_root, snap_file_2_hash), pruned_files
+
+        self.assertThat(
+            pruned_files,
+            Not(Contains(os.path.join(snap_cache.snap_cache_root, snap_file_2_hash))),
         )
