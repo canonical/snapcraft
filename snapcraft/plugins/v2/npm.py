@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nodejs plugin is useful for node/npm based parts.
+"""The npm plugin is useful for node based parts that use npm.
 
-The plugin uses node to install dependencies from `package.json`. It
+The plugin uses npm to install dependencies from `package.json`. It
 also sets up binaries defined in `package.json` into the `PATH`.
 
 This plugin uses the common plugin keywords as well as those for "sources".
