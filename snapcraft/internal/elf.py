@@ -338,16 +338,14 @@ class ElfFile:
                 elif isinstance(segment, elftools.elf.segments.InterpSegment):
                     self.interp = segment.get_interp_name()
 
-            # We cannot rely on iterating on the notes via the note segment.
-            # Patchelf may move note sections into other segments, and worse
-            # yet, possibly leave the note segment standing with invalid data.
-            # Here we instead iterate over each section and (more) reliably
-            # gather the note information.
-            for section in elf.iter_sections():
-                if isinstance(section, elftools.elf.sections.NoteSection):
-                    for note in section.iter_notes():
-                        if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
-                            self.build_id = _ensure_str(note.n_desc)
+            build_id_section = elf.get_section_by_name(".note.gnu.build-id")
+            if (
+                isinstance(build_id_section, elftools.elf.sections.NoteSection)
+                and build_id_section.header["sh_type"] != "SHT_NOBITS"
+            ):
+                for note in build_id_section.iter_notes():
+                    if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
+                        self.build_id = _ensure_str(note.n_desc)
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
