@@ -18,7 +18,7 @@
 - [X] Add CLI support for =help=
 - [X] Add CLI support for =list-plugins=
 - [ ] Add CLI support for =expand-plugins=
-- [ ] Introduce new custom plugin loading logic for =core20=
+- [X] Introduce new custom plugin loading logic for =core20=
 
 *** TODO [[file:specifications/enabling-experimental-features.org][Enabling Experimental Features]]
 

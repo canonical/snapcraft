@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Set
 from snapcraft.plugins.v2 import PluginV2
 
 
-class NilPlugin(PluginV2):
+class PluginImpl(PluginV2):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {

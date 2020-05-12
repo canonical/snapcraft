@@ -91,14 +91,18 @@ def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
         module = _load_local(f"{module_name}", local_plugins_dir)
         logger.info(f"Loaded local plugin for {plugin_name}")
 
+        # v2 requires plugin implementation to be named "PluginImpl".
+        if hasattr(module, "PluginImpl") and issubclass(
+            module.PluginImpl, plugins.v2.PluginV2
+        ):
+            return module.PluginImpl
+
         for attr in vars(module).values():
             if not isinstance(attr, type):
                 continue
-            if not issubclass(attr, plugins.v1.PluginV1) and not issubclass(
-                attr, plugins.v2.PluginV2
-            ):
+            if not issubclass(attr, plugins.v1.PluginV1):
                 continue
-            if attr == plugins.v1.PluginV1 or attr == plugins.v2.PluginV2:
+            if attr == plugins.v1.PluginV1:
                 continue
             return attr
         else:

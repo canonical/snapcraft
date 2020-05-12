@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Set
 
 from snapcraft.plugins.v2 import nil
 
 
-class LocalPlugin(nil.NilPlugin):
+class PluginImpl(nil.NilPlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()
