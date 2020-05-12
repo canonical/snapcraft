@@ -26,6 +26,11 @@ class LocalPlugin(nil.NilPlugin):
         schema["properties"]["foo"] = {"type": "string"}
         return schema
 
+    def get_build_packages(self) -> Set[str]:
+        build_packages = super().get_build_packages()
+        build_packages.add("gcc")
+        return build_packages
+
     def get_build_commands(self) -> List[str]:
         commands = super().get_build_commands()
         commands.append("mkdir -p ${SNAPCRAFT_PART_INSTALL}/bin")
