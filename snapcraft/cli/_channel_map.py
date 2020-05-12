@@ -17,7 +17,7 @@
 import itertools
 import os
 from collections import OrderedDict
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from typing_extensions import Final
 
 from tabulate import tabulate
@@ -35,20 +35,6 @@ class _HINTS:
     FOLLOWING: Final[str] = "↑"
     NO_PROGRESS: Final[str] = "-"
     PROGRESSING_TO: Final[str] = "→"
-
-
-def _get_channel_hint(
-    *, channel_map, fallback: Optional[str], architecture: str
-) -> str:
-    tick = _HINTS.CLOSED
-    for c in channel_map:
-        if c.channel == fallback and c.architecture == architecture:
-            tick = _HINTS.FOLLOWING
-            break
-    else:
-        if fallback is None:
-            tick = _HINTS.CLOSED
-    return tick
 
 
 def _get_channel_order(
@@ -113,18 +99,15 @@ def _get_channel_line(
         return [channel_string, version_string, revision_string, expiration_date_string]
 
 
-def _get_channel_lines_for_channel(
-    snap_channel_map: ChannelMap, channel_name: str, architecture: str
-) -> List[List[str]]:
+def _get_channel_lines_for_channel(  # noqa: C901
+    snap_channel_map: ChannelMap,
+    channel_name: str,
+    architecture: str,
+    current_tick: str,
+) -> Tuple[str, List[List[str]]]:
     channel_lines: List[List[str]] = list()
 
     channel_info = snap_channel_map.get_channel_info(channel_name)
-
-    hint = _get_channel_hint(
-        channel_map=snap_channel_map.channel_map,
-        fallback=channel_info.fallback,
-        architecture=architecture,
-    )
 
     try:
         progressive_mapped_channel: Optional[
@@ -144,7 +127,7 @@ def _get_channel_lines_for_channel(
             mapped_channel=progressive_mapped_channel,
             revision=progressive_revision,
             channel_info=channel_info,
-            hint=hint,
+            hint=current_tick,
             progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
         )
         if progressive_mapped_channel.progressive.percentage is None:
@@ -164,6 +147,7 @@ def _get_channel_lines_for_channel(
     except ValueError:
         mapped_channel = None
 
+    next_tick = current_tick
     if mapped_channel is not None:
         revision = snap_channel_map.get_revision(mapped_channel.revision)
         channel_lines.append(
@@ -171,20 +155,23 @@ def _get_channel_lines_for_channel(
                 mapped_channel=mapped_channel,
                 revision=revision,
                 channel_info=channel_info,
-                hint=hint,
+                hint=current_tick,
                 progress_string=progress_string,
             )
         )
-    # Don't show empty branches
+        if channel_info.branch is None:
+            next_tick = _HINTS.FOLLOWING
+    # Show an empty entry if there is no specific channel information, but
+    # only for <track>/<risks> (ignoring /<branch>).
     elif channel_info.branch is None:
         channel_lines.append(
             _get_channel_line(
                 mapped_channel=None,
                 revision=None,
                 channel_info=channel_info,
-                hint=hint,
+                hint=current_tick,
                 progress_string=_HINTS.NO_PROGRESS
-                if hint == _HINTS.CLOSED
+                if current_tick == _HINTS.CLOSED
                 else progress_string,
             )
         )
@@ -194,8 +181,10 @@ def _get_channel_lines_for_channel(
         and progressive_mapped_channel is not None
     ):
         channel_lines.append(progressive_mapped_channel_line)
+        if channel_info.branch is None:
+            next_tick = _HINTS.FOLLOWING
 
-    return channel_lines
+    return next_tick, channel_lines
 
 
 def _has_channels_for_architecture(
@@ -234,6 +223,7 @@ def get_tabulated_channel_map(
             ):
                 continue
             architecture_mentioned = False
+            next_tick = _HINTS.CLOSED
             for channel_name in channel_order[track_name]:
                 if not track_mentioned:
                     track_mentioned = True
@@ -247,9 +237,10 @@ def get_tabulated_channel_map(
                 else:
                     architecture_string = ""
 
-                for channel_line in _get_channel_lines_for_channel(
-                    snap_channel_map, channel_name, architecture
-                ):
+                next_tick, parsed_channels = _get_channel_lines_for_channel(
+                    snap_channel_map, channel_name, architecture, next_tick
+                )
+                for channel_line in parsed_channels:
                     channel_lines.append(
                         [track_string, architecture_string] + channel_line
                     )

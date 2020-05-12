@@ -67,6 +67,38 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )
 
+    def test_status_following(self):
+        self.channel_map.channel_map = [
+            MappedChannel(
+                channel="2.1/stable",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=None),
+            )
+        ]
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10")
+        )
+
+        result = self.run_command(["status", "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.1      amd64   stable     10         20
+                             candidate  ↑          ↑
+                             beta       ↑          ↑
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
     def test_progressive_status(self):
         self.channel_map.channel_map[0].progressive.percentage = 10.0
 
