@@ -182,7 +182,12 @@ class ProviderExecError(ProviderBaseError):
     )
 
     def __init__(
-        self, *, provider_name: str, command: Sequence[str], exit_code: int
+        self,
+        *,
+        provider_name: str,
+        command: Sequence[str],
+        exit_code: int,
+        output: Optional[bytes] = None
     ) -> None:
         command_string = " ".join(shlex.quote(i) for i in command)
         super().__init__(
@@ -191,6 +196,7 @@ class ProviderExecError(ProviderBaseError):
             command_string=command_string,
             exit_code=exit_code,
         )
+        self.output = output
 
 
 class ProviderShellError(_GenericProviderError):

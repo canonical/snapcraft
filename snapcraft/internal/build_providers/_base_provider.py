@@ -15,18 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+import base64
 import os
 import pathlib
+import platform
 import logging
 import shlex
 import shutil
 import sys
+import tempfile
 from textwrap import dedent
 from typing import Optional, Sequence
 from typing import Any, Dict
 
 from xdg import BaseDirectory
 
+import snapcraft
 from . import errors
 from ._snap import SnapInjector
 from snapcraft.internal import common, steps
@@ -38,41 +42,6 @@ logger = logging.getLogger(__name__)
 
 def _get_platform() -> str:
     return sys.platform
-
-
-_CLOUD_USER_DATA = dedent(
-    """\
-    #cloud-config
-    manage_etc_hosts: true
-    package_update: false
-    growpart:
-        mode: growpart
-        devices: ["/"]
-        ignore_growroot_disabled: false
-    write_files:
-        - path: /root/.bashrc
-          permissions: 0644
-          content: |
-            export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
-            export PS1="\h \$(/bin/_snapcraft_prompt)# "
-            export PATH=/snap/bin:$PATH
-        - path: /bin/_snapcraft_prompt
-          permissions: 0755
-          content: |
-            #!/bin/bash
-            if [[ "$PWD" =~ ^$HOME.* ]]; then
-                path="${PWD/#$HOME/\ ..}"
-                if [[ "$path" == " .." ]]; then
-                    ps1=""
-                else
-                    ps1="$path"
-                fi
-            else
-                ps1="$PWD"
-            fi
-            echo -n $ps1
-    """  # noqa: W605
-)
 
 
 class Provider(abc.ABC):
@@ -91,29 +60,27 @@ class Provider(abc.ABC):
         self.echoer = echoer
         self._is_ephemeral = is_ephemeral
 
-        self.instance_name = "snapcraft-{}".format(project.info.name)
+        self.instance_name = "snapcraft-{}".format(project._snap_meta.name)
 
-        if project.info.version:
+        if project._snap_meta.version:
             self.snap_filename = "{}_{}_{}.snap".format(
-                project.info.name, project.info.version, project.deb_arch
+                project._snap_meta.name, project._snap_meta.version, project.deb_arch
             )
         else:
             self.snap_filename = "{}_{}.snap".format(
-                project.info.name, project.deb_arch
+                project._snap_meta.name, project.deb_arch
             )
 
         self.provider_project_dir = os.path.join(
             BaseDirectory.save_data_path("snapcraft"),
             "projects",
-            project.info.name,
+            project._snap_meta.name,
             self._get_provider_name(),
         )
 
         if build_provider_flags is None:
             build_provider_flags = dict()
         self.build_provider_flags = build_provider_flags.copy()
-
-        self._cached_home_directory: Optional[pathlib.Path] = None
 
     def __enter__(self):
         try:
@@ -191,7 +158,7 @@ class Provider(abc.ABC):
         target = (self._get_home_directory() / "project").as_posix()
         self._mount(self.project._project_dir, target)
 
-        if self.build_provider_flags.get("bind_ssh"):
+        if self.build_provider_flags.get("SNAPCRAFT_BIND_SSH"):
             self._mount_ssh()
 
     def _mount_prime_directory(self) -> bool:
@@ -257,9 +224,10 @@ class Provider(abc.ABC):
         """Provider steps to provide a shell into the instance."""
 
     def launch_instance(self) -> None:
-        # Check provider base and clean project if base has changed.
+        # Clean project if we cannot trust existing environment, or it
+        # no longer matches project target.
         if os.path.exists(self.provider_project_dir):
-            self._ensure_base()
+            self._ensure_compatible_build_environment()
 
         try:
             # An ProviderStartError exception here means we need to create
@@ -272,28 +240,186 @@ class Provider(abc.ABC):
             os.makedirs(self.provider_project_dir)
             # then launch
             self._launch()
-            # We need to setup snapcraft now to be able to refresh
-            self._setup_snapcraft()
-            # and do first boot related things
-            self._run(["snapcraft", "refresh"])
-        else:
-            # We always setup snapcraft after a start to bring it up to speed with
-            # what is on the host
-            self._setup_snapcraft()
 
-    def _ensure_base(self) -> None:
+            # Configure environment for snapcraft use.
+            self._setup_environment()
+
+            # Refresh repository caches.
+            self._run(["apt-get", "update"])
+
+            # And make sure we are using the latest from that cache.
+            self._run(["apt-get", "dist-upgrade", "--yes"])
+
+        # We always setup snapcraft after a start to bring it up to speed with
+        # what is on the host
+        self._setup_snapcraft()
+
+    def _is_compatible_version(self, built_by: str) -> bool:
+        """Return True if running version is >= built-by version."""
+
+        # We use a bit a of naive string check here.  Re-using Python
+        # versioning comparisons cannot be used because we don't follow
+        # their spec. Apt version comparison would require running on Linux.
+        return snapcraft._get_version() >= built_by
+
+    def _ensure_compatible_build_environment(self) -> None:
+        """Force clean of build-environment if project is not compatible."""
+
         info = self._load_info()
-        provider_base = info["base"] if "base" in info else None
-        if self._base_has_changed(self.project.info.get_build_base(), provider_base):
+        provider_base = info.get("base")
+        built_by = info.get("created-by-snapcraft-version")
+        if self.project._get_build_base() != provider_base:
             self.echoer.warning(
                 "Project base changed from {!r} to {!r}, cleaning build instance.".format(
-                    provider_base, self.project.info.get_build_base()
+                    provider_base, self.project._get_build_base()
                 )
             )
             self.clean_project()
+        elif built_by is None:
+            self.echoer.warning(
+                f"Build environment was created with unknown snapcraft version {built_by!r}, cleaning."
+            )
+            self.clean_project()
+        elif not self._is_compatible_version(built_by):
+            self.echoer.warning(
+                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning."
+            )
+            self.clean_project()
+
+    def _install_file(self, *, path: str, content: str, permissions: str) -> None:
+        basename = os.path.basename(path)
+
+        with tempfile.NamedTemporaryFile(suffix=basename) as temp_file:
+            temp_file.write(content.encode())
+            temp_file.flush()
+            # Push to a location that can be written to by all backends
+            # with unique files depending on path.
+            remote_file = os.path.join(
+                "/var/tmp", base64.b64encode(path.encode()).decode()
+            )
+            self._push_file(source=temp_file.name, destination=remote_file)
+            self._run(["mv", remote_file, path])
+            # This chown is not necessarily needed. but does keep things
+            # consistent.
+            self._run(["chown", "root:root", path])
+            self._run(["chmod", permissions, path])
+
+    def _get_code_name_from_build_base(self):
+        build_base = self.project._get_build_base()
+
+        return {
+            "core": "xenial",
+            "core16": "xenial",
+            "core18": "bionic",
+            "core20": "focal",
+        }[build_base]
+
+    def _get_primary_mirror(self) -> str:
+        primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
+
+        if primary_mirror is None:
+            if platform.machine() in ["i686", "x86_64"]:
+                primary_mirror = "http://archive.ubuntu.com/ubuntu"
+            else:
+                primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
+
+        return primary_mirror
+
+    def _get_security_mirror(self) -> str:
+        security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
+
+        if security_mirror is None:
+            if platform.machine() in ["i686", "x86_64"]:
+                security_mirror = "http://security.ubuntu.com/ubuntu"
+            else:
+                security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
+
+        return security_mirror
+
+    def _setup_environment(self) -> None:
+        self._install_file(
+            path="/root/.bashrc",
+            content=dedent(
+                """\
+                        #!/bin/bash
+                        export PS1="\\h \\$(/bin/_snapcraft_prompt)# "
+                        """
+            ),
+            permissions="0600",
+        )
+
+        self._install_file(
+            path="/bin/_snapcraft_prompt",
+            content=dedent(
+                """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+            ),
+            permissions="0755",
+        )
+
+        self._install_file(path="/etc/apt/sources.list", content="", permissions="0644")
+
+        self._install_file(
+            path="/etc/apt/sources.list.d/default.sources",
+            content=dedent(
+                """\
+                    Types: deb deb-src
+                    URIs: {primary_mirror}
+                    Suites: {release} {release}-updates
+                    Components: main multiverse restricted universe
+                    """.format(
+                    primary_mirror=self._get_primary_mirror(),
+                    release=self._get_code_name_from_build_base(),
+                )
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/apt/sources.list.d/default-security.sources",
+            content=dedent(
+                """\
+                        Types: deb deb-src
+                        URIs: {security_mirror}
+                        Suites: {release}-security
+                        Components: main multiverse restricted universe
+                        """.format(
+                    security_mirror=self._get_security_mirror(),
+                    release=self._get_code_name_from_build_base(),
+                )
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/apt/apt.conf.d/00-snapcraft",
+            content=dedent(
+                """\
+                    Apt::Install-Recommends "false";
+                    """
+            ),
+            permissions="0644",
+        )
 
     def _setup_snapcraft(self) -> None:
-        self._save_info(base=self.project.info.get_build_base())
+        self._save_info(
+            data={
+                "base": self.project._get_build_base(),
+                "created-by-snapcraft-version": snapcraft._get_version(),
+            }
+        )
 
         registry_filepath = os.path.join(
             self.provider_project_dir, "snap-registry.yaml"
@@ -321,7 +447,7 @@ class Provider(abc.ABC):
         # Check for None as this build can be driven from a non snappy enabled
         # system, so we may find ourselves in a situation where the base is not
         # set like on OSX or Windows.
-        build_base = self.project.info.get_build_base()
+        build_base = self.project._get_build_base()
         if build_base is not None and build_base != "core":
             snap_injector.add(snap_name="snapd")
 
@@ -335,30 +461,28 @@ class Provider(abc.ABC):
 
         snap_injector.apply()
 
-    def _get_cloud_user_data(self) -> str:
-        cloud_user_data_filepath = os.path.join(
-            self.provider_project_dir, "user-data.yaml"
-        )
-        if os.path.exists(cloud_user_data_filepath):
-            return cloud_user_data_filepath
-
-        with open(cloud_user_data_filepath, "w") as cloud_user_data_file:
-            print(_CLOUD_USER_DATA, file=cloud_user_data_file, end="")
-
-        return cloud_user_data_filepath
-
     def _get_env_command(self) -> Sequence[str]:
         """Get command sequence for `env` with configured flags."""
 
         env_list = ["env"]
+
+        # Tell Snapcraft it can take ownership of the host.
+        env_list.append("SNAPCRAFT_BUILD_ENVIRONMENT=managed-host")
+
+        # Setup PATH so that snaps have precedence.
+        env_list.append(
+            "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        )
+
+        # Set the HOME directory.
+        env_list.append(f"HOME={self._get_home_directory()}")
 
         # Configure SNAPCRAFT_HAS_TTY.
         has_tty = str(sys.stdout.isatty())
         env_list.append(f"SNAPCRAFT_HAS_TTY={has_tty}")
 
         # Pass through configurable environment variables.
-        for key in ["http_proxy", "https_proxy"]:
-            value = self.build_provider_flags.get(key)
+        for key, value in self.build_provider_flags.items():
             if not value:
                 continue
 
@@ -370,33 +494,7 @@ class Provider(abc.ABC):
 
     def _get_home_directory(self) -> pathlib.Path:
         """Get user's home directory path."""
-        if self._cached_home_directory is not None:
-            return self._cached_home_directory
-
-        command = ["printenv", "HOME"]
-        run_output = self._run(command=command, hide_output=True)
-
-        # Shouldn't happen, but due to _run()'s return type as being Optional,
-        # we need to check for it anyways for mypy.
-        if not run_output:
-            provider_name = self._get_provider_name()
-            raise errors.ProviderExecError(
-                provider_name=provider_name, command=command, exit_code=2
-            )
-
-        cached_home_directory = pathlib.Path(run_output.decode().strip())
-
-        self._cached_home_directory = cached_home_directory
-        return cached_home_directory
-
-    def _base_has_changed(self, base: str, provider_base: str) -> bool:
-        # Make it backwards compatible with instances without project info
-        if base == "core18" and provider_base is None:
-            return False
-        elif base != provider_base:
-            return True
-
-        return False
+        return pathlib.Path("/root")
 
     def _load_info(self) -> Dict[str, Any]:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
@@ -410,7 +508,7 @@ class Provider(abc.ABC):
         cmd_string = " ".join([shlex.quote(c) for c in command])
         logger.debug(f"Running: {cmd_string}")
 
-    def _save_info(self, **data: Dict[str, Any]) -> None:
+    def _save_info(self, *, data: Dict[str, Any]) -> None:
         filepath = os.path.join(self.provider_project_dir, "project-info.yaml")
 
         dirpath = os.path.dirname(filepath)

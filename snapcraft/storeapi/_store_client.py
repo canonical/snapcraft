@@ -17,7 +17,7 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
 
 import pymacaroons
 import requests
@@ -34,7 +34,12 @@ from .constants import DEFAULT_SERIES
 from ._sso_client import SSOClient
 from ._snap_index_client import SnapIndexClient
 from ._sca_client import SCAClient
+from ._snap_v2_client import SnapV2Client
 from ._up_down_client import UpDownClient
+
+
+if TYPE_CHECKING:
+    from .v2 import snap_channel_map
 
 
 class StoreClient:
@@ -47,6 +52,7 @@ class StoreClient:
         self.cpi = SnapIndexClient(self.conf)
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
+        self.v2_snap = SnapV2Client(self.conf)
 
     def login(
         self,
@@ -130,7 +136,7 @@ class StoreClient:
 
         return account_data
 
-    def acl(self) -> Dict[str, Union[List[str], str, None]]:
+    def acl(self) -> Dict[str, Any]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}
@@ -206,7 +212,6 @@ class StoreClient:
         snap_name,
         revision,
         channels,
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ):
         return self._refresh_if_necessary(
@@ -215,7 +220,6 @@ class StoreClient:
             revision,
             channels,
             progressive_percentage=progressive_percentage,
-            progressive_key=progressive_key,
         )
 
     def get_snap_revisions(self, snap_name, arch=None):
@@ -255,6 +259,13 @@ class StoreClient:
             raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
+
+    def get_snap_channel_map(
+        self, *, snap_name: str
+    ) -> "snap_channel_map.SnapChannelMap":
+        return self._refresh_if_necessary(
+            self.v2_snap.get_snap_channel_map, snap_name=snap_name
+        )
 
     def close_channels(self, snap_id, channel_names):
         return self._refresh_if_necessary(

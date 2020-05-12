@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,7 @@
 import hashlib
 import os
 from datetime import datetime
+from pathlib import Path
 
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta.snap import Snap
@@ -67,6 +68,12 @@ class Project(ProjectOptions):
         # would only need to initialize it once (properly).
         self._snap_meta = Snap()
 
+    def _get_build_base(self) -> str:
+        """
+        Return name for type base or the base otherwise build-base is set
+        """
+        return self._snap_meta.get_build_base()
+
     def _get_project_directory_hash(self) -> str:
         m = hashlib.sha1()
         m.update(self._project_dir.encode())
@@ -97,6 +104,11 @@ class Project(ProjectOptions):
             return os.path.join(self._project_dir, "build-aux", "snap")
         else:
             return os.path.join(self._project_dir, "snap")
+
+    def _get_keys_path(self) -> Path:
+        # Directory containing <KEY_ID>.asc keys for use with
+        # package-repositories, relative to 'snap' assets.
+        return Path(self._get_snapcraft_assets_dir(), "keys")
 
     def _get_local_plugins_dir(self) -> str:
         deprecated_plugins_dir = os.path.join(self._parts_dir, "plugins")

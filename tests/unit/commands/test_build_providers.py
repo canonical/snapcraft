@@ -14,18 +14,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from typing import Optional
 from unittest import mock
 
 import fixtures
 from testtools.matchers import Equals
 
-from . import LifecycleCommandsBaseTestCase
+from . import CommandBaseTestCase
 from snapcraft import project
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup
 from tests.unit.build_providers import ProviderImpl
+
+
+class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
+
+    yaml_template = """name: {step}-test
+version: "1.0"
+summary: test {step}
+description: if the {step} is successful the state file will be updated
+confinement: strict
+grade: stable
+base: {base}
+
+parts:
+{parts}"""
+
+    yaml_part = """  {step}{iter:d}:
+    plugin: nil"""
+
+    def make_snapcraft_yaml(
+        self, step, n=1, yaml_part=None, create=False, base="core18"
+    ):
+        if not yaml_part:
+            yaml_part = self.yaml_part
+
+        parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
+        super().make_snapcraft_yaml(
+            self.yaml_template.format(step=step, parts=parts, base=base)
+        )
+
+        parts = []
+        for i in range(n):
+            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
+            state_dir = os.path.join(part_dir, "state")
+            parts.append({"part_dir": part_dir, "state_dir": state_dir})
+
+        return parts
 
 
 class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):

@@ -20,7 +20,8 @@ import pathlib
 from textwrap import dedent
 from unittest.mock import call, patch, Mock
 
-from testtools.matchers import Equals, EndsWith, DirExists, FileContains, Not
+import fixtures
+from testtools.matchers import Equals, EndsWith, DirExists, Not
 
 from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
 from snapcraft.internal.build_providers import errors
@@ -40,7 +41,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
         self.assertThat(
             provider.snap_filename,
-            Equals("project-name_{}.snap".format(self.project.deb_arch)),
+            Equals("project-name_1.0_{}.snap".format(self.project.deb_arch)),
         )
 
     def test_context(self):
@@ -73,7 +74,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         destroy_mock.assert_called_once_with("destroy bad")
 
     def test_initialize_snap_filename_with_version(self):
-        self.project.info.version = "test-version"
+        self.project._snap_meta.version = "test-version"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
@@ -83,6 +84,8 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
 
     def test_launch_instance(self):
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "4.0"))
+
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.start_mock.side_effect = errors.ProviderInstanceNotFoundError(
             instance_name=self.instance_name
@@ -91,8 +94,85 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_any_call()
         provider.start_mock.assert_any_call()
-        provider.save_info_mock.assert_called_once_with({"base": "core16"})
-        provider.run_mock.assert_called_once_with(["snapcraft", "refresh"])
+        provider.save_info_mock.assert_called_once_with(
+            {"data": {"base": "core16", "created-by-snapcraft-version": "4.0"}}
+        )
+
+        self.assertThat(
+            provider.run_mock.mock_calls,
+            Equals(
+                [
+                    call(["mv", "/var/tmp/L3Jvb3QvLmJhc2hyYw==", "/root/.bashrc"]),
+                    call(["chown", "root:root", "/root/.bashrc"]),
+                    call(["chmod", "0600", "/root/.bashrc"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                            "/bin/_snapcraft_prompt",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
+                    call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
+                            "/etc/apt/sources.list",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/etc/apt/sources.list"]),
+                    call(["chmod", "0644", "/etc/apt/sources.list"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
+                            "/etc/apt/sources.list.d/default.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chown",
+                            "root:root",
+                            "/etc/apt/sources.list.d/default.sources",
+                        ]
+                    ),
+                    call(["chmod", "0644", "/etc/apt/sources.list.d/default.sources"]),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chown",
+                            "root:root",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "chmod",
+                            "0644",
+                            "/etc/apt/sources.list.d/default-security.sources",
+                        ]
+                    ),
+                    call(
+                        [
+                            "mv",
+                            "/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
+                            "/etc/apt/apt.conf.d/00-snapcraft",
+                        ]
+                    ),
+                    call(["chown", "root:root", "/etc/apt/apt.conf.d/00-snapcraft"]),
+                    call(["chmod", "0644", "/etc/apt/apt.conf.d/00-snapcraft"]),
+                    call(["apt-get", "update"]),
+                    call(["apt-get", "dist-upgrade", "--yes"]),
+                ]
+            ),
+        )
 
         self.assertThat(provider.provider_project_dir, DirExists())
 
@@ -109,7 +189,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
         # False.
-        provider.build_provider_flags = dict(bind_ssh=False)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=False)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
@@ -123,7 +203,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         )
 
         # True.
-        provider.build_provider_flags = dict(bind_ssh=True)
+        provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=True)
         provider.mount_project()
         provider.mount_mock.assert_has_calls(
             [
@@ -132,68 +212,131 @@ class BaseProviderTest(BaseProviderBaseTest):
             ]
         )
 
-    def test_ensure_base_same_base(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
+    def test_setup_environment_content_amd64(self):
+        self.useFixture(fixtures.MockPatch("platform.machine", return_value="x86_64"))
+        recorded_files = dict()
 
-        # Provider and project have the same base
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={"base": "core16"},
+        @contextlib.contextmanager
+        def fake_namedtempfile(*, suffix: str, **kwargs):
+            # Usage hides the file basename in the suffix.
+            tmp_path = os.path.join(self.path, "tmpfile")
+            with open(tmp_path, "wb") as f_write:
+                yield f_write
+            with open(tmp_path, "r") as f_read:
+                recorded_files[suffix] = f_read.read()
+
+        self.useFixture(
+            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
         )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_not_called()
-
-    def test_ensure_base_new_base(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
-
-        # Provider and project have different bases
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={"base": "core18"},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_called_once_with()
-
-    def test_ensure_base_no_base_clean(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core16"
-
-        # Provider has no base, project has base that's not core18
-        # (assume provider has core18 for backward compatibility)
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={},
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        provider._ensure_base()
-        provider.clean_project_mock.assert_called_once_with()
-
-    def test_ensure_base_no_base_keep(self):
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project.info.base = "core18"
+        provider._setup_environment()
 
-        # Provider has no base, project has base core18
-        # (assume provider has core18 for backward compatibility)
-        patcher = patch(
-            "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-            return_value={},
+        self.expectThat(
+            recorded_files,
+            Equals(
+                {
+                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+                    "_snapcraft_prompt": dedent(
+                        """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+                    ),
+                    "default.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://archive.ubuntu.com/ubuntu
+                        Suites: xenial xenial-updates
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "default-security.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://security.ubuntu.com/ubuntu
+                        Suites: xenial-security
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "sources.list": "",
+                }
+            ),
         )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
-        provider._ensure_base()
-        provider.clean_project_mock.assert_not_called()
+    def test_setup_environment_content_arm64(self):
+        self.useFixture(fixtures.MockPatch("platform.machine", return_value="aarch64"))
+        recorded_files = dict()
+
+        @contextlib.contextmanager
+        def fake_namedtempfile(*, suffix: str, **kwargs):
+            # Usage hides the file basename in the suffix.
+            tmp_path = os.path.join(self.path, "tmpfile")
+            with open(tmp_path, "wb") as f_write:
+                yield f_write
+            with open(tmp_path, "r") as f_read:
+                recorded_files[suffix] = f_read.read()
+
+        self.useFixture(
+            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
+        )
+
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider._setup_environment()
+
+        self.expectThat(
+            recorded_files,
+            Equals(
+                {
+                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+                    "_snapcraft_prompt": dedent(
+                        """\
+                        #!/bin/bash
+                        if [[ "$PWD" =~ ^$HOME.* ]]; then
+                            path="${PWD/#$HOME/\\ ..}"
+                            if [[ "$path" == " .." ]]; then
+                                ps1=""
+                            else
+                                ps1="$path"
+                            fi
+                        else
+                            ps1="$PWD"
+                        fi
+                        echo -n $ps1
+                        """
+                    ),
+                    "default.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://ports.ubuntu.com/ubuntu-ports
+                        Suites: xenial xenial-updates
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "default-security.sources": dedent(
+                        """\
+                        Types: deb deb-src
+                        URIs: http://ports.ubuntu.com/ubuntu-ports
+                        Suites: xenial-security
+                        Components: main multiverse restricted universe
+                    """
+                    ),
+                    "sources.list": "",
+                }
+            ),
+        )
 
     def test_start_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -230,7 +373,18 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         results = provider._get_env_command()
 
-        self.assertThat(results, Equals(["env", "SNAPCRAFT_HAS_TTY=False"]))
+        self.assertThat(
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                ]
+            ),
+        )
 
     def test_passthrough_environment_flags_non_string(self):
         # Set http_proxy to a bool even though it doesn't make sense...
@@ -241,13 +395,26 @@ class BaseProviderTest(BaseProviderBaseTest):
         results = provider._get_env_command()
 
         self.assertThat(
-            results, Equals(["env", "SNAPCRAFT_HAS_TTY=False", "http_proxy=True"])
+            results,
+            Equals(
+                [
+                    "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "http_proxy=True",
+                ]
+            ),
         )
 
     def test_passthrough_environment_flags_all(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.build_provider_flags = dict(
-            http_proxy="http://127.0.0.1:8080", https_proxy="http://127.0.0.1:8080"
+            http_proxy="http://127.0.0.1:8080",
+            https_proxy="http://127.0.0.1:8080",
+            SNAPCRAFT_BUILD_INFO=True,
+            SNAPCRAFT_IMAGE_INFO='{"build_url":"https://example.com"}',
         )
 
         results = provider._get_env_command()
@@ -257,9 +424,14 @@ class BaseProviderTest(BaseProviderBaseTest):
             Equals(
                 [
                     "env",
+                    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
+                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=http://127.0.0.1:8080",
                     "https_proxy=http://127.0.0.1:8080",
+                    "SNAPCRAFT_BUILD_INFO=True",
+                    'SNAPCRAFT_IMAGE_INFO={"build_url":"https://example.com"}',
                 ]
             ),
         )
@@ -317,8 +489,8 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_with_core(self):
-        self.project.info.base = "core"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -334,8 +506,8 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_for_classic_build(self):
-        self.project.info.base = "core18"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core18"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -353,7 +525,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
 class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
     def test_setup_snapcraft_with_base(self):
-        self.project.info.base = "core18"
+        self.project._snap_meta.base = "core18"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -375,32 +547,11 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             ]
         )
         self.assertThat(self.snap_injector_mock().add.call_count, Equals(3))
-        self.snap_injector_mock().apply.assert_called_once_with()
-
-    def test_setup_snapcraft_with_no_base(self):
-        self.project.info.base = None
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_snapcraft()
-
-        self.snap_injector_mock.assert_called_once_with(
-            registry_filepath=os.path.join(
-                provider.provider_project_dir, "snap-registry.yaml"
-            ),
-            snap_arch=self.project.deb_arch,
-            runner=provider._run,
-            file_pusher=provider._push_file,
-            inject_from_host=False,
-        )
-        self.snap_injector_mock().add.assert_has_calls(
-            [call(snap_name="core18"), call(snap_name="snapcraft")]
-        )
-        self.assertThat(self.snap_injector_mock().add.call_count, Equals(2))
         self.snap_injector_mock().apply.assert_called_once_with()
 
     def test_setup_snapcraft_for_classic_build(self):
-        self.project.info.base = "core18"
-        self.project.info.confinement = "classic"
+        self.project._snap_meta.base = "core18"
+        self.project._snap_meta.confinement = "classic"
 
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider._setup_snapcraft()
@@ -425,47 +576,91 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
 
-class GetCloudUserDataTest(BaseProviderBaseTest):
-    def test_get(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        os.makedirs(provider.provider_project_dir)
-
-        cloud_data_filepath = provider._get_cloud_user_data()
-        self.assertThat(
-            cloud_data_filepath,
-            FileContains(
-                dedent(
-                    """\
-            #cloud-config
-            manage_etc_hosts: true
-            package_update: false
-            growpart:
-                mode: growpart
-                devices: ["/"]
-                ignore_growroot_disabled: false
-            write_files:
-                - path: /root/.bashrc
-                  permissions: 0644
-                  content: |
-                    export SNAPCRAFT_BUILD_ENVIRONMENT=managed-host
-                    export PS1="\h \$(/bin/_snapcraft_prompt)# "
-                    export PATH=/snap/bin:$PATH
-                - path: /bin/_snapcraft_prompt
-                  permissions: 0755
-                  content: |
-                    #!/bin/bash
-                    if [[ "$PWD" =~ ^$HOME.* ]]; then
-                        path="${PWD/#$HOME/\ ..}"
-                        if [[ "$path" == " .." ]]; then
-                            ps1=""
-                        else
-                            ps1="$path"
-                        fi
-                    else
-                        ps1="$PWD"
-                    fi
-                    echo -n $ps1
-        """  # noqa: W605
-                )
+class CompatibilityCleanTests(BaseProviderBaseTest):
+    scenarios = [
+        (
+            "same-base-no-clean",
+            dict(
+                base="core16",
+                loaded_info={"base": "core16", "created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=False,
             ),
+        ),
+        (
+            "different-base-clean",
+            dict(
+                base="core16",
+                loaded_info={"base": "core18", "created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "unspecified-base-clean",
+            dict(
+                base="core20",
+                loaded_info={"created-by-snapcraft-version": "1.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "unspecified-created-version-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "downgrade-version-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="1.0",
+                expect_clean=True,
+            ),
+        ),
+        (
+            "same-version-no-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="2.0",
+                expect_clean=False,
+            ),
+        ),
+        (
+            "upgrade-version-no-clean",
+            dict(
+                base="core20",
+                loaded_info={"base": "core20", "created-by-snapcraft-version": "2.0"},
+                version="3.0",
+                expect_clean=False,
+            ),
+        ),
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", self.version))
+
+    def test_scenario(self):
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.project._snap_meta.base = self.base
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.build_providers._base_provider.Provider._load_info",
+                return_value=self.loaded_info,
+            )
         )
+
+        provider._ensure_compatible_build_environment()
+
+        if self.expect_clean:
+            provider.clean_project_mock.assert_called_once_with()
+        else:
+            provider.clean_project_mock.assert_not_called()

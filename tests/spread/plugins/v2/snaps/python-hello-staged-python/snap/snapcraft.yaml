@@ -1,0 +1,31 @@
+name: python-hello-staged-python
+version: "1.0"
+summary: A simple hello world in python
+description: |
+  This is a basic python snap. It just hosts a hello world with the
+  python interpreter.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  python-hello-staged-python:
+    command: bin/hello
+
+parts:
+  python-part:
+    source: .
+    plugin: python
+    stage-packages:
+      - libpython3-stdlib
+      - libpython3.8-stdlib
+      - libpython3.8-minimal
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - python3-venv
+      - python3-minimal
+      - python3-distutils
+      - python3-pkg-resources
+      - python3.8-minimal

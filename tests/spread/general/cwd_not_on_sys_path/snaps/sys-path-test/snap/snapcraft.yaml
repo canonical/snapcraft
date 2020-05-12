@@ -6,6 +6,7 @@ description: |
   will clash and cause the build to fail. It should succeed.
 
 grade: stable
+base: core18
 confinement: strict
 
 parts:

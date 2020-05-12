@@ -1,0 +1,19 @@
+name: rust-hello-workspace
+version: "1.0"
+summary: Test the rust plugin with sworkspaces.
+description: |
+  This is a basic rust snap with workspaces.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  rust-hello-workspace:
+    command: bin/rust-hello-workspace
+
+parts:
+  hello:
+    plugin: rust
+    source: .
+    rust-path: ["hello"]

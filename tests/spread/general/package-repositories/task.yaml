@@ -1,0 +1,36 @@
+summary: Test various package-repository configurations.
+
+environment:
+  SNAP/test_apt_key_fingerprint: test-apt-key-fingerprint
+  SNAP/test_apt_key_name: test-apt-key-name
+  SNAP/test_apt_keyserver: test-apt-keyserver
+  SNAP/test_apt_ppa: test-apt-ppa
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+systems:
+  - ubuntu-16*
+  - ubuntu-18*
+  - ubuntu-20*
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean --use-lxd
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft --use-lxd --enable-experimental-package-repositories
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  snap_executable="${SNAP}.test-ppa"
+  [ "$("${snap_executable}")" = "hello!" ]

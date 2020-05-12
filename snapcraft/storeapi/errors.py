@@ -690,6 +690,20 @@ class StoreDeltaApplicationError(StoreError):
         super().__init__(message=message)
 
 
+class StoreSnapChannelMapError(SnapcraftException):
+    def __init__(self, *, snap_name: str) -> None:
+        self._snap_name = snap_name
+
+    def get_brief(self) -> str:
+        return f"Could not retrieve information for {self._snap_name!r}."
+
+    def get_resolution(self) -> str:
+        return (
+            "Ensure the snap name is correct and that you have permissions to "
+            "access it."
+        )
+
+
 class StoreSnapStatusError(StoreSnapRevisionsError):
 
     fmt = (
@@ -784,7 +798,7 @@ class KeyNotRegisteredError(StoreError):
     fmt = (
         "The key {key_name!r} is not registered in the Store.\nPlease "
         "register it with `snapcraft register-key {key_name!r}` before "
-        "signing and pushing signatures to the Store."
+        "signing and uploading signatures to the Store."
     )
 
     def __init__(self, key_name):

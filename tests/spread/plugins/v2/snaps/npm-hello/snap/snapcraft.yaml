@@ -1,0 +1,24 @@
+name: npm-hello
+version: "1.0"
+summary: test the npm plugin
+description: |
+  This is a basic npm snap. It just hosts a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+
+confinement: strict
+grade: devel
+base: core20
+
+apps:
+  npm-hello:
+    command: bin/npm-hello
+    plugs:
+      - network
+
+parts:
+  npm-part:
+    source: .
+    plugin: npm
+    npm-node-version: "12.16.2"
+

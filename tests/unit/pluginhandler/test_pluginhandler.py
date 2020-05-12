@@ -41,7 +41,7 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.internal.sources.errors import SnapcraftSourceUnhandledError
-from snapcraft.plugins import nil
+from snapcraft import plugins
 from snapcraft.project import Project
 from tests import fixture_setup, unit
 
@@ -50,7 +50,7 @@ class PluginTestCase(unit.TestCase):
     def test_build_with_subdir_copies_sourcedir(self):
         handler = self.load_part("test-part", part_properties={"source-subdir": "src"})
 
-        sourcedir = handler.plugin.sourcedir
+        sourcedir = handler.part_source_dir
         source_subdir = handler.plugin.options.source_subdir
 
         subdir = os.path.join(sourcedir, source_subdir)
@@ -59,16 +59,16 @@ class PluginTestCase(unit.TestCase):
         open(os.path.join(subdir, "file2"), "w").close()
 
         self.assertThat(
-            handler.plugin.builddir,
+            handler.part_build_work_dir,
             Equals(os.path.join(handler.plugin.build_basedir, source_subdir)),
         )
 
         handler.build()
 
-        self.assertTrue(
-            os.path.exists(os.path.join(handler.plugin.build_basedir, "file1"))
+        self.assertThat(os.path.join(handler.part_build_dir, "file1"), FileExists())
+        self.assertThat(
+            os.path.join(handler.part_build_dir, source_subdir, "file2"), FileExists()
         )
-        self.assertTrue(os.path.exists(os.path.join(handler.plugin.builddir, "file2")))
 
     def test_build_with_missing_metadata_file(self):
         handler = self.load_part(
@@ -82,10 +82,10 @@ class PluginTestCase(unit.TestCase):
     def test_build_without_subdir_copies_sourcedir(self):
         handler = self.load_part("test-part")
 
-        os.makedirs(handler.plugin.sourcedir)
-        open(os.path.join(handler.plugin.sourcedir, "file"), "w").close()
+        os.makedirs(handler.part_source_dir)
+        open(os.path.join(handler.part_source_dir, "file"), "w").close()
 
-        self.assertThat(handler.plugin.builddir, Equals(handler.plugin.build_basedir))
+        self.assertThat(handler.part_build_dir, Equals(handler.plugin.build_basedir))
 
         handler.build()
 
@@ -121,7 +121,7 @@ class PluginTestCase(unit.TestCase):
         )
         self.assertThat(exclude, Equals(["etc", "usr/lib/*.a"]))
 
-    @patch.object(snapcraft.plugins.nil.NilPlugin, "snap_fileset")
+    @patch.object(snapcraft.plugins.v1.nil.NilPlugin, "snap_fileset")
     def test_migratable_fileset_for_no_options_modification(self, mock_snap_fileset):
         """Making sure migratable_fileset_for() doesn't modify options"""
 
@@ -434,7 +434,7 @@ class PluginTestCase(unit.TestCase):
         handler = self.load_part("test-part")
         handler.build()
         mock_organize.assert_called_once_with(
-            "test-part", {}, handler.plugin.installdir, False
+            "test-part", {}, handler.part_install_dir, False
         )
 
     @patch("snapcraft.internal.pluginhandler._organize_filesets")
@@ -450,7 +450,7 @@ class PluginTestCase(unit.TestCase):
         handler.makedirs()
         handler.update_build()
         mock_organize.assert_called_once_with(
-            "test-part", {}, handler.plugin.installdir, True
+            "test-part", {}, handler.part_install_dir, True
         )
 
 
@@ -766,6 +766,21 @@ class OrganizeTestCase(unit.TestCase):
 
 
 class RealStageTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
+
     def make_snapcraft_project(self):
         snapcraft_yaml_file_path = self.make_snapcraft_yaml(
             dedent(
@@ -958,24 +973,26 @@ class StateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch("snapcraft._baseplugin.BasePlugin.get_pull_properties")
-        self.get_pull_properties_mock = patcher.start()
-        self.get_pull_properties_mock.return_value = []
-        self.addCleanup(patcher.stop)
+        self.get_pull_properties_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.v1.PluginV1.get_pull_properties", return_value=[]
+            )
+        ).mock
 
-        patcher = patch("snapcraft._baseplugin.BasePlugin.get_build_properties")
-        self.get_build_properties_mock = patcher.start()
-        self.get_build_properties_mock.return_value = []
-        self.addCleanup(patcher.stop)
+        self.get_build_properties_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.v1.PluginV1.get_build_properties", return_value=[]
+            )
+        ).mock
 
-        self.handler = self.load_part("test_part")
-
+        self.handler = self.load_part("test_part", base=self.base)
         self.handler.makedirs()
 
-        patcher = patch("snapcraft.internal.elf.get_elf_files")
-        self.get_elf_files_mock = patcher.start()
-        self.get_elf_files_mock.return_value = frozenset()
-        self.addCleanup(patcher.stop)
+        self.get_elf_files_mock = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.get_elf_files", return_value=frozenset()
+            )
+        ).mock
 
         self.useFixture(
             fixtures.MockPatch(
@@ -985,6 +1002,8 @@ class StateBaseTestCase(unit.TestCase):
 
 
 class PullStateTestCase(StateBaseTestCase):
+    scenarios = (("v1 plugin", dict(base="core18")), ("v2 plugin", dict(base="core20")))
+
     def test_pull_build_packages_without_grammar_properties(self):
         self.handler = self.load_part(
             "test_part", part_properties={"build-packages": ["package1"]}
@@ -1024,6 +1043,8 @@ class PullStateTestCase(StateBaseTestCase):
 
 
 class StateTestCase(StateBaseTestCase):
+    scenarios = (("v1 plugin", dict(base="core18")), ("v2 plugin", dict(base="core20")))
+
     @patch("snapcraft.internal.repo.Repo")
     def test_pull_state(self, repo_mock):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -1125,8 +1146,7 @@ class StateTestCase(StateBaseTestCase):
         )
         files = state.extracted_metadata["files"]
         self.assertThat(
-            files,
-            Equals([os.path.join(self.handler.plugin.sourcedir, "metadata-file")]),
+            files, Equals([os.path.join(self.handler.part_source_dir, "metadata-file")])
         )
 
     @patch("snapcraft.internal.repo.Repo")
@@ -1191,12 +1211,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, "Expected pull to save state YAML")
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertTrue("foo" in state.properties)
-        self.assertThat(state.properties["foo"], Equals("bar"))
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.assertTrue("foo" in state.properties)
+            self.assertThat(state.properties["foo"], Equals("bar"))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch.object(nil.NilPlugin, "clean_pull")
+    @patch.object(plugins.v1.nil.NilPlugin, "clean_pull")
     def test_clean_pull_state(self, mock_clean_pull):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
@@ -1206,12 +1227,16 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_pull()
 
         # Verify that the plugin had clean_pull() called
-        mock_clean_pull.assert_called_once_with()
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            mock_clean_pull.assert_called_once_with()
 
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
     def test_build_state(self):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
@@ -1243,7 +1268,7 @@ class StateTestCase(StateBaseTestCase):
         )
 
         # Create metadata file
-        open(os.path.join(self.handler.plugin.sourcedir, "metadata-file"), "w").close()
+        open(os.path.join(self.handler.part_source_dir, "metadata-file"), "w").close()
 
         def _fake_extractor(file_path, workdir):
             return snapcraft.extractors.ExtractedMetadata(
@@ -1297,7 +1322,7 @@ class StateTestCase(StateBaseTestCase):
         )
         files = state.extracted_metadata["files"]
         self.assertThat(
-            files, Equals([os.path.join(self.handler.plugin.builddir, "metadata-file")])
+            files, Equals([os.path.join(self.handler.part_build_dir, "metadata-file")])
         )
 
     def test_build_state_with_scriptlet_metadata(self):
@@ -1340,6 +1365,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(metadata.get_version(), Equals("override-version"))
 
     def test_build_state_with_properties(self):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.get_build_properties_mock.return_value = ["foo"]
         self.handler.plugin.options.foo = "bar"
         self.handler._part_properties = {"foo": "bar"}
@@ -1361,8 +1389,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch.object(nil.NilPlugin, "clean_build")
+    @patch.object(plugins.v1.nil.NilPlugin, "clean_build")
     def test_clean_build_state(self, mock_clean_build):
+        if not isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            self.skipTest("Test designed for PluginV1")
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
 
         self.handler.mark_done(steps.PULL)
@@ -1370,8 +1401,9 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_build()
 
-        # Verify that the plugin had clean_build() called
-        mock_clean_build.assert_called_once_with()
+        # Verify that the plugin had clean_build() called for v1.
+        if isinstance(self.handler.plugin, plugins.v1.PluginV1):
+            mock_clean_build.assert_called_once_with()
 
         self.assertThat(self.handler.latest_step(), Equals(steps.PULL))
         self.assertThat(self.handler.next_step(), Equals(steps.BUILD))
@@ -1380,7 +1412,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -1451,7 +1483,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -1561,7 +1593,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -1573,7 +1605,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
         self.assertRaises(errors.NoNextStepError, self.handler.next_step)
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/1", "bin/2"}
+            self.handler._project.prime_dir, {"bin/1", "bin/2"}
         )
         self.assertFalse(mock_copy.called)
 
@@ -1637,10 +1669,10 @@ class StateTestCase(StateBaseTestCase):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
-        bindir = os.path.join(self.handler.primedir, "bin")
+        bindir = os.path.join(self.handler._project.prime_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "2"), "w").close()
 
@@ -1653,7 +1685,7 @@ class StateTestCase(StateBaseTestCase):
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/1"}
+            self.handler._project.prime_dir, {"bin/1"}
         )
         self.assertFalse(mock_copy.called)
 
@@ -1682,19 +1714,24 @@ class StateTestCase(StateBaseTestCase):
     ):
         mock_load_dependencies.return_value = {
             "/foo/bar/baz",
-            "{}/lib1/installed".format(self.handler.plugin.installdir),
-            "{}/lib2/staged".format(self.handler.stagedir),
+            "{}/lib1/installed".format(self.handler.part_install_dir),
+            "{}/lib2/staged".format(self.handler._project.stage_dir),
+            "{}/lib3/primed".format(self.handler._project.prime_dir),
         }
         self.get_elf_files_mock.return_value = frozenset(
             [
-                elf.ElfFile(path=os.path.join(self.handler.primedir, "bin", "1")),
-                elf.ElfFile(path=os.path.join(self.handler.primedir, "bin", "2")),
+                elf.ElfFile(
+                    path=os.path.join(self.handler._project.prime_dir, "bin", "1")
+                ),
+                elf.ElfFile(
+                    path=os.path.join(self.handler._project.prime_dir, "bin", "2")
+                ),
             ]
         )
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -1710,15 +1747,15 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
         self.assertRaises(errors.NoNextStepError, self.handler.next_step)
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/1", "bin/2"}
+            self.handler._project.prime_dir, {"bin/1", "bin/2"}
         )
         mock_migrate_files.assert_has_calls(
             [
                 call(
                     {"bin/1", "bin/2"},
                     {"bin"},
-                    self.handler.stagedir,
-                    self.handler.primedir,
+                    self.handler._project.stage_dir,
+                    self.handler._project.prime_dir,
                 )
             ]
         )
@@ -1728,17 +1765,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
-        self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertThat(len(state.files), Equals(2))
+        self.assertThat(state.dependency_paths, Equals({"lib3"}))
         self.assertTrue("bin/1" in state.files)
         self.assertTrue("bin/2" in state.files)
         self.assertThat(len(state.directories), Equals(1))
         self.assertTrue("bin" in state.directories)
-        self.assertThat(len(state.dependency_paths), Equals(2))
-        self.assertFalse("foo/bar" in state.dependency_paths)
-        self.assertTrue("lib1" in state.dependency_paths)
-        self.assertTrue("lib2" in state.dependency_paths)
         self.assertTrue("prime" in state.properties)
         self.assertThat(state.properties["prime"], Equals(["*"]))
         self.assertTrue(type(state.project_options) is OrderedDict)
@@ -1753,22 +1786,27 @@ class StateTestCase(StateBaseTestCase):
         self.handler = self.load_part("test_part")
 
         self.get_elf_files_mock.return_value = frozenset(
-            [elf.ElfFile(path=os.path.join(self.handler.primedir, "bin", "file"))]
+            [
+                elf.ElfFile(
+                    path=os.path.join(self.handler._project.prime_dir, "bin", "file")
+                )
+            ]
         )
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
         mock_load_dependencies.return_value = set(
             [
                 "/foo/bar/baz",
-                "{}/lib1/installed".format(self.handler.plugin.installdir),
-                "{}/lib2/staged".format(self.handler.stagedir),
+                "{}/lib1/installed".format(self.handler.part_install_dir),
+                "{}/lib2/staged".format(self.handler._project.stage_dir),
+                "{}/lib3/primed".format(self.handler._project.prime_dir),
             ]
         )
 
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "file"), "w").close()
 
@@ -1780,38 +1818,39 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
         self.assertRaises(errors.NoNextStepError, self.handler.next_step)
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/file"}
+            self.handler._project.prime_dir, {"bin/file"}
         )
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
-            {"bin/file"}, {"bin"}, self.handler.stagedir, self.handler.primedir
+            {"bin/file"},
+            {"bin"},
+            self.handler._project.stage_dir,
+            self.handler._project.prime_dir,
         )
 
         state = self.handler.get_prime_state()
 
-        # Verify that only the part and staged libraries were saved into the
-        # dependency paths, not the system dependency.
-        self.assertTrue(type(state.dependency_paths) is set)
-        self.assertThat(len(state.dependency_paths), Equals(2))
-        self.assertTrue("lib1" in state.dependency_paths)
-        self.assertTrue("lib2" in state.dependency_paths)
+        # Verify that only the primed paths were captured.
+        # The rest should be considered missing.
+        self.assertThat(state.dependency_paths, Equals({"lib3"}))
 
     @patch("snapcraft.internal.elf.ElfFile._extract_attributes")
-    @patch(
-        "snapcraft.internal.elf.ElfFile.load_dependencies",
-        return_value=set(["/foo/bar/baz"]),
-    )
+    @patch("snapcraft.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft.internal.pluginhandler._migrate_files")
     def test_prime_state_with_shadowed_dependencies(
         self, mock_migrate_files, mock_load_dependencies, mock_get_symbols
     ):
         self.get_elf_files_mock.return_value = frozenset([elf.ElfFile(path="bin/1")])
+        mock_load_dependencies.return_value = {
+            f"{self.handler._project.prime_dir}/foo/bar/baz"
+        }
+
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
-        foobardir = os.path.join(self.handler.plugin.installdir, "foo", "bar")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
+        foobardir = os.path.join(self.handler.part_install_dir, "foo", "bar")
         os.makedirs(bindir)
         os.makedirs(foobardir)
 
@@ -1828,20 +1867,19 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
         self.assertRaises(errors.NoNextStepError, self.handler.next_step)
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/1", "foo/bar/baz"}
+            self.handler._project.prime_dir, {"bin/1", "foo/bar/baz"}
         )
         mock_migrate_files.assert_called_once_with(
             {"bin/1", "foo/bar/baz"},
             {"bin", "foo", "foo/bar"},
-            self.handler.stagedir,
-            self.handler.primedir,
+            self.handler._project.stage_dir,
+            self.handler._project.prime_dir,
         )
 
         state = self.handler.get_prime_state()
 
         self.assertTrue(type(state) is states.PrimeState)
-        self.assertThat(len(state.dependency_paths), Equals(1))
-        self.assertTrue("foo/bar" in state.dependency_paths)
+        self.assertThat(state.dependency_paths, Equals({"foo/bar"}))
 
     @patch("shutil.copy")
     def test_prime_state_with_prime_keyword(self, mock_copy):
@@ -1850,7 +1888,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
 
-        bindir = os.path.join(self.handler.plugin.installdir, "bin")
+        bindir = os.path.join(self.handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -1862,7 +1900,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
         self.assertRaises(errors.NoNextStepError, self.handler.next_step)
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {"bin/1"}
+            self.handler._project.prime_dir, {"bin/1"}
         )
         self.assertFalse(mock_copy.called)
 
@@ -1984,7 +2022,7 @@ class StateTestCase(StateBaseTestCase):
 
 
 class StateFileMigrationTestCase(StateBaseTestCase):
-
+    base = "core18"
     scenarios = [(step.name, dict(step=step)) for step in steps.STEPS]
 
     def test_state_file_migration(self):
@@ -2096,8 +2134,8 @@ class IsDirtyTestCase(unit.TestCase):
 
     @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     def test_build_is_dirty_from_project(self, mock_enable_cross_compilation):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="amd64")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="amd64")
+        self.handler = self.load_part("test-part", project=project)
         self.handler.mark_build_done()
         self.assertFalse(
             self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
@@ -2108,8 +2146,8 @@ class IsDirtyTestCase(unit.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch="armhf")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="armhf")
+        self.handler = self.load_part("test-part", project=project)
         self.assertFalse(
             self.handler.is_clean(steps.BUILD), "Build step was unexpectedly clean"
         )
@@ -2153,8 +2191,8 @@ class IsDirtyTestCase(unit.TestCase):
 
     @patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
     def test_pull_is_dirty_from_project(self, mock_enable_cross_compilation):
-        project_options = snapcraft.ProjectOptions(target_deb_arch="amd64")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="amd64")
+        self.handler = self.load_part("test-part", project=project)
         self.handler.mark_pull_done()
         self.assertFalse(
             self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
@@ -2165,8 +2203,8 @@ class IsDirtyTestCase(unit.TestCase):
 
         # Reload the plugin with new project options arch, thereby making it
         # dirty.
-        project_options = snapcraft.ProjectOptions(target_deb_arch="armhf")
-        self.handler = self.load_part("test-part", project_options=project_options)
+        project = Project(target_deb_arch="armhf")
+        self.handler = self.load_part("test-part", project=project)
         self.assertFalse(
             self.handler.is_clean(steps.PULL), "Pull step was unexpectedly clean"
         )
@@ -2352,7 +2390,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler1 = self.load_part("part1")
         handler1.makedirs()
 
-        bindir = os.path.join(handler1.plugin.installdir, "bin")
+        bindir = os.path.join(handler1.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
 
@@ -2362,7 +2400,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler2 = self.load_part("part2")
         handler2.makedirs()
 
-        bindir = os.path.join(handler2.plugin.installdir, "bin")
+        bindir = os.path.join(handler2.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "2"), "w").close()
 
@@ -2402,7 +2440,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = self.load_part("part1")
         handler.makedirs()
 
-        bindir = os.path.join(handler.plugin.installdir, "bin")
+        bindir = os.path.join(handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -2467,7 +2505,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler1 = self.load_part("part1")
         handler1.makedirs()
 
-        bindir = os.path.join(handler1.plugin.installdir, "bin")
+        bindir = os.path.join(handler1.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
 
@@ -2477,7 +2515,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler2 = self.load_part("part2")
         handler2.makedirs()
 
-        bindir = os.path.join(handler2.plugin.installdir, "bin")
+        bindir = os.path.join(handler2.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "2"), "w").close()
 
@@ -2513,7 +2551,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler = self.load_part("part1")
         handler.makedirs()
 
-        bindir = os.path.join(handler.plugin.installdir, "bin")
+        bindir = os.path.join(handler.part_install_dir, "bin")
         os.makedirs(bindir)
         open(os.path.join(bindir, "1"), "w").close()
         open(os.path.join(bindir, "2"), "w").close()
@@ -2590,7 +2628,7 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         handler = self.load_part("test_part", part_properties={"prime": self.fileset})
         handler.makedirs()
 
-        installdir = handler.plugin.installdir
+        installdir = handler.part_install_dir
         os.makedirs(installdir + "/1/1a/1b")
         os.makedirs(installdir + "/2/2a")
         os.makedirs(installdir + "/3")
@@ -2607,12 +2645,13 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         # Now prime them
         handler.prime()
 
-        self.assertTrue(os.listdir(self.prime_dir))
+        self.assertTrue(os.listdir(handler._project.prime_dir))
 
         handler.clean_prime({})
 
         self.assertFalse(
-            os.listdir(self.prime_dir), "Expected prime dir to be completely cleaned"
+            os.listdir(handler._project.prime_dir),
+            "Expected prime dir to be completely cleaned",
         )
 
 
@@ -2633,7 +2672,7 @@ class CleanStageTestCase(CleanBaseTestCase):
         handler = self.load_part("test_part", part_properties={"stage": self.fileset})
         handler.makedirs()
 
-        installdir = handler.plugin.installdir
+        installdir = handler.part_install_dir
         os.makedirs(installdir + "/1/1a/1b")
         os.makedirs(installdir + "/2/2a")
         os.makedirs(installdir + "/3")
@@ -2727,55 +2766,55 @@ class CollisionTestCase(unit.TestCase):
         tmpdir = tmpdirObject.name
 
         part1 = self.load_part("part1")
-        part1.plugin.installdir = tmpdir + "/install1"
-        os.makedirs(part1.plugin.installdir + "/a")
-        open(part1.plugin.installdir + "/a/1", mode="w").close()
-        with open(part1.plugin.installdir + "/file.pc", mode="w") as f:
-            f.write("prefix={}\n".format(part1.plugin.installdir))
+        part1.part_install_dir = tmpdir + "/install1"
+        os.makedirs(part1.part_install_dir + "/a")
+        open(part1.part_install_dir + "/a/1", mode="w").close()
+        with open(part1.part_install_dir + "/file.pc", mode="w") as f:
+            f.write("prefix={}\n".format(part1.part_install_dir))
             f.write("Name: File\n")
 
         part2 = self.load_part("part2")
-        part2.plugin.installdir = tmpdir + "/install2"
-        os.makedirs(part2.plugin.installdir + "/a")
-        with open(part2.plugin.installdir + "/1", mode="w") as f:
+        part2.part_install_dir = tmpdir + "/install2"
+        os.makedirs(part2.part_install_dir + "/a")
+        with open(part2.part_install_dir + "/1", mode="w") as f:
             f.write("1")
-        open(part2.plugin.installdir + "/2", mode="w").close()
-        with open(part2.plugin.installdir + "/a/2", mode="w") as f:
+        open(part2.part_install_dir + "/2", mode="w").close()
+        with open(part2.part_install_dir + "/a/2", mode="w") as f:
             f.write("a/2")
-        with open(part2.plugin.installdir + "/file.pc", mode="w") as f:
-            f.write("prefix={}\n".format(part2.plugin.installdir))
+        with open(part2.part_install_dir + "/file.pc", mode="w") as f:
+            f.write("prefix={}\n".format(part2.part_install_dir))
             f.write("Name: File\n")
 
         part3 = self.load_part("part3")
-        part3.plugin.installdir = tmpdir + "/install3"
-        os.makedirs(part3.plugin.installdir + "/a")
-        os.makedirs(part3.plugin.installdir + "/b")
-        with open(part3.plugin.installdir + "/1", mode="w") as f:
+        part3.part_install_dir = tmpdir + "/install3"
+        os.makedirs(part3.part_install_dir + "/a")
+        os.makedirs(part3.part_install_dir + "/b")
+        with open(part3.part_install_dir + "/1", mode="w") as f:
             f.write("2")
-        with open(part2.plugin.installdir + "/2", mode="w") as f:
+        with open(part2.part_install_dir + "/2", mode="w") as f:
             f.write("1")
-        open(part3.plugin.installdir + "/a/2", mode="w").close()
+        open(part3.part_install_dir + "/a/2", mode="w").close()
 
         part4 = self.load_part("part4")
-        part4.plugin.installdir = tmpdir + "/install4"
-        os.makedirs(part4.plugin.installdir)
-        with open(part4.plugin.installdir + "/file.pc", mode="w") as f:
-            f.write("prefix={}\n".format(part4.plugin.installdir))
+        part4.part_install_dir = tmpdir + "/install4"
+        os.makedirs(part4.part_install_dir)
+        with open(part4.part_install_dir + "/file.pc", mode="w") as f:
+            f.write("prefix={}\n".format(part4.part_install_dir))
             f.write("Name: ConflictFile\n")
 
         # Create a new part with a symlink that collides with part1's
         # non-symlink.
         part5 = self.load_part("part5")
-        part5.plugin.installdir = os.path.join(tmpdir, "install5")
-        os.makedirs(part5.plugin.installdir)
-        os.symlink("foo", os.path.join(part5.plugin.installdir, "a"))
+        part5.part_install_dir = os.path.join(tmpdir, "install5")
+        os.makedirs(part5.part_install_dir)
+        os.symlink("foo", os.path.join(part5.part_install_dir, "a"))
 
         # Create a new part with a symlink that points to a different place
         # than part5's symlink.
         part6 = self.load_part("part6")
-        part6.plugin.installdir = os.path.join(tmpdir, "install6")
-        os.makedirs(part6.plugin.installdir)
-        os.symlink("bar", os.path.join(part6.plugin.installdir, "a"))
+        part6.part_install_dir = os.path.join(tmpdir, "install6")
+        os.makedirs(part6.part_install_dir)
+        os.symlink("bar", os.path.join(part6.part_install_dir, "a"))
 
         self.part1 = part1
         self.part2 = part2
@@ -2844,14 +2883,14 @@ class CollisionTestCase(unit.TestCase):
         part_built = self.load_part(
             "part_built", part_properties={"stage": ["collision"]}
         )
-        part_built.plugin.installdir = "part_built_install"
+        part_built.part_install_dir = "part_built_install"
         # a part built has the stage file in the installdir.
-        os.makedirs(part_built.plugin.installdir)
-        open(os.path.join(part_built.plugin.installdir, "collision"), "w").close()
+        os.makedirs(part_built.part_install_dir)
+        open(os.path.join(part_built.part_install_dir, "collision"), "w").close()
         part_not_built = self.load_part(
             "part_not_built", part_properties={"stage": ["collision"]}
         )
-        part_not_built.plugin.installdir = "part_not_built_install"
+        part_not_built.part_install_dir = "part_not_built_install"
         # a part not built doesn't have the stage file in the installdir.
         pluginhandler.check_for_collisions([part_built, part_not_built])
 
@@ -2859,7 +2898,9 @@ class CollisionTestCase(unit.TestCase):
 class StagePackagesTestCase(unit.TestCase):
     def test_missing_stage_package_raises_exception(self):
         fake_repo = Mock()
-        fake_repo.get.side_effect = repo.errors.PackageNotFoundError("non-existing")
+        fake_repo.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+            "non-existing"
+        )
         part = self.load_part(
             "stage-test",
             part_properties={"stage-packages": ["non-existing"]},
@@ -2943,14 +2984,14 @@ class SourcesTestCase(unit.TestCase):
         handler.build()
 
         # Make sure this is still a link
-        build_file_path = os.path.join(handler.plugin.builddir, "file")
-        build_symlinkfile_path = os.path.join(handler.plugin.builddir, "symlinkfile")
+        build_file_path = os.path.join(handler.part_build_dir, "file")
+        build_symlinkfile_path = os.path.join(handler.part_build_dir, "symlinkfile")
 
         self.assertTrue(os.path.isfile(build_file_path))
         self.assertTrue(os.path.islink(build_symlinkfile_path))
 
-        build_dir_path = os.path.join(handler.plugin.builddir, "dir")
-        build_symlinkdir_path = os.path.join(handler.plugin.builddir, "symlinkdir")
+        build_dir_path = os.path.join(handler.part_build_dir, "dir")
+        build_symlinkdir_path = os.path.join(handler.part_build_dir, "symlinkdir")
 
         self.assertTrue(os.path.isdir(build_dir_path))
         self.assertTrue(os.path.isdir(build_symlinkdir_path))
@@ -2966,14 +3007,14 @@ class SourcesTestCase(unit.TestCase):
 
         for file_ in common.SNAPCRAFT_FILES:
             self.assertFalse(
-                os.path.exists(os.path.join(handler.plugin.sourcedir, file_))
+                os.path.exists(os.path.join(handler.part_source_dir, file_))
             )
         self.assertThat(
-            os.path.join(handler.plugin.sourcedir, "my-snap.snap"), Not(FileExists())
+            os.path.join(handler.part_source_dir, "my-snap.snap"), Not(FileExists())
         )
 
         # Make sure we don't filter things out incorrectly
-        self.assertThat(os.path.join(handler.plugin.sourcedir, "my-snap"), FileExists())
+        self.assertThat(os.path.join(handler.part_source_dir, "my-snap"), FileExists())
 
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source="unrecognized://test_source")
@@ -2991,13 +3032,13 @@ class CleanPullTestCase(unit.TestCase):
         handler = self.load_part("test-part")
 
         handler.pull()
-        source_file = os.path.join(handler.plugin.sourcedir, "source")
+        source_file = os.path.join(handler.part_source_dir, "source")
         open(source_file, "w").close()
 
         handler.clean_pull()
 
         # The source directory should now be gone
-        self.assertFalse(os.path.exists(handler.plugin.sourcedir))
+        self.assertFalse(os.path.exists(handler.part_source_dir))
 
     def test_clean_pull_symlink(self):
         real_source_directory = os.path.join(os.getcwd(), "src")
@@ -3006,14 +3047,14 @@ class CleanPullTestCase(unit.TestCase):
         handler = self.load_part("test-part", part_properties={"source": "src"})
 
         handler.pull()
-        os.rmdir(handler.plugin.sourcedir)
-        os.symlink(real_source_directory, handler.plugin.sourcedir)
+        os.rmdir(handler.part_source_dir)
+        os.symlink(real_source_directory, handler.part_source_dir)
 
         handler.clean_pull()
 
         # The source symlink should now be gone, but the real source should
         # still be there.
-        self.assertFalse(os.path.exists(handler.plugin.sourcedir))
+        self.assertFalse(os.path.exists(handler.part_source_dir))
         self.assertTrue(os.path.isdir(real_source_directory))
 
 
@@ -3023,10 +3064,10 @@ class CleanBuildTestCase(unit.TestCase):
 
         handler.build()
 
-        source_file = os.path.join(handler.plugin.sourcedir, "source")
+        source_file = os.path.join(handler.part_source_dir, "source")
         open(source_file, "w").close()
         open(os.path.join(handler.plugin.build_basedir, "built"), "w").close()
-        open(os.path.join(handler.plugin.installdir, "installed"), "w").close()
+        open(os.path.join(handler.part_install_dir, "installed"), "w").close()
 
         handler.clean_build()
 
@@ -3037,4 +3078,4 @@ class CleanBuildTestCase(unit.TestCase):
         self.assertFalse(os.path.exists(handler.plugin.build_basedir))
 
         # Make sure the install directory is gone
-        self.assertFalse(os.path.exists(handler.plugin.installdir))
+        self.assertFalse(os.path.exists(handler.part_install_dir))

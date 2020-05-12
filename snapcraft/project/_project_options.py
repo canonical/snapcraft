@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import multiprocessing
 import os
 import platform
 import sys
@@ -131,9 +132,19 @@ def _get_platform_architecture():
 class ProjectOptions:
     @property
     def parallel_build_count(self) -> int:
-        if sys.platform == "win32":
-            return os.cpu_count()
-        return len(os.sched_getaffinity(0))
+        try:
+            build_count = len(os.sched_getaffinity(0))
+        except AttributeError:
+            # Fall back to multiprocessing.cpu_count()...
+            try:
+                build_count = multiprocessing.cpu_count()
+            except NotImplementedError:
+                logger.warning(
+                    "Unable to determine CPU count; disabling parallel builds"
+                )
+                build_count = 1
+
+        return build_count
 
     @property
     def is_cross_compiling(self):

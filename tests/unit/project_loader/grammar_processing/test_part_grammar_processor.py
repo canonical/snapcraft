@@ -316,13 +316,44 @@ class PartGrammarBuildAndStageSnapsTestCase(unit.TestCase):
         platform_architecture_mock.return_value = ("64bit", "ELF")
 
         repo = mock.Mock()
-        plugin = mock.Mock()
-        plugin.build_snaps = self.snaps
-        plugin.stage_snaps = self.snaps
+
+        class Plugin:
+            build_snaps = self.snaps
+            stage_snaps = self.snaps
+
+        plugin = Plugin()
         expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={},
+            properties={
+                "build-snaps": {"plugin-preferred"},
+                "stage-snaps": "plugin-preferred",
+            },
+            project=project.Project(target_deb_arch=self.target_arch),
+            repo=repo,
+        )
+
+        self.assertThat(processor.get_build_snaps(), Equals(expected))
+        self.assertThat(processor.get_stage_snaps(), Equals(expected))
+
+    @mock.patch("platform.architecture")
+    @mock.patch("platform.machine")
+    def test_build_snaps_plugin_no_attr(
+        self, platform_machine_mock, platform_architecture_mock
+    ):
+        platform_machine_mock.return_value = self.host_arch
+        platform_architecture_mock.return_value = ("64bit", "ELF")
+
+        repo = mock.Mock()
+
+        class Plugin:
+            pass
+
+        plugin = Plugin()
+        expected = getattr(self, "expected_{}".format(self.target_arch))
+        processor = PartGrammarProcessor(
+            plugin=plugin,
+            properties={"build-snaps": self.snaps, "stage-snaps": self.snaps},
             project=project.Project(target_deb_arch=self.target_arch),
             repo=repo,
         )
@@ -405,13 +436,46 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
         platform_architecture_mock.return_value = ("64bit", "ELF")
 
         repo = mock.Mock()
-        plugin = mock.Mock()
-        plugin.build_packages = self.packages
-        plugin.stage_packages = self.packages
+
+        class Plugin:
+            build_packages = self.packages
+            stage_packages = self.packages
+
+        plugin = Plugin()
         expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={},
+            properties={
+                "build-packages": {"plugin-preferred"},
+                "stage-packages": "plugin-preferred",
+            },
+            project=project.Project(target_deb_arch=self.target_arch),
+            repo=repo,
+        )
+        self.assertThat(processor.get_build_packages(), Equals(expected))
+        self.assertThat(processor.get_stage_packages(), Equals(expected))
+
+    @mock.patch("platform.architecture")
+    @mock.patch("platform.machine")
+    def test_packages_plugin_no_attr(
+        self, platform_machine_mock, platform_architecture_mock
+    ):
+        platform_machine_mock.return_value = self.host_arch
+        platform_architecture_mock.return_value = ("64bit", "ELF")
+
+        repo = mock.Mock()
+
+        class Plugin:
+            pass
+
+        plugin = Plugin()
+        expected = getattr(self, "expected_{}".format(self.target_arch))
+        processor = PartGrammarProcessor(
+            plugin=plugin,
+            properties={
+                "build-packages": self.packages,
+                "stage-packages": self.packages,
+            },
             project=project.Project(target_deb_arch=self.target_arch),
             repo=repo,
         )

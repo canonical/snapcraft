@@ -1,0 +1,18 @@
+name: python-from-archive
+version: "0"
+summary: test the python plugin
+description: |
+  Use a stage-package and a python-package from PyPI
+confinement: strict
+grade: devel
+base: core18
+
+parts:
+  python-from-archive:
+    plugin: nil
+    stage-packages:
+      - python3-yaml
+  python-package:
+    plugin: python
+    python-packages:
+      - bitstring

@@ -44,6 +44,7 @@ from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
+    from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
 
 
 logger = logging.getLogger(__name__)
@@ -323,6 +324,10 @@ class StoreClientCLI(storeapi.StoreClient):
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
     @_login_wrapper
+    def get_snap_channel_map(self, *, snap_name: str) -> "SnapChannelMap":
+        return super().get_snap_channel_map(snap_name=snap_name)
+
+    @_login_wrapper
     def get_account_information(self) -> Dict[str, Any]:
         return super().get_account_information()
 
@@ -357,14 +362,12 @@ class StoreClientCLI(storeapi.StoreClient):
         snap_name: str,
         revision: str,
         channels: List[str],
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ) -> Dict[str, Any]:
         return super().release(
             snap_name=snap_name,
             revision=revision,
             channels=channels,
-            progressive_key=progressive_key,
             progressive_percentage=progressive_percentage,
         )
 
@@ -620,16 +623,16 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     if not local:
         store_client.push_snap_build(snap_id, snap_build_content.decode())
-        logger.info("Build assertion {} pushed to the Store.".format(snap_build_path))
+        logger.info("Build assertion {} uploaded to the Store.".format(snap_build_path))
 
 
-def push_metadata(snap_filename, force):
-    """Push only the metadata to the server.
+def upload_metadata(snap_filename, force):
+    """Upload only the metadata to the server.
 
     If force=True it will force the local metadata into the Store,
     ignoring any possible conflict.
     """
-    logger.debug("Pushing metadata to the Store (force=%s)", force)
+    logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
     snap_yaml = _get_data_from_snap_file(snap_filename)
@@ -656,15 +659,15 @@ def push_metadata(snap_filename, force):
         metadata = {"icon": icon}
         store_client.push_binary_metadata(snap_name, metadata, force)
 
-    logger.info("The metadata has been pushed")
+    logger.info("The metadata has been uploaded")
 
 
-def push(snap_filename, release_channels=None):
-    """Push a snap_filename to the store.
+def upload(snap_filename, release_channels=None):
+    """Upload a snap_filename to the store.
 
     If a cached snap is available, a delta will be generated from
     the cached snap to the new target snap and uploaded instead. In the
-    case of a delta processing or upload failure, push will fall back to
+    case of a delta processing or upload failure, upload will fall back to
     uploading the full snap.
 
     If release_channels is defined it also releases it to those channels if the
@@ -675,7 +678,7 @@ def push(snap_filename, release_channels=None):
     built_at = snap_yaml.get("snapcraft-started-at")
 
     logger.debug(
-        "Run push precheck and verify cached data for {!r}.".format(snap_filename)
+        "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
     store_client.push_precheck(snap_name=snap_name)
@@ -693,7 +696,7 @@ def push(snap_filename, release_channels=None):
     result: Dict[str, Any] = None
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(
+            result = _upload_delta(
                 store_client,
                 snap_name=snap_name,
                 snap_filename=snap_filename,
@@ -704,16 +707,16 @@ def push(snap_filename, release_channels=None):
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
-                "Falling back to pushing full snap...".format(str(e))
+                "Falling back to uploading full snap...".format(str(e))
             )
         except storeapi.errors.StorePushError as push_error:
             logger.warning(
-                "Unable to push delta to store: {}\n"
-                "Falling back to pushing full snap...".format(push_error.error_list)
+                "Unable to upload delta to store: {}\n"
+                "Falling back to uploading full snap...".format(push_error.error_list)
             )
 
     if result is None:
-        result = _push_snap(
+        result = _upload_snap(
             store_client,
             snap_name=snap_name,
             snap_filename=snap_filename,
@@ -729,7 +732,7 @@ def push(snap_filename, release_channels=None):
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
 
 
-def _push_snap(
+def _upload_snap(
     store_client,
     *,
     snap_name: str,
@@ -748,7 +751,7 @@ def _push_snap(
     return result
 
 
-def _push_delta(
+def _upload_delta(
     store_client,
     *,
     snap_name: str,
@@ -776,7 +779,7 @@ def _push_delta(
     }
 
     try:
-        logger.debug("Pushing delta {!r}.".format(delta_filename))
+        logger.debug("Uploading delta {!r}.".format(delta_filename))
         delta_tracker = store_client.upload(
             snap_name=snap_name,
             snap_filename=delta_filename,
@@ -852,73 +855,7 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
-def _add_progressive_release_information(
-    channel_map_tree,
-    *,
-    progressive_key: str,
-    progressive_percentage: int,
-    release_channels: List[str],
-) -> None:
-    """
-    Modify channel map tree so that it has progressive release information.
-
-    This method is in place to support the UI as the channel_map_tree
-    returned by the release API does not contain this information.
-    """
-    for channel in [storeapi.channels.Channel(c) for c in release_channels]:
-        for arch_entry in channel_map_tree[channel.track][DEFAULT_SERIES].values():
-            for channel_entry in arch_entry:
-                if "progressive" in channel_entry:
-                    continue
-                channel_string = (
-                    "{}/{}".format(channel.risk, channel.branch)
-                    if channel.branch
-                    else channel.risk
-                )
-                if channel_entry["channel"] != channel_string:
-                    continue
-                channel_entry["progressive"] = {
-                    "percentage": progressive_percentage,
-                    "key": progressive_key,
-                    "paused": False,
-                }
-
-
-def release(
-    snap_name,
-    revision,
-    release_channels,
-    *,
-    progressive_key: Optional[str] = None,
-    progressive_percentage: Optional[int] = None,
-):
-    channels = StoreClientCLI().release(
-        snap_name=snap_name,
-        revision=revision,
-        channels=release_channels,
-        progressive_key=progressive_key,
-        progressive_percentage=progressive_percentage,
-    )
-    channel_map_tree = channels.get("channel_map_tree", {})
-
-    if progressive_key is not None and progressive_percentage is not None:
-        _add_progressive_release_information(
-            channel_map_tree,
-            progressive_key=progressive_key,
-            progressive_percentage=progressive_percentage,
-            release_channels=release_channels,
-        )
-
-    # This does not look good in green so we print instead
-    tabulated_channels = _tabulated_channel_map_tree(channel_map_tree)
-    print(tabulated_channels)
-
-    if "opened_channels" in channels:
-        logger.info(_get_text_for_opened_channels(channels["opened_channels"]))
-
-
 def _tabulated_channel_map_tree(channel_map_tree):
-
     """Tabulate channel map (LTS Channel channel-maps)"""
 
     def _format_tree(channel_maps, track):

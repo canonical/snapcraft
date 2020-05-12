@@ -21,16 +21,18 @@ import operator
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from tabulate import tabulate
 
 import snapcraft
+from snapcraft._store import StoreClientCLI
 from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 from ._review import review_snap
+from ._channel_map import get_tabulated_channel_map
 
 
 _MESSAGE_REGISTER_PRIVATE = dedent(
@@ -80,17 +82,20 @@ def storecli():
     pass
 
 
-def _human_readable_acls(store: storeapi.StoreClient) -> str:
-    acl = store.acl()
+def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
+    acl = store_client.acl()
     snap_names = []
     snap_ids = acl["snap_ids"]
-    if snap_ids:
-        if not isinstance(snap_ids, list):
-            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
 
-        for snap_id in snap_ids:
-            snap_names.append(store.get_snap_name_for_id(snap_id))
-    acl["snap_names"] = snap_names
+    if snap_ids is not None:
+        try:
+            for snap_id in snap_ids:
+                snap_names.append(store_client.get_snap_name_for_id(snap_id))
+        except TypeError:
+            raise RuntimeError(f"invalid snap_ids: {snap_ids!r}")
+        acl["snap_names"] = snap_names
+    else:
+        acl["snap_names"] = None
 
     human_readable_acl: Dict[str, Union[str, List[str], None]] = {
         "expires": str(acl["expires"])
@@ -117,7 +122,8 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
 @click.argument("snap-name", metavar="<snap-name>")
 @click.option("--private", is_flag=True, help="Register the snap as a private one")
 @click.option("--store", metavar="<store>", help="Store to register with")
-def register(snap_name, private, store):
+@click.option("--yes", is_flag=True)
+def register(snap_name, private, store, yes):
     """Register <snap-name> with the store.
 
     You can use this command to register an available <snap-name> and become
@@ -129,7 +135,7 @@ def register(snap_name, private, store):
     """
     if private:
         click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
-    if echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
+    if yes or echo.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
         snapcraft.register(snap_name, is_private=private, store_id=store)
         click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
     else:
@@ -147,8 +153,8 @@ def register(snap_name, private, store):
     metavar="<snap-file>",
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
-def push(snap_file, release):
-    """Push <snap-file> to the store.
+def upload(snap_file, release):
+    """Upload <snap-file> to the store.
 
     By passing --release with a comma separated list of channels the snap would
     be released to the selected channels if the store review passes for this
@@ -162,15 +168,15 @@ def push(snap_file, release):
 
     \b
     Examples:
-        snapcraft push my-snap_0.1_amd64.snap
-        snapcraft push my-snap_0.2_amd64.snap --release edge
-        snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
+        snapcraft upload my-snap_0.1_amd64.snap
+        snapcraft upload my-snap_0.2_amd64.snap --release edge
+        snapcraft upload my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo("Preparing to push {!r}.".format(os.path.basename(snap_file)))
+    click.echo("Preparing to upload {!r}.".format(os.path.basename(snap_file)))
     if release:
         channel_list = release.split(",")
         click.echo(
-            "After pushing, the resulting snap revision will be released to "
+            "After uploading, the resulting snap revision will be released to "
             "{} when it passes the Snap Store review."
             "".format(formatting_utils.humanize_list(channel_list, "and"))
         )
@@ -178,10 +184,10 @@ def push(snap_file, release):
         channel_list = None
 
     review_snap(snap_file=snap_file)
-    snapcraft.push(snap_file, channel_list)
+    snapcraft.upload(snap_file, channel_list)
 
 
-@storecli.command("push-metadata")
+@storecli.command("upload-metadata")
 @click.option(
     "--force",
     is_flag=True,
@@ -192,8 +198,8 @@ def push(snap_file, release):
     metavar="<snap-file>",
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
-def push_metadata(snap_file, force):
-    """Push metadata from <snap-file> to the store.
+def upload_metadata(snap_file, force):
+    """Upload metadata from <snap-file> to the store.
 
     The following information will be retrieved from <snap-file> and used
     to update the store:
@@ -208,18 +214,37 @@ def push_metadata(snap_file, force):
 
     \b
     Examples:
-        snapcraft push-metadata my-snap_0.1_amd64.snap
-        snapcraft push-metadata my-snap_0.1_amd64.snap --force
+        snapcraft upload-metadata my-snap_0.1_amd64.snap
+        snapcraft upload-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo("Pushing metadata from {!r}".format(os.path.basename(snap_file)))
-    snapcraft.push_metadata(snap_file, force)
+    click.echo("Uploading metadata from {!r}".format(os.path.basename(snap_file)))
+    snapcraft.upload_metadata(snap_file, force)
 
 
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("revision", metavar="<revision>")
 @click.argument("channels", metavar="<channels>")
-def release(snap_name, revision, channels) -> None:
+@click.option(
+    "--progressive",
+    type=click.IntRange(0, 100),
+    default=100,
+    metavar="<percentage>",
+    help="set a release progression to a certain percentage.",
+)
+@click.option(
+    "--experimental-progressive-releases",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables 'progressive releases'.",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
+)
+def release(
+    snap_name,
+    revision,
+    channels,
+    progressive: Optional[int],
+    experimental_progressive_releases: bool,
+) -> None:
     """Release <snap-name> on <revision> to the selected store <channels>.
     <channels> is a comma separated list of valid channels on the
     store.
@@ -250,7 +275,46 @@ def release(snap_name, revision, channels) -> None:
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    snapcraft.release(snap_name, revision, channels.split(","))
+    # If progressive is set to 100, treat it as None.
+    if progressive == 100:
+        progressive = None
+
+    if progressive is not None and not experimental_progressive_releases:
+        raise click.UsageError(
+            "--progressive requires --experimental-progressive-releases."
+        )
+    elif progressive:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
+
+    store_client_cli = StoreClientCLI()
+    release_data = store_client_cli.release(
+        snap_name=snap_name,
+        revision=revision,
+        channels=channels.split(","),
+        progressive_percentage=progressive,
+    )
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+    architectures_for_revision = snap_channel_map.get_revision(
+        int(revision)
+    ).architectures
+    tracks = [storeapi.channels.Channel(c).track for c in channels.split(",")]
+    click.echo(
+        get_tabulated_channel_map(
+            snap_channel_map, tracks=tracks, architectures=architectures_for_revision
+        )
+    )
+
+    opened_channels = release_data.get("opened_channels", [])
+    if len(opened_channels) == 1:
+        echo.info(f"The {opened_channels[0]!r} channel is now open.")
+    elif len(opened_channels) > 1:
+        channels = ("{!r}".format(channel) for channel in opened_channels[:-1])
+        echo.info(
+            "The {} and {!r} channels are now open.".format(
+                ", ".join(channels), opened_channels[-1]
+            )
+        )
 
 
 @storecli.command()
@@ -335,7 +399,20 @@ def promote(snap_name, from_channel, to_channel, yes):
         )
     ):
         for c in from_channel_set:
-            snapcraft.release(snap_name, str(c.revision), [str(parsed_to_channel)])
+            store.release(
+                snap_name=snap_name,
+                revision=str(c.revision),
+                channels=[str(parsed_to_channel)],
+            )
+        snap_channel_map = store.get_snap_channel_map(snap_name=snap_name)
+        existing_architectures = snap_channel_map.get_existing_architectures()
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map,
+                tracks=[parsed_to_channel.track],
+                architectures=existing_architectures,
+            )
+        )
     else:
         echo.wrapped("Channel promotion cancelled")
 
@@ -361,18 +438,38 @@ def close(snap_name, channels):
 
 @storecli.command()
 @click.option(
+    "--experimental-progressive-releases",
+    is_flag=True,
+    help="*EXPERIMENTAL* Enables 'progressive releases'.",
+    envvar="SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES",
+)
+@click.option(
     "--arch", metavar="<arch>", help="The snap architecture to get the status for"
 )
 @click.argument("snap-name", metavar="<snap-name>")
-def status(snap_name, arch):
+def status(snap_name, arch, experimental_progressive_releases):
     """Get the status on the store for <snap-name>.
 
     \b
     Examples:
         snapcraft status my-snap
-        snapcraft status my-snap --arch armhf
     """
-    snapcraft.status(snap_name, arch)
+    if experimental_progressive_releases:
+        os.environ["SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES"] = "Y"
+        echo.warning("*EXPERIMENTAL* progressive releases in use.")
+
+    snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
+    existing_architectures = snap_channel_map.get_existing_architectures()
+    if arch and arch not in existing_architectures:
+        echo.warning(f"No revisions for architecture {arch!r}.")
+    else:
+        if arch:
+            architectures = (arch,)
+        else:
+            architectures = existing_architectures
+        click.echo(
+            get_tabulated_channel_map(snap_channel_map, architectures=architectures)
+        )
 
 
 @storecli.command("list-revisions")
@@ -394,16 +491,13 @@ def list_revisions(snap_name, arch):
     snapcraft.revisions(snap_name, arch)
 
 
-@storecli.command("list-registered")
-def list_registered():
+@storecli.command("list")
+def list():
     """List snap names registered or shared with you.
-
-    This command has an alias of `registered`.
 
     \b
     Examples:
-        snapcraft list-registered
-        snapcraft registered
+        snapcraft list
     """
     snapcraft.list_registered()
 
@@ -466,9 +560,9 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     if acls:
         acl_list = acls.split(",")
 
-    store = storeapi.StoreClient()
+    store_client = storeapi.StoreClient()
     if not snapcraft.login(
-        store=store,
+        store=store_client,
         packages=snap_list,
         channels=channel_list,
         acls=acl_list,
@@ -480,7 +574,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     # Support a login_file of '-', which indicates a desire to print to stdout
     if login_file.strip() == "-":
         echo.info("\nExported login starts on next line:")
-        store.conf.save(config_fd=sys.stdout, encode=True)
+        store_client.conf.save(config_fd=sys.stdout, encode=True)
         print()
 
         preamble = "Login successfully exported and printed above"
@@ -491,7 +585,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
 
         # mypy doesn't have the opener arg in its stub. Ignore its warning
         with open(login_file, "w", opener=private_open) as f:  # type: ignore
-            store.conf.save(config_fd=f)
+            store_client.conf.save(config_fd=f)
 
         # Now that the file has been written, we can just make it
         # owner-readable
@@ -514,7 +608,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
             )
         )
     )
-    echo.info(_human_readable_acls(store))
+    echo.info(_human_readable_acls(store_client))
     echo.warning(
         "This exported login is not encrypted. Do not commit it to version control!"
     )
@@ -534,15 +628,15 @@ def login(login_file):
     If you do not have an Ubuntu One account, you can create one at
     https://snapcraft.io/account
     """
-    store = storeapi.StoreClient()
-    if not snapcraft.login(store=store, config_fd=login_file):
+    store_client = storeapi.StoreClient()
+    if not snapcraft.login(store=store_client, config_fd=login_file):
         sys.exit(1)
 
     print()
 
     if login_file:
         echo.info("Login successful. You now have these capabilities:\n")
-        echo.info(_human_readable_acls(store))
+        echo.info(_human_readable_acls(store_client))
     else:
         echo.info("Login successful.")
 

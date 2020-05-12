@@ -1,0 +1,55 @@
+#+TITLE: Snapcraft Tasks
+#+STARTUP: content
+#+STARTUP: lognotestate
+
+* Specifications
+
+** 2020
+
+*** STRT [[file:specifications/core20-plugins.org][Snapcraft Core20 Plugins]] [7/11]
+
+- [X] Move =BasePlugin= to a v1 import path
+- [X] Add backwards compatibility for =BasePlugin=
+- [X] Rework in-tree plugin importing into a map
+- [X] Introduce =snapcraft.plugins.v2.PluginV2=
+- [X] Add =PluginHandler= logic for the =core20= plugin
+- [ ] Plugin manifest generation.
+- [ ] Detection of property changes for rebuilds.
+- [X] Add CLI support for =help=
+- [X] Add CLI support for =list-plugins=
+- [ ] Add CLI support for =expand-plugins=
+- [ ] Introduce new custom plugin loading logic for =core20=
+
+*** TODO [[file:specifications/enabling-experimental-features.org][Enabling Experimental Features]]
+
+*** TODO [[file:specifications/enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [/]
+
+- [ ] Add =click= option to enable experimental feature
+- [ ] Amend schema to allow =compression=
+- [ ] Replace =mksquashfs= with =snap pack=
+- [ ] Toggle compression with =snap pack=
+
+*** STRT [[file:specifications/progressive-releases.org][Progressive Releases]] [/]
+
+- [X] Implement channel-map endpoint
+- [X] Add support for the status command
+- [X] Add support for the release command
+- [ ] Add support for the close command
+- [X] Add support for the promote command
+- [ ] Migrate promote away from using the state endpoint
+- [ ] Remove the state endpoint
+- [ ] Add support for metrics
+- [ ] Add support for specific channel-map endpoint errors
+- [ ] Remove experimental flag
+
+*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [/]
+
+- [X] System-wide APT configuration for build and stage-packages.
+- [X] Meta support for =package-repositories=: PackageRepository
+- [X] Plugin v1 conversion to use PackageRepository for adding keys/repos.
+- [X] Enable override of default sources.
+- [X] Add assets for =<project>/snap/keys/<key-id>.asc=
+- [X] Enable =key-id= to match thumbprint, key ID, or key asset file.
+- [ ] Improve error handling when schema validation fails. Nearly everything will fail with: "The =package-repositories[0] property does not match the required schema: <schemas>=
+- [ ] Add multi-arch spread test(s).
+- [ ] Finalize schema and mark stable.

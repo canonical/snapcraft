@@ -1244,11 +1244,13 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
         final_snap_hook = os.path.join(self.hooks_dir, "snap-hook")
         self.assertThat(final_snap_hook, FileExists())
         self.assertThat(final_snap_hook, unit.IsExecutable())
-        expected = (
-            "#!/bin/sh\n"
-            "export PATH=$SNAP/foo\n"
-            "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH\n"
-            'exec "$SNAP/snap/hooks/snap-hook" "$@"\n'
+        expected = textwrap.dedent(
+            """\
+            #!/bin/sh
+            export PATH=$SNAP/foo
+            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            exec "$SNAP/snap/hooks/snap-hook" "$@"
+        """
         )
 
         self.assertThat(final_snap_hook, FileContains(expected))

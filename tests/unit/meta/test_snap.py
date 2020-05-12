@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,11 +29,6 @@ from tests import integration, unit
 
 
 class SnapTests(unit.TestCase):
-    """ Test the snaps.  Note that the ordering of ordereddicts must align
-    with Snap's use of _MANDATORY_PACKAGE_KEYS + _OPTIONAL_PACKAGE_KEYS.
-
-    This applies even for verifying YAMLs, which are (now) ordered."""
-
     def test_empty(self):
         snap_dict = OrderedDict()
 
@@ -97,7 +92,7 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["summary"], snap.summary)
         self.assertEqual(snap_dict["description"], snap.description)
 
-    def test_passthrough(self):
+    def test_snap_yaml_passthrough(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
@@ -116,7 +111,7 @@ class SnapTests(unit.TestCase):
         passthrough = transformed_dict.pop("passthrough")
         transformed_dict.update(passthrough)
 
-        self.assertEqual(transformed_dict, snap.to_dict())
+        self.assertEqual(transformed_dict, snap.to_snap_yaml_dict())
         self.assertEqual(True, snap.is_passthrough_enabled)
         self.assertEqual(passthrough, snap.passthrough)
         self.assertEqual(snap_dict["name"], snap.name)
@@ -124,63 +119,88 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap_dict["summary"], snap.summary)
         self.assertEqual(snap_dict["description"], snap.description)
 
-    def test_all_keys(self):
-        snap_dict = OrderedDict(
-            {
-                "name": "snap-test",
-                "version": "test-version",
-                "summary": "test-summary",
-                "description": "test-description",
-                "apps": {"test-app": {"command": "test-app"}},
-                "architectures": ["all"],
-                "assumes": ["command-chain"],
-                "base": "core",
-                "confinement": "strict",
-                "environment": {"TESTING": "1"},
-                "epoch": 0,
-                "grade": "devel",
-                "hooks": {
-                    "test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}
+    def test_snap_yaml_all_keys(self):
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "adopt-info": "some-part",
+            "apps": {"test-app": {"command": "test-app"}},
+            "architectures": ["all"],
+            "assumes": ["command-chain"],
+            "base": "core",
+            "confinement": "strict",
+            "environment": {"TESTING": "1"},
+            "epoch": 0,
+            "grade": "devel",
+            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "layout": {"/target": {"bind": "$SNAP/foo"}},
+            "license": "GPL",
+            "package-repositories": [
+                {"type": "apt", "ppa": "test/ppa"},
+                {
+                    "type": "apt",
+                    "architectures": ["amd64", "i386"],
+                    "components": ["main"],
+                    "deb-types": ["deb"],
+                    "key-id": "test-key-id",
+                    "key-server": "test-key-server.com",
+                    "suites": ["xenial"],
+                    "url": "http://archive.ubuntu.com",
                 },
-                "layout": {"/target": {"bind": "$SNAP/foo"}},
-                "license": "GPL",
-                "plugs": {"test-plug": OrderedDict({"interface": "some-value"})},
-                "slots": {"test-slot": OrderedDict({"interface": "some-value"})},
-                "system-usernames": OrderedDict(
-                    {"snap_daemon": OrderedDict({"scope": "shared"})}
-                ),
-                "title": "test-title",
-                "type": "base",
-            }
-        )
+            ],
+            "passthrough": {"test": "value"},
+            "plugs": {"test-plug": {"interface": "some-value"}},
+            "slots": {"test-slot": {"interface": "some-value"}},
+            "system-usernames": {"snap_daemon": {"scope": "shared"}},
+            "title": "test-title",
+            "type": "base",
+        }
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        expected_dict = snap_dict.copy()
+        expected_dict.pop("adopt-info")
+        expected_dict.pop("base")
+        expected_dict.pop("package-repositories")
+        expected_dict.update(expected_dict.pop("passthrough"))
+
+        self.assertEqual(expected_dict, snap.to_snap_yaml_dict())
+        self.assertEqual(True, snap.is_passthrough_enabled)
+
+    def test_all_keys(self):
+        snap_dict = {
+            "name": "snap-test",
+            "version": "test-version",
+            "summary": "test-summary",
+            "description": "test-description",
+            "adopt-info": "some-part",
+            "apps": {"test-app": {"command": "test-app"}},
+            "architectures": ["all"],
+            "assumes": ["command-chain"],
+            "base": "core",
+            "confinement": "strict",
+            "environment": {"TESTING": "1"},
+            "epoch": 0,
+            "grade": "devel",
+            "hooks": {"test-hook": {"command-chain": ["cmd1"], "plugs": ["network"]}},
+            "layout": {"/target": {"bind": "$SNAP/foo"}},
+            "license": "GPL",
+            "passthrough": {"test": "value"},
+            "plugs": {"test-plug": {"interface": "some-value"}},
+            "slots": {"test-slot": {"interface": "some-value"}},
+            "system-usernames": {"snap_daemon": {"scope": "shared"}},
+            "title": "test-title",
+            "type": "base",
+        }
 
         snap = Snap.from_dict(snap_dict=snap_dict)
         snap.validate()
 
         self.assertEqual(snap_dict, snap.to_dict())
-        self.assertEqual(False, snap.is_passthrough_enabled)
-        self.assertEqual(snap_dict["name"], snap.name)
-        self.assertEqual(snap_dict["version"], snap.version)
-        self.assertEqual(snap_dict["summary"], snap.summary)
-        self.assertEqual(snap_dict["description"], snap.description)
-        self.assertEqual(snap_dict["apps"]["test-app"], snap.apps["test-app"].to_dict())
-        self.assertEqual(snap_dict["architectures"], snap.architectures)
-        self.assertEqual(set(snap_dict["assumes"]), snap.assumes)
-        self.assertEqual(snap_dict["base"], snap.base)
-        self.assertEqual(snap_dict["environment"], snap.environment)
-        self.assertEqual(
-            snap_dict["hooks"]["test-hook"], snap.hooks["test-hook"].to_dict()
-        )
-        self.assertEqual(snap_dict["license"], snap.license)
-        self.assertEqual(
-            snap_dict["plugs"]["test-plug"], snap.plugs["test-plug"].to_yaml_object()
-        )
-        self.assertEqual(
-            snap_dict["slots"]["test-slot"], snap.slots["test-slot"].to_yaml_object()
-        )
-        self.assertEqual(snap_dict["confinement"], snap.confinement)
-        self.assertEqual(snap_dict["title"], snap.title)
-        self.assertEqual(snap_dict["type"], snap.type)
+        self.assertEqual(True, snap.is_passthrough_enabled)
 
     def test_system_usernames_shortform_scope(self):
         snap_dict = OrderedDict(
@@ -441,7 +461,7 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual({"command-chain"}, snap.assumes)
 
-    def test_write_snap_yaml_skips_base_core(self):
+    def test_build_base_and_write_snap_yaml_skips_base_core(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
@@ -465,15 +485,43 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertFalse("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core")
 
-    def test_write_snap_yaml_with_base_core18(self):
+    def test_build_base_write_snap_yaml_skips_build_base(self):
         snap_dict = OrderedDict(
             {
                 "name": "snap-test",
                 "version": "snap-version",
                 "summary": "snap-summary",
                 "description": "snap-description",
-                "base": "core18",
+                "base": "core20",
+                "build-base": "core18",
+                "grade": "devel",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertEqual(snap_dict, snap.to_dict())
+        self.assertFalse("build-base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
+
+    def test_build_base_and_write_snap_yaml_with_base_core20(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "snap-test",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "base": "core20",
                 "grade": "devel",
             }
         )
@@ -490,6 +538,60 @@ class SnapTests(unit.TestCase):
 
         self.assertEqual(snap_dict, snap.to_dict())
         self.assertTrue("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core20")
+
+    def test_build_base_and_write_snap_yaml_type_base(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "core18",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "devel",
+                "type": "base",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertEqual(snap_dict, snap.to_dict())
+        self.assertTrue("base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
+
+    def test_build_base_and_write_snap_yaml_type_base_with_build_base(self):
+        snap_dict = OrderedDict(
+            {
+                "name": "core20",
+                "version": "snap-version",
+                "summary": "snap-summary",
+                "description": "snap-description",
+                "grade": "devel",
+                "build-base": "core18",
+                "type": "base",
+            }
+        )
+
+        snap = Snap.from_dict(snap_dict=snap_dict)
+        snap.validate()
+
+        # Write snap yaml.
+        snap_yaml_path = os.path.join(self.path, "snap.yaml")
+        snap.write_snap_yaml(path=snap_yaml_path)
+
+        # Read snap yaml.
+        written_snap_yaml = open(snap_yaml_path, "r").read()
+
+        self.assertTrue("base" in written_snap_yaml)
+        self.assertFalse("build-base" in written_snap_yaml)
+        self.assertEqual(snap.get_build_base(), "core18")
 
 
 class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):

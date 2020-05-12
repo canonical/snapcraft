@@ -90,6 +90,13 @@ class ProjectSanityChecksTest(unit.TestCase):
         open(os.path.join(plugins_dir, "random-hook-2"), "w").close()
         self.assert_check_passes()
 
+    def test_keys(self):
+        keys_dir = os.path.join(self.snap_asset_dir, "keys")
+        os.makedirs(keys_dir)
+        open(os.path.join(keys_dir, "fake-key.asc"), "w").close()
+        open(os.path.join(keys_dir, "key2.asc"), "w").close()
+        self.assert_check_passes()
+
     def test_local(self):
         local_dir = os.path.join(self.snap_asset_dir, "local")
         local_subdir = os.path.join(local_dir, "subdir")
@@ -102,22 +109,25 @@ class ProjectSanityChecksTest(unit.TestCase):
         dir1 = os.path.join(self.snap_asset_dir, "dir1")
         dir2 = os.path.join(self.snap_asset_dir, "dir2")
         gui_dir = os.path.join(self.snap_asset_dir, "gui")
+        keys_dir = os.path.join(self.snap_asset_dir, "keys")
         state_dir = os.path.join(self.snap_asset_dir, ".snapcraft")
-        fake_plugins_dir = os.path.join(dir1, "plugins")
-        fake_hooks_dir = os.path.join(dir1, "hooks")
         fake_gui_dir = os.path.join(dir2, "gui")
+        fake_hooks_dir = os.path.join(dir1, "hooks")
         fake_local_dir = os.path.join(dir2, "local")
+        fake_plugins_dir = os.path.join(dir1, "plugins")
         os.makedirs(dir1)
         os.makedirs(dir2)
         os.makedirs(gui_dir)
+        os.makedirs(keys_dir)
         os.makedirs(state_dir)
-        os.makedirs(fake_plugins_dir)
-        os.makedirs(fake_hooks_dir)
         os.makedirs(fake_gui_dir)
+        os.makedirs(fake_hooks_dir)
         os.makedirs(fake_local_dir)
+        os.makedirs(fake_plugins_dir)
         open(os.path.join(dir1, "foo"), "w").close()
         open(os.path.join(dir2, "bar"), "w").close()
         open(os.path.join(gui_dir, "icon.jpg"), "w").close()
+        open(os.path.join(keys_dir, "invalid.key"), "w").close()
         open(os.path.join(state_dir, "baz"), "w").close()
 
         self.run_check()
@@ -137,7 +147,9 @@ class ProjectSanityChecksTest(unit.TestCase):
                     "- dir2/bar\n"
                     "- dir2/gui\n"
                     "- dir2/local\n"
-                    "- gui/icon.jpg\n\n"
+                    "- gui/icon.jpg\n"
+                    "- keys/invalid.key\n"
+                    "\n"
                     "If you must store these files within the {snap_asset_dir!r} directory, move them "
                     "to '{snap_asset_dir}/local', which is ignored by snapcraft.\n"
                 ).format(snap_asset_dir=self.snap_asset_dir)

@@ -1,0 +1,21 @@
+summary: |
+  Minimally ensure the plugin works without bases by running pull.
+  The plugin can be tested without bases in full through the legacy release of
+  snapcraft.
+
+environment:
+  SNAP_DIR: ../snaps/ruby-hello
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  clear_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft pull

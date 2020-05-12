@@ -23,11 +23,12 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-from testtools.matchers import Contains, Equals, FileExists, Not, Is
+from testtools.matchers import Contains, Equals, FileExists, Not, Is, IsInstance
 
+import tests
 from snapcraft import config, storeapi
 from snapcraft.storeapi import errors
-import tests
+from snapcraft.storeapi.v2 import channel_map
 from tests import fixture_setup, unit
 
 
@@ -978,7 +979,7 @@ class UploadTestCase(StoreTestCase):
         )
 
 
-class ReleaseTestCase(StoreTestCase):
+class ReleaseTest(StoreTestCase):
     def test_release_without_login_raises_exception(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
@@ -1005,11 +1006,7 @@ class ReleaseTestCase(StoreTestCase):
     def test_progressive_release_snap(self):
         self.client.login("dummy", "test correct password")
         channel_map = self.client.release(
-            "test-snap",
-            "19",
-            ["beta"],
-            progressive_key="progressive_key",
-            progressive_percentage=10,
+            "test-snap", "19", ["beta"], progressive_percentage=10
         )
         expected_channel_map = {
             "opened_channels": ["beta"],
@@ -1500,6 +1497,22 @@ class GetSnapStatusTestCase(StoreTestCase):
                 "Error fetching status of snap id 'my_snap_id' for 'any arch' "
                 "in '16' series: 500 Server error."
             ),
+        )
+
+
+class SnapChannelMapTest(StoreTestCase):
+    def test_get_snap_status_without_login_raises_exception(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_channel_map,
+            snap_name="basic",
+        )
+
+    def test_get_snap_channel_map(self):
+        self.client.login("dummy", "test correct password")
+        self.assertThat(
+            self.client.get_snap_channel_map(snap_name="basic"),
+            IsInstance(channel_map.ChannelMap),
         )
 
 

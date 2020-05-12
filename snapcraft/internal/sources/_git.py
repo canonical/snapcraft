@@ -150,6 +150,19 @@ class Git(Base):
                 output=error.output.decode(),
             )
 
+    def _fetch_origin_commit(self):
+        self._run(
+            [
+                self.command,
+                "-C",
+                self.source_dir,
+                "fetch",
+                "origin",
+                self.source_commit,
+            ],
+            **self._call_kwargs
+        )
+
     def _pull_existing(self):
         refspec = "HEAD"
         if self.source_branch:
@@ -158,6 +171,7 @@ class Git(Base):
             refspec = "refs/tags/" + self.source_tag
         elif self.source_commit:
             refspec = self.source_commit
+            self._fetch_origin_commit()
 
         reset_spec = refspec if refspec != "HEAD" else "origin/master"
 
@@ -201,13 +215,18 @@ class Git(Base):
         self._run(command + [self.source, self.source_dir], **self._call_kwargs)
 
         if self.source_commit:
+            self._fetch_origin_commit()
+
             self._run(
                 [self.command, "-C", self.source_dir, "checkout", self.source_commit],
                 **self._call_kwargs
             )
 
+    def is_local(self):
+        return os.path.exists(os.path.join(self.source_dir, ".git"))
+
     def pull(self):
-        if os.path.exists(os.path.join(self.source_dir, ".git")):
+        if self.is_local():
             self._pull_existing()
         else:
             self._clone_new()

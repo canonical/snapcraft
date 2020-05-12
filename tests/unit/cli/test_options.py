@@ -26,55 +26,205 @@ from tests import unit
 
 class TestProviderOptions(unit.TestCase):
     scenarios = [
-        ("host empty", dict(provider="host", kwargs=dict())),
-        ("host http proxy", dict(provider="host", kwargs=dict(http_proxy="1.1.1.1"))),
-        ("host https proxy", dict(provider="host", kwargs=dict(https_proxy="1.1.1.1"))),
+        ("host empty", dict(provider="host", kwargs=dict(), flags=dict())),
+        (
+            "host http proxy",
+            dict(
+                provider="host",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "host https proxy",
+            dict(
+                provider="host",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "host build info",
+            dict(
+                provider="host",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "host build info off",
+            dict(provider="host", kwargs=dict(enable_manifest=False), flags=dict()),
+        ),
+        (
+            "host image info",
+            dict(
+                provider="host",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
+        ),
         (
             "host all",
             dict(
                 provider="host",
                 kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
             ),
         ),
-        ("lxd empty", dict(provider="lxd", kwargs=dict())),
-        ("lxd http proxy", dict(provider="lxd", kwargs=dict(http_proxy="1.1.1.1"))),
-        ("lxd https proxy", dict(provider="lxd", kwargs=dict(https_proxy="1.1.1.1"))),
+        ("lxd empty", dict(provider="lxd", kwargs=dict(), flags=dict())),
+        (
+            "lxd http proxy",
+            dict(
+                provider="lxd",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "lxd https proxy",
+            dict(
+                provider="lxd",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "lxd build info",
+            dict(
+                provider="lxd",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "lxd image info",
+            dict(
+                provider="lxd",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
+        ),
         (
             "lxd all",
             dict(
-                provider="lxd", kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1")
+                provider="lxd",
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
-        ("managed-host empty", dict(provider="managed-host", kwargs=dict())),
+        (
+            "managed-host empty",
+            dict(provider="managed-host", kwargs=dict(), flags=dict()),
+        ),
         (
             "managed-host http proxy",
-            dict(provider="managed-host", kwargs=dict(http_proxy="1.1.1.1")),
+            dict(
+                provider="managed-host",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
         ),
         (
             "managed-host https proxy",
-            dict(provider="managed-host", kwargs=dict(https_proxy="1.1.1.1")),
+            dict(
+                provider="managed-host",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "managed-host build info",
+            dict(
+                provider="managed-host",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "managed-host image info",
+            dict(
+                provider="managed-host",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
         ),
         (
             "managed-host all",
             dict(
                 provider="managed-host",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
-        ("multipass empty", dict(provider="multipass", kwargs=dict())),
+        ("multipass empty", dict(provider="multipass", kwargs=dict(), flags=dict())),
         (
             "multipass http proxy",
-            dict(provider="multipass", kwargs=dict(http_proxy="1.1.1.1")),
+            dict(
+                provider="multipass",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
         ),
         (
             "multipass https proxy",
-            dict(provider="multipass", kwargs=dict(https_proxy="1.1.1.1")),
+            dict(
+                provider="multipass",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "multipass build info",
+            dict(
+                provider="multipass",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "multipass image info",
+            dict(
+                provider="multipass",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
         ),
         (
             "multipass all",
             dict(
                 provider="multipass",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
     ]
@@ -82,7 +232,7 @@ class TestProviderOptions(unit.TestCase):
     def test_valid_flags(self):
         flags = options.get_build_provider_flags(self.provider, **self.kwargs)
 
-        self.assertThat(flags, Equals(self.kwargs))
+        self.assertThat(flags, Equals(self.flags))
 
 
 class TestInvalidBuildProviderFlags(unit.TestCase):

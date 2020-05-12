@@ -18,99 +18,43 @@ from textwrap import dedent
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
+from snapcraft.storeapi.v2.channel_map import (
+    MappedChannel,
+    Progressive,
+    Revision,
+    SnapChannel,
+)
 from . import FakeStoreCommandsBaseTestCase
 
 
 class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
-    def test_upload_without_snap_must_raise_exception(self):
+    def setUp(self):
+        super().setUp()
+
+        self.fake_store_release.mock.return_value = {"opened_channels": ["2.1/beta"]}
+
+    def test_release_without_snap_name_must_raise_exception(self):
         result = self.run_command(["release"])
 
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_release_snap(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["beta"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 19,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                        ]
-                    }
-                }
-            },
-        }
-
-        result = self.run_command(["release", "nil-snap", "19", "beta"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     -          -           -
-                             candidate  -          -           -
-                             beta       0          19          -
-                             edge       ^          ^           -
-            \x1b[0;32mThe 'beta' channel is now open.\x1b[0m"""
-                )
-            ),
-        )
-        self.fake_store_release.mock.assert_called_once_with(
-            snap_name="nil-snap",
-            revision="19",
-            channels=["beta"],
-            progressive_key=None,
-            progressive_percentage=None,
-        )
-
-    def test_release_snap_with_lts_channel(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["2.1/beta"],
-            "channel_map_tree": {
-                "2.1": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 19,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                        ]
-                    }
-                }
-            },
-        }
-
+    def test_release(self):
         result = self.run_command(["release", "nil-snap", "19", "2.1/beta"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision    Notes
-            2.1      amd64   stable     -          -           -
-                             candidate  -          -           -
-                             beta       0          19          -
-                             edge       ^          ^           -
-            \x1b[0;32mThe '2.1/beta' channel is now open.\x1b[0m"""
+            Track    Arch    Channel    Version    Revision
+            2.1      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         19
+                             edge       ↑          ↑
+            The '2.1/beta' channel is now open.
+            """
                 )
             ),
         )
@@ -118,190 +62,168 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             snap_name="nil-snap",
             revision="19",
             channels=["2.1/beta"],
-            progressive_key=None,
             progressive_percentage=None,
         )
 
-    def test_release_snap_with_branch(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["stable/hotfix1"],
-            "channel_map_tree": {
-                "2.1": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 19,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                            {
-                                "channel": "stable/hotfix1",
-                                "info": "branch",
-                                "revision": 20,
-                                "version": "1",
-                                "expires_at": "2017-05-21T18:52:14.578435",
-                            },
-                        ]
-                    }
-                }
-            },
-        }
+    def test_progressive_release(self):
+        self.channel_map.channel_map[0].progressive.percentage = 10.0
 
-        result = self.run_command(["release", "nil-snap", "20", "stable/hotfix1"])
+        result = self.run_command(
+            [
+                "release",
+                "nil-snap",
+                "19",
+                "2.1/beta",
+                "--progressive",
+                "10",
+                "--experimental-progressive-releases",
+            ]
+        )
+
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            *EXPERIMENTAL* progressive releases in use.
+            Track    Arch    Channel    Version    Revision    Progress
+            2.1      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       -          -           -
+                                        10         19          → 10%
+                             edge       ↑          ↑           -
+            The '2.1/beta' channel is now open.
+            """
+                )
+            ),
+        )
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap",
+            revision="19",
+            channels=["2.1/beta"],
+            progressive_percentage=10,
+        )
+
+    def test_release_with_branch(self):
+        self.fake_store_release.mock.return_value = {
+            "opened_channels": ["stable/hotfix1"]
+        }
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/stable/hotfix1",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=None),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10hotfix")
+        )
+        self.channel_map.snap.channels.append(
+            SnapChannel(
+                name="2.1/stable/hotfix1",
+                track="2.1",
+                risk="stable",
+                branch="hotfix1",
+                fallback="2.1/stable",
+            )
+        )
+
+        result = self.run_command(["release", "nil-snap", "20", "2.1/stable/hotfix1"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-            Track    Arch    Channel         Version    Revision    Notes    Expires at
+            Track    Arch    Channel         Version    Revision    Expires at
+            2.1      amd64   stable          -          -
+                             stable/hotfix1  10hotfix   20          2020-02-03T20:58:37Z
+                             candidate       -          -
+                             beta            10         19
+                             edge            ↑          ↑
+            The 'stable/hotfix1' channel is now open.
+                    """
+                )
+            ),
+        )
+
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap",
+            revision="20",
+            channels=["2.1/stable/hotfix1"],
+            progressive_percentage=None,
+        )
+
+    def test_progressive_release_with_branch(self):
+        self.fake_store_release.mock.return_value = {
+            "opened_channels": ["2.1/stable/hotfix1"]
+        }
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/stable/hotfix1",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=80.0),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10hotfix")
+        )
+        self.channel_map.snap.channels.append(
+            SnapChannel(
+                name="2.1/stable/hotfix1",
+                track="2.1",
+                risk="stable",
+                branch="hotfix1",
+                fallback="2.1/stable",
+            )
+        )
+
+        result = self.run_command(
+            [
+                "release",
+                "--progressive",
+                "80",
+                "--experimental-progressive-releases",
+                "nil-snap",
+                "20",
+                "2.1/stable/hotfix1",
+            ]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            *EXPERIMENTAL* progressive releases in use.
+            Track    Arch    Channel         Version    Revision    Progress    Expires at
             2.1      amd64   stable          -          -           -
+                             stable/hotfix1  10hotfix   20          → 80%       2020-02-03T20:58:37Z
                              candidate       -          -           -
-                             beta            0          19          -
-                             edge            ^          ^           -
-                             stable/hotfix1  1          20          -        2017-05-21T18:52:14.578435
-            \x1b[0;32mThe 'stable/hotfix1' channel is now open.\x1b[0m"""
+                             beta            10         19          -
+                             edge            ↑          ↑           -
+            The '2.1/stable/hotfix1' channel is now open.
+                    """
                 )
             ),
         )
         self.fake_store_release.mock.assert_called_once_with(
             snap_name="nil-snap",
             revision="20",
-            channels=["stable/hotfix1"],
-            progressive_key=None,
-            progressive_percentage=None,
-        )
-
-    def test_release_snap_opens_more_than_one_channel(self):
-        self.fake_store_release.mock.return_value = {
-            "opened_channels": ["stable", "beta", "edge"],
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "none"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 19,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                        ]
-                    }
-                }
-            },
-        }
-
-        result = self.run_command(["release", "nil-snap", "19", "beta"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     -          -           -
-                             candidate  -          -           -
-                             beta       0          19          -
-                             edge       ^          ^           -
-            \x1b[0;32mThe 'stable', 'beta' and 'edge' channels are now open.\x1b[0m"""
-                )
-            ),
-        )  # noqa
-        self.fake_store_release.mock.assert_called_once_with(
-            snap_name="nil-snap",
-            revision="19",
-            channels=["beta"],
-            progressive_key=None,
-            progressive_percentage=None,
-        )
-
-    def test_release_with_bad_channel_info(self):
-        self.fake_store_release.mock.return_value = {
-            "channel_map_tree": {
-                "latest": {
-                    "16": {
-                        "amd64": [
-                            {"channel": "stable", "info": "fake-bad-channel-info"},
-                            {"channel": "candidate", "info": "none"},
-                            {
-                                "revision": 19,
-                                "channel": "beta",
-                                "version": "0",
-                                "info": "specific",
-                            },
-                            {"channel": "edge", "info": "tracking"},
-                        ]
-                    }
-                }
-            }
-        }
-
-        result = self.run_command(["release", "nil-snap", "19", "beta"])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        self.fake_store_release.mock.assert_called_once_with(
-            snap_name="nil-snap",
-            revision="19",
-            channels=["beta"],
-            progressive_key=None,
-            progressive_percentage=None,
-        )
-
-        # output will include the channel with no info, but there will be a log
-        # in error alerting the problem
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable
-                             candidate  -          -           -
-                             beta       0          19          -
-                             edge       ^          ^           -"""
-                )
-            ),
-        )
-        self.assertThat(
-            result.output,
-            Contains(
-                "Unexpected channel info: 'fake-bad-channel-info' in channel stable"
-            ),
+            channels=["2.1/stable/hotfix1"],
+            progressive_percentage=80,
         )
 
     def test_release_without_login_must_ask(self):
         self.fake_store_release.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
-            {
-                "opened_channels": ["beta"],
-                "channel_map_tree": {
-                    "latest": {
-                        "16": {
-                            "amd64": [
-                                {"channel": "stable", "info": "none"},
-                                {"channel": "candidate", "info": "none"},
-                                {
-                                    "revision": 19,
-                                    "channel": "beta",
-                                    "version": "0",
-                                    "info": "specific",
-                                },
-                                {"channel": "edge", "info": "tracking"},
-                            ]
-                        }
-                    }
-                },
-            },
+            {"opened_channels": ["beta"]},
         ]
 
         result = self.run_command(

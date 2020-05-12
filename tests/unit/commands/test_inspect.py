@@ -19,9 +19,10 @@ import os
 import re
 import textwrap
 
+import fixtures
 from testtools.matchers import Contains, Equals, MatchesRegex
-import snapcraft.internal.errors
 
+import snapcraft.internal.errors
 from . import CommandBaseTestCase
 
 
@@ -100,6 +101,18 @@ class InspectProvidesCommandTest(CommandBaseTestCase):
             )
         )
 
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
+
         self.run_command(["prime"])
 
     def test_inspect_provides(self):
@@ -175,6 +188,18 @@ class InspectLatestStepTest(CommandBaseTestCase):
             )
         )
 
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
+
     def test_inspect_latest_step(self):
         self.run_command(["pull"])
         self.run_command(["build", "part1"])
@@ -237,6 +262,18 @@ class InspectLifecycleStatusTest(CommandBaseTestCase):
 
         os.mkdir("src1")
         os.mkdir("src2")
+
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
 
     def test_inspect_lifecycle_status(self):
         self.run_command(["pull"])

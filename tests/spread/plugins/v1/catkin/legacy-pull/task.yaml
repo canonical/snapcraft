@@ -1,0 +1,48 @@
+# The legacy tests intermittently fail when the backend is GCE, setting to
+# manual until we can properly address the issue.
+manual: true
+summary: |
+  Minimally ensure the plugin works without bases by running pull.
+  The plugin can be tested without bases in full through the legacy release of
+  snapcraft.
+warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/ros-talker-listener
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  clear_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  cd "$SNAP_DIR"
+  # Legacy requires the rosdistro to be specified
+  echo "    rosdistro: kinetic" >> snap/snapcraft.yaml
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+# On failure print out the apt-config to ensure repository
+# failures are not related to original release image modifications
+# for a given series.
+debug: |
+  apt-config dump
+
+# ROS Kinetic only supports 16.04
+systems:
+   - ubuntu-16.04
+   - ubuntu-16.04-64
+   - ubuntu-16.04-amd64
+   - ubuntu-16.04-arm64
+   - ubuntu-16.04-armhf
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft pull

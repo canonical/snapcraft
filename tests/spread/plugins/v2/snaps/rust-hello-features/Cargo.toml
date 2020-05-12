@@ -1,0 +1,10 @@
+[package]
+name = "rust-hello-features"
+version = "1.0.0"
+
+[features]
+conditional-feature-present = []
+conditional-feature-missing = []
+
+[dependencies]
+log = "*"

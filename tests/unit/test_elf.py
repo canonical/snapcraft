@@ -539,3 +539,80 @@ class HandleGlibcTestCase(unit.TestCase):
             root_path=self.path,
             snap_base_path="/snap/snap-name/current",
         )
+
+
+class LddParsingTests(unit.TestCase):
+    scenarios = [
+        (
+            "ubuntu 20.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007ffcae3e6000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f33eebeb000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007f33eedf2000)
+""",
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 18.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007fffeddd1000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007fe500619000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fe500228000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fe500a44000)
+""",
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+        (
+            "ubuntu 16.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007ffd71d64000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fda33a16000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fda33de0000)
+    """,
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 16.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007fff305b3000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007faef225c000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007faef1e92000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007faef2473000)
+    """,
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+    ]
+
+    def test_scenario(self):
+        def fake_abspath(path):
+            return path
+
+        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
+        self.useFixture(fixtures.MockPatch("os.path.abspath", side_effect=fake_abspath))
+        self.useFixture(
+            fixtures.MockPatch(
+                "subprocess.check_output", return_value=self.ldd_output.encode()
+            )
+        )
+
+        libraries = elf.ldd(path="/bin/foo", ld_library_paths=[])
+
+        self.assertThat(libraries, Equals(self.expected))

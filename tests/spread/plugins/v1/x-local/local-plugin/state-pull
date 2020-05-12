@@ -1,0 +1,32 @@
+!PullState
+assets:
+  build-packages: !!set {}
+  build-snaps: !!set {}
+  source-details: null
+  stage-packages: []
+extracted_metadata:
+  files: []
+  metadata: !ExtractedMetadata
+    _data: {}
+    common_id_list: []
+project_options:
+  deb_arch: @EXPECTED_ARCHITECTURE@
+properties:
+  foo: null
+  override-pull: snapcraftctl pull
+  parse-info: []
+  plugin: x-local-plugin
+  source: .
+  source-branch: ''
+  source-commit: ''
+  source-depth: 0
+  source-subdir: ''
+  source-tag: ''
+  source-type: ''
+  stage-packages: []
+schema_properties:
+- foo
+- stage-packages
+scriptlet_metadata: !ExtractedMetadata
+  _data: {}
+  common_id_list: []

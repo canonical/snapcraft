@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2017, 2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -336,8 +336,9 @@ def _get_version():
 # Set this early so that the circular imports aren't too painful
 __version__ = _get_version()
 
-
-from snapcraft._baseplugin import BasePlugin  # noqa
+# For backwards compatibility with external plugins.
+import snapcraft._legacy_loader  # noqa: F401
+from snapcraft.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401
 
 # FIXME LP: #1662658
 from snapcraft._store import (  # noqa
@@ -349,11 +350,10 @@ from snapcraft._store import (  # noqa
     list_keys,
     list_registered,
     login,
-    push,
-    push_metadata,
+    upload,
+    upload_metadata,
     register,
     register_key,
-    release,
     sign_build,
     status,
     validate,

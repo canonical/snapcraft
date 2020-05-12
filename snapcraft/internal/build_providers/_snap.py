@@ -311,14 +311,14 @@ class SnapInjector:
         self._remote_snap_dir = "/var/tmp"
 
     def _disable_and_wait_for_refreshes(self) -> None:
-        # Disable autorefresh for 15 minutes,
-        # https://github.com/snapcore/snapd/pull/5436/files
-        now_plus_15 = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        # Disable autorefresh for 1 day.
+        hold_time = datetime.datetime.now() + datetime.timedelta(days=1)
         logger.debug("Holding refreshes for snaps.")
         self._runner(
-            ["snap", "set", "core", "refresh.hold={}Z".format(now_plus_15.isoformat())],
+            ["snap", "set", "system", "refresh.hold={}Z".format(hold_time.isoformat())],
             hide_output=True,
         )
+
         # Auto refresh may have kicked in while setting the hold.
         logger.debug("Waiting for pending snap auto refreshes.")
         with contextlib.suppress(errors.ProviderExecError):

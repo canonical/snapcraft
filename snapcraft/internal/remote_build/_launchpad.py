@@ -159,7 +159,7 @@ class LaunchpadClient:
 
         logger.debug("Downloading artifacts...")
         for build in builds:
-            self._download_snap(build)
+            self._download_build_artifacts(build)
             self._download_log(build)
 
     def _get_builds_collection_entry(self, snap: Entry) -> Optional[Entry]:
@@ -389,10 +389,13 @@ class LaunchpadClient:
     def _download_log(self, build: Dict[str, Any]) -> None:
         url = build["build_log_url"]
         arch = build["arch_tag"]
-        log_name = self._get_logfile_name(arch)
-        self._download_file(url=url, dst=log_name, gunzip=True)
+        if url is None:
+            logger.info(f"No build log available for {arch!r}.")
+        else:
+            log_name = self._get_logfile_name(arch)
+            self._download_file(url=url, dst=log_name, gunzip=True)
+            logger.info(f"Build log available at {log_name!r}")
 
-        logger.info(f"Build log available at {log_name!r}")
         if _is_build_status_failure(build):
             logger.error(f"Build failed for arch {arch!r}.")
 
@@ -409,7 +412,7 @@ class LaunchpadClient:
         except urllib.error.HTTPError as e:
             logger.error(f"Error downloading {url}: {e.reason}")
 
-    def _download_snap(self, build: Dict[str, Any]) -> None:
+    def _download_build_artifacts(self, build: Dict[str, Any]) -> None:
         arch = build["arch_tag"]
         snap_build = self._lp_load_url(build["self_link"])
         urls = snap_build.getFileUrls()
@@ -419,15 +422,14 @@ class LaunchpadClient:
             return
 
         for url in urls:
-            snap_name = _get_url_basename(url)
+            file_name = _get_url_basename(url)
 
-            # Sanity check file name.
-            if not snap_name.endswith("_{}.snap".format(arch)):
-                logger.info("Skipping unknown artifact: {url}")
-                continue
+            self._download_file(url=url, dst=file_name)
 
-            self._download_file(url=url, dst=snap_name)
-            logger.info("Snapped {}".format(snap_name))
+            if file_name.endswith(".snap"):
+                logger.info(f"Snapped {file_name}")
+            else:
+                logger.info(f"Fetched {file_name}")
 
     def _gitify_repository(self, repo_dir: str) -> Git:
         """Git-ify source repository tree.

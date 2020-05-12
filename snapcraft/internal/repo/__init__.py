@@ -16,10 +16,6 @@
 
 """Operations with platform specific package repositories."""
 
-import contextlib
-import shutil
-
-from snapcraft.internal.errors import MissingCommandError
 from . import errors  # noqa
 from . import snaps  # noqa
 from . import _platform
@@ -31,19 +27,3 @@ if _platform._is_deb_based():
     from ._deb import Ubuntu  # noqa
 
 Repo = _platform._get_repo_for_platform()
-
-
-def check_for_command(command):
-    if not shutil.which(command):
-        raise MissingCommandError(command)
-
-
-def get_pkg_name_parts(pkg_name):
-    """Break package name into base parts"""
-
-    name = pkg_name
-    version = None
-    with contextlib.suppress(ValueError):
-        name, version = pkg_name.split("=")
-
-    return name, version

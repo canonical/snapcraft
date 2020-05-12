@@ -1,0 +1,25 @@
+summary: Build a snap that is missing a library dependency
+
+environment:
+  SNAP_DIR: snaps/missing-lib
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  output="$(snapcraft)"
+
+  echo "$output" | MATCH "The 'pciutils' part is missing libraries that are not included in the snap or base."
+  echo "$output" | MATCH -- "- libpci3"

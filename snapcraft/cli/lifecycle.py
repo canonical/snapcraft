@@ -24,9 +24,7 @@ import click
 
 from . import echo
 from ._command import SnapcraftProjectCommand
-from ._config import enable_snapcraft_config_file
 from ._options import (
-    add_build_options,
     add_provider_options,
     apply_host_provider_flags,
     get_build_provider,
@@ -61,21 +59,21 @@ def _execute(  # noqa: C901
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
-    **kwargs
+    **kwargs,
 ) -> "Project":
     # Cleanup any previous errors.
     _clean_provider_error()
 
     build_provider = get_build_provider(**kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    apply_host_provider_flags(build_provider_flags)
+
     is_managed_host = build_provider == "managed-host"
 
     project = get_project(is_managed_host=is_managed_host, **kwargs)
-    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
-
     conduct_project_sanity_check(project)
 
     if build_provider in ["host", "managed-host"]:
-        apply_host_provider_flags(build_provider_flags)
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
@@ -139,7 +137,7 @@ def _execute(  # noqa: C901
 
 def _pack(directory: str, *, output: Optional[str]) -> None:
     snap_name = lifecycle.pack(directory, output)
-    echo.info("Snapped {}".format(snap_name))
+    echo.info(f"Snapped {snap_name!r}")
 
 
 def _clean_provider_error() -> None:
@@ -158,7 +156,6 @@ def _retrieve_provider_error(instance) -> None:
 
 
 @click.group()
-@add_build_options()
 @add_provider_options()
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
@@ -166,7 +163,6 @@ def lifecyclecli(ctx, **kwargs):
 
 
 @lifecyclecli.command()
-@enable_snapcraft_config_file()
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
@@ -178,9 +174,7 @@ def init():
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
 @click.pass_context
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def pull(ctx, parts, **kwargs):
@@ -196,8 +190,6 @@ def pull(ctx, parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -213,8 +205,6 @@ def build(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -230,8 +220,6 @@ def stage(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -247,8 +235,6 @@ def prime(parts, **kwargs):
 
 
 @lifecyclecli.command("try")
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 def try_command(**kwargs):
     """Try a snap on the host, priming if necessary.
@@ -266,8 +252,6 @@ def try_command(**kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -286,7 +270,7 @@ def snap(directory, output, **kwargs):
         deprecations.handle_deprecation_notice("dn6")
         _pack(directory, output=output)
     else:
-        _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
+        _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
@@ -308,7 +292,6 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
 @click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -329,6 +312,8 @@ def clean(ctx, parts, unprime, step, **kwargs):
 
     build_provider = get_build_provider(**kwargs)
     build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    apply_host_provider_flags(build_provider_flags)
+
     is_managed_host = build_provider == "managed-host"
 
     try:
@@ -341,7 +326,6 @@ def clean(ctx, parts, unprime, step, **kwargs):
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     if build_provider in ["host", "managed-host"]:
-        apply_host_provider_flags(build_provider_flags)
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
