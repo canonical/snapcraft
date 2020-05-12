@@ -1,6 +1,6 @@
 name: local-plugin-from-nil-hello
 base: core20
-version: "0.1"
+version: "1.0"
 summary: local plugin in snap/plugins
 description: derived from existing plugin (nil)
 confinement: strict
