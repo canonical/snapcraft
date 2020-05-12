@@ -343,7 +343,13 @@ class LXD(Provider):
         was_cleaned = super().clean_project()
         if was_cleaned:
             if self._container is None:
-                self._container = self._lxd_client.containers.get(self.instance_name)
+                try:
+                    self._container = self._lxd_client.containers.get(
+                        self.instance_name
+                    )
+                except pylxd.exceptions.NotFound:
+                    # If no container found, nothing to delete.
+                    return was_cleaned
             self._stop()
             self._container.delete(wait=True)
         return was_cleaned
