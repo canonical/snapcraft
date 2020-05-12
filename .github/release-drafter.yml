@@ -12,9 +12,9 @@ categories:
     label:
       - "specification"
       - "doc"
-  - title: "Project Health"
+  - title: "Tooling"
     label:
-      - "project-health"
+      - "tooling"
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 template: |
   Special thanks to the contributors that made this release happen: $CONTRIBUTORS
