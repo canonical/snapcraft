@@ -94,9 +94,11 @@ def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
         for attr in vars(module).values():
             if not isinstance(attr, type):
                 continue
-            if not issubclass(attr, plugins.v1.PluginV1):
+            if not issubclass(attr, plugins.v1.PluginV1) and not issubclass(
+                attr, plugins.v2.PluginV2
+            ):
                 continue
-            if attr == plugins.v1.PluginV1:
+            if attr == plugins.v1.PluginV1 or attr == plugins.v2.PluginV2:
                 continue
             return attr
         else:
