@@ -298,10 +298,10 @@ class ElfFile:
         self.elf_type: str = "ET_NONE"
 
         try:
-            logger.debug("Extracting ELF attributes:", path)
+            logger.debug(f"Extracting ELF attributes: {path}")
             self._extract_attributes()
         except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
-            logger.debug("Extracting ELF attributes exception: ", str(exception))
+            logger.debug(f"Extracting ELF attributes exception: {str(exception)}")
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
