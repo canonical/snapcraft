@@ -49,7 +49,7 @@ class SnapCache(SnapcraftProjectCache):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_filename,
                     "-e",
-                    # cygwin unsquashfs uses unix paths
+                    # cygwin unsquashfs uses unix paths.
                     Path("meta", "snap.yaml").as_posix(),
                 ]
             )
