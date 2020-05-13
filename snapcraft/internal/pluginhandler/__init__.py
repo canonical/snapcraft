@@ -36,7 +36,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
-from ._part_build_environment import get_snapcraft_build_environment
+from ._part_build_environment import get_snapcraft_part_environment
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
@@ -123,10 +123,10 @@ class PluginHandler:
 
         if isinstance(plugin, plugins.v2.PluginV2):
             build_step_run_callable = self._do_v2_build
-            build_env_generator = self._generate_build_env
+            env_generator = self._generate_part_env
         else:
             build_step_run_callable = self.plugin.build
-            build_env_generator = common.assemble_env
+            env_generator = common.assemble_env
             self._migrate_state_file()
 
         self._runner = Runner(
@@ -136,7 +136,7 @@ class PluginHandler:
             builddir=self.part_build_dir,
             stagedir=self._project.stage_dir,
             primedir=self._project.prime_dir,
-            build_env_generator=build_env_generator,
+            env_generator=env_generator,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
                 steps.BUILD.name: build_step_run_callable,
@@ -598,7 +598,7 @@ class PluginHandler:
 
         self._do_build(update=True)
 
-    def _generate_build_env(self) -> str:
+    def _generate_part_env(self) -> str:
         """
         Generates an environment suitable to run during a step.
 
@@ -608,7 +608,7 @@ class PluginHandler:
             raise RuntimeError("PluginV1 not supported.")
 
         # Snapcraft's say.
-        snapcraft_build_environment = get_snapcraft_build_environment(self)
+        snapcraft_build_environment = get_snapcraft_part_environment(self)
 
         # Plugin's say.
         plugin_build_environment = self.plugin.get_build_environment()
@@ -649,7 +649,7 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_build_env(), file=run_file)
+            print(self._generate_part_env(), file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)

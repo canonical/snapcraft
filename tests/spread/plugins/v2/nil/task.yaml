@@ -1,4 +1,6 @@
-summary: Build a nil snap
+summary: >-
+  Build a nil snap running each step and verifying the
+  environment is correct
 
 environment:
   SNAP_DIR: ../snaps/nil-basic
@@ -15,14 +17,45 @@ execute: |
       find "$1" ! -path "$1" -printf '%P\n' | sort | xargs
   }
 
-  cd "$SNAP_DIR"
-  # Validate build-environment from the plugin makes it
-  # to override-build.
-  snapcraft build | MATCH "foo=bar"
+  verify_env()
+  {
+      output="$1"
 
-  # Go all the way to prime, this will test going over the
-  # pull and build steps again.
-  snapcraft prime
+      echo "$output" | MATCH "SNAPCRAFT_PART_SRC="
+      echo "$output" | MATCH "SNAPCRAFT_PART_BUILD="
+      echo "$output" | MATCH "SNAPCRAFT_PART_INSTALL="
+
+      echo "$output" | MATCH "SNAPCRAFT_STAGE="
+      echo "$output" | MATCH "SNAPCRAFT_PRIME="
+
+      echo "$output" | MATCH "SNAPCRAFT_ARCH_TRIPLET="
+      echo "$output" | MATCH "SNAPCRAFT_PARALLEL_BUILD_COUNT="
+
+      echo "$output" | MATCH "SNAPCRAFT_PROJECT_NAME="
+      echo "$output" | MATCH "SNAPCRAFT_PROJECT_VERSION="
+      echo "$output" | MATCH "SNAPCRAFT_PROJECT_DIR="
+
+      echo "$output" | MATCH "SNAPCRAFT_EXTENSIONS_DIR="
+
+      echo "$output" | MATCH "foo=bar"
+  }
+
+  cd "$SNAP_DIR"
+
+  # Unset developer debug for easier match failure inspections.
+  unset SNAPCRAFT_ENABLE_DEVELOPER_DEBUG
+
+  pull_output=$(snapcraft pull)
+  verify_env "$pull_output"
+
+  build_output=$(snapcraft build)
+  verify_env "$build_output"
+
+  stage_output=$(snapcraft stage)
+  verify_env "$stage_output"
+
+  prime_output=$(snapcraft prime)
+  verify_env "$prime_output"
 
   # Verify that the only thing here is the snap metadata
   [ "$(list_dir_contents prime)" = "meta meta/snap.yaml snap snap/manifest.yaml snap/snapcraft.yaml" ]

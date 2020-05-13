@@ -22,7 +22,7 @@ import sys
 import tempfile
 import textwrap
 import time
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 from snapcraft.internal import common, errors
 
@@ -43,7 +43,7 @@ class Runner:
         stagedir: str,
         primedir: str,
         builtin_functions: Dict[str, Callable[..., None]],
-        build_env_generator: Callable[..., str],
+        env_generator: Callable[..., str],
     ) -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
@@ -54,8 +54,8 @@ class Runner:
         :param str primedir: The priming area.
         :param dict builtin_functions: Dict of builtin function names to
                                        actual callables.
-        :param str build_env_generator: a callable to provide the build
-                                        environment.
+        :param str env_generator: a callable to provide environment settings
+                                  for the part.
         """
         self._partdir = partdir
         self._sourcedir = sourcedir
@@ -63,7 +63,7 @@ class Runner:
         self._stagedir = stagedir
         self._primedir = primedir
         self._builtin_functions = builtin_functions
-        self._build_env_generator = build_env_generator
+        self._env_generator = env_generator
 
         self._override_pull_scriptlet = part_properties.get("override-pull")
         self._override_build_scriptlet = part_properties.get("override-build")
@@ -81,10 +81,7 @@ class Runner:
         """Run override-build scriptlet."""
         if self._override_build_scriptlet:
             self._run_scriptlet(
-                "override-build",
-                self._override_build_scriptlet,
-                self._builddir,
-                env_generator=self._build_env_generator,
+                "override-build", self._override_build_scriptlet, self._builddir
             )
 
     def stage(self) -> None:
@@ -106,14 +103,17 @@ class Runner:
         scriptlet_name: str,
         scriptlet: str,
         workdir: str,
-        env_generator: Callable[..., str] = common.assemble_env,
+        env_generator: Optional[Callable[..., str]] = None,
     ) -> None:
+        if env_generator is None:
+            env_generator = self._env_generator
+
         if common.is_snap():
             # Since the snap is classic, there is no $PATH pointing into the snap, which
             # means snapcraftctl won't be found. We can't use aliases since they don't
             # persist into subshells. However, we know that snapcraftctl lives in its own
             # directory, so adding that to the PATH should have no ill side effects.
-            snapcraftctl_env = 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"\n'
+            snapcraftctl_env = 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"'
         else:
             snapcraftctl_env = ""
 
@@ -131,7 +131,9 @@ class Runner:
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
                 {snapcraftctl_env}
+
                 {env}
+
                 {scriptlet}"""
             ).format(
                 interpreter=sys.executable,
