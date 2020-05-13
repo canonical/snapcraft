@@ -60,7 +60,7 @@ def _get_data_from_snap_file(snap_path):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_path,
                     "-e",
-                    # cygwin unsquashfs on windows uses unix paths
+                    # cygwin unsquashfs on windows uses unix paths.
                     Path("meta", "snap.yaml").as_posix(),
                 ]
             )
