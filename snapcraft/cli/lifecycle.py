@@ -337,7 +337,7 @@ def clean(ctx, parts, unprime, step, **kwargs):
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host, unless on Windows
+            # Clear the prime directory on the host, unless on Windows.
             if sys.platform != "win32":
                 lifecycle.clean(project, parts, steps.PRIME)
 
