@@ -657,7 +657,7 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_part_env(), file=run_file)
+            print(self._generate_part_env(steps.BUILD), file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
