@@ -1081,7 +1081,7 @@ def validate(snap_name, validations, revoke=False, key=None):
         with open(fname, "wb") as f:
             f.write(assertion)
 
-            store_client.push_assertion(snap_id, assertion, endpoint="validations")
+        store_client.push_assertion(snap_id, assertion, endpoint="validations")
 
 
 validation_re = re.compile("^[^=]+=[0-9]+$")
