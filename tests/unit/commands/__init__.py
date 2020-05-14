@@ -282,10 +282,10 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             "url": "/fake/url",
             "revision": 9,
         }
-        self.fake_store_push_precheck = fixtures.MockPatchObject(
-            storeapi.StoreClient, "push_precheck"
+        self.fake_store_upload_precheck = fixtures.MockPatchObject(
+            storeapi.StoreClient, "upload_precheck"
         )
-        self.useFixture(self.fake_store_push_precheck)
+        self.useFixture(self.fake_store_upload_precheck)
 
         self.fake_store_upload = fixtures.MockPatchObject(
             storeapi.StoreClient, "upload", return_value=self.mock_tracker

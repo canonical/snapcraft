@@ -169,8 +169,8 @@ class StoreClient:
             series=DEFAULT_SERIES,
         )
 
-    def push_precheck(self, snap_name):
-        return self._refresh_if_necessary(self.sca.snap_push_precheck, snap_name)
+    def upload_precheck(self, snap_name):
+        return self._refresh_if_necessary(self.sca.snap_upload_precheck, snap_name)
 
     def push_snap_build(self, snap_id, snap_build):
         return self._refresh_if_necessary(self.sca.push_snap_build, snap_id, snap_build)
@@ -196,7 +196,7 @@ class StoreClient:
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
         return self._refresh_if_necessary(
-            self.sca.snap_push_metadata,
+            self.sca.snap_upload_metadata,
             snap_name,
             updown_data,
             delta_format=delta_format,
@@ -352,8 +352,8 @@ class StoreClient:
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
 
-    def push_metadata(self, snap_name, metadata, force):
-        """Push the metadata to the server."""
+    def upload_metadata(self, snap_name, metadata, force):
+        """Upload the metadata to the server."""
         account_info = self.get_account_information()
         try:
             snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
@@ -364,11 +364,11 @@ class StoreClient:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
-            self.sca.push_metadata, snap_id, snap_name, metadata, force
+            self.sca.upload_metadata, snap_id, snap_name, metadata, force
         )
 
-    def push_binary_metadata(self, snap_name, metadata, force):
-        """Push the binary metadata to the server."""
+    def upload_binary_metadata(self, snap_name, metadata, force):
+        """Upload the binary metadata to the server."""
         account_info = self.get_account_information()
         try:
             snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
@@ -379,5 +379,5 @@ class StoreClient:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
-            self.sca.push_binary_metadata, snap_id, snap_name, metadata, force
+            self.sca.upload_binary_metadata, snap_id, snap_name, metadata, force
         )

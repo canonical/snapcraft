@@ -26,8 +26,8 @@ from snapcraft import file_utils, storeapi, internal
 from snapcraft.internal import review_tools
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
-    StorePushError,
     StoreUploadError,
+    StoreUpDownError,
 )
 import tests
 from . import FakeStoreCommandsBaseTestCase
@@ -177,7 +177,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
     def test_upload_without_login_must_ask(self):
-        self.fake_store_push_precheck.mock.side_effect = [
+        self.fake_store_upload_precheck.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
             None,
         ]
@@ -222,8 +222,8 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
                     ]
                 )
 
-        self.fake_store_push_precheck.mock.side_effect = [
-            StorePushError("basic", MockResponse()),
+        self.fake_store_upload_precheck.mock.side_effect = [
+            StoreUploadError("basic", MockResponse()),
             None,
         ]
 
@@ -252,13 +252,15 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
                     ]
                 )
 
-        self.fake_store_push_precheck.mock.side_effect = [
-            StorePushError("basic", MockResponse()),
+        self.fake_store_upload_precheck.mock.side_effect = [
+            StoreUploadError("basic", MockResponse()),
             None,
         ]
 
         raised = self.assertRaises(
-            storeapi.errors.StorePushError, self.run_command, ["upload", self.snap_file]
+            storeapi.errors.StoreUploadError,
+            self.run_command,
+            ["upload", self.snap_file],
         )
 
         self.assertThat(
@@ -274,15 +276,15 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
             text = "stub error"
             reason = "stub reason"
 
-        self.fake_store_upload.mock.side_effect = StoreUploadError(MockResponse())
+        self.fake_store_upload.mock.side_effect = StoreUpDownError(MockResponse())
 
         self.assertRaises(
-            storeapi.errors.StoreUploadError,
+            storeapi.errors.StoreUpDownError,
             self.run_command,
             ["upload", self.snap_file],
         )
 
-    def test_push_raises_deprecation_warning(self):
+    def test_upload_raises_deprecation_warning(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
