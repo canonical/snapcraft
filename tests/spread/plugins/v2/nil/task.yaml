@@ -38,11 +38,7 @@ execute: |
   verify_build_env()
   {
       output="$1"
-      if [ -n "$2" ]; then
-          match="MATCH $2"
-      else
-          match="MATCH"
-      fi
+      match="$2"
 
       echo "$output" | $match "SNAPCRAFT_PART_BUILD="
       echo "$output" | $match "SNAPCRAFT_PART_INSTALL="
@@ -52,11 +48,7 @@ execute: |
   verify_prime_env()
   {
       output="$1"
-      if [ -n "$2" ]; then
-          match="MATCH $2"
-      else
-          match="MATCH"
-      fi
+      match="$2"
 
       echo "$output" | $match "SNAPCRAFT_PRIME="
   }
@@ -68,23 +60,23 @@ execute: |
 
   pull_output=$(snapcraft pull)
   verify_env "$pull_output"
-  verify_build_env "$pull_output" -v
-  verify_prime_env "$pull_output" -v
+  verify_build_env "$pull_output" "MATCH -v"
+  verify_prime_env "$pull_output" "MATCH -v"
 
   build_output=$(snapcraft build)
   verify_env "$build_output"
-  verify_build_env "$build_output"
-  verify_prime_env "$build_output" -v
+  verify_build_env "$build_output" "MATCH"
+  verify_prime_env "$build_output" MATCH -v
 
   stage_output=$(snapcraft stage)
   verify_env "$stage_output"
-  verify_build_env "$stage_output" -v
-  verify_prime_env "$stage_output" -v
+  verify_build_env "$stage_output" "MATCH -v"
+  verify_prime_env "$stage_output" "MATCH -v"
 
   prime_output=$(snapcraft prime)
   verify_env "$prime_output"
-  verify_build_env "$prime_output" -v
-  verify_prime_env "$prime_output"
+  verify_build_env "$prime_output" "MATCH -v"
+  verify_prime_env "$prime_output" "MATCH"
 
   # Verify that the only thing here is the snap metadata
   [ "$(list_dir_contents prime)" = "meta meta/snap.yaml snap snap/manifest.yaml snap/snapcraft.yaml" ]
