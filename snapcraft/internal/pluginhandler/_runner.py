@@ -22,9 +22,9 @@ import sys
 import tempfile
 import textwrap
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
-from snapcraft.internal import common, errors
+from snapcraft.internal import common, errors, steps
 
 
 class Runner:
@@ -74,40 +74,45 @@ class Runner:
         """Run override-pull scriptlet."""
         if self._override_pull_scriptlet:
             self._run_scriptlet(
-                "override-pull", self._override_pull_scriptlet, self._sourcedir
+                "override-pull",
+                self._override_pull_scriptlet,
+                self._sourcedir,
+                steps.PULL,
             )
 
     def build(self) -> None:
         """Run override-build scriptlet."""
         if self._override_build_scriptlet:
             self._run_scriptlet(
-                "override-build", self._override_build_scriptlet, self._builddir
+                "override-build",
+                self._override_build_scriptlet,
+                self._builddir,
+                steps.BUILD,
             )
 
     def stage(self) -> None:
         """Run override-stage scriptlet."""
         if self._override_stage_scriptlet:
             self._run_scriptlet(
-                "override-stage", self._override_stage_scriptlet, self._stagedir
+                "override-stage",
+                self._override_stage_scriptlet,
+                self._stagedir,
+                steps.STAGE,
             )
 
     def prime(self) -> None:
         """Run override-prime scriptlet."""
         if self._override_prime_scriptlet:
             self._run_scriptlet(
-                "override-prime", self._override_prime_scriptlet, self._primedir
+                "override-prime",
+                self._override_prime_scriptlet,
+                self._primedir,
+                steps.PRIME,
             )
 
     def _run_scriptlet(
-        self,
-        scriptlet_name: str,
-        scriptlet: str,
-        workdir: str,
-        env_generator: Optional[Callable[..., str]] = None,
+        self, scriptlet_name: str, scriptlet: str, workdir: str, step: steps.Step
     ) -> None:
-        if env_generator is None:
-            env_generator = self._env_generator
-
         if common.is_snap():
             # Since the snap is classic, there is no $PATH pointing into the snap, which
             # means snapcraftctl won't be found. We can't use aliases since they don't
@@ -141,7 +146,7 @@ class Runner:
                 feedback_fifo=feedback_fifo.path,
                 scriptlet=scriptlet,
                 snapcraftctl_env=snapcraftctl_env,
-                env=env_generator(),
+                env=self._env_generator(step),
             )
 
             with tempfile.TemporaryFile(mode="w+") as script_file:

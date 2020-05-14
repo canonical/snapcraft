@@ -14,17 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, Optional, TYPE_CHECKING
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common
+from snapcraft.internal import common, steps
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
     from . import PluginHandler
 
 
-def get_snapcraft_global_environment(project: "Project") -> Dict[str, str]:
+def get_snapcraft_global_environment(
+    project: "Project", include_prime: bool = True
+) -> Dict[str, str]:
+    """
+    Return a global environment for a part.
+
+    include_prime defaults to True for behaviour not to change when using
+    core and core18 bases.
+
+    :param Project project: the Snapcraft project instance.
+    :param bool include_prime: whether to include the prime directory in
+                               the results.
+    :returns: a dictionary with environment variables to apply.
+    :rtype: dict
+    """
     # The triple check is mostly for unit tests support until we completely
     # get rid of project.info.
     if project._snap_meta.name:
@@ -61,18 +75,30 @@ def get_snapcraft_global_environment(project: "Project") -> Dict[str, str]:
     }
 
 
-def get_snapcraft_part_directory_environment(part: "PluginHandler") -> Dict[str, str]:
-    return {
-        "SNAPCRAFT_PART_SRC": part.part_source_dir,
-        "SNAPCRAFT_PART_BUILD": part.part_build_dir,
-        "SNAPCRAFT_PART_INSTALL": part.part_install_dir,
-    }
+def get_snapcraft_part_directory_environment(
+    part: "PluginHandler", *, step: Optional[steps.Step] = None
+) -> Dict[str, str]:
+    env = {"SNAPCRAFT_PART_SRC": part.part_source_dir}
+
+    if step is None or step == steps.BUILD:
+        env.update(
+            {
+                "SNAPCRAFT_PART_BUILD": part.part_build_dir,
+                "SNAPCRAFT_PART_INSTALL": part.part_install_dir,
+            }
+        )
+
+    return env
 
 
-def get_snapcraft_part_environment(part: "PluginHandler") -> Dict[str, str]:
+def get_snapcraft_part_environment(
+    part: "PluginHandler", *, step: steps.Step
+) -> Dict[str, str]:
     """Return Snapcraft provided part environment."""
-    part_environment = get_snapcraft_global_environment(part._project)
-    part_environment.update(get_snapcraft_part_directory_environment(part))
+    part_environment = get_snapcraft_global_environment(
+        part._project, include_prime=step == steps.PRIME
+    )
+    part_environment.update(get_snapcraft_part_directory_environment(part, step=step))
 
     paths = [part.part_install_dir, part._project.stage_dir]
 

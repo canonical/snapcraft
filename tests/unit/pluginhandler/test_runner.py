@@ -61,7 +61,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.pull()
@@ -79,7 +79,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"pull": _fake_pull},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.pull()
@@ -99,7 +99,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -123,7 +123,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -141,7 +141,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"build": _fake_build},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -159,7 +159,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.stage()
@@ -177,7 +177,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"stage": _fake_stage},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.stage()
@@ -195,7 +195,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.prime()
@@ -213,7 +213,7 @@ class RunnerTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"prime": _fake_prime},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.prime()
@@ -246,7 +246,7 @@ class RunnerFailureTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -269,7 +269,7 @@ class RunnerFailureTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -285,7 +285,7 @@ class RunnerFailureTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -307,7 +307,7 @@ class RunnerFailureTestCase(unit.TestCase):
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"prime": _raise},
-            env_generator=lambda: "export FOO=BAR",
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         silent_popen = functools.partial(
