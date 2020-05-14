@@ -63,7 +63,7 @@ class CMakePluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    "cmake .",
+                    'cmake "${SNAPCRAFT_PART_SRC}"',
                     'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
                     'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
                 ]
@@ -85,7 +85,7 @@ class CMakePluginTest(TestCase):
             plugin.get_build_commands(),
             Equals(
                 [
-                    "cmake . "
+                    'cmake "${SNAPCRAFT_PART_SRC}" '
                     "-DVERBOSE=1 "
                     "-DCMAKE_INSTALL_PREFIX=/foo "
                     '-DCMAKE_SPACED_ARGS="foo bar" '
