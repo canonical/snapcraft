@@ -1,4 +1,6 @@
-summary: Build, rebuild and run hello.c with different plugin configurations
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
 
 environment:
   SNAP/autotools: autotools-hello
@@ -43,6 +45,8 @@ execute: |
   cd "../snaps/$SNAP"
 
   # Build what we have and verify the snap runs as expected.
+  snapcraft prime
+  snapcraft clean hello
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello world" ]
