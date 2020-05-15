@@ -45,7 +45,11 @@ execute: |
   cd "../snaps/$SNAP"
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft prime
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
+  # Clean the hello part, then build and run again.
   snapcraft clean hello
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
