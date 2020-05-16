@@ -457,7 +457,14 @@ class PipDownloadTest(PipCommandBaseTestCase):
     ]
 
     def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = ["download", "--disable-pip-version-check", "--dest", mock.ANY]
+        common_args = [
+            "download",
+            "--disable-pip-version-check",
+            "--dest",
+            mock.ANY,
+            "--find-links",
+            mock.ANY,
+        ]
         common_args.extend(*args)
         self.mock_run.assert_called_once_with(common_args, **kwargs)
 

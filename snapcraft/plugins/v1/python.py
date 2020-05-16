@@ -54,10 +54,11 @@ be preferred instead and no interpreter would be brought in through
 
 import collections
 import contextlib
+import glob
 import logging
 import os
 import re
-from shutil import which
+import shutil
 from textwrap import dedent
 from typing import List, Optional, Set
 
@@ -124,6 +125,7 @@ class PythonPlugin(PluginV1):
             "default": "python3",
             "enum": ["python2", "python3"],
         }
+        schema["properties"]["prebuilt-wheel-dir"] = {"type": "string", "default": ""}
         schema["anyOf"] = [{"required": ["source"]}, {"required": ["python-packages"]}]
 
         return schema
@@ -138,6 +140,7 @@ class PythonPlugin(PluginV1):
             "python-packages",
             "process-dependency-links",
             "python-version",
+            "prebuilt-wheel-dir",
         ]
 
     @property
@@ -332,6 +335,20 @@ class PythonPlugin(PluginV1):
         )
 
     def _download_project(self):
+
+        if self.options.prebuilt_wheel_dir:
+            srcdir = (
+                os.path.abspath(os.getcwd() + "/" + self.options.prebuilt_wheel_dir)
+                + "/*.whl"
+            )
+
+            # Make sure the destination directory exists
+            os.makedirs(self._pip._python_package_dir, exist_ok=True)
+
+            logger.info("Copying pre-built wheels from {}".format(srcdir))
+            for file in glob.glob(srcdir):
+                shutil.copy(file, self._pip._python_package_dir)
+
         constraints = self._get_normalized_property_set(
             "constraints", self.options.constraints
         )
@@ -475,7 +492,7 @@ def simple_env_bzr(bin_dir):
        """
     os.makedirs(bin_dir, exist_ok=True)
     bzr_bin = os.path.join(bin_dir, "bzr")
-    real_bzr_bin = which("bzr")
+    real_bzr_bin = shutil.which("bzr")
     if real_bzr_bin:
         exec_line = 'exec {} "$@"'.format(real_bzr_bin)
     else:

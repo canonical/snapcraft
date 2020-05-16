@@ -280,6 +280,8 @@ class Pip:
                 "--disable-pip-version-check",
                 "--dest",
                 self._python_package_dir,
+                "--find-links",
+                self._python_package_dir,
             ]
             + args
             + package_args,

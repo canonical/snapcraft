@@ -67,6 +67,7 @@ class PythonPluginBaseTest(PluginsV1BaseTestCase):
             python_version = "python3"
             python_packages = []
             process_dependency_links = False
+            prebuilt_wheel_dir = ""
 
         self.options = Options()
 
@@ -109,6 +110,7 @@ class PythonPluginPropertiesTest(unit.TestCase):
             "default": "python3",
             "enum": ["python2", "python3"],
         }
+        expected_prebuilt_wheel_dir = {"type": "string", "default": ""}
 
         self.assertDictEqual(
             expected_requirements, schema["properties"]["requirements"]
@@ -124,6 +126,9 @@ class PythonPluginPropertiesTest(unit.TestCase):
         self.assertDictEqual(
             expected_python_version, schema["properties"]["python-version"]
         )
+        self.assertDictEqual(
+            expected_prebuilt_wheel_dir, schema["properties"]["prebuilt-wheel-dir"]
+        )
 
     def test_get_pull_properties(self):
         expected_pull_properties = [
@@ -132,6 +137,7 @@ class PythonPluginPropertiesTest(unit.TestCase):
             "python-packages",
             "process-dependency-links",
             "python-version",
+            "prebuilt-wheel-dir",
         ]
         resulting_pull_properties = python.PythonPlugin.get_pull_properties()
 

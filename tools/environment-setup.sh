@@ -44,9 +44,12 @@ lxc exec snapcraft-dev -- apt install --yes \
     python3-pip \
     python3-venv \
     rpm2cpio \
-    squashfs-tools
+    squashfs-tools \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev
 
-# Create a virtual environment and set it as default 
+# Create a virtual environment and set it as default
 lxc exec snapcraft-dev -- sudo -iu ubuntu pyvenv .venv/snapcraft
 lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .profile"
@@ -59,6 +62,10 @@ if ! lxc config device show snapcraft-dev | grep -q snapcraft-project; then
     lxc config device add snapcraft-dev snapcraft-project disk \
         source="$PWD" path=/home/ubuntu/snapcraft
 fi
+
+# Update setuptools and wheel
+lxc exec snapcraft-dev -- sudo -iu ubuntu pip install -U setuptools
+lxc exec snapcraft-dev -- sudo -iu ubuntu pip install -U wheel
 
 # Install python dependencies
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install \
