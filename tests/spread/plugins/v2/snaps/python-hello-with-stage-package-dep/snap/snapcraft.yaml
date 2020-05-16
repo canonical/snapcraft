@@ -15,7 +15,7 @@ apps:
       PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
 
 parts:
-  python-part:
+  hello:
     source: .
     plugin: python
     stage-packages:

@@ -15,6 +15,6 @@ apps:
     command: bin/rust-hello
 
 parts:
-  rust-hello:
+  hello:
     plugin: rust
     source: .

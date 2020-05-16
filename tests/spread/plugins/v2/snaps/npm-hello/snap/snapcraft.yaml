@@ -17,7 +17,7 @@ apps:
       - network
 
 parts:
-  npm-part:
+  hello:
     source: .
     plugin: npm
     npm-node-version: "12.16.2"

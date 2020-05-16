@@ -15,7 +15,7 @@ apps:
     command: usr/bin/hello
 
 parts:
-  autotools-project:
+  hello:
     plugin: autotools
     source: .
     autotools-configure-parameters:

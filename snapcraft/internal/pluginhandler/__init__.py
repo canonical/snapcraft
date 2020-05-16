@@ -777,10 +777,6 @@ class PluginHandler:
         }
 
     def clean_build(self):
-        # Only relevant for PluginV1.
-        if not isinstance(self.plugin, plugins.v1.PluginV1):
-            return
-
         if self.is_clean(steps.BUILD):
             return
 
