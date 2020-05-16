@@ -43,7 +43,7 @@ execute: |
   snapcraft build
 
   # Verify the changed source is reflected
-  if ! diff src/main.rs parts/rust-hello/src/src/main.rs; then
+  if ! diff src/main.rs parts/hello/src/src/main.rs; then
     echo "The source has not changed."
     exit 1
   fi
