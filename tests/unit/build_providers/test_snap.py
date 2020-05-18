@@ -121,7 +121,7 @@ class SnapInjectionTest(unit.TestCase):
             [
                 call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "ack", "/var/tmp/snapd.assert"]),
                 call(["snap", "install", "/var/tmp/snapd.snap"]),
                 call(["snap", "ack", "/var/tmp/core18.assert"]),
@@ -174,7 +174,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
@@ -237,7 +237,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "ack", "/var/tmp/core.assert"]),
                 call(["snap", "install", "/var/tmp/core.snap"]),
                 call(["snap", "ack", "/var/tmp/snapcraft.assert"]),
@@ -291,7 +291,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
@@ -335,7 +335,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "edge", "snapcraft"]
@@ -373,7 +373,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
@@ -395,7 +395,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
@@ -479,7 +479,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "refresh", "--channel", "stable", "core"]),
                 call(
                     ["snap", "refresh", "--classic", "--channel", "stable", "snapcraft"]
@@ -509,7 +509,7 @@ class SnapInjectionTest(unit.TestCase):
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),
-                call(["snap", "watch", "--last=auto-refresh"]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "install", "--channel", "stable", "core"]),
                 call(
                     ["snap", "install", "--classic", "--channel", "stable", "snapcraft"]
