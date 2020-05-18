@@ -17,6 +17,7 @@
 import collections
 import contextlib
 import copy
+import distutils
 import filecmp
 import io
 import logging
@@ -627,6 +628,12 @@ class PluginHandler:
         # Create the script.
         with io.StringIO() as run_environment:
             print("#!/bin/sh", file=run_environment)
+
+            if distutils.util.strtobool(
+                os.environ.get("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n")
+            ):
+                print("set -x", file=run_environment)
+
             print("set -e", file=run_environment)
 
             print("# Environment", file=run_environment)
