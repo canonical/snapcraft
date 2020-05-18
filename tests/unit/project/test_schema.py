@@ -166,6 +166,16 @@ class ValidationTest(ValidationBaseTest):
                 "daemon": "simple",
                 "install-mode": "disable",
             },
+            "service17": {
+                "command": "binary17",
+                "daemon": "simple",
+                "daemon-scope": "system",
+            },
+            "service18": {
+                "command": "binary18",
+                "daemon": "simple",
+                "daemon-scope": "user",
+            },
         }
 
         Validator(self.data).validate()
@@ -191,6 +201,26 @@ class ValidationTest(ValidationBaseTest):
                 "the required schema: 'on-tuesday' is not one of ['on-success', "
                 "'on-failure', 'on-abnormal', 'on-abort', 'on-watchdog', 'always', "
                 "'never']"
+            ),
+        )
+
+    def test_invalid_daemon_scope(self):
+        self.data["apps"] = {
+            "service1": {
+                "command": "binary1",
+                "daemon": "simple",
+                "daemon-scope": "europe",
+            }
+        }
+        raised = self.assertRaises(
+            snapcraft.yaml_utils.errors.YamlValidationError,
+            Validator(self.data).validate,
+        )
+        self.assertThat(
+            str(raised),
+            Contains(
+                "The 'apps/service1/daemon-scope' property does not match the "
+                "required schema: 'europe' is not one of ['system', 'user']"
             ),
         )
 
@@ -236,6 +266,7 @@ class ValidationTest(ValidationBaseTest):
         ("post-stop-command", "binary1 --post-stop"),
         ("before", ["service1"]),
         ("after", ["service2"]),
+        ("daemon-scope", "system"),
     ],
 )
 def test_daemon_dependency(data, option, value):
