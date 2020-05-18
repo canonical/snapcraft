@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import datetime
 import enum
 import logging
@@ -23,7 +22,6 @@ import tempfile
 from typing import Callable, List, Optional
 from typing import Any, Dict  # noqa: F401
 
-from . import errors
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import repo
 
@@ -321,8 +319,7 @@ class SnapInjector:
 
         # Auto refresh may have kicked in while setting the hold.
         logger.debug("Waiting for pending snap auto refreshes.")
-        with contextlib.suppress(errors.ProviderExecError):
-            self._runner(["snap", "watch", "--last=auto-refresh"], hide_output=True)
+        self._runner(["snap", "watch", "--last=auto-refresh?"], hide_output=True)
 
     def _enable_snapd_snap(self) -> None:
         # Required to not install the core snap when building using
