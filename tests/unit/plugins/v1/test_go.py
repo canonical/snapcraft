@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import jsonschema
 from unittest import mock
@@ -306,6 +307,9 @@ class GoPluginTest(GoPluginBaseTest):
         )
 
     def test_go_mod_requires_newer_go_version(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
         class Options:
             source = "dir"
             go_channel = "latest/stable"
@@ -320,12 +324,18 @@ class GoPluginTest(GoPluginBaseTest):
         os.makedirs(plugin.sourcedir)
         open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
 
-        self.assertRaises(go.GoModRequiredVersionError, plugin.pull)
+        plugin.pull()
 
         self.run_output_mock.assert_called_once_with(
             ["go", "version"], cwd=mock.ANY, env=mock.ANY
         )
-        self.run_mock.assert_not_called()
+        self.assertThat(
+            fake_logger.output,
+            Contains(
+                "Use of go.mod requires Go '1.13', found '1.6.4'. "
+                "Ensure you have the proper setup for older versions of go."
+            ),
+        )
 
     def test_no_local_source_with_go_packages(self):
         class Options:

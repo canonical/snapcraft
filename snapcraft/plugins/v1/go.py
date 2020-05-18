@@ -67,19 +67,6 @@ logger = logging.getLogger(__name__)
 _GO_MOD_REQUIRED_GO_VERSION = "1.13"
 
 
-class GoModRequiredVersionError(errors.SnapcraftException):
-    def __init__(self, *, go_version: str) -> None:
-        self._go_version = go_version
-
-    def get_brief(self) -> str:
-        return "Use of go.mod requires Go {!r} or greater, found: {!r}".format(
-            _GO_MOD_REQUIRED_GO_VERSION, self._go_version
-        )
-
-    def get_resolution(self) -> str:
-        return "Set go-channel to a newer version of Go and try again."
-
-
 def _get_cgo_ldflags(library_paths: List[str]) -> str:
     cgo_ldflags: List[str] = list()
 
@@ -179,7 +166,10 @@ class GoPlugin(PluginV1):
             self._go_version = version_match.group(1)
 
         if parse_version(self._go_version) < parse_version(_GO_MOD_REQUIRED_GO_VERSION):
-            raise GoModRequiredVersionError(go_version=self._go_version)
+            logger.warning(
+                f"Use of go.mod requires Go {_GO_MOD_REQUIRED_GO_VERSION!r}, found {self._go_version!r}. "
+                "Ensure you have the proper setup for older versions of go."
+            )
 
         return True
 
