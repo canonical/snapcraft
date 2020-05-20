@@ -14,7 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The go plugin can be used for go projects using `go get`.
+"""The go plugin can be used for go projects.
+
+The plugin supports Go Modules if a go.mod definition is found in the
+sources out of the box if the Go version used is 1.13 or greater.
+
+If using 1.11 or 1.12, enabling through environment flags is required.
+Read more about this at https://github.com/golang/go/wiki/Modules and
+the implementation will only install the binary corresponding to the
+main module.
+
+If a go.mod file is not found, the plugin will "go get".
 
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
@@ -47,13 +57,14 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Tags to use during the go build. Default is not to use any build tags.
 """
 
+import fileinput
 import logging
 import os
 import re
 import shutil
 from glob import iglob
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 from pkg_resources import parse_version
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from snapcraft import common
 from snapcraft.internal import elf, errors
@@ -64,7 +75,10 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-_GO_MOD_REQUIRED_GO_VERSION = "1.13"
+# The absolute minimum required go version (including one with flags set).
+_GO_MOD_REQUIRED_GO_VERSION = "1.11"
+# Go versions lower than this require the flag.
+_GO_MOD_ENV_FLAG_REQUIRED_GO_VERSION = "1.13"
 
 
 class GoModRequiredVersionError(errors.SnapcraftException):
@@ -151,7 +165,9 @@ class GoPlugin(PluginV1):
         self._gopath_pkg = os.path.join(self._gopath, "pkg")
 
         self._version_regex = re.compile(r"^go version go(.*) .*$")
-        self._go_version: Optional[str] = None
+        self._go_version: Optional[Tuple[str, ...]] = None
+
+        self._go_mod_warning_issued = False
 
     def _setup_base_tools(self, go_channel: str, base: Optional[str]) -> None:
         if go_channel:
@@ -161,25 +177,40 @@ class GoPlugin(PluginV1):
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
+    def _get_parsed_go_version(self) -> Tuple[str, ...]:
+        if self._go_version is not None:
+            return self._go_version
+
+        go_version_cmd_output: str = self._run_output(["go", "version"])
+        version_match = self._version_regex.match(go_version_cmd_output)
+
+        if version_match is None:
+            raise RuntimeError(
+                "Unable to parse go version output: {!r}".format(go_version_cmd_output)
+            )
+
+        self._go_version = parse_version(version_match.group(1))
+
+        return self._go_version
+
     def _is_using_go_mod(self, cwd: str) -> bool:
         if not os.path.exists(os.path.join(cwd, "go.mod")):
             return False
 
-        if self._go_version is None:
-            go_version_cmd_output: str = self._run_output(["go", "version"])
-            version_match = self._version_regex.match(go_version_cmd_output)
+        current_version = self._get_parsed_go_version()
 
-            if version_match is None:
-                raise RuntimeError(
-                    "Unable to parse go version output: {!r}".format(
-                        go_version_cmd_output
-                    )
-                )
+        if current_version < parse_version(_GO_MOD_REQUIRED_GO_VERSION):
+            raise GoModRequiredVersionError(go_version=str(self._go_version))
 
-            self._go_version = version_match.group(1)
-
-        if parse_version(self._go_version) < parse_version(_GO_MOD_REQUIRED_GO_VERSION):
-            raise GoModRequiredVersionError(go_version=self._go_version)
+        if not self._go_mod_warning_issued and current_version < parse_version(
+            _GO_MOD_ENV_FLAG_REQUIRED_GO_VERSION
+        ):
+            logger.warning(
+                "Ensure Go Module support is correct for this version of Go. "
+                "Read more about it at "
+                "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
+            )
+            self._go_mod_warning_issued = True
 
         return True
 
@@ -240,6 +271,19 @@ class GoPlugin(PluginV1):
         main_packages = [p[0] for p in packages_split if p[1] == "main"]
         return main_packages
 
+    def _get_module(self) -> str:
+        pattern = re.compile(r"module\s*(?P<module>.*)\s")
+        with fileinput.input(os.path.join(self.builddir, "go.mod")) as go_mod_file:
+            for line in go_mod_file:
+                match = pattern.search(line)
+                if match is not None:
+                    module = match.group("module")
+                    break
+            else:
+                raise RuntimeError("Expected a module in go.mod")
+
+        return os.path.basename(module)
+
     def _build(self, *, package: str = "") -> None:
         build_cmd = ["go", "build"]
 
@@ -250,15 +294,24 @@ class GoPlugin(PluginV1):
 
         if self._is_using_go_mod(self.builddir) and not package:
             work_dir = self.builddir
-            build_cmd.extend(["-o", self._install_bin_dir, "./..."])
-            relink_cmd.extend(["-o", self._install_bin_dir, "./..."])
+            build_type_args = ["-o"]
+
+            # go build ./... is not supported in go 1.11 or 1.12.
+            # This will only install the main module.
+            if self._get_parsed_go_version() < parse_version(
+                _GO_MOD_ENV_FLAG_REQUIRED_GO_VERSION
+            ):
+                build_type_args.append(
+                    os.path.join(self._install_bin_dir, self._get_module())
+                )
+            else:
+                build_type_args.extend([self._install_bin_dir, "./..."])
         else:
             work_dir = self._install_bin_dir
-            build_cmd.append(package)
-            relink_cmd.append(package)
+            build_type_args = [package]
 
         pre_build_files = os.listdir(self._install_bin_dir)
-        self._run(build_cmd, cwd=work_dir)
+        self._run(build_cmd + build_type_args, cwd=work_dir)
         post_build_files = os.listdir(self._install_bin_dir)
 
         new_files = set(post_build_files) - set(pre_build_files)
@@ -273,7 +326,7 @@ class GoPlugin(PluginV1):
             # able to set rpath later on. This workaround can be removed after
             # https://github.com/NixOS/patchelf/issues/146 is fixed.
             if self._is_classic and elf.ElfFile(path=binary_path).is_dynamic:
-                self._run(relink_cmd, cwd=work_dir)
+                self._run(relink_cmd + build_type_args, cwd=work_dir)
 
     def _build_go_packages(self) -> None:
         if self.options.go_packages:
