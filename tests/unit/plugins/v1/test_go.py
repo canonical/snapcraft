@@ -340,7 +340,7 @@ class GoPluginTest(GoPluginBaseTest):
         self.assertThat(
             fake_logger.output.strip(),
             Equals(
-                "Ensure Go Module support is correct for this version of Go. "
+                "Ensure build environment configuration is correct for this version of Go. "
                 "Read more about it at "
                 "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
             ),
@@ -708,7 +708,7 @@ class GoPluginTest(GoPluginBaseTest):
         self.assertThat(
             fake_logger.output.strip(),
             Equals(
-                "Ensure Go Module support is correct for this version of Go. "
+                "Ensure build environment configuration is correct for this version of Go. "
                 "Read more about it at "
                 "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
             ),

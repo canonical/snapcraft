@@ -17,7 +17,7 @@
 """The go plugin can be used for go projects.
 
 The plugin supports Go Modules if a go.mod definition is found in the
-sources out of the box if the Go version used is 1.13 or greater.
+root of the part's source the Go version used is 1.13 or greater.
 
 If using 1.11 or 1.12, enabling through environment flags is required.
 Read more about this at https://github.com/golang/go/wiki/Modules and
@@ -206,7 +206,7 @@ class GoPlugin(PluginV1):
             _GO_MOD_ENV_FLAG_REQUIRED_GO_VERSION
         ):
             logger.warning(
-                "Ensure Go Module support is correct for this version of Go. "
+                "Ensure build environment configuration is correct for this version of Go. "
                 "Read more about it at "
                 "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
             )
