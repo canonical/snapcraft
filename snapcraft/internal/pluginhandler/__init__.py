@@ -36,7 +36,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
-from ._part_build_environment import get_snapcraft_build_environment
+from ._part_environment import get_snapcraft_part_environment
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
@@ -122,11 +122,16 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
+            env_generator = self._generate_part_env
             build_step_run_callable = self._do_v2_build
-            build_env_generator = self._generate_build_env
         else:
+
+            def generate_part_env(step: steps.Step) -> str:
+                return common.assemble_env()
+
+            env_generator = generate_part_env
             build_step_run_callable = self.plugin.build
-            build_env_generator = common.assemble_env
+
             self._migrate_state_file()
 
         self._runner = Runner(
@@ -136,7 +141,7 @@ class PluginHandler:
             builddir=self.part_build_dir,
             stagedir=self._project.stage_dir,
             primedir=self._project.prime_dir,
-            build_env_generator=build_env_generator,
+            env_generator=env_generator,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
                 steps.BUILD.name: build_step_run_callable,
@@ -598,7 +603,7 @@ class PluginHandler:
 
         self._do_build(update=True)
 
-    def _generate_build_env(self) -> str:
+    def _generate_part_env(self, step: steps.Step) -> str:
         """
         Generates an environment suitable to run during a step.
 
@@ -608,10 +613,13 @@ class PluginHandler:
             raise RuntimeError("PluginV1 not supported.")
 
         # Snapcraft's say.
-        snapcraft_build_environment = get_snapcraft_build_environment(self)
+        snapcraft_build_environment = get_snapcraft_part_environment(self, step=step)
 
         # Plugin's say.
-        plugin_build_environment = self.plugin.get_build_environment()
+        if step == steps.BUILD:
+            plugin_environment = self.plugin.get_build_environment()
+        else:
+            plugin_environment = dict()
 
         # Part's (user) say.
         user_build_environment = self._part_properties["build-environment"]
@@ -626,7 +634,7 @@ class PluginHandler:
             for k, v in snapcraft_build_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## Plugin Environment", file=run_environment)
-            for k, v in plugin_build_environment.items():
+            for k, v in plugin_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## User Environment", file=run_environment)
             for env in user_build_environment:
@@ -649,7 +657,7 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_build_env(), file=run_file)
+            print(self._generate_part_env(steps.BUILD), file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
@@ -769,10 +777,6 @@ class PluginHandler:
         }
 
     def clean_build(self):
-        # Only relevant for PluginV1.
-        if not isinstance(self.plugin, plugins.v1.PluginV1):
-            return
-
         if self.is_clean(steps.BUILD):
             return
 

@@ -1197,7 +1197,7 @@ class StateTestCase(StateBaseTestCase):
     def test_pull_state_with_properties(self):
         self.get_pull_properties_mock.return_value = ["foo"]
         self.handler.plugin.options.foo = "bar"
-        self.handler._part_properties = {"foo": "bar"}
+        self.handler._part_properties["foo"] = "bar"
 
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
@@ -1478,7 +1478,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_stage_state_with_stage_keyword(self):
         self.handler.plugin.options.stage = ["bin/1"]
-        self.handler._part_properties = {"stage": ["bin/1"]}
+        self.handler._part_properties["stage"] = ["bin/1"]
 
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))

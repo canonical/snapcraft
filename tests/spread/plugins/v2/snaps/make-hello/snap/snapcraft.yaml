@@ -15,7 +15,7 @@ apps:
     command: bin/hello
 
 parts:
-  make-project:
+  hello:
     plugin: make
     make-parameters:
       - HELLO=1

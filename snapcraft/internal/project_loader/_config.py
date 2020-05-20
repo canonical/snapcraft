@@ -26,7 +26,7 @@ from typing import List, Set
 from snapcraft import plugins, project, formatting_utils
 from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.internal.meta.snap import Snap
-from snapcraft.internal.pluginhandler._part_build_environment import (
+from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
 from snapcraft.project._schema import Validator

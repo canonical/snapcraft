@@ -272,8 +272,8 @@ def _register_wrapper(method):
     def register_decorator(self, *args, snap_name: str, **kwargs):
         try:
             return method(self, *args, snap_name=snap_name, **kwargs)
-        except storeapi.errors.StorePushError as push_error:
-            if "resource-not-found" not in push_error.error_list:
+        except storeapi.errors.StoreUploadError as upload_error:
+            if "resource-not-found" not in upload_error.error_list:
                 raise
             echo.wrapped(
                 "You are required to register this snap before continuing. "
@@ -333,15 +333,15 @@ class StoreClientCLI(storeapi.StoreClient):
 
     @_login_wrapper
     @_register_wrapper
-    def push_precheck(self, *, snap_name: str) -> None:
-        return super().push_precheck(snap_name=snap_name)
+    def upload_precheck(self, *, snap_name: str) -> None:
+        return super().upload_precheck(snap_name=snap_name)
 
     @_login_wrapper
     @_register_wrapper
-    def push_metadata(
+    def upload_metadata(
         self, *, snap_name: str, metadata: Dict[str, str], force: bool
     ) -> Dict[str, Any]:
-        return super().push_metadata(
+        return super().upload_metadata(
             snap_name=snap_name, metadata=metadata, force=force
         )
 
@@ -653,11 +653,11 @@ def upload_metadata(snap_filename, force):
 
     # hit the server
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
-    store_client.push_metadata(snap_name=snap_name, metadata=metadata, force=force)
+    store_client.upload_precheck(snap_name=snap_name)
+    store_client.upload_metadata(snap_name=snap_name, metadata=metadata, force=force)
     with _get_icon_from_snap_file(snap_filename) as icon:
         metadata = {"icon": icon}
-        store_client.push_binary_metadata(snap_name, metadata, force)
+        store_client.upload_binary_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been uploaded")
 
@@ -681,7 +681,7 @@ def upload(snap_filename, release_channels=None):
         "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
+    store_client.upload_precheck(snap_name=snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
 
@@ -709,10 +709,10 @@ def upload(snap_filename, release_channels=None):
                 "Error generating delta: {}\n"
                 "Falling back to uploading full snap...".format(str(e))
             )
-        except storeapi.errors.StorePushError as push_error:
+        except storeapi.errors.StoreUploadError as upload_error:
             logger.warning(
                 "Unable to upload delta to store: {}\n"
-                "Falling back to uploading full snap...".format(push_error.error_list)
+                "Falling back to uploading full snap...".format(upload_error.error_list)
             )
 
     if result is None:
@@ -798,7 +798,7 @@ def _upload_delta(
         else:
             raise
     except storeapi.errors.StoreServerError as e:
-        raise storeapi.errors.StorePushError(snap_name, e.response)
+        raise storeapi.errors.StoreUploadError(snap_name, e.response)
     finally:
         if os.path.isfile(delta_filename):
             try:

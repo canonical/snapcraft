@@ -15,7 +15,7 @@ apps:
     command: usr/bin/cmake-hello
 
 parts:
-  cmake-project:
+  hello:
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr

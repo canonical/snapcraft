@@ -15,7 +15,7 @@ apps:
     command: bin/hello
 
 parts:
-  meson-project:
+  hello:
     source: .
     plugin: meson
     meson-version: "0.48.0"

@@ -14,7 +14,7 @@ apps:
     command: bin/go-build-tags
 
 parts:
-  go-build-tags:
+  hello:
     source: .
     plugin: go
     go-buildtags:
