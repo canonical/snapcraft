@@ -1,24 +1,25 @@
 summary: Build and run a basic Go snap using go.mod
 
 environment:
-  SNAP_DIR: ../snaps/go-mod-hello
+  SNAP/supported_go: go-mod-hello
+  SNAP/supported_go_with_env: go-mod-hello-with-env
   LANG: C.UTF-8
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  set_base "../snaps/${SNAP}/snap/snapcraft.yaml"
 
 restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  cd "$SNAP_DIR"
+  cd "../snaps/${SNAP}"
   snapcraft clean
   rm -f ./*.snap
   restore_yaml snap/snapcraft.yaml
 
 execute: |
-  cd "$SNAP_DIR"
+  cd "../snaps/${SNAP}"
 
   snapcraft
 
@@ -33,5 +34,5 @@ execute: |
     exit 1
   fi
 
-  sudo snap install go-mod-hello_*.snap --dangerous
-  [ "$(go-mod-hello)" = "hello world" ]
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$(${SNAP})" = "hello world" ]
