@@ -13,46 +13,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
+from snapcraft.storeapi.v2.channel_map import (
+    MappedChannel,
+    Progressive,
+    Revision,
+    SnapChannel,
+)
 from . import FakeStoreCommandsBaseTestCase
 
 
 class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.expected = {
-            "i386": [
-                {"info": "none", "channel": "stable"},
-                {"info": "none", "channel": "beta"},
-                {
-                    "info": "specific",
-                    "version": "1.0-i386",
-                    "channel": "edge",
-                    "revision": 3,
-                },
-            ],
-            "amd64": [
-                {
-                    "info": "specific",
-                    "version": "1.0-amd64",
-                    "channel": "stable",
-                    "revision": 2,
-                },
-                {
-                    "info": "specific",
-                    "version": "1.1-amd64",
-                    "channel": "beta",
-                    "revision": 4,
-                },
-                {"info": "tracking", "channel": "edge"},
-            ],
-        }
-
     def test_status_without_snap_raises_exception(self):
         result = self.run_command(["status"])
 
@@ -60,15 +36,10 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_status_without_login_must_ask(self):
-        self.fake_store_account_info.mock.side_effect = [
+        self.fake_store_get_snap_channel_map.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            self.channel_map,
         ]
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": self.expected}}
-        }
 
         result = self.run_command(
             ["status", "snap-test"], input="user@example.com\nsecret\n"
@@ -77,174 +48,197 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             result.output, Contains("You are required to login before continuing.")
         )
 
-    def test_status_with_3rd_party_snap(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError, self.run_command, ["status", "snap-test"]
-        )
-
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '16' series.")
-        )
-
-    def test_status_with_3rd_party_snap_by_arch(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--arch=arm64"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'arm64' was not found in '16' series."),
-        )
-
-    def test_status_with_3rd_party_snap_by_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--series=18"],
-        )
-
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '18' series.")
-        )
-
-    def test_status_by_unknown_arch(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--arch=some-arch"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'some-arch' was not found in '16' series."),
-        )
-
-    def test_status_by_unknown_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            ["status", "snap-test", "--series=some-series"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' was not found in 'some-series' series."),
-        )
-
     def test_status(self):
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": self.expected}}
-        }
-
         result = self.run_command(["status", "snap-test"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             result.output,
-            Contains(
+            Equals(
                 dedent(
                     """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     1.0-amd64  2           -
-                             beta       1.1-amd64  4           -
-                             edge       ^          ^           -
-                     i386    stable     -          -           -
-                             beta       -          -           -
-                             edge       1.0-i386   3           -"""
-                )
-            ),
-        )
-        self.fake_store_status.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
-        )
-
-    def test_status_by_arch(self):
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": {"i386": self.expected["i386"]}}}
-        }
-
-        result = self.run_command(["status", "snap-test", "--arch=i386"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   i386    stable     -          -           -
-                             beta       -          -           -
-                             edge       1.0-i386   3           -"""
-                )
-            ),
-        )
-        self.fake_store_status.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", "i386"
-        )
-
-    def test_status_by_series(self):
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": self.expected}}
-        }
-
-        result = self.run_command(["status", "snap-test", "--series=16"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel    Version    Revision    Notes
-            latest   amd64   stable     1.0-amd64  2           -
-                             beta       1.1-amd64  4           -
-                             edge       ^          ^           -
-                     i386    stable     -          -           -
-                             beta       -          -           -
-                             edge       1.0-i386   3           -"""
-                )
-            ),
-        )
-        self.fake_store_status.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
-        )
-
-    def test_status_including_branch(self):
-        expected = {
-            "i386": [
-                {"info": "none", "channel": "stable"},
-                {"info": "none", "channel": "beta"},
-                {
-                    "info": "branch",
-                    "version": "1.0-i386",
-                    "channel": "stable/hotfix",
-                    "revision": 3,
-                    "expires_at": "2017-05-21T18:52:14.578435",
-                },
-            ]
-        }
-        self.fake_store_status.mock.return_value = {
-            "channel_map_tree": {"latest": {"16": expected}}
-        }
-
-        result = self.run_command(["status", "snap-test"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Track    Arch    Channel        Version    Revision    Notes    Expires at
-            latest   i386    stable         -          -           -
-                             beta           -          -           -
-                             stable/hotfix  1.0-i386   3           -        2017-05-21T18:52:14.578435
+            Track    Arch    Channel    Version    Revision
+            2.1      amd64   stable     -          -
+                             candidate  -          -
+                             beta       10         19
+                             edge       ↑          ↑
             """
                 )
             ),
         )
-        self.fake_store_status.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
+
+    def test_status_following(self):
+        self.channel_map.channel_map = [
+            MappedChannel(
+                channel="2.1/stable",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=None),
+            )
+        ]
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10")
+        )
+
+        result = self.run_command(["status", "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.1      amd64   stable     10         20
+                             candidate  ↑          ↑
+                             beta       ↑          ↑
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_progressive_status(self):
+        self.channel_map.channel_map[0].progressive.percentage = 10.0
+
+        result = self.run_command(
+            ["status", "snap-test", "--experimental-progressive-releases"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            *EXPERIMENTAL* progressive releases in use.
+            Track    Arch    Channel    Version    Revision    Progress
+            2.1      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       -          -           -
+                                        10         19          → 10%
+                             edge       ↑          ↑           -
+            """
+                )
+            ),
+        )
+
+    def test_status_by_arch(self):
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/beta",
+                architecture="s390x",
+                expiration_date=None,
+                revision=99,
+                progressive=Progressive(paused=None, percentage=None),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["s390x"], revision=99, version="10")
+        )
+
+        result = self.run_command(["status", "snap-test", "--arch=s390x"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel    Version    Revision
+            2.1      s390x   stable     -          -
+                             candidate  -          -
+                             beta       10         99
+                             edge       ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_status_including_branch(self):
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/stable/hotfix1",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=None),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10hotfix")
+        )
+        self.channel_map.snap.channels.append(
+            SnapChannel(
+                name="2.1/stable/hotfix1",
+                track="2.1",
+                risk="stable",
+                branch="hotfix1",
+                fallback="2.1/stable",
+            )
+        )
+
+        result = self.run_command(["status", "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            Track    Arch    Channel         Version    Revision    Expires at
+            2.1      amd64   stable          -          -
+                             stable/hotfix1  10hotfix   20          2020-02-03T20:58:37Z
+                             candidate       -          -
+                             beta            10         19
+                             edge            ↑          ↑
+            """
+                )
+            ),
+        )
+
+    def test_progressive_status_including_branch(self):
+        self.channel_map.channel_map.append(
+            MappedChannel(
+                channel="2.1/stable/hotfix1",
+                architecture="amd64",
+                expiration_date="2020-02-03T20:58:37Z",
+                revision=20,
+                progressive=Progressive(paused=None, percentage=20.0),
+            )
+        )
+        self.channel_map.revisions.append(
+            Revision(architectures=["amd64"], revision=20, version="10hotfix")
+        )
+        self.channel_map.snap.channels.append(
+            SnapChannel(
+                name="2.1/stable/hotfix1",
+                track="2.1",
+                risk="stable",
+                branch="hotfix1",
+                fallback="2.1/stable",
+            )
+        )
+
+        result = self.run_command(
+            ["status", "snap-test", "--experimental-progressive-releases"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            *EXPERIMENTAL* progressive releases in use.
+            Track    Arch    Channel         Version    Revision    Progress    Expires at
+            2.1      amd64   stable          -          -           -
+                             stable/hotfix1  10hotfix   20          → 20%       2020-02-03T20:58:37Z
+                             candidate       -          -           -
+                             beta            10         19          -
+                             edge            ↑          ↑           -
+            """
+                )
+            ),
         )

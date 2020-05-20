@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2018 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -44,16 +44,24 @@ def _fake_prime():
 
 
 class RunnerTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.partdir = os.path.abspath("partdir")
+        os.mkdir(self.partdir)
+
     def test_pull(self):
         os.mkdir("sourcedir")
 
         runner = _runner.Runner(
             part_properties={"override-pull": "touch pull"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.pull()
@@ -65,11 +73,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-pull": "snapcraftctl pull"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"pull": _fake_pull},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.pull()
@@ -83,11 +93,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "echo $PATH > path"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -105,11 +117,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "touch build"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -121,11 +135,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "snapcraftctl build"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"build": _fake_build},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.build()
@@ -137,11 +153,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-stage": "touch stage"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.stage()
@@ -153,11 +171,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-stage": "snapcraftctl stage"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"stage": _fake_stage},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.stage()
@@ -169,11 +189,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "touch prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.prime()
@@ -185,11 +207,13 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "snapcraftctl prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"prime": _fake_prime},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         runner.prime()
@@ -198,6 +222,12 @@ class RunnerTestCase(unit.TestCase):
 
 
 class RunnerFailureTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.partdir = os.path.abspath("partdir")
+        os.mkdir(self.partdir)
+
     def test_failure_on_last_script_command_results_in_failure(self):
         os.mkdir("builddir")
 
@@ -210,11 +240,13 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": script},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -231,11 +263,13 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": script},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -245,11 +279,13 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-build": "alias snapcraftctl 2> /dev/null"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -265,11 +301,13 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
             part_properties={"override-prime": "snapcraftctl prime"},
+            partdir=self.partdir,
             sourcedir="sourcedir",
             builddir="builddir",
             stagedir="stagedir",
             primedir="primedir",
             builtin_functions={"prime": _raise},
+            env_generator=lambda step: "export FOO=BAR",
         )
 
         silent_popen = functools.partial(

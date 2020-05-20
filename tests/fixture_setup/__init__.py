@@ -5,9 +5,6 @@ if hasattr(socket, "AF_UNIX"):
     from ._unix import FakeSnapd  # noqa: F401
 try:
     from ._unittests import (  # noqa: F401
-        FakeAptBaseDependency,
-        FakeAptCache,
-        FakeAptCachePackage,
         FakeElf,
         FakeExtension,
         FakeMetadataExtractor,

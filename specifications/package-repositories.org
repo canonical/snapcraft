@@ -1,0 +1,292 @@
+#+TITLE: Package Repositories
+#+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
+#+DATE: [2020-04-21]
+
+* Scope
+
+This feature adds a high-level key package-management to snapcraft.yaml that
+enables users to configure additional repositories & components. Specifically,
+the scope of package-management is for anything affecting the behavior and
+availability of:
+
+- build-packages
+- stage-packages
+- build-snaps
+- stage-snaps
+- python-packages
+
+The scope of this spec will focus on the configuration of =apt= repositories,
+affecting the availability of =build-packages= and =stage-pagickages=.
+
+* Enabling the feature
+
+Simply configure =package-repositories= in snapcraft.yaml.  Snapcraft will log
+a warning that the feature is experimental until the schema is to be considered
+stable.
+
+* Schema for package-repositories
+
+- *Type:* list[package-repository]
+
+- *Description:* array of repositories.
+
+* Schema for APT PPA shortcut package-repository
+
+** Property: type (required)
+
+- *Type:* enum[string]
+
+- *Description:* Specifies type of package-repository.  Must be =apt=.
+
+- *Notes:*
+
+  - Must be =apt=.
+
+- *Examples:*
+
+  - =type: apt=
+
+** Property: ppa (required)
+
+- *Type:* string
+
+- *Description:* PPA shortcut string.
+
+- *Format:* =<ppa-owner>=/=<ppa-name>=
+
+- *Examples:*
+
+  - =ppa: snappy-devs/snapcraft-daily=
+
+  - =ppa: mozillateam/firefox-next=
+
+* Schema for traditional APT/deb repository sources
+
+** Property: type (required)
+
+- *Type:* enum[string]
+
+- *Description:* Specifies type of package-repository.
+
+- *Notes:*
+
+  - Must be =apt=.
+
+- *Examples:*
+
+  - =type: apt=
+
+** Property: architectures (optional)
+
+- *Type:* list[string]
+
+- *Description:* Architectures to enable, or restrict to, for this repository.
+
+- *Notes:*
+
+  - Supports =$SNAPCRAFT_APT_HOST_ARCH= variable.
+
+- *Default:* If unspecified, architectures is assumed to match the host's architecture, i.e. =[$SNAPCRAFT_APT_HOST_ARCH]=.
+
+- *Examples:*
+
+  - architectures: [i386]
+
+  - architectures: [i386, amd64]
+
+  - architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]
+
+** Property: deb-types (optional)
+
+- *Type:* list[string]
+
+- *Description:* List of deb types to enable.
+
+- *Default:* If unspecified, types is assumed to be =deb= and =deb-src=, i.e. =[deb, deb-src]=.
+
+- *Examples:*
+
+  - deb-types: [deb]
+
+  - deb-types: [deb, deb-src]
+
+** Property: components (required)
+
+- *Type:* list[string]
+
+- *Description:* Apt repository components to enable: e.g. =main=, =multiverse=, =unstable=.
+
+- *Examples:*
+
+  - components: [main]
+
+  - components: [main, multiverse, universe, restricted]
+
+** Property: key-id (required)
+
+  - *Type:* string
+
+  - *Description:* GPG key identifier / fingerprint.  May be used to identify a key by:
+
+    - Key ID
+
+    - Thumbprint
+
+    - Project asset key file in: =<project>/snap/keys/<key-id>.asc=
+
+  - *Format:* alphanumeric, dash =-=, and underscores =_= permitted.
+
+  - *Examples:*
+
+    - GPG Key Thumbprint: =key-id: 590CA3D8E4826565BE3200526A634116E00F4C82=
+
+    - GPG Key ID: =key-id: 6A634116E00F4C82=
+
+    - Matching =<project>/snap/keys/custom-repo.asc=: =key-id: custom-repo=
+
+** Property: key-server (optional)
+
+  - *Type:* string
+
+  - *Description:* Key server to fetch key =<key-id>= from.
+
+  - *Default:* If unspecified, snapcraft will attempt to fetch a specified key from keyserver.ubuntu.com.
+
+  - *Format:* Keyserver URL supported by =gpg --keyserver=.
+
+  - *Examples:*
+
+    - =key-server: keyserver.ubuntu.com=
+
+    - =key-server: hkp://keyserver.ubuntu.com:80=
+
+** Property: suites (required)
+
+  - *Type:* string
+
+  - *Description:* Repository suites to enable.
+
+  - *Notes:*
+
+    - Supports =$SNAPCRAFT_APT_RELEASE= variable for snapcraft to populate base's release name (e.g. =xenial=).
+
+  - *Examples:*
+
+    - =suites: [xenial]=
+
+    - =suites: [xenial, xenial-updates]=
+
+    - =suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-security]=
+
+** Property: url (required)
+
+  - *Type:* string
+
+  - *Description:* Repository URL, e.g. ==.
+
+  - *Examples:*
+
+    - =url: http://archive.canonical.com/ubuntu=
+
+* Example configurations
+
+#+BEGIN_SRC yaml
+name: apt-example
+base: core18
+
+<snip>
+
+package-repositories:
+  - type: apt
+    ppa: snappy-dev/snapcraft-daily
+
+  - type: apt
+    deb-types: [deb, deb-src]
+    components: [main]
+    suites: [$SNAPCRAFT_APT_RELEASE]
+    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
+
+  - type: apt
+    deb-types: [deb, deb-src]
+    components: [main, multiverse, restricted, universe]
+    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+    key-id: test-key
+    url: http://archive.ubuntu.com/ubuntu
+#+END_SRC
+
+* Exploratory: overriding default snapcraft image sources configuration
+
+The default repositories that ship with snapcraft could be overridden by
+adding a =name= field.  Default names currently shipped are =default=
+and =default-security=.  This would only override sources if using a snapcraft
+managed build environment (i.e. Multipass or LXD). Snapcraft does not modify
+the host's apt repository configuration when using destructive mode.
+
+E.g.:
+
+#+BEGIN_SRC yaml
+package-repositories:
+  - type: apt
+    name: default
+    deb-types: [deb, deb-src]
+    components: [main, multiverse, restricted, universe]
+    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://archive.ubuntu.com/ubuntu
+
+  - type: apt
+    name: default-security
+    deb-types: [deb, deb-src]
+    components: [main, multiverse, restricted, universe]
+    suites: [$SNAPCRAFT_APT_RELEASE-security]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://security.ubuntu.com/ubuntu
+#+END_SRC
+
+When used in the snapcraft yaml, snapcraft will warn:
+
+#+BEGIN_SRC
+*EXPERIMENTAL* package-repositories in use.
+#+END_SRC
+
+As it will be enabled without an experimental CLI flag to promote testing,
+it will warn every time the snapcraft.yaml is processed.  This will result
+in the warning being logged several times.
+
+* Key search methodology
+
+1. =<key-id>= will be matched against thumbprints for all keys in =<project>/snap/keys/*.asc=.
+
+  - If match found, matching key file will be imported.
+
+  - If no match, continue to step 2.
+
+2. =<key-id>= will be matched for file pattern: =<project>/snap/keys/<key-id>.asc=.
+
+  - If file is found, matching key file will be imported.
+
+  - If no match, continue to step 3.
+
+3. =<key-id>= will be queried from =<key-server>=, defaulting to =keyserver.ubuntu.com=.
+
+  - If key is found, the key will be imported.
+
+  - If key not found, an error will be presented to the user:
+
+#+BEGIN_EXAMPLE
+Failed to install GPG key: GPG key =<key-id>= not found on key server =<key-server>=
+
+Recommended resolution:
+Verify any configured GPG keys.
+
+Detailed information:
+GPG key ID: <key-id>
+GPG key server: <key-server>
+#+END_EXAMPLE
+
+* GPG Keyring handling
+
+All GPG keys will be imported into a new keyring:
+=/etc/apt/trusted.gpg.d/snapcraft.gpg=
+

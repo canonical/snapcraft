@@ -1,0 +1,26 @@
+name: nil-basic
+version: "1.0"
+summary: Create the empty snap
+description: Create an empty snap with nothing to pull
+
+grade: devel
+base: core20
+confinement: strict
+
+parts:
+  nil-part:
+    plugin: nil
+    build-environment:
+      - foo: bar
+    override-pull: |
+      env
+      snapcraftctl pull
+    override-build: |
+      env
+      snapcraftctl build
+    override-stage: |
+      env
+      snapcraftctl stage
+    override-prime: |
+      env
+      snapcraftctl prime

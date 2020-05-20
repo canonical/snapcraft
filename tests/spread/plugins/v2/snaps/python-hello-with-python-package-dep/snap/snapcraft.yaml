@@ -1,0 +1,21 @@
+name: python-hello-with-python-package-dep
+version: "1.0"
+summary: A simple hello world in python
+description: |
+  This is a basic python snap that has a python-package dep.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  python-hello-with-python-package-dep:
+    command: bin/hello
+
+parts:
+  hello:
+    source: .
+    plugin: python
+    python-packages:
+      - pip==20.0.2
+      - appdirs

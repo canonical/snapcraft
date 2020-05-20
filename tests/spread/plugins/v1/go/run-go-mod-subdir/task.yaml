@@ -1,0 +1,37 @@
+summary: Build and run a basic Go snap using go.mod with main package in a subdir
+
+environment:
+  SNAP_DIR: ../snaps/go-mod-hello-subdir
+  LANG: C.UTF-8
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  restore_yaml snap/snapcraft.yaml
+
+execute: |
+  cd "$SNAP_DIR"
+
+  snapcraft
+
+  if ! snap list go; then
+    echo "The go snap from the Snap Store should have been installed."
+    exit 1
+  fi
+
+  # This only works on ubuntu
+  if dpkg -s golang-go; then
+    echo "The go deb for the system repositories should not have been installed."
+    exit 1
+  fi
+
+  sudo snap install go-mod-hello-subdir_*.snap --dangerous
+  [ "$(go-mod-hello-subdir)" = "Ahoy, world!" ]

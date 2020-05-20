@@ -115,6 +115,102 @@
                 ]
             }
         },
+        "apt-deb": {
+            "type": "object",
+            "description": "deb repositories",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "apt"
+                    ]
+                },
+                "architectures": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "description": "Architectures to enable, or restrict to, for this repository.  Supports '$SNAPCRAFT_APT_HOST_ARCH' variable.  Defaults to host architecture."
+                    }
+                },
+                "deb-types": {
+                    "type": "array",
+                    "description": "deb types to enable.  Defaults to [deb, deb-src].",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "deb",
+                            "deb-src"
+                        ]
+                    }
+                },
+                "components": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
+                    }
+                },
+                "key-id": {
+                    "type": "string",
+                    "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
+                    "pattern": "^[a-zA-Z0-9-_]*$"
+                },
+                "key-server": {
+                    "type": "string",
+                    "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
+                },
+                "suites": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security'.  Supports '$SNAPCRAFT_APT_RELEASE' variable for snapcraft to populate base's release name (e.g. 'xenial')."
+                    }
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'."
+                }
+            },
+            "required": [
+                "type",
+                "components",
+                "key-id",
+                "suites",
+                "url"
+            ],
+            "validation-failure": "{!r} is not properly configured deb repository"
+        },
+        "apt-ppa": {
+            "type": "object",
+            "description": "PPA repository",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "apt"
+                    ]
+                },
+                "ppa": {
+                    "type": "string",
+                    "description": "ppa path: e.g. 'canonical-kernel-team/unstable'"
+                }
+            },
+            "required": [
+                "type",
+                "ppa"
+            ],
+            "validation-failure": "{!r} is not properly configured PPA repository"
+        },
         "system-username-scope": {
             "type": "string",
             "description": "short-form user configuration (<username>: <scope>)",
@@ -339,6 +435,24 @@
         "layout": {
             "type": "object",
             "description": "layout property to be passed into the snap.yaml as-is"
+        },
+        "package-repositories": {
+            "type": "array",
+            "description": "additional repository configuration.",
+            "minItems": 0,
+            "uniqueItems": true,
+            "items": [
+                {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/apt-deb"
+                        },
+                        {
+                            "$ref": "#/definitions/apt-ppa"
+                        }
+                    ]
+                }
+            ]
         },
         "system-usernames": {
             "type": "object",
@@ -659,6 +773,7 @@
                             "items": {
                                 "enum": [
                                     "gnome-3-28",
+                                    "gnome-3-34",
                                     "kde-neon"
                                 ]
                             }

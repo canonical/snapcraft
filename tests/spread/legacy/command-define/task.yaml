@@ -2,6 +2,9 @@ summary: Ensure the define command outputs correctly
 
 systems: [ubuntu-16*]
 
+environment:
+  SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "no"
+
 restore: |
   rm -rf ./parts
   rm -f ./define.txt

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -125,18 +125,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                     "\n"
                     "To learn more about these part keywords, run "
                     "`snapcraft help plugins`."
-                ),
-            },
-        ),
-        (
-            "MissingCommandError",
-            {
-                "exception": errors.MissingCommandError,
-                "kwargs": {"required_commands": ["test-command1", "test-command2"]},
-                "expected_message": (
-                    "Failed to run command: "
-                    "One or more packages are missing, please install:"
-                    " ['test-command1', 'test-command2']"
                 ),
             },
         ),

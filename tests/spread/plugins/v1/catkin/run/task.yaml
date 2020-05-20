@@ -1,0 +1,41 @@
+summary: Build and run a basic catkin snap
+warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
+priority: 100  # Run this test early so we're not waiting for it
+
+environment:
+  SNAP_DIR: ../snaps/ros-talker-listener
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft
+  sudo snap install ros-talker-listener_*.snap --dangerous
+
+  # Verify that the hardcoded /usr/bin/python in rosversion is changed to
+  # use /usr/bin/env
+  expr "$(head -n 1 prime/usr/bin/rosversion)" : '^#!/usr/bin/env\spython2\?$' > /dev/null
+
+  # Regression test for LP: #1660852. Make sure --help actually gets passed to
+  # roslaunch instead of being eaten by setup.sh.
+  ros-talker-listener --help | MATCH "Usage: roslaunch"
+
+  # Run the ROS system. By default this will never exit, but the demo supports
+  # an `exit-after-receive` parameter that, if true, will cause the system to
+  # shutdown after the listener has successfully received a message.
+  # TODO: re-enable once this does not take so long on 18.04.
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
+    ros-talker-listener exit-after-receive:=true | MATCH "I heard Hello world"
+  fi

@@ -29,3 +29,6 @@ prime
 .mypy_cache
 .spread-reuse.*
 pip-wheel-metadata/
+# direnv
+.envrc
+.direnv

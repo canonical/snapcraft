@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
-from typing import Optional
 
 from snapcraft import yaml_utils
 from . import _schema
@@ -48,17 +47,6 @@ class ProjectInfo:
     def validate_raw_snapcraft(self):
         """Validate the snapcraft.yaml for this project."""
         _schema.Validator(self.__raw_snapcraft).validate()
-
-    def get_build_base(self) -> Optional[str]:
-        """
-        Return name for type base or the base otherwise build-base is set
-        """
-        if self.build_base:
-            return self.build_base
-        elif self.type == "base":
-            return self.name
-        else:
-            return self.base
 
     def get_raw_snapcraft(self):
         # TODO this should be a MappingProxyType, but ordered writing

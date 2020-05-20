@@ -20,21 +20,9 @@ from textwrap import dedent
 
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft.internal import errors
-from snapcraft.internal.repo import check_for_command
-from snapcraft.internal.repo import BaseRepo
+from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
 from tests import unit
 from . import RepoBaseTestCase
-
-
-class CommandCheckTestCase(unit.TestCase):
-    def test_check_for_command_not_installed(self):
-        self.assertRaises(
-            errors.MissingCommandError, check_for_command, "missing-command"
-        )
-
-    def test_check_for_command_installed(self):
-        check_for_command("sh")
 
 
 class FixXmlToolsTestCase(RepoBaseTestCase):
@@ -131,7 +119,7 @@ class FixXmlToolsTestCase(RepoBaseTestCase):
             with open(path, "w") as f:
                 f.write(test_file["content"])
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         for test_file in self.files:
             self.assertThat(test_file["path"], FileContains(test_file["expected"]))
@@ -195,7 +183,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         with open(self.file_path, "w") as fd:
             fd.write(self.content)
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         with open(self.file_path, "r") as fd:
             self.assertThat(fd.read(), Equals(self.expected))
@@ -243,7 +231,7 @@ class RemoveUselessFilesTestCase(RepoBaseTestCase):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, "w").close()
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
         self.assertThat(path, self.matcher)
 
@@ -271,7 +259,7 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
                 )
             )
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         expected_pc_file_content = dedent(
             """\
@@ -312,7 +300,7 @@ class FixSymlinksTestCase(RepoBaseTestCase):
     def test_fix_symlinks(self):
         os.symlink(self.src, self.dst)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         self.assertThat(os.readlink(self.dst), Equals(self.src))
 
@@ -337,6 +325,23 @@ class FixSUIDTestCase(RepoBaseTestCase):
         open(file, mode="w").close()
         os.chmod(file, self.test_mod)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         self.assertThat(stat.S_IMODE(os.stat(file).st_mode), Equals(self.expected_mod))
+
+
+class TestPkgNameParts(unit.TestCase):
+    def test_get_pkg_name_parts_name_only(self):
+        name, version = get_pkg_name_parts("hello")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals(None))
+
+    def test_get_pkg_name_parts_all(self):
+        name, version = get_pkg_name_parts("hello:i386=2.10-1")
+        self.assertThat(name, Equals("hello:i386"))
+        self.assertThat(version, Equals("2.10-1"))
+
+    def test_get_pkg_name_parts_no_arch(self):
+        name, version = get_pkg_name_parts("hello=2.10-1")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals("2.10-1"))

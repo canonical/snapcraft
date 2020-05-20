@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
 
 import pymacaroons
 import requests
@@ -28,13 +28,18 @@ from snapcraft.internal.indicators import download_requests_stream
 
 from . import logger
 from . import _upload
-from . import constants
 from . import errors
+from .constants import DEFAULT_SERIES
 
 from ._sso_client import SSOClient
 from ._snap_index_client import SnapIndexClient
 from ._sca_client import SCAClient
+from ._snap_v2_client import SnapV2Client
 from ._up_down_client import UpDownClient
+
+
+if TYPE_CHECKING:
+    from .v2 import snap_channel_map
 
 
 class StoreClient:
@@ -47,6 +52,7 @@ class StoreClient:
         self.cpi = SnapIndexClient(self.conf)
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
+        self.v2_snap = SnapV2Client(self.conf)
 
     def login(
         self,
@@ -130,7 +136,7 @@ class StoreClient:
 
         return account_data
 
-    def acl(self) -> Dict[str, Union[List[str], str, None]]:
+    def acl(self) -> Dict[str, Any]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}
@@ -160,11 +166,11 @@ class StoreClient:
             snap_name,
             is_private=is_private,
             store_id=store_id,
-            series=constants.DEFAULT_SERIES,
+            series=DEFAULT_SERIES,
         )
 
-    def push_precheck(self, snap_name):
-        return self._refresh_if_necessary(self.sca.snap_push_precheck, snap_name)
+    def upload_precheck(self, snap_name):
+        return self._refresh_if_necessary(self.sca.snap_upload_precheck, snap_name)
 
     def push_snap_build(self, snap_id, snap_build):
         return self._refresh_if_necessary(self.sca.push_snap_build, snap_id, snap_build)
@@ -190,7 +196,7 @@ class StoreClient:
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
         return self._refresh_if_necessary(
-            self.sca.snap_push_metadata,
+            self.sca.snap_upload_metadata,
             snap_name,
             updown_data,
             delta_format=delta_format,
@@ -206,7 +212,6 @@ class StoreClient:
         snap_name,
         revision,
         channels,
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ):
         return self._refresh_if_necessary(
@@ -215,52 +220,52 @@ class StoreClient:
             revision,
             channels,
             progressive_percentage=progressive_percentage,
-            progressive_key=progressive_key,
         )
 
-    def get_snap_revisions(self, snap_name, series=None, arch=None):
-        if series is None:
-            series = constants.DEFAULT_SERIES
-
+    def get_snap_revisions(self, snap_name, arch=None):
         account_info = self.get_account_information()
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_revisions, snap_id, series, arch
+            self.sca.snap_revisions, snap_id, DEFAULT_SERIES, arch
         )
 
         if not response:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
 
-    def get_snap_status(self, snap_name, series=None, arch=None):
-        if series is None:
-            series = constants.DEFAULT_SERIES
-
+    def get_snap_status(self, snap_name, arch=None):
         account_info = self.get_account_information()
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_status, snap_id, series, arch
+            self.sca.snap_status, snap_id, DEFAULT_SERIES, arch
         )
 
         if not response:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
+
+    def get_snap_channel_map(
+        self, *, snap_name: str
+    ) -> "snap_channel_map.SnapChannelMap":
+        return self._refresh_if_necessary(
+            self.v2_snap.get_snap_channel_map, snap_name=snap_name
+        )
 
     def close_channels(self, snap_id, channel_names):
         return self._refresh_if_necessary(
@@ -347,34 +352,32 @@ class StoreClient:
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
 
-    def push_metadata(self, snap_name, metadata, force):
-        """Push the metadata to the server."""
+    def upload_metadata(self, snap_name, metadata, force):
+        """Upload the metadata to the server."""
         account_info = self.get_account_information()
-        series = constants.DEFAULT_SERIES
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series)
+            raise errors.SnapNotFoundError(snap_name=snap_name)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
-            self.sca.push_metadata, snap_id, snap_name, metadata, force
+            self.sca.upload_metadata, snap_id, snap_name, metadata, force
         )
 
-    def push_binary_metadata(self, snap_name, metadata, force):
-        """Push the binary metadata to the server."""
+    def upload_binary_metadata(self, snap_name, metadata, force):
+        """Upload the binary metadata to the server."""
         account_info = self.get_account_information()
-        series = constants.DEFAULT_SERIES
         try:
-            snap_id = account_info["snaps"][series][snap_name]["snap-id"]
+            snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series)
+            raise errors.SnapNotFoundError(snap_name=snap_name)
 
         if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
-            self.sca.push_binary_metadata, snap_id, snap_name, metadata, force
+            self.sca.upload_binary_metadata, snap_id, snap_name, metadata, force
         )

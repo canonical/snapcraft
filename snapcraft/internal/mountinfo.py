@@ -70,7 +70,7 @@ class MountInfo:
                         self._mount_point_mounts[mount.mount_point] = mount
                         root_mounts[mount.root].append(mount)
                     except errors.InvalidMountinfoFormat as e:
-                        logger.warn(str(e))
+                        logger.warning(str(e))
 
         self._root_mounts = dict(root_mounts)
 

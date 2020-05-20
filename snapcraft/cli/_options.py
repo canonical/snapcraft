@@ -14,15 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.util
 import os
 import sys
+from typing import Dict, List, Optional
 
 import click
-from typing import Dict, List
 
 from snapcraft.project import Project, get_snapcraft_yaml
-from snapcraft.cli.echo import confirm, prompt
+from snapcraft.cli.echo import confirm, prompt, warning
 from snapcraft.internal import common, errors
+from snapcraft.internal.meta.snap import Snap
 
 
 class PromptOption(click.Option):
@@ -45,33 +47,54 @@ class PromptOption(click.Option):
         )
 
 
-_BUILD_OPTIONS = [
-    dict(
-        param_decls="--target-arch",
-        metavar="<arch>",
-        help="Target architecture to cross compile to",
-    ),
-    dict(
-        param_decls="--debug",
-        is_flag=True,
-        help="Shells into the environment if the build fails.",
-    ),
-    dict(
-        param_decls="--shell",
-        is_flag=True,
-        help="Shells into the environment in lieu of the step to run.",
-    ),
-    dict(
-        param_decls="--shell-after",
-        is_flag=True,
-        help="Shells into the environment after the step has run.",
-    ),
-]
+class BoolParamType(click.ParamType):
+    name = "boolean"
+
+    def convert(self, value, param, ctx):
+        """Convert option string to value.
+
+        Unlike click's BoolParamType, use distutils.util.strtobool to
+        convert values.
+        """
+        if isinstance(value, bool):
+            return value
+        try:
+            return bool(distutils.util.strtobool(value))
+        except ValueError:
+            self.fail("%r is not a valid boolean" % value, param, ctx)
+
+    def __repr__(self):
+        return "BOOL"
+
 
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
 _PROVIDER_OPTIONS = [
+    dict(
+        param_decls="--target-arch",
+        metavar="<arch>",
+        help="Target architecture to cross compile to",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls="--debug",
+        is_flag=True,
+        help="Shells into the environment if the build fails.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls="--shell",
+        is_flag=True,
+        help="Shells into the environment in lieu of the step to run.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
+        param_decls="--shell-after",
+        is_flag=True,
+        help="Shells into the environment after the step has run.",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
     dict(
         param_decls="--destructive-mode",
         is_flag=True,
@@ -114,6 +137,38 @@ _PROVIDER_OPTIONS = [
         envvar="SNAPCRAFT_BIND_SSH",
         supported_providers=["lxd", "multipass"],
     ),
+    dict(
+        param_decls="--enable-developer-debug",
+        is_flag=True,
+        help="Enable developer debug logging.",
+        envvar="SNAPCRAFT_ENABLE_DEVELOPER_DEBUG",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--enable-manifest",
+        is_flag=True,
+        type=BoolParamType(),
+        help="Generate snap manifest.",
+        envvar="SNAPCRAFT_BUILD_INFO",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--manifest-image-information",
+        metavar="<json string>",
+        help="Set snap manifest image-info",
+        envvar="SNAPCRAFT_IMAGE_INFO",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        hidden=True,
+    ),
+    dict(
+        param_decls="--enable-experimental-package-repositories",
+        is_flag=True,
+        help="Enable `package-repositories` support in schema.",
+        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
 ]
 
 
@@ -128,16 +183,10 @@ def _add_options(options, func, hidden):
         if "supported_providers" in option:
             option.pop("supported_providers")
 
-        click_option = click.option(param_decls, **option, hidden=hidden)
+        hidden_override = option.pop("hidden", hidden)
+        click_option = click.option(param_decls, **option, hidden=hidden_override)
         func = click_option(func)
     return func
-
-
-def add_build_options(hidden=False):
-    def _add_build_options(func):
-        return _add_options(_BUILD_OPTIONS, func, hidden)
-
-    return _add_build_options
 
 
 def add_provider_options(hidden=False):
@@ -229,6 +278,8 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
 
     for option in _PROVIDER_OPTIONS:
         key: str = option["param_decls"]  # type: ignore
+        is_flag: bool = option.get("is_flag", False)  # type: ignore
+        envvar: Optional[str] = option.get("envvar")  # type: ignore
         supported_providers: List[str] = option["supported_providers"]  # type: ignore
 
         # Skip --provider option.
@@ -239,10 +290,14 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
         if build_provider not in supported_providers:
             continue
 
-        # Add option, if set.
+        # Skip boolean flags that have not been set.
         key_formatted = _param_decls_to_kwarg(key)
-        if key_formatted in kwargs:
-            build_provider_flags[key_formatted] = kwargs[key_formatted]
+        if is_flag and not kwargs.get(key_formatted):
+            continue
+
+        # Add build provider flag using envvar as key.
+        if envvar is not None and key_formatted in kwargs:
+            build_provider_flags[envvar] = kwargs[key_formatted]
 
     return build_provider_flags
 
@@ -271,6 +326,10 @@ def get_project(*, is_managed_host: bool = False, **kwargs):
         snapcraft_yaml_file_path=snapcraft_yaml_file_path,
         is_managed_host=is_managed_host,
     )
+    # TODO: this should be automatic on get_project().
+    # This is not the complete meta parsed by the project loader.
+    project._snap_meta = Snap.from_dict(project.info.get_raw_snapcraft())
+
     return project
 
 
@@ -285,3 +344,7 @@ def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
                 os.environ.pop(key)
         else:
             os.environ[key] = str(value)
+
+    # Log any experimental flags in use.
+    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
+        warning("*EXPERIMENTAL* package-repositories in use")

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -40,10 +40,12 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.storeapi.constants import DEFAULT_SERIES
 
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
+    from snapcraft.storeapi.v2.snap_channel_map import SnapChannelMap
 
 
 logger = logging.getLogger(__name__)
@@ -272,8 +274,8 @@ def _register_wrapper(method):
     def register_decorator(self, *args, snap_name: str, **kwargs):
         try:
             return method(self, *args, snap_name=snap_name, **kwargs)
-        except storeapi.errors.StorePushError as push_error:
-            if "resource-not-found" not in push_error.error_list:
+        except storeapi.errors.StoreUploadError as upload_error:
+            if "resource-not-found" not in upload_error.error_list:
                 raise
             echo.wrapped(
                 "You are required to register this snap before continuing. "
@@ -324,20 +326,24 @@ class StoreClientCLI(storeapi.StoreClient):
         return super().close_channels(snap_id=snap_id, channel_names=channel_names)
 
     @_login_wrapper
+    def get_snap_channel_map(self, *, snap_name: str) -> "SnapChannelMap":
+        return super().get_snap_channel_map(snap_name=snap_name)
+
+    @_login_wrapper
     def get_account_information(self) -> Dict[str, Any]:
         return super().get_account_information()
 
     @_login_wrapper
     @_register_wrapper
-    def push_precheck(self, *, snap_name: str) -> None:
-        return super().push_precheck(snap_name=snap_name)
+    def upload_precheck(self, *, snap_name: str) -> None:
+        return super().upload_precheck(snap_name=snap_name)
 
     @_login_wrapper
     @_register_wrapper
-    def push_metadata(
+    def upload_metadata(
         self, *, snap_name: str, metadata: Dict[str, str], force: bool
     ) -> Dict[str, Any]:
-        return super().push_metadata(
+        return super().upload_metadata(
             snap_name=snap_name, metadata=metadata, force=force
         )
 
@@ -358,14 +364,12 @@ class StoreClientCLI(storeapi.StoreClient):
         snap_name: str,
         revision: str,
         channels: List[str],
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ) -> Dict[str, Any]:
         return super().release(
             snap_name=snap_name,
             revision=revision,
             channels=channels,
-            progressive_key=progressive_key,
             progressive_percentage=progressive_percentage,
         )
 
@@ -396,8 +400,6 @@ class StoreClientCLI(storeapi.StoreClient):
 
 
 def list_registered():
-    series = storeapi.constants.DEFAULT_SERIES
-
     account_info = StoreClientCLI().get_account_information()
     snaps = [
         (
@@ -407,14 +409,14 @@ def list_registered():
             info["price"] or "-",
             "-",
         )
-        for name, info in account_info["snaps"].get(series, {}).items()
+        for name, info in account_info["snaps"].get(DEFAULT_SERIES, {}).items()
         # Presenting only approved snap registrations, which means name
         # disputes will be displayed/sorted some other way.
         if info["status"] == "Approved"
     ]
 
     if not snaps:
-        print("There are no registered snaps for series {!r}.".format(series))
+        echo.warning("There are no registered snaps.")
         return
 
     tabulated_snaps = tabulate(
@@ -584,7 +586,6 @@ def sign_build(snap_filename, key_name=None, local=False):
     if not os.path.exists(snap_filename):
         raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
 
-    snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml["name"]
     grade = snap_yaml.get("grade", "stable")
@@ -594,10 +595,10 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     try:
         authority_id = account_info["account_id"]
-        snap_id = account_info["snaps"][snap_series][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError as e:
         raise storeapi.errors.StoreBuildAssertionPermissionError(
-            snap_name, snap_series
+            snap_name, DEFAULT_SERIES
         ) from e
 
     snap_build_path = snap_filename + "-build"
@@ -624,16 +625,16 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     if not local:
         store_client.push_snap_build(snap_id, snap_build_content.decode())
-        logger.info("Build assertion {} pushed to the Store.".format(snap_build_path))
+        logger.info("Build assertion {} uploaded to the Store.".format(snap_build_path))
 
 
-def push_metadata(snap_filename, force):
-    """Push only the metadata to the server.
+def upload_metadata(snap_filename, force):
+    """Upload only the metadata to the server.
 
     If force=True it will force the local metadata into the Store,
     ignoring any possible conflict.
     """
-    logger.debug("Pushing metadata to the Store (force=%s)", force)
+    logger.debug("Uploading metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
     snap_yaml = _get_data_from_snap_file(snap_filename)
@@ -654,21 +655,21 @@ def push_metadata(snap_filename, force):
 
     # hit the server
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
-    store_client.push_metadata(snap_name=snap_name, metadata=metadata, force=force)
+    store_client.upload_precheck(snap_name=snap_name)
+    store_client.upload_metadata(snap_name=snap_name, metadata=metadata, force=force)
     with _get_icon_from_snap_file(snap_filename) as icon:
         metadata = {"icon": icon}
-        store_client.push_binary_metadata(snap_name, metadata, force)
+        store_client.upload_binary_metadata(snap_name, metadata, force)
 
-    logger.info("The metadata has been pushed")
+    logger.info("The metadata has been uploaded")
 
 
-def push(snap_filename, release_channels=None):
-    """Push a snap_filename to the store.
+def upload(snap_filename, release_channels=None):
+    """Upload a snap_filename to the store.
 
     If a cached snap is available, a delta will be generated from
     the cached snap to the new target snap and uploaded instead. In the
-    case of a delta processing or upload failure, push will fall back to
+    case of a delta processing or upload failure, upload will fall back to
     uploading the full snap.
 
     If release_channels is defined it also releases it to those channels if the
@@ -679,10 +680,10 @@ def push(snap_filename, release_channels=None):
     built_at = snap_yaml.get("snapcraft-started-at")
 
     logger.debug(
-        "Run push precheck and verify cached data for {!r}.".format(snap_filename)
+        "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
+    store_client.upload_precheck(snap_name=snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
 
@@ -697,7 +698,7 @@ def push(snap_filename, release_channels=None):
     result: Dict[str, Any] = None
     if sha3_384_available and source_snap:
         try:
-            result = _push_delta(
+            result = _upload_delta(
                 store_client,
                 snap_name=snap_name,
                 snap_filename=snap_filename,
@@ -708,16 +709,16 @@ def push(snap_filename, release_channels=None):
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 "Error generating delta: {}\n"
-                "Falling back to pushing full snap...".format(str(e))
+                "Falling back to uploading full snap...".format(str(e))
             )
-        except storeapi.errors.StorePushError as push_error:
+        except storeapi.errors.StoreUploadError as upload_error:
             logger.warning(
-                "Unable to push delta to store: {}\n"
-                "Falling back to pushing full snap...".format(push_error.error_list)
+                "Unable to upload delta to store: {}\n"
+                "Falling back to uploading full snap...".format(upload_error.error_list)
             )
 
     if result is None:
-        result = _push_snap(
+        result = _upload_snap(
             store_client,
             snap_name=snap_name,
             snap_filename=snap_filename,
@@ -727,13 +728,13 @@ def push(snap_filename, release_channels=None):
 
     logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
     if release_channels:
-        status(snap_name, storeapi.constants.DEFAULT_SERIES, deb_arch)
+        status(snap_name, deb_arch)
 
     snap_cache.cache(snap_filename=snap_filename)
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
 
 
-def _push_snap(
+def _upload_snap(
     store_client,
     *,
     snap_name: str,
@@ -752,7 +753,7 @@ def _push_snap(
     return result
 
 
-def _push_delta(
+def _upload_delta(
     store_client,
     *,
     snap_name: str,
@@ -780,7 +781,7 @@ def _push_delta(
     }
 
     try:
-        logger.debug("Pushing delta {!r}.".format(delta_filename))
+        logger.debug("Uploading delta {!r}.".format(delta_filename))
         delta_tracker = store_client.upload(
             snap_name=snap_name,
             snap_filename=delta_filename,
@@ -799,7 +800,7 @@ def _push_delta(
         else:
             raise
     except storeapi.errors.StoreServerError as e:
-        raise storeapi.errors.StorePushError(snap_name, e.response)
+        raise storeapi.errors.StoreUploadError(snap_name, e.response)
     finally:
         if os.path.isfile(delta_filename):
             try:
@@ -856,78 +857,10 @@ def _get_text_for_channel(channel):
     return channel_text
 
 
-def _add_progressive_release_information(
-    channel_map_tree,
-    *,
-    progressive_key: str,
-    progressive_percentage: int,
-    release_channels: List[str],
-) -> None:
-    """
-    Modify channel map tree so that it has progressive release information.
-
-    This method is in place to support the UI as the channel_map_tree
-    returned by the release API does not contain this information.
-    """
-    for channel in [storeapi.channels.Channel(c) for c in release_channels]:
-        for arch_entry in channel_map_tree[channel.track][
-            storeapi.constants.DEFAULT_SERIES
-        ].values():
-            for channel_entry in arch_entry:
-                if "progressive" in channel_entry:
-                    continue
-                channel_string = (
-                    "{}/{}".format(channel.risk, channel.branch)
-                    if channel.branch
-                    else channel.risk
-                )
-                if channel_entry["channel"] != channel_string:
-                    continue
-                channel_entry["progressive"] = {
-                    "percentage": progressive_percentage,
-                    "key": progressive_key,
-                    "paused": False,
-                }
-
-
-def release(
-    snap_name,
-    revision,
-    release_channels,
-    *,
-    progressive_key: Optional[str] = None,
-    progressive_percentage: Optional[int] = None,
-):
-    channels = StoreClientCLI().release(
-        snap_name=snap_name,
-        revision=revision,
-        channels=release_channels,
-        progressive_key=progressive_key,
-        progressive_percentage=progressive_percentage,
-    )
-    channel_map_tree = channels.get("channel_map_tree", {})
-
-    if progressive_key is not None and progressive_percentage is not None:
-        _add_progressive_release_information(
-            channel_map_tree,
-            progressive_key=progressive_key,
-            progressive_percentage=progressive_percentage,
-            release_channels=release_channels,
-        )
-
-    # This does not look good in green so we print instead
-    tabulated_channels = _tabulated_channel_map_tree(channel_map_tree)
-    print(tabulated_channels)
-
-    if "opened_channels" in channels:
-        logger.info(_get_text_for_opened_channels(channels["opened_channels"]))
-
-
 def _tabulated_channel_map_tree(channel_map_tree):
-
     """Tabulate channel map (LTS Channel channel-maps)"""
 
-    def _format_tree(channel_maps, track, series):
+    def _format_tree(channel_maps, track):
         arches = []
 
         for arch, channel_map in sorted(channel_maps.items()):
@@ -951,9 +884,7 @@ def _tabulated_channel_map_tree(channel_map_tree):
         for series, series_data in track_data.items():
             for arch, channel_map in series_data.items():
                 channel_maps[arch] = channel_map
-        parsed_channels = [
-            channel for channel in _format_tree(channel_maps, track, series)
-        ]
+        parsed_channels = [channel for channel in _format_tree(channel_maps, track)]
         data += parsed_channels
 
     have_expiration = any(x[6] for x in data)
@@ -972,16 +903,14 @@ def _tabulated_channel_map_tree(channel_map_tree):
 
 def close(snap_name, channel_names):
     """Close one or more channels for the specific snap."""
-    snap_series = storeapi.constants.DEFAULT_SERIES
-
     store_client = StoreClientCLI()
     account_info = store_client.get_account_information()
 
     try:
-        snap_id = account_info["snaps"][snap_series][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError as e:
         raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, snap_series
+            snap_name, DEFAULT_SERIES
         ) from e
 
     closed_channels, c_m_tree = store_client.close_channels(
@@ -1033,8 +962,8 @@ def download(
     )
 
 
-def status(snap_name, series, arch):
-    status = StoreClientCLI().get_snap_status(snap_name, series, arch)
+def status(snap_name, arch):
+    status = StoreClientCLI().get_snap_status(snap_name, arch)
 
     channel_map_tree = status.get("channel_map_tree", {})
     # This does not look good in green so we print instead
@@ -1052,8 +981,8 @@ def _get_text_for_current_channels(channels, current_channels):
     )
 
 
-def revisions(snap_name, series, arch):
-    revisions = StoreClientCLI().get_snap_revisions(snap_name, series, arch)
+def revisions(snap_name, arch):
+    revisions = StoreClientCLI().get_snap_revisions(snap_name, arch)
 
     parsed_revisions = [
         (
@@ -1081,12 +1010,11 @@ def gated(snap_name):
     # Get data for the gating snap
     snaps = account_info.get("snaps", {})
 
-    release = storeapi.constants.DEFAULT_SERIES
     # Resolve name to snap-id
     try:
-        snap_id = snaps[release][snap_name]["snap-id"]
+        snap_id = snaps[DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name)
+        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
     validations = store_client.get_assertion(snap_id, endpoint="validations")
 
@@ -1125,11 +1053,10 @@ def validate(snap_name, validations, revoke=False, key=None):
     authority_id = account_info["account_id"]
 
     # Get data for the gating snap
-    release = storeapi.constants.DEFAULT_SERIES
     try:
-        snap_id = account_info["snaps"][release][snap_name]["snap-id"]
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
     except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name)
+        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
 
     # Then, for each requested validation, generate assertion
     for validation in validations:
@@ -1139,7 +1066,7 @@ def validate(snap_name, validations, revoke=False, key=None):
         assertion = {
             "type": "validation",
             "authority-id": authority_id,
-            "series": release,
+            "series": DEFAULT_SERIES,
             "snap-id": snap_id,
             "approved-snap-id": approved_data.snap_id,
             "approved-snap-revision": rev,

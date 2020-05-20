@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,11 +23,12 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-from testtools.matchers import Contains, Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, Not, Is, IsInstance
 
-from snapcraft import config, storeapi
-from snapcraft.storeapi import errors, constants
 import tests
+from snapcraft import config, storeapi
+from snapcraft.storeapi import errors
+from snapcraft.storeapi.v2 import channel_map
 from tests import fixture_setup, unit
 
 
@@ -171,7 +172,8 @@ class DownloadTestCase(StoreTestCase):
 
     def test_download_nonexistent_snap_raises_exception(self):
         self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
+
+        raised = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
             "nonexistent-snap",
@@ -179,7 +181,10 @@ class DownloadTestCase(StoreTestCase):
             download_path="dummy.snap",
             arch="test-arch",
         )
-        self.assertThat(str(e), Equals("Snap 'nonexistent-snap' was not found."))
+
+        self.expectThat(raised._snap_name, Equals("nonexistent-snap"))
+        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Is(None))
 
     def test_download_snap(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -194,30 +199,31 @@ class DownloadTestCase(StoreTestCase):
         self.useFixture(fake_logger)
         self.client.login("dummy", "test correct password")
 
-        e = self.assertRaises(
+        raised = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
             "test-snap",
             risk="beta",
             download_path="dummy.snap",
         )
-        self.assertThat(
-            str(e), Equals("Snap 'test-snap' was not found in the 'beta' channel.")
-        )
 
-    def test_download_from_branded_store_requires_store(self):
+        self.expectThat(raised._snap_name, Equals("test-snap"))
+        self.expectThat(raised._channel, Equals("beta"))
+        self.expectThat(raised._arch, Is(None))
+
+    def test_download_from_brand_store_requires_store(self):
         self.client.login("dummy", "test correct password")
-        err = self.assertRaises(
+        raised = self.assertRaises(
             errors.SnapNotFoundError,
             self.client.download,
-            "test-snap-branded-store",
+            "test-snap-brand-store",
             risk="stable",
             download_path="dummy.snap",
         )
 
-        self.assertThat(
-            str(err), Equals("Snap 'test-snap-branded-store' was not found.")
-        )
+        self.expectThat(raised._snap_name, Equals("test-snap-brand-store"))
+        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Is(None))
 
     def test_download_from_branded_store(self):
         # Downloading from a branded-store requires setting the
@@ -931,10 +937,10 @@ class UploadTestCase(StoreTestCase):
             ),
         )
 
-    def test_push_unregistered_snap(self):
+    def test_upload_unregistered_snap(self):
         self.client.login("dummy", "test correct password")
         raised = self.assertRaises(
-            errors.StorePushError,
+            errors.StoreUploadError,
             self.client.upload,
             "test-snap-unregistered",
             self.snap_path,
@@ -944,10 +950,10 @@ class UploadTestCase(StoreTestCase):
             Equals("This snap is not registered. Register the snap and try again."),
         )
 
-    def test_push_forbidden_snap(self):
+    def test_upload_forbidden_snap(self):
         self.client.login("dummy", "test correct password")
         raised = self.assertRaises(
-            errors.StorePushError,
+            errors.StoreUploadError,
             self.client.upload,
             "test-snap-forbidden",
             self.snap_path,
@@ -955,7 +961,7 @@ class UploadTestCase(StoreTestCase):
         self.assertThat(
             str(raised),
             Equals(
-                "You are not the publisher or allowed to push revisions for "
+                "You are not the publisher or allowed to upload revisions for "
                 "this snap. Ensure you are logged in with the proper account "
                 "and try again."
             ),
@@ -973,7 +979,7 @@ class UploadTestCase(StoreTestCase):
         )
 
 
-class ReleaseTestCase(StoreTestCase):
+class ReleaseTest(StoreTestCase):
     def test_release_without_login_raises_exception(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
@@ -1000,11 +1006,7 @@ class ReleaseTestCase(StoreTestCase):
     def test_progressive_release_snap(self):
         self.client.login("dummy", "test correct password")
         channel_map = self.client.release(
-            "test-snap",
-            "19",
-            ["beta"],
-            progressive_key="progressive_key",
-            progressive_percentage=10,
+            "test-snap", "19", ["beta"], progressive_percentage=10
         )
         expected_channel_map = {
             "opened_channels": ["beta"],
@@ -1296,12 +1298,6 @@ class GetSnapRevisionsTestCase(StoreTestCase):
         self.client.login("dummy", "test correct password")
         self.assertThat(self.client.get_snap_revisions("basic"), Equals(self.expected))
 
-    def test_get_snap_revisions_filter_by_series(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_revisions("basic", series="16"), Equals(self.expected)
-        )
-
     def test_get_snap_revisions_filter_by_arch(self):
         self.client.login("dummy", "test correct password")
         self.assertThat(
@@ -1309,40 +1305,19 @@ class GetSnapRevisionsTestCase(StoreTestCase):
             Equals([rev for rev in self.expected if rev["arch"] == "amd64"]),
         )
 
-    def test_get_snap_revisions_filter_by_series_and_filter(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_revisions("basic", series="16", arch="amd64"),
-            Equals(
-                [
-                    rev
-                    for rev in self.expected
-                    if "16" in rev["series"] and rev["arch"] == "amd64"
-                ]
-            ),
-        )
-
-    def test_get_snap_revisions_filter_by_unknown_series(self):
-        self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_revisions,
-            "basic",
-            series="12",
-        )
-        self.assertThat(str(e), Equals("Snap 'basic' was not found in '12' series."))
-
     def test_get_snap_revisions_filter_by_unknown_arch(self):
         self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
+
+        raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.client.get_snap_revisions,
             "basic",
-            arch="somearch",
+            arch="some-arch",
         )
-        self.assertThat(
-            str(e), Equals("Snap 'basic' for 'somearch' was not found in '16' series.")
-        )
+
+        self.expectThat(raised._snap_name, Equals("basic"))
+        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Equals("some-arch"))
 
     def test_get_snap_revisions_refreshes_macaroon(self):
         self.client.login("dummy", "test correct password")
@@ -1466,12 +1441,6 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.client.login("dummy", "test correct password")
         self.assertThat(self.client.get_snap_status("basic"), Equals(self.expected))
 
-    def test_get_snap_status_filter_by_series(self):
-        self.client.login("dummy", "test correct password")
-        self.assertThat(
-            self.client.get_snap_status("basic", series="16"), Equals(self.expected)
-        )
-
     def test_get_snap_status_filter_by_arch(self):
         self.client.login("dummy", "test correct password")
         exp_arch = self.expected["channel_map_tree"]["latest"]["16"]["amd64"]
@@ -1480,35 +1449,19 @@ class GetSnapStatusTestCase(StoreTestCase):
             Equals({"channel_map_tree": {"latest": {"16": {"amd64": exp_arch}}}}),
         )
 
-    def test_get_snap_status_filter_by_series_and_filter(self):
-        self.client.login("dummy", "test correct password")
-        exp_arch = self.expected["channel_map_tree"]["latest"]["16"]["amd64"]
-        self.assertThat(
-            self.client.get_snap_status("basic", series="16", arch="amd64"),
-            Equals({"channel_map_tree": {"latest": {"16": {"amd64": exp_arch}}}}),
-        )
-
-    def test_get_snap_status_filter_by_unknown_series(self):
-        self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_status,
-            "basic",
-            series="12",
-        )
-        self.assertThat(str(e), Equals("Snap 'basic' was not found in '12' series."))
-
     def test_get_snap_status_filter_by_unknown_arch(self):
         self.client.login("dummy", "test correct password")
-        e = self.assertRaises(
+
+        raised = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.client.get_snap_status,
             "basic",
-            arch="somearch",
+            arch="some-arch",
         )
-        self.assertThat(
-            str(e), Equals("Snap 'basic' for 'somearch' was not found in '16' series.")
-        )
+
+        self.expectThat(raised._snap_name, Equals("basic"))
+        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Is("some-arch"))
 
     def test_get_snap_status_no_id(self):
         self.client.login("dummy", "test correct password")
@@ -1544,6 +1497,22 @@ class GetSnapStatusTestCase(StoreTestCase):
                 "Error fetching status of snap id 'my_snap_id' for 'any arch' "
                 "in '16' series: 500 Server error."
             ),
+        )
+
+
+class SnapChannelMapTest(StoreTestCase):
+    def test_get_snap_status_without_login_raises_exception(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_channel_map,
+            snap_name="basic",
+        )
+
+    def test_get_snap_channel_map(self):
+        self.client.login("dummy", "test correct password")
+        self.assertThat(
+            self.client.get_snap_channel_map(snap_name="basic"),
+            IsInstance(channel_map.ChannelMap),
         )
 
 
@@ -1587,16 +1556,16 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
         self.assertThat(raised.error_code, Equals(500))
 
 
-class PushMetadataTestCase(StoreTestCase):
+class UploadMetadataTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
 
     def _setup_snap(self):
-        """Login, register and push a snap.
+        """Login, register and upload a snap.
 
-        These are all the previous steps needed to push metadata.
+        These are all the previous steps needed to upload metadata.
         """
         self.client.login("dummy", "test correct password")
         self.client.register("basic")
@@ -1607,7 +1576,7 @@ class PushMetadataTestCase(StoreTestCase):
     def test_requires_login(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
-            self.client.push_metadata,
+            self.client.upload_metadata,
             "basic",
             {},
             False,
@@ -1617,7 +1586,7 @@ class PushMetadataTestCase(StoreTestCase):
         self._setup_snap()
         self.fake_store.needs_refresh = True
         metadata = {"field_ok": "foo"}
-        self.client.push_metadata("basic", metadata, False)
+        self.client.upload_metadata("basic", metadata, False)
         self.assertFalse(self.fake_store.needs_refresh)
 
     def test_invalid_data(self):
@@ -1625,7 +1594,7 @@ class PushMetadataTestCase(StoreTestCase):
         metadata = {"invalid": "foo"}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.push_metadata,
+            self.client.upload_metadata,
             "basic",
             metadata,
             False,
@@ -1635,7 +1604,7 @@ class PushMetadataTestCase(StoreTestCase):
     def test_all_ok(self):
         self._setup_snap()
         metadata = {"field_ok": "foo"}
-        result = self.client.push_metadata("basic", metadata, False)
+        result = self.client.upload_metadata("basic", metadata, False)
         self.assertIsNone(result)
 
     def test_conflicting_simple_normal(self):
@@ -1643,17 +1612,17 @@ class PushMetadataTestCase(StoreTestCase):
         metadata = {"test-conflict": "value"}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.push_metadata,
+            self.client.upload_metadata,
             "basic",
             metadata,
             False,
         )
         should = """
-            Metadata not pushed!
+            Metadata not uploaded!
             Conflict in 'test-conflict' field:
                 In snapcraft.yaml: 'value'
                 In the Store:      'value-changed'
-            You can repeat the push-metadata command with --force to force the local values into the Store
+            You can repeat the upload-metadata command with --force to force the local values into the Store
         """  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
@@ -1662,20 +1631,20 @@ class PushMetadataTestCase(StoreTestCase):
         metadata = {"test-conflict-1": "value-1", "test-conflict-2": "value-2"}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.push_metadata,
+            self.client.upload_metadata,
             "basic",
             metadata,
             False,
         )
         should = """
-            Metadata not pushed!
+            Metadata not uploaded!
             Conflict in 'test-conflict-1' field:
                 In snapcraft.yaml: 'value-1'
                 In the Store:      'value-1-changed'
             Conflict in 'test-conflict-2' field:
                 In snapcraft.yaml: 'value-2'
                 In the Store:      'value-2-changed'
-            You can repeat the push-metadata command with --force to force the local values into the Store
+            You can repeat the upload-metadata command with --force to force the local values into the Store
         """  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
@@ -1683,7 +1652,7 @@ class PushMetadataTestCase(StoreTestCase):
         self._setup_snap()
         metadata = {"test-conflict": "value"}
         # force the update, even on conflicts!
-        result = self.client.push_metadata("basic", metadata, True)
+        result = self.client.upload_metadata("basic", metadata, True)
         self.assertIsNone(result)
 
     def test_braces_in_error_messages_are_literals(self):
@@ -1691,31 +1660,31 @@ class PushMetadataTestCase(StoreTestCase):
         metadata = {"test-conflict-with-braces": "value"}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.push_metadata,
+            self.client.upload_metadata,
             "basic",
             metadata,
             False,
         )
         should = """
-            Metadata not pushed!
+            Metadata not uploaded!
             Conflict in 'test-conflict-with-braces' field:
                 In snapcraft.yaml: 'value'
                 In the Store:      'value with {braces}'
-            You can repeat the push-metadata command with --force to force the local values into the Store
+            You can repeat the upload-metadata command with --force to force the local values into the Store
         """  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
 
-class PushBinaryMetadataTestCase(StoreTestCase):
+class UploadBinaryMetadataTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
 
     def _setup_snap(self):
-        """Login, register and push a snap.
+        """Login, register and upload a snap.
 
-        These are all the previous steps needed to push binary metadata.
+        These are all the previous steps needed to upload binary metadata.
         """
         self.client.login("dummy", "test correct password")
         self.client.register("basic")
@@ -1726,7 +1695,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
     def test_requires_login(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
-            self.client.push_binary_metadata,
+            self.client.upload_binary_metadata,
             "basic",
             {},
             False,
@@ -1737,7 +1706,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
         self.fake_store.needs_refresh = True
         with tempfile.NamedTemporaryFile(suffix="ok") as f:
             metadata = {"icon": f}
-            self.client.push_binary_metadata("basic", metadata, False)
+            self.client.upload_binary_metadata("basic", metadata, False)
         self.assertFalse(self.fake_store.needs_refresh)
 
     def test_invalid_data(self):
@@ -1746,7 +1715,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             metadata = {"icon": f}
             raised = self.assertRaises(
                 errors.StoreMetadataError,
-                self.client.push_binary_metadata,
+                self.client.upload_binary_metadata,
                 "basic",
                 metadata,
                 False,
@@ -1757,7 +1726,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
         self._setup_snap()
         with tempfile.NamedTemporaryFile(suffix="ok") as f:
             metadata = {"icon": f}
-            result = self.client.push_binary_metadata("basic", metadata, False)
+            result = self.client.upload_binary_metadata("basic", metadata, False)
         self.assertIsNone(result)
 
     def test_conflicting_simple_normal(self):
@@ -1767,17 +1736,17 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             metadata = {"icon": f}
             raised = self.assertRaises(
                 errors.StoreMetadataError,
-                self.client.push_binary_metadata,
+                self.client.upload_binary_metadata,
                 "basic",
                 metadata,
                 False,
             )
         should = """
-            Metadata not pushed!
+            Metadata not uploaded!
             Conflict in 'icon' field:
                 In snapcraft.yaml: '{}'
                 In the Store:      'original-icon'
-            You can repeat the push-metadata command with --force to force the local values into the Store
+            You can repeat the upload-metadata command with --force to force the local values into the Store
         """.format(
             filename
         )  # NOQA
@@ -1788,7 +1757,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
         with tempfile.NamedTemporaryFile(suffix="conflict") as f:
             metadata = {"icon": f}
             # force the update, even on conflicts!
-            result = self.client.push_binary_metadata("basic", metadata, True)
+            result = self.client.upload_binary_metadata("basic", metadata, True)
         self.assertIsNone(result)
 
     def test_braces_in_error_messages_are_literals(self):
@@ -1798,17 +1767,17 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             metadata = {"icon": f}
             raised = self.assertRaises(
                 errors.StoreMetadataError,
-                self.client.push_binary_metadata,
+                self.client.upload_binary_metadata,
                 "basic",
                 metadata,
                 False,
             )
         should = """
-            Metadata not pushed!
+            Metadata not uploaded!
             Conflict in 'icon' field:
                 In snapcraft.yaml: '{}'
                 In the Store:      'original icon with {{braces}}'
-            You can repeat the push-metadata command with --force to force the local values into the Store
+            You can repeat the upload-metadata command with --force to force the local values into the Store
         """.format(
             filename
         )  # NOQA
@@ -1818,19 +1787,14 @@ class PushBinaryMetadataTestCase(StoreTestCase):
 class SnapNotFoundTestCase(StoreTestCase):
 
     scenarios = (
-        ("push_metadata", dict(attribute="push_metadata")),
-        ("push_binary_metadata", dict(attribute="push_binary_metadata")),
+        ("upload_metadata", dict(attribute="upload_metadata")),
+        ("upload_binary_metadata", dict(attribute="upload_binary_metadata")),
     )
 
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
-        self.useFixture(self.fake_logger)
-
     def _setup_snap(self):
-        """Login, register and push a snap.
+        """Login, register and upload a snap.
 
-        These are all the previous steps needed to push binary metadata.
+        These are all the previous steps needed to upload binary metadata.
         """
         self.client.login("dummy", "test correct password")
         self.client.register("basic")
@@ -1841,17 +1805,15 @@ class SnapNotFoundTestCase(StoreTestCase):
     def test_snap_not_found(self):
         self._setup_snap()
         metadata = {"field_ok": "dummy"}
+
         raised = self.assertRaises(
             errors.SnapNotFoundError,
             getattr(self.client, self.attribute),
-            "test-unexistent-snap",
+            "test-nonexistent-snap",
             metadata,
             False,
         )
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Snap 'test-unexistent-snap' was not "
-                "found in '{}' series.".format(constants.DEFAULT_SERIES)
-            ),
-        )
+
+        self.expectThat(raised._snap_name, Equals("test-nonexistent-snap"))
+        self.expectThat(raised._channel, Is(None))
+        self.expectThat(raised._arch, Is(None))

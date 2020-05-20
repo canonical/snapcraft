@@ -16,7 +16,6 @@
 
 import fixtures
 import json
-import os
 import subprocess
 from textwrap import dedent
 from unittest import mock
@@ -24,6 +23,7 @@ from unittest import mock
 from click.testing import CliRunner
 
 from snapcraft import storeapi
+from snapcraft.storeapi.v2.channel_map import ChannelMap
 from snapcraft.cli._runner import run
 from tests import fixture_setup, unit
 
@@ -94,39 +94,52 @@ class CommandBaseTestCase(unit.TestCase):
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
+    def setUp(self):
+        super().setUp()
 
-    yaml_template = """name: {step}-test
-version: "1.0"
-summary: test {step}
-description: if the {step} is successful the state file will be updated
-confinement: strict
-grade: stable
-base: {base}
+        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT"))
 
-parts:
-{parts}"""
+        self.fake_lifecycle_clean = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.clean"
+        )
+        self.useFixture(self.fake_lifecycle_clean)
 
-    yaml_part = """  {step}{iter:d}:
-    plugin: nil"""
+        self.fake_lifecycle_execute = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.execute"
+        )
+        self.useFixture(self.fake_lifecycle_execute)
 
-    def make_snapcraft_yaml(
-        self, step, n=1, yaml_part=None, create=False, base="core18"
-    ):
-        if not yaml_part:
-            yaml_part = self.yaml_part
+        self.fake_lifecycle_pack = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle.pack", return_value="foo.snap"
+        )
+        self.useFixture(self.fake_lifecycle_pack)
 
-        parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
-        super().make_snapcraft_yaml(
-            self.yaml_template.format(step=step, parts=parts, base=base)
+        self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path,
+            parts={
+                "part0": {"plugin": "nil"},
+                "part1": {"plugin": "nil"},
+                "part2": {"plugin": "nil"},
+            },
+        )
+        self.useFixture(self.snapcraft_yaml)
+
+        self.provider_class_mock = mock.MagicMock()
+        self.provider_mock = mock.MagicMock()
+        self.provider_class_mock.return_value.__enter__.return_value = (
+            self.provider_mock
         )
 
-        parts = []
-        for i in range(n):
-            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
-            state_dir = os.path.join(part_dir, "state")
-            parts.append({"part_dir": part_dir, "state_dir": state_dir})
+        self.fake_get_provider_for = fixtures.MockPatch(
+            "snapcraft.internal.build_providers.get_provider_for",
+            return_value=self.provider_class_mock,
+        )
+        self.useFixture(self.fake_get_provider_for)
 
-        return parts
+    def assert_clean_not_called(self):
+        self.fake_lifecycle_clean.mock.assert_not_called()
+        self.provider_mock.clean.assert_not_called()
+        self.provider_mock.clean_project.assert_not_called()
 
 
 class StoreCommandsBaseTestCase(CommandBaseTestCase):
@@ -140,6 +153,13 @@ class StoreCommandsBaseTestCase(CommandBaseTestCase):
 class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
+
+        # Our experimental environment variable is sticky
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES", None
+            )
+        )
 
         self.fake_store_login = fixtures.MockPatchObject(storeapi.StoreClient, "login")
         self.useFixture(self.fake_store_login)
@@ -197,6 +217,62 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_register_key)
 
+        # channel-map endpoint
+        self.channel_map = ChannelMap.unmarshal(
+            {
+                "channel-map": [
+                    {
+                        "architecture": "amd64",
+                        "channel": "2.1/beta",
+                        "expiration-date": None,
+                        "revision": 19,
+                        "progressive": {"paused": None, "percentage": None},
+                    }
+                ],
+                "revisions": [
+                    {"architectures": ["amd64"], "revision": 19, "version": "10"}
+                ],
+                "snap": {
+                    "name": "snap-test",
+                    "channels": [
+                        {
+                            "branch": None,
+                            "fallback": None,
+                            "name": "2.1/stable",
+                            "risk": "stable",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/stable",
+                            "name": "2.1/candidate",
+                            "risk": "candidate",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/candidate",
+                            "name": "2.1/beta",
+                            "risk": "beta",
+                            "track": "2.1",
+                        },
+                        {
+                            "branch": None,
+                            "fallback": "2.1/beta",
+                            "name": "2.1/edge",
+                            "risk": "edge",
+                            "track": "2.1",
+                        },
+                    ],
+                    "default-track": "2.1",
+                },
+            }
+        )
+        self.fake_store_get_snap_channel_map = fixtures.MockPatchObject(
+            storeapi.StoreClient, "get_snap_channel_map", return_value=self.channel_map
+        )
+        self.useFixture(self.fake_store_get_snap_channel_map)
+
         # Uploading
         self.mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         self.mock_tracker.track.return_value = {
@@ -206,10 +282,10 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             "url": "/fake/url",
             "revision": 9,
         }
-        self.fake_store_push_precheck = fixtures.MockPatchObject(
-            storeapi.StoreClient, "push_precheck"
+        self.fake_store_upload_precheck = fixtures.MockPatchObject(
+            storeapi.StoreClient, "upload_precheck"
         )
-        self.useFixture(self.fake_store_push_precheck)
+        self.useFixture(self.fake_store_upload_precheck)
 
         self.fake_store_upload = fixtures.MockPatchObject(
             storeapi.StoreClient, "upload", return_value=self.mock_tracker

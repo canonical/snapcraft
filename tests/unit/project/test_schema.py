@@ -1877,3 +1877,270 @@ class SystemUsernamesTests(ProjectBaseTest):
                 "The 'system-usernames/snap_daemon' property does not match the required schema: OrderedDict([('scope', 'invalid-scope')]) is not valid under any of the given schemas"
             ),
         )
+
+
+class PackageManagement(ProjectBaseTest):
+    def test_yaml_valid_apt_repositories(self):
+        self.assertValidationPasses(
+            dedent(
+                """\
+                name: test
+                base: core18
+                version: "1"
+                summary: test
+                description: nothing
+                license: MIT
+                parts:
+                  part1:
+                    plugin: nil
+                package-repositories:
+                  - type: apt
+                    ppa: user/test-ppa
+                  - type: apt
+                    architectures: [amd64, i386]
+                    components: [main, multiverse]
+                    deb-types: [deb, deb-src]
+                    key-id: test-key-id
+                    key-server: keyserver.ubuntu.com
+                    url: http://archive.ubuntu.com/ubuntu
+                    suites: [test, test-updates, test-security]
+                  - type: apt
+                    components: [main, multiverse]
+                    key-id: test-key-id
+                    url: http://archive.ubuntu.com/ubuntu
+                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+                """
+            )
+        )
+
+
+class InvalidAptConfigurations(ProjectBaseTest):
+    scenarios = [
+        (
+            "ppa extra invalid field",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      ppa: test/ppa
+                      invalid: invalid
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb extra invalid field",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main]
+                      key-id: test-key-id
+                      url: http://archive.ubuntu.com/ubuntu
+                      suites: [test, test-updates, test-security]
+                      invalid: invalid
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb missing field: components",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      key-id: test-key-id
+                      url: http://archive.ubuntu.com/ubuntu
+                      suites: [test, test-updates, test-security]
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb missing field: key-id",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      url: http://archive.ubuntu.com/ubuntu
+                      suites: [test, test-updates, test-security]
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb missing field: suites",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      url: http://archive.ubuntu.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb missing field: url",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb invalid deb type",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      deb-type: [invalid]
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb invalid key-id",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: \\*\\*
+                      suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty architectures",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                      architectures: []
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty components",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: []
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "deb empty suites",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main]
+                      key-id: test-key-id
+                      suites: []
+                      url: http://test-url.com/ubuntu
+                    """
+                ),
+                message_contains="The 'package-repositories[0]' property does not match the required schema:",
+            ),
+        ),
+        (
+            "ppa duplicate",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      ppa: dupe/check
+                    - type: apt
+                      ppa: dupe/check
+                    """
+                ),
+                message_contains="has non-unique elements",
+            ),
+        ),
+        (
+            "deb duplicate",
+            dict(
+                packages=dedent(
+                    """\
+                    package-repositories:
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                    - type: apt
+                      components: [main, multiverse]
+                      key-id: test-key-id
+                      suites: [test, test-updates, test-security]
+                    """
+                ),
+                message_contains="has non-unique elements",
+            ),
+        ),
+    ]
+
+    def test_invalid(self):
+        raised = self.assertValidationRaises(
+            dedent(
+                f"""\
+            name: test-snap
+            base: core18
+            version: "1.0"
+            summary: test summary
+            description: test description
+
+            parts:
+                my-part:
+                    plugin: nil
+        """
+            )
+            + self.packages
+        )
+
+        self.assertThat(raised.message, Contains(self.message_contains))

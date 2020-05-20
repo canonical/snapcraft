@@ -8,7 +8,6 @@ environment:
   matrix:
   - PYTHON: C:\Python37-x64
 
-clone_depth: 1
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
 - '%LOCALAPPDATA%\pip\Cache\wheels'
@@ -53,12 +52,8 @@ build_script:
 
 test_script:
 - cmd: |
-    echo "Running select unit tests..."
-    venv\Scripts\activate.bat
-    python -m unittest run tests.integration.store.test_store_login_logout -v
-    venv\Scripts\deactivate.bat
-
     echo "Smoke testing snapcraft.exe..."
+    dist\snapcraft.exe logout
     dist\snapcraft.exe version
     mkdir test
     cd test

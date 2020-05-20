@@ -2,6 +2,7 @@
 exclude = '''
 /(
     \.git
+  | \.direnv
   | \.hg
   | \.mypy_cache
   | \.tox

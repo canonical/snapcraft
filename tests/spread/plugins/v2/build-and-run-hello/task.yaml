@@ -1,0 +1,79 @@
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
+
+environment:
+  SNAP/autotools: autotools-hello
+  SNAP/cmake: cmake-hello
+  SNAP/make: make-hello
+  SNAP/python: python-hello
+  SNAP/python_staged: python-hello-staged-python
+  SNAP/python_with_python_package_dep: python-hello-with-python-package-dep
+  SNAP/python_with_stage_package_dep: python-hello-with-stage-package-dep
+  SNAP/go_mod: go-mod-hello
+  SNAP/dump: dump-hello
+  SNAP/meson: meson-hello
+  SNAP/meson_staged_python: meson-hello-staged-python
+  SNAP/npm: npm-hello
+  SNAP/rust: rust-hello
+  SNAP/rust_features: rust-hello-features
+  SNAP/rust_workspace: rust-hello-workspace
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/$SNAP/snap/snapcraft.yaml"
+
+restore: |
+  cd "../snaps/$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  [ -f hello ] && git checkout hello
+  [ -f hello.c ] && git checkout hello.c
+  [ -f hello.js ] && git checkout hello.js
+  [ -f main.go ] && git checkout main.go
+  [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "../snaps/$SNAP"
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
+  # Make sure that what we built runs with the changes applied.
+  if [ -f hello ]; then
+    modified_file=hello
+  elif [ -f hello.c ]; then
+    modified_file=hello.c
+  elif [ -f hello.js ]; then
+    modified_file=hello.js
+  elif [ -f main.go ]; then
+    modified_file=main.go
+  elif [ -f src/main.rs ]; then
+    modified_file=src/main.rs
+  elif [ -f say/src/lib.rs ]; then
+    modified_file=say/src/lib.rs
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello rebuilt world" ]

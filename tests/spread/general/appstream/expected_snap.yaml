@@ -1,0 +1,28 @@
+name: appstream-desktop
+version: 1.0.0
+summary: Appstream Desktop test
+description: |-
+  Some description.
+
+
+  Some list:
+
+  - First item
+  - Second item
+
+
+  Test me please.
+apps:
+  appstream-desktop:
+    command: usr/bin/appstream-desktop
+    common-id: io.snapcraft.appstream
+    command-chain:
+    - snap/command-chain/snapcraft-runner
+architectures:
+- amd64
+assumes:
+- command-chain
+base: core18
+confinement: strict
+grade: devel
+title: Appstream Desktop

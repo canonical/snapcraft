@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,8 +20,10 @@ from textwrap import dedent
 import click
 
 import snapcraft
+from snapcraft.project import errors as project_errors
 from . import echo
-from snapcraft.internal import sources
+from ._options import get_project
+from snapcraft.internal import errors, sources
 
 
 _TOPICS = {"sources": sources, "plugins": snapcraft}
@@ -38,8 +40,13 @@ def helpcli():
 @click.option(
     "--devel", is_flag=True, help="Show more details for snapcraft developers"
 )
+@click.option(
+    "--base",
+    help="Show help for specific base",
+    type=click.Choice(["core", "core16", "core18", "core20"]),
+)
 @click.pass_context
-def help_command(ctx, topic, devel):
+def help_command(ctx, topic, devel, base):
     """Obtain help for a certain topic, plugin or command.
 
     The <topic> can either be a plugin name or one of:
@@ -55,6 +62,7 @@ def help_command(ctx, topic, devel):
         snapcraft help plugins
         snapcraft help sources
         snapcraft help go
+        snapcraft help go --base core18
         snapcraft help build
     """
     if not topic:
@@ -81,7 +89,7 @@ def help_command(ctx, topic, devel):
         _topic_help(topic, devel)
     else:
         try:
-            _module_help(topic, devel)
+            _module_help(topic, devel, base)
         except ImportError:
             # 10 is the limit which determines ellipsis is needed
             if len(topic) > 10:
@@ -115,13 +123,29 @@ def _topic_help(module_name, devel):
         click.echo(_TOPICS[module_name].__doc__)
 
 
-def _module_help(module_name, devel):
+def _module_help(plugin_name: str, devel: bool, base: str):
+    module_name = plugin_name.replace("-", "_")
+
+    if base is None:
+        try:
+            base = get_project()._snap_meta.get_build_base()
+        except (errors.ProjectNotFoundError, project_errors.MissingSnapcraftYamlError):
+            base = "core20"
+
+    if base == "core20":
+        plugin_version = "v2"
+    else:
+        plugin_version = "v1"
+
     module = importlib.import_module(
-        "snapcraft.plugins.{}".format(module_name.replace("-", "_"))
+        f"snapcraft.plugins.{plugin_version}.{module_name}"
     )
     if module.__doc__ and devel:
         help(module)
     elif module.__doc__:
-        click.echo(module.__doc__)
+        click.echo_via_pager(
+            f"Displaying help for the {plugin_name!r} plugin for {base!r}.\n\n"
+            + module.__doc__
+        )
     else:
         click.echo("The plugin has no documentation")

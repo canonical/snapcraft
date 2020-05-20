@@ -36,8 +36,8 @@ class StoreMetadataHandler:
         self.snap_id = snap_id
         self.snap_name = snap_name
 
-    def push(self, metadata, force):
-        """Push the metadata to SCA."""
+    def upload(self, metadata, force):
+        """Upload the metadata to SCA."""
         url = "snaps/" + self.snap_id + "/metadata"
         headers = {
             "Authorization": self.auth,
@@ -82,7 +82,7 @@ class StoreMetadataHandler:
         updated_info = screenshots
 
         if current_icon is None and icon is None:
-            # icon unchanged, nothing to push
+            # icon unchanged, nothing to upload
             return data, files
 
         if icon:
@@ -97,11 +97,11 @@ class StoreMetadataHandler:
                 updated_info.append(upload_icon)
                 files = {"icon": icon}
             else:
-                # icon unchanged, nothing to push
+                # icon unchanged, nothing to upload
                 return data, files
 
         if not files:
-            # API requires a multipart request, but we have no files to push
+            # API requires a multipart request, but we have no files to upload
             # https://github.com/requests/requests/issues/1081
             files = {"info": ("", json.dumps(updated_info))}
         else:
@@ -109,8 +109,8 @@ class StoreMetadataHandler:
 
         return data, files
 
-    def push_binary(self, metadata, force):
-        """Push the binary metadata to SCA."""
+    def upload_binary(self, metadata, force):
+        """Upload the binary metadata to SCA."""
         data, files = self._build_binary_request_data(metadata)
         if data is None and files is None:
             # nothing to update

@@ -3,12 +3,9 @@ dist: bionic
 
 env:
   global:
-    # SPREAD_GOOGLE_KEY
-    - secure: "uWKJdJlHc8tg+98jGpcc/FvsssEbw2FARqtgO0smBp5x8JWCmAt5fAVPB8qRbbirdHS5Yjpk8SSSa3vWVizYeTIOV+Vo3w8/1oqymPnMEEMtcLkyGZP+fNMDgNnX+icOU/bmh8werhOn9+qiZfKmFuXgpjrXzYoWzrhn55EuDN68Yhe6gB1zznHihDtSKjwQrbZFlgNnTh13Wk9lY8y2XYsWZZVfQ25dP4PaQQv647nBhcWPvrB0N/vMmDS/twvUBcbbEjRg5yKtsqzuT2lEqdIpwosp3/gZjWAWK0FjjmnzRcSHbugtaxWHmghHDLHSpP4GF7bzYL01tklFWDSW9DDvVfZ3HgiN058LL1jsk+VjcMCgu7csUWUj2kib3/TjKQy32R1vALpgDOrLHutdVDXoED33qxcyAYLODNRwW9o+QQM2HoZD4PKVDcKW4WOvAKp7Z1NK+ag26WdA/bM7ZgAll40dY9yPtgg0fdMM9N1X9e4v2TJmjnSLXF8v0jXIwp3VL01c/RpsmD7ubTUp0ixSaiKK0cCvxdflsDSUGojckeA4OsGOf9X+anqxmJsiY7vW/TKULMgToKEYDIPB0EfJ0Tf8P/ve4veEZSnhFinrDk46jwSP2m4kpR2FHAMtjCwqWEXZWouIJOOclAk4IqUWGT88Iomdz/LFbQa2rdo="
     - LC_ALL: "C.UTF-8"
     - LANG: "C.UTF-8"
     - PATH: "/snap/bin:$PATH"
-    - SPREAD_DEBUG_JOURNAL: "true"
 
 jobs:
   include:
@@ -47,26 +44,11 @@ jobs:
       script:
         - ./tools/cla_check.py
 
-    - stage: unit, snap and osx
+    - stage: unit and snap
       name: unit tests
       script:
-        - SNAPCRAFT_PACKAGE_TYPE=none ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/unit/coverage"
-    - stage: unit, snap and osx
-      name: osx
-      os: osx
-      addons:
-        homebrew:
-          packages:
-            - coreutils
-            - python
-      install:
-        - echo Temporarily disabled
-        - echo python3 ./tools/brew_install_from_source.py
-        - echo python3 -m pip install -r requirements.txt
-        - echo python3 -m pip install -r requirements-devel.txt
-      script:
-        - echo SNAPCRAFT_PACKAGE_TYPE=brew ./runtests.sh tests.integration.store.test_store_login_logout use-run
-    - stage: unit, snap and osx
+        - SNAPCRAFT_UNIT_TESTS=Y ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/unit/coverage"
+    - stage: unit and snap
       name: snap
       workspaces:
         create:
@@ -76,7 +58,7 @@ jobs:
       addons:
         snaps:
           - name: snapcraft
-            channel: edge
+            channel: stable
             classic: true
           - name: transfer
           - name: http
@@ -87,11 +69,13 @@ jobs:
             - libnacl-dev
             - libsodium-dev
             - libssl-dev
-            - libxml2-dev
-            - libxslt-dev
             - libyaml-dev
             - python3.6-dev
-      script: snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+      script:
+        - snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+        - sudo snap install "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --dangerous --classic
+        - snapcraft clean --destructive-mode
+        - snapcraft snap --destructive-mode --output "snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
       after_success:
         - timeout 180 /snap/bin/transfer snapcraft-pr$TRAVIS_PULL_REQUEST.snap
       after_failure:
@@ -119,31 +103,9 @@ jobs:
       name: store
       workspaces:
         use: snaps
-      addons:
-        apt:
-          packages:
-            - git
-            - libapt-pkg-dev
-            - libffi-dev
-            - libnacl-dev
-            - libsodium-dev
-            - libssl-dev
-            - libxml2-dev
-            - libxslt-dev
-            - libyaml-dev
-            - python3-yaml
-            - python3.6-dev
-            - rpm2cpio
-            - squashfs-tools
-            - xdelta3
-      install:
-        - curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py --user
-        - pip3 install --user -r requirements-devel.txt -r requirements.txt codecov
-        - ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install "snapcraft-pr$TRAVIS_PULL_REQUEST.snap" --dangerous --classic}
-      before_script:
-        - rm -rf snapcraft
+      if: head_repo = "snapcore/snapcraft"
       script:
-        - SNAPCRAFT_PACKAGE_TYPE=snap ./runtests.sh tests/integration/store
+        - ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/general/store"
 
     - stage: docker
       env:

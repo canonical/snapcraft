@@ -1,0 +1,17 @@
+name: missing-none
+version: 'test1'
+summary: test
+description: test
+grade: stable
+base: core18
+confinement: strict
+
+parts:
+  pciutils:
+    plugin: nil
+    stage-packages:
+      - pciutils
+
+apps:
+  lspci:
+    command: usr/bin/lspci

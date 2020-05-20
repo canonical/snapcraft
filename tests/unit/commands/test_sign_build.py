@@ -78,7 +78,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                'Error: Invalid value for "<snap-file>": File "nonexisting.snap" does not exist.\n'
+                "Error: Invalid value for '<snap-file>': File 'nonexisting.snap' does not exist.\n"
             ),
         )
         self.assertThat(mock_check_output.call_count, Equals(0))
@@ -232,7 +232,7 @@ class SignBuildTestCase(CommandBaseTestCase):
             str(raised),
             Contains(
                 "Please register it with `snapcraft register-key 'default'` "
-                "before signing and pushing signatures to the Store."
+                "before signing and uploading signatures to the Store."
             ),
         )
         snap_build_path = self.snap_test.snap_path + "-build"
@@ -369,7 +369,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_sign_build_push_successfully(
+    def test_sign_build_upload_successfully(
         self,
         mock_installed,
         mock_get_snap_data,
@@ -399,7 +399,9 @@ class SignBuildTestCase(CommandBaseTestCase):
         )
         self.assertThat(
             result.output,
-            Contains("Build assertion {} pushed to the Store.".format(snap_build_path)),
+            Contains(
+                "Build assertion {} uploaded to the Store.".format(snap_build_path)
+            ),
         )
         self.assertThat(snap_build_path, FileExists())
         mock_check_output.assert_called_with(
@@ -420,7 +422,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
     @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
-    def test_sign_build_push_existing(
+    def test_sign_build_upload_existing(
         self,
         mock_installed,
         mock_get_snap_data,
@@ -448,6 +450,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         )
         self.assertThat(
             result.output,
-            Contains("Build assertion {} pushed to the Store.".format(snap_build_path)),
+            Contains(
+                "Build assertion {} uploaded to the Store.".format(snap_build_path)
+            ),
         )
         mock_push_snap_build.assert_called_with("snap-id", "Already signed assertion")

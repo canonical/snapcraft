@@ -1,16 +1,11 @@
 project: snapcraft
 
 environment:
-  SPREAD_DEBUG_JOURNAL: "$(HOST: echo ${SPREAD_DEBUG_JOURNAL:-false})"
-
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
   # Generate manifest when building snaps.
   SNAPCRAFT_BUILD_INFO: "1"
-
-  # This variable can be set to either "deb" or "snap". It defaults to "snap".
-  SNAPCRAFT_PACKAGE_TYPE: "$(HOST: echo ${SNAPCRAFT_PACKAGE_TYPE:-snap})"
 
   # If SNAPCRAFT_PACKAGE_TYPE is "snap" and this variable is defined, spread
   # will install snapcraft from that channel. Otherwise, it'll look for a snap
@@ -18,11 +13,17 @@ environment:
   # nothing.
   SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
 
+  # Are these unit tests.
+  SNAPCRAFT_UNIT_TESTS: "$(HOST: echo ${SNAPCRAFT_UNIT_TESTS})"
+
   # Show error tracebacks
   SNAPCRAFT_MANAGED_HOST: "yes"
 
   # Disable all Sentry error reporting
   SNAPCRAFT_ENABLE_ERROR_REPORTING: "no"
+
+  # Print potentially useful debugging info
+  SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "yes"
 
   # Ensure that we have the right debian configuration for legacy
   DEBIAN_FRONTEND: noninteractive
@@ -33,10 +34,11 @@ environment:
 backends:
   lxd:
     systems:
+      # -native is added for clarity and for ubuntu-20.04* to match.
       - ubuntu-16.04
       - ubuntu-18.04
+      - ubuntu-20.04
   google:
-    key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
     location: computeengine/us-east1-b
     systems:
       - ubuntu-16.04-64:
@@ -45,6 +47,57 @@ backends:
       - ubuntu-18.04-64:
           workers: 18
           image: ubuntu-1804-64
+      - ubuntu-20.04-64:
+          workers: 4
+          image: ubuntu-2004-64
+
+  multipass:
+    type: adhoc
+    allocate: |
+      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+        image="18.04"
+        instance_name="spread-18-04"
+      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+        image="20.04"
+        instance_name="spread-20-04"
+      else
+        FATAL "$SPREAD_SYSTEM is not supported!"
+      fi
+
+      multipass launch --disk 20G --mem 2G --name "$instance_name" "$image"
+
+      # Get the IP from the instance
+      ip=$(multipass info --format csv "$instance_name" | tail -1 | cut -d\, -f3)
+      # Enable PasswordAuthertication for root over SSH.
+      multipass exec "$instance_name" -- \
+        sudo sh -c "echo root:ubuntu | sudo chpasswd"
+      multipass exec "$instance_name" -- \
+        sudo sh -c \
+        "sed -i /etc/ssh/sshd_config -e 's/^PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#PermitRootLogin.*/PermitRootLogin yes/'"
+      multipass exec "$instance_name" -- \
+        sudo systemctl restart ssh
+
+      ADDRESS "$ip:22"
+    discard: |
+      if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+        instance_name="spread-18-04"
+      elif [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+        instance_name="spread-20-04"
+      else
+        FATAL "$SPREAD_SYSTEM is not supported!"
+      fi
+
+      multipass delete --purge "$instance_name"
+    systems:
+      - ubuntu-18.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
+      - ubuntu-20.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
+
   autopkgtest:
     type: adhoc
     allocate: |
@@ -96,6 +149,22 @@ backends:
       - ubuntu-18.04-arm64:
           username: ubuntu
           password: ubuntu
+      # Focal
+      - ubuntu-20.04-amd64:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-ppc64el:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-armhf:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-s390x:
+          username: ubuntu
+          password: ubuntu
+      - ubuntu-20.04-arm64:
+          username: ubuntu
+          password: ubuntu
 
 exclude: [snaps-cache/]
 
@@ -127,58 +196,47 @@ prepare: |
   fi
 
   # Exit now if we are preparing for unit tests.
-  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "none" ]; then
+  if [ "$SNAPCRAFT_UNIT_TESTS" = "Y" ]; then
       exit 0
   fi
 
   apt-get install -y snapd
+  snap install snapd
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ]; then
+  # Hold snap refreshes for 24h.
+  snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
       # nicely handle the snap and deb being installed at the same time.
       apt-get remove --purge --yes lxd lxd-client
       # Install and setup the lxd snap
       snap install lxd
+      echo "PATH=$PATH"
+      echo "which lxd: $(command -v lxd)"
+      stat /snap/bin/lxd
       lxd waitready --timeout=30
       lxd init --auto
       # Add the ubuntu user to the lxd group.
       adduser ubuntu lxd
   fi
 
-  if [ "$SNAPCRAFT_PACKAGE_TYPE" = "deb" ]; then
-      apt-get install -y snapcraft
-  elif [ "$SNAPCRAFT_PACKAGE_TYPE" = "snap" ]; then
-      # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
-      # Otherwise, look for it in /snapcraft/.
-      if [ -z "$SNAPCRAFT_CHANNEL" ]; then
-          if stat /snapcraft/*.snap 2>/dev/null; then
-              snap install --classic --dangerous /snapcraft/*.snap
-          else
-              echo "Expected a snap to exist in /snapcraft/. If your intention"\
-                   "was to install from the store, set \$SNAPCRAFT_CHANNEL."
-              exit 1
-          fi
-      else
-          snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
-      fi
+  # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
+  # Otherwise, look for it in /snapcraft/.
+  if [ -z "$SNAPCRAFT_CHANNEL" ]; then
+    if stat /snapcraft/*.snap 2>/dev/null; then
+      snap install --classic --dangerous /snapcraft/*.snap
+    else
+      echo "Expected a snap to exist in /snapcraft/. If your intention"\
+           "was to install from the store, set \$SNAPCRAFT_CHANNEL."
+      exit 1
+    fi
   else
-    echo "'$SNAPCRAFT_PACKAGE_TYPE' is not a supported snapcraft package type."\
-         " Supported types are 'deb' and 'snap'."
-    exit 1
-  fi
-
-debug: |
-  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
-    journalctl -xe
+    snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
   fi
 
 restore-each: |
   "$TOOLS_DIR"/restore.sh
-
-debug-each: |
-  if [ "$SPREAD_DEBUG_JOURNAL" == "true" ]; then
-    journalctl -xe
-  fi
 
 suites:
  # Unit tests
@@ -224,7 +282,7 @@ suites:
      pyvenv "$HOME/venv/snapcraft"
      # shellcheck source=/dev/null
      source "$HOME/venv/snapcraft/bin/activate"
-     pip install --upgrade pip
+     pip install --upgrade pip wheel setuptools
      pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt codecov
    recover: |
      rm -rf ~/venv
@@ -232,6 +290,10 @@ suites:
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality
+   # TODO: enable once we have python plugin support for core20.
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
 
  # Use of multipass and lxd build providers
  tests/spread/build-providers/:
@@ -239,14 +301,18 @@ suites:
    systems:
    - ubuntu-16.04-64
    - ubuntu-18.04-64
+   - ubuntu-20.04-64
    kill-timeout: 180m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
- tests/spread/plugins/ant/:
+ tests/spread/plugins/v1/ant/:
    summary: tests of snapcraft's Ant plugin
- tests/spread/plugins/ament/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/ament/:
    summary: tests of snapcraft's Ament plugin when not using a base
    systems:
    - ubuntu-16.04-amd64
@@ -255,9 +321,12 @@ suites:
    - ubuntu-16.04
    - ubuntu-16.04-64
    kill-timeout: 360m
- tests/spread/plugins/autotools/:
+ tests/spread/plugins/v1/autotools/:
    summary: tests of snapcraft's Autotools plugin
- tests/spread/plugins/catkin/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/catkin/:
    summary: tests of snapcraft's Catkin plugin
    systems:
    - ubuntu-16.04
@@ -271,7 +340,7 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
- tests/spread/plugins/colcon/:
+ tests/spread/plugins/v1/colcon/:
    summary: tests of snapcraft's Colcon plugin
    systems:
    - ubuntu-18.04
@@ -280,7 +349,7 @@ suites:
    - ubuntu-18.04-arm64
    - ubuntu-18.04-armhf
    kill-timeout: 180m
- tests/spread/plugins/conda/:
+ tests/spread/plugins/v1/conda/:
    summary: tests of snapcraft's Conda plugin
    systems:
    - ubuntu-18.04
@@ -291,11 +360,17 @@ suites:
    - ubuntu-16.04-64
    # Network errors on autopkgtest infra
    # - ubuntu-16.04-amd64
- tests/spread/plugins/copy/:
+ tests/spread/plugins/v1/copy/:
    summary: tests of snapcraft's Copy plugin when not using a base
- tests/spread/plugins/cmake/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/cmake/:
    summary: tests of snapcraft's CMake plugin
- tests/spread/plugins/crystal/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/crystal/:
    summary: tests of snapcraft's Crystal plugin
    systems:
    - ubuntu-18.04
@@ -304,46 +379,85 @@ suites:
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
- tests/spread/plugins/dotnet/:
+ tests/spread/plugins/v1/dotnet/:
    summary: tests of snapcraft's Dotnet plugin
    # Keep this 16.04 as it is the only supported system for this plugin
    systems:
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
- tests/spread/plugins/go/:
+ tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
- tests/spread/plugins/godeps/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/godeps/:
    summary: tests of snapcraft's Godeps plugin
- tests/spread/plugins/gradle/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/gradle/:
    summary: tests of snapcraft's Gradle plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    priority: 50  # Run this test early so we're not waiting for it
    kill-timeout: 40m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/kbuild/:
+ tests/spread/plugins/v1/kbuild/:
    summary: tests of snapcraft's Kbuild plugin
- tests/spread/plugins/make/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/make/:
    summary: tests of snapcraft's Make plugin
- tests/spread/plugins/maven/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/maven/:
    summary: tests of snapcraft's Maven plugin
- tests/spread/plugins/meson/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/meson/:
    summary: tests of snapcraft's Meson plugin
- tests/spread/plugins/nodejs/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/nodejs/:
    summary: tests of snapcraft's Nodejs plugin
- tests/spread/plugins/nil/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/nil/:
    summary: tests of snapcraft's Nil plugin
- tests/spread/plugins/plainbox/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/plainbox/:
    summary: tests of snapcraft's Plainbox plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    kill-timeout: 20m
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
- tests/spread/plugins/python/:
+ tests/spread/plugins/v1/python/:
    summary: tests of snapcraft's Python plugin
- tests/spread/plugins/qmake/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/qmake/:
    summary: tests of snapcraft's qmake plugin
- tests/spread/plugins/ruby/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/ruby/:
    summary: tests of snapcraft's Ruby plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
    kill-timeout: 180m
- tests/spread/plugins/rust/:
+ tests/spread/plugins/v1/rust/:
    summary: tests of snapcraft's Rust plugin
    systems:
    - ubuntu-18.04
@@ -358,16 +472,44 @@ suites:
    - ubuntu-16.04-i386
    - ubuntu-16.04-armhf
    - ubuntu-16.04-s390x
- tests/spread/plugins/scons/:
+ tests/spread/plugins/v1/scons/:
    summary: tests of snapcraft's SCons plugin
- tests/spread/plugins/tar-content/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/tar-content/:
    summary: tests of snapcraft's tar-content plugin when not using a base
- tests/spread/plugins/waf/:
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/waf/:
    summary: tests of snapcraft's Waf plugin
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v1/x-local/:
+   summary: tests of snapcraft's local plugins
+   systems:
+   - ubuntu-16.04*
+   - ubuntu-18.04*
+ tests/spread/plugins/v2/:
+   summary: tests of snapcraft's v2 plugins
+   systems:
+   - ubuntu-20.04*
 
 # Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
+
+# External snap tests
+ tests/spread/snaps/:
+   systems:
+   - ubuntu-18.04-64
+   manual: true
+   summary: external snaps
+   prepare: |
+     sudo apt-get install git
+     sudo apt-mark auto git
 
 # Legacy tests
  tests/spread/legacy/:
@@ -380,15 +522,16 @@ suites:
    warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 100  # Run this test early so we're not waiting for it
    systems:
-     - ubuntu-16.04*
      - ubuntu-18.04*
    environment:
      # TODO: make generic
      PIP_COMMAND: "/root/.local/bin/pip"
+     SNAPCRAFT_PACKAGE_TYPE: "snap"
    prepare: |
      apt-get update
      apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion libxml2-dev libxslt-dev
      pip3 install --user --upgrade pip
+     $PIP_COMMAND install --user --upgrade wheel setuptools
      $PIP_COMMAND install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
      # Move the snapcraft modules out of the way
      mv /snapcraft/snapcraft /snapcraft.bak

@@ -1,0 +1,23 @@
+name: meson-hello-staged-python
+version: "1.0"
+summary: test the meson plugin
+description: |
+  This is a basic meson snap that stages python to cause interference.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  meson-hello-staged-python:
+    command: bin/hello
+
+parts:
+  hello:
+    source: .
+    plugin: meson
+    meson-version: "0.48.0"
+    meson-parameters:
+      - --prefix=/
+    stage-packages:
+      - python3-minimal

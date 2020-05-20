@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,7 @@
 
 import copy
 import contextlib
+import distutils.util
 import itertools
 import logging
 import os
@@ -333,9 +334,6 @@ class _SnapPackaging:
         self._parts_dir = project_config.project.parts_dir
 
         self._arch_triplet = project_config.project.arch_triplet
-        self._is_host_compatible_with_base = (
-            project_config.project.is_host_compatible_with_base
-        )
         self.meta_dir = os.path.join(self._prime_dir, "meta")
         self.meta_gui_dir = os.path.join(self.meta_dir, "gui")
         self._config_data = project_config.data.copy()
@@ -438,23 +436,32 @@ class _SnapPackaging:
     def _assemble_runtime_environment(self) -> str:
         # Classic confinement or building on a host that does not match the target base
         # means we cannot setup an environment that will work.
-        if (
-            self._config_data["confinement"] == "classic"
-            or not self._is_host_compatible_with_base
-        ):
+        if self._config_data["confinement"] == "classic":
             # Temporary workaround for snapd bug not expanding PATH:
             # We generate an empty runner which addresses the issue.
             # https://bugs.launchpad.net/snapd/+bug/1860369
             return ""
 
-        common.env = self._project_config.snap_env()
-        assembled_env = common.assemble_env()
-        common.reset_env()
+        env = list()
+        if self._project_config.project._snap_meta.base in ("core", "core16", "core18"):
+            common.env = self._project_config.snap_env()
+            assembled_env = common.assemble_env()
+            common.reset_env()
 
-        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
-        ld_library_env = "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
-        return "\n".join([assembled_env, ld_library_env])
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            env.append(self._install_path_pattern.sub("$SNAP", assembled_env))
+        else:
+            # TODO use something local to the meta package and
+            # only add paths for directory items that actually exist.
+            runtime_env = project_loader.runtime_env(
+                self._prime_dir, self._project_config.project.arch_triplet
+            )
+            for e in runtime_env:
+                env.append(re.sub(self._prime_dir, "$SNAP", e))
+
+        env.append('export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"')
+
+        return "\n".join(env)
 
     def _generate_snapcraft_runner(self) -> Optional[str]:
         """Create runner if required.
@@ -463,6 +470,14 @@ class _SnapPackaging:
 
         # If there are no apps, or type is snapd, no need to create a runner.
         if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
+        # No more command-chain for core20 and classic confinement.
+        # This was a workaround for LP: #1860369.
+        if (
+            self._snap_meta.base not in ("core", "core16", "core18", None)
+            and self._snap_meta.confinement == "classic"
+        ):
             return None
 
         assembled_env = self._assemble_runtime_environment()
@@ -490,7 +505,7 @@ class _SnapPackaging:
             os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
-        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(

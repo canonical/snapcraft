@@ -72,11 +72,19 @@ def load(stream: TextIO) -> Any:
 
 
 def dump(
-    data: Union[Dict[str, Any], yaml.YAMLObject], *, stream: Optional[TextIO] = None
+    data: Union[Dict[str, Any], yaml.YAMLObject],
+    *,
+    stream: Optional[TextIO] = None,
+    sort_keys=True
 ) -> Optional[str]:
     """Safely dump YAML in ordered manner."""
     return yaml.dump(
-        data, stream, _SafeOrderedDumper, default_flow_style=False, allow_unicode=True
+        data,
+        stream=stream,
+        Dumper=_SafeOrderedDumper,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=sort_keys,
     )
 
 

@@ -1,0 +1,17 @@
+name: dump-hello
+version: "1.0"
+summary: Create hello world by dumping
+description: Use the dump plugin to create a hello world
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  dump-hello:
+    command: hello
+
+parts:
+  hello:
+    plugin: dump
+    source: .

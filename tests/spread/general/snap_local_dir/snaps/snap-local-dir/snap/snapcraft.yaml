@@ -4,6 +4,7 @@ summary: Snap to test snap/local dir
 description: Verify that the snap/local dir can be used for sources.
 
 grade: devel
+base: core18
 confinement: strict
 
 parts:

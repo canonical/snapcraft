@@ -184,6 +184,9 @@ class ContentSlot(Slot):
         if "write" in source_data:
             slot.write = source_data["write"]
 
+        if "content" in source_data:
+            slot.content = source_data["content"]
+
         return slot
 
     def to_yaml_object(self) -> Dict[str, Any]:
