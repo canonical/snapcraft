@@ -1,7 +1,5 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
 # published by the Free Software Foundation.
@@ -16,7 +14,7 @@
 import logging
 import os
 import time
-from subprocess import check_call, CalledProcessError, Popen, PIPE, STDOUT
+from subprocess import check_call, check_output, CalledProcessError, Popen, PIPE, STDOUT
 
 from progressbar import AnimatedMarker, ProgressBar
 
@@ -24,9 +22,6 @@ from . import errors
 from snapcraft import file_utils, yaml_utils
 from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
-
-
-_SNAP_PATH = os.path.join(os.path.sep, "snap", "core", "current", "usr", "bin", "snap")
 
 
 logger = logging.getLogger(__name__)
@@ -49,18 +44,7 @@ def pack(directory, output=None):
     mksquashfs_path = file_utils.get_tool_path("mksquashfs")
 
     snap = _snap_data_from_dir(directory)
-    # Verify that the snap command is available and use it to
-    # validate the layout.
-    # The snap command will most likely be found as it lives in
-    # core and the snapcraft snap lives on top of it (on the side
-    # rather).
-    if os.path.exists(_SNAP_PATH):
-        _run_snap_pack_verification(directory=directory)
-    elif snap.get("license"):
-        logger.warning(
-            "Could not find {!r}, validation of the license string will only "
-            "take place once pushed to the store.".format(_SNAP_PATH)
-        )
+    _run_snap_pack_verification(directory=directory)
 
     output_snap_name = output or common.format_snap_name(snap)
     # If a .snap-build exists at this point, when we are about to override
@@ -84,10 +68,20 @@ def pack(directory, output=None):
 
 
 def _run_snap_pack_verification(*, directory: str) -> None:
+    # Minimal check to ensure we are calling the snap command we want.
     try:
-        check_call([_SNAP_PATH, "pack", "--check-skeleton", directory])
-    except CalledProcessError:
-        raise errors.PackVerificationError()
+        check_output(["snap", "pack", "--help"])
+    except (CalledProcessError, FileNotFoundError):
+        logger.warning(
+            "Could not find the 'snap' command, validation of "
+            "advanced snap features shall take place once this snap "
+            "is uploaded to the Snap Store."
+        )
+    else:
+        try:
+            check_call(["snap", "pack", "--check-skeleton", directory])
+        except CalledProcessError:
+            raise errors.PackVerificationError()
 
 
 def _run_mksquashfs(
