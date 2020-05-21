@@ -18,6 +18,7 @@ import logging
 import typing
 from typing import Optional
 import os
+import sys
 
 import click
 
@@ -336,8 +337,9 @@ def clean(ctx, parts, unprime, step, **kwargs):
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host
-            lifecycle.clean(project, parts, steps.PRIME)
+            # Clear the prime directory on the host, unless on Windows.
+            if sys.platform != "win32":
+                lifecycle.clean(project, parts, steps.PRIME)
 
 
 if __name__ == "__main__":

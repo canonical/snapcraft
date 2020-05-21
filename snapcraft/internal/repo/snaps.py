@@ -61,6 +61,9 @@ class SnapPackage:
 
     @classmethod
     def is_snap_installed(cls, snap):
+        # Snaps are not currently supported on Windows
+        if sys.platform == "win32":
+            return False
         return cls(snap).installed
 
     def __init__(self, snap):
