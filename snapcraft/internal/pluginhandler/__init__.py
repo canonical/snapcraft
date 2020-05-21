@@ -665,10 +665,16 @@ class PluginHandler:
 
         for build_command in plugin_build_commands:
             try:
-                subprocess.run([build_script_path, build_command], check=True, cwd=self.part_build_work_dir)
+                subprocess.run(
+                    [build_script_path, build_command],
+                    check=True,
+                    cwd=self.part_build_work_dir,
+                )
             except subprocess.CalledProcessError as process_error:
                 raise errors.SnapcraftPluginCommandError(
-                    command=build_command, part_name=self.name, exit_code=process_error.returncode
+                    command=build_command,
+                    part_name=self.name,
+                    exit_code=process_error.returncode,
                 ) from process_error
 
     def _do_build(self, *, update=False):
