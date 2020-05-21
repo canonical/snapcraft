@@ -26,6 +26,7 @@ import tempfile
 from datetime import datetime
 from subprocess import Popen
 from typing import Any, Dict, Iterable, List, Optional, TextIO, TYPE_CHECKING
+from pathlib import Path
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -61,7 +62,8 @@ def _get_data_from_snap_file(snap_path):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_path,
                     "-e",
-                    os.path.join("meta", "snap.yaml"),
+                    # cygwin unsquashfs on windows uses unix paths.
+                    Path("meta", "snap.yaml").as_posix(),
                 ]
             )
         except subprocess.CalledProcessError:
