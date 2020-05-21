@@ -475,7 +475,7 @@ class Provider(abc.ABC):
         )
 
         # Set the HOME directory.
-        env_list.append(f"HOME={self._get_home_directory()}")
+        env_list.append(f"HOME={self._get_home_directory().as_posix()}")
 
         # Configure SNAPCRAFT_HAS_TTY.
         has_tty = str(sys.stdout.isatty())
