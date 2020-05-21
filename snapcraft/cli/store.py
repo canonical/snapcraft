@@ -460,7 +460,10 @@ def status(snap_name, arch, experimental_progressive_releases):
 
     snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
     existing_architectures = snap_channel_map.get_existing_architectures()
-    if arch and arch not in existing_architectures:
+
+    if not snap_channel_map.channel_map:
+        echo.warning("This snap has no released revisions.")
+    elif arch and arch not in existing_architectures:
         echo.warning(f"No revisions for architecture {arch!r}.")
     else:
         if arch:
