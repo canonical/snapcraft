@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import jsonschema
 from unittest import mock
@@ -34,9 +35,10 @@ class GoPluginBaseTest(PluginsV1BaseTestCase):
 
         def fake_go_build(command, cwd, *args, **kwargs):
             if command[0] == "go" and command[1] == "build" and "-o" in command:
-                open(
-                    os.path.join(command[command.index("-o") + 1], "binary"), "w"
-                ).close()
+                output = command[command.index("-o") + 1]
+                if os.path.basename(output) != "module":
+                    output = os.path.join(output, "binary")
+                open(output, "w").close()
             elif command[0] == "go" and command[1] == "build" and "-o" not in command:
                 # the package is -1
                 open(os.path.join(cwd, os.path.basename(command[-1])), "w").close()
@@ -289,7 +291,7 @@ class GoPluginTest(GoPluginBaseTest):
             go_packages = []
             go_importpath = ""
 
-        self.run_output_mock.return_value = "go version go13 linux/amd64"
+        self.run_output_mock.return_value = "go version go1.13 linux/amd64"
 
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
@@ -303,6 +305,45 @@ class GoPluginTest(GoPluginBaseTest):
         )
         self.run_mock.assert_called_once_with(
             ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+    def test_pull_go_mod_with_older_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = "foo"
+            go_buildtags = ""
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.run_output_mock.return_value = "go version go1.11 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        plugin.pull()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+        # Call pull again and ensure nothing new is logged.
+        plugin.pull()
+
+        self.assertThat(
+            fake_logger.output.strip(),
+            Equals(
+                "Ensure build environment configuration is correct for this version of Go. "
+                "Read more about it at "
+                "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
+            ),
         )
 
     def test_go_mod_requires_newer_go_version(self):
@@ -615,7 +656,7 @@ class GoPluginTest(GoPluginBaseTest):
             go_importpath = ""
             go_buildtags = ""
 
-        self.run_output_mock.return_value = "go version go13 linux/amd64"
+        self.run_output_mock.return_value = "go version go1.13 linux/amd64"
 
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
@@ -631,6 +672,46 @@ class GoPluginTest(GoPluginBaseTest):
             ["go", "build", "-o", plugin._install_bin_dir, "./..."],
             cwd=plugin.builddir,
             env=mock.ANY,
+        )
+
+    def test_build_go_mod_with_older_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.run_output_mock.return_value = "go version go1.11 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        with open(os.path.join(plugin.builddir, "go.mod"), "w") as go_mod_file:
+            print("module github.com/foo/bar/module", file=go_mod_file)
+            print("go 1.11", file=go_mod_file)
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "build", "-o", f"{plugin._install_bin_dir}/module"],
+            cwd=plugin.builddir,
+            env=mock.ANY,
+        )
+
+        self.assertThat(
+            fake_logger.output.strip(),
+            Equals(
+                "Ensure build environment configuration is correct for this version of Go. "
+                "Read more about it at "
+                "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
+            ),
         )
 
     @mock.patch("snapcraft.internal.elf.ElfFile")
