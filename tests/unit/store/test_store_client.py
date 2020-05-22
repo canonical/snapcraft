@@ -164,6 +164,18 @@ class LoginTestCase(StoreTestCase):
 
         self.assertTrue(config.Config().is_empty())
 
+    def test_login_account_id_wiped_on_relogin(self):
+        self.client.login("dummy email", "test correct password")
+        self.assertIsNotNone(self.client.conf.get("macaroon"))
+        self.assertIsNotNone(self.client.conf.get("unbound_discharge"))
+        self.assertIsNone(self.client.conf.get("account_id"))
+        self.client.whoami()
+        self.assertIsNotNone(self.client.conf.get("account_id"))
+
+        # A new login should wipe account_id.
+        self.client.login("dummy email", "test correct password")
+        self.assertIsNone(self.client.conf.get("account_id"))
+
 
 class DownloadTestCase(StoreTestCase):
 
