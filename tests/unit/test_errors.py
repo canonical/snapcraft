@@ -887,8 +887,8 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_details": None,
                 "expected_docs_url": None,
                 "expected_reportable": False,
-            }
-        )
+            },
+        ),
     )
 
     def test_snapcraft_exception_handling(self):

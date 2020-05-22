@@ -744,6 +744,7 @@ class SnapcraftPluginAssertionError(SnapcraftException):
 
 class SnapcraftPluginBuildError(SnapcraftException):
     """An exception to raise when the PluginV2 build fails at runtime."""
+
     def __init__(self, *, part_name: str) -> None:
         self._part_name = part_name
 
