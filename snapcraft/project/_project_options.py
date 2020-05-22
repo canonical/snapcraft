@@ -110,7 +110,8 @@ _HOST_COMPATIBILITY = {
 }
 _STATIC_BASES = ["bare"]
 
-_LINKER_VERSION_FOR_BASE = {"core18": "2.27", "core": "2.23"}
+# TODO: just check the base.
+_LINKER_VERSION_FOR_BASE = {"core20": "2.31", "core18": "2.27", "core": "2.23"}
 
 
 def _get_platform_architecture():

@@ -87,6 +87,8 @@ class StoreClient:
             unbound_discharge = self.sso.get_unbound_discharge(
                 email, password, one_time_password, caveat_id
             )
+            # Clear any old data before setting.
+            self.conf.clear()
             # The macaroon has been discharged, save it in the config
             self.conf.set("macaroon", macaroon)
             self.conf.set("unbound_discharge", unbound_discharge)
