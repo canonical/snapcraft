@@ -901,35 +901,6 @@ def _tabulated_channel_map_tree(channel_map_tree):
     return tabulate(data, numalign="left", headers=headers, tablefmt="plain")
 
 
-def close(snap_name, channel_names):
-    """Close one or more channels for the specific snap."""
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-
-    try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError as e:
-        raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, DEFAULT_SERIES
-        ) from e
-
-    closed_channels, c_m_tree = store_client.close_channels(
-        snap_id=snap_id, channel_names=channel_names
-    )
-
-    tabulated_status = _tabulated_channel_map_tree(c_m_tree)
-    print(tabulated_status)
-
-    print()
-    if len(closed_channels) == 1:
-        msg = "The {} channel is now closed.".format(closed_channels[0])
-    else:
-        msg = "The {} and {} channels are now closed.".format(
-            ", ".join(closed_channels[:-1]), closed_channels[-1]
-        )
-    logger.info(msg)
-
-
 def download(
     snap_name,
     *,

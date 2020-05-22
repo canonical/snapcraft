@@ -343,7 +343,6 @@ from snapcraft.plugins.v1 import PluginV1 as BasePlugin  # noqa: F401
 # FIXME LP: #1662658
 from snapcraft._store import (  # noqa
     create_key,
-    close,
     download,
     revisions,
     gated,
