@@ -877,6 +877,18 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_reportable": True,
             },
         ),
+        (
+            "SnapcraftPluginBuildError",
+            {
+                "exception": errors.SnapcraftPluginBuildError,
+                "kwargs": {"part_name": "foo"},
+                "expected_brief": "Failed to build 'foo'.",
+                "expected_resolution": "Check the build logs and ensure the part's configuration and sources are correct.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
     )
 
     def test_snapcraft_exception_handling(self):
