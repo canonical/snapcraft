@@ -52,7 +52,6 @@ class LXD(Provider):
     # classic confinement and require using the lxd snap, the lxd and lxc
     # binaries should be found in /snap/bin
     _LXD_BIN = os.path.join(os.path.sep, "snap", "bin", "lxd")
-    _LXC_BIN = os.path.join(os.path.sep, "snap", "bin", "lxc")
 
     @classmethod
     def ensure_provider(cls):
@@ -161,27 +160,21 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        env_command = super()._get_env_command()
-
-        # TODO: use pylxd
-        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
-        cmd.extend(env_command)
+        cmd = super()._get_env_command()
         cmd.extend(command)
-        self._log_run(cmd)
-
-        output = None
-        try:
-            if hide_output:
-                output = subprocess.check_output(cmd)
-            else:
-                subprocess.check_call(cmd)
-        except subprocess.CalledProcessError as process_error:
+        logger.debug(f"Executing in {self.instance_name}: {cmd}")
+        (exit_code, stdout, stderr) = self._container.execute()
+        
+        if not hide_output:
+            print(stdout)
+            print(stderr)
+        if exit_code:
             raise errors.ProviderExecError(
                 provider_name=self._get_provider_name(),
                 command=command,
-                exit_code=process_error.returncode,
-                output=process_error.output,
-            ) from process_error
+                exit_code=exit_code,
+                output=stdout + stderr,
+            )
 
         return output
 
