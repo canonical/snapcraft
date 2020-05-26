@@ -184,7 +184,21 @@ def upload(snap_file, release):
         channel_list = None
 
     review_snap(snap_file=snap_file)
-    snapcraft.upload(snap_file, channel_list)
+    snap_name, snap_revision = snapcraft.upload(snap_file, channel_list)
+
+    echo.info("Revision {!r} of {!r} created.".format(snap_revision, snap_name))
+    if channel_list:
+        store_client_cli = StoreClientCLI()
+        snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map,
+                architectures=snap_channel_map.get_revision(
+                    snap_revision
+                ).architectures,
+            )
+        )
 
 
 @storecli.command("upload-metadata")

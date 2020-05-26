@@ -25,7 +25,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, TYPE_CHECKING
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
 from pathlib import Path
 
 # Ideally we would move stuff into more logical components
@@ -664,7 +664,7 @@ def upload_metadata(snap_filename, force):
     logger.info("The metadata has been uploaded")
 
 
-def upload(snap_filename, release_channels=None):
+def upload(snap_filename, release_channels=None) -> Tuple[str, int]:
     """Upload a snap_filename to the store.
 
     If a cached snap is available, a delta will be generated from
@@ -695,7 +695,7 @@ def upload(snap_filename, release_channels=None):
     source_snap = snap_cache.get(deb_arch=deb_arch)
     sha3_384_available = hasattr(hashlib, "sha3_384")
 
-    result: Dict[str, Any] = None
+    result: Optional[Dict[str, Any]] = None
     if sha3_384_available and source_snap:
         try:
             result = _upload_delta(
@@ -726,12 +726,10 @@ def upload(snap_filename, release_channels=None):
             channels=release_channels,
         )
 
-    logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
-    if release_channels:
-        status(snap_name, deb_arch)
-
     snap_cache.cache(snap_filename=snap_filename)
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
+
+    return snap_name, result["revision"]
 
 
 def _upload_snap(

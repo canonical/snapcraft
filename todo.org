@@ -29,14 +29,14 @@
 - [ ] Replace =mksquashfs= with =snap pack=
 - [ ] Toggle compression with =snap pack=
 
-*** STRT [[file:specifications/progressive-releases.org][Progressive Releases]] [5/10]
+*** STRT [[file:specifications/progressive-releases.org][Progressive Releases]] [6/11]
 
 - [X] Implement channel-map endpoint
 - [X] Add support for the status command
 - [X] Add support for the release command
 - [X] Add support for the close command
 - [X] Add support for the promote command
-- [ ] Add support for the upload and release command
+- [X] Add support for the upload and release command
 - [ ] Migrate promote away from using the state endpoint
 - [ ] Remove the state endpoint
 - [ ] Add support for metrics
