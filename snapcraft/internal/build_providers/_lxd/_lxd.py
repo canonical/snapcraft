@@ -166,7 +166,7 @@ class LXD(Provider):
         (exit_code, stdout, stderr) = self._container.execute()
 
         output = stdout + "\n\nSTDERR: " + stderr
-        
+
         if not hide_output:
             print(output)
         if exit_code:
