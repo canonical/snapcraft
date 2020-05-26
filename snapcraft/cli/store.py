@@ -433,7 +433,40 @@ def close(snap_name, channels):
         snapcraft close my-snap beta
         snapcraft close my-snap beta edge
     """
-    snapcraft.close(snap_name, channels)
+    store = storeapi.StoreClient()
+    account_info = store.get_account_information()
+
+    try:
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+    except KeyError:
+        raise storeapi.errors.StoreChannelClosingPermissionError(
+            snap_name, DEFAULT_SERIES
+        )
+
+    # Returned closed_channels cannot be trusted as it returns risks.
+    store.close_channels(snap_id=snap_id, channel_names=channels)
+    if len(channels) == 1:
+        msg = "The {} channel is now closed.".format(channels[0])
+    else:
+        msg = "The {} and {} channels are now closed.".format(
+            ", ".join(channels[:-1]), channels[-1]
+        )
+
+    snap_channel_map = store.get_snap_channel_map(snap_name=snap_name)
+    if snap_channel_map.channel_map:
+        closed_tracks = {storeapi.channels.Channel(c).track for c in channels}
+        existing_architectures = snap_channel_map.get_existing_architectures()
+
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map,
+                architectures=existing_architectures,
+                tracks=closed_tracks,
+            )
+        )
+        click.echo()
+
+    echo.info(msg)
 
 
 @storecli.command()
@@ -460,7 +493,10 @@ def status(snap_name, arch, experimental_progressive_releases):
 
     snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
     existing_architectures = snap_channel_map.get_existing_architectures()
-    if arch and arch not in existing_architectures:
+
+    if not snap_channel_map.channel_map:
+        echo.warning("This snap has no released revisions.")
+    elif arch and arch not in existing_architectures:
         echo.warning(f"No revisions for architecture {arch!r}.")
     else:
         if arch:

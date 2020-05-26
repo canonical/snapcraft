@@ -1,0 +1,24 @@
+name: go-mod-hello-with-env
+version: "1.0"
+summary: A simple go project using go.mod
+description: |
+  This is a basic go snap. It just prints a hello world brought in from
+  a version pinned go package using go.mod.
+
+grade: devel
+base: core18
+confinement: strict
+
+apps:
+  go-mod-hello-with-env:
+    command: bin/go-mod-hello
+
+parts:
+  hello:
+    source: .
+    plugin: go
+    go-channel: 1.11/stable
+    build-environment:
+      - GO111MODULE: "on"
+    build-packages:
+      - git

@@ -99,6 +99,16 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             ),
         )
 
+    def test_status_no_releases(self):
+        self.channel_map.channel_map = []
+
+        result = self.run_command(["status", "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output.strip(), Equals("This snap has no released revisions.")
+        )
+
     def test_progressive_status(self):
         self.channel_map.channel_map[0].progressive.percentage = 10.0
 

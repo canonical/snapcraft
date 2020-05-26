@@ -658,6 +658,7 @@ class PluginHandler:
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
             print(self._generate_part_env(steps.BUILD), file=run_file)
+            print("set -x", file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
@@ -665,7 +666,15 @@ class PluginHandler:
             run_file.flush()
 
         build_script_path.chmod(0o755)
-        subprocess.run([build_script_path], check=True, cwd=self.part_build_work_dir)
+
+        try:
+            subprocess.run(
+                [build_script_path], check=True, cwd=self.part_build_work_dir
+            )
+        except subprocess.CalledProcessError as process_error:
+            raise errors.SnapcraftPluginBuildError(
+                part_name=self.name
+            ) from process_error
 
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
