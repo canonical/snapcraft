@@ -165,15 +165,16 @@ class LXD(Provider):
         logger.debug(f"Executing in {self.instance_name}: {cmd}")
         (exit_code, stdout, stderr) = self._container.execute()
 
+        output = stdout + "\n\nSTDERR: " + stderr
+        
         if not hide_output:
-            print(stdout)
-            print(stderr)
+            print(output)
         if exit_code:
             raise errors.ProviderExecError(
                 provider_name=self._get_provider_name(),
                 command=command,
                 exit_code=exit_code,
-                output=stdout + stderr,
+                output=output,
             )
 
         return output
