@@ -164,7 +164,7 @@ class LXD(Provider):
         cmd.extend(command)
         logger.debug(f"Executing in {self.instance_name}: {cmd}")
         (exit_code, stdout, stderr) = self._container.execute()
-        
+
         if not hide_output:
             print(stdout)
             print(stderr)
