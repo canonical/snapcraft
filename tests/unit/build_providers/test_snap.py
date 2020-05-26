@@ -49,8 +49,9 @@ class SnapInjectionTest(unit.TestCase):
                 "name": "snapd",
                 "confinement": "strict",
                 "id": "2kkitQ",
-                "channel": "stable",
+                "channel": "edge",
                 "revision": "1",
+                "tracking-channel": "latest/edge",
             },
             {
                 "name": "core18",
@@ -58,6 +59,7 @@ class SnapInjectionTest(unit.TestCase):
                 "id": "2kkibb",
                 "channel": "stable",
                 "revision": "123",
+                "tracking-channel": "latest/beta",
             },
             {
                 "name": "snapcraft",
@@ -65,6 +67,7 @@ class SnapInjectionTest(unit.TestCase):
                 "id": "3lljuR",
                 "channel": "edge",
                 "revision": "345",
+                "tracking-channel": "latest/candidate",
             },
         ]
         self.get_assertion_mock.side_effect = [
@@ -124,10 +127,13 @@ class SnapInjectionTest(unit.TestCase):
                 call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "ack", "/var/tmp/snapd.assert"]),
                 call(["snap", "install", "/var/tmp/snapd.snap"]),
+                call(["snap", "switch", "snapd", "--channel", "latest/edge"]),
                 call(["snap", "ack", "/var/tmp/core18.assert"]),
                 call(["snap", "install", "/var/tmp/core18.snap"]),
+                call(["snap", "switch", "core18", "--channel", "latest/beta"]),
                 call(["snap", "ack", "/var/tmp/snapcraft.assert"]),
                 call(["snap", "install", "--classic", "/var/tmp/snapcraft.snap"]),
+                call(["snap", "switch", "snapcraft", "--channel", "latest/candidate"]),
             ]
         )
         self.provider.push_file_mock.assert_has_calls(
