@@ -280,7 +280,7 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             "processed": True,
             "can_release": True,
             "url": "/fake/url",
-            "revision": 9,
+            "revision": 19,
         }
         self.fake_store_upload_precheck = fixtures.MockPatchObject(
             storeapi.StoreClient, "upload_precheck"

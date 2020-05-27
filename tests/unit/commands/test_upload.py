@@ -37,24 +37,6 @@ class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        self.fake_store_status.mock.return_value = {
-            "amd64": [
-                {
-                    "info": "specific",
-                    "version": "1.0-amd64",
-                    "channel": "stable",
-                    "revision": 2,
-                },
-                {
-                    "info": "specific",
-                    "version": "1.1-amd64",
-                    "channel": "beta",
-                    "revision": 4,
-                },
-                {"info": "tracking", "channel": "edge"},
-            ]
-        }
-
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
         )
@@ -82,9 +64,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertRegexpMatches(
-            self.fake_logger.output, r"Revision 9 of 'basic' created\."
-        )
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -162,9 +142,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["upload", snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertRegexpMatches(
-            self.fake_logger.output, r"Revision 9 of 'basic' created\."
-        )
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=snap_file,
@@ -292,7 +270,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["push", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.assertThat(
             fake_logger.output,
             Contains(
@@ -311,11 +289,12 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
     def test_upload_and_release_a_snap(self):
+        self.useFixture
         # Upload
         result = self.run_command(["upload", self.snap_file, "--release", "beta"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created"))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -334,7 +313,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created"))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -550,7 +529,7 @@ class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
     ]
 
     def test_upload_revision_prune_snap_cache(self):
-        snap_revision = 9
+        snap_revision = 19
 
         self.mock_tracker.track.return_value = {
             "code": "ready_to_release",
