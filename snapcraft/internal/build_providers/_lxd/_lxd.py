@@ -164,7 +164,7 @@ class LXD(Provider):
 
         self._ensure_container_running()
 
-        cmd = []
+        cmd: List[str] = []
         cmd.extend(super()._get_env_command())
         cmd.extend(command)
         logger.debug(f"Executing in {self.instance_name}: {cmd}")
