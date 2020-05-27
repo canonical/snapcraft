@@ -158,6 +158,10 @@ class LXD(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
+        # Sanity check - developer error if container not initialized.
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
         self._ensure_container_running()
 
         cmd = []
