@@ -1,0 +1,123 @@
+* Datastore: Environment Manager
+
+Datastore used for build-environment management for each provider.
+
+** Scope
+
+This document is intended to serve as the specification of the
+environment-manager datastore. Interfaces, versioning, deprecations, and
+migrations related to the persistent storage aspect of build-environment
+management are to be documented here.
+
+** Data Storage
+
+This datastore utilizes TinyDB with YAML storage. TinyDB provides database
+functionality, including support for queries, which will support operations to
+maintain build environments throughout their lifecycle.
+
+The =Environment Manager= datastore will be per-user such that snapcraft does
+not require root. The datastore will reside in
+=<user-data>/snapcraft/environment-manager.yaml=, where =<user-data>= is the
+first defined value of:
+  1. $SNAP_USER_DATA
+  2. $XDG_DATA_HOME
+  3. $HOME/.local/share
+
+** Table Schema
+
+*** Control
+
+The datastore will have a =Control= table with one, and only one, =control= record:
+
+|--------------------------------+---------+--------------------------------------------------+---------|
+| field                          | type    | description                                      | example |
+|--------------------------------+---------+--------------------------------------------------+---------|
+| created_with_snapcraft_version | string  | Version of snapcraft that created this document. | "4.0.1" |
+| schema_version                 | integer | Version of schema used by the datastore.         | 3       |
+|--------------------------------+---------+--------------------------------------------------+---------|
+
+- Any datastore without this table and =control= record will be considered invalid.
+
+*** Migrations
+
+The datastore will have a =Migrations= table with an array of =migration= records:
+
+|-------------------+---------+-------------------------------------------------------------------------------+----------------------------|
+| field             | type    | description                                                                   | example                    |
+|-------------------+---------+-------------------------------------------------------------------------------+----------------------------|
+| schema_version    | integer | Version of schema this migration migrated datastore to.used by the datastore. | 3                          |
+| timestamp         | string  | Timestamp of when this migration occurred using python's =time.asctime()=.    | "Fri Aug 21 15:56:20 2020" |
+| snapcraft_version | string  | Version of snapcraft that performed this migration.                           | "4.0.1"                    |
+|-------------------+---------+-------------------------------------------------------------------------------+----------------------------|
+
+- When migrating a database, each migration will be logged in the datastore for triaging purposes.
+
+- Any datastore without this table will be considered invalid.
+
+*** BuildEnvironments
+
+The datastore will have a =BuildEnvironments= table with an array of =build-environment= records:
+
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| field              | type   | description                                                                                  | example                                             |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| provider           | string | Name of build provider, e.g. ["host", "lxd", "multipass", "launchapad"]                      | "multipass"                                         |
+| timestamp_created  | string | Creation timestamp of build environment instance using python's =time.asctime()=.            | "Fri Aug 21 15:56:20 2020"                          |
+| timestamp_accessed | string | Accessed (last use) timestamp of build environment instance using python's =time.asctime()=. | "Fri Aug 21 15:56:20 2020"                          |
+| snapcraft_version  | string | Version of snapcraft that created this environment.                                          | "4.0.1"                                             |
+| project_name       | string | Name of project (as derived from snapcraft.yaml).                                            | "my-snap-name"                                      |
+| project_path       | string | Path to project.                                                                             | "/home/user/git/my-snap-name"                       |
+| project_id         | string | Unique identifier for project.                                                               | "<project-id>" as defined in environment lifecycle. |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+
+- Whenever an environment is created or updated, the record is created/updated.  When cleaning the environment, the =build-environment= record is purged.
+
+*** LXD
+
+The datastore will have a =LXD= table with an array of =lxd-environment= records:
+
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| field              | type   | description                                                                                  | example                                             |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| project_id         | string | Unique identifier for project.                                                               | "<project-id>" as defined in environment lifecycle. |
+| image_name         | string | Image used to create project.                                                                | "ubuntu:20.04"                                      |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+
+- Records any LXD-specific attributes related to a build-environment.
+
+*** Multipass
+
+The datastore will have a =Multipass= table with an array of =multipass-environment= records:
+
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| field              | type   | description                                                                                  | example                                             |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+| project_id         | string | Unique identifier for project.                                                               | "<project-id>" as defined in environment lifecycle. |
+| image_name         | string | Image used to create project.                                                                | "20.04"                                      |
+|--------------------+--------+----------------------------------------------------------------------------------------------+-----------------------------------------------------|
+
+- Records any Multipass-specific attributes related to a build-environment.
+
+*** Launchpad
+
+The datastore will have a =Launchpad= table with an array of =launchpad-build= records:
+
+|----------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+| field          | type   | description                             | example                                                                                |
+|----------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+| project_id     | string | Unique identifier for project.          | "<project-id>" as defined in environment lifecycle.                                    |
+| git_url        | string | URL to Launchpad git repository.        | "https://<launchpad-user>@git.launchpad.net/~<launchpad-user>/+git/<repository-name>/" |
+| launchpad_user | string | Launchpad username.                     | "user"                                                                                 |
+| snap_name      | string | Name of snap registered with Launchpad. | "snapcraft-<project-id>"                                                               |
+|----------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+
+- Records metadata about any builds pushed to Launchpad using =snapcraft remote-build=.
+
+** Usage Notes
+
+*** Cleanup
+
+Whenever a build-environment is purged, e.g. =snapcraft clean= or =snapcraft
+purge=, the associated metadata must be removed from the datastore. If an
+environment is going to be reused, the current records must also be removed
+(before being re-created).

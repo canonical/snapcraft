@@ -1,0 +1,44 @@
+* Snapcraft Data Storage
+
+This is an outline for a reference implementation for any datastores required by
+snapcraft. Obvious cases are the snapcraft envinronment-manager and the project
+builder.
+
+** Goals
+
+- Provide persistent data storage for where needed for Snapcraft, in a
+  consistent manner.
+
+- Backwards and forward-compatible where possible
+
+- Automatic safety fallback operation
+
+** Implementation Requirements
+
+1. TinyDB database with YAML storage.
+
+** Compatibility Rules
+
+1) Datastore must indicate which two fields for versioning in its
+   =Control= table:
+
+   a. =requires_snapcraft_version=: minimum version of Snapcraft that is
+      compatible with datastore.
+
+   b. =schema_version=: an incrementing version identifier for the schema.
+      As the database is upgraded over time using migrations, this schema_version
+      will updated to match the latest migration.
+
+2) Datastore minimum snapcraft version must be bumped when a field is
+   introduced that cannot be safely ignored by older versions of snapcraft, or
+   other compatibility-breaking changes. These events should be avoided, if
+   practical.
+
+3) Snapcraft will ignore document fields it does not understand (if
+   datastore version has not been incremented, it is safe to do so).
+
+4) Snapcraft will automatically migrate documents to newer versions.
+
+5) Add new fields with defaults preferably matching prior behavior.
+
+6) New migration function will be added for each version uprev.
