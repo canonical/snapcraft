@@ -3,19 +3,23 @@
 # Launcher common exports for any desktop app #
 ###############################################
 
+# Note: We avoid using `eval` because we don't want to expand variable names
+#       in paths. For example: LD_LIBRARY_PATH paths might contain `$LIB`.
 function prepend_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\$dir\${$var:+:\$$var}\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${dir}${var:+:$var}"
   fi
 }
 
 function append_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\${$var:+\$$var:}\$dir\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${var:+$var:}${dir}"
   fi
 }
 
