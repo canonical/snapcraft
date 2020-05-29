@@ -167,7 +167,7 @@ class LXD(Provider):
         cmd = list(super()._get_env_command())
         cmd.extend(command)
         logger.debug(f"Executing in {self.instance_name}: {cmd}")
-        (exit_code, stdout, stderr) = self._container.execute()
+        (exit_code, stdout, stderr) = self._container.execute(cmd)
 
         output = stdout + "\n\nSTDERR: " + stderr
 
