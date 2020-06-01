@@ -75,7 +75,7 @@ _PROVIDER_OPTIONS = [
         param_decls="--target-arch",
         metavar="<arch>",
         help="Target architecture to cross compile to",
-        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        supported_providers=["host"],
     ),
     dict(
         param_decls="--debug",
