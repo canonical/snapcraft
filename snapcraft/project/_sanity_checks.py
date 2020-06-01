@@ -35,7 +35,7 @@ _EXPECTED_SNAP_DIR_PATTERNS = {
 }
 
 
-def conduct_project_sanity_check(project: Project) -> None:
+def conduct_project_sanity_check(project: Project, **kwargs) -> None:
     """Sanity check the project itself before continuing.
 
     The checks done here are meant to be light, and not rely on the build environment.
@@ -57,6 +57,11 @@ def conduct_project_sanity_check(project: Project) -> None:
         raise SnapcraftEnvironmentError(
             "*EXPERIMENTAL* 'package-repositories' configured, but not enabled. "
             "Enable with '--enable-experimental-package-repositories' flag."
+        )
+
+    if project._get_build_base() in ["core20"] and "target_arch" in kwargs:
+        raise SnapcraftEnvironmentError(
+            "--target-arch has been deprecated and is no longer supported on core20."
         )
 
 
