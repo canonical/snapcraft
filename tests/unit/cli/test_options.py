@@ -21,6 +21,7 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft.cli._options as options
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
 
 
@@ -300,3 +301,35 @@ class TestInvalidBuildProviderFlags(unit.TestCase):
                 "invalid-provider",
                 **kwargs,
             )
+
+
+class TestSudo(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
+
+    def test_click_error_with_sudo_for_providers(self):
+        for provider in ["lxd", "multipass"]:
+            self.useFixture(
+                fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", provider)
+            )
+
+            self.assertRaisesRegex(
+                SnapcraftEnvironmentError,
+                f"^'sudo' cannot be used with build provider '{provider}'$",
+                options._sanity_check_build_provider_flags,
+                provider,
+            )
+
+    @mock.patch("click.echo")
+    def test_click_warn_sudo_with_host(self, echo_mock):
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+
+        options._sanity_check_build_provider_flags("host")
+
+        echo_mock.assert_called_once_with(
+            "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+        )

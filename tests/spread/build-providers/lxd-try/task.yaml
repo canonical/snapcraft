@@ -16,7 +16,7 @@ restore: |
   export SNAP_DIR
   cd "$SNAP_DIR"
 
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
+  sudo -iu ubuntu env -i bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   rm -f ./*.snap
 
   chown root "$SNAP_DIR"
@@ -32,12 +32,12 @@ execute: |
   cd "$SNAP_DIR"
 
   # lxd mounting as root is just not going to work.
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft try --use-lxd"
+  sudo -iu ubuntu env -i bash -c "cd $SNAP_DIR && snapcraft try --use-lxd"
   snap try prime
   [ "$(make-hello)" = "hello world" ]
 
   # snapcraft clean when trying keeps the dir
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
+  sudo -iu ubuntu env -i bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   if [ ! -d prime ]; then
       echo "The prime directory should not have been removed while trying"
       exit 1
@@ -45,7 +45,7 @@ execute: |
 
   # Remove the snap try and clean again
   snap remove make-hello
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
+  sudo -iu ubuntu env -i bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   if [ -d prime ]; then
       echo "The prime directory should have been removed"
       exit 1
