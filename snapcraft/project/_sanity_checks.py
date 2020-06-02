@@ -59,7 +59,10 @@ def conduct_project_sanity_check(project: Project, **kwargs) -> None:
             "Enable with '--enable-experimental-package-repositories' flag."
         )
 
-    if project._get_build_base() in ["core20"] and "target_arch" in kwargs:
+    if (
+        project._get_build_base() in ["core20"]
+        and kwargs.get("target_arch") is not None
+    ):
         raise SnapcraftEnvironmentError(
             "--target-arch has been deprecated and is no longer supported on core20."
         )
