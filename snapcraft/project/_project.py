@@ -72,6 +72,13 @@ class Project(ProjectOptions):
         """
         Return name for type base or the base otherwise build-base is set
         """
+
+        # In case snap_meta is not yet populated, lookup base in info.
+        if self.info.build_base:
+            return self.info.build_base
+        elif self.info.base:
+            return self.info.base
+
         return self._snap_meta.get_build_base()
 
     def _get_project_directory_hash(self) -> str:
