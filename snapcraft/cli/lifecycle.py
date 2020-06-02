@@ -71,7 +71,7 @@ def _execute(  # noqa: C901
     is_managed_host = build_provider == "managed-host"
 
     project = get_project(is_managed_host=is_managed_host, **kwargs)
-    conduct_project_sanity_check(project)
+    conduct_project_sanity_check(project, **kwargs)
 
     if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
