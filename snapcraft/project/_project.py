@@ -74,10 +74,11 @@ class Project(ProjectOptions):
         """
 
         # In case snap_meta is not yet populated, lookup base in info.
-        if self.info.build_base:
-            return self.info.build_base
-        elif self.info.base:
-            return self.info.base
+        if self.info:
+            if self.info.build_base:
+                return self.info.build_base
+            if self.info.base:
+                return self.info.base
 
         return self._snap_meta.get_build_base()
 
