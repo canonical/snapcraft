@@ -30,7 +30,12 @@ def is_available() -> bool:
 
 def run(*, snap_filename: str) -> None:
     # TODO allow suppression of error and warn through project configuration.
-    command = [_REVIEW_TOOLS_PATH.as_posix(), snap_filename, "--json"]
+    command = [
+        _REVIEW_TOOLS_PATH.as_posix(),
+        snap_filename,
+        "--json",
+        "--allow-classic",
+    ]
     # Speed up the process by not doing the re-squash tests.
     env = dict(SNAP_ENFORCE_RESQUASHFS="0")
 

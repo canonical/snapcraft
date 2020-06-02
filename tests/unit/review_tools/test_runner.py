@@ -35,7 +35,7 @@ class RunTest(unit.TestCase):
 
     def assert_fake_check_output_called(self):
         self.fake_check_output.mock.assert_called_once_with(
-            [self.review_tools_path, "fake.snap", "--json"],
+            [self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             env={"SNAP_ENFORCE_RESQUASHFS": "0"},
             stderr=subprocess.STDOUT,
         )
@@ -72,7 +72,7 @@ class RunTest(unit.TestCase):
 
     def test_review_errors(self):
         self.fake_check_output.mock.side_effect = subprocess.CalledProcessError(
-            cmd=[self.review_tools_path, "fake.snap", "--json"],
+            cmd=[self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             returncode=3,
             output=json.dumps(
                 {
@@ -97,7 +97,7 @@ class RunTest(unit.TestCase):
 
     def test_review_unkown_error_bubbles_up(self):
         self.fake_check_output.mock.side_effect = subprocess.CalledProcessError(
-            cmd=[self.review_tools_path, "fake.snap", "--json"],
+            cmd=[self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             returncode=4,
             output=b"unknown",
         )
