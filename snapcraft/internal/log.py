@@ -17,6 +17,7 @@
 
 import logging
 import sys
+from http.client import HTTPConnection
 
 from snapcraft.internal.indicators import is_dumb_terminal
 
@@ -75,6 +76,9 @@ def configure(logger_name=None, log_level=None):
     # INFO by default for the requests lib as it is too noisy
     if log_level == logging.DEBUG:
         logging.getLogger("requests").setLevel(log_level)
+
+        # Debug HTTP connections.
+        HTTPConnection.debuglevel = 1
     else:
         logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("gnupg").setLevel(logging.WARNING)
