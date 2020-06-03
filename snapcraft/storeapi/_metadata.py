@@ -16,9 +16,13 @@
 
 import hashlib
 import json
+import logging
+import mimetypes
 import os
 
 from snapcraft.storeapi.errors import StoreMetadataError
+
+logger = logging.getLogger(__name__)
 
 
 def _media_hash(media_file):
@@ -95,7 +99,14 @@ class StoreMetadataHandler:
                     "filename": icon.name,
                 }
                 updated_info.append(upload_icon)
-                files = {"icon": icon}
+
+                icon_mime_type, _ = mimetypes.guess_type(icon.name)
+                logger.debug(f"detected {icon.name!r} as {icon_mime_type!r}")
+
+                if icon_mime_type is not None:
+                    files = [("icon", (icon.name, icon, icon_mime_type))]
+                else:
+                    files = [("icon", (icon.name, icon))]
             else:
                 # icon unchanged, nothing to upload
                 return data, files
