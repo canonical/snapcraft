@@ -5,6 +5,7 @@ summary: >-
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
+  SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/make: make-hello
   SNAP/python: python-hello
   SNAP/python_staged: python-hello-staged-python
