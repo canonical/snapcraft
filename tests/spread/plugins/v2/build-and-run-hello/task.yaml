@@ -33,6 +33,7 @@ restore: |
   # Undo changes to hello
   [ -f hello ] && git checkout hello
   [ -f hello.c ] && git checkout hello.c
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
   [ -f src/main.rs ] && git checkout src/main.rs
@@ -61,6 +62,8 @@ execute: |
     modified_file=hello
   elif [ -f hello.c ]; then
     modified_file=hello.c
+  elif [ -f subdir/hello.c ]; then
+    modified_file=subdir/hello.c
   elif [ -f hello.js ]; then
     modified_file=hello.js
   elif [ -f main.go ]; then
