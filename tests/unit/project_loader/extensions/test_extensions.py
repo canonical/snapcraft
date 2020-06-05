@@ -19,7 +19,7 @@ import textwrap
 
 from testscenarios import multiply_scenarios
 
-from snapcraft.internal.project_loader import supported_extension_names
+from snapcraft.internal.project_loader import find_extension, supported_extension_names
 
 from .. import ProjectLoaderBaseTest
 
@@ -45,6 +45,8 @@ class ExtensionCombinationTest(ProjectLoaderBaseTest):
     )
 
     def test_extensions_all_combinations_validate(self):
+        common_bases = set(["core", "core18", "core20"])
+
         # Determine extension list given scenarios
         extension_names = list()
         for member_pair in inspect.getmembers(self):
@@ -53,28 +55,34 @@ class ExtensionCombinationTest(ProjectLoaderBaseTest):
                 value = getattr(self, name)
                 if value:
                     extension_names.append(value)
+                    ext = find_extension(value)
+                    common_bases &= set(ext.get_supported_bases())
 
         # This shouldn't have any validation issues
-        self.make_snapcraft_project(
-            textwrap.dedent(
-                """\
-                name: test
-                version: "1"
-                summary: test
-                description: test
-                base: core18
-                grade: stable
-                confinement: strict
+        if common_bases:
+            base = common_bases.pop()
+            self.make_snapcraft_project(
+                textwrap.dedent(
+                    """\
+                    name: test
+                    version: "1"
+                    summary: test
+                    description: test
+                    base: {base}
+                    grade: stable
+                    confinement: strict
 
-                apps:
-                    test-app:
-                        command: test-command
-                        adapter: full
-                        extensions: {extensions}
+                    apps:
+                        test-app:
+                            command: test-command
+                            adapter: full
+                            extensions: {extensions}
 
-                parts:
-                    part1:
-                        plugin: nil
-                """
-            ).format(extensions=extension_names)
-        )
+                    parts:
+                        part1:
+                            plugin: nil
+                    """
+                ).format(base=base, extensions=extension_names)
+            )
+        else:
+            self.skipTest(f"no common base: {extension_names!r}")
