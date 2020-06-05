@@ -280,18 +280,6 @@ class PluginHandler:
                 os.makedirs(self.part_state_dir)
                 self.mark_done(steps.get_step_by_name(step))
 
-    def working_directory_for_step(self, step: steps.Step) -> str:
-        if step == steps.PULL:
-            return self.part_source_dir
-        elif step == steps.BUILD:
-            return self.part_build_dir
-        elif step == steps.STAGE:
-            return self._project.stage_dir
-        elif step == steps.PRIME:
-            return self._project.prime_dir
-
-        raise errors.InvalidStepError(step.name)
-
     def latest_step(self):
         for step in reversed(steps.STEPS):
             if os.path.exists(states.get_step_state_file(self.part_state_dir, step)):
