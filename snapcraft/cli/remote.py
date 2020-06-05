@@ -105,7 +105,7 @@ def remote_build(
         snapcraft remote-build --recover
         snapcraft remote-build --status
     """
-    if os.getenv("SUDO_USER"):
+    if os.getenv("SUDO_USER") and os.geteuid() == 0:
         raise SnapcraftEnvironmentError("'sudo' cannot be used with remote-build")
 
     if not launchpad_accept_public_upload:
