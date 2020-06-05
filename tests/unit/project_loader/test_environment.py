@@ -255,8 +255,12 @@ class EnvironmentTest(ProjectLoaderBaseTest):
                     'SNAPCRAFT_EXTENSIONS_DIR="{}"'.format(common.get_extensionsdir()),
                     'SNAPCRAFT_PARALLEL_BUILD_COUNT="2"',
                     'SNAPCRAFT_PART_BUILD="{}/parts/main/build"'.format(self.path),
+                    'SNAPCRAFT_PART_BUILD_WORK="{}/parts/main/build/"'.format(
+                        self.path
+                    ),
                     'SNAPCRAFT_PART_INSTALL="{}/parts/main/install"'.format(self.path),
                     'SNAPCRAFT_PART_SRC="{}/parts/main/src"'.format(self.path),
+                    'SNAPCRAFT_PART_SRC_WORK="{}/parts/main/src/"'.format(self.path),
                     'SNAPCRAFT_PRIME="{}/prime"'.format(self.path),
                     'SNAPCRAFT_PROJECT_DIR="{}"'.format(self.path),
                     'SNAPCRAFT_PROJECT_GRADE="stable"',

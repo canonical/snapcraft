@@ -89,9 +89,9 @@ class PluginHandler:
         self.part_snaps_dir = os.path.join(self.part_dir, "snaps")
         # The working directory for the build depends on the source-subdir
         # part property.
-        self.part_build_work_dir = os.path.join(
-            self.part_build_dir, self._part_properties.get("source-subdir", "")
-        )
+        source_sub_dir = self._part_properties.get("source-subdir", "")
+        self.part_source_work_dir = os.path.join(self.part_source_dir, source_sub_dir)
+        self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
 
         self._pull_state: Optional[states.PullState] = None
         self._build_state: Optional[states.BuildState] = None

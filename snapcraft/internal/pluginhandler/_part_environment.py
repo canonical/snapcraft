@@ -78,12 +78,16 @@ def get_snapcraft_global_environment(
 def get_snapcraft_part_directory_environment(
     part: "PluginHandler", *, step: Optional[steps.Step] = None
 ) -> Dict[str, str]:
-    env = {"SNAPCRAFT_PART_SRC": part.part_source_dir}
+    env = {
+        "SNAPCRAFT_PART_SRC": part.part_source_dir,
+        "SNAPCRAFT_PART_SRC_WORK": part.part_source_work_dir,
+    }
 
     if step is None or step == steps.BUILD:
         env.update(
             {
                 "SNAPCRAFT_PART_BUILD": part.part_build_dir,
+                "SNAPCRAFT_PART_BUILD_WORK": part.part_build_work_dir,
                 "SNAPCRAFT_PART_INSTALL": part.part_install_dir,
             }
         )
