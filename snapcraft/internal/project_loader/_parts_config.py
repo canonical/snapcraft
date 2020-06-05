@@ -26,7 +26,6 @@ from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
     get_snapcraft_part_directory_environment,
 )
-from snapcraft import plugins
 from ._env import build_env, build_env_for_stage, runtime_env
 from . import errors, grammar_processing
 
@@ -188,17 +187,6 @@ class PartsConfig:
             "Setting up part {!r} with plugin {!r} and "
             "properties {!r}.".format(part_name, plugin_name, part_properties)
         )
-
-        if isinstance(plugin, plugins.v1.PluginV1):
-            keys_path = self._project._get_keys_path()
-
-            if any(
-                [
-                    package_repo.install(keys_path=keys_path)
-                    for package_repo in plugin.get_required_package_repositories()
-                ]
-            ):
-                repo.Repo.refresh_build_packages()
 
         stage_packages_repo = repo.Repo
 

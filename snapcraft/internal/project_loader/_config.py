@@ -245,15 +245,29 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
-    def get_build_packages(self) -> Set[str]:
+    def install_package_repositories(self) -> None:
         keys_path = self.project._get_keys_path()
-        if any(
-            [
-                package_repo.install(keys_path=keys_path)
-                for package_repo in self.project._snap_meta.package_repositories
-            ]
-        ):
+
+        # Install repositories configured by 'package-repositories'.
+        changes = [
+            package_repo.install(keys_path=keys_path)
+            for package_repo in self.project._snap_meta.package_repositories
+        ]
+
+        # Install repositories configured by v1 plugins.
+        for part in self.all_parts:
+            if isinstance(part.plugin, plugins.v1.PluginV1):
+                changes += [
+                    package_repo.install(keys_path=keys_path)
+                    for package_repo in part.plugin.get_required_package_repositories()
+                ]
+
+        if any(changes):
             repo.Repo.refresh_build_packages()
+
+    def get_build_packages(self) -> Set[str]:
+        # Install/update configured package repositories.
+        self.install_package_repositories()
 
         build_packages = self._global_grammar_processor.get_build_packages()
         build_packages |= set(self.project.additional_build_packages)
