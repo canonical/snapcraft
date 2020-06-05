@@ -6,6 +6,7 @@ environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
   SNAP/cmake_subdir: cmake-hello-subdir
+  SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
   SNAP/make: make-hello
   SNAP/local_plugin_from_base: local-plugin-from-base-hello
   SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
@@ -21,6 +22,7 @@ environment:
   SNAP/rust: rust-hello
   SNAP/rust_features: rust-hello-features
   SNAP/rust_workspace: rust-hello-workspace
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -38,6 +40,7 @@ restore: |
   [ -f subdir/hello.c ] && git checkout subdir/hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
+  [ -f src/hello.cpp ] && git checkout src/hello.cpp
   [ -f src/main.rs ] && git checkout src/main.rs
   [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
 
@@ -70,6 +73,8 @@ execute: |
     modified_file=hello.js
   elif [ -f main.go ]; then
     modified_file=main.go
+  elif [ -f src/hello.cpp ]; then
+    modified_file=src/hello.cpp
   elif [ -f src/main.rs ]; then
     modified_file=src/main.rs
   elif [ -f say/src/lib.rs ]; then
