@@ -29,6 +29,9 @@ from snapcraft.internal.lifecycle._status_cache import StatusCache
 from . import LifecycleTestBase
 
 
+# TODO refactor this entire module, the current test time is around 15 minutes.
+
+
 def pull_order(part_name=None):
     events = []
 
@@ -159,6 +162,9 @@ class OrderTestBase(LifecycleTestBase):
                 snapcraft.config.OutdatedStepAction.CLEAN
             )
 
+    def set_attributes(self, kwargs):
+        self.__dict__.update(kwargs)
+
     def get_run_order(self):
         # Let's determine run order by using the timestamp of state files
         actual_order = []
@@ -247,11 +253,8 @@ class ReStepOrderTestBase(OrderTestBase):
 
 
 class MainTest(ReStepOrderTestBase):
-
-    scenarios = [
-        # Re-pull tests
-        (
-            "pull -> repull",
+    def test_pull_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PULL,
                 "initial_parts": ["main"],
@@ -262,10 +265,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": pull_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "build -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["main"],
@@ -276,10 +282,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [dict(part="main", step=steps.BUILD)],
                 "expected_final": pull_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "stage -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["main"],
@@ -293,10 +302,13 @@ class MainTest(ReStepOrderTestBase):
                 ],
                 "expected_final": pull_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "prime -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_prime_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["main"],
@@ -311,11 +323,13 @@ class MainTest(ReStepOrderTestBase):
                 ],
                 "expected_final": pull_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        # All <step> re-pull tests
-        (
-            "all pull -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_pull_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PULL,
                 "initial_parts": [],
@@ -340,10 +354,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PULL),
                 ],
-            },
-        ),
-        (
-            "all build -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": [],
@@ -370,10 +387,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PULL),
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
-            },
-        ),
-        (
-            "all stage -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_stage_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -402,10 +422,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
-        ),
-        (
-            "all prime -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_prime_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -439,11 +462,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
-        ),
-        # Re-build tests
-        (
-            "build -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_build_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["main"],
@@ -454,10 +479,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": build_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "stage -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_stage_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["main"],
@@ -468,10 +496,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [dict(part="main", step=steps.STAGE)],
                 "expected_final": build_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "prime -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_prime_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["main"],
@@ -485,11 +516,13 @@ class MainTest(ReStepOrderTestBase):
                 ],
                 "expected_final": build_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        # All <step> re-build tests
-        (
-            "all build -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_build_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": [],
@@ -514,10 +547,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PULL),
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
-            },
-        ),
-        (
-            "all stage -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_stage_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -544,10 +580,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
-        ),
-        (
-            "all prime -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_prime_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -581,11 +620,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
-        ),
-        # Re-stage tests
-        (
-            "stage -> restage",
+            }
+        )
+
+        self.run_test()
+
+    def test_stage_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["main"],
@@ -596,10 +637,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": stage_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "prime -> restage",
+            }
+        )
+
+        self.run_test()
+
+    def test_prime_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["main"],
@@ -610,11 +654,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [dict(part="main", step=steps.PRIME)],
                 "expected_final": stage_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        # All <step> re-stage tests
-        (
-            "all stage -> restage",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_stage_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -641,10 +687,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
-        ),
-        (
-            "all prime -> restage",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_prime_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -675,11 +724,13 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
-        ),
-        # Re-prime tests
-        (
-            "prime -> reprime",
+            }
+        )
+
+        self.run_test()
+
+    def test_prime_reprime(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["main"],
@@ -690,11 +741,13 @@ class MainTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": prime_order("main"),
                 "expected_dirty": [],
-            },
-        ),
-        # All <step> re-prime tests
-        (
-            "all prime -> reprime",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_prime_reprime(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -713,20 +766,15 @@ class MainTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
-        ),
-    ]
+            }
+        )
 
-    def test_main(self):
         self.run_test()
 
 
 class DependentTest(ReStepOrderTestBase):
-
-    scenarios = [
-        # Re-pull tests
-        (
-            "pull -> repull",
+    def test_pull_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PULL,
                 "initial_parts": ["dependent"],
@@ -737,10 +785,13 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": pull_order("dependent"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "build -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["dependent"],
@@ -751,10 +802,13 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [dict(part="dependent", step=steps.BUILD)],
                 "expected_final": pull_order("dependent"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "stage -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_stage_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["dependent"],
@@ -768,10 +822,13 @@ class DependentTest(ReStepOrderTestBase):
                 ],
                 "expected_final": pull_order("dependent"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "prime -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_prime_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["dependent"],
@@ -787,11 +844,13 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_final": prime_order("main")
                 + [dict(part="dependent", step=steps.PULL)],
                 "expected_dirty": [],
-            },
-        ),
-        # All <step> re-pull tests
-        (
-            "all pull -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_pull_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PULL,
                 "initial_parts": [],
@@ -809,10 +868,13 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.PULL),
                 ],
                 "expected_dirty": [dict(part="nested-dependent", step=steps.PULL)],
-            },
-        ),
-        (
-            "all build -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": [],
@@ -834,10 +896,13 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PULL),
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
-            },
-        ),
-        (
-            "all stage -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_stage_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -861,10 +926,13 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
-        ),
-        (
-            "all prime -> repull",
+            }
+        )
+
+        self.run_test()
+
+    def test_all_prime_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -892,11 +960,13 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
-        ),
-        # Re-build tests
-        (
-            "build -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_build_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["dependent"],
@@ -907,10 +977,13 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": build_order("dependent"),
                 "expected_dirty": [],
-            },
-        ),
-        (
-            "stage -> rebuild",
+            }
+        )
+
+        self.run_test()
+
+    def test_stage_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["dependent"],
@@ -922,9 +995,12 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_final": build_order("dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "prime -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_prime_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["dependent"],
@@ -943,10 +1019,13 @@ class DependentTest(ReStepOrderTestBase):
                 ],
                 "expected_dirty": [],
             },
-        ),
-        # All <step> re-build tests
-        (
-            "all build -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_all_build_rebuild(self):
+
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": [],
@@ -967,9 +1046,12 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
             },
-        ),
-        (
-            "all stage -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_all_stage_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -992,9 +1074,12 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
             },
-        ),
-        (
-            "all prime -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_all_prime_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -1022,10 +1107,12 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
             },
-        ),
-        # Re-stage tests
-        (
-            "stage -> restage",
+        )
+
+        self.run_test()
+
+    def test_stage_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["dependent"],
@@ -1037,9 +1124,12 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_final": stage_order("dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "prime -> restage",
+        )
+
+        self.run_test()
+
+    def test_prime_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["dependent"],
@@ -1055,10 +1145,12 @@ class DependentTest(ReStepOrderTestBase):
                 ],
                 "expected_dirty": [],
             },
-        ),
-        # All <step> re-stage tests
-        (
-            "all stage -> restage",
+        )
+
+        self.run_test()
+
+    def test_all_stage_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": [],
@@ -1080,9 +1172,12 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
             },
-        ),
-        (
-            "all prime -> restage",
+        )
+
+        self.run_test()
+
+    def test_all_prime_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -1107,10 +1202,12 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
             },
-        ),
-        # Re-prime tests
-        (
-            "prime -> reprime",
+        )
+
+        self.run_test()
+
+    def test_prime_reprime(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["dependent"],
@@ -1122,10 +1219,12 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_final": prime_order("dependent"),
                 "expected_dirty": [],
             },
-        ),
-        # All <step> re-prime tests
-        (
-            "all prime -> reprime",
+        )
+
+        self.run_test()
+
+    def test_all_prime_reprime(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": [],
@@ -1143,18 +1242,13 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_dirty": [dict(part="nested-dependent", step=steps.PRIME)],
             },
         ),
-    ]
 
-    def test_dependent(self):
         self.run_test()
 
 
 class NestedDependentTest(ReStepOrderTestBase):
-
-    scenarios = [
-        # Re-pull tests
-        (
-            "pull -> repull",
+    def test_pull_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PULL,
                 "initial_parts": ["nested-dependent"],
@@ -1166,9 +1260,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "build -> repull",
+        )
+
+        self.run_test()
+
+    def test_build_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["nested-dependent"],
@@ -1182,9 +1279,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "stage -> repull",
+        )
+
+        self.run_test()
+
+    def test_stage_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["nested-dependent"],
@@ -1199,9 +1299,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "prime -> repull",
+        )
+
+        self.run_test()
+
+    def test_prime_repull(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["nested-dependent"],
@@ -1218,10 +1321,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 + [dict(part="nested-dependent", step=steps.PULL)],
                 "expected_dirty": [],
             },
-        ),
-        # Re-build tests
-        (
-            "build -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_build_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.BUILD,
                 "initial_parts": ["nested-dependent"],
@@ -1233,9 +1338,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": build_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "stage -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_stage_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["nested-dependent"],
@@ -1249,9 +1357,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": build_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "prime -> rebuild",
+        )
+
+        self.run_test()
+
+    def test_prime_rebuild(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["nested-dependent"],
@@ -1271,10 +1382,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 ],
                 "expected_dirty": [],
             },
-        ),
-        # Re-stage tests
-        (
-            "stage -> restage",
+        )
+
+        self.run_test()
+
+    def test_stage_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.STAGE,
                 "initial_parts": ["nested-dependent"],
@@ -1286,9 +1399,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": stage_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-        (
-            "prime -> restage",
+        )
+
+        self.run_test()
+
+    def test_prime_restage(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["nested-dependent"],
@@ -1307,10 +1423,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 ],
                 "expected_dirty": [],
             },
-        ),
-        # Re-prime tests
-        (
-            "prime -> reprime",
+        )
+
+        self.run_test()
+
+    def test_prime_reprime(self):
+        self.set_attributes(
             {
                 "initial_step": steps.PRIME,
                 "initial_parts": ["nested-dependent"],
@@ -1322,254 +1440,12 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": prime_order("nested-dependent"),
                 "expected_dirty": [],
             },
-        ),
-    ]
+        )
 
-    def test_nested_dependent(self):
         self.run_test()
 
 
-class DirtyAndOutdatedTest(OrderTestBase):
-    tests = [
-        # main tests
-        (
-            "main pull dirty",
-            {
-                "test_parts": [dict(part="main", step=steps.PULL)],
-                "expected_initial": prime_order(),
-                "expected_test": prime_order(),
-                "expected_final": prime_order(),
-            },
-        ),
-        (
-            "main build dirty",
-            {
-                "test_parts": [dict(part="main", step=steps.BUILD)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="main", step=steps.BUILD),
-                    dict(part="main", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": prime_order(),
-            },
-        ),
-        (
-            "main stage dirty",
-            {
-                "test_parts": [dict(part="main", step=steps.STAGE)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="main", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_test_cleaned": [],
-                "expected_final": prime_order(),
-            },
-        ),
-        (
-            "main prime dirty",
-            {
-                "test_parts": [dict(part="main", step=steps.PRIME)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_test_cleaned": [],
-                "expected_final": prime_order(),
-            },
-        ),
-        # dependent tests
-        (
-            "dependent pull dirty",
-            {
-                "test_parts": [dict(part="dependent", step=steps.PULL)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": prime_order("main")
-                + [
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "dependent build dirty",
-            {
-                "test_parts": [dict(part="dependent", step=steps.BUILD)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": stage_order("main")
-                + [
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "dependent stage dirty",
-            {
-                "test_parts": [dict(part="dependent", step=steps.STAGE)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": stage_order("main")
-                + [
-                    dict(part="dependent", step=steps.PULL),
-                    dict(part="dependent", step=steps.BUILD),
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "dependent prime dirty",
-            {
-                "test_parts": [dict(part="dependent", step=steps.PRIME)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": prime_order(),
-            },
-        ),
-        # nested dependent tests
-        (
-            "nested dependent pull dirty",
-            {
-                "test_parts": [dict(part="nested-dependent", step=steps.PULL)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": prime_order("dependent")
-                + [
-                    dict(part="nested-dependent", step=steps.PULL),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "nested dependent build dirty",
-            {
-                "test_parts": [dict(part="nested-dependent", step=steps.BUILD)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": pull_order("nested-dependent")
-                + [
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.BUILD),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "nested dependent stage dirty",
-            {
-                "test_parts": [dict(part="nested-dependent", step=steps.STAGE)],
-                "expected_initial": prime_order(),
-                "expected_test": [
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-                "expected_final": build_order("nested-dependent")
-                + [
-                    dict(part="main", step=steps.PRIME),
-                    dict(part="dependent", step=steps.PRIME),
-                    dict(part="nested-dependent", step=steps.STAGE),
-                    dict(part="nested-dependent", step=steps.PRIME),
-                ],
-            },
-        ),
-        (
-            "nested dependent prime dirty",
-            {
-                "test_parts": [dict(part="nested-dependent", step=steps.PRIME)],
-                "expected_initial": prime_order(),
-                "expected_test": [dict(part="nested-dependent", step=steps.PRIME)],
-                "expected_final": prime_order("nested-dependent"),
-            },
-        ),
-    ]
-
-    test_types = [
-        ("dirty", dict(test_type="dirty")),
-        ("outdated", dict(test_type="outdated")),
-    ]
-
-    scenarios = multiply_scenarios(tests, test_types)
-
+class DirtyOutdatedTestBase(OrderTestBase):
     def setUp(self):
         super().setUp()
 
@@ -1631,7 +1507,7 @@ class DirtyAndOutdatedTest(OrderTestBase):
             state_file_path = states.get_step_state_file(part.plugin.statedir, step)
             open(state_file_path, "w").close()
 
-    def test_dirty_and_outdated(self):
+    def run_test(self):
         # Prime all parts
         lifecycle.execute(steps.PRIME, self.project_config)
 
@@ -1659,3 +1535,535 @@ class DirtyAndOutdatedTest(OrderTestBase):
         )
 
         self.assert_parts_dirty([], "(dirty)")
+
+
+class DirtyTest(DirtyOutdatedTestBase):
+    test_type = "dirty"
+
+    def test_main_pull_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": prime_order(),
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_build_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.BUILD),
+                    dict(part="main", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_stage_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_test_cleaned": [],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_prime_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_test_cleaned": [],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def dependent_pull_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_dependent_build_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": stage_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_dependent_stage_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": stage_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+        self.run_test()
+
+    def test_dependent_prime_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_pull_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order("dependent")
+                + [
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependendent_build_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": pull_order("nested-dependent")
+                + [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_stage_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": build_order("nested-dependent")
+                + [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_prime_dirty(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [dict(part="nested-dependent", step=steps.PRIME)],
+                "expected_final": prime_order("nested-dependent"),
+            },
+        )
+
+        self.run_test()
+
+
+class OutdatedTest(DirtyOutdatedTestBase):
+    test_type = "outdated"
+
+    def test_main_pull_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": prime_order(),
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_build_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.BUILD),
+                    dict(part="main", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_stage_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_test_cleaned": [],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_main_prime_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="main", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_test_cleaned": [],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def dependent_pull_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_dependent_build_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": stage_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_dependent_stage_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": stage_order("main")
+                + [
+                    dict(part="dependent", step=steps.PULL),
+                    dict(part="dependent", step=steps.BUILD),
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+        self.run_test()
+
+    def test_dependent_prime_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="dependent", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order(),
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_pull_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.PULL)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": prime_order("dependent")
+                + [
+                    dict(part="nested-dependent", step=steps.PULL),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependendent_build_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.BUILD)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": pull_order("nested-dependent")
+                + [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.BUILD),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_stage_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.STAGE)],
+                "expected_initial": prime_order(),
+                "expected_test": [
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+                "expected_final": build_order("nested-dependent")
+                + [
+                    dict(part="main", step=steps.PRIME),
+                    dict(part="dependent", step=steps.PRIME),
+                    dict(part="nested-dependent", step=steps.STAGE),
+                    dict(part="nested-dependent", step=steps.PRIME),
+                ],
+            },
+        )
+
+        self.run_test()
+
+    def test_nested_dependent_prime_outdated(self):
+        self.set_attributes(
+            {
+                "test_parts": [dict(part="nested-dependent", step=steps.PRIME)],
+                "expected_initial": prime_order(),
+                "expected_test": [dict(part="nested-dependent", step=steps.PRIME)],
+                "expected_final": prime_order("nested-dependent"),
+            },
+        )
+
+        self.run_test()
