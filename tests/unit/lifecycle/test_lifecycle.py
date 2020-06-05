@@ -51,7 +51,9 @@ class ExecutionTestCase(LifecycleTestBase):
             def __init__(self):
                 self.plugin = Plugin()
                 self.part_source_dir = "/tmp"
+                self.part_source_work_dir = "/tmp"
                 self.part_build_dir = "/tmp"
+                self.part_build_work_dir = "/tmp"
                 self.part_install_dir = "/tmp"
 
         part = Part()
