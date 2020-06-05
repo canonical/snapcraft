@@ -92,13 +92,12 @@ class NpmPlugin(PluginV2):
             f"""\
         if [ ! -f "${{SNAPCRAFT_PART_INSTALL}}/bin/node" ]; then
             curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --strip-components=1
-            export PATH="${{SNAPCRAFT_PART_INSTALL}}/bin:${{PATH}}"
         fi
         """
         )
 
     def get_build_environment(self) -> Dict[str, str]:
-        return dict()
+        return dict(PATH="${SNAPCRAFT_PART_INSTALL}/bin:${PATH}")
 
     def get_build_commands(self) -> List[str]:
         return [
