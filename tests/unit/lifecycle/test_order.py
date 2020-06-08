@@ -994,7 +994,7 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [dict(part="dependent", step=steps.STAGE)],
                 "expected_final": build_order("dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1018,7 +1018,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.BUILD),
                 ],
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1045,7 +1045,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.PULL),
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1073,7 +1073,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1106,7 +1106,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1123,7 +1123,7 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": stage_order("dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1144,7 +1144,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.STAGE),
                 ],
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1171,7 +1171,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1201,7 +1201,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1218,7 +1218,7 @@ class DependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": prime_order("dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1240,7 +1240,7 @@ class DependentTest(ReStepOrderTestBase):
                     dict(part="dependent", step=steps.PRIME),
                 ],
                 "expected_dirty": [dict(part="nested-dependent", step=steps.PRIME)],
-            },
+            }
         ),
 
         self.run_test()
@@ -1259,7 +1259,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1278,7 +1278,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 ],
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1298,7 +1298,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 ],
                 "expected_final": pull_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1320,7 +1320,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_final": prime_order("dependent")
                 + [dict(part="nested-dependent", step=steps.PULL)],
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1337,7 +1337,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": build_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1356,7 +1356,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 ],
                 "expected_final": build_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1381,7 +1381,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.BUILD),
                 ],
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1398,7 +1398,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": stage_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1422,7 +1422,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                 ],
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1439,7 +1439,7 @@ class NestedDependentTest(ReStepOrderTestBase):
                 "expected_test_cleaned": [],
                 "expected_final": prime_order("nested-dependent"),
                 "expected_dirty": [],
-            },
+            }
         )
 
         self.run_test()
@@ -1547,7 +1547,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                 "expected_initial": prime_order(),
                 "expected_test": prime_order(),
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1571,7 +1571,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1595,7 +1595,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                 ],
                 "expected_test_cleaned": [],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1612,7 +1612,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                 ],
                 "expected_test_cleaned": [],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1643,7 +1643,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1674,7 +1674,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1704,7 +1704,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
         self.run_test()
 
@@ -1718,7 +1718,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1741,7 +1741,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1764,7 +1764,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1785,7 +1785,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1797,7 +1797,7 @@ class DirtyTest(DirtyOutdatedTestBase):
                 "expected_initial": prime_order(),
                 "expected_test": [dict(part="nested-dependent", step=steps.PRIME)],
                 "expected_final": prime_order("nested-dependent"),
-            },
+            }
         )
 
         self.run_test()
@@ -1813,7 +1813,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                 "expected_initial": prime_order(),
                 "expected_test": prime_order(),
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1837,7 +1837,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1861,7 +1861,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                 ],
                 "expected_test_cleaned": [],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1878,7 +1878,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                 ],
                 "expected_test_cleaned": [],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -1909,7 +1909,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1940,7 +1940,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -1970,7 +1970,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="dependent", step=steps.PRIME),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
         self.run_test()
 
@@ -1984,7 +1984,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
                 "expected_final": prime_order(),
-            },
+            }
         )
 
         self.run_test()
@@ -2007,7 +2007,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -2030,7 +2030,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -2051,7 +2051,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                     dict(part="nested-dependent", step=steps.STAGE),
                     dict(part="nested-dependent", step=steps.PRIME),
                 ],
-            },
+            }
         )
 
         self.run_test()
@@ -2063,7 +2063,7 @@ class OutdatedTest(DirtyOutdatedTestBase):
                 "expected_initial": prime_order(),
                 "expected_test": [dict(part="nested-dependent", step=steps.PRIME)],
                 "expected_final": prime_order("nested-dependent"),
-            },
+            }
         )
 
         self.run_test()
