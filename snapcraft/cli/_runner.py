@@ -28,7 +28,6 @@ from .discovery import discoverycli
 from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
-from .inspect import inspectcli
 from .remote import remotecli
 from .help import helpcli
 from .extensions import extensioncli
@@ -48,7 +47,6 @@ command_groups = [
     lifecyclecli,
     extensioncli,
     versioncli,
-    inspectcli,
     remotecli,
 ]
 
