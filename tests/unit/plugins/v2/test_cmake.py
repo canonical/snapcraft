@@ -28,19 +28,42 @@ def test_schema():
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
-            }
+            },
+            "cmake-generator": {
+                "type": "string",
+                "enum": ["Unix Makefiles", "Ninja"],
+                "default": "Unix Makefiles",
+            },
         },
     }
 
 
 def test_get_build_packages():
-    plugin = CMakePlugin(part_name="my-part", options=lambda: None)
+    class Options:
+        cmake_parameters = list()
+        cmake_generator = "Unix Makefiles"
+
+    plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_packages() == {"gcc", "cmake"}
 
 
+def test_get_build_packages_ninja():
+    class Options:
+        cmake_parameters = list()
+        cmake_generator = "Ninja"
+
+    plugin = CMakePlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_packages() == {"gcc", "cmake", "ninja-build"}
+
+
 def test_get_build_environment():
-    plugin = CMakePlugin(part_name="my-part", options=lambda: None)
+    class Options:
+        cmake_parameters = list()
+        cmake_generator = "Unix Makefiles"
+
+    plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_environment() == {"CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}"}
 
@@ -48,11 +71,26 @@ def test_get_build_environment():
 def test_get_build_commands():
     class Options:
         cmake_parameters = list()
+        cmake_generator = "Unix Makefiles"
 
     plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_commands() == [
-        'cmake "${SNAPCRAFT_PART_SRC_WORK}"',
+        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles"',
+        'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
+        'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
+    ]
+
+
+def test_get_build_commands_ninja():
+    class Options:
+        cmake_parameters = list()
+        cmake_generator = "Ninja"
+
+    plugin = CMakePlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_commands() == [
+        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Ninja"',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
         'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
     ]
@@ -66,11 +104,12 @@ def test_get_build_commands_with_cmake_parameters():
             '-DCMAKE_SPACED_ARGS="foo bar"',
             '-DCMAKE_USING_ENV="$SNAPCRAFT_PART_INSTALL"/bar',
         ]
+        cmake_generator = "Unix Makefiles"
 
     plugin = CMakePlugin(part_name="my-part", options=Options())
 
     assert plugin.get_build_commands() == [
-        'cmake "${SNAPCRAFT_PART_SRC_WORK}" '
+        'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles" '
         "-DVERBOSE=1 "
         "-DCMAKE_INSTALL_PREFIX=/foo "
         '-DCMAKE_SPACED_ARGS="foo bar" '

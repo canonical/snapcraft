@@ -48,7 +48,12 @@ class CMakePlugin(PluginV2):
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
-                }
+                },
+                "cmake-generator": {
+                    "type": "string",
+                    "enum": ["Unix Makefiles", "Ninja"],
+                    "default": "Unix Makefiles",
+                },
             },
         }
 
@@ -56,7 +61,12 @@ class CMakePlugin(PluginV2):
         return set()
 
     def get_build_packages(self) -> Set[str]:
-        return {"gcc", "cmake"}
+        build_packages = {"gcc", "cmake"}
+
+        if self.options.cmake_generator == "Ninja":
+            build_packages.add("ninja-build")
+
+        return build_packages
 
     def get_build_environment(self) -> Dict[str, str]:
         return {
@@ -64,7 +74,12 @@ class CMakePlugin(PluginV2):
         }
 
     def _get_cmake_configure_command(self) -> str:
-        cmd = ["cmake", '"${SNAPCRAFT_PART_SRC_WORK}"'] + self.options.cmake_parameters
+        cmd = [
+            "cmake",
+            '"${SNAPCRAFT_PART_SRC_WORK}"',
+            "-G",
+            f'"{self.options.cmake_generator}"',
+        ] + self.options.cmake_parameters
 
         return " ".join(cmd)
 

@@ -1,0 +1,23 @@
+name: cmake-hello
+version: "1.0"
+summary: test the cmake plugin
+description: |
+  This is a basic cmake snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  cmake-hello:
+    command: usr/bin/cmake-hello
+
+parts:
+  hello:
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
+    cmake-generator: Ninja
+    source: .
