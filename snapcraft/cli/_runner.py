@@ -32,7 +32,6 @@ from .remote import remotecli
 from .help import helpcli
 from .extensions import extensioncli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
-from .ci import cicli
 from ._command_group import SnapcraftGroup
 from ._options import add_provider_options
 from ._errors import exception_handler
@@ -40,7 +39,6 @@ from ._errors import exception_handler
 
 command_groups = [
     storecli,
-    cicli,
     assertionscli,
     containerscli,
     discoverycli,
