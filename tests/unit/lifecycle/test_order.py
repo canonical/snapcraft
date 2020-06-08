@@ -20,7 +20,6 @@ import textwrap
 
 from unittest import mock
 from testtools.matchers import Contains, Equals, HasLength
-from testscenarios import multiply_scenarios
 
 import snapcraft
 from snapcraft.internal import lifecycle, pluginhandler, states, steps
@@ -287,7 +286,7 @@ class MainTest(ReStepOrderTestBase):
 
         self.run_test()
 
-    def test_build_repull(self):
+    def test_stage_repull(self):
         self.set_attributes(
             {
                 "initial_step": steps.STAGE,
