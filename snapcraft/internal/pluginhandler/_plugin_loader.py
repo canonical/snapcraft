@@ -18,6 +18,7 @@ import contextlib
 import importlib
 import logging
 import sys
+from pathlib import Path
 
 import jsonschema
 
@@ -74,21 +75,48 @@ def load_plugin(
     return plugin
 
 
-def _load_local(module_name: str, local_plugin_dir: str):
-    sys.path = [local_plugin_dir] + sys.path
-    logger.debug(f"Loading plugin module {module_name!r} with sys.path {sys.path!r}")
-    try:
-        module = importlib.import_module(module_name)
-    finally:
-        sys.path.pop(0)
+def _load_compat_x_prefix(plugin_name: str, module_name: str, local_plugin_dir: str):
+    compat_path = Path(local_plugin_dir, f"x-{plugin_name}.py")
+    if not compat_path.exists():
+        return None
+
+    preferred_name = f"{module_name}.py"
+    logger.warning(
+        f"Legacy plugin name detected, please rename the plugin's file name {compat_path.name!r} to {preferred_name!r}."
+    )
+
+    spec = importlib.util.spec_from_file_location(plugin_name, compat_path)
+    if spec.loader is None:
+        return None
+
+    # Prevent mypy type complaints by asserting type.
+    assert isinstance(spec.loader, importlib.abc.Loader)
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_local(plugin_name: str, local_plugin_dir: str):
+    module_name = plugin_name.replace("-", "_")
+
+    module = _load_compat_x_prefix(plugin_name, module_name, local_plugin_dir)
+    if module is None:
+        sys.path = [local_plugin_dir] + sys.path
+        logger.debug(
+            f"Loading plugin module {module_name!r} with sys.path {sys.path!r}"
+        )
+        try:
+            module = importlib.import_module(module_name)
+        finally:
+            sys.path.pop(0)
 
     return module
 
 
 def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
     with contextlib.suppress(ImportError):
-        module_name = plugin_name.replace("-", "_")
-        module = _load_local(f"{module_name}", local_plugins_dir)
+        module = _load_local(plugin_name, local_plugins_dir)
         logger.info(f"Loaded local plugin for {plugin_name}")
 
         for attr in vars(module).values():
