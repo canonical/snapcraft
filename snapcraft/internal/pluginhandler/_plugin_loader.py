@@ -124,7 +124,12 @@ def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
                 continue
             if not issubclass(attr, plugins.v1.PluginV1):
                 continue
-            if attr == plugins.v1.PluginV1:
+            if not hasattr(attr, "__module__"):
+                continue
+            logger.debug(
+                f"Plugin attribute {attr!r} has __module__: {attr.__module__!r}"
+            )
+            if attr.__module__.startswith("snapcraft.plugins"):
                 continue
             return attr
         else:
