@@ -3,6 +3,7 @@ summary: Use local plugins to build a snap
 environment:
   SNAP_DIR/baseplugin: ../snaps/from-baseplugin
   SNAP_DIR/nilplugin: ../snaps/from-nilplugin
+  SNAP_DIR/pluginv1: ../snaps/from-pluginv1
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
