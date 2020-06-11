@@ -179,35 +179,32 @@ class TestPrepareBuild:
 
         plugin._prepare_build()
 
-        assert mock_run.mock_calls[0][1][0] == ["catkin", "init"]
-        assert mock_run.mock_calls[1][1][0] == ["catkin", "clean", "-y"]
-        assert mock_run.mock_calls[2][1][0] == [
-            "catkin",
-            "profile",
-            "add",
-            "-f",
-            "default",
-        ]
         if "debug" in options.build_attributes:
             expected_cmake_args = ["-DCMAKE_BUILD_TYPE=Debug"] + catkin_cmake_args
         else:
             expected_cmake_args = ["-DCMAKE_BUILD_TYPE=Release"] + catkin_cmake_args
 
-        assert (
-            mock_run.mock_calls[3][1][0]
-            == [
-                "catkin",
-                "config",
-                "--profile",
-                "default",
-                "--build-space",
-                plugin.builddir,
-                "--source-space",
-                os.path.join(plugin.builddir, plugin.options.source_space),
-                "--install",
-                "--install-space",
-                plugin.rosdir,
-                "--cmake-args",
+        mock_run.assert_has_calls(
+            [
+                mock.call(["catkin", "init"]),
+                mock.call(["catkin", "clean", "-y"]),
+                mock.call(["catkin", "profile", "add", "-f", "default",]),
+                mock.call(
+                    [
+                        "catkin",
+                        "config",
+                        "--profile",
+                        "default",
+                        "--build-space",
+                        plugin.builddir,
+                        "--source-space",
+                        os.path.join(plugin.builddir, plugin.options.source_space),
+                        "--install",
+                        "--install-space",
+                        plugin.rosdir,
+                        "--cmake-args",
+                    ]
+                    + expected_cmake_args
+                ),
             ]
-            + expected_cmake_args
         )
