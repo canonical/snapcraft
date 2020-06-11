@@ -168,31 +168,44 @@ class TestRustPluginCrossCompile:
         plugin = rust.RustPlugin("test-part", options, project)
         plugin.pull()
 
-        assert len(mock_run.mock_calls) == 4
-        assert mock_run.mock_calls[0][1][0] == [
-            os.path.join(plugin._rustup_dir, "rustup.sh"),
-            "-y",
-            "--no-modify-path",
-            "--profile=minimal",
-            "--default-toolchain",
-            "none",
-        ]
-        assert mock_run.mock_calls[1][1][0] == [plugin._rustup_cmd, "install", "stable"]
-        assert mock_run.mock_calls[2][1][0] == [
-            plugin._rustup_cmd,
-            "target",
-            "add",
-            "--toolchain",
-            "stable",
-            target,
-        ]
-        assert mock_run.mock_calls[3][1][0] == [
-            plugin._cargo_cmd,
-            "+stable",
-            "fetch",
-            "--manifest-path",
-            os.path.join(plugin.sourcedir, "Cargo.toml"),
-        ]
+        assert mock_run.call_count == 4
+        mock_run.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        os.path.join(plugin._rustup_dir, "rustup.sh"),
+                        "-y",
+                        "--no-modify-path",
+                        "--profile=minimal",
+                        "--default-toolchain",
+                        "none",
+                    ],
+                    env=mock.ANY,
+                ),
+                mock.call([plugin._rustup_cmd, "install", "stable"], env=mock.ANY),
+                mock.call(
+                    [
+                        plugin._rustup_cmd,
+                        "target",
+                        "add",
+                        "--toolchain",
+                        "stable",
+                        target,
+                    ],
+                    env=mock.ANY,
+                ),
+                mock.call(
+                    [
+                        plugin._cargo_cmd,
+                        "+stable",
+                        "fetch",
+                        "--manifest-path",
+                        os.path.join(plugin.sourcedir, "Cargo.toml"),
+                    ],
+                    env=mock.ANY,
+                ),
+            ]
+        )
 
         mock_run.reset_mock()
         cargo_path = Path(plugin.builddir) / "Cargo.toml"
@@ -202,26 +215,21 @@ class TestRustPluginCrossCompile:
         plugin.build()
 
         assert os.path.exists(os.path.join(plugin.builddir, ".cargo", "config"))
-        assert mock_run.call_count == 1
-        mock_run.assert_has_calls(
+        mock_run.assert_called_once_with(
             [
-                mock.call(
-                    [
-                        plugin._cargo_cmd,
-                        "+stable",
-                        "install",
-                        "--path",
-                        plugin.builddir,
-                        "--root",
-                        plugin.installdir,
-                        "--force",
-                        "--target",
-                        target,
-                    ],
-                    cwd=plugin.builddir,
-                    env=plugin._build_env(),
-                )
-            ]
+                plugin._cargo_cmd,
+                "+stable",
+                "install",
+                "--path",
+                plugin.builddir,
+                "--root",
+                plugin.installdir,
+                "--force",
+                "--target",
+                target,
+            ],
+            cwd=plugin.builddir,
+            env=plugin._build_env(),
         )
 
 
