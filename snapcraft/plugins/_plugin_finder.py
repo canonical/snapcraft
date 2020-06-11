@@ -29,7 +29,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "ant": v1.AntPlugin,
             "autotools": v1.AutotoolsPlugin,
             "catkin": v1.CatkinPlugin,
-            "catkin_tools": v1.CatkinToolsPlugin,
+            "catkin-tools": v1.CatkinToolsPlugin,
             "cmake": v1.CMakePlugin,
             "colcon": v1.ColconPlugin,
             "conda": v1.CondaPlugin,
