@@ -722,20 +722,8 @@ class NodePluginUnsupportedArchTest(NodePluginBaseTest):
         )
 
 
-class NodePluginMissingFilesTest(NodePluginBaseTest):
-    def run_test(self):
-        plugin = nodejs.NodePlugin("test-part", self.options, self.project)
+def test_missing_package_json(mock_run, mock_run_output, nodejs_plugin_with_assets):
+    (pathlib.Path(nodejs_plugin_with_assets.sourcedir) / "package.json").unlink()
 
-        self.create_assets(plugin, skip_package_json=True)
-
-        self.assertRaises(nodejs.NodejsPluginMissingPackageJsonError, plugin.pull)
-
-    def test_npm(self):
-        self.package_manager = "npm"
-
-        self.run_test()
-
-    def test_yarn(self):
-        self.package_manager = "yarn"
-
-        self.run_test()
+    with pytest.raises(nodejs.NodejsPluginMissingPackageJsonError):
+        nodejs_plugin_with_assets.pull()
