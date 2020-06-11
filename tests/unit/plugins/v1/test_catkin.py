@@ -909,15 +909,6 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
     underlay = None
     expected_underlay_path = None
 
-    def setUp(self):
-        super().setUp()
-
-        # Make the underlay a valid workspace
-        if self.underlay:
-            os.makedirs(self.underlay["build-path"])
-            open(os.path.join(self.underlay["build-path"], "setup.sh"), "w").close()
-            self.properties.underlay = self.underlay
-
     @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
     def test_pull_debian_dependencies(self, generate_setup_mock):
         plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
@@ -1439,7 +1430,7 @@ class TestBuildArgs:
         ),
     ]
 
-    @mock.patch.object(catkin.CatkinPlugin, "run")
+    @mock.patch("snapcraft.plugins.v1.catkin.CatkinPlugin.run", autospec=True)
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
@@ -1489,7 +1480,7 @@ class TestBuildArgs:
         ]
         if catkin_cmake_args:
             expected_command += catkin_cmake_args
-        assert run_mock.mock_calls[0][1][0] == expected_command
+        run_mock.assert_called_once_with(plugin, expected_command)
 
         finish_build_mock.assert_called_once_with()
 
