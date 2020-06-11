@@ -24,8 +24,9 @@ from tests.unit import load_part
 
 
 @pytest.fixture
-def mock_patcher():
-    patcher = mock.patch("snapcraft.internal.elf.Patcher")
+def mock_elf_patcher():
+    """Return a mock for snapcraft.internal.elf.Patcher."""
+    patcher = mock.patch("snapcraft.internal.elf.Patcher", autospec=True)
     yield patcher.start()
     patcher.stop()
 
@@ -36,7 +37,7 @@ class TestStaticBasePatching:
         ("classic", dict(confinement="classic")),
     )
 
-    def test_static_base_with_libc6_stage_packaged(self, mock_patcher, confinement):
+    def test_static_base_with_libc6_stage_packaged(self, mock_elf_patcher, confinement):
         # The "bare" base is a static base.
         handler = load_part(
             "test-part",
@@ -55,13 +56,15 @@ class TestStaticBasePatching:
 
         patcher.patch()
 
-        mock_patcher.assert_called_once_with(
+        mock_elf_patcher.assert_called_once_with(
             dynamic_linker="/snap/test-snap/current/lib/x86_64-linux-gnu/ld-2.27.so",
             preferred_patchelf_path=None,
             root_path=handler._project.prime_dir,
         )
 
-    def test_static_base_without_libc6_stage_packaged(self, mock_patcher, confinement):
+    def test_static_base_without_libc6_stage_packaged(
+        self, mock_elf_patcher, confinement
+    ):
         # The "bare" base is a static base, empty, so there is no linker loader to look for.
         handler = load_part(
             "test-part",
@@ -80,9 +83,9 @@ class TestStaticBasePatching:
 
         patcher.patch()
 
-        mock_patcher.mock.assert_not_called()
+        mock_elf_patcher.assert_not_called()
 
-    def test_no_base(self, mock_patcher, confinement):
+    def test_no_base(self, mock_elf_patcher, confinement):
         handler = load_part(
             "test-part",
             snap_type="app",
@@ -100,12 +103,13 @@ class TestStaticBasePatching:
 
         patcher.patch()
 
-        mock_patcher.mock.assert_not_called()
+        mock_elf_patcher.assert_not_called()
 
 
 @pytest.fixture
 def mock_partpatcher():
-    patcher = mock.patch("snapcraft.internal.pluginhandler.PartPatcher")
+    """Return a mock for snapcraft.internal.pluginhandler.PartPatcher."""
+    patcher = mock.patch("snapcraft.internal.pluginhandler.PartPatcher", autospec=True)
     yield patcher.start()
     patcher.stop()
 
