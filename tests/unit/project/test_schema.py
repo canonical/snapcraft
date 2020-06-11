@@ -191,12 +191,6 @@ class ValidationTest(ValidationBaseTest):
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 
 
-def test_icon_missing_is_valid_yaml(monkeypatch, data):
-    monkeypatch.setattr(os.path, "exists", lambda x: False)
-
-    Validator(data).validate()
-
-
 @pytest.mark.parametrize(
     "option,value",
     [
@@ -512,7 +506,6 @@ def test_daemon_missing_errors(data, mode):
         "_a",
         "a_",
         "a_a",
-        "Hi",
     ],
 )
 def test_invalid_hook_names(data, name):
