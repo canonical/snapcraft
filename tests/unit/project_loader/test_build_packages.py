@@ -24,7 +24,7 @@ from snapcraft.internal import project_loader
 
 
 def get_project_config(snapcraft_yaml_content):
-    snapcraft_yaml_path = pathlib.Path("Snapcraft.yaml")
+    snapcraft_yaml_path = pathlib.Path("snapcraft.yaml")
     with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
         print(snapcraft_yaml_content, file=snapcraft_yaml_file)
 
