@@ -38,6 +38,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture
 def tmp_work_path(tmp_path):
+    """Setup a temporary directory and chdir to it."""
     os.chdir(tmp_path)
     return tmp_path
 
