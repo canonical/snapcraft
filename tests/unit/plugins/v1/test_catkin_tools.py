@@ -188,7 +188,7 @@ class TestPrepareBuild:
             [
                 mock.call(["catkin", "init"]),
                 mock.call(["catkin", "clean", "-y"]),
-                mock.call(["catkin", "profile", "add", "-f", "default",]),
+                mock.call(["catkin", "profile", "add", "-f", "default"]),
                 mock.call(
                     [
                         "catkin",
