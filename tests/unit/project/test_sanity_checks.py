@@ -63,17 +63,18 @@ def project(snapcraft_yaml_path, request):
 
 
 @pytest.fixture
-def caplogwarning(caplog):
+def caplog_warning(caplog):
+    """Return caplog set to logging.WARNING."""
     caplog.set_level(logging.WARNING)
     return caplog
 
 
-def test_no_snap_dir(caplogwarning, project):
+def test_no_snap_dir(caplog_warning, project):
     conduct_project_sanity_check(project)
-    assert len(caplogwarning.records) == 0
+    assert len(caplog_warning.records) == 0
 
 
-def test_accepted_artifacts(caplogwarning, project):
+def test_accepted_artifacts(caplog_warning, project):
     assets_dir = pathlib.Path("snap")
 
     file_assets = [
@@ -97,10 +98,10 @@ def test_accepted_artifacts(caplogwarning, project):
 
     conduct_project_sanity_check(project)
 
-    assert len(caplogwarning.records) == 0
+    assert len(caplog_warning.records) == 0
 
 
-def test_unexpected_things(caplogwarning, project):
+def test_unexpected_things(caplog_warning, project):
     assets_dir = pathlib.Path("snap")
 
     file_assets = [
@@ -123,7 +124,7 @@ def test_unexpected_things(caplogwarning, project):
         asset_path.touch()
 
     conduct_project_sanity_check(project)
-    assert caplogwarning.records[0].message == (
+    assert caplog_warning.records[0].message == (
         "The 'snap' directory is meant specifically for snapcraft, but it "
         "contains the following non-snapcraft-related paths, which is "
         "unsupported and will cause unexpected behavior:\n"
