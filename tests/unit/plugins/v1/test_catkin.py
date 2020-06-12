@@ -18,13 +18,13 @@ import ast
 import builtins
 import os
 import os.path
-import re
 import subprocess
 import sys
 import tempfile
 import textwrap
-
 from unittest import mock
+
+import pytest
 import testtools
 from testtools.matchers import (
     Contains,
@@ -904,21 +904,239 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
                 self.assertThat(f.read(), Equals(file_info["expected"]))
 
 
-class PullTestCase(CatkinPluginBaseTest):
+class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
-    scenarios = [
-        ("no underlay", {"underlay": None, "expected_underlay_path": None}),
-        (
-            "underlay",
-            {
-                "underlay": {
-                    "build-path": "test-build-path",
-                    "run-path": "test-run-path",
-                },
-                "expected_underlay_path": "test-build-path",
-            },
-        ),
-    ]
+    underlay = None
+    expected_underlay_path = None
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    def test_pull_debian_dependencies(self, generate_setup_mock):
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        os.makedirs(os.path.join(plugin.sourcedir, "src"))
+
+        self.dependencies_mock.return_value = {"apt": {"foo", "bar", "baz"}}
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rosdep"),
+            self.ubuntu_distro,
+        )
+
+        self.wstool_mock.assert_not_called()
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertThat(self.dependencies_mock.call_count, Equals(1))
+        self.assertThat(self.dependencies_mock.call_args[0][0], Equals({"my_package"}))
+
+        # Verify that the dependencies were installed
+        self.assertThat(
+            self.ubuntu_mock.install_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        install_dir=plugin.installdir,
+                        package_names={"bar", "baz", "foo"},
+                        base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    def test_pull_local_dependencies(self, generate_setup_mock):
+        self.properties.catkin_packages.append("package_2")
+
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        os.makedirs(os.path.join(plugin.sourcedir, "src"))
+
+        # No system dependencies (only local)
+        self.dependencies_mock.return_value = {}
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rosdep"),
+            self.ubuntu_distro,
+        )
+
+        self.wstool_mock.assert_not_called()
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertThat(self.dependencies_mock.call_count, Equals(1))
+        self.assertThat(
+            self.dependencies_mock.call_args[0][0], Equals({"my_package", "package_2"})
+        )
+
+        # Verify that no .deb packages were installed
+        self.assertTrue(
+            mock.call().unpack(plugin.installdir) not in self.ubuntu_mock.mock_calls
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    def test_pull_with_roscore(self, generate_setup_mock):
+        self.properties.include_roscore = True
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        os.makedirs(os.path.join(plugin.sourcedir, "src"))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = {}
+
+        def resolve(package_name):
+            if package_name == "ros_core":
+                return {"apt": {"ros-core-dependency"}}
+
+        self.rosdep_mock.return_value.resolve_dependency = resolve
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rosdep"),
+            self.ubuntu_distro,
+        )
+
+        self.wstool_mock.assert_not_called()
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that roscore was installed
+        self.assertThat(
+            self.ubuntu_mock.install_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        install_dir=plugin.installdir,
+                        package_names={"ros-core-dependency"},
+                        base=self.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    def test_pull_with_rosinstall_files(self, generate_setup_mock):
+        self.properties.rosinstall_files = ["rosinstall-file"]
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        os.makedirs(os.path.join(plugin.sourcedir, "src"))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = {}
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rosdep"),
+            self.ubuntu_distro,
+        )
+
+        self.assert_wstool_setup(
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "wstool"),
+        )
+
+        self.wstool_mock.assert_has_calls(
+            [
+                mock.call().merge(os.path.join(plugin.sourcedir, "rosinstall-file")),
+                mock.call().update(),
+            ]
+        )
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that no .deb packages were installed
+        self.assertTrue(
+            mock.call().unpack(plugin.installdir) not in self.ubuntu_mock.mock_calls
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    def test_pull_pip_dependencies(self, generate_setup_mock):
+        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        os.makedirs(os.path.join(plugin.sourcedir, "src"))
+
+        self.dependencies_mock.return_value = {"pip": {"foo", "bar", "baz"}}
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.ros_distro,
+            os.path.join(plugin.sourcedir, "src"),
+            os.path.join(plugin.partdir, "rosdep"),
+            self.ubuntu_distro,
+        )
+
+        self.wstool_mock.assert_not_called()
+
+        self.assert_pip_setup(
+            "2", plugin.partdir, plugin.installdir, plugin.project.stage_dir
+        )
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertThat(self.dependencies_mock.call_count, Equals(1))
+        self.assertThat(self.dependencies_mock.call_args[0][0], Equals({"my_package"}))
+
+        # Verify that the pip dependencies were installed
+        self.pip_mock.return_value.download.assert_called_once_with(
+            {"foo", "bar", "baz"}
+        )
+        self.pip_mock.return_value.install.assert_called_once_with(
+            {"foo", "bar", "baz"}
+        )
+
+
+class PullUnderlayTestCase(CatkinPluginBaseTest):
+
+    underlay = {"build-path": "test-build-path", "run-path": "test-run-path"}
+    expected_underlay_path = "test-build-path"
 
     def setUp(self):
         super().setUp()
@@ -1153,24 +1371,58 @@ class PullTestCase(CatkinPluginBaseTest):
         )
 
 
-class BuildTestCase(CatkinPluginBaseTest):
+@pytest.fixture
+def options():
+    class Options:
+        catkin_packages = ["my_package"]
+        source_space = "src"
+        source_subdir = None
+        include_roscore = False
+        catkin_cmake_args = []
+        underlay = None
+        rosinstall_files = None
+        recursive_rosinstall = False
+        build_attributes = []
+        catkin_ros_master_uri = "http://localhost:11311"
+        disable_parallel = False
+
+    return Options()
+
+
+class TestBuildArgs:
 
     scenarios = [
         (
             "release without catkin-cmake-args",
-            {"build_attributes": [], "catkin_cmake_args": []},
+            {
+                "build_attributes": [],
+                "catkin_cmake_args": [],
+                "disable_parallel": False,
+            },
         ),
         (
             "release with catkin-cmake-args",
-            {"build_attributes": [], "catkin_cmake_args": ["-DFOO"]},
+            {
+                "build_attributes": [],
+                "catkin_cmake_args": ["-DFOO"],
+                "disable_parallel": False,
+            },
         ),
         (
             "debug without catkin-cmake-args",
-            {"build_attributes": ["debug"], "catkin_cmake_args": []},
+            {
+                "build_attributes": ["debug"],
+                "catkin_cmake_args": [],
+                "disable_parallel": False,
+            },
         ),
         (
             "debug with catkin-cmake-args",
-            {"build_attributes": ["debug"], "catkin_cmake_args": ["-DFOO"]},
+            {
+                "build_attributes": ["debug"],
+                "catkin_cmake_args": ["-DFOO"],
+                "disable_parallel": False,
+            },
         ),
         (
             "release without catkin-cmake-args single threaded",
@@ -1178,77 +1430,57 @@ class BuildTestCase(CatkinPluginBaseTest):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-        self.properties.build_attributes.extend(self.build_attributes)
-        self.properties.catkin_cmake_args = self.catkin_cmake_args
-        if hasattr(self, "disable_parallel"):
-            self.properties.disable_parallel = self.disable_parallel
-
-    @mock.patch.object(catkin.CatkinPlugin, "run")
+    @mock.patch("snapcraft.plugins.v1.catkin.CatkinPlugin.run", autospec=True)
     @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
     def test_build(
-        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
+        self,
+        finish_build_mock,
+        prepare_build_mock,
+        run_output_mock,
+        run_mock,
+        project_core18,
+        options,
+        build_attributes,
+        catkin_cmake_args,
+        disable_parallel,
     ):
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+
+        options.build_attributes += build_attributes
+        options.catkin_cmake_args += catkin_cmake_args
+        options.disable_parallel = disable_parallel
+
+        plugin = catkin.CatkinPlugin("test-part", options, project_core18)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
 
         prepare_build_mock.assert_called_once_with()
 
-        # Matching like this for order independence (otherwise it would be
-        # quite fragile)
-        build_attributes = self.build_attributes
-        catkin_cmake_args = self.catkin_cmake_args
-        disable_parallel = self.properties.disable_parallel
+        if "debug" in build_attributes:
+            build_type = "Debug"
+        else:
+            build_type = "Release"
 
-        class check_build_command:
-            def __eq__(self, args):
-                command = " ".join(args)
-                if "debug" in build_attributes:
-                    build_type_valid = re.match(
-                        ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug", command
-                    )
-                else:
-                    build_type_valid = re.match(
-                        ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release", command
-                    )
-                args_valid = True
-                if catkin_cmake_args:
-                    expected_args = " ".join(catkin_cmake_args)
-                    args_valid = re.match(
-                        ".*--cmake-args.*{}".format(re.escape(expected_args)), command
-                    )
-                if disable_parallel:
-                    args_parallel_build_count = re.match(".*-j1", command)
-                else:
-                    args_parallel_build_count = re.match(
-                        ".*-j{}".format(plugin.parallel_build_count), command
-                    )
-                return (
-                    args_valid
-                    and build_type_valid
-                    and args[0] == "catkin_make_isolated"
-                    and "--install" in command
-                    and "--pkg my_package" in command
-                    and "--directory {}".format(plugin.builddir) in command
-                    and "--install-space {}".format(plugin.rosdir) in command
-                    and "--source-space {}".format(
-                        os.path.join(plugin.builddir, plugin.options.source_space)
-                    )
-                    in command
-                    and args_parallel_build_count
-                )
-
-        run_mock.assert_called_with(check_build_command())
-
-        self.assertFalse(
-            self.dependencies_mock.called,
-            "Dependencies should have been discovered in the pull() step",
-        )
+        expected_command = [
+            "catkin_make_isolated",
+            "--install",
+            "--pkg",
+            "my_package",
+            "--directory",
+            plugin.builddir,
+            "--source-space",
+            f"{plugin.builddir}/src",
+            "--install-space",
+            f"{plugin.installdir}/opt/ros/melodic",
+            "-j{}".format(1 if disable_parallel else 2),
+            "--cmake-args",
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+        ]
+        if catkin_cmake_args:
+            expected_command += catkin_cmake_args
+        run_mock.assert_called_once_with(plugin, expected_command)
 
         finish_build_mock.assert_called_once_with()
 
@@ -1257,76 +1489,214 @@ class BuildTestCase(CatkinPluginBaseTest):
     @mock.patch.object(catkin.CatkinPlugin, "_prepare_build")
     @mock.patch.object(catkin.CatkinPlugin, "_finish_build")
     def test_build_all_packages(
-        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
+        self,
+        finish_build_mock,
+        prepare_build_mock,
+        run_output_mock,
+        run_mock,
+        project_core18,
+        options,
+        build_attributes,
+        catkin_cmake_args,
+        disable_parallel,
     ):
-        self.properties.catkin_packages = None
-        plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+        options.catkin_packages = None
+        options.build_attributes += build_attributes
+        options.catkin_cmake_args += catkin_cmake_args
+        options.disable_parallel = disable_parallel
+
+        plugin = catkin.CatkinPlugin("test-part", options, project_core18)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
 
         prepare_build_mock.assert_called_once_with()
 
-        # Matching like this for order independence (otherwise it would be
-        # quite fragile)
-        build_attributes = self.build_attributes
-        catkin_cmake_args = self.catkin_cmake_args
+        if "debug" in build_attributes:
+            build_type = "Debug"
+        else:
+            build_type = "Release"
 
-        class check_build_command:
-            def __eq__(self, args):
-                command = " ".join(args)
-                if "debug" in build_attributes:
-                    build_type_valid = re.match(
-                        ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug", command
-                    )
-                else:
-                    build_type_valid = re.match(
-                        ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release", command
-                    )
-                args_valid = True
-                if catkin_cmake_args:
-                    expected_args = " ".join(catkin_cmake_args)
-                    args_valid = re.match(
-                        ".*--cmake-args.*{}".format(re.escape(expected_args)), command
-                    )
-                return (
-                    args_valid
-                    and build_type_valid
-                    and args[0] == "catkin_make_isolated"
-                    and "--install" in command
-                    and "--directory {}".format(plugin.builddir) in command
-                    and "--install-space {}".format(plugin.rosdir) in command
-                    and "--source-space {}".format(
-                        os.path.join(plugin.builddir, plugin.options.source_space)
-                    )
-                    in command
-                )
-
-        run_mock.assert_called_with(check_build_command())
-
-        self.assertFalse(
-            self.dependencies_mock.called,
-            "Dependencies should have been discovered in the pull() step",
-        )
+        expected_command = [
+            "catkin_make_isolated",
+            "--install",
+            "--directory",
+            plugin.builddir,
+            "--source-space",
+            f"{plugin.builddir}/src",
+            "--install-space",
+            f"{plugin.installdir}/opt/ros/melodic",
+            "-j{}".format(1 if disable_parallel else 2),
+            "--cmake-args",
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+        ]
+        if catkin_cmake_args:
+            expected_command += catkin_cmake_args
+        assert run_mock.mock_calls[0][1][0] == expected_command
 
         finish_build_mock.assert_called_once_with()
 
 
-class FinishBuildTestCase(CatkinPluginBaseTest):
+class FinishBuildNoUnderlayTestCase(CatkinPluginBaseTest):
 
-    scenarios = [
-        ("no underlay", {"underlay": None, "expected_underlay_path": None}),
-        (
-            "underlay",
+    underlay = None
+    expected_underlay_path = None
+
+    def setUp(self):
+        super().setUp()
+
+        self.properties.underlay = self.underlay
+        self.plugin = catkin.CatkinPlugin("test-part", self.properties, self.project)
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    @mock.patch.object(catkin.CatkinPlugin, "_use_in_snap_python")
+    def test_finish_build_cmake_paths(self, use_python_mock, generate_setup_mock):
+        os.makedirs(os.path.join(self.plugin.rosdir, "test"))
+
+        # Place a few .cmake files with incorrect paths, and some files that
+        # shouldn't be changed.
+        files = [
             {
-                "underlay": {
-                    "build-path": "test-build-path",
-                    "run-path": "test-run-path",
-                },
-                "expected_underlay_path": "test-run-path",
+                "path": "fooConfig.cmake",
+                "contents": '"{}/usr/lib/foo"'.format(self.plugin.installdir),
+                "expected": '"$ENV{SNAPCRAFT_STAGE}/usr/lib/foo"',
             },
-        ),
-    ]
+            {
+                "path": "bar.cmake",
+                "contents": '"/usr/lib/bar"',
+                "expected": '"/usr/lib/bar"',
+            },
+            {
+                "path": "test/bazConfig.cmake",
+                "contents": '"{0}/test/baz;{0}/usr/lib/baz"'.format(
+                    self.plugin.installdir
+                ),
+                "expected": '"$ENV{SNAPCRAFT_STAGE}/test/baz;'
+                '$ENV{SNAPCRAFT_STAGE}/usr/lib/baz"',
+            },
+            {"path": "test/quxConfig.cmake", "contents": "qux", "expected": "qux"},
+            {
+                "path": "test/installedConfig.cmake",
+                "contents": '"$ENV{SNAPCRAFT_STAGE}/foo"',
+                "expected": '"$ENV{SNAPCRAFT_STAGE}/foo"',
+            },
+        ]
+
+        for file_info in files:
+            path = os.path.join(self.plugin.rosdir, file_info["path"])
+            with open(path, "w") as f:
+                f.write(file_info["contents"])
+
+        self.plugin._finish_build()
+
+        self.assertTrue(use_python_mock.called)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                "$SNAP", self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        for file_info in files:
+            path = os.path.join(self.plugin.rosdir, file_info["path"])
+            with open(path, "r") as f:
+                self.assertThat(f.read(), Equals(file_info["expected"]))
+
+        # Verify that no sitecustomize.py was generated
+        self.assertThat(
+            os.path.join(
+                self.plugin.installdir, "usr", "lib", "python2.7", "sitecustomize.py"
+            ),
+            Not(FileExists()),
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    @mock.patch.object(catkin.CatkinPlugin, "run")
+    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
+    @mock.patch.object(catkin.CatkinPlugin, "_use_in_snap_python")
+    def test_finish_build_cmake_prefix_path(
+        self, use_python_mock, run_output_mock, run_mock, generate_setup_mock
+    ):
+        setup_file = os.path.join(self.plugin.rosdir, "_setup_util.py")
+        os.makedirs(os.path.dirname(setup_file))
+
+        with open(setup_file, "w") as f:
+            f.write(
+                "CMAKE_PREFIX_PATH = '{0}/{1};{0}\n".format(
+                    self.plugin.rosdir, self.ros_distro
+                )
+            )
+
+        self.plugin._finish_build()
+
+        self.assertTrue(use_python_mock.called)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                "$SNAP", self.expected_underlay_path
+            )
+        else:
+            generate_setup_mock.assert_not_called()
+
+        expected = "CMAKE_PREFIX_PATH = []\n"
+
+        with open(setup_file, "r") as f:
+            self.assertThat(
+                f.read(),
+                Equals(expected),
+                "The absolute path to python or the CMAKE_PREFIX_PATH "
+                "was not replaced as expected",
+            )
+
+        # Verify that no sitecustomize.py was generated
+        self.assertThat(
+            os.path.join(
+                self.plugin.installdir, "usr", "lib", "python2.7", "sitecustomize.py"
+            ),
+            Not(FileExists()),
+        )
+
+    @mock.patch.object(catkin.CatkinPlugin, "_generate_snapcraft_setup_sh")
+    @mock.patch.object(catkin.CatkinPlugin, "run")
+    @mock.patch.object(catkin.CatkinPlugin, "run_output", return_value="foo")
+    @mock.patch.object(catkin.CatkinPlugin, "_use_in_snap_python")
+    def test_finish_build_python_sitecustomize(
+        self, use_python_mock, run_output_mock, run_mock, generate_setup_mock
+    ):
+        self.pip_mock.return_value.list.return_value = {"test-package"}
+
+        # Create site.py, indicating that python2 was a stage-package
+        site_py_path = os.path.join(
+            self.plugin.installdir, "usr", "lib", "python2.7", "site.py"
+        )
+        os.makedirs(os.path.dirname(site_py_path), exist_ok=True)
+        open(site_py_path, "w").close()
+
+        # Also create python2 site-packages, indicating that pip packages were
+        # installed.
+        os.makedirs(
+            os.path.join(self.plugin.installdir, "lib", "python2.7", "site-packages"),
+            exist_ok=True,
+        )
+
+        self.plugin._finish_build()
+
+        # Verify that sitecustomize.py was generated
+        self.assertThat(
+            os.path.join(
+                self.plugin.installdir, "usr", "lib", "python2.7", "sitecustomize.py"
+            ),
+            FileExists(),
+        )
+
+
+class FinishBuildUnderlayTestCase(CatkinPluginBaseTest):
+
+    underlay = {"build-path": "test-build-path", "run-path": "test-run-path"}
+    expected_underlay_path = "test-run-path"
 
     def setUp(self):
         super().setUp()
@@ -1759,7 +2129,7 @@ class CatkinFindTestCase(unit.TestCase):
         )
 
 
-class CatkinCmakeArgTests(unit.TestCase):
+class TestCatkinCmakeArg:
     scenarios = [
         (
             "no quote",
@@ -1810,7 +2180,5 @@ class CatkinCmakeArgTests(unit.TestCase):
         ),
     ]
 
-    def test_arg(self):
-        self.assertThat(
-            catkin._parse_cmake_arg(self.input_string), Equals(self.expected_string)
-        )
+    def test_arg(self, input_string, expected_string):
+        assert catkin._parse_cmake_arg(input_string) == expected_string

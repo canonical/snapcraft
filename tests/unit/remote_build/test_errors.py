@@ -15,17 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.internal.remote_build import errors
-from tests import unit
-from testtools.matchers import Equals
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftException:
 
     scenarios = (
         (
             "LaunchpadGitPushError",
             {
-                "exception": errors.LaunchpadGitPushError,
+                "exception_class": errors.LaunchpadGitPushError,
                 "kwargs": dict(command="foo", exit_code=4),
                 "expected_brief": "Failed to push sources to Launchpad.",
                 "expected_resolution": "Verify connectivity to https://git.launchpad.net and retry build.",
@@ -37,8 +35,8 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "LaunchpadHttpsError",
             {
-                "exception": errors.LaunchpadHttpsError,
-                "kwargs": None,
+                "exception_class": errors.LaunchpadHttpsError,
+                "kwargs": dict(),
                 "expected_brief": "Failed to connect to Launchpad API service.",
                 "expected_resolution": "Verify connectivity to https://api.launchpad.net and retry build.",
                 "expected_details": None,
@@ -48,13 +46,20 @@ class SnapcraftExceptionTests(unit.TestCase):
         ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        if self.kwargs:
-            exception = self.exception(**self.kwargs)
-        else:
-            exception = self.exception()
-        self.assertThat(exception.get_brief(), Equals(self.expected_brief))
-        self.assertThat(exception.get_resolution(), Equals(self.expected_resolution))
-        self.assertThat(exception.get_details(), Equals(self.expected_details))
-        self.assertThat(exception.get_docs_url(), Equals(self.expected_docs_url))
-        self.assertThat(exception.get_reportable(), Equals(self.expected_reportable))
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        expected_brief,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+        expected_resolution,
+        kwargs,
+    ):
+        exception = exception_class(**kwargs)
+
+        assert expected_brief == exception.get_brief()
+        assert expected_resolution == exception.get_resolution()
+        assert expected_details == exception.get_details()
+        assert expected_docs_url == exception.get_docs_url()
+        assert expected_reportable == exception.get_reportable()

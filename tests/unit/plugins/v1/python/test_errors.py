@@ -14,20 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
-
 
 from snapcraft.plugins.v1._python import errors
-from tests import unit
 
 
-class ErrorFormattingTestCase(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = (
         (
             "PipListInvalidLegacyFormatError",
             {
-                "exception": errors.PipListInvalidLegacyFormatError,
+                "exception_class": errors.PipListInvalidLegacyFormatError,
                 "kwargs": {"output": "test-output"},
                 "expected_message": (
                     "Failed to parse Python package list: "
@@ -38,7 +35,5 @@ class ErrorFormattingTestCase(unit.TestCase):
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message

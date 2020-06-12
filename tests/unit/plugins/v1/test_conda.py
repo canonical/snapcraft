@@ -17,8 +17,9 @@
 import os
 from unittest import mock
 
-from testtools.matchers import DirExists, Equals, HasLength, Not
 import fixtures
+import pytest
+from testtools.matchers import DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import conda
@@ -184,43 +185,37 @@ class CondaPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class CondaPluginGetMinicondaSourceTest(CondaPluginBaseTest):
-    scenarios = (
+@pytest.mark.parametrize(
+    "miniconda_version,expected_url,expected_checksum",
+    [
         (
             "latest",
-            dict(
-                miniconda_version="latest",
-                expected_url="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-                expected_checksum=None,
-            ),
+            "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
+            None,
         ),
         (
-            "known specific version",
-            dict(
-                miniconda_version="4.6.14",
-                expected_url="https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-Linux-x86_64.sh",
-                expected_checksum="md5/718259965f234088d785cad1fbd7de03",
-            ),
+            "4.6.14",
+            "https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-Linux-x86_64.sh",
+            "md5/718259965f234088d785cad1fbd7de03",
         ),
         (
-            "unknown specific version",
-            dict(
-                miniconda_version="4.5.14",
-                expected_url="https://repo.anaconda.com/miniconda/Miniconda3-4.5.14-Linux-x86_64.sh",
-                expected_checksum=None,
-            ),
+            "4.5.14",
+            "https://repo.anaconda.com/miniconda/Miniconda3-4.5.14-Linux-x86_64.sh",
+            None,
         ),
-    )
+    ],
+)
+def test_get_miniconda_source(
+    project, miniconda_version, expected_url, expected_checksum
+):
+    class Options:
+        conda_miniconda_version = miniconda_version
 
-    def test_specific_known_version(self):
-        class Options:
-            conda_miniconda_version = self.miniconda_version
+    plugin = conda.CondaPlugin("test-part", Options(), project)
+    source_script = plugin._get_miniconda_script()
 
-        plugin = conda.CondaPlugin("test-part", Options(), self.project)
-        source_script = plugin._get_miniconda_script()
-
-        self.assertThat(source_script.source, Equals(self.expected_url))
-        self.assertThat(source_script.source_checksum, Equals(self.expected_checksum))
+    assert source_script.source == expected_url
+    assert source_script.source_checksum == expected_checksum
 
 
 class CondaPluginTest(CondaPluginBaseTest):

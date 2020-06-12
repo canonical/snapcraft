@@ -14,14 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 from textwrap import dedent
 
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals
 
 from . import LoadPartBaseTest, ProjectLoaderBaseTest
 from snapcraft.project import Project
 from snapcraft.internal import project_loader
 from tests import fixture_setup
+
+
+def get_project_config(snapcraft_yaml_content):
+    snapcraft_yaml_path = pathlib.Path("Snapcraft.yaml")
+    with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
+        print(snapcraft_yaml_content, file=snapcraft_yaml_file)
+
+    project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix())
+    return project_loader.load_config(project)
 
 
 class TestParts(ProjectLoaderBaseTest):
@@ -52,7 +62,7 @@ class TestParts(ProjectLoaderBaseTest):
         self.assertThat(raised.after_part_name, Equals("inexistent-part"))
 
 
-class PartOrderTestCase(ProjectLoaderBaseTest):
+class TestPartOrder:
 
     scenarios = [
         (
@@ -152,13 +162,15 @@ class PartOrderTestCase(ProjectLoaderBaseTest):
         ),
     ]
 
-    def test_part_order_consistency(self):
+    def test_part_order_consistency(self, tmp_work_path, contents, expected_order):
         """Test that parts are always processed in the same order."""
-        project_config = self.make_snapcraft_project(self.contents)
-        self.assertThat(project_config.all_parts, HasLength(len(self.expected_order)))
 
-        for part, expected_name in zip(project_config.all_parts, self.expected_order):
-            self.expectThat(part.name, Equals(expected_name))
+        project_config = get_project_config(contents)
+
+        assert len(project_config.all_parts) == len(expected_order)
+
+        for part, expected_name in zip(project_config.all_parts, expected_order):
+            assert part.name == expected_name
 
 
 class PluginLoadTest(LoadPartBaseTest):

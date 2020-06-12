@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,13 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import doctest
+from unittest import mock
 
-from snapcraft.internal.project_loader.grammar_processing import (
-    _global_grammar_processor as processor,
-)
+import pytest
 
 
-def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(processor))
-    return tests
+@pytest.fixture()
+def snap_injector():
+    """Fake SnapManager"""
+    patcher = mock.patch(
+        "snapcraft.internal.build_providers._base_provider.SnapInjector"
+    )
+    snap_injector_mock = patcher.start()
+    yield snap_injector_mock
+    patcher.stop()

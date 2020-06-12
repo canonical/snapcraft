@@ -1797,12 +1797,6 @@ class UploadBinaryMetadataTestCase(StoreTestCase):
 
 
 class SnapNotFoundTestCase(StoreTestCase):
-
-    scenarios = (
-        ("upload_metadata", dict(attribute="upload_metadata")),
-        ("upload_binary_metadata", dict(attribute="upload_binary_metadata")),
-    )
-
     def _setup_snap(self):
         """Login, register and upload a snap.
 
@@ -1814,13 +1808,14 @@ class SnapNotFoundTestCase(StoreTestCase):
         tracker = self.client.upload("basic", path)
         tracker.track()
 
-    def test_snap_not_found(self):
+    def assert_raises(self, method):
         self._setup_snap()
+
         metadata = {"field_ok": "dummy"}
 
         raised = self.assertRaises(
             errors.SnapNotFoundError,
-            getattr(self.client, self.attribute),
+            getattr(self.client, method),
             "test-nonexistent-snap",
             metadata,
             False,
@@ -1829,3 +1824,9 @@ class SnapNotFoundTestCase(StoreTestCase):
         self.expectThat(raised._snap_name, Equals("test-nonexistent-snap"))
         self.expectThat(raised._channel, Is(None))
         self.expectThat(raised._arch, Is(None))
+
+    def test_snap_not_found_upload_metadata(self):
+        self.assert_raises("upload_metadata")
+
+    def test_snap_not_found_upload_binary_metadata(self):
+        self.assert_raises("upload_binary_metadata")

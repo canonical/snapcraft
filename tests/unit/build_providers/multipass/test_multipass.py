@@ -20,13 +20,10 @@ from unittest import mock
 from unittest.mock import call
 
 import fixtures
+import pytest
 from testtools.matchers import Equals
 
-from tests.unit.build_providers import (
-    BaseProviderBaseTest,
-    BaseProviderWithBasesBaseTest,
-    get_project,
-)
+from tests.unit.build_providers import BaseProviderBaseTest, get_project
 from snapcraft.internal import steps
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import _base_provider, errors
@@ -69,6 +66,37 @@ _DEFAULT_INSTANCE_INFO = dedent(
     }
     """
 )  # noqa: E501
+
+
+@pytest.fixture()
+def multipass_cmd():
+    """Fake MultipassCommand implementation."""
+
+    def execute_effect(*, command, instance_name, hide_output):
+        if hide_output:
+            return None
+        return b""
+
+    patcher = mock.patch(
+        "snapcraft.internal.build_providers._multipass." "_multipass.MultipassCommand",
+        spec=MultipassCommand,
+    )
+    multipass_cmd_mock = patcher.start()
+
+    multipass_cmd_mock().execute.side_effect = execute_effect
+
+    # default data returned for info so launch is triggered
+    multipass_cmd_mock().info.side_effect = [
+        errors.ProviderInfoError(
+            provider_name="multipass", exit_code=1, stderr=b"error"
+        ),
+        _DEFAULT_INSTANCE_INFO.encode(),
+        _DEFAULT_INSTANCE_INFO.encode(),
+    ]
+
+    yield multipass_cmd_mock
+
+    patcher.stop()
 
 
 class GetEnv(_base_provider.Provider):
@@ -401,436 +429,383 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().delete.assert_not_called()
 
 
-class MultipassWithBasesTest(BaseProviderWithBasesBaseTest):
+class TestMultipassWithBases:
 
     scenarios = (
-        (
-            "linux",
-            dict(platform="linux", base="core16", expected_image="snapcraft:core16"),
-        ),
-        (
-            "linux",
-            dict(platform="linux", base="core18", expected_image="snapcraft:core18"),
-        ),
-        (
-            "darwin",
-            dict(platform="darwin", base="core18", expected_image="snapcraft:core18"),
-        ),
-        (
-            "darwin",
-            dict(platform="darwin", base="core16", expected_image="snapcraft:core16"),
-        ),
+        ("linux", dict(base="core16", expected_image="snapcraft:core16")),
+        ("linux", dict(base="core18", expected_image="snapcraft:core18")),
     )
 
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch(
-            "snapcraft.internal.build_providers._multipass."
-            "_multipass.MultipassCommand",
-            spec=MultipassCommand,
-        )
-        self.multipass_cmd_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.project = get_project(base=self.base)
-
-        def execute_effect(*, command, instance_name, hide_output):
-            if hide_output:
-                return None
-            else:
-                return b""
-
-        self.multipass_cmd_mock().execute.side_effect = execute_effect
-
-        patcher = mock.patch("builtins.open", mock.mock_open())
-        self.open_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        # default data returned for info so launch is triggered
-        self.multipass_cmd_mock().info.side_effect = [
-            errors.ProviderInfoError(
-                provider_name="multipass", exit_code=1, stderr=b"error"
-            ),
-            _DEFAULT_INSTANCE_INFO.encode(),
-            _DEFAULT_INSTANCE_INFO.encode(),
-        ]
-
-        self.expected_uid_map = {str(os.getuid()): "0"}
-        self.expected_gid_map = {str(os.getgid()): "0"}
-
-    def test_lifecycle(self):
+    def test_lifecycle(
+        self, xdg_dirs, in_snap, snap_injector, multipass_cmd, base, expected_image
+    ):
         with MultipassTestImpl(
-            project=self.project, echoer=self.echoer_mock, is_ephemeral=False
+            project=get_project(base=base), echoer=mock.Mock(), is_ephemeral=False
         ) as instance:
             instance.mount_project()
             instance.execute_step(steps.PULL)
 
-        self.multipass_cmd_mock().launch.assert_called_once_with(
-            instance_name=self.instance_name,
+        multipass_cmd().launch.assert_called_once_with(
+            instance_name="snapcraft-project-name",
             cpus="2",
             mem="2G",
             disk="256G",
-            image=self.expected_image,
+            image=expected_image,
         )
-        self.assertThat(
-            self.multipass_cmd_mock().execute.mock_calls,
-            Equals(
-                [
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L3Jvb3QvLmJhc2hyYw==",
-                            "/root/.bashrc",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/root/.bashrc",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0600",
-                            "/root/.bashrc",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
-                            "/bin/_snapcraft_prompt",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/bin/_snapcraft_prompt",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0755",
-                            "/bin/_snapcraft_prompt",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
-                            "/etc/apt/sources.list",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/etc/apt/sources.list",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0644",
-                            "/etc/apt/sources.list",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
-                            "/etc/apt/sources.list.d/default.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/etc/apt/sources.list.d/default.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0644",
-                            "/etc/apt/sources.list.d/default.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
-                            "/etc/apt/sources.list.d/default-security.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/etc/apt/sources.list.d/default-security.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0644",
-                            "/etc/apt/sources.list.d/default-security.sources",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "mv",
-                            "/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
-                            "/etc/apt/apt.conf.d/00-snapcraft",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chown",
-                            "root:root",
-                            "/etc/apt/apt.conf.d/00-snapcraft",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "chmod",
-                            "0644",
-                            "/etc/apt/apt.conf.d/00-snapcraft",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "apt-get",
-                            "update",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "apt-get",
-                            "dist-upgrade",
-                            "--yes",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                    call(
-                        command=[
-                            "sudo",
-                            "-H",
-                            "-i",
-                            "env",
-                            "SNAPCRAFT_HAS_TTY=False",
-                            "snapcraft",
-                            "pull",
-                        ],
-                        hide_output=False,
-                        instance_name="snapcraft-project-name",
-                    ),
-                ]
+        assert multipass_cmd().execute.mock_calls == [
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L3Jvb3QvLmJhc2hyYw==",
+                    "/root/.bashrc",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
             ),
-        )
-        self.multipass_cmd_mock().mount.assert_called_once_with(
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/root/.bashrc",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0600",
+                    "/root/.bashrc",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                    "/bin/_snapcraft_prompt",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/bin/_snapcraft_prompt",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0755",
+                    "/bin/_snapcraft_prompt",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
+                    "/etc/apt/sources.list",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/etc/apt/sources.list",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0644",
+                    "/etc/apt/sources.list",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
+                    "/etc/apt/sources.list.d/default.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/etc/apt/sources.list.d/default.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0644",
+                    "/etc/apt/sources.list.d/default.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
+                    "/etc/apt/sources.list.d/default-security.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/etc/apt/sources.list.d/default-security.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0644",
+                    "/etc/apt/sources.list.d/default-security.sources",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "mv",
+                    "/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
+                    "/etc/apt/apt.conf.d/00-snapcraft",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chown",
+                    "root:root",
+                    "/etc/apt/apt.conf.d/00-snapcraft",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "chmod",
+                    "0644",
+                    "/etc/apt/apt.conf.d/00-snapcraft",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "apt-get",
+                    "update",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "apt-get",
+                    "dist-upgrade",
+                    "--yes",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "snapcraft",
+                    "pull",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+        ]
+
+        multipass_cmd().mount.assert_called_once_with(
             source=mock.ANY,
-            target="{}:{}".format(self.instance_name, "/root/project"),
-            uid_map=self.expected_uid_map,
-            gid_map=self.expected_gid_map,
+            target="snapcraft-project-name:/root/project",
+            uid_map={str(os.getuid()): "0"},
+            gid_map={str(os.getgid()): "0"},
         )
-        self.multipass_cmd_mock().umount.assert_not_called()
-        self.assertThat(self.multipass_cmd_mock().info.call_count, Equals(3))
-        self.multipass_cmd_mock().info.assert_has_calls(
+        multipass_cmd().umount.assert_not_called()
+
+        assert multipass_cmd().info.call_count == 3
+        multipass_cmd().info.assert_has_calls(
             [
-                mock.call(instance_name=self.instance_name, output_format="json"),
-                mock.call(instance_name=self.instance_name, output_format="json"),
+                mock.call(instance_name="snapcraft-project-name", output_format="json"),
+                mock.call(instance_name="snapcraft-project-name", output_format="json"),
             ]
         )
-        self.assertThat(
-            self.multipass_cmd_mock().push_file.mock_calls,
-            Equals(
-                [
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L3Jvb3QvLmJhc2hyYw==",
-                        source=mock.ANY,
-                    ),
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
-                        source=mock.ANY,
-                    ),
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
-                        source=mock.ANY,
-                    ),
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
-                        source=mock.ANY,
-                    ),
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
-                        source=mock.ANY,
-                    ),
-                    call(
-                        destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
-                        source=mock.ANY,
-                    ),
-                ]
+        assert multipass_cmd().push_file.mock_calls == [
+            call(
+                destination="snapcraft-project-name:/var/tmp/L3Jvb3QvLmJhc2hyYw==",
+                source=mock.ANY,
             ),
-        )
-        self.multipass_cmd_mock().stop.assert_called_once_with(
-            instance_name=self.instance_name, time=10
-        )
-        self.multipass_cmd_mock().delete.assert_not_called()
+            call(
+                destination="snapcraft-project-name:/var/tmp/L2Jpbi9fc25hcGNyYWZ0X3Byb21wdA==",
+                source=mock.ANY,
+            ),
+            call(
+                destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0",
+                source=mock.ANY,
+            ),
+            call(
+                destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC5zb3VyY2Vz",
+                source=mock.ANY,
+            ),
+            call(
+                destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvc291cmNlcy5saXN0LmQvZGVmYXVsdC1zZWN1cml0eS5zb3VyY2Vz",
+                source=mock.ANY,
+            ),
+            call(
+                destination="snapcraft-project-name:/var/tmp/L2V0Yy9hcHQvYXB0LmNvbmYuZC8wMC1zbmFwY3JhZnQ=",
+                source=mock.ANY,
+            ),
+        ]
 
-    def test_mount_prime_directory(self):
+        multipass_cmd().stop.assert_called_once_with(
+            instance_name="snapcraft-project-name", time=10
+        )
+        multipass_cmd().delete.assert_not_called()
+
+    def test_mount_prime_directory(
+        self, xdg_dirs, in_snap, snap_injector, multipass_cmd, base, expected_image
+    ):
+
         with MultipassTestImpl(
-            project=self.project, echoer=self.echoer_mock, is_ephemeral=False
+            project=get_project(base), echoer=mock.Mock(), is_ephemeral=False
         ) as instance:
             instance._mount_prime_directory()
 
-        self.multipass_cmd_mock().mount.assert_called_once_with(
+        multipass_cmd().mount.assert_called_once_with(
             source=mock.ANY,
-            target="{}:{}".format(self.instance_name, "/root/prime"),
-            uid_map=self.expected_uid_map,
-            gid_map=self.expected_gid_map,
+            target="snapcraft-project-name:/root/prime",
+            uid_map={str(os.getuid()): "0"},
+            gid_map={str(os.getgid()): "0"},
         )

@@ -20,6 +20,7 @@ import jsonschema
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors, meta
@@ -889,62 +890,57 @@ class GoPluginUnsupportedBase(PluginsV1BaseTestCase):
         )
 
 
-class GoPluginCrossCompileTest(GoPluginBaseTest):
+@pytest.mark.parametrize(
+    "deb_arch,go_arch",
+    [
+        ("armhf", "arm"),
+        ("arm64", "arm64"),
+        ("i386", "386"),
+        ("amd64", "amd64"),
+        ("ppc64el", "ppc64le"),
+    ],
+)
+def test_cross_compile(monkeypatch, tmp_work_path, mock_run, deb_arch, go_arch):
+    monkeypatch.setattr(Project, "is_cross_compiling", True)
 
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf", go_arch="arm")),
-        ("aarch64", dict(deb_arch="arm64", go_arch="arm64")),
-        ("i386", dict(deb_arch="i386", go_arch="386")),
-        ("x86_64", dict(deb_arch="amd64", go_arch="amd64")),
-        ("ppc64le", dict(deb_arch="ppc64el", go_arch="ppc64le")),
-    ]
+    class Options:
+        source = ""
+        go_packages = ["github.com/gotools/vet"]
+        go_importpath = ""
+        go_buildtags = ""
+        go_channel = ""
 
-    def setUp(self):
-        super().setUp()
+    project = Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-        self.project = Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(
-            name="test-snap", base="core18", confinement="strict"
-        )
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    plugin = go.GoPlugin("test-part", Options(), project)
 
-    def test_cross_compile(self):
-        class Options:
-            source = ""
-            go_packages = ["github.com/gotools/vet"]
-            go_importpath = ""
-            go_buildtags = ""
-            go_channel = ""
+    os.makedirs(plugin.sourcedir)
 
-        plugin = go.GoPlugin("test-part", Options(), self.project)
+    plugin.pull()
 
-        os.makedirs(plugin.sourcedir)
+    assert mock_run.call_count == 1
 
-        plugin.pull()
+    for call_args in mock_run.call_args_list:
+        env = call_args[1]["env"]
+        assert "CC" in env
+        assert env["CC"] == f"{project.arch_triplet}-gcc"
 
-        self.assertThat(self.run_mock.call_count, Equals(1))
-        for call_args in self.run_mock.call_args_list:
-            env = call_args[1]["env"]
-            self.assertIn("CC", env)
-            self.assertThat(
-                env["CC"], Equals("{}-gcc".format(self.project.arch_triplet))
-            )
-            self.assertIn("CXX", env)
-            self.assertThat(
-                env["CXX"], Equals("{}-g++".format(self.project.arch_triplet))
-            )
-            self.assertIn("CGO_ENABLED", env)
-            self.assertThat(env["CGO_ENABLED"], Equals("1"))
-            self.assertIn("GOARCH", env)
-            self.assertThat(env["GOARCH"], Equals(self.go_arch))
-            if self.deb_arch == "armhf":
-                self.assertIn("GOARM", env)
-                self.assertThat(env["GOARM"], Equals("7"))
+        assert "CXX" in env
+        assert env["CXX"] == f"{project.arch_triplet}-g++"
+
+        assert "CGO_ENABLED" in env
+        assert env["CGO_ENABLED"] == "1"
+
+        assert "GOARCH" in env
+        assert env["GOARCH"] == go_arch
+
+        if deb_arch == "armhf":
+            assert "GOARM" in env
+            assert env["GOARM"] == "7"
 
 
-class CGoLdFlagsTest(unit.TestCase):
+class TestCGoLdFlags:
     scenarios = (
         (
             "none",
@@ -988,13 +984,10 @@ class CGoLdFlagsTest(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
+    def test_generated_cgo_ldflags(
+        self, monkeypatch, cgo_ldflags_env, library_paths, ldflags_env, expected
+    ):
+        monkeypatch.setenv("CGO_LDFLAGS", cgo_ldflags_env)
+        monkeypatch.setenv("LDFLAGS", ldflags_env)
 
-        self.useFixture(
-            fixtures.EnvironmentVariable("CGO_LDFLAGS", self.cgo_ldflags_env)
-        )
-        self.useFixture(fixtures.EnvironmentVariable("LDFLAGS", self.ldflags_env))
-
-    def test_generated_cgo_ldflags(self):
-        self.assertThat(go._get_cgo_ldflags(self.library_paths), Equals(self.expected))
+        assert go._get_cgo_ldflags(library_paths) == expected

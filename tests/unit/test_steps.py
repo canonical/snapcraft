@@ -14,68 +14,62 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
+import pytest
 
 from snapcraft.internal import steps
-from tests import unit
 
 
-class StepsTestCase(unit.TestCase):
-    def test_step_order(self):
-        step = steps.PULL
-        step = step.next_step()
-        self.expectThat(step, Equals(steps.BUILD))
-        step = step.next_step()
-        self.expectThat(step, Equals(steps.STAGE))
-        step = step.next_step()
-        self.expectThat(step, Equals(steps.PRIME))
-        self.assertIsNone(step.next_step())
+def test_step_order():
+    step = steps.PULL
 
-        step = step.previous_step()
-        self.expectThat(step, Equals(steps.STAGE))
-        step = step.previous_step()
-        self.expectThat(step, Equals(steps.BUILD))
-        step = step.previous_step()
-        self.expectThat(step, Equals(steps.PULL))
-        self.assertIsNone(step.previous_step())
+    step = step.next_step()
+    assert step == steps.BUILD
 
-    def test_next_step_handles_none(self):
-        self.assertThat(steps.next_step(None), Equals(steps.PULL))
+    step = step.next_step()
+    assert step == steps.STAGE
 
+    step = step.next_step()
+    assert step == steps.PRIME
 
-class NextStepsTestCase(unit.TestCase):
+    assert step.next_step() is None
 
-    scenarios = [
-        (
-            "pull",
-            {
-                "step": steps.PULL,
-                "expected_steps": [steps.BUILD, steps.STAGE, steps.PRIME],
-            },
-        ),
-        ("build", {"step": steps.BUILD, "expected_steps": [steps.STAGE, steps.PRIME]}),
-        ("stage", {"step": steps.STAGE, "expected_steps": [steps.PRIME]}),
-        ("prime", {"step": steps.PRIME, "expected_steps": []}),
-    ]
+    step = step.previous_step()
+    assert step == steps.STAGE
 
-    def test_next_steps(self):
-        self.assertThat(self.step.next_steps(), Equals(self.expected_steps))
+    step = step.previous_step()
+    assert step == steps.BUILD
+
+    step = step.previous_step()
+    assert step == steps.PULL
+
+    assert step.previous_step() is None
 
 
-class PreviousStepsTestCase(unit.TestCase):
+def test_next_step_handles_none():
+    assert steps.next_step(None) == steps.PULL
 
-    scenarios = [
-        ("pull", {"step": steps.PULL, "expected_steps": []}),
-        ("build", {"step": steps.BUILD, "expected_steps": [steps.PULL]}),
-        ("stage", {"step": steps.STAGE, "expected_steps": [steps.PULL, steps.BUILD]}),
-        (
-            "prime",
-            {
-                "step": steps.PRIME,
-                "expected_steps": [steps.PULL, steps.BUILD, steps.STAGE],
-            },
-        ),
-    ]
 
-    def test_previous_steps(self):
-        self.assertThat(self.step.previous_steps(), Equals(self.expected_steps))
+@pytest.mark.parametrize(
+    "step,next_steps",
+    [
+        (steps.PULL, [steps.BUILD, steps.STAGE, steps.PRIME]),
+        (steps.BUILD, [steps.STAGE, steps.PRIME]),
+        (steps.STAGE, [steps.PRIME]),
+        (steps.PRIME, []),
+    ],
+)
+def test_next_steps(step, next_steps):
+    assert step.next_steps() == next_steps
+
+
+@pytest.mark.parametrize(
+    "step,previous_steps",
+    [
+        (steps.PULL, []),
+        (steps.BUILD, [steps.PULL]),
+        (steps.STAGE, [steps.PULL, steps.BUILD]),
+        (steps.PRIME, [steps.PULL, steps.BUILD, steps.STAGE]),
+    ],
+)
+def test_previous_steps(step, previous_steps):
+    assert step.previous_steps() == previous_steps

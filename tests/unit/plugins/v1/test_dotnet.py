@@ -130,13 +130,13 @@ class DotNetProjectBaseTest(PluginsV1BaseTestCase):
         self.mock_check_call.side_effect = side_effect
 
 
-class DotNetErrorsTest(unit.TestCase):
+class TestDotNetErrors:
 
     scenarios = (
         (
             "DotNetBadArchitectureError",
             {
-                "exception": dotnet.DotNetBadArchitectureError,
+                "exception_class": dotnet.DotNetBadArchitectureError,
                 "kwargs": {"architecture": "wrong-arch", "supported": ["arch"]},
                 "expected_message": (
                     "Failed to prepare the .NET SDK: "
@@ -148,7 +148,7 @@ class DotNetErrorsTest(unit.TestCase):
         (
             "DotNetBadReleaseDataError",
             {
-                "exception": dotnet.DotNetBadReleaseDataError,
+                "exception_class": dotnet.DotNetBadReleaseDataError,
                 "kwargs": {"version": "test"},
                 "expected_message": (
                     "Failed to prepare the .NET SDK: "
@@ -159,10 +159,8 @@ class DotNetErrorsTest(unit.TestCase):
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message
 
 
 class DotNetProjectTest(DotNetProjectBaseTest):
@@ -220,14 +218,8 @@ class DotNetProjectTest(DotNetProjectBaseTest):
 
 
 class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
-
-    scenarios = [
-        ("Debug", dict(configuration="Debug", build_attributes=["debug"])),
-        ("Release", dict(configuration="Release", build_attributes=[])),
-    ]
-
-    def test_build_commands(self):
-        self.options.build_attributes = self.build_attributes
+    def run_test(self, configuration, build_attributes):
+        self.options.build_attributes = build_attributes
         plugin = dotnet.DotNetPlugin("test-part", self.options, self.project)
         _setup_dirs(plugin)
         plugin.build()
@@ -239,15 +231,14 @@ class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
             Equals(
                 [
                     mock.call(
-                        [dotnet_command, "build", "-c", self.configuration],
-                        cwd=mock.ANY,
+                        [dotnet_command, "build", "-c", configuration], cwd=mock.ANY
                     ),
                     mock.call(
                         [
                             dotnet_command,
                             "publish",
                             "-c",
-                            self.configuration,
+                            configuration,
                             "-o",
                             plugin.installdir,
                             "--self-contained",
@@ -259,3 +250,9 @@ class DotNetProjectBuildCommandsTest(DotNetProjectBaseTest):
                 ]
             ),
         )
+
+    def test_debug(self):
+        self.run_test("Debug", ["debug"])
+
+    def test_release(self):
+        self.run_test("Release", ["release"])
