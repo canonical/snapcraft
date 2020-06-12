@@ -1905,7 +1905,7 @@ class PackageManagement(ProjectBaseTest):
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [test, test-updates, test-security]
                   - type: apt
-                    components: [main, multiverse]
+                    components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
