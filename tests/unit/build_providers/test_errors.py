@@ -14,19 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
-
 from snapcraft.internal.build_providers import errors
-from tests import unit
 
 
-class ErrorFormattingTest(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = [
         (
             "ProviderNotSupportedError",
             dict(
-                exception=errors.ProviderNotSupportedError,
+                exception_class=errors.ProviderNotSupportedError,
                 kwargs=dict(provider="docker"),
                 expected_message=(
                     "The 'docker' provider is not supported, please choose a "
@@ -37,7 +34,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderNotFound",
             dict(
-                exception=errors.ProviderNotFound,
+                exception_class=errors.ProviderNotFound,
                 kwargs=dict(
                     provider="multipass",
                     prompt_installable=False,
@@ -51,7 +48,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderLaunchError (exit code)",
             dict(
-                exception=errors.ProviderLaunchError,
+                exception_class=errors.ProviderLaunchError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to launch with "
@@ -63,7 +60,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderLaunchError (error message)",
             dict(
-                exception=errors.ProviderLaunchError,
+                exception_class=errors.ProviderLaunchError,
                 kwargs=dict(
                     provider_name="multipass", error_message="failed to launch"
                 ),
@@ -77,7 +74,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderLaunchError (exit code and error message)",
             dict(
-                exception=errors.ProviderLaunchError,
+                exception_class=errors.ProviderLaunchError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -93,7 +90,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderStopError (exit code)",
             dict(
-                exception=errors.ProviderStopError,
+                exception_class=errors.ProviderStopError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to stop with "
@@ -105,7 +102,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderStopError (error message)",
             dict(
-                exception=errors.ProviderStopError,
+                exception_class=errors.ProviderStopError,
                 kwargs=dict(provider_name="multipass", error_message="failed to stop"),
                 expected_message=(
                     "An error occurred with the instance when trying to stop with "
@@ -117,7 +114,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderStopError (exit code and error message)",
             dict(
-                exception=errors.ProviderStopError,
+                exception_class=errors.ProviderStopError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -133,7 +130,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderDeleteError (exit code)",
             dict(
-                exception=errors.ProviderDeleteError,
+                exception_class=errors.ProviderDeleteError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to delete with "
@@ -145,7 +142,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderDeleteError (error message)",
             dict(
-                exception=errors.ProviderDeleteError,
+                exception_class=errors.ProviderDeleteError,
                 kwargs=dict(
                     provider_name="multipass", error_message="failed to delete"
                 ),
@@ -159,7 +156,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderDeleteError (exit code and error message)",
             dict(
-                exception=errors.ProviderDeleteError,
+                exception_class=errors.ProviderDeleteError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -175,7 +172,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderShellError (exit code)",
             dict(
-                exception=errors.ProviderShellError,
+                exception_class=errors.ProviderShellError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to shell with "
@@ -187,7 +184,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderShellError (error message)",
             dict(
-                exception=errors.ProviderShellError,
+                exception_class=errors.ProviderShellError,
                 kwargs=dict(provider_name="multipass", error_message="failed to shell"),
                 expected_message=(
                     "An error occurred with the instance when trying to shell with "
@@ -199,7 +196,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderShellError (exit code and error message)",
             dict(
-                exception=errors.ProviderShellError,
+                exception_class=errors.ProviderShellError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -215,7 +212,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderMountError (exit code)",
             dict(
-                exception=errors.ProviderMountError,
+                exception_class=errors.ProviderMountError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to mount with "
@@ -227,7 +224,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderMountError (error message)",
             dict(
-                exception=errors.ProviderMountError,
+                exception_class=errors.ProviderMountError,
                 kwargs=dict(provider_name="multipass", error_message="failed to mount"),
                 expected_message=(
                     "An error occurred with the instance when trying to mount with "
@@ -239,7 +236,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderMountError (exit code and error message)",
             dict(
-                exception=errors.ProviderMountError,
+                exception_class=errors.ProviderMountError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -255,7 +252,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderFileCopyError (exit code)",
             dict(
-                exception=errors.ProviderFileCopyError,
+                exception_class=errors.ProviderFileCopyError,
                 kwargs=dict(provider_name="multipass", exit_code=1),
                 expected_message=(
                     "An error occurred with the instance when trying to copy files with "
@@ -267,7 +264,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderFileCopyError (error message)",
             dict(
-                exception=errors.ProviderFileCopyError,
+                exception_class=errors.ProviderFileCopyError,
                 kwargs=dict(
                     provider_name="multipass", error_message="failed to copy files"
                 ),
@@ -281,7 +278,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderFileCopyError (exit code and error message)",
             dict(
-                exception=errors.ProviderFileCopyError,
+                exception_class=errors.ProviderFileCopyError,
                 kwargs=dict(
                     provider_name="multipass",
                     exit_code=1,
@@ -297,7 +294,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderExecError",
             dict(
-                exception=errors.ProviderExecError,
+                exception_class=errors.ProviderExecError,
                 kwargs=dict(
                     provider_name="multipass",
                     command=["snap", "install", "snapcraft", "--classic"],
@@ -313,7 +310,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderInfoError",
             dict(
-                exception=errors.ProviderInfoError,
+                exception_class=errors.ProviderInfoError,
                 kwargs=dict(provider_name="multipass", exit_code=1, stderr=b"error"),
                 expected_message=(
                     "An error occurred when using 'multipass' to query the status "
@@ -324,7 +321,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderInstanceNotFoundError",
             dict(
-                exception=errors.ProviderInstanceNotFoundError,
+                exception_class=errors.ProviderInstanceNotFoundError,
                 kwargs=dict(instance_name="test-build"),
                 expected_message="Cannot find an instance named 'test-build'.",
             ),
@@ -332,7 +329,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderInfoDataKeyError",
             dict(
-                exception=errors.ProviderInfoDataKeyError,
+                exception_class=errors.ProviderInfoDataKeyError,
                 kwargs=dict(
                     provider_name="multipass",
                     missing_key="instance-name",
@@ -348,7 +345,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderBadDataError",
             dict(
-                exception=errors.ProviderBadDataError,
+                exception_class=errors.ProviderBadDataError,
                 kwargs=dict(provider_name="multipass", data="bad-json"),
                 expected_message=(
                     "The data returned by 'multipass' was not expected or in the "
@@ -359,7 +356,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderCommunicationError",
             dict(
-                exception=errors.ProviderCommunicationError,
+                exception_class=errors.ProviderCommunicationError,
                 kwargs=dict(provider_name="multipass", message="failed to foo"),
                 expected_message=(
                     "An error occurred when trying to communicate with the "
@@ -370,7 +367,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderMultipassDownloadFailed",
             dict(
-                exception=errors.ProviderMultipassDownloadFailed,
+                exception_class=errors.ProviderMultipassDownloadFailed,
                 kwargs=dict(message="failed to foo"),
                 expected_message=(
                     "Failed to download Multipass: 'failed to foo'\n"
@@ -382,7 +379,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "ProviderMultipassInstallationFailed",
             dict(
-                exception=errors.ProviderMultipassInstallationFailed,
+                exception_class=errors.ProviderMultipassInstallationFailed,
                 kwargs=dict(message="failed to foo"),
                 expected_message=(
                     "Failed to install Multipass: 'failed to foo'\n"
@@ -393,7 +390,5 @@ class ErrorFormattingTest(unit.TestCase):
         ),
     ]
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message

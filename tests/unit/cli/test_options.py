@@ -25,7 +25,7 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
 
 
-class TestProviderOptions(unit.TestCase):
+class TestProviderOptions:
     scenarios = [
         ("host empty", dict(provider="host", kwargs=dict(), flags=dict())),
         (
@@ -230,10 +230,8 @@ class TestProviderOptions(unit.TestCase):
         ),
     ]
 
-    def test_valid_flags(self):
-        flags = options.get_build_provider_flags(self.provider, **self.kwargs)
-
-        self.assertThat(flags, Equals(self.flags))
+    def test(self, provider, kwargs, flags):
+        assert options.get_build_provider_flags(provider, **kwargs) == flags
 
 
 class TestInvalidBuildProviderFlags(unit.TestCase):

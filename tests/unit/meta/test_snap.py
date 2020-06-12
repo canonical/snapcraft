@@ -19,13 +19,12 @@ from collections import OrderedDict
 from textwrap import dedent
 from unittest import mock
 
-import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.system_user import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
-from tests import integration, unit
+from tests import unit
 
 
 class SnapTests(unit.TestCase):
@@ -594,7 +593,7 @@ class SnapTests(unit.TestCase):
         self.assertEqual(snap.get_build_base(), "core18")
 
 
-class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
+class TestYAMLComparisons:
     scenarios = [
         (
             "slot-all-forms",
@@ -702,25 +701,22 @@ class YAMLComparisons(testscenarios.WithScenarios, integration.TestCase):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-
-    def test_conversions(self):
+    def test_conversions(self, tmp_work_path, snapcraft_yaml, snap_yaml):
         # Ordering matters for verifying the YAML.
-        snapcraft_yaml_path = os.path.join(self.path, "snapcraft.yaml")
-        with open(snapcraft_yaml_path, "w") as f:
-            f.write(self.snapcraft_yaml)
+        snapcraft_yaml_path = tmp_work_path / "snapcraft.yaml"
+        with snapcraft_yaml_path.open("w") as snapcraft_file:
+            print(snapcraft_yaml, file=snapcraft_file)
 
-        snap = Snap.from_file(snapcraft_yaml_path)
+        snap = Snap.from_file(snapcraft_yaml_path.as_posix())
         snap.validate()
 
         # Write snap yaml.
-        snap_yaml_path = os.path.join(self.path, "snap.yaml")
-        snap.write_snap_yaml(path=snap_yaml_path)
+        snap_yaml_path = tmp_work_path / "snap.yaml"
+        snap.write_snap_yaml(path=snap_yaml_path.as_posix())
 
         # Read snap yaml.
-        with open(snap_yaml_path, "r") as f:
-            written_snap_yaml = f.read()
+        with snap_yaml_path.open() as snap_file:
+            written_snap_yaml = snap_file.read()
 
         # Compare stripped versions (to remove leading/trailing newlines).
-        self.assertEqual(self.snap_yaml.strip(), written_snap_yaml.strip())
+        assert snap_yaml.strip() == written_snap_yaml.strip()

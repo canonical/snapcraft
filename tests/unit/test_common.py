@@ -16,6 +16,7 @@
 
 import os
 
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft.internal import common, errors
@@ -28,12 +29,13 @@ class CommonTestCase(unit.TestCase):
         common.set_plugindir(plugindir)
         self.assertThat(plugindir, Equals(common.get_plugindir()))
 
-    def test_isurl(self):
-        self.assertTrue(common.isurl("git://"))
-        self.assertTrue(common.isurl("bzr://"))
-        self.assertFalse(common.isurl("./"))
-        self.assertFalse(common.isurl("/foo"))
-        self.assertFalse(common.isurl("/foo:o"))
+
+def test_isurl():
+    assert common.isurl("git://") is True
+    assert common.isurl("bzr://") is True
+    assert common.isurl("./") is False
+    assert common.isurl("/foo") is False
+    assert common.isurl("/foo:o") is False
 
 
 class CommonMigratedTestCase(unit.TestCase):
@@ -133,7 +135,7 @@ class FormatInColumnsTestCase(unit.TestCase):
         )
 
 
-class FormatSnapFileNameTest(unit.TestCase):
+class TestFormatSnapFileName:
 
     scenarios = [
         (
@@ -147,7 +149,6 @@ class FormatSnapFileNameTest(unit.TestCase):
             "missing version",
             dict(
                 snap=dict(name="name", architectures=["amd64"]),
-                allow_empty_version=True,
                 expected="name_amd64.snap",
             ),
         ),
@@ -183,20 +184,17 @@ class FormatSnapFileNameTest(unit.TestCase):
         ),
     ]
 
-    def test_filename(self):
-        if hasattr(self, "allow_empty_version"):
-            snap_name = common.format_snap_name(
-                self.snap, allow_empty_version=self.allow_empty_version
-            )
+    def test_filename(self, snap, expected):
+        if "version" not in snap:
+            snap_name = common.format_snap_name(snap, allow_empty_version=True)
         else:
-            snap_name = common.format_snap_name(self.snap)
+            snap_name = common.format_snap_name(snap)
 
-        self.assertThat(snap_name, Equals(self.expected))
+        assert snap_name == expected
 
 
-class FormatSnapFileNameErrorTest(unit.TestCase):
-    def test_version_missing_and_not_allowed_is_error(self):
-        # This is to not experience unexpected results given the
-        # fact that version is not allowed.
-        snap = dict(name="name")
-        self.assertRaises(KeyError, common.format_snap_name, snap)
+def test_version_missing_and_not_allowed_is_error():
+    # This is to not experience unexpected results given the
+    # fact that version is not allowed.
+    with pytest.raises(KeyError):
+        common.format_snap_name(dict(name="name"))

@@ -24,10 +24,7 @@ from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
 
-    scenarios = [
-        ("list-keys", {"command_name": "list-keys"}),
-        ("keys alias", {"command_name": "keys"}),
-    ]
+    command_name = "list-keys"
 
     def test_list_keys_snapd_not_installed(self):
         self.fake_package_installed.mock.return_value = False
@@ -88,6 +85,24 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
                 )
             ),
         )
+
+    def test_alias(self):
+        self.command_name = "keys"
+        self.fake_store_account_info.mock.return_value = {
+            "account_id": "abcd",
+            "account_keys": [
+                {
+                    "name": "default",
+                    "public-key-sha3-384": (get_sample_key("default")["sha3-384"]),
+                }
+            ],
+        }
+
+        result = self.run_command(
+            [self.command_name], input="user@example.com\nsecret\n"
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
 
     def test_list_keys_without_registered(self):
         result = self.run_command(

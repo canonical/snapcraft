@@ -20,14 +20,12 @@ from testtools.matchers import Equals
 from snapcraft import yaml_utils
 import snapcraft.internal
 from tests import unit
+from .conftest import Project
 
 
 class StageStateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-
-        class Project:
-            pass
 
         self.project = Project()
         self.files = {"foo"}
@@ -80,21 +78,5 @@ class StateStageTestCase(StageStateBaseTestCase):
         self.assertFalse(self.state.project_options_of_interest(self.project))
 
 
-class StageStateNotEqualTestCase(StageStateBaseTestCase):
-
-    scenarios = [
-        ("no files", dict(other_property="files", other_value=set())),
-        ("no directories", dict(other_property="directories", other_value=set())),
-        (
-            "no part properties",
-            dict(other_property="part_properties", other_value=None),
-        ),
-    ]
-
-    def test_comparison_not_equal(self):
-        setattr(self, self.other_property, self.other_value)
-        other_state = snapcraft.internal.states.StageState(
-            self.files, self.directories, self.part_properties, self.project
-        )
-
-        self.assertFalse(self.state == other_state, "Expected states to be different")
+def test_comparison_not_equal(stage_state, stage_state_variant):
+    assert stage_state != stage_state_variant

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 
 from testtools.matchers import Contains, Equals, FileExists, Not
 
@@ -148,7 +149,7 @@ class AppCommandTest(unit.TestCase):
         self.assertThat(app.to_dict(), Equals({"command": "test-command"}))
 
 
-class WrapperUseTest(unit.TestCase):
+class TestWrapperUse:
     scenarios = (
         (
             "wrapper allowed for plain command on core18",
@@ -180,24 +181,18 @@ class WrapperUseTest(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
+    def test_wrapper(self, tmp_work_path, extra_app_properties, base, expect_wrappers):
+        app_properties = dict(command="foo")
+        app_properties.update(extra_app_properties)
 
-        self.app_properties = dict(command="foo")
-        self.app_properties.update(self.extra_app_properties)
+        for exe in ["foo"] + app_properties.get("command-chain", list()):
+            exe_path = pathlib.Path(exe)
+            exe_path.touch()
+            exe_path.chmod(0o755)
 
-        for exe in ["foo"] + self.app_properties.get("command-chain", list()):
-            open(exe, "w").close()
-            os.chmod(exe, 0o755)
+        app = application.Application.from_dict(app_name="foo", app_dict=app_properties)
 
-    def test_wrapper(self):
-        app = application.Application.from_dict(
-            app_name="foo", app_dict=self.app_properties
-        )
-
-        self.assertThat(
-            app.can_use_wrapper(base=self.base), Equals(self.expect_wrappers)
-        )
+        assert app.can_use_wrapper(base=base) == expect_wrappers
 
 
 class InvalidCommandChainTest(unit.TestCase):

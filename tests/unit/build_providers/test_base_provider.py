@@ -23,7 +23,12 @@ from unittest.mock import call, patch, Mock
 import fixtures
 from testtools.matchers import Equals, EndsWith, DirExists, Not
 
-from . import BaseProviderBaseTest, MacBaseProviderWithBasesBaseTest, ProviderImpl
+from . import (
+    BaseProviderBaseTest,
+    MacBaseProviderWithBasesBaseTest,
+    ProviderImpl,
+    get_project,
+)
 from snapcraft.internal.build_providers import errors
 
 
@@ -576,7 +581,7 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
         self.snap_injector_mock().apply.assert_called_once_with()
 
 
-class CompatibilityCleanTests(BaseProviderBaseTest):
+class TestCompatibilityClean:
     scenarios = [
         (
             "same-base-no-clean",
@@ -643,24 +648,18 @@ class CompatibilityCleanTests(BaseProviderBaseTest):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", self.version))
+    def test_scenario(
+        self, monkeypatch, in_snap, base, loaded_info, version, expect_clean
+    ):
+        monkeypatch.setenv("SNAP_VERSION", version)
 
-    def test_scenario(self):
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider.project._snap_meta.base = self.base
-
-        self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft.internal.build_providers._base_provider.Provider._load_info",
-                return_value=self.loaded_info,
-            )
-        )
+        provider = ProviderImpl(project=get_project(), echoer=Mock())
+        provider.project._snap_meta.base = base
+        provider.loaded_info = loaded_info
 
         provider._ensure_compatible_build_environment()
 
-        if self.expect_clean:
+        if expect_clean:
             provider.clean_project_mock.assert_called_once_with()
         else:
             provider.clean_project_mock.assert_not_called()

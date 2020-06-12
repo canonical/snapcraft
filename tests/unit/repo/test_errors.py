@@ -13,19 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from testtools.matchers import Equals
 
 from snapcraft.internal.repo import errors
-from tests import unit
 
 
-class ErrorFormattingTestCase(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = (
         (
             "SnapdConnectionError",
             {
-                "exception": errors.SnapdConnectionError,
+                "exception_class": errors.SnapdConnectionError,
                 "kwargs": {"snap_name": "test", "url": "url"},
                 "expected_message": (
                     "Failed to get information for snap 'test': "
@@ -35,19 +33,17 @@ class ErrorFormattingTestCase(unit.TestCase):
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message
 
 
-class AptGPGKeyInstallErrorTests(unit.TestCase):
+class TestAptGPGKeyInstallError:
 
     scenarios = [
         (
             "AptGPGKeyInstallError basic",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {"output": "some error", "key": "fake key"},
                 "expected_brief": "Failed to install GPG key: some error",
                 "expected_resolution": "Verify any configured GPG keys.",
@@ -59,7 +55,7 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         (
             "AptGPGKeyInstallError basic with warning",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {
                     "output": "Warning: apt-key output should not be parsed (stdout is not a terminal)\nsome error",
                     "key": "fake key",
@@ -74,7 +70,7 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         (
             "AptGPGKeyInstallError basic with warning",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {
                     "output": "Warning: apt-key output should not be parsed (stdout is not a terminal)\nsome error",
                     "key": "fake key",
@@ -89,7 +85,7 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         (
             "AptGPGKeyInstallError keyserver no data",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {
                     "output": "gpg: keyserver receive failed: No data",
                     "key_id": "fake-key-id",
@@ -105,7 +101,7 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         (
             "AptGPGKeyInstallError keyserver failure",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {
                     "output": "gpg: keyserver receive failed: Server indicated a failure",
                     "key_id": "fake-key-id",
@@ -121,7 +117,7 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         (
             "AptGPGKeyInstallError keyserver timeout",
             {
-                "exception": errors.AptGPGKeyInstallError,
+                "exception_class": errors.AptGPGKeyInstallError,
                 "kwargs": {
                     "output": "gpg: keyserver receive failed: Connection timed out",
                     "key_id": "fake-key-id",
@@ -136,10 +132,20 @@ class AptGPGKeyInstallErrorTests(unit.TestCase):
         ),
     ]
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.assertThat(exception.get_brief(), Equals(self.expected_brief))
-        self.assertThat(exception.get_resolution(), Equals(self.expected_resolution))
-        self.assertThat(exception.get_details(), Equals(self.expected_details))
-        self.assertThat(exception.get_docs_url(), Equals(self.expected_docs_url))
-        self.assertThat(exception.get_reportable(), Equals(self.expected_reportable))
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        expected_brief,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+        expected_resolution,
+        kwargs,
+    ):
+        exception = exception_class(**kwargs)
+
+        assert expected_brief == exception.get_brief()
+        assert expected_resolution == exception.get_resolution()
+        assert expected_details == exception.get_details()
+        assert expected_docs_url == exception.get_docs_url()
+        assert expected_reportable == exception.get_reportable()

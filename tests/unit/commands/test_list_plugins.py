@@ -24,10 +24,7 @@ from . import CommandBaseTestCase
 
 class ListPluginsCommandTestCase(CommandBaseTestCase):
 
-    scenarios = [
-        ("list-plugins", {"command_name": "list-plugins"}),
-        ("plugins alias", {"command_name": "plugins"}),
-    ]
+    command_name = "list-plugins"
 
     default_plugin_output = (
         "fake      dotruby         kernelz  checkbox-provider  oxide  hornet      dumper  "
@@ -93,6 +90,20 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.fake_iter_modules.mock.assert_called_once_with(
             snapcraft.plugins.v1.__path__
         )
+
+    def test_alias(self):
+        self.command_name = "plugins"
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core18",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
 
     def test_core20_list(self):
         result = self.run_command([self.command_name, "--base", "core20"])

@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os.path
+import os
+import platform
 from unittest import mock
 
 import testtools
@@ -30,7 +31,7 @@ from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
 
 
-class NativeOptionsTestCase(unit.TestCase):
+class TestNativeOptions:
 
     scenarios = [
         (
@@ -156,50 +157,55 @@ class NativeOptionsTestCase(unit.TestCase):
         ),
     ]
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
     def test_architecture_options(
-        self, mock_platform_machine, mock_platform_architecture
+        self,
+        monkeypatch,
+        machine,
+        architecture,
+        expected_arch_triplet,
+        expected_deb_arch,
+        expected_kernel_arch,
+        expected_core_dynamic_linker,
     ):
-        mock_platform_machine.return_value = self.machine
-        mock_platform_architecture.return_value = self.architecture
+        monkeypatch.setattr(platform, "architecture", lambda: architecture)
+        monkeypatch.setattr(platform, "machine", lambda: machine)
+
         options = snapcraft.ProjectOptions()
-        self.assertThat(options.arch_triplet, Equals(self.expected_arch_triplet))
-        self.assertThat(options.deb_arch, Equals(self.expected_deb_arch))
-        self.assertThat(options.kernel_arch, Equals(self.expected_kernel_arch))
+
+        assert options.arch_triplet == expected_arch_triplet
+        assert options.deb_arch == expected_deb_arch
+        assert options.kernel_arch == expected_kernel_arch
 
         # The core dynamic linker is correct.  Guard against stray absolute
         # paths, as they cause os.path.join to discard the previous
         # argument.
-        self.assertFalse(os.path.isabs(self.expected_core_dynamic_linker))
-        with mock.patch("os.path.lexists") as mock_lexists:
-            mock_lexists.return_value = True
-            with mock.patch("os.path.islink") as mock_islink:
-                mock_islink.return_value = False
-                self.assertThat(
-                    options.get_core_dynamic_linker("core"),
-                    Equals(
-                        os.path.join(
-                            common.get_installed_snap_path("core"),
-                            self.expected_core_dynamic_linker,
-                        )
-                    ),
-                )
+        monkeypatch.setattr(os.path, "lexists", lambda x: True)
+        monkeypatch.setattr(os.path, "islink", lambda x: False)
+        expected_linker_path = os.path.join(
+            common.get_installed_snap_path("core"), expected_core_dynamic_linker
+        )
+        assert options.get_core_dynamic_linker("core") == expected_linker_path
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
     def test_get_platform_architecture(
-        self, mock_platform_machine, mock_platform_architecture
+        self,
+        monkeypatch,
+        machine,
+        architecture,
+        expected_arch_triplet,
+        expected_deb_arch,
+        expected_kernel_arch,
+        expected_core_dynamic_linker,
     ):
-        mock_platform_machine.return_value = self.machine
-        mock_platform_architecture.return_value = self.architecture
+        monkeypatch.setattr(platform, "architecture", lambda: architecture)
+        monkeypatch.setattr(platform, "machine", lambda: machine)
+
         platform_arch = _get_platform_architecture()
         userspace_conversions = _32BIT_USERSPACE_ARCHITECTURE
 
-        if self.architecture[0] == "32bit" and self.machine in userspace_conversions:
-            self.assertThat(platform_arch, Equals(userspace_conversions[self.machine]))
+        if architecture[0] == "32bit" and machine in userspace_conversions:
+            assert platform_arch == userspace_conversions[machine]
         else:
-            self.assertThat(platform_arch, Equals(self.machine))
+            assert platform_arch == machine
 
 
 class OptionsTestCase(unit.TestCase):
@@ -223,7 +229,7 @@ class OptionsTestCase(unit.TestCase):
         self.assertThat(options.cross_compiler_prefix, Equals(""))
 
 
-class TestHostIsCompatibleWithTargetBase(unit.TestCase):
+class TestHostIsCompatibleWithTargetBase:
 
     scenarios = (
         ("trusty core", dict(codename="trusty", base="core", is_compatible=True)),
@@ -242,18 +248,16 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
-        patcher = mock.patch("snapcraft.internal.os_release.OsRelease.version_codename")
-        self.codename_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+    def test_compatibility(self, monkeypatch, codename, base, is_compatible):
+        monkeypatch.setattr(
+            snapcraft.internal.os_release.OsRelease,
+            "version_codename",
+            lambda x: codename,
+        )
 
-    def test_compatibility(self):
-        self.codename_mock.return_value = self.codename
-
-        self.assertThat(
-            snapcraft.ProjectOptions().is_host_compatible_with_base(self.base),
-            Equals(self.is_compatible),
+        assert (
+            snapcraft.ProjectOptions().is_host_compatible_with_base(base)
+            is is_compatible
         )
 
 

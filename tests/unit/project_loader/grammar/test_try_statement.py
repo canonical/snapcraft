@@ -15,14 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
-import testtools
-from testtools.matchers import Equals
+
+import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._try as _try
-
-from . import GrammarBaseTestCase
+from snapcraft.internal.project_loader import grammar
 
 
 def load_tests(loader, tests, ignore):
@@ -30,7 +28,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class TryStatementGrammarTestCase(GrammarBaseTestCase):
+class TestTryStatementGrammar:
 
     scenarios = [
         (
@@ -111,29 +109,27 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
         ),
     ]
 
-    def test_try_statement_grammar(self):
+    def test_try_statement_grammar(self, body, else_bodies, expected_packages):
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), self.checker
+            None, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
         )
-        statement = _try.TryStatement(body=self.body, processor=processor)
+        statement = _try.TryStatement(body=body, processor=processor)
 
-        for else_body in self.else_bodies:
+        for else_body in else_bodies:
             statement.add_else(else_body)
 
-        self.assertThat(statement.process(), Equals(self.expected_packages))
+        assert statement.process() == expected_packages
 
 
-class TryStatementElseFail(GrammarBaseTestCase):
-    def test_else_fail(self):
-        processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(), self.checker
-        )
-        statement = _try.TryStatement(body=["invalid"], processor=processor)
+def test_else_fail():
+    processor = grammar.GrammarProcessor(
+        None, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
+    )
+    statement = _try.TryStatement(body=["invalid"], processor=processor)
 
-        statement.add_else(None)
+    statement.add_else(None)
 
-        with testtools.ExpectedException(
-            grammar.errors.UnsatisfiedStatementError,
-            "Unable to satisfy 'try', failure forced",
-        ):
-            statement.process()
+    with pytest.raises(grammar.errors.UnsatisfiedStatementError) as error:
+        statement.process()
+
+    assert "Unable to satisfy 'try', failure forced" in str(error.value)

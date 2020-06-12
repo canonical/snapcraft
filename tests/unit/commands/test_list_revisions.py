@@ -52,10 +52,7 @@ class RevisionsCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
 
 class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
 
-    scenarios = [
-        ("list-revisions", dict(command_name="list-revisions")),
-        ("revisions", dict(command_name="revisions")),
-    ]
+    command_name = "list-revisions"
 
     def test_revisions_without_snap_raises_exception(self):
         result = self.run_command([self.command_name])
@@ -121,6 +118,15 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         self.fake_store_revisions.mock.assert_called_once_with(
             "snap-test-snap-id", "16", None
         )
+
+    def test_alias(self):
+        self.command_name = "list-revisions"
+
+        self.fake_store_revisions.mock.return_value = self.expected
+
+        result = self.run_command([self.command_name, "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
 
     def test_revisions_by_arch(self):
         self.fake_store_revisions.mock.return_value = [
