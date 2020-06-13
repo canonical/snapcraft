@@ -429,7 +429,7 @@ class Ubuntu(BaseRepo):
                 installed.add(f"{pkg_name}={pkg_version}")
                 file_utils.link_or_copy(
                     str(dl_path),
-                    (stage_packages_path / os.path.basename(str(dl_path))).as_posix(),
+                    str(stage_packages_path / dl_path.name),
                 )
 
         return sorted(installed)
