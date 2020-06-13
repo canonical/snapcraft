@@ -447,7 +447,7 @@ class Ubuntu(BaseRepo):
                 cls._mark_origin_stage_package(extract_dir, marked_name)
                 # Stage files to install_dir.
                 file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
-        cls.normalize(install_path.as_posix())
+        cls.normalize(str(install_path))
 
     @classmethod
     def build_package_is_valid(cls, package_name) -> bool:
