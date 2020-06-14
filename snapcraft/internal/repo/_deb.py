@@ -428,8 +428,7 @@ class Ubuntu(BaseRepo):
                 logger.debug(f"Extracting stage package: {pkg_name}")
                 installed.add(f"{pkg_name}={pkg_version}")
                 file_utils.link_or_copy(
-                    str(dl_path),
-                    str(stage_packages_path / dl_path.name),
+                    str(dl_path), str(stage_packages_path / dl_path.name)
                 )
 
         return sorted(installed)
