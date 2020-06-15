@@ -1408,21 +1408,6 @@ class TestInvalidAptConfigurations:
             ),
         ),
         (
-            "deb empty components",
-            dict(
-                packages=[
-                    {
-                        "type": "apt",
-                        "components": [],
-                        "key-id": "test-key-id",
-                        "url": "http://archive.ubuntu.com/ubuntu",
-                        "suites": ["test", "test-updates", "test-security"],
-                    }
-                ],
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
             "deb empty suites",
             dict(
                 packages=[
