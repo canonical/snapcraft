@@ -1410,7 +1410,7 @@ class CollisionTestCase(unit.TestCase):
 class StagePackagesTestCase(unit.TestCase):
     def test_missing_stage_package_raises_exception(self):
         fake_repo = Mock()
-        fake_repo.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+        fake_repo.fetch_stage_packages.side_effect = repo.errors.PackageNotFoundError(
             "non-existing"
         )
         part = self.load_part(

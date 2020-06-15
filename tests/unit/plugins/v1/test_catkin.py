@@ -17,7 +17,7 @@
 import ast
 import builtins
 import os
-import os.path
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -310,7 +310,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        self.ubuntu_mock.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+        self.ubuntu_mock.fetch_stage_packages.side_effect = repo.errors.PackageNotFoundError(
             "foo"
         )
 
@@ -943,13 +943,24 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         # Verify that the dependencies were installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),
@@ -1033,13 +1044,24 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         # Verify that roscore was installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"ros-core-dependency"},
-                        base=self.project._get_build_base(),
+                        base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),
@@ -1181,13 +1203,24 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         # Verify that the dependencies were installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),
@@ -1271,13 +1304,24 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         # Verify that roscore was installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"ros-core-dependency"},
                         base=self.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),
@@ -2075,14 +2119,28 @@ class CatkinFindTestCase(unit.TestCase):
         self.catkin.setup()
 
         # Verify that only rospack was installed (no other .debs)
-        self.ubuntu_mock.assert_has_calls(
-            [
-                mock.call.install_stage_packages(
-                    install_dir="catkin_path/install",
-                    package_names=["ros-kinetic-catkin"],
-                    base=self.project._get_build_base(),
-                )
-            ]
+        self.assertThat(
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=self.catkin._catkin_stage_packages_path,
+                        package_names=["ros-kinetic-catkin"],
+                        base=self.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=self.catkin._catkin_stage_packages_path,
+                        install_path=pathlib.Path("catkin_path/install"),
+                    )
+                ]
+            ),
         )
 
     def test_setup_can_run_multiple_times(self):

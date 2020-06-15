@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import logging
 import subprocess
 import sys
@@ -70,6 +71,9 @@ class Wstool:
         self._ros_package_path = ros_package_path
         self._wstool_path = wstool_path
         self._wstool_install_path = os.path.join(wstool_path, "install")
+        self._wstool_stage_packages_path = (
+            pathlib.Path(self._wstool_path) / "stage_packages"
+        )
         self._project = project
         self._base = base
 
@@ -81,10 +85,14 @@ class Wstool:
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
         logger.info("Installing wstool...")
-        repo.Ubuntu.install_stage_packages(
+        repo.Ubuntu.fetch_stage_packages(
             package_names=["python-wstool"],
-            install_dir=self._wstool_install_path,
+            stage_packages_path=self._wstool_stage_packages_path,
             base=self._base,
+        )
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=self._wstool_stage_packages_path,
+            install_path=pathlib.Path(self._wstool_install_path),
         )
 
         logger.info("Initializing workspace (if necessary)...")

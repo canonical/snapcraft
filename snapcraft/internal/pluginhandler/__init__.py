@@ -87,6 +87,10 @@ class PluginHandler:
         self.part_install_dir = os.path.join(self.part_dir, "install")
         self.part_state_dir = os.path.join(self.part_dir, "state")
         self.part_snaps_dir = os.path.join(self.part_dir, "snaps")
+
+        # Location to store fetch stage packages.
+        self.stage_packages_path = pathlib.Path(self.part_dir) / "stage_packages"
+
         # The working directory for the build depends on the source-subdir
         # part property.
         source_sub_dir = self._part_properties.get("source-subdir", "")
@@ -437,22 +441,31 @@ class PluginHandler:
                 self.part_install_dir, clean_target=False, keep_snap=True
             )
 
-    def _install_stage_packages(self):
+    def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             try:
-                self.stage_packages = self._stage_packages_repo.install_stage_packages(
+                self.stage_packages = self._stage_packages_repo.fetch_stage_packages(
                     package_names=stage_packages,
-                    install_dir=self.part_install_dir,
                     base=self._project._get_build_base(),
+                    stage_packages_path=self.stage_packages_path,
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)
 
+    def _unpack_stage_packages(self):
+        # We do this regardless, if there is no package in stage_packages_path
+        # then nothing will happen.
+        self._stage_packages_repo.unpack_stage_packages(
+            stage_packages_path=self.stage_packages_path,
+            install_path=pathlib.Path(self.part_install_dir),
+        )
+
     def prepare_pull(self, force=False):
         self.makedirs()
-        self._install_stage_packages()
+        self._fetch_stage_packages()
         self._fetch_stage_snaps()
+        self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
     def pull(self, force=False):
@@ -540,6 +553,9 @@ class PluginHandler:
             else:
                 shutil.rmtree(self.part_source_dir)
 
+        if self.stage_packages_path.exists():
+            shutil.rmtree(self.stage_packages_path)
+
         if isinstance(self.plugin, plugins.v1.PluginV1):
             self.plugin.clean_pull()
         self.mark_cleaned(steps.PULL)
@@ -554,7 +570,7 @@ class PluginHandler:
         self.makedirs()
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
-        self._install_stage_packages()
+        self._unpack_stage_packages()
 
     def build(self, force=False):
         self.makedirs()

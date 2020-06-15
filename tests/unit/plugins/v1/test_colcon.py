@@ -16,7 +16,7 @@
 
 import logging
 import os
-import os.path
+import pathlib
 
 import fixtures
 import pytest
@@ -289,7 +289,7 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        self.ubuntu_mock.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+        self.ubuntu_mock.fetch_stage_packages.side_effect = repo.errors.PackageNotFoundError(
             "foo"
         )
 
@@ -905,13 +905,24 @@ class PullTestCase(ColconPluginTestBase):
 
         # Verify that the dependencies were installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),

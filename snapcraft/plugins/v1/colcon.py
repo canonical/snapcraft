@@ -59,6 +59,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import contextlib
 import collections
 import os
+import pathlib
 import logging
 import re
 import shutil
@@ -312,6 +313,8 @@ class ColconPlugin(PluginV1):
         if os.path.abspath(self.sourcedir) == os.path.abspath(self._ros_package_path):
             raise ColconWorkspaceIsRootError()
 
+        self.stage_packages_path = pathlib.Path(self.partdir) / "colcon_stage_packages"
+
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
@@ -380,13 +383,17 @@ class ColconPlugin(PluginV1):
 
         logger.info("Installing apt dependencies...")
         try:
-            repo.Ubuntu.install_stage_packages(
+            repo.Ubuntu.fetch_stage_packages(
                 package_names=apt_dependencies,
-                install_dir=self.installdir,
+                stage_packages_path=self.stage_packages_path,
                 base=self.project._get_build_base(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise ColconAptDependencyFetchError(e.message)
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=self.stage_packages_path,
+            install_path=pathlib.Path(self.installdir),
+        )
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:
@@ -404,6 +411,9 @@ class ColconPlugin(PluginV1):
         # Remove the rosdep path, if any
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._rosdep_path)
+
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(self.stage_packages_path)
 
         # Clean pip packages, if any
         self._pip.clean_packages()
