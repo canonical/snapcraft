@@ -774,7 +774,8 @@
                                 "enum": [
                                     "gnome-3-28",
                                     "gnome-3-34",
-                                    "kde-neon"
+                                    "kde-neon",
+                                    "openvino-2020-3"
                                 ]
                             }
                         }
