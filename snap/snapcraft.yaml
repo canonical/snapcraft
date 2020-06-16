@@ -17,6 +17,7 @@ apps:
     environment:
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
+      SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "y"
     command: bin/snapcraft
     completer: snapcraft-completion
 
