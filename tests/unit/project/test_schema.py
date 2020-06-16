@@ -1270,7 +1270,7 @@ class PackageManagement(ProjectBaseTest):
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [test, test-updates, test-security]
                   - type: apt
-                    components: [main, multiverse]
+                    components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
                     suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
@@ -1402,21 +1402,6 @@ class TestInvalidAptConfigurations:
                         "url": "http://archive.ubuntu.com/ubuntu",
                         "suites": ["test", "test-updates", "test-security"],
                         "architectures": [],
-                    }
-                ],
-                message_contains="The 'package-repositories[0]' property does not match the required schema:",
-            ),
-        ),
-        (
-            "deb empty components",
-            dict(
-                packages=[
-                    {
-                        "type": "apt",
-                        "components": [],
-                        "key-id": "test-key-id",
-                        "url": "http://archive.ubuntu.com/ubuntu",
-                        "suites": ["test", "test-updates", "test-security"],
                     }
                 ],
                 message_contains="The 'package-repositories[0]' property does not match the required schema:",
