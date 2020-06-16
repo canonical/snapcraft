@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Equals
 
 from . import LifecycleCommandsBaseTestCase
 
@@ -24,14 +24,12 @@ class TestPack(LifecycleCommandsBaseTestCase):
         result = self.run_command(["pack", "snap-dir"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped 'foo.snap'"))
         self.fake_lifecycle_execute.mock.assert_not_called()
-        self.fake_lifecycle_pack.mock.assert_called_once_with("snap-dir", None)
+        self.fake_pack.mock.assert_called_once_with("snap-dir", output=None)
 
     def test_output(self):
         result = self.run_command(["pack", "snap-dir", "--output", "foo.snap"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Snapped 'foo.snap'"))
         self.fake_lifecycle_execute.mock.assert_not_called()
-        self.fake_lifecycle_pack.mock.assert_called_once_with("snap-dir", "foo.snap")
+        self.fake_pack.mock.assert_called_once_with("snap-dir", output="foo.snap")

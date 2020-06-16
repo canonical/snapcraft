@@ -109,10 +109,8 @@ class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_lifecycle_execute)
 
-        self.fake_lifecycle_pack = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle.pack", return_value="foo.snap"
-        )
-        self.useFixture(self.fake_lifecycle_pack)
+        self.fake_pack = fixtures.MockPatch("snapcraft.cli.lifecycle._pack")
+        self.useFixture(self.fake_pack)
 
         self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
             self.path,
