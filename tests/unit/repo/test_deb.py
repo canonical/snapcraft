@@ -183,11 +183,11 @@ class BuildPackagesTestCase(unit.TestCase):
             fixtures.MockPatch("subprocess.check_call")
         ).mock
 
-        def get_installed_version(package_name):
-            return "1.0" if "installed" in package_name else None
-
-        self.fake_apt_cache.return_value.__enter__.return_value.get_installed_version.side_effect = (
-            get_installed_version
+        self.fake_apt_cache.return_value.__enter__.return_value.is_package_installed.side_effect = (
+            lambda package_name, package_version: True
+            if "installed" in package_name
+            and (package_version == "1.0" or package_version is None)
+            else False
         )
 
         self.useFixture(fixtures.MockPatch("os.environ.copy", return_value={}))

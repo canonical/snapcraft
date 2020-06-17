@@ -316,13 +316,9 @@ class Ubuntu(BaseRepo):
         with AptCache() as apt_cache:
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(pkg_name)
 
-                if installed_version is None or (
-                    pkg_version is not None and installed_version != pkg_version
-                ):
+                if not apt_cache.is_package_installed(pkg_name, pkg_version):
                     return False
-
         return True
 
     @classmethod
