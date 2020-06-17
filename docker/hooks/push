@@ -1,0 +1,5 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+"${DIR}/../publish.sh" "${DOCKER_TAG}" "${DOCKER_REPO}" "linux/amd64,linux/arm64,linux/arm/v7"

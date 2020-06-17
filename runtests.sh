@@ -45,7 +45,7 @@ run_static_tests() {
     echo "Running shellcheck"
     # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
     # tons of issues.
-    find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
+    find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck -x
 
     echo "Running shellcheck inside spread yaml"
     ./tools/spread-shellcheck.py spread.yaml tests/spread/

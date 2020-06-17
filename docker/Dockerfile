@@ -1,6 +1,13 @@
-FROM ubuntu:xenial as builder
+ARG DOCKER_ARCH
+FROM ${DOCKER_ARCH}/ubuntu:focal as builder
 
-# Grab dependencies
+ARG QEMU_ARCH
+COPY qemu-${QEMU_ARCH}-static /usr/bin/
+
+ARG SNAP_ARCH
+ARG RISK
+
+# Grab dependencies.
 RUN apt-get update
 RUN apt-get dist-upgrade --yes
 RUN apt-get install --yes \
@@ -10,19 +17,25 @@ RUN apt-get install --yes \
 
 # Grab the core snap (for backwards compatibility) from the stable channel and
 # unpack it in the proper place.
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/core' | jq '.download_url' -r) --output core.snap
+RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' -H "X-Ubuntu-Architecture: ${SNAP_ARCH}" 'https://api.snapcraft.io/api/v1/snaps/details/core' | jq '.download_url' -r) --output core.snap
 RUN mkdir -p /snap/core
 RUN unsquashfs -d /snap/core/current core.snap
 
 # Grab the core18 snap (which snapcraft uses as a base) from the stable channel
 # and unpack it in the proper place.
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/core18' | jq '.download_url' -r) --output core18.snap
+RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' -H "X-Ubuntu-Architecture: ${SNAP_ARCH}" 'https://api.snapcraft.io/api/v1/snaps/details/core18' | jq '.download_url' -r) --output core18.snap
 RUN mkdir -p /snap/core18
 RUN unsquashfs -d /snap/core18/current core18.snap
 
-# Grab the snapcraft snap from the beta channel and unpack it in the proper
+# Grab the core20 snapfrom the stable channel
+# and unpack it in the proper place.
+RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' -H "X-Ubuntu-Architecture: ${SNAP_ARCH}" 'https://api.snapcraft.io/api/v1/snaps/details/core20' | jq '.download_url' -r) --output core20.snap
+RUN mkdir -p /snap/core20
+RUN unsquashfs -d /snap/core20/current core20.snap
+
+# Grab the snapcraft snap from the targeted channel and unpack it in the proper
 # place.
-RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel=beta' | jq '.download_url' -r) --output snapcraft.snap
+RUN curl -L $(curl -H 'X-Ubuntu-Series: 16' -H "X-Ubuntu-Architecture: ${SNAP_ARCH}" "https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel=${RISK}" | jq '.download_url' -r) --output snapcraft.snap
 RUN mkdir -p /snap/snapcraft
 RUN unsquashfs -d /snap/snapcraft/current snapcraft.snap
 
@@ -36,14 +49,18 @@ RUN chmod +x /snap/bin/snapcraft
 
 # Multi-stage build, only need the snaps from the builder. Copy them one at a
 # time so they can be cached.
-FROM ubuntu:xenial
+FROM ${DOCKER_ARCH}/ubuntu:focal
 COPY --from=builder /snap/core /snap/core
 COPY --from=builder /snap/core18 /snap/core18
+COPY --from=builder /snap/core20 /snap/core20
 COPY --from=builder /snap/snapcraft /snap/snapcraft
 COPY --from=builder /snap/bin/snapcraft /snap/bin/snapcraft
 
+ARG QEMU_ARCH
+COPY qemu-${QEMU_ARCH}-static /usr/bin/
+
 # Generate locale and install dependencies.
-RUN apt-get update && apt-get dist-upgrade --yes && apt-get install --yes snapd sudo locales && locale-gen en_US.UTF-8
+RUN apt-get update && apt-get dist-upgrade --yes && apt-get install --yes sudo locales && locale-gen en_US.UTF-8
 
 # Set the proper environment.
 ENV LANG="en_US.UTF-8"
@@ -52,4 +69,6 @@ ENV LC_ALL="en_US.UTF-8"
 ENV PATH="/snap/bin:$PATH"
 ENV SNAP="/snap/snapcraft/current"
 ENV SNAP_NAME="snapcraft"
-ENV SNAP_ARCH="amd64"
+
+ARG SNAP_ARCH
+ENV SNAP_ARCH="${SNAP_ARCH}"

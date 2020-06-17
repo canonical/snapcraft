@@ -8,7 +8,7 @@ snap/.snapcraft/
 tests/unit/parts/
 tests/unit/snap/
 tests/unit/stage/
-build
+/build
 dist
 *.egg-info
 .eggs/
@@ -32,3 +32,4 @@ pip-wheel-metadata/
 # direnv
 .envrc
 .direnv
+qemu-*
