@@ -73,7 +73,7 @@ def _execute(  # noqa: C901
     # Temporary fix to ignore target_arch.
     if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
         echo.warning(
-            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode, is unsupported, and will be removed in future versions."
+            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
         )
         kwargs.pop("target_arch")
 
