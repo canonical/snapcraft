@@ -140,24 +140,19 @@ class AptCache(ContextDecorator):
     def is_package_valid(self, package_name: str) -> bool:
         return package_name in self.cache or self.cache.is_virtual_package(package_name)
 
-    def is_package_installed(self, package_name: str, package_version: str) -> bool:
-        if self.cache.is_virtual_package(package_name):
+    def get_installed_version(
+        self, package_name: str, *, resolve_virtual_packages: bool = False
+    ) -> Optional[str]:
+        if resolve_virtual_packages and self.cache.is_virtual_package(package_name):
             logger.warning(
                 f"{package_name!r} is a virtual package, use non virtual packages for deterministic results."
             )
-            return self.is_package_installed(
-                self.cache.get_providing_packages(package_name)[0].name, package_version
+            # Recusrse until a "real" package is found.
+            return self.get_installed_version(
+                self.cache.get_providing_packages(package_name)[0].name,
+                resolve_virtual_packages=resolve_virtual_packages,
             )
 
-        installed_version = self.get_installed_version(package_name)
-        if installed_version is None or (
-            package_version is not None and installed_version != package_version
-        ):
-            return False
-
-        return True
-
-    def get_installed_version(self, package_name: str) -> Optional[str]:
         if package_name in self.cache:
             if self.cache[package_name].installed is not None:
                 return self.cache[package_name].installed.version
