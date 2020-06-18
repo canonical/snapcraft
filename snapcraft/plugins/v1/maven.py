@@ -31,7 +31,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - maven-targets:
       (list of strings)
-      List of targets that were built that need
+      List of target directories where the built jars are stored.
+      It corresponds to the <build><directory>target</directory></build>
+      from the Maven's build declaration.
 
     - maven-version:
       (string)
@@ -53,6 +55,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import shutil
+import textwrap
 from glob import glob
 from typing import Sequence
 from urllib.parse import urlparse
@@ -221,7 +224,16 @@ class MavenPlugin(PluginV1):
             arfiles = glob(os.path.join(src, "*.[jw]ar"))
 
             if len(arfiles) == 0:
-                raise RuntimeError("Could not find any built jar files for part")
+                raise RuntimeError(
+                    textwrap.dedent(
+                        """\
+                    Could not find built jar files for part in any of the following directories: %s. This
+                    could happen if your `maven-targets` points to a directory that is not the same as the one
+                    indicated in your Maven's <build><directory>target</directory></build> declaration. Try
+                    removing `maven-targets` definition."""
+                        % arfiles
+                    )
+                )
             if len(jarfiles) > 0 and len(f) == 0:
                 basedir = "jar"
             elif len(warfiles) > 0 and len(f) == 0:
