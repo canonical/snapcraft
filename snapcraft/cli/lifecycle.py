@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 import logging
 import typing
 import os
@@ -153,22 +154,17 @@ def _run_pack(snap_command: List[str]) -> str:
         else:
             message = f"\033[0;32mSnapping \033[0m"
             progress_indicator = progressbar.ProgressBar(
-                widgets=[message, progressbar.AnimatedMarker()], maxval=7
+                widgets=[message, progressbar.AnimatedMarker()]
             )
             progress_indicator.start()
-
-            ret = proc.poll()
-            count = 0
-
-            while ret is None:
-                if count >= 7:
-                    progress_indicator.start()
-                    count = 0
-                progress_indicator.update(count)
-                count += 1
+            for counter in itertools.count():
+                progress_indicator.update(counter)
                 time.sleep(0.2)
                 ret = proc.poll()
-        print("")
+                if ret is not None:
+                    break
+            progress_indicator.finish()
+
         if proc.stdout is not None:
             stdout = proc.stdout.read().decode()
         if proc.stderr is not None:
