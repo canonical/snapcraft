@@ -183,7 +183,7 @@ class BuildPackagesTestCase(unit.TestCase):
             fixtures.MockPatch("subprocess.check_call")
         ).mock
 
-        def get_installed_version(package_name):
+        def get_installed_version(package_name, resolve_virtual_packages=False):
             return "1.0" if "installed" in package_name else None
 
         self.fake_apt_cache.return_value.__enter__.return_value.get_installed_version.side_effect = (
