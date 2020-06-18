@@ -70,6 +70,13 @@ def _execute(  # noqa: C901
 
     is_managed_host = build_provider == "managed-host"
 
+    # Temporary fix to ignore target_arch.
+    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
+        echo.warning(
+            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
+        )
+        kwargs.pop("target_arch")
+
     project = get_project(is_managed_host=is_managed_host, **kwargs)
     conduct_project_sanity_check(project, **kwargs)
 
@@ -315,6 +322,10 @@ def clean(ctx, parts, unprime, step, **kwargs):
     apply_host_provider_flags(build_provider_flags)
 
     is_managed_host = build_provider == "managed-host"
+
+    # Temporary fix to ignore target_arch, silently for clean.
+    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
+        kwargs.pop("target_arch")
 
     try:
         project = get_project(is_managed_host=is_managed_host)
