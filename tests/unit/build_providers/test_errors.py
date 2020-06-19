@@ -401,7 +401,7 @@ class TestSnapcraftExceptionTests:
             {
                 "exception_class": errors.ProviderInvalidBaseError,
                 "kwargs": {"provider_name": "LXD", "build_base": "core29"},
-                "expected_brief": "The 'LXD' does not have an environment setup to build for base 'core29'",
+                "expected_brief": "The 'LXD' provider does not support base 'core29'",
                 "expected_resolution": "Ensure build-base or base are correct in the snapcraft.yaml file.",
                 "expected_details": None,
                 "expected_docs_url": "https://snapcraft.io/docs/base-snaps",

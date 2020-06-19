@@ -133,7 +133,7 @@ class ProviderInvalidBaseError(_SnapcraftException):
         self.build_base = build_base
 
     def get_brief(self) -> str:
-        return f"The {self.provider_name!r} does not have an environment setup to build for base {self.build_base!r}"
+        return f"The {self.provider_name!r} provider does not support base {self.build_base!r}"
 
     def get_resolution(self) -> str:
         return "Ensure build-base or base are correct in the snapcraft.yaml file."
