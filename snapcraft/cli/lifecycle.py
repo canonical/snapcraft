@@ -71,7 +71,7 @@ def _execute(  # noqa: C901
     is_managed_host = build_provider == "managed-host"
 
     # Temporary fix to ignore target_arch.
-    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
+    if kwargs.get("target_arch") is not None and build_provider in ["multipass", "lxd"]:
         echo.warning(
             "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
         )
