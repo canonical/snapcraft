@@ -211,7 +211,12 @@ class SnapInjectionTest(unit.TestCase):
                 "channel": "stable",
                 "revision": "123",
             },
-            {"name": "snapcraft", "confinement": "classic", "revision": "x20", "tracking-channel": "latest/stable"},
+            {
+                "name": "snapcraft",
+                "confinement": "classic",
+                "revision": "x20",
+                "tracking-channel": "latest/stable",
+            },
         ]
         self.get_assertion_mock.side_effect = [
             b"fake-assertion-account-store",
