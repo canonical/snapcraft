@@ -71,8 +71,8 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu pip install \
 # Install the project for quick tests
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --editable snapcraft
 
-# Install black to run static tests, if available
-lxc exec snapcraft-dev -- snap install black --beta --devmode || true
+# Install black to run static tests.
+lxc exec snapcraft-dev -- snap install black --beta --devmode
 
 # Install shellcheck for static tests.
 lxc exec snapcraft-dev -- snap install shellcheck
