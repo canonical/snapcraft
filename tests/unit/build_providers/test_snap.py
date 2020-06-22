@@ -20,7 +20,7 @@ from textwrap import dedent
 from unittest.mock import call, patch, ANY
 
 import fixtures
-from testtools.matchers import Contains, Equals, FileContains, HasLength, Not
+from testtools.matchers import Contains, Equals, FileContains, Not
 
 from . import ProviderImpl, get_project
 from snapcraft.internal.build_providers._snap import (
