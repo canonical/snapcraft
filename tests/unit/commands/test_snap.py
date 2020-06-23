@@ -84,8 +84,8 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self.fake_lifecycle_execute.mock.assert_called_once_with(
             steps.PRIME, mock.ANY, tuple()
         )
-        self.fake_lifecycle_pack.mock.assert_called_once_with(
-            os.path.join(self.path, "prime"), None
+        self.fake_pack.mock.assert_called_once_with(
+            os.path.join(self.path, "prime"), output=None
         )
 
     def test_output_using_destructive_mode(self):
@@ -98,8 +98,8 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self.fake_lifecycle_execute.mock.assert_called_once_with(
             steps.PRIME, mock.ANY, tuple()
         )
-        self.fake_lifecycle_pack.mock.assert_called_once_with(
-            os.path.join(self.path, "prime"), "foo.snap"
+        self.fake_pack.mock.assert_called_once_with(
+            os.path.join(self.path, "prime"), output="foo.snap"
         )
 
     def test_deprecated_snap_dir(self):
@@ -109,4 +109,4 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self.assertThat(result.output, Contains("DEPRECATED"))
         self.fake_get_provider_for.mock.assert_not_called()
         self.fake_lifecycle_execute.mock.assert_not_called()
-        self.fake_lifecycle_pack.mock.assert_called_once_with("snap-dir", None)
+        self.fake_pack.mock.assert_called_once_with("snap-dir", output=None)
