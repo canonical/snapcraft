@@ -16,16 +16,20 @@
 
 import io
 import os
+import pathlib
 import tarfile
 from textwrap import dedent
 from unittest import mock
 from xml.etree import ElementTree
 
 import fixtures
+import pytest
 from testtools.matchers import Equals, FileExists, HasLength
 
 from snapcraft.internal import errors
+from snapcraft.internal.meta.snap import Snap
 from snapcraft.plugins.v1 import maven
+from snapcraft.project import Project
 from tests import unit
 from . import PluginsV1BaseTestCase
 
@@ -131,58 +135,150 @@ class MavenPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class MavenPluginTest(PluginsV1BaseTestCase):
+def _get_expected_java_version(maven_plugin) -> str:
+    base = maven_plugin.project._snap_meta.base
+    maven_openjdk_version = maven_plugin.options.maven_openjdk_version
 
-    scenarios = (
-        (
-            "core java version 8 ",
-            dict(base="core", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core java version 8 ",
-            dict(base="core", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core java version default ",
-            dict(base="core", java_version="", expected_java_version="9"),
-        ),
-        (
-            "core16 java version 8 ",
-            dict(base="core16", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core16 java version 8 ",
-            dict(base="core16", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core16 java version default ",
-            dict(base="core16", java_version="", expected_java_version="9"),
-        ),
-        (
-            "core18 java version 8 ",
-            dict(base="core18", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core18 java version 11",
-            dict(base="core18", java_version="11", expected_java_version="11"),
-        ),
-        (
-            "core18 java version default",
-            dict(base="core18", java_version="", expected_java_version="11"),
-        ),
+    if maven_openjdk_version:
+        expected_java_version = maven_openjdk_version
+    elif base in ("core", "core16"):
+        expected_java_version = "9"
+    else:
+        expected_java_version = "11"
+
+    return expected_java_version
+
+
+_BASE_JAVA_COMBINATIONS = [
+    ("", "core"),
+    ("8", "core"),
+    ("", "core16"),
+    ("8", "core16"),
+    ("", "core18"),
+    ("11", "core18"),
+]
+
+
+@pytest.fixture(params=_BASE_JAVA_COMBINATIONS)
+def maven_plugin(tmp_work_path, request):
+    """Return an instance of MavenPlugin setup with different bases and java versions."""
+    java_version, base = request.param
+
+    class Options:
+        maven_options = []
+        maven_targets = [""]
+        maven_version = maven._DEFAULT_MAVEN_VERSION
+        maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
+        maven_openjdk_version = java_version
+
+    project = Project()
+    project._snap_meta = Snap(name="test-snap", base=base, confinement="strict")
+
+    return maven.MavenPlugin("test-part", Options(), project)
+
+
+@pytest.fixture()
+def maven_plugin_with_assets(maven_plugin):
+    """Return an instance of MavenPlugin with artifacts setup using maven_plugin."""
+    pathlib.Path(maven_plugin.sourcedir).mkdir(parents=True)
+
+    expected_java_version = _get_expected_java_version(maven_plugin)
+
+    fake_java_path = (
+        pathlib.Path(maven_plugin.installdir)
+        / f"usr/lib/jvm/java-{expected_java_version}-openjdk-amd64/bin/java"
+    )
+    fake_java_path.parent.mkdir(parents=True)
+    fake_java_path.touch()
+
+    maven_tar_path = (
+        pathlib.Path(maven_plugin.partdir)
+        / f"maven/apache-maven-{maven_plugin.options.maven_version}-bin.tar.gz"
+    )
+    maven_tar_path.parent.mkdir(parents=True)
+    maven_tar_path.touch()
+
+    return maven_plugin
+
+
+def test_stage_and_build_packages(maven_plugin):
+    expected_java_version = _get_expected_java_version(maven_plugin)
+
+    assert maven_plugin.stage_packages == [
+        f"openjdk-{expected_java_version}-jre-headless"
+    ]
+    assert maven_plugin.build_packages == [
+        f"openjdk-{expected_java_version}-jdk-headless"
+    ]
+
+
+def test_build(mock_tar, mock_run, maven_plugin_with_assets):
+    plugin = maven_plugin_with_assets
+
+    def fake_run(cmd, *args, **kwargs):
+        os.makedirs(os.path.join(plugin.builddir, "target"))
+        open(os.path.join(plugin.builddir, "target", "jar.jar"), "w").close()
+
+    mock_run.side_effect = fake_run
+
+    plugin.build()
+
+    mock_run.assert_called_once_with(
+        ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
     )
 
+
+def test_build_war(mock_tar, mock_run, maven_plugin_with_assets):
+    plugin = maven_plugin_with_assets
+
+    def fake_run(cmd, *args, **kwargs):
+        os.makedirs(os.path.join(plugin.builddir, "target"))
+        open(os.path.join(plugin.builddir, "target", "war.war"), "w").close()
+
+    mock_run.side_effect = fake_run
+
+    plugin.build()
+
+    mock_run.assert_called_once_with(
+        ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+    )
+
+
+def test_build_with_targets(mock_tar, mock_run, maven_plugin_with_assets):
+    maven_plugin_with_assets.options.maven_targets = ["child1", "child2"]
+    plugin = maven_plugin_with_assets
+
+    def fake_run(cmd, *args, **kwargs):
+        os.makedirs(os.path.join(plugin.builddir, "child1", "target"))
+        os.makedirs(os.path.join(plugin.builddir, "child2", "target"))
+        open(
+            os.path.join(plugin.builddir, "child1", "target", "child1.jar"), "w"
+        ).close()
+        open(
+            os.path.join(plugin.builddir, "child2", "target", "child2.jar"), "w"
+        ).close()
+
+    mock_run.side_effect = fake_run
+
+    plugin.build()
+
+    mock_run.assert_called_once_with(
+        ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
+    )
+
+
+class TestBuildWithProxies(PluginsV1BaseTestCase):
     def setUp(self):
         super().setUp()
 
-        self.project._snap_meta.base = self.base
+        self.project._snap_meta.base = "core18"
 
         class Options:
             maven_options = []
             maven_targets = [""]
             maven_version = maven._DEFAULT_MAVEN_VERSION
             maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
-            maven_openjdk_version = self.java_version
+            maven_openjdk_version = "11"
 
         self.options = Options()
 
@@ -202,7 +298,7 @@ class MavenPluginTest(PluginsV1BaseTestCase):
             "usr",
             "lib",
             "jvm",
-            "java-{}-openjdk-amd64".format(self.expected_java_version),
+            "java-11-openjdk-amd64",
             "bin",
             "java",
         )
@@ -243,104 +339,6 @@ class MavenPluginTest(PluginsV1BaseTestCase):
         self.assertThat(
             self._canonicalize_settings(observed),
             Equals(self._canonicalize_settings(expected)),
-        )
-
-    def test_stage_and_build_packages(self):
-        plugin = maven.MavenPlugin("test-part", self.options, self.project)
-
-        self.assertThat(
-            plugin.stage_packages,
-            Equals(["openjdk-{}-jre-headless".format(self.expected_java_version)]),
-        )
-        self.assertThat(
-            plugin.build_packages,
-            Equals(["openjdk-{}-jdk-headless".format(self.expected_java_version)]),
-        )
-
-    def test_build(self):
-        env_vars = (("http_proxy", None), ("https_proxy", None))
-        for v in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
-
-        plugin = maven.MavenPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        def side(l, **kwargs):
-            os.makedirs(os.path.join(plugin.builddir, "target"))
-            open(os.path.join(plugin.builddir, "target", "jar.jar"), "w").close()
-
-        self.run_mock.side_effect = side
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
-        )
-
-    def test_build_fail(self):
-        env_vars = (("http_proxy", None), ("https_proxy", None))
-        for v in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
-
-        plugin = maven.MavenPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        self.assertRaises(RuntimeError, plugin.build)
-
-        self.run_mock.assert_called_once_with(
-            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
-        )
-
-    def test_build_war(self):
-        env_vars = (("http_proxy", None), ("https_proxy", None))
-        for v in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
-
-        plugin = maven.MavenPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        def side(l, **kwargs):
-            os.makedirs(os.path.join(plugin.builddir, "target"))
-            open(os.path.join(plugin.builddir, "target", "war.war"), "w").close()
-
-        self.run_mock.side_effect = side
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
-        )
-
-    def test_build_with_targets(self):
-        env_vars = (("http_proxy", None), ("https_proxy", None))
-        for v in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
-
-        opts = self.options
-        opts.maven_targets = ["child1", "child2"]
-        plugin = maven.MavenPlugin("test-part", opts, self.project)
-
-        self.create_assets(plugin)
-
-        def side(l, **kwargs):
-            os.makedirs(os.path.join(plugin.builddir, "child1", "target"))
-            os.makedirs(os.path.join(plugin.builddir, "child2", "target"))
-            open(
-                os.path.join(plugin.builddir, "child1", "target", "child1.jar"), "w"
-            ).close()
-            open(
-                os.path.join(plugin.builddir, "child2", "target", "child2.jar"), "w"
-            ).close()
-
-        self.run_mock.side_effect = side
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["mvn", "package"], cwd=plugin.builddir, env=mock.ANY
         )
 
     def test_build_with_http_proxy(self):
@@ -623,7 +621,7 @@ class MavenPluginUnsupportedBase(PluginsV1BaseTestCase):
         )
 
 
-class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
+class TestUnsupportedJDKVersionError:
 
     scenarios = (
         (
@@ -661,26 +659,17 @@ class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
-
-        self.project._snap_meta.base = self.base
-
+    def test_use_invalid_openjdk_version_fails(self, base, version, expected_message):
         class Options:
             maven_options = []
             maven_targets = [""]
             maven_version = maven._DEFAULT_MAVEN_VERSION
             maven_version_checksum = maven._DEFAULT_MAVEN_CHECKSUM
-            maven_openjdk_version = self.version
+            maven_openjdk_version = version
 
-        self.options = Options()
+        project = Project()
+        project._snap_meta = Snap(name="test-snap", base=base, confinement="strict")
 
-    def test_use_invalid_openjdk_version_fails(self):
-        raised = self.assertRaises(
-            maven.UnsupportedJDKVersionError,
-            maven.MavenPlugin,
-            "test-part",
-            self.options,
-            self.project,
-        )
-        self.assertThat(str(raised), Equals(self.expected_message))
+        with pytest.raises(maven.UnsupportedJDKVersionError) as error:
+            maven.MavenPlugin("test-part", Options(), project)
+            assert str(error) == expected_message

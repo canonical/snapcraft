@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import subprocess
 
 from unittest import mock
@@ -47,14 +48,28 @@ class WstoolTestCase(unit.TestCase):
         self.wstool.setup()
 
         # Verify that only wstool was installed (no other .debs)
-        self.ubuntu_mock.assert_has_calls(
-            [
-                mock.call.install_stage_packages(
-                    install_dir="wstool_path/install",
-                    package_names=["python-wstool"],
-                    base="core",
-                )
-            ]
+        self.assertThat(
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=self.wstool._wstool_stage_packages_path,
+                        package_names=["python-wstool"],
+                        base="core",
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=self.wstool._wstool_stage_packages_path,
+                        install_path=pathlib.Path("wstool_path/install"),
+                    )
+                ]
+            ),
         )
 
         # Verify that wstool was initialized

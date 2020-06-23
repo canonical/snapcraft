@@ -73,6 +73,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import contextlib
 import glob
 import os
+import pathlib
 import tempfile
 import logging
 import re
@@ -320,6 +321,7 @@ class CatkinPlugin(PluginV1):
         self.catkin_packages = None
         if options.catkin_packages is not None:
             self.catkin_packages = set(options.catkin_packages)
+        self.stage_packages_path = pathlib.Path(self.partdir) / "catkin_stage_packages"
         self._rosdep_path = os.path.join(self.partdir, "rosdep")
         self._catkin_path = os.path.join(self.partdir, "catkin")
         self._wstool_path = os.path.join(self.partdir, "wstool")
@@ -539,13 +541,17 @@ class CatkinPlugin(PluginV1):
 
         logger.info("Installing apt dependencies...")
         try:
-            repo.Ubuntu.install_stage_packages(
+            repo.Ubuntu.fetch_stage_packages(
                 package_names=apt_dependencies,
-                install_dir=self.installdir,
+                stage_packages_path=self.stage_packages_path,
                 base=self.project._get_build_base(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise CatkinAptDependencyFetchError(e.message)
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=self.stage_packages_path,
+            install_path=pathlib.Path(self.installdir),
+        )
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:
@@ -567,6 +573,10 @@ class CatkinPlugin(PluginV1):
         # Remove the catkin path, if any
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._catkin_path)
+
+        # Remove the catkin path, if any
+        with contextlib.suppress(FileNotFoundError):
+            shutil.rmtree(self.stage_packages_path)
 
         # Clean pip packages, if any
         self._pip.clean_packages()
@@ -964,6 +974,9 @@ class _Catkin:
         self._catkin_path = catkin_path
         self._project = project
         self._catkin_install_path = os.path.join(self._catkin_path, "install")
+        self._catkin_stage_packages_path = (
+            pathlib.Path(self._catkin_path) / "stage_packages"
+        )
 
     def setup(self):
         os.makedirs(self._catkin_install_path, exist_ok=True)
@@ -971,10 +984,14 @@ class _Catkin:
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
         logger.info("Installing catkin...")
-        repo.Ubuntu.install_stage_packages(
+        repo.Ubuntu.fetch_stage_packages(
             package_names=["ros-{}-catkin".format(self._ros_distro)],
-            install_dir=self._catkin_install_path,
+            stage_packages_path=self._catkin_stage_packages_path,
             base=self._project._get_build_base(),
+        )
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=self._catkin_stage_packages_path,
+            install_path=pathlib.Path(self._catkin_install_path),
         )
 
     def find(self, package_name):

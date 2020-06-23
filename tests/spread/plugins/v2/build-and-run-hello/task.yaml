@@ -1,8 +1,11 @@
-summary: Build, rebuild and run hello.c with different plugin configurations
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
 
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
+  SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/make: make-hello
   SNAP/local_plugin_from_base: local-plugin-from-base-hello
   SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
@@ -32,6 +35,7 @@ restore: |
   # Undo changes to hello
   [ -f hello ] && git checkout hello
   [ -f hello.c ] && git checkout hello.c
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
   [ -f src/main.rs ] && git checkout src/main.rs
@@ -49,11 +53,19 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "hello world" ]
 
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "hello world" ]
+
   # Make sure that what we built runs with the changes applied.
   if [ -f hello ]; then
     modified_file=hello
   elif [ -f hello.c ]; then
     modified_file=hello.c
+  elif [ -f subdir/hello.c ]; then
+    modified_file=subdir/hello.c
   elif [ -f hello.js ]; then
     modified_file=hello.js
   elif [ -f main.go ]; then

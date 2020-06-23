@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import datetime
 import enum
 import logging
@@ -23,7 +22,6 @@ import tempfile
 from typing import Callable, List, Optional
 from typing import Any, Dict  # noqa: F401
 
-from . import errors
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import repo
 
@@ -72,6 +70,7 @@ class _SnapManager:
         self.__repo = None  # type: Optional[repo.snaps.SnapPackage]
         self.__revision = None  # type: Optional[str]
         self.__install_cmd = None  # type: Optional[List[str]]
+        self.__switch_cmd: Optional[List[str]] = None
         self.__assertion_ack_cmd = None  # type: Optional[List[str]]
 
     def _get_snap_repo(self):
@@ -155,6 +154,7 @@ class _SnapManager:
         host_snap_repo = self._get_snap_repo()
 
         install_cmd = list()  # type: List[str]
+        switch_cmd: Optional[List[str]] = None
         assertion_ack_cmd = list()  # type: List[str]
         snap_revision = None
 
@@ -162,6 +162,16 @@ class _SnapManager:
             install_cmd = ["snap", "install"]
             host_snap_info = host_snap_repo.get_local_snap_info()
             snap_revision = host_snap_info["revision"]
+            snap_channel = host_snap_info.get("tracking-channel")
+
+            if not snap_revision.startswith("x") and snap_channel:
+                switch_cmd = [
+                    "snap",
+                    "switch",
+                    self.snap_name,
+                    "--channel",
+                    snap_channel,
+                ]
 
             if snap_revision.startswith("x"):
                 install_cmd.append("--dangerous")
@@ -197,6 +207,7 @@ class _SnapManager:
             install_cmd.append(host_snap_repo.name)
 
         self.__install_cmd = install_cmd
+        self.__switch_cmd = switch_cmd
         self.__assertion_ack_cmd = assertion_ack_cmd
         self.__revision = snap_revision
 
@@ -228,6 +239,13 @@ class _SnapManager:
             )
 
         return self.__install_cmd
+
+    def get_channel_switch_cmd(self) -> Optional[List[str]]:
+        # The tracked channel can be None, so probe __revision instead
+        if self.__revision is None:
+            self._set_data()
+
+        return self.__switch_cmd
 
     def get_assertion_ack_cmd(self) -> List[str]:
         if self.__assertion_ack_cmd is None:
@@ -321,8 +339,7 @@ class SnapInjector:
 
         # Auto refresh may have kicked in while setting the hold.
         logger.debug("Waiting for pending snap auto refreshes.")
-        with contextlib.suppress(errors.ProviderExecError):
-            self._runner(["snap", "watch", "--last=auto-refresh"], hide_output=True)
+        self._runner(["snap", "watch", "--last=auto-refresh?"], hide_output=True)
 
     def _enable_snapd_snap(self) -> None:
         # Required to not install the core snap when building using
@@ -377,6 +394,8 @@ class SnapInjector:
                 snap.push_host_snap(file_pusher=self._file_pusher)
                 self._runner(snap.get_assertion_ack_cmd())
             self._runner(snap.get_snap_install_cmd())
+            if snap.get_channel_switch_cmd() is not None:
+                self._runner(snap.get_channel_switch_cmd())
             self._record_revision(snap.snap_name, snap.get_revision())
 
         _save_registry(self._registry_data, self._registry_filepath)

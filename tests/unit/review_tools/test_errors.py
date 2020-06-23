@@ -16,19 +16,16 @@
 
 from textwrap import dedent
 
-from testtools.matchers import Equals, Is
-
 from snapcraft.internal.review_tools import errors
-from tests import unit
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftException:
 
     scenarios = (
         (
             "ReviewError (linting error with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -54,7 +51,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (linting warning with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -80,7 +77,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (linting error without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -105,7 +102,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (linting warning without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -130,7 +127,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (security error with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -156,7 +153,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (security warning with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -182,7 +179,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (security error without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -207,7 +204,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (security warning without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_functional": {"error": {}, "warn": {}},
@@ -232,7 +229,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (functional error with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_security": {"error": {}, "warn": {}},
@@ -258,7 +255,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (functional warning with link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_security": {"error": {}, "warn": {}},
@@ -284,7 +281,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (functional error without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_security": {"error": {}, "warn": {}},
@@ -309,7 +306,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError (functional warning without link)",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_security": {"error": {}, "warn": {}},
@@ -334,7 +331,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "ReviewError",
             {
-                "exception": errors.ReviewError,
+                "exception_class": errors.ReviewError,
                 "kwargs": dict(
                     review_json={
                         "snap.v2_security": {
@@ -378,18 +375,16 @@ class SnapcraftExceptionTests(unit.TestCase):
         ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.expectThat(
-            exception.get_brief(),
-            Equals("Review Tools did not fully pass for this snap."),
+    def test_snapcraft_exception_handling(
+        self, exception_class, expected_details, kwargs
+    ):
+        exception = exception_class(**kwargs)
+
+        assert exception.get_details() == expected_details
+        assert exception.get_brief() == "Review Tools did not fully pass for this snap."
+        assert (
+            exception.get_resolution()
+            == "Specific measures might need to be taken on the Snap Store before this snap can be fully accepted."
         )
-        self.expectThat(
-            exception.get_resolution(),
-            Equals(
-                "Specific measures might need to be taken on the Snap Store before this snap can be fully accepted."
-            ),
-        )
-        self.expectThat(exception.get_details(), Equals(self.expected_details))
-        self.expectThat(exception.get_docs_url(), Is(None)),
-        self.expectThat(exception.get_reportable(), Is(False))
+        assert exception.get_docs_url() is None
+        assert exception.get_reportable() is False

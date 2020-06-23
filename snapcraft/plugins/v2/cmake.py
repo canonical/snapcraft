@@ -62,7 +62,7 @@ class CMakePlugin(PluginV2):
         return dict()
 
     def _get_cmake_configure_command(self) -> str:
-        cmd = ["cmake", "."] + self.options.cmake_parameters
+        cmd = ["cmake", '"${SNAPCRAFT_PART_SRC_WORK}"'] + self.options.cmake_parameters
 
         return " ".join(cmd)
 

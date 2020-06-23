@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import jsonschema
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, DirExists, Equals, HasLength, Not
 
 from snapcraft.internal import errors, meta
@@ -34,9 +36,10 @@ class GoPluginBaseTest(PluginsV1BaseTestCase):
 
         def fake_go_build(command, cwd, *args, **kwargs):
             if command[0] == "go" and command[1] == "build" and "-o" in command:
-                open(
-                    os.path.join(command[command.index("-o") + 1], "binary"), "w"
-                ).close()
+                output = command[command.index("-o") + 1]
+                if os.path.basename(output) != "module":
+                    output = os.path.join(output, "binary")
+                open(output, "w").close()
             elif command[0] == "go" and command[1] == "build" and "-o" not in command:
                 # the package is -1
                 open(os.path.join(cwd, os.path.basename(command[-1])), "w").close()
@@ -289,7 +292,7 @@ class GoPluginTest(GoPluginBaseTest):
             go_packages = []
             go_importpath = ""
 
-        self.run_output_mock.return_value = "go version go13 linux/amd64"
+        self.run_output_mock.return_value = "go version go1.13 linux/amd64"
 
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
@@ -303,6 +306,45 @@ class GoPluginTest(GoPluginBaseTest):
         )
         self.run_mock.assert_called_once_with(
             ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+    def test_pull_go_mod_with_older_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = "foo"
+            go_buildtags = ""
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.run_output_mock.return_value = "go version go1.11 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, "go.mod"), "w").close()
+
+        plugin.pull()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "mod", "download"], cwd=plugin.sourcedir, env=mock.ANY
+        )
+
+        # Call pull again and ensure nothing new is logged.
+        plugin.pull()
+
+        self.assertThat(
+            fake_logger.output.strip(),
+            Equals(
+                "Ensure build environment configuration is correct for this version of Go. "
+                "Read more about it at "
+                "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
+            ),
         )
 
     def test_go_mod_requires_newer_go_version(self):
@@ -615,7 +657,7 @@ class GoPluginTest(GoPluginBaseTest):
             go_importpath = ""
             go_buildtags = ""
 
-        self.run_output_mock.return_value = "go version go13 linux/amd64"
+        self.run_output_mock.return_value = "go version go1.13 linux/amd64"
 
         plugin = go.GoPlugin("test-part", Options(), self.project)
 
@@ -631,6 +673,46 @@ class GoPluginTest(GoPluginBaseTest):
             ["go", "build", "-o", plugin._install_bin_dir, "./..."],
             cwd=plugin.builddir,
             env=mock.ANY,
+        )
+
+    def test_build_go_mod_with_older_go_version(self):
+        class Options:
+            source = "dir"
+            go_channel = "latest/stable"
+            go_packages = []
+            go_importpath = ""
+            go_buildtags = ""
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.run_output_mock.return_value = "go version go1.11 linux/amd64"
+
+        plugin = go.GoPlugin("test-part", Options(), self.project)
+
+        os.makedirs(plugin.builddir)
+        with open(os.path.join(plugin.builddir, "go.mod"), "w") as go_mod_file:
+            print("module github.com/foo/bar/module", file=go_mod_file)
+            print("go 1.11", file=go_mod_file)
+
+        plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ["go", "version"], cwd=mock.ANY, env=mock.ANY
+        )
+        self.run_mock.assert_called_once_with(
+            ["go", "build", "-o", f"{plugin._install_bin_dir}/module"],
+            cwd=plugin.builddir,
+            env=mock.ANY,
+        )
+
+        self.assertThat(
+            fake_logger.output.strip(),
+            Equals(
+                "Ensure build environment configuration is correct for this version of Go. "
+                "Read more about it at "
+                "https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support"
+            ),
         )
 
     @mock.patch("snapcraft.internal.elf.ElfFile")
@@ -808,62 +890,57 @@ class GoPluginUnsupportedBase(PluginsV1BaseTestCase):
         )
 
 
-class GoPluginCrossCompileTest(GoPluginBaseTest):
+@pytest.mark.parametrize(
+    "deb_arch,go_arch",
+    [
+        ("armhf", "arm"),
+        ("arm64", "arm64"),
+        ("i386", "386"),
+        ("amd64", "amd64"),
+        ("ppc64el", "ppc64le"),
+    ],
+)
+def test_cross_compile(monkeypatch, tmp_work_path, mock_run, deb_arch, go_arch):
+    monkeypatch.setattr(Project, "is_cross_compiling", True)
 
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf", go_arch="arm")),
-        ("aarch64", dict(deb_arch="arm64", go_arch="arm64")),
-        ("i386", dict(deb_arch="i386", go_arch="386")),
-        ("x86_64", dict(deb_arch="amd64", go_arch="amd64")),
-        ("ppc64le", dict(deb_arch="ppc64el", go_arch="ppc64le")),
-    ]
+    class Options:
+        source = ""
+        go_packages = ["github.com/gotools/vet"]
+        go_importpath = ""
+        go_buildtags = ""
+        go_channel = ""
 
-    def setUp(self):
-        super().setUp()
+    project = Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-        self.project = Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(
-            name="test-snap", base="core18", confinement="strict"
-        )
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    plugin = go.GoPlugin("test-part", Options(), project)
 
-    def test_cross_compile(self):
-        class Options:
-            source = ""
-            go_packages = ["github.com/gotools/vet"]
-            go_importpath = ""
-            go_buildtags = ""
-            go_channel = ""
+    os.makedirs(plugin.sourcedir)
 
-        plugin = go.GoPlugin("test-part", Options(), self.project)
+    plugin.pull()
 
-        os.makedirs(plugin.sourcedir)
+    assert mock_run.call_count == 1
 
-        plugin.pull()
+    for call_args in mock_run.call_args_list:
+        env = call_args[1]["env"]
+        assert "CC" in env
+        assert env["CC"] == f"{project.arch_triplet}-gcc"
 
-        self.assertThat(self.run_mock.call_count, Equals(1))
-        for call_args in self.run_mock.call_args_list:
-            env = call_args[1]["env"]
-            self.assertIn("CC", env)
-            self.assertThat(
-                env["CC"], Equals("{}-gcc".format(self.project.arch_triplet))
-            )
-            self.assertIn("CXX", env)
-            self.assertThat(
-                env["CXX"], Equals("{}-g++".format(self.project.arch_triplet))
-            )
-            self.assertIn("CGO_ENABLED", env)
-            self.assertThat(env["CGO_ENABLED"], Equals("1"))
-            self.assertIn("GOARCH", env)
-            self.assertThat(env["GOARCH"], Equals(self.go_arch))
-            if self.deb_arch == "armhf":
-                self.assertIn("GOARM", env)
-                self.assertThat(env["GOARM"], Equals("7"))
+        assert "CXX" in env
+        assert env["CXX"] == f"{project.arch_triplet}-g++"
+
+        assert "CGO_ENABLED" in env
+        assert env["CGO_ENABLED"] == "1"
+
+        assert "GOARCH" in env
+        assert env["GOARCH"] == go_arch
+
+        if deb_arch == "armhf":
+            assert "GOARM" in env
+            assert env["GOARM"] == "7"
 
 
-class CGoLdFlagsTest(unit.TestCase):
+class TestCGoLdFlags:
     scenarios = (
         (
             "none",
@@ -907,13 +984,10 @@ class CGoLdFlagsTest(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
+    def test_generated_cgo_ldflags(
+        self, monkeypatch, cgo_ldflags_env, library_paths, ldflags_env, expected
+    ):
+        monkeypatch.setenv("CGO_LDFLAGS", cgo_ldflags_env)
+        monkeypatch.setenv("LDFLAGS", ldflags_env)
 
-        self.useFixture(
-            fixtures.EnvironmentVariable("CGO_LDFLAGS", self.cgo_ldflags_env)
-        )
-        self.useFixture(fixtures.EnvironmentVariable("LDFLAGS", self.ldflags_env))
-
-    def test_generated_cgo_ldflags(self):
-        self.assertThat(go._get_cgo_ldflags(self.library_paths), Equals(self.expected))
+        assert go._get_cgo_ldflags(library_paths) == expected

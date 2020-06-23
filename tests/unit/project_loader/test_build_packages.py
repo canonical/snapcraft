@@ -14,66 +14,58 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-import unittest.mock
+import pathlib
 from textwrap import dedent
 
-from testtools.matchers import Contains, Equals
+import pytest
 
-from . import ProjectLoaderBaseTest
-
-
-class TestBuildPackagesFromSnapcraftYaml(ProjectLoaderBaseTest):
-    def test_build_packages(self):
-        snapcraft_yaml = dedent(
-            """\
-            name: test
-            base: core18
-            version: "1.0"
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-
-            build-packages: [foobar]
-
-            parts:
-              part1:
-                plugin: nil
-                build-packages: [foo, bar]
-            """
-        )
-
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
-
-        self.assertThat(
-            project_config.get_build_packages(), Equals({"foobar", "foo", "bar"})
-        )
+from snapcraft.project import Project
+from snapcraft.internal import project_loader
 
 
-class VCSBuildPackagesTest(ProjectLoaderBaseTest):
+def get_project_config(snapcraft_yaml_content):
+    snapcraft_yaml_path = pathlib.Path("snapcraft.yaml")
+    with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
+        print(snapcraft_yaml_content, file=snapcraft_yaml_file)
 
-    scenarios = [
-        (
-            "git",
-            dict(
-                source="git://github.com/ubuntu-core/snapcraft.git",
-                expected_package="git",
-            ),
-        ),
-        ("bzr", dict(source="lp:ubuntu-push", expected_package="bzr")),
-        (
-            "tar",
-            dict(
-                source="https://github.com/ubuntu-core/snapcraft/archive/2.0.1.tar.gz",
-                expected_package=None,
-            ),
-        ),
-    ]
+    project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix())
+    return project_loader.load_config(project)
 
-    def test_config_adds_vcs_packages_to_build_packages(self):
-        snapcraft_yaml = dedent(
-            """\
+
+def test_build_packages_from_snapcraft_yaml(tmp_work_path):
+    snapcraft_yaml = dedent(
+        """\
+        name: test
+        base: core18
+        version: "1.0"
+        summary: test
+        description: test
+        confinement: strict
+        grade: stable
+
+        build-packages: [foobar]
+
+        parts:
+          part1:
+            plugin: nil
+            build-packages: [foo, bar]
+        """
+    )
+
+    project_config = get_project_config(snapcraft_yaml)
+
+    assert project_config.get_build_packages() == {"foobar", "foo", "bar"}
+
+
+@pytest.mark.parametrize(
+    "source,expected_package",
+    [("git://github.com/ubuntu-core/snapcraft.git", "git"), ("lp:ubuntu-push", "bzr")],
+)
+def test_config_adds_vcs_packages_to_build_packages(
+    tmp_work_path, source, expected_package
+):
+    snapcraft_yaml = dedent(
+        f"""\
             name: test
             base: core18
             version: "1"
@@ -84,34 +76,32 @@ class VCSBuildPackagesTest(ProjectLoaderBaseTest):
 
             parts:
               part1:
-                source: {0}
+                source: {source}
                 plugin: nil
             """
-        ).format(self.source)
+    )
 
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
+    project_config = get_project_config(snapcraft_yaml)
 
-        if self.expected_package:
-            self.assertThat(
-                project_config.get_build_packages(), Contains(self.expected_package)
-            )
+    assert expected_package in project_config.get_build_packages()
 
 
-class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
-
-    scenarios = [
-        ("git", dict(type_="git", package="git")),
-        ("hg", dict(type_="hg", package="mercurial")),
-        ("mercurial", dict(type_="mercurial", package="mercurial")),
-        ("bzr", dict(type_="bzr", package="bzr")),
-        ("tar", dict(type_="tar", package=None)),
-        ("svn", dict(type_="svn", package="subversion")),
-        ("subversion", dict(type_="subversion", package="subversion")),
-    ]
-
-    def test_config_adds_vcs_packages_to_build_packages_from_types(self):
-        snapcraft_yaml = dedent(
-            """\
+@pytest.mark.parametrize(
+    "source_type,expected_package",
+    [
+        ("git", "git"),
+        ("hg", "mercurial"),
+        ("mercurial", "mercurial"),
+        ("bzr", "bzr"),
+        ("svn", "subversion"),
+        ("subversion", "subversion"),
+    ],
+)
+def test_config_adds_vcs_packages_to_build_packages_from_types(
+    tmp_work_path, source_type, expected_package
+):
+    snapcraft_yaml = dedent(
+        f"""\
             name: test
             base: core18
             version: "1"
@@ -123,65 +113,19 @@ class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
             parts:
               part1:
                 source: http://something/somewhere
-                source-type: {0}
+                source-type: {source_type}
                 plugin: autotools
         """
-        ).format(self.type_)
+    )
 
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
+    project_config = get_project_config(snapcraft_yaml)
 
-        if self.package:
-            self.assertThat(project_config.get_build_packages(), Contains(self.package))
-
-
-class XCompileTest(ProjectLoaderBaseTest):
-    def setUp(self):
-        super().setUp()
-
-        self.snapcraft_yaml = dedent(
-            """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-
-            parts:
-              part1:
-                plugin: nil
-        """
-        )
-
-    def test_config_adds_extra_build_tools_when_cross_compiling(self):
-        project_kwargs = dict(target_deb_arch="armhf")
-        with unittest.mock.patch(
-            "platform.machine"
-        ) as machine_mock, unittest.mock.patch("platform.architecture") as arch_mock:
-            arch_mock.return_value = ("64bit", "ELF")
-            machine_mock.return_value = "x86_64"
-            project_config = self.make_snapcraft_project(
-                self.snapcraft_yaml, project_kwargs
-            )
-
-        self.assertThat(
-            project_config.get_build_packages(), Contains("gcc-arm-linux-gnueabihf")
-        ),
-        self.assertThat(
-            project_config.get_build_packages(), Contains("libc6-dev-armhf-cross")
-        ),
-
-    def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
-        project_config = self.make_snapcraft_project(self.snapcraft_yaml)
-
-        self.assertThat(project_config.get_build_packages(), Equals(set()))
+    assert expected_package in project_config.get_build_packages()
 
 
-class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
-    def test_git_added_for_version_git(self):
-        snapcraft_yaml = dedent(
-            """\
+def test_git_added_for_version_git(tmp_work_path):
+    snapcraft_yaml = dedent(
+        """\
             name: test
             base: core18
             version: "git"
@@ -194,8 +138,8 @@ class VersionGitBuildPackagesTest(ProjectLoaderBaseTest):
               part1:
                 plugin: nil
             """
-        )
+    )
 
-        project_config = self.make_snapcraft_project(snapcraft_yaml)
+    project_config = get_project_config(snapcraft_yaml)
 
-        self.assertThat(project_config.get_build_packages(), Contains("git"))
+    "git" in project_config.get_build_packages()

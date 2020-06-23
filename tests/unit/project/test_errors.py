@@ -14,20 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tests import unit
-
-from testtools.matchers import Equals
-
 from snapcraft.project import errors
 
 
-class ErrorFormattingTest(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = [
         (
             "MissingSnapcraftYamlError",
             {
-                "exception": errors.MissingSnapcraftYamlError,
+                "exception_class": errors.MissingSnapcraftYamlError,
                 "kwargs": {"snapcraft_yaml_file_path": ".snapcraft.yaml"},
                 "expected_message": (
                     "Could not find .snapcraft.yaml. Are you sure you are "
@@ -39,7 +35,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "YamlValidationError",
             {
-                "exception": errors.YamlValidationError,
+                "exception_class": errors.YamlValidationError,
                 "kwargs": {"source": ".snapcraft.yaml", "message": "error"},
                 "expected_message": "Issues while validating .snapcraft.yaml: error",
             },
@@ -47,7 +43,7 @@ class ErrorFormattingTest(unit.TestCase):
         (
             "DuplicateSnapcraftYamlError",
             {
-                "exception": errors.DuplicateSnapcraftYamlError,
+                "exception_class": errors.DuplicateSnapcraftYamlError,
                 "kwargs": {
                     "snapcraft_yaml_file_path": ".snapcraft.yaml",
                     "other_snapcraft_yaml_file_path": "snapcraft.yaml",
@@ -60,7 +56,5 @@ class ErrorFormattingTest(unit.TestCase):
         ),
     ]
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message

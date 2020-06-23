@@ -298,10 +298,10 @@ class ElfFile:
         self.elf_type: str = "ET_NONE"
 
         try:
-            logger.debug("Extracting ELF attributes:", path)
+            logger.debug(f"Extracting ELF attributes: {path}")
             self._extract_attributes()
         except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
-            logger.debug("Extracting ELF attributes exception: ", str(exception))
+            logger.debug(f"Extracting ELF attributes exception: {str(exception)}")
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
@@ -321,15 +321,22 @@ class ElfFile:
                 elf.header.e_machine,
             )
 
-            for segment in elf.iter_segments():
-                if isinstance(segment, elftools.elf.dynamic.DynamicSegment):
-                    self.is_dynamic = True
-                    for tag in segment.iter_tags("DT_NEEDED"):
+            # Gather attributes from dynamic sections.
+            for section in elf.iter_sections():
+                if not isinstance(section, elftools.elf.dynamic.DynamicSection):
+                    continue
+
+                self.is_dynamic = True
+
+                for tag in section.iter_tags():
+                    if tag.entry.d_tag == "DT_NEEDED":
                         needed = _ensure_str(tag.needed)
                         self.needed[needed] = NeededLibrary(name=needed)
-                    for tag in segment.iter_tags("DT_SONAME"):
+                    elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = _ensure_str(tag.soname)
-                elif segment["p_type"] == "PT_GNU_STACK":
+
+            for segment in elf.iter_segments():
+                if segment["p_type"] == "PT_GNU_STACK":
                     # p_flags holds the bit mask for this segment.
                     # See `man 5 elf`.
                     mode = segment["p_flags"]

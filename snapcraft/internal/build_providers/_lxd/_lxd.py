@@ -17,7 +17,6 @@
 from textwrap import dedent
 import logging
 import os
-import pathlib
 import subprocess
 import sys
 import urllib.parse
@@ -41,21 +40,6 @@ logger = logging.getLogger(__name__)
 # Filter out attribute setting warnings for properties that exist in LXD operations
 # but are unhandled in pylxd.
 warnings.filterwarnings("ignore", module="pylxd.models.operation")
-
-
-def _get_resolv_conf_content(
-    resolv_conf_path: pathlib.Path = pathlib.Path("/run/systemd/resolve/resolv.conf"),
-) -> str:
-    environment_nameserver = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER")
-    if environment_nameserver is not None:
-        resolv_conf_content = f"nameserver {environment_nameserver}"
-    elif resolv_conf_path.exists():
-        with resolv_conf_path.open() as resolv_conf_file:
-            resolv_conf_content = resolv_conf_file.read(-1)
-    else:
-        resolv_conf_content = "nameserver 1.1.1.1"
-
-    return resolv_conf_content
 
 
 class LXD(Provider):
@@ -202,10 +186,15 @@ class LXD(Provider):
         return output
 
     def _launch(self) -> None:
-        config = {
-            "name": self.instance_name,
-            "source": get_image_source(base=self.project._get_build_base()),
-        }
+        build_base = self.project._get_build_base()
+        try:
+            source = get_image_source(base=build_base)
+        except KeyError:
+            raise errors.ProviderInvalidBaseError(
+                provider_name=self._get_provider_name(), build_base=build_base
+            )
+
+        config = {"name": self.instance_name, "source": source}
 
         try:
             container = self._lxd_client.containers.create(config, wait=True)
@@ -438,18 +427,16 @@ class LXD(Provider):
             path="/etc/hostname", content=self.instance_name, permissions="0644"
         )
 
-        self._install_file(
-            path="/etc/resolv.conf",
-            content=_get_resolv_conf_content(),
-            permissions="0644",
-        )
-
-        self._container.restart(wait=True)
         self._wait_for_systemd()
 
-        # the system needs networking
+        # Use resolv.conf managed by systemd-resolved.
+        self._run(["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"])
+
+        self._run(["systemctl", "enable", "systemd-resolved"])
         self._run(["systemctl", "enable", "systemd-networkd"])
-        self._run(["systemctl", "start", "systemd-networkd"])
+
+        self._run(["systemctl", "restart", "systemd-resolved"])
+        self._run(["systemctl", "restart", "systemd-networkd"])
 
         self._wait_for_network()
 

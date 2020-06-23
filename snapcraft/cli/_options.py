@@ -75,7 +75,7 @@ _PROVIDER_OPTIONS = [
         param_decls="--target-arch",
         metavar="<arch>",
         help="Target architecture to cross compile to",
-        supported_providers=["host", "lxd", "managed-host", "multipass"],
+        supported_providers=["host", "lxd", "multipass"],
     ),
     dict(
         param_decls="--debug",
@@ -231,6 +231,18 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
         if key in sys.argv and build_provider not in supported_providers:
             raise click.BadArgumentUsage(
                 f"{key} cannot be used with build provider {build_provider!r}"
+            )
+
+    # Check if running as sudo.
+    if os.getenv("SUDO_USER") and os.geteuid() == 0:
+        if build_provider in ["lxd", "multipass"]:
+            raise errors.SnapcraftEnvironmentError(
+                f"'sudo' cannot be used with build provider {build_provider!r}"
+            )
+
+        if build_provider in ["host"]:
+            click.echo(
+                "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
             )
 
 

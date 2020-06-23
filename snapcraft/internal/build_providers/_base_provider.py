@@ -269,11 +269,14 @@ class Provider(abc.ABC):
         provider_base = info.get("base")
         built_by = info.get("created-by-snapcraft-version")
         if self.project._get_build_base() != provider_base:
-            self.echoer.warning(
-                "Project base changed from {!r} to {!r}, cleaning build instance.".format(
-                    provider_base, self.project._get_build_base()
+            if provider_base is None:
+                self.echoer.warning(
+                    "Build instance created with incompatible snapcraft, cleaning."
                 )
-            )
+            else:
+                self.echoer.warning(
+                    f"Project base changed from {provider_base!r} to {provider_base!r}, cleaning build instance."
+                )
             self.clean_project()
         elif built_by is None:
             self.echoer.warning(
@@ -475,7 +478,7 @@ class Provider(abc.ABC):
         )
 
         # Set the HOME directory.
-        env_list.append(f"HOME={self._get_home_directory()}")
+        env_list.append(f"HOME={self._get_home_directory().as_posix()}")
 
         # Configure SNAPCRAFT_HAS_TTY.
         has_tty = str(sys.stdout.isatty())

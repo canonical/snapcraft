@@ -13,7 +13,7 @@ apps:
     command: bin/rust-hello-features
 
 parts:
-  simple-rust:
+  hello:
     plugin: rust
     source: .
     rust-features: [conditional-feature-present]

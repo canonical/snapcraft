@@ -73,9 +73,6 @@ class SnapcraftGroup(click.Group):
         # from the store.
         commands.pop(commands.index("edit-collaborators"))
 
-        # Inspect is for internal usage: hide it
-        commands.pop(commands.index("inspect"))
-
         # Hide the legacy commands
         for command in _CMD_LEGACY:
             commands.pop(commands.index(command))

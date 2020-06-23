@@ -14,27 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import pathlib
 from datetime import datetime
+from textwrap import dedent
 
-from testtools.matchers import Equals, Is, LessThan
+import pytest
 
-from tests import unit
 from snapcraft.project import Project
 
 
-class ProjectTest(unit.TestCase):
-    def test_project_with_arguments(self):
-        project = Project(target_deb_arch="armhf", debug=True)
+def test_project_with_arguments():
+    project = Project(target_deb_arch="armhf", debug=True)
 
-        self.assertThat(project.deb_arch, Equals("armhf"))
-        self.assertThat(project.debug, Equals(True))
-        # This is a backwards compatibility check
-        self.assertThat(project.info, Is(None))
+    assert project.deb_arch == "armhf"
+    assert project.debug is True
 
-    def test_project_with_snapcraft_yaml_file_path_carries_info(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            """\
+    # This is a backwards compatibility check
+    assert project.info is None
+
+
+def test_project_with_snapcraft_yaml_file_path_carries_info(tmp_work_path):
+    snapcraft_yaml_path = pathlib.Path("snapcraft.yaml")
+    with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
+        print(
+            dedent(
+                """\
             name: foo
             version: "1"
             summary: bar
@@ -45,24 +49,26 @@ class ProjectTest(unit.TestCase):
               part1:
                 plugin: go
             """
+            ),
+            file=snapcraft_yaml_file,
         )
 
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+    project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix())
 
-        # Only 1 value is enough
-        self.assertThat(project.info.name, Equals("foo"))
+    # Only 1 value is enough
+    assert project.info.name == "foo"
 
 
-class ProjectLocationTest(unit.TestCase):
-
-    scenarios = [
-        ("standard", {"location": ""}),
-        ("alternative", {"location": "build-aux"}),
-    ]
-
-    def test_project_local_plugin_location(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            """\
+@pytest.mark.parametrize(
+    "location", ["snap/snapcraft.yaml", "build-aux/snap/snapcraft.yaml"]
+)
+def test_project_local_plugin_location(tmp_work_path, location):
+    snapcraft_yaml_path = tmp_work_path / pathlib.Path(location)
+    snapcraft_yaml_path.parent.mkdir(parents=True)
+    with snapcraft_yaml_path.open("w") as snapcraft_yaml_file:
+        print(
+            dedent(
+                """\
             name: foo
             version: "1"
             summary: bar
@@ -71,19 +77,17 @@ class ProjectLocationTest(unit.TestCase):
 
             parts:
               part1:
-                plugin: nil
-            """,
-            location=self.location,
+                plugin: go
+            """
+            ),
+            file=snapcraft_yaml_file,
         )
 
-        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-        self.assertThat(
-            project.local_plugins_dir,
-            Equals(os.path.join(os.getcwd(), self.location, "snap", "plugins")),
-        )
+    project = Project(snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix())
+
+    expected_plugins_dir = snapcraft_yaml_path.parent / "plugins"
+    assert project.local_plugins_dir == expected_plugins_dir.as_posix()
 
 
-class ProjectTimestampTest(unit.TestCase):
-    def test_get_snapcraft_started(self):
-        project = Project()
-        self.assertThat(project._get_start_time(), LessThan(datetime.utcnow()))
+def test_get_snapcraft_started():
+    assert Project()._get_start_time() < datetime.utcnow()

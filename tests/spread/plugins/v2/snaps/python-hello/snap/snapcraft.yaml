@@ -15,7 +15,7 @@ apps:
     command: bin/hello
 
 parts:
-  python-part:
+  hello:
     source: .
     plugin: python
     python-packages:

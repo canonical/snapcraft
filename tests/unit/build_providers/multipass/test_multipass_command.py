@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import shutil
 import subprocess
 from collections import OrderedDict
 from unittest import mock
 
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft.internal.build_providers import errors
@@ -54,36 +56,34 @@ class MultipassCommandGeneralTest(MultipassCommandBaseTest):
         MultipassCommand.ensure_multipass(platform="linux")
 
 
-class MultipassCommandEnsureMultipassErrorsTest(MultipassCommandBaseTest):
+class TestMultipassCommandEnsureMultipassErrors:
     scenarios = (
         ("linux", dict(platform="linux", prompt_installable=True, snap_which=True)),
-        ("linux not snap", dict(platform="linux", prompt_installable=False)),
-        ("darwin", dict(platform="darwin", prompt_installable=True)),
-        ("unknown", dict(platform="unknown", prompt_installable=False)),
+        (
+            "linux not snap",
+            dict(platform="linux", prompt_installable=False, snap_which=False),
+        ),
+        ("darwin", dict(platform="darwin", prompt_installable=True, snap_which=False)),
+        (
+            "unknown",
+            dict(platform="unknown", prompt_installable=False, snap_which=False),
+        ),
     )
 
-    def setUp(self):
-        super().setUp()
-
+    def test_ensure_multipass_raises(
+        self, monkeypatch, platform, prompt_installable, snap_which
+    ):
         def which_effect(command: str):
-            if command != "snap":
-                return
+            if command == "snap" and snap_which:
+                return ["snap"]
 
-            try:
-                if self.snap_which:
-                    return ["snap"]
-            except AttributeError:
-                return []
+            return None
 
-        self.which_mock.side_effect = which_effect
+        monkeypatch.setattr(shutil, "which", which_effect)
 
-    def test_ensure_multipass_raises(self):
-        raised = self.assertRaises(
-            errors.ProviderNotFound,
-            MultipassCommand.ensure_multipass,
-            platform=self.platform,
-        )
-        self.assertThat(raised.prompt_installable, Equals(self.prompt_installable))
+        with pytest.raises(errors.ProviderNotFound) as error:
+            MultipassCommand.ensure_multipass(platform)
+            assert error.prompt_installable is prompt_installable
 
 
 class MultipassCommandSetupMultipassTest(MultipassCommandBaseTest):

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import subprocess
 
 from unittest import mock
@@ -55,13 +56,24 @@ class RosdepTestCase(unit.TestCase):
 
         # Verify that only rosdep was installed (no other .debs)
         self.assertThat(
-            self.ubuntu_mock.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
-                    mock.call.install_stage_packages(
-                        install_dir="rosdep_path/install",
+                    mock.call(
+                        stage_packages_path=self.rosdep._rosdep_stage_packages_path,
                         package_names=["python-rosdep"],
                         base="core",
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=self.rosdep._rosdep_stage_packages_path,
+                        install_path=pathlib.Path("rosdep_path/install"),
                     )
                 ]
             ),

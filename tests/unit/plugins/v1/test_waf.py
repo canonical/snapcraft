@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from unittest import mock
+
+import pytest
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors, meta
@@ -164,39 +165,19 @@ class WafPluginUnsupportedBase(PluginsV1BaseTestCase):
         )
 
 
-class WafCrossCompilePluginTestCase(WafPluginBaseTest):
+@pytest.mark.parametrize("deb_arch", ["armhf", "arm64", "i386", "ppc64el"])
+def test_cross_compile(monkeypatch, deb_arch):
+    monkeypatch.setattr(Project, "is_cross_compiling", True)
 
-    scenarios = [
-        ("armv7l", dict(deb_arch="armhf")),
-        ("aarch64", dict(deb_arch="arm64")),
-        ("i386", dict(deb_arch="i386")),
-        ("x86_64", dict(deb_arch="amd64")),
-        ("ppc64le", dict(deb_arch="ppc64el")),
-    ]
+    class Options:
+        configflags = []
 
-    def setUp(self):
-        super().setUp()
+    project = Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-        self.project = Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
+    plugin = waf.WafPlugin("test-part", Options(), project)
+    plugin.enable_cross_compilation()
 
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch("snapcraft.ProjectOptions.is_cross_compiling")
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.dict(os.environ, {})
-        self.env_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_cross_compile(self):
-        plugin = waf.WafPlugin("test-part", self.options, self.project)
-        # This shouldn't raise an exception
-        plugin.enable_cross_compilation()
-
-        env = plugin.env(plugin.sourcedir)
-        self.assertIn("CC={}-gcc".format(self.project.arch_triplet), env)
-        self.assertIn("CXX={}-g++".format(self.project.arch_triplet), env)
+    env = plugin.env(plugin.sourcedir)
+    assert f"CC={project.arch_triplet}-gcc" in env
+    assert f"CXX={project.arch_triplet}-g++" in env

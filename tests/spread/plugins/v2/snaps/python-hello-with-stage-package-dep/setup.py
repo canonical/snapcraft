@@ -8,4 +8,5 @@ setuptools.setup(
     author_email="snapcraft@lists.snapcraft.io",
     description="A simple hello world in python",
     scripts=["hello"],
+    install_requires=["appdirs"],
 )

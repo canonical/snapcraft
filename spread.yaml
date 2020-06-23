@@ -202,9 +202,7 @@ prepare: |
 
   apt-get install -y snapd
   snap install snapd
-
-  # Hold snap refreshes for 24h.
-  snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
+  snap wait system seed.loaded
 
   if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
       # Remove lxd and lxd-client deb packages as our implementation (pylxd) does not
@@ -212,13 +210,18 @@ prepare: |
       apt-get remove --purge --yes lxd lxd-client
       # Install and setup the lxd snap
       snap install lxd
-      echo "PATH=$PATH"
-      echo "which lxd: $(command -v lxd)"
-      stat /snap/bin/lxd
-      lxd waitready --timeout=30
-      lxd init --auto
       # Add the ubuntu user to the lxd group.
       adduser ubuntu lxd
+  fi
+
+  # Hold snap refreshes for 24h.
+  snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
+  snap watch --last=auto-refresh?
+  snap watch --last=install?
+
+  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      /snap/bin/lxd waitready --timeout=30
+      /snap/bin/lxd init --auto
   fi
 
   # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
@@ -283,7 +286,9 @@ suites:
      # shellcheck source=/dev/null
      source "$HOME/venv/snapcraft/bin/activate"
      pip install --upgrade pip wheel setuptools
-     pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt codecov
+     cd /snapcraft
+     pip install -r requirements.txt -r requirements-devel.txt codecov
+     pip install -e .
    recover: |
      rm -rf ~/venv
 

@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
-
 from snapcraft.internal.states._state import PartState
-from tests import unit
 
 
 class _TestState(PartState):
@@ -37,29 +34,31 @@ class _TestProject:
             setattr(self, key, value)
 
 
-class StateTestCase(unit.TestCase):
+class TestState:
     scenarios = [
         ("change existing", dict(old={"foo": "bar"}, new={"foo": "baz"})),
         ("add new", dict(old={"baz": "qux"}, new={"foo": "bar", "baz": "qux"})),
         ("remove old", dict(old={"foo": "bar", "baz": "qux"}, new={"baz": "qux"})),
     ]
 
-    def setUp(self):
-        super().setUp()
+    def get_state(self, old):
+        project = _TestProject(old)
+        part_properties = old
 
-        self.project = _TestProject(self.old)
-        self.part_properties = self.old
+        state = _TestState(part_properties, project)
+        state.properties = old
+        state.project_options = old
 
-        self.state = _TestState(self.part_properties, self.project)
-        self.state.properties = self.old
-        self.state.project_options = self.old
+        return state
 
-    def test_diff_properties_of_interest(self):
-        differing_properties = self.state.diff_properties_of_interest(self.new)
-        self.assertThat(differing_properties, Equals({"foo"}))
+    def test_diff_properties_of_interest(self, old, new):
+        state = self.get_state(old)
+        differing_properties = state.diff_properties_of_interest(new)
 
-    def test_diff_project_options_of_interest(self):
-        differing_properties = self.state.diff_project_options_of_interest(
-            _TestProject(self.new)
-        )
-        self.assertThat(differing_properties, Equals({"foo"}))
+        assert differing_properties == {"foo"}
+
+    def test_diff_project_options_of_interest(self, old, new):
+        state = self.get_state(old)
+        differing_properties = state.diff_project_options_of_interest(_TestProject(new))
+
+        assert differing_properties == {"foo"}

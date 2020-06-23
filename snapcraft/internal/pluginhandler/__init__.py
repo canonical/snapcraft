@@ -36,7 +36,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
 from ._metadata_extraction import extract_metadata
-from ._part_build_environment import get_snapcraft_build_environment
+from ._part_environment import get_snapcraft_part_environment
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
 from ._patchelf import PartPatcher
@@ -87,11 +87,15 @@ class PluginHandler:
         self.part_install_dir = os.path.join(self.part_dir, "install")
         self.part_state_dir = os.path.join(self.part_dir, "state")
         self.part_snaps_dir = os.path.join(self.part_dir, "snaps")
+
+        # Location to store fetch stage packages.
+        self.stage_packages_path = pathlib.Path(self.part_dir) / "stage_packages"
+
         # The working directory for the build depends on the source-subdir
         # part property.
-        self.part_build_work_dir = os.path.join(
-            self.part_build_dir, self._part_properties.get("source-subdir", "")
-        )
+        source_sub_dir = self._part_properties.get("source-subdir", "")
+        self.part_source_work_dir = os.path.join(self.part_source_dir, source_sub_dir)
+        self.part_build_work_dir = os.path.join(self.part_build_dir, source_sub_dir)
 
         self._pull_state: Optional[states.PullState] = None
         self._build_state: Optional[states.BuildState] = None
@@ -122,11 +126,16 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
+            env_generator = self._generate_part_env
             build_step_run_callable = self._do_v2_build
-            build_env_generator = self._generate_build_env
         else:
+
+            def generate_part_env(step: steps.Step) -> str:
+                return common.assemble_env()
+
+            env_generator = generate_part_env
             build_step_run_callable = self.plugin.build
-            build_env_generator = common.assemble_env
+
             self._migrate_state_file()
 
         self._runner = Runner(
@@ -136,7 +145,7 @@ class PluginHandler:
             builddir=self.part_build_dir,
             stagedir=self._project.stage_dir,
             primedir=self._project.prime_dir,
-            build_env_generator=build_env_generator,
+            env_generator=env_generator,
             builtin_functions={
                 steps.PULL.name: self._do_pull,
                 steps.BUILD.name: build_step_run_callable,
@@ -274,18 +283,6 @@ class PluginHandler:
                 os.remove(self.part_state_dir)
                 os.makedirs(self.part_state_dir)
                 self.mark_done(steps.get_step_by_name(step))
-
-    def working_directory_for_step(self, step: steps.Step) -> str:
-        if step == steps.PULL:
-            return self.part_source_dir
-        elif step == steps.BUILD:
-            return self.part_build_dir
-        elif step == steps.STAGE:
-            return self._project.stage_dir
-        elif step == steps.PRIME:
-            return self._project.prime_dir
-
-        raise errors.InvalidStepError(step.name)
 
     def latest_step(self):
         for step in reversed(steps.STEPS):
@@ -444,22 +441,31 @@ class PluginHandler:
                 self.part_install_dir, clean_target=False, keep_snap=True
             )
 
-    def _install_stage_packages(self):
+    def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             try:
-                self.stage_packages = self._stage_packages_repo.install_stage_packages(
+                self.stage_packages = self._stage_packages_repo.fetch_stage_packages(
                     package_names=stage_packages,
-                    install_dir=self.part_install_dir,
                     base=self._project._get_build_base(),
+                    stage_packages_path=self.stage_packages_path,
                 )
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)
 
+    def _unpack_stage_packages(self):
+        # We do this regardless, if there is no package in stage_packages_path
+        # then nothing will happen.
+        self._stage_packages_repo.unpack_stage_packages(
+            stage_packages_path=self.stage_packages_path,
+            install_path=pathlib.Path(self.part_install_dir),
+        )
+
     def prepare_pull(self, force=False):
         self.makedirs()
-        self._install_stage_packages()
+        self._fetch_stage_packages()
         self._fetch_stage_snaps()
+        self._unpack_stage_packages()
         self._unpack_stage_snaps()
 
     def pull(self, force=False):
@@ -547,6 +553,9 @@ class PluginHandler:
             else:
                 shutil.rmtree(self.part_source_dir)
 
+        if self.stage_packages_path.exists():
+            shutil.rmtree(self.stage_packages_path)
+
         if isinstance(self.plugin, plugins.v1.PluginV1):
             self.plugin.clean_pull()
         self.mark_cleaned(steps.PULL)
@@ -561,7 +570,7 @@ class PluginHandler:
         self.makedirs()
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
-        self._install_stage_packages()
+        self._unpack_stage_packages()
 
     def build(self, force=False):
         self.makedirs()
@@ -598,7 +607,7 @@ class PluginHandler:
 
         self._do_build(update=True)
 
-    def _generate_build_env(self) -> str:
+    def _generate_part_env(self, step: steps.Step) -> str:
         """
         Generates an environment suitable to run during a step.
 
@@ -608,10 +617,13 @@ class PluginHandler:
             raise RuntimeError("PluginV1 not supported.")
 
         # Snapcraft's say.
-        snapcraft_build_environment = get_snapcraft_build_environment(self)
+        snapcraft_build_environment = get_snapcraft_part_environment(self, step=step)
 
         # Plugin's say.
-        plugin_build_environment = self.plugin.get_build_environment()
+        if step == steps.BUILD:
+            plugin_environment = self.plugin.get_build_environment()
+        else:
+            plugin_environment = dict()
 
         # Part's (user) say.
         user_build_environment = self._part_properties["build-environment"]
@@ -626,7 +638,7 @@ class PluginHandler:
             for k, v in snapcraft_build_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## Plugin Environment", file=run_environment)
-            for k, v in plugin_build_environment.items():
+            for k, v in plugin_environment.items():
                 print(f'export {k}="{v}"', file=run_environment)
             print("## User Environment", file=run_environment)
             for env in user_build_environment:
@@ -649,7 +661,8 @@ class PluginHandler:
 
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
-            print(self._generate_build_env(), file=run_file)
+            print(self._generate_part_env(steps.BUILD), file=run_file)
+            print("set -x", file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
@@ -657,7 +670,15 @@ class PluginHandler:
             run_file.flush()
 
         build_script_path.chmod(0o755)
-        subprocess.run([build_script_path], check=True, cwd=self.part_build_work_dir)
+
+        try:
+            subprocess.run(
+                [build_script_path], check=True, cwd=self.part_build_work_dir
+            )
+        except subprocess.CalledProcessError as process_error:
+            raise errors.SnapcraftPluginBuildError(
+                part_name=self.name
+            ) from process_error
 
     def _do_build(self, *, update=False):
         self._do_runner_step(steps.BUILD)
@@ -769,10 +790,6 @@ class PluginHandler:
         }
 
     def clean_build(self):
-        # Only relevant for PluginV1.
-        if not isinstance(self.plugin, plugins.v1.PluginV1):
-            return
-
         if self.is_clean(steps.BUILD):
             return
 

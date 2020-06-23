@@ -13,19 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from testtools.matchers import Equals
 
 from snapcraft.internal.sources import errors
-from tests import unit
 
 
-class ErrorFormattingTestCase(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = (
         (
             "SnapcraftSourceNotFoundError",
             {
-                "exception": errors.SnapcraftSourceNotFoundError,
+                "exception_class": errors.SnapcraftSourceNotFoundError,
                 "kwargs": {"source": "file-not-found.tar.gz"},
                 "expected_message": (
                     "Failed to pull source: 'file-not-found.tar.gz'.\n"
@@ -37,7 +35,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftSourceUnhandledError",
             {
-                "exception": errors.SnapcraftSourceUnhandledError,
+                "exception_class": errors.SnapcraftSourceUnhandledError,
                 "kwargs": {"source": "unknown://source/type"},
                 "expected_message": (
                     "Failed to pull source: "
@@ -51,7 +49,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftSourceInvalidOptionError",
             {
-                "exception": errors.SnapcraftSourceInvalidOptionError,
+                "exception_class": errors.SnapcraftSourceInvalidOptionError,
                 "kwargs": {"source_type": "test", "option": "foo"},
                 "expected_message": (
                     "Failed to pull source: "
@@ -63,7 +61,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftSourceIncompatibleOptionsError, two options",
             {
-                "exception": errors.SnapcraftSourceIncompatibleOptionsError,
+                "exception_class": errors.SnapcraftSourceIncompatibleOptionsError,
                 "kwargs": {"source_type": "test", "options": ["foo", "bar"]},
                 "expected_message": (
                     "Failed to pull source: "
@@ -75,7 +73,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidSnapError",
             {
-                "exception": errors.InvalidSnapError,
+                "exception_class": errors.InvalidSnapError,
                 "kwargs": {},
                 "expected_message": (
                     "The snap file does not contain valid data. "
@@ -85,19 +83,17 @@ class ErrorFormattingTestCase(unit.TestCase):
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftException:
 
     scenarios = (
         (
             "GitCommandError",
             {
-                "exception": errors.GitCommandError,
+                "exception_class": errors.GitCommandError,
                 "kwargs": dict(
                     command=["echo", "hi", "$foo"],
                     output="some error output",
@@ -112,10 +108,19 @@ class SnapcraftExceptionTests(unit.TestCase):
         ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.assertEquals(self.expected_brief, exception.get_brief())
-        self.assertEquals(self.expected_resolution, exception.get_resolution())
-        self.assertEquals(self.expected_details, exception.get_details())
-        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
-        self.assertEquals(self.expected_reportable, exception.get_reportable())
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        kwargs,
+        expected_brief,
+        expected_resolution,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+    ):
+        exception = exception_class(**kwargs)
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable

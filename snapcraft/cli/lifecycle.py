@@ -18,6 +18,7 @@ import logging
 import typing
 from typing import Optional
 import os
+import sys
 
 import click
 
@@ -69,8 +70,15 @@ def _execute(  # noqa: C901
 
     is_managed_host = build_provider == "managed-host"
 
+    # Temporary fix to ignore target_arch.
+    if kwargs.get("target_arch") is not None and build_provider in ["multipass", "lxd"]:
+        echo.warning(
+            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
+        )
+        kwargs.pop("target_arch")
+
     project = get_project(is_managed_host=is_managed_host, **kwargs)
-    conduct_project_sanity_check(project)
+    conduct_project_sanity_check(project, **kwargs)
 
     if build_provider in ["host", "managed-host"]:
         project_config = project_loader.load_config(project)
@@ -315,6 +323,10 @@ def clean(ctx, parts, unprime, step, **kwargs):
 
     is_managed_host = build_provider == "managed-host"
 
+    # Temporary fix to ignore target_arch, silently for clean.
+    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
+        kwargs.pop("target_arch")
+
     try:
         project = get_project(is_managed_host=is_managed_host)
     except errors.ProjectNotFoundError:
@@ -336,8 +348,9 @@ def clean(ctx, parts, unprime, step, **kwargs):
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host
-            lifecycle.clean(project, parts, steps.PRIME)
+            # Clear the prime directory on the host, unless on Windows.
+            if sys.platform != "win32":
+                lifecycle.clean(project, parts, steps.PRIME)
 
 
 if __name__ == "__main__":

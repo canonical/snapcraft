@@ -31,7 +31,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
     - maven-targets:
       (list of strings)
-      List of targets that were built that need
+      List of target directories where the built jars are stored.
+      It corresponds to the <build><directory>target</directory></build>
+      from the Maven's build declaration.
 
     - maven-version:
       (string)
@@ -53,8 +55,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import shutil
+import textwrap
 from glob import glob
-from typing import Sequence
+from typing import Sequence, Optional
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -64,14 +67,38 @@ from snapcraft.plugins.v1 import PluginV1
 
 logger = logging.getLogger(__name__)
 
-
 _DEFAULT_MAVEN_VERSION = "3.5.4"
 _DEFAULT_MAVEN_CHECKSUM = "sha512/2a803f578f341e164f6753e410413d16ab60fabe31dc491d1fe35c984a5cce696bc71f57757d4538fe7738be04065a216f3ebad4ef7e0ce1bb4c51bc36d6be86"
 _MAVEN_URL = "https://archive.apache.org/dist/maven/maven-3/{version}/binaries/apache-maven-{version}-bin.tar.gz"
 
 
-class UnsupportedJDKVersionError(errors.SnapcraftError):
+class EmptyBuildTargetDirectoryError(errors.SnapcraftException):
+    def __init__(self, target_directory: str) -> None:
+        self._target_directory = target_directory
 
+    def get_details(self) -> Optional[str]:
+        return textwrap.dedent(
+            """\
+            This could happen if your `maven-targets` points to a directory that is not the same as the one
+            in your Maven's <build><directory>target</directory></build> declaration. By default, Snap's
+            Maven plugin won't need `maven-targets` declaration as it will work with the default Maven behavior.
+            If you are not sure, try removing `maven-targets` definition and build your Snap again."""
+        )
+
+    def get_brief(self) -> str:
+        return "Could not find built jar files for part in the following directory: {!r}".format(
+            self._target_directory
+        )
+
+    def get_resolution(self) -> str:
+        return textwrap.dedent(
+            """\
+            `maven-targets` should point the same directory as Maven's
+            <build><directory>target</directory></build> declaration."""
+        )
+
+
+class UnsupportedJDKVersionError(errors.SnapcraftError):
     fmt = (
         "The maven-openjdk-version plugin property was set to {version!r}.\n"
         "Valid values for the {base!r} base are: {valid_versions}."
@@ -221,7 +248,7 @@ class MavenPlugin(PluginV1):
             arfiles = glob(os.path.join(src, "*.[jw]ar"))
 
             if len(arfiles) == 0:
-                raise RuntimeError("Could not find any built jar files for part")
+                raise EmptyBuildTargetDirectoryError(src)
             if len(jarfiles) > 0 and len(f) == 0:
                 basedir = "jar"
             elif len(warfiles) > 0 and len(f) == 0:

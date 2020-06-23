@@ -15,10 +15,12 @@ apps:
       PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
 
 parts:
-  python-part:
+  hello:
     source: .
     plugin: python
     stage-packages:
       - python3-appdirs
     python-packages:
       - pip==20.0.2
+    build-environment:
+      - PYTHONPATH: $SNAPCRAFT_PART_INSTALL/usr/lib/python3/dist-packages:$PYTHONPATH

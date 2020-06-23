@@ -376,7 +376,7 @@ class StoreRegistrationError(StoreError):
         return "\n".join(self._errors)
 
 
-class StoreUploadError(StoreError):
+class StoreUpDownError(StoreError):
 
     fmt = (
         "There was an error uploading the package.\n"
@@ -388,14 +388,14 @@ class StoreUploadError(StoreError):
         super().__init__(response=response, reason=response.reason, text=response.text)
 
 
-class StorePushError(StoreError):
+class StoreUploadError(StoreError):
 
     __FMT_NOT_REGISTERED = (
         "This snap is not registered. Register the snap and try again."
     )
 
     __FMT_NOT_OWNER = (
-        "You are not the publisher or allowed to push revisions for this "
+        "You are not the publisher or allowed to upload revisions for this "
         "snap. Ensure you are logged in with the proper account and try "
         "again."
     )
@@ -573,7 +573,7 @@ class StoreMetadataError(StoreError):
     __FMT_NOT_FOUND = (
         "Sorry, updating the information on the store has failed, first run "
         "`snapcraft register {snap_name}` and then "
-        "`snapcraft push <snap-file>`."
+        "`snapcraft upload <snap-file>`."
     )
 
     fmt = "Received {status_code!r}: {text!r}"
@@ -592,7 +592,7 @@ class StoreMetadataError(StoreError):
                 for error in response_json["error_list"]
                 if error["code"] == "conflict"
             ]
-            parts = ["Metadata not pushed!"]
+            parts = ["Metadata not uploaded!"]
             for field_name, error in sorted(conflicts):
                 sent = metadata.get(field_name)
                 parts.extend(
@@ -603,7 +603,7 @@ class StoreMetadataError(StoreError):
                     )
                 )
             parts.append(
-                "You can repeat the push-metadata command with "
+                "You can repeat the upload-metadata command with "
                 "--force to force the local values into the Store"
             )
             self.parts = "\n".join(parts)
