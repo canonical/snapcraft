@@ -392,3 +392,38 @@ class TestErrorFormatting:
 
     def test_error_formatting(self, exception_class, kwargs, expected_message):
         assert str(exception_class(**kwargs)) == expected_message
+
+
+class TestSnapcraftExceptionTests:
+    scenarios = (
+        (
+            "ProviderInvalidBaseError",
+            {
+                "exception_class": errors.ProviderInvalidBaseError,
+                "kwargs": {"provider_name": "LXD", "build_base": "core29"},
+                "expected_brief": "The 'LXD' provider does not support base 'core29'",
+                "expected_resolution": "Ensure build-base or base are correct in the snapcraft.yaml file.",
+                "expected_details": None,
+                "expected_docs_url": "https://snapcraft.io/docs/base-snaps",
+                "expected_reportable": False,
+            },
+        ),
+    )
+
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        expected_brief,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+        expected_resolution,
+        kwargs,
+    ):
+        exception = exception_class(**kwargs)
+
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable

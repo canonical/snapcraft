@@ -186,10 +186,15 @@ class LXD(Provider):
         return output
 
     def _launch(self) -> None:
-        config = {
-            "name": self.instance_name,
-            "source": get_image_source(base=self.project._get_build_base()),
-        }
+        build_base = self.project._get_build_base()
+        try:
+            source = get_image_source(base=build_base)
+        except KeyError:
+            raise errors.ProviderInvalidBaseError(
+                provider_name=self._get_provider_name(), build_base=build_base
+            )
+
+        config = {"name": self.instance_name, "source": source}
 
         try:
             container = self._lxd_client.containers.create(config, wait=True)
