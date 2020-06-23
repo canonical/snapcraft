@@ -11,6 +11,6 @@ apps:
     command: bin/hello
 
 parts:
-    x-local-plugin:
-      plugin: x-local-plugin
-      source: .
+  hello:
+    plugin: x-local-plugin
+    source: .
