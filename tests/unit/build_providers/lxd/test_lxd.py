@@ -787,6 +787,13 @@ class LXDInitTest(LXDBaseTest):
             wait=True,
         )
 
+    def test_create_invalid_base(self):
+        self.project._snap_meta.base = "core19"
+
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+
+        self.assertRaises(errors.ProviderInvalidBaseError, instance.create)
+
 
 class LXDLaunchedTest(LXDBaseTest):
     def setUp(self):
