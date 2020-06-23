@@ -43,7 +43,7 @@ class ExtensionImpl(Extension):
             "plugs": {
                 "openvino-1804": {
                     "interface": "content",
-                    "target": "$SNAP/openvino",
+                    "target": "$SNAP",
                     "default-provider": toolkit_snap,
                 },
             },
