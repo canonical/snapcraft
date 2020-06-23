@@ -145,6 +145,17 @@ class TestNativeOptions:
             ),
         ),
         (
+            "riscv64",
+            dict(
+                machine="riscv64",
+                architecture=("64bit", "ELF"),
+                expected_arch_triplet="riscv64-linux-gnu",
+                expected_deb_arch="riscv64",
+                expected_kernel_arch="riscv64",
+                expected_core_dynamic_linker="lib/ld-linux-riscv64-lp64d.so.1",
+            ),
+        ),
+        (
             "s390x",
             dict(
                 machine="s390x",

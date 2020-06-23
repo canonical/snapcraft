@@ -73,6 +73,15 @@ _ARCH_TRANSLATIONS = {
         "triplet": "powerpc64le-linux-gnu",
         "core-dynamic-linker": "lib64/ld64.so.2",
     },
+    "riscv64": {
+        "kernel": "riscv64",
+        "deb": "riscv64",
+        "uts_machine": "riscv64",
+        "cross-compiler-prefix": "riscv64-linux-gnu-",
+        "cross-build-packages": ["gcc-riscv64-linux-gnu", "libc6-dev-riscv64-cross"],
+        "triplet": "riscv64-linux-gnu",
+        "core-dynamic-linker": "lib/ld-linux-riscv64-lp64d.so.1",
+    },
     "s390x": {
         "kernel": "s390",
         "deb": "s390x",
