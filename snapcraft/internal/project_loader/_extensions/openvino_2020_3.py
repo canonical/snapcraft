@@ -39,7 +39,15 @@ class ExtensionImpl(Extension):
 
         toolkit_snap = "cjp256-openvino-toolkit-1804"
 
-        self.root_snippet = {}
+        self.root_snippet = {
+            "plugs": {
+                "openvino-1804": {
+                    "interface": "content",
+                    "target": "$SNAP/openvino",
+                    "default-provider": toolkit_snap,
+                },
+            },
+        }
 
         self.app_snippet = {
             "environment": {
@@ -60,7 +68,7 @@ class ExtensionImpl(Extension):
                 "PATH": "$SNAP/openvino/deployment_tools/model_optimizer:$SNAP/openvino/data_processing/gstreamer/bin:$SNAP/openvino/data_processing/gstreamer/bin/gstreamer-1.0:$PATH",
                 "PKG_CONFIG_PATH": "$SNAP/openvino/data_processing/dl_streamer/lib/pkgconfig:$SNAP/openvino/data_processing/gstreamer/lib/pkgconfig:",
                 "PYTHONPATH": "$SNAP/openvino/opencv/lib/python3.6/site-packages:$SNAP/openvino/python/python3.6:$SNAP/openvino/python/python3:$SNAP/openvino/deployment_tools/open_model_zoo/tools/accuracy_checker:$SNAP/openvino/deployment_tools/model_optimizer:$SNAP/openvino/data_processing/dl_streamer/python:$SNAP/openvino/data_processing/gstreamer/lib/python3.6/site-packages:",
-                #"ngraph_DIR": "$SNAP/openvino/deployment_tools/ngraph/cmake",
+                # "ngraph_DIR": "$SNAP/openvino/deployment_tools/ngraph/cmake",
                 "ngraph_DIR": "$SNAP/openvino/cmake",
             },
             "plugs": [
@@ -76,9 +84,7 @@ class ExtensionImpl(Extension):
 
         self.part_snippet = {
             "build-environment": [
-                {
-                    "INTEL_OPENVINO_DIR": f"/snap/{toolkit_snap}/current/openvino"
-                },
+                {"INTEL_OPENVINO_DIR": f"/snap/{toolkit_snap}/current/openvino"},
                 {
                     "GI_TYPELIB_PATH": "$INTEL_OPENVINO_DIR/data_processing/gstreamer/lib/girepository-1.0"
                 },
@@ -95,9 +101,7 @@ class ExtensionImpl(Extension):
                 {
                     "HDDL_INSTALL_DIR": "$INTEL_OPENVINO_DIR/deployment_tools/inference_engine/external/hddl"
                 },
-                {
-                    "INTEL_CVSDK_DIR": "$INTEL_OPENVINO_DIR"
-                },
+                {"INTEL_CVSDK_DIR": "$INTEL_OPENVINO_DIR"},
                 {
                     "InferenceEngine_DIR": "$INTEL_OPENVINO_DIR/deployment_tools/inference_engine/share"
                 },
@@ -119,7 +123,7 @@ class ExtensionImpl(Extension):
                 {
                     "PYTHONPATH": "$INTEL_OPENVINO_DIR/opencv/lib/python3.6/site-packages:$INTEL_OPENVINO_DIR/python/python3.6:$INTEL_OPENVINO_DIR/python/python3:$INTEL_OPENVINO_DIR/deployment_tools/open_model_zoo/tools/accuracy_checker:$INTEL_OPENVINO_DIR/deployment_tools/model_optimizer:$INTEL_OPENVINO_DIR/data_processing/dl_streamer/python:$INTEL_OPENVINO_DIR/data_processing/gstreamer/lib/python3.6/site-packages:"
                 },
-                #{"ngraph_DIR": "$INTEL_OPENVINO_DIR/deployment_tools/ngraph/cmake"},
+                # {"ngraph_DIR": "$INTEL_OPENVINO_DIR/deployment_tools/ngraph/cmake"},
                 {"ngraph_DIR": "$INTEL_OPENVINO_DIR/cmake"},
             ]
         }
@@ -211,14 +215,14 @@ class ExtensionImpl(Extension):
                     "libcdio17",
                     "libcdparanoia0",
                     "libchromaprint1",
-                    #"libcrystalhd3",
+                    # "libcrystalhd3",
                     "libcurl3-gnutls",
                     "libdc1394-22",
                     "libdca0",
                     "libde265-0",
                     "libdirectfb-1.7-7",
                     "libdrm-amdgpu1",
-                    #"libdrm-intel1",
+                    # "libdrm-intel1",
                     "libdrm-nouveau2",
                     "libdrm-radeon1",
                     "libdv4",
