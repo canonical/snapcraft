@@ -211,7 +211,12 @@ class SnapInjectionTest(unit.TestCase):
                 "channel": "stable",
                 "revision": "123",
             },
-            {"name": "snapcraft", "confinement": "classic", "revision": "x20"},
+            {
+                "name": "snapcraft",
+                "confinement": "classic",
+                "revision": "x20",
+                "tracking-channel": "latest/stable",
+            },
         ]
         self.get_assertion_mock.side_effect = [
             b"fake-assertion-account-store",
@@ -240,6 +245,8 @@ class SnapInjectionTest(unit.TestCase):
             call(["snap-revision", "snap-revision=123", "snap-id=2kkitQ"]),
         ]
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
+        # Check the call count to ensure the snap switch command does not sneak in.
+        self.assertThat(self.provider.run_mock.call_count, Equals(6))
         self.provider.run_mock.assert_has_calls(
             [
                 call(["snap", "set", "system", ANY]),

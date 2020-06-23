@@ -164,7 +164,7 @@ class _SnapManager:
             snap_revision = host_snap_info["revision"]
             snap_channel = host_snap_info.get("tracking-channel")
 
-            if snap_channel:
+            if not snap_revision.startswith("x") and snap_channel:
                 switch_cmd = [
                     "snap",
                     "switch",
