@@ -29,15 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 _ARCH_TRANSLATIONS = {
-    "armv7l": {
-        "kernel": "arm",
-        "deb": "armhf",
-        "uts_machine": "arm",
-        "cross-compiler-prefix": "arm-linux-gnueabihf-",
-        "cross-build-packages": ["gcc-arm-linux-gnueabihf", "libc6-dev-armhf-cross"],
-        "triplet": "arm-linux-gnueabihf",
-        "core-dynamic-linker": "lib/ld-linux-armhf.so.3",
-    },
     "aarch64": {
         "kernel": "arm64",
         "deb": "arm64",
@@ -47,11 +38,28 @@ _ARCH_TRANSLATIONS = {
         "triplet": "aarch64-linux-gnu",
         "core-dynamic-linker": "lib/ld-linux-aarch64.so.1",
     },
+    "armv7l": {
+        "kernel": "arm",
+        "deb": "armhf",
+        "uts_machine": "arm",
+        "cross-compiler-prefix": "arm-linux-gnueabihf-",
+        "cross-build-packages": ["gcc-arm-linux-gnueabihf", "libc6-dev-armhf-cross"],
+        "triplet": "arm-linux-gnueabihf",
+        "core-dynamic-linker": "lib/ld-linux-armhf.so.3",
+    },
     "i686": {
         "kernel": "x86",
         "deb": "i386",
         "uts_machine": "i686",
         "triplet": "i386-linux-gnu",
+    },
+    "ppc": {
+        "kernel": "powerpc",
+        "deb": "powerpc",
+        "uts_machine": "powerpc",
+        "cross-compiler-prefix": "powerpc-linux-gnu-",
+        "cross-build-packages": ["gcc-powerpc-linux-gnu", "libc6-dev-powerpc-cross"],
+        "triplet": "powerpc-linux-gnu",
     },
     "ppc64le": {
         "kernel": "powerpc",
@@ -65,21 +73,6 @@ _ARCH_TRANSLATIONS = {
         "triplet": "powerpc64le-linux-gnu",
         "core-dynamic-linker": "lib64/ld64.so.2",
     },
-    "ppc": {
-        "kernel": "powerpc",
-        "deb": "powerpc",
-        "uts_machine": "powerpc",
-        "cross-compiler-prefix": "powerpc-linux-gnu-",
-        "cross-build-packages": ["gcc-powerpc-linux-gnu", "libc6-dev-powerpc-cross"],
-        "triplet": "powerpc-linux-gnu",
-    },
-    "x86_64": {
-        "kernel": "x86",
-        "deb": "amd64",
-        "uts_machine": "x86_64",
-        "triplet": "x86_64-linux-gnu",
-        "core-dynamic-linker": "lib64/ld-linux-x86-64.so.2",
-    },
     "s390x": {
         "kernel": "s390",
         "deb": "s390x",
@@ -88,6 +81,13 @@ _ARCH_TRANSLATIONS = {
         "cross-build-packages": ["gcc-s390x-linux-gnu", "libc6-dev-s390x-cross"],
         "triplet": "s390x-linux-gnu",
         "core-dynamic-linker": "lib/ld64.so.1",
+    },
+    "x86_64": {
+        "kernel": "x86",
+        "deb": "amd64",
+        "uts_machine": "x86_64",
+        "triplet": "x86_64-linux-gnu",
+        "core-dynamic-linker": "lib64/ld-linux-x86-64.so.2",
     },
 }
 
