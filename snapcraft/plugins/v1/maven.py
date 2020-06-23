@@ -80,7 +80,7 @@ class EmptyBuildTargetDirectoryError(errors.SnapcraftException):
         return textwrap.dedent(
             """\
             This could happen if your `maven-targets` points to a directory that is not the same as the one
-            in your Maven's <build><directory>target</directory></build> declaration. By default, Snap's 
+            in your Maven's <build><directory>target</directory></build> declaration. By default, Snap's
             Maven plugin won't need `maven-targets` declaration as it will work with the default Maven behavior.
             If you are not sure, try removing `maven-targets` definition and build your Snap again."""
         )
@@ -93,7 +93,7 @@ class EmptyBuildTargetDirectoryError(errors.SnapcraftException):
     def get_resolution(self) -> str:
         return textwrap.dedent(
             """\
-            `maven-targets` should point the same directory as Maven's 
+            `maven-targets` should point the same directory as Maven's
             <build><directory>target</directory></build> declaration."""
         )
 
