@@ -161,7 +161,9 @@ def _run_pack(snap_command: List[str]) -> str:
         else:
             message = f"\033[0;32mSnapping \033[0m"
             progress_indicator = progressbar.ProgressBar(
-                widgets=[message, progressbar.AnimatedMarker()]
+                widgets=[message, progressbar.AnimatedMarker()],
+                # From progressbar.ProgressBar.update(...).
+                maxval=progressbar.UnknownLength,
             )
             progress_indicator.start()
             for counter in itertools.count():
