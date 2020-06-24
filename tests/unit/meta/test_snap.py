@@ -130,6 +130,7 @@ class SnapTests(unit.TestCase):
             "assumes": ["command-chain"],
             "base": "core",
             "confinement": "strict",
+            "compression": "xz",
             "environment": {"TESTING": "1"},
             "epoch": 0,
             "grade": "devel",
@@ -163,6 +164,7 @@ class SnapTests(unit.TestCase):
         expected_dict = snap_dict.copy()
         expected_dict.pop("adopt-info")
         expected_dict.pop("base")
+        expected_dict.pop("compression")
         expected_dict.pop("package-repositories")
         expected_dict.update(expected_dict.pop("passthrough"))
 
@@ -181,6 +183,7 @@ class SnapTests(unit.TestCase):
             "assumes": ["command-chain"],
             "base": "core",
             "confinement": "strict",
+            "compression": "lzo",
             "environment": {"TESTING": "1"},
             "epoch": 0,
             "grade": "devel",

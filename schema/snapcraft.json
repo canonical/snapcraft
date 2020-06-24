@@ -412,6 +412,14 @@
             "description": "the snap epoch, used to specify upgrade paths",
             "format": "epoch"
         },
+        "compression": {
+            "description": "compression to use during packing",
+            "type": "string",
+            "enum": [
+                "lzo",
+                "xz"
+            ]
+        },
         "environment": {
             "type": "object",
             "description": "environment entries for the snap as a whole",
