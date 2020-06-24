@@ -981,6 +981,7 @@ class EnvironmentTest(ProjectBaseTest):
             r"schema: \[1, 2\].*",
         )
 
+
 @pytest.mark.parametrize("compression", ["lzo", "xz"])
 def test_valid_compression(data, compression):
     data["compression"] = compression
