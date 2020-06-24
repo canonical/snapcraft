@@ -13,7 +13,6 @@ try:
         FakeSnapCommand,
         FakeSnapcraftctl,
         FakeMultipass,
-        SilentSnapProgress,
     )
 except ImportError as import_error:
     if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "snapcraft")):

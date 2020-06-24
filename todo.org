@@ -22,11 +22,11 @@
 
 *** TODO [[file:specifications/enabling-experimental-features.org][Enabling Experimental Features]]
 
-*** TODO [[file:specifications/enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [/]
+*** TODO [[file:specifications/enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [1/4]
 
 - [ ] Add =click= option to enable experimental feature
 - [ ] Amend schema to allow =compression=
-- [ ] Replace =mksquashfs= with =snap pack=
+- [X] Replace =mksquashfs= with =snap pack=
 - [ ] Toggle compression with =snap pack=
 
 *** STRT [[file:specifications/progressive-releases.org][Progressive Releases]] [6/11]
