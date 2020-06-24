@@ -7,6 +7,8 @@ environment:
   SNAP/cmake: cmake-hello
   SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/make: make-hello
+  SNAP/local_plugin_from_base: local-plugin-from-base-hello
+  SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
   SNAP/python: python-hello
   SNAP/python_staged: python-hello-staged-python
   SNAP/python_with_python_package_dep: python-hello-with-python-package-dep
