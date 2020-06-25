@@ -413,7 +413,7 @@
             "format": "epoch"
         },
         "compression": {
-            "description": "compression to use during packing, default if not set is determined by snap pack",
+            "description": "compression to use for snap archive - default is otherwise determined by 'snap pack'",
             "type": "string",
             "enum": [
                 "lzo",
