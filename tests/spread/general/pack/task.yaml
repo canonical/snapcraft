@@ -1,4 +1,4 @@
-summary: Different compression algorithms for snap pack
+summary: Try different compression algorithms set in snapcraft.yaml
 
 systems: [ubuntu-20*]
 
