@@ -90,7 +90,11 @@ def _execute(  # noqa: C901
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
-            _pack(project.prime_dir, output=output)
+            _pack(
+                project.prime_dir,
+                compression=project._snap_meta.compression,
+                output=output,
+            )
     else:
         build_provider_class = build_providers.get_provider_for(build_provider)
         try:
@@ -194,10 +198,19 @@ def _run_pack(snap_command: List[str]) -> str:
     return snap_filename
 
 
-def _pack(directory: str, *, output: Optional[str]) -> None:
+def _pack(
+    directory: str, *, compression: Optional[str] = None, output: Optional[str]
+) -> None:
     snap_path = file_utils.get_tool_path("snap")
 
     command = [snap_path, "pack"]
+    # When None, just use snap pack's default settings.
+    if compression is not None:
+        if compression != "xz":
+            echo.warning(
+                f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
+            )
+        command.extend(["--compression", compression])
     if output is not None:
         command.extend(["--filename", output])
     command.append(directory)
