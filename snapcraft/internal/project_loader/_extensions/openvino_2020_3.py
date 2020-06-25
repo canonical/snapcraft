@@ -128,7 +128,7 @@ class ExtensionImpl(Extension):
                     "PKG_CONFIG_PATH": "$INTEL_OPENVINO_DIR/data_processing/dl_streamer/lib/pkgconfig:$INTEL_OPENVINO_DIR/data_processing/gstreamer/lib/pkgconfig:"
                 },
                 {
-                    "PYTHONPATH": "$INTEL_OPENVINO_DIR/opencv/lib/python3.6/site-packages:$INTEL_OPENVINO_DIR/python/python3.6:$INTEL_OPENVINO_DIR/python/python3:$INTEL_OPENVINO_DIR/deployment_tools/open_model_zoo/tools/accuracy_checker:$INTEL_OPENVINO_DIR/deployment_tools/model_optimizer:$INTEL_OPENVINO_DIR/data_processing/dl_streamer/python:$INTEL_OPENVINO_DIR/data_processing/gstreamer/lib/python3.6/site-packages:"
+                    "PYTHONPATH": "$INTEL_OPENVINO_DIR/opencv/lib/python3.6/dist-packages:$INTEL_OPENVINO_DIR/opencv/lib/python3.6/site-packages:$INTEL_OPENVINO_DIR/python/python3.6:$INTEL_OPENVINO_DIR/python/python3:$INTEL_OPENVINO_DIR/deployment_tools/open_model_zoo/tools/accuracy_checker:$INTEL_OPENVINO_DIR/deployment_tools/model_optimizer:$INTEL_OPENVINO_DIR/data_processing/dl_streamer/python:$INTEL_OPENVINO_DIR/data_processing/gstreamer/lib/python3.6/site-packages:"
                 },
                 # {"ngraph_DIR": "$INTEL_OPENVINO_DIR/deployment_tools/ngraph/cmake"},
                 {"ngraph_DIR": "$INTEL_OPENVINO_DIR/cmake"},
