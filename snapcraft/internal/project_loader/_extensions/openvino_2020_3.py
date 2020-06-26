@@ -141,7 +141,7 @@ class ExtensionImpl(Extension):
                 # "source": "http://registrationcenter-download.intel.com/akdlm/irc_nas/16670/l_openvino_toolkit_p_2020.3.194.tgz",
                 # "override-build": "./install.sh --accept_eula --silent --install_dir $SNAPCRAFT_PART_INSTALL/openvino-toolkit",
                 "plugin": "nil",
-                "build-snaps": [f"{toolkit_snap}/latest/edge"],
+                "build-snaps": [f"{toolkit_snap}/latest/stable"],
                 "build-packages": [
                     "libbison-dev",
                     "libdrm-dev",
