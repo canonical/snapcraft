@@ -982,6 +982,27 @@ class EnvironmentTest(ProjectBaseTest):
         )
 
 
+@pytest.mark.parametrize("compression", ["lzo", "xz"])
+def test_valid_compression(data, compression):
+    data["compression"] = compression
+
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("compression", ["lzma", "gz", "rar"])
+def test_invalid_compression(data, compression):
+    data["compression"] = compression
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'compression' property does not match the required "
+        f"schema: {compression!r} is not one of ['lzo', 'xz']"
+    )
+    assert expected_message in str(error.value)
+
+
 @pytest.mark.parametrize("confinement", ["strict", "devmode", "classic"])
 def test_valid_confinement(data, confinement):
     data["confinement"] = confinement

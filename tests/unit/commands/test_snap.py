@@ -85,7 +85,7 @@ class TestSnap(LifecycleCommandsBaseTestCase):
             steps.PRIME, mock.ANY, tuple()
         )
         self.fake_pack.mock.assert_called_once_with(
-            os.path.join(self.path, "prime"), output=None
+            os.path.join(self.path, "prime"), compression=None, output=None
         )
 
     def test_output_using_destructive_mode(self):
@@ -99,7 +99,7 @@ class TestSnap(LifecycleCommandsBaseTestCase):
             steps.PRIME, mock.ANY, tuple()
         )
         self.fake_pack.mock.assert_called_once_with(
-            os.path.join(self.path, "prime"), output="foo.snap"
+            os.path.join(self.path, "prime"), compression=None, output="foo.snap"
         )
 
     def test_deprecated_snap_dir(self):

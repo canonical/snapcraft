@@ -119,6 +119,12 @@ def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
         module = _load_local(plugin_name, local_plugins_dir)
         logger.info(f"Loaded local plugin for {plugin_name}")
 
+        # v2 requires plugin implementation to be named "PluginImpl".
+        if hasattr(module, "PluginImpl") and issubclass(
+            module.PluginImpl, plugins.v2.PluginV2
+        ):
+            return module.PluginImpl
+
         for attr in vars(module).values():
             if not isinstance(attr, type):
                 continue
