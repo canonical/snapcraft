@@ -17,6 +17,7 @@
 import os
 import pathlib
 from typing import List
+from unittest import mock
 
 import pytest
 import xdg
@@ -34,6 +35,14 @@ def pytest_generate_tests(metafunc):
         argnames = [x[0] for x in items]
         argvalues.append([x[1] for x in items])
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
+
+
+@pytest.fixture
+def mock_subprocess_run():
+    """A no-op subprocess.run mock."""
+    patcher = mock.patch("subprocess.run")
+    yield patcher.start()
+    patcher.stop()
 
 
 @pytest.fixture
