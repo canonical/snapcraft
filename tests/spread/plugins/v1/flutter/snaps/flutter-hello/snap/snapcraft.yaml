@@ -1,0 +1,21 @@
+name: flutter-hello
+version: 0.1.0
+summary: Hello GUI application using flutter
+description: Test application to ensure build works.
+confinement: strict
+base: core18
+grade: stable
+
+apps:
+  flutter-hello:
+    command: flutter-hello
+    extensions: [gnome-3-28]
+    plugs:
+      - network
+
+parts:
+  flutter-hello:
+    source: .
+    plugin: flutter
+    flutter-channel: master
+    flutter-revision: 3ce26910923b6a5e784df17a8a9a17b50598df4a
