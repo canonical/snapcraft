@@ -30,10 +30,7 @@ def test_schema():
         "$schema": "http://json-schema.org/draft-04/schema#",
         "additionalProperties": False,
         "properties": {
-            "flutter-channel": {
-                "enum": ["dev", "master"],
-                "type": "string",
-            },
+            "flutter-channel": {"enum": ["dev", "master"], "type": "string",},
             "flutter-revision": {"default": None, "type": "string"},
             "flutter-target": {"default": "lib/main.dart", "type": "string"},
         },
