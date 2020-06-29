@@ -23,11 +23,12 @@ For more information check the 'plugins' topic for the former and the
 Additionally, this plugin uses the following plugin-specific keywords:
 
     - flutter-channel
-      (string, default: "stable")
+      (string)
       Which Flutter channel to use for the build
     - flutter-revision
-      (string, default: None)
-      Which Flutter revision to use for the build
+      (string)
+      Which Flutter revision to use for the build. This must be a valid
+      revision from the flutter repository.
     - flutter-target
       (string, default: lib/main.dart)
       The main entry-point file of the application
@@ -51,7 +52,7 @@ class FlutterPlugin(PluginV1):
         schema = super().schema()
         schema["properties"]["flutter-channel"] = {
             "type": "string",
-            "enum": ["stable", "beta", "dev", "master"],
+            "enum": ["dev", "master"],
         }
         schema["properties"]["flutter-target"] = {
             "type": "string",

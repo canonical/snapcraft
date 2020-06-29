@@ -31,7 +31,7 @@ def test_schema():
         "additionalProperties": False,
         "properties": {
             "flutter-channel": {
-                "enum": ["stable", "beta", "dev", "master"],
+                "enum": ["dev", "master"],
                 "type": "string",
             },
             "flutter-revision": {"default": None, "type": "string"},
