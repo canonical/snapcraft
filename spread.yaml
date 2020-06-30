@@ -391,6 +391,13 @@ suites:
    - ubuntu-16.04
    - ubuntu-16.04-64
    - ubuntu-16.04-amd64
+ tests/spread/plugins/v1/flutter/:
+   summary: tests of snapcraft's Flutter plugin
+   # Keep this 18.04 as the tests makes use of the GNOME 3.28 extension.
+   systems:
+   - ubuntu-18.04
+   - ubuntu-18.04-64
+   - ubuntu-18.04-amd64
  tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
    systems:

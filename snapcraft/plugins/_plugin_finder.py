@@ -36,6 +36,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
             "crystal": v1.CrystalPlugin,
             "dotnet": v1.DotNetPlugin,
             "dump": v1.DumpPlugin,
+            "flutter": v1.FlutterPlugin,
             "go": v1.GoPlugin,
             "godeps": v1.GodepsPlugin,
             "gradle": v1.GradlePlugin,
