@@ -9,7 +9,7 @@ grade: stable
 apps:
   flutter-hello:
     command: flutter-hello
-    extensions: [gnome-3-28]
+    extensions: [flutter-master]
     plugs:
       - network
 
@@ -17,5 +17,4 @@ parts:
   flutter-hello:
     source: .
     plugin: flutter
-    flutter-channel: master
     flutter-revision: 3ce26910923b6a5e784df17a8a9a17b50598df4a

@@ -30,7 +30,6 @@ def test_schema():
         "$schema": "http://json-schema.org/draft-04/schema#",
         "additionalProperties": False,
         "properties": {
-            "flutter-channel": {"enum": ["dev", "master"], "type": "string"},
             "flutter-revision": {"default": None, "type": "string"},
             "flutter-target": {"default": "lib/main.dart", "type": "string"},
         },
@@ -41,7 +40,6 @@ def test_schema():
 
 def test_get_pull_properties():
     assert flutter.FlutterPlugin.get_pull_properties() == [
-        "flutter-channel",
         "flutter-revision",
     ]
 
@@ -72,12 +70,6 @@ def test_pull(mock_subprocess_run, flutter_plugin):
     flutter_plugin.pull()
 
     assert mock_subprocess_run.mock_calls == [
-        call(
-            ["flutter", "channel", flutter_plugin.options.flutter_channel], check=True
-        ),
-        call(["flutter", "config", "--enable-linux-desktop"], check=True),
-        call(["flutter", "upgrade"], check=True),
-        call(["flutter", "doctor"], check=True),
         call(["flutter", "pub", "get"], check=True),
     ]
 
@@ -87,12 +79,6 @@ def test_pull_with_revision(mock_subprocess_run, flutter_plugin):
     flutter_plugin.pull()
 
     assert mock_subprocess_run.mock_calls == [
-        call(
-            ["flutter", "channel", flutter_plugin.options.flutter_channel], check=True
-        ),
-        call(["flutter", "config", "--enable-linux-desktop"], check=True),
-        call(["flutter", "upgrade"], check=True),
-        call(["flutter", "doctor"], check=True),
         call("yes | flutter version foo", shell=True, check=True,),
         call(["flutter", "pub", "get"], check=True),
     ]
