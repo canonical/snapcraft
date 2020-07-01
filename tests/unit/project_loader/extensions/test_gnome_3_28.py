@@ -75,6 +75,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "desktop",
                         "desktop-legacy",
                         "gsettings",
+                        "opengl",
                         "wayland",
                         "x11",
                     ],

@@ -99,7 +99,14 @@ class ExtensionImpl(Extension):
 
         self.app_snippet = {
             "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": ["desktop", "desktop-legacy", "gsettings", "wayland", "x11"],
+            "plugs": [
+                "desktop",
+                "desktop-legacy",
+                "gsettings",
+                "opengl",
+                "wayland",
+                "x11",
+            ],
         }
 
         self.parts = {
