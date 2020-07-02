@@ -19,8 +19,7 @@ from collections import OrderedDict
 from typing import Dict, List
 
 from snapcraft import formatting_utils
-from snapcraft.internal.errors import SnapcraftError
-
+from snapcraft.internal.errors import SnapcraftError, SnapcraftException
 
 # dict of jsonschema validator -> cause pairs. Wish jsonschema just gave us
 # better messages.
@@ -195,3 +194,14 @@ def _interpret_anyOf(error):
     return "must be one of {}".format(
         formatting_utils.humanize_list(usages, "or", "{}")
     )
+
+
+class SnapcraftExperimentalExtensionsRequiredError(SnapcraftException):
+    def __init__(self, *, extension_name: str) -> None:
+        self.extension_name = extension_name
+
+    def get_brief(self) -> str:
+        return f"Experimental extension {self.extension_name!r} is required, but not enabled."
+
+    def get_resolution(self) -> str:
+        return "This extension may be enabled with the '--enable-experimental-extensions' parameter."

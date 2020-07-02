@@ -21,10 +21,10 @@ from typing import Any, Dict, List, Optional
 
 import click
 
-from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt, warning
 from snapcraft.internal import common, errors
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project, get_snapcraft_yaml
 
 
 class PromptOption(click.Option):
