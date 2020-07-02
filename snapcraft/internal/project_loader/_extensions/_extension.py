@@ -15,8 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
-from typing import Any, Dict
-from typing import Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from .. import errors
 
@@ -45,6 +44,11 @@ class Extension(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_supported_confinement() -> Tuple[str, ...]:
         """Return a tuple of supported confinement settings."""
+
+    @staticmethod
+    def is_experimental(base: Optional[str]) -> bool:
+        """Return whether or not this extension is unstable for given base."""
+        return False
 
     def __init__(self, *, extension_name: str, yaml_data: Dict[str, Any]) -> None:
         """Create a new Extension.
