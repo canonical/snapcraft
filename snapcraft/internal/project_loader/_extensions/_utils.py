@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Set, Type
 
 from .. import errors
 from ._extension import Extension
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.project import errors as project_errors
 
 logger = logging.getLogger(__name__)
@@ -123,6 +124,13 @@ def _load_extension(
 ) -> Extension:
     extension_class = find_extension(extension_name)
 
+    if extension_class.is_experimental(base=base):
+        if os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
+            logger.warning(f"*EXPERIMENTAL* extension {extension_name!r} enabled.")
+        else:
+            raise SnapcraftEnvironmentError(
+                f"Experimental extension {extension_name!r} is required, but not enabled.\nThis extension may be enabled with the '--enable-experimental-extensions' parameter."
+            )
     # Hand the extension a copy of the yaml data so the only way they can modify it is
     # by going through the extension API.
     return extension_class(
