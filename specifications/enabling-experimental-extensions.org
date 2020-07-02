@@ -1,0 +1,29 @@
+#+TITLE: Enabling Experimental Extensions
+#+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
+#+DATE: [2020-07-03]
+
+* Scope
+
+Snapcraft must support extensions for as long as the base is supported.  To ensure Snapcraft will continue to operate in a predictable manner, any extension that is not considered *stable* must indicate that it is experimental, and Snapcraft will require user acknowledgment.
+
+This document defines how *experimental* extensions work.
+
+* Extension Interfaces Changes
+
+Breaking interface changes are never allowed unless introduced with a new base.  If breaking changes are required, consider creating a new extension (version).
+
+An extension may indicate that it is experimental by implementing the ==is_experimental(...)== interface and returning True if the interfaces are not yet considered stable.
+
+The extension may conditionally indicate experimental status depending the on targeted base.  This allows extensions to reconsider their supported interfaces when a new base is available.
+
+* User Acknowledgment
+
+The user will enable experimental extensions with the ==--enable-experimental-extensions== flag.
+
+* Logging Experimental
+
+Snapcraft must log a warning:
+
+- when ==-enable-experimental-extensions== flag is used.
+
+- for each extension in use that is marked experimental.
