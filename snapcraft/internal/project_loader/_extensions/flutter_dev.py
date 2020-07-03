@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,10 +16,11 @@
 
 # Import types and tell flake8 to ignore the "unused" List.
 
+
 from ._flutter_meta import FlutterMetaExtension
 
 
 class ExtensionImpl(metaclass=FlutterMetaExtension):
-    channel = "master"
+    channel = "dev"
     supported_bases = ("core18",)
     supported_confinement = ("strict", "devmode")
