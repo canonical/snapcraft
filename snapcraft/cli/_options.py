@@ -17,7 +17,7 @@
 import distutils.util
 import os
 import sys
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import click
 
@@ -70,7 +70,7 @@ class BoolParamType(click.ParamType):
 _SUPPORTED_PROVIDERS = ["host", "lxd", "multipass"]
 _HIDDEN_PROVIDERS = ["managed-host"]
 _ALL_PROVIDERS = _SUPPORTED_PROVIDERS + _HIDDEN_PROVIDERS
-_PROVIDER_OPTIONS = [
+_PROVIDER_OPTIONS: List[Dict[str, Any]] = [
     dict(
         param_decls="--target-arch",
         metavar="<arch>",
@@ -356,6 +356,19 @@ def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
                 os.environ.pop(key)
         else:
             os.environ[key] = str(value)
+
+    # Clear false/unset boolean environment flags.
+    for option in _PROVIDER_OPTIONS:
+        if not option.get("is_flag", False):
+            continue
+
+        env_name = option.get("envvar")
+        if env_name is None:
+            continue
+
+        if not build_provider_flags.get(env_name):
+            os.environ.pop(env_name, None)
+            continue
 
     # Log any experimental flags in use.
     if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
