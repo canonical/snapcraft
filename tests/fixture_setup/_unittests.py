@@ -488,12 +488,3 @@ class FakeMultipass(fixtures.Fixture):
 
         multipass = os.path.join(tempdir, "multipass")
         os.symlink("/bin/true", multipass)
-
-
-class SilentSnapProgress(fixtures.Fixture):
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch("snapcraft.internal.lifecycle._packer.ProgressBar")
-        patcher.start()
-        self.addCleanup(patcher.stop)

@@ -48,7 +48,10 @@ class NpmPluginTest(TestCase):
     def test_get_build_environment(self):
         plugin = NpmPlugin(part_name="my-part", options=lambda: None)
 
-        self.assertThat(plugin.get_build_environment(), Equals(dict()))
+        self.assertThat(
+            plugin.get_build_environment(),
+            Equals({"PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}"}),
+        )
 
     def test_get_architecture_from_snap_arch(self):
         for snap_arch, node_arch in [
@@ -90,7 +93,6 @@ class NpmPluginTest(TestCase):
                         """\
                     if [ ! -f "${SNAPCRAFT_PART_INSTALL}/bin/node" ]; then
                         curl -s "https://nodejs.org/dist/v6.0.0/node-v6.0.0-linux-x64.tar.gz" | tar xzf - -C "${SNAPCRAFT_PART_INSTALL}/" --strip-components=1
-                        export PATH="${SNAPCRAFT_PART_INSTALL}/bin:${PATH}"
                     fi
                     """
                     ),

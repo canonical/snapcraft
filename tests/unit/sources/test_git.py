@@ -16,7 +16,7 @@
 
 import os
 import shutil
-from subprocess import CalledProcessError
+import subprocess
 from unittest import mock
 
 import fixtures
@@ -29,7 +29,7 @@ from tests.subprocess_utils import call, call_with_output
 
 
 def fake_git_command_error(*args, **kwargs):
-    raise CalledProcessError(44, ["git"], output=b"git: some error")
+    raise subprocess.CalledProcessError(44, ["git"], output=b"git: some error")
 
 
 # LP: #1733584
@@ -483,7 +483,7 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
         self.assertTrue(sources._source_handler["git"] is sources.Git)
 
     def test_pull_failure(self):
-        self.mock_run.side_effect = CalledProcessError(1, [])
+        self.mock_run.side_effect = subprocess.CalledProcessError(1, [])
 
         git = sources.Git("git://my-source", "source_dir")
         raised = self.assertRaises(sources.errors.SnapcraftPullError, git.pull)
@@ -722,7 +722,7 @@ class GitGenerateVersionBaseTestCase(unit.TestCase):
         self.addCleanup(patcher.stop)
 
 
-class GitGenerateVersionTestCase(GitGenerateVersionBaseTestCase):
+class TestGitGenerateVersion:
 
     scenarios = (
         ("only_tag", dict(return_value="2.28", expected="2.28")),
@@ -739,14 +739,17 @@ class GitGenerateVersionTestCase(GitGenerateVersionBaseTestCase):
         ),
     )
 
-    def test_version(self):
-        self.output_mock.return_value = self.return_value.encode("utf-8")
-        self.assertThat(sources.Git.generate_version(), Equals(self.expected))
+    def test_version(self, monkeypatch, return_value, expected):
+        monkeypatch.setattr(
+            subprocess, "check_output", lambda *args, **kwargs: return_value.encode()
+        )
+
+        assert sources.Git.generate_version() == expected
 
 
 class GitGenerateVersionNoTagTestCase(GitGenerateVersionBaseTestCase):
     def test_version(self):
-        self.output_mock.side_effect = CalledProcessError(1, [])
+        self.output_mock.side_effect = subprocess.CalledProcessError(1, [])
         proc_mock = mock.Mock()
         proc_mock.returncode = 0
         proc_mock.communicate.return_value = (b"abcdef1", b"")
@@ -758,7 +761,7 @@ class GitGenerateVersionNoTagTestCase(GitGenerateVersionBaseTestCase):
 
 class GitGenerateVersionNoGitTestCase(GitGenerateVersionBaseTestCase):
     def test_version(self):
-        self.output_mock.side_effect = CalledProcessError(1, [])
+        self.output_mock.side_effect = subprocess.CalledProcessError(1, [])
         proc_mock = mock.Mock()
         proc_mock.returncode = 2
         proc_mock.communicate.return_value = (b"", b"No .git")

@@ -19,6 +19,7 @@ from typing import Any, Dict, Optional
 from typing import Sequence  # noqa: F401
 
 from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
+from snapcraft.internal.errors import SnapcraftException as _SnapcraftException
 
 
 class ProviderBaseError(_SnapcraftError):
@@ -78,7 +79,7 @@ class _GenericProviderError(ProviderBaseError):
         provider_name: str,
         action: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         if exit_code is not None and error_message is not None:
             fmt = self._FMT_ERROR_MESSAGE_AND_EXIT_CODE
@@ -116,7 +117,7 @@ class ProviderLaunchError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="launch",
@@ -126,13 +127,28 @@ class ProviderLaunchError(_GenericProviderError):
         )
 
 
+class ProviderInvalidBaseError(_SnapcraftException):
+    def __init__(self, *, provider_name: str, build_base: str) -> None:
+        self.provider_name = provider_name
+        self.build_base = build_base
+
+    def get_brief(self) -> str:
+        return f"The {self.provider_name!r} provider does not support base {self.build_base!r}"
+
+    def get_resolution(self) -> str:
+        return "Ensure build-base or base are correct in the snapcraft.yaml file."
+
+    def get_docs_url(self) -> str:
+        return "https://snapcraft.io/docs/base-snaps"
+
+
 class ProviderStartError(_GenericProviderError):
     def __init__(
         self,
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="start",
@@ -148,7 +164,7 @@ class ProviderStopError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="stop",
@@ -164,7 +180,7 @@ class ProviderDeleteError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="delete",
@@ -187,7 +203,7 @@ class ProviderExecError(ProviderBaseError):
         provider_name: str,
         command: Sequence[str],
         exit_code: int,
-        output: Optional[bytes] = None
+        output: Optional[bytes] = None,
     ) -> None:
         command_string = " ".join(shlex.quote(i) for i in command)
         super().__init__(
@@ -205,7 +221,7 @@ class ProviderShellError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="shell",
@@ -221,7 +237,7 @@ class ProviderMountError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="mount",
@@ -237,7 +253,7 @@ class ProviderUnMountError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="unmount",
@@ -253,7 +269,7 @@ class ProviderFileCopyError(_GenericProviderError):
         *,
         provider_name: str,
         error_message: Optional[str] = None,
-        exit_code: Optional[int] = None
+        exit_code: Optional[int] = None,
     ) -> None:
         super().__init__(
             action="copy files",

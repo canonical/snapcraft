@@ -16,18 +16,15 @@
 
 from textwrap import dedent
 
-from testtools.matchers import Equals
-
 from snapcraft.storeapi import errors
-from tests import unit
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftException:
     scenarios = (
         (
             "SnapNotFoundError snap_name",
             dict(
-                exception=errors.SnapNotFoundError,
+                exception_class=errors.SnapNotFoundError,
                 kwargs=dict(snap_name="not-found"),
                 expected_brief="Snap 'not-found' was not found.",
                 expected_resolution="Ensure you have proper access rights for 'not-found'.",
@@ -39,7 +36,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapNotFoundError snap_id",
             dict(
-                exception=errors.SnapNotFoundError,
+                exception_class=errors.SnapNotFoundError,
                 kwargs=dict(snap_id="1234567890"),
                 expected_brief="Cannot find snap with snap_id '1234567890'.",
                 expected_resolution="Ensure you have proper access rights for '1234567890'.",
@@ -51,7 +48,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapNotFoundError snap_name, channel and arch",
             dict(
-                exception=errors.SnapNotFoundError,
+                exception_class=errors.SnapNotFoundError,
                 kwargs=dict(
                     snap_name="not-found", channel="default/stable", arch="foo"
                 ),
@@ -69,7 +66,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapNotFoundError snap_name and channel",
             dict(
-                exception=errors.SnapNotFoundError,
+                exception_class=errors.SnapNotFoundError,
                 kwargs=dict(snap_name="not-found", channel="default/stable"),
                 expected_brief="Snap 'not-found' was not found on channel 'default/stable'.",
                 expected_resolution=dedent(
@@ -85,7 +82,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapNotFoundError snap_name and arch",
             dict(
-                exception=errors.SnapNotFoundError,
+                exception_class=errors.SnapNotFoundError,
                 kwargs=dict(snap_name="not-found", arch="foo"),
                 expected_brief="Snap 'not-found' for architecture 'foo' was not found.",
                 expected_resolution=dedent(
@@ -100,10 +97,19 @@ class SnapcraftExceptionTests(unit.TestCase):
         ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.expectThat(exception.get_brief(), Equals(self.expected_brief))
-        self.expectThat(exception.get_resolution(), Equals(self.expected_resolution))
-        self.expectThat(exception.get_details(), Equals(self.expected_details))
-        self.expectThat(exception.get_docs_url(), Equals(self.expected_docs_url))
-        self.expectThat(exception.get_reportable(), Equals(self.expected_reportable))
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        kwargs,
+        expected_brief,
+        expected_resolution,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+    ):
+        exception = exception_class(**kwargs)
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable

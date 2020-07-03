@@ -15,14 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import tarfile
+import pathlib
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals, HasLength
+import pytest
+from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
+from snapcraft.internal.meta.snap import Snap
 from snapcraft.plugins.v1 import ant
+from snapcraft.project import Project
 from tests import unit
 from . import PluginsV1BaseTestCase
 
@@ -85,201 +88,135 @@ class AntPluginPropertiesTest(unit.TestCase):
             self.assertIn(property, resulting_build_properties)
 
 
-class AntPluginBaseTest(PluginsV1BaseTestCase):
-    scenarios = (
-        (
-            "core java version 8 ",
-            dict(base="core", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core java version 8 ",
-            dict(base="core", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core java version default ",
-            dict(base="core", java_version="", expected_java_version="9"),
-        ),
-        (
-            "core16 java version 8 ",
-            dict(base="core16", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core16 java version 8 ",
-            dict(base="core16", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core16 java version default ",
-            dict(base="core16", java_version="", expected_java_version="9"),
-        ),
-        (
-            "core18 java version 8 ",
-            dict(base="core18", java_version="8", expected_java_version="8"),
-        ),
-        (
-            "core18 java version 11",
-            dict(base="core18", java_version="11", expected_java_version="11"),
-        ),
-        (
-            "core18 java version default",
-            dict(base="core18", java_version="", expected_java_version="11"),
-        ),
+def _get_expected_java_version(ant_plugin) -> str:
+    base = ant_plugin.project._snap_meta.base
+    ant_openjdk_version = ant_plugin.options.ant_openjdk_version
+
+    if ant_openjdk_version:
+        expected_java_version = ant_openjdk_version
+    elif base in ("core", "core16"):
+        expected_java_version = "9"
+    else:
+        expected_java_version = "11"
+
+    return expected_java_version
+
+
+_BASE_JAVA_COMBINATIONS = [
+    ("", "core"),
+    ("8", "core"),
+    ("", "core16"),
+    ("8", "core16"),
+    ("", "core18"),
+    ("11", "core18"),
+]
+
+
+@pytest.fixture(params=_BASE_JAVA_COMBINATIONS)
+def ant_plugin(tmp_work_path, request):
+    """Return an instance of AntPlugin setup with different bases and java versions."""
+    java_version, base = request.param
+
+    class Options:
+        ant_properties = {}
+        ant_build_targets = None
+        ant_channel = None
+        ant_version = "1.10.5"
+        ant_version_checksum = "sha512/a7f1e0cec9d5ed1b3ab6cddbb9364f127305a997bbc88ecd734f9ef142ec0332375e01ace3592759bb5c3307cd9c1ac0a78a30053f304c7030ea459498e4ce4e"
+        ant_openjdk_version = java_version
+        ant_buildfile = None
+
+    project = Project()
+    project._snap_meta = Snap(name="test-snap", base=base, confinement="strict")
+
+    return ant.AntPlugin("test-part", Options(), project)
+
+
+@pytest.fixture()
+def ant_plugin_with_assets(ant_plugin):
+    """Return an instance of AntPlugin with artifacts setup using ant_plugin."""
+    pathlib.Path(ant_plugin.sourcedir).mkdir(parents=True)
+
+    expected_java_version = _get_expected_java_version(ant_plugin)
+
+    fake_java_path = (
+        pathlib.Path(ant_plugin.installdir)
+        / f"usr/lib/jvm/java-{expected_java_version}-openjdk-amd64/bin/java"
+    )
+    fake_java_path.parent.mkdir(parents=True)
+    fake_java_path.touch()
+
+    ant_tar_path = (
+        pathlib.Path(ant_plugin.partdir)
+        / f"ant/apache-ant-{ant_plugin.options.ant_version}-bin.tar.bz2"
+    )
+    ant_tar_path.parent.mkdir(parents=True)
+    ant_tar_path.touch()
+
+    return ant_plugin
+
+
+def test_stage_and_build_packages(ant_plugin):
+    expected_java_version = _get_expected_java_version(ant_plugin)
+
+    assert ant_plugin.stage_packages == [
+        f"openjdk-{expected_java_version}-jre-headless"
+    ]
+    assert ant_plugin.build_packages == [
+        f"openjdk-{expected_java_version}-jdk-headless"
+    ]
+
+
+def test_build(mock_tar, mock_run, ant_plugin_with_assets):
+    plugin = ant_plugin_with_assets
+
+    def fake_run(cmd, *args, **kwargs):
+        os.makedirs(os.path.join(plugin.builddir, "target"))
+        open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
+
+    mock_run.side_effect = fake_run
+
+    plugin.build()
+
+    mock_run.assert_called_once_with(["ant"], cwd=plugin.builddir, env=mock.ANY)
+    mock_tar.assert_called_once_with(
+        ant._ANT_ARCHIVE_FORMAT_URL.format(version=plugin.options.ant_version),
+        mock.ANY,
+        source_checksum=plugin.options.ant_version_checksum,
     )
 
-    def setUp(self):
-        super().setUp()
 
-        self.project._snap_meta.base = self.base
+def test_build_with_options(mock_tar, mock_run, ant_plugin_with_assets):
+    plugin = ant_plugin_with_assets
+    plugin.options.ant_build_targets = ["artifacts", "jar"]
+    plugin.options.ant_properties = {"basedir": "."}
 
-        class Options:
-            ant_properties = {}
-            ant_build_targets = None
-            ant_channel = None
-            ant_version = "1.10.5"
-            ant_version_checksum = "sha512/a7f1e0cec9d5ed1b3ab6cddbb9364f127305a997bbc88ecd734f9ef142ec0332375e01ace3592759bb5c3307cd9c1ac0a78a30053f304c7030ea459498e4ce4e"
-            ant_openjdk_version = self.java_version
-            ant_buildfile = None
+    plugin.build()
 
-        self.options = Options()
+    mock_run.assert_called_once_with(
+        ["ant", "artifacts", "jar", "-Dbasedir=."], cwd=plugin.builddir, env=mock.ANY
+    )
+    mock_tar.assert_called_once_with(
+        ant._ANT_ARCHIVE_FORMAT_URL.format(version=plugin.options.ant_version),
+        mock.ANY,
+        source_checksum=plugin.options.ant_version_checksum,
+    )
 
-        patcher = mock.patch("snapcraft.internal.common.run")
-        self.run_mock = patcher.start()
-        self.addCleanup(patcher.stop)
 
-        patcher = mock.patch("snapcraft.internal.sources.Tar")
-        self.tar_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+def test_build_with_explicit_buildfile(mock_tar, mock_run, ant_plugin_with_assets):
+    plugin = ant_plugin_with_assets
+    plugin.options.ant_buildfile = "test.xml"
 
-    def create_assets(self, plugin):
-        os.makedirs(plugin.sourcedir)
+    plugin.build()
 
-        fake_java_path = os.path.join(
-            plugin.installdir,
-            "usr",
-            "lib",
-            "jvm",
-            "java-{}-openjdk-amd64".format(self.expected_java_version),
-            "bin",
-            "java",
-        )
-        os.makedirs(os.path.dirname(fake_java_path))
-        open(fake_java_path, "w").close()
-
-        ant_tar_path = os.path.join(
-            plugin.partdir,
-            "ant",
-            "apache-ant-{}-bin.tar.bz2".format(plugin.options.ant_version),
-        )
-        os.makedirs(os.path.dirname(ant_tar_path))
-        tarfile.TarFile(ant_tar_path, "w").close()
-
-    def test_stage_and_build_packages(self):
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        self.assertThat(
-            plugin.stage_packages,
-            Equals(["openjdk-{}-jre-headless".format(self.expected_java_version)]),
-        )
-        self.assertThat(
-            plugin.build_packages,
-            Equals(["openjdk-{}-jdk-headless".format(self.expected_java_version)]),
-        )
-
-    def test_build(self):
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        def side(l, **kwargs):
-            os.makedirs(os.path.join(plugin.builddir, "target"))
-            open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
-
-        self.run_mock.side_effect = side
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["ant"], cwd=plugin.builddir, env=mock.ANY
-        )
-        self.tar_mock.assert_called_once_with(
-            ant._ANT_ARCHIVE_FORMAT_URL.format(version=self.options.ant_version),
-            mock.ANY,
-            source_checksum=self.options.ant_version_checksum,
-        )
-
-    def test_build_with_options(self):
-        self.options.ant_build_targets = ["artifacts", "jar"]
-        self.options.ant_properties = {"basedir": "."}
-
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["ant", "artifacts", "jar", "-Dbasedir=."],
-            cwd=plugin.builddir,
-            env=mock.ANY,
-        )
-        self.tar_mock.assert_called_once_with(
-            ant._ANT_ARCHIVE_FORMAT_URL.format(version=self.options.ant_version),
-            mock.ANY,
-            source_checksum=self.options.ant_version_checksum,
-        )
-
-    def test_build_with_explicit_buildfile(self):
-        self.options.ant_buildfile = "test.xml"
-
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        self.create_assets(plugin)
-
-        plugin.build()
-
-        self.run_mock.assert_called_once_with(
-            ["ant", "-f", "test.xml"], cwd=plugin.builddir, env=mock.ANY
-        )
-        self.tar_mock.assert_called_once_with(
-            ant._ANT_ARCHIVE_FORMAT_URL.format(version=self.options.ant_version),
-            mock.ANY,
-            source_checksum=self.options.ant_version_checksum,
-        )
-
-    def test_env(self):
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        os.makedirs(os.path.join(plugin.installdir, "jar"))
-        open(os.path.join(plugin.installdir, "jar", "lib1.jar"), "w").close()
-        open(os.path.join(plugin.installdir, "jar", "lib2.jar"), "w").close()
-        env = plugin.env(plugin.partdir)
-        self.assertIn(
-            "CLASSPATH={}/jar/lib1.jar:{}/jar/lib2.jar:$CLASSPATH".format(
-                plugin.partdir, plugin.partdir
-            ),
-            env,
-        )
-
-    def test_build_env_proxies(self):
-        env_vars = (
-            ("http_proxy", "http://user:pass@localhost:3132"),
-            ("https_proxy", "http://user2:pass2@localhost2:3133"),
-        )
-        for key, value in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(key, value))
-
-        plugin = ant.AntPlugin("test-part", self.options, self.project)
-
-        env = plugin._build_environment()
-        self.assertThat(env, Contains("ANT_OPTS"))
-        self.assertThat(
-            env["ANT_OPTS"],
-            Equals(
-                "-Dhttp.proxyHost=localhost -Dhttp.proxyPort=3132 "
-                "-Dhttp.proxyUser=user -Dhttp.proxyPassword=pass "
-                "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133 "
-                "-Dhttps.proxyUser=user2 -Dhttps.proxyPassword=pass2"
-            ),
-        )
+    mock_run.assert_called_once_with(
+        ["ant", "-f", "test.xml"], cwd=plugin.builddir, env=mock.ANY
+    )
+    mock_tar.assert_called_once_with(
+        ant._ANT_ARCHIVE_FORMAT_URL.format(version=plugin.options.ant_version),
+        mock.ANY,
+        source_checksum=plugin.options.ant_version_checksum,
+    )
 
 
 class AntPluginSnapTest(PluginsV1BaseTestCase):
@@ -385,7 +322,7 @@ class AntPluginUnsupportedBase(PluginsV1BaseTestCase):
         )
 
 
-class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
+class TestUnsupportedJDKVersionError:
 
     scenarios = (
         (
@@ -423,27 +360,18 @@ class UnsupportedJDKVersionErrorTest(PluginsV1BaseTestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
-
-        self.project._snap_meta.base = self.base
-
+    def test_use_invalid_openjdk_version_fails(self, base, version, expected_message):
         class Options:
             ant_properties = {}
             ant_build_targets = None
             ant_channel = None
             ant_version = "1.10.5"
             ant_version_checksum = "sha512/a7f1e0cec9d5ed1b3ab6cddbb9364f127305a997bbc88ecd734f9ef142ec0332375e01ace3592759bb5c3307cd9c1ac0a78a30053f304c7030ea459498e4ce4e"
-            ant_openjdk_version = self.version
+            ant_openjdk_version = version
 
-        self.options = Options()
+        project = Project()
+        project._snap_meta = Snap(name="test-snap", base=base, confinement="strict")
 
-    def test_use_invalid_openjdk_version_fails(self):
-        raised = self.assertRaises(
-            ant.UnsupportedJDKVersionError,
-            ant.AntPlugin,
-            "test-part",
-            self.options,
-            self.project,
-        )
-        self.assertThat(str(raised), Equals(self.expected_message))
+        with pytest.raises(ant.UnsupportedJDKVersionError) as error:
+            ant.AntPlugin("test-part", Options(), project)
+            assert str(error) == expected_message

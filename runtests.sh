@@ -53,20 +53,10 @@ run_static_tests() {
 
 run_snapcraft_tests(){
     test_suite="$1"
-    use_run="$2"
 
-    if [[ -n "$use_run" ]]; then
-        python3 -m unittest -b -v run "$test_suite"
-    elif [[ -n "$(command -v coverage)" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    if [[ "$test_suite" == "tests/unit"* ]]; then
         # Run with coverage results, if available.
-        python3 -m coverage erase
-        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
-
-        coverage report
-        echo
-        echo "Run 'python3-coverage html' to get a nice report"
-        echo "View it by running 'x-www-browser htmlcov'"
-        echo
+        pytest --cov-report=xml --cov=snapcraft tests/unit/
     else
         python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi

@@ -505,30 +505,7 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
 
 
 class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
-
-    scenarios = [
-        (
-            "delete other cache files with valid name",
-            {
-                "cached_snaps": [
-                    "a-cached-snap_0.3_{}_8.snap",
-                    "another-cached-snap_1.0_fakearch_6.snap",
-                ]
-            },
-        ),
-        (
-            "delete other cache files with invalid name",
-            {
-                "cached_snaps": [
-                    "a-cached-snap_0.3_{}.snap",
-                    "cached-snap-without-revision_1.0_fakearch.snap",
-                    "another-cached-snap-without-version_fakearch.snap",
-                ]
-            },
-        ),
-    ]
-
-    def test_upload_revision_prune_snap_cache(self):
+    def run_test(self, cached_snaps):
         snap_revision = 19
 
         self.mock_tracker.track.return_value = {
@@ -551,7 +528,7 @@ class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
         )
         os.makedirs(snap_cache)
 
-        for cached_snap in self.cached_snaps:
+        for cached_snap in cached_snaps:
             cached_snap = cached_snap.format(deb_arch)
             open(os.path.join(snap_cache, cached_snap), "a").close()
 
@@ -566,7 +543,21 @@ class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
 
         self.assertThat(os.path.join(snap_cache, real_cached_snap), FileExists())
 
-        for snap in self.cached_snaps:
+        for snap in cached_snaps:
             snap = snap.format(deb_arch)
             self.assertThat(os.path.join(snap_cache, snap), Not(FileExists()))
         self.assertThat(len(os.listdir(snap_cache)), Equals(1))
+
+    def test_delete_other_cache_files_with_valid_name(self):
+        self.run_test(
+            ["a-cached-snap_0.3_{}_8.snap", "another-cached-snap_1.0_fakearch_6.snap"]
+        )
+
+    def test_delete_other_cache_file_with_invalid_name(self):
+        self.run_test(
+            [
+                "a-cached-snap_0.3_{}.snap",
+                "cached-snap-without-revision_1.0_fakearch.snap",
+                "another-cached-snap-without-version_fakearch.snap",
+            ]
+        )

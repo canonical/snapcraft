@@ -77,8 +77,17 @@ class RemoteBuildTests(CommandBaseTestCase):
     def test_remote_build_sudo_errors(self):
         self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
 
+        self.useFixture(fixtures.MockPatch("os.geteuid", return_value=0))
+
         self.assertRaises(
             SnapcraftEnvironmentError,
             self.run_command,
             ["remote-build", "--launchpad-accept-public-upload"],
         )
+
+    def test_remote_build_sudo_non_root_no_errors(self):
+        self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
+
+        self.useFixture(fixtures.MockPatch("os.geteuid", return_value=1000))
+
+        self.run_command(["remote-build", "--launchpad-accept-public-upload"])

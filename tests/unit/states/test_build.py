@@ -15,20 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from unittest import mock
+
 from testtools.matchers import Equals
 
 from snapcraft import yaml_utils
 import snapcraft.internal
 from tests import unit
+from .conftest import Project
 
 
 class BuildStateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-
-        class Project:
-            def __init__(self):
-                self.deb_arch = "amd64"
 
         self.project = Project()
         self.property_names = ["foo"]
@@ -96,20 +94,5 @@ class BuildStateTestCase(BuildStateBaseTestCase):
         self.assertThat(options["deb_arch"], Equals("amd64"))
 
 
-class BuildStateNotEqualTestCase(BuildStateBaseTestCase):
-
-    scenarios = [
-        ("no property names", dict(other_property="property_names", other_value=[])),
-        (
-            "no part properties",
-            dict(other_property="part_properties", other_value=None),
-        ),
-        ("no project", dict(other_property="project", other_value=None)),
-    ]
-
-    def test_comparison_not_equal(self):
-        setattr(self, self.other_property, self.other_value)
-        other_state = snapcraft.internal.states.BuildState(
-            self.property_names, self.part_properties, self.project
-        )
-        self.assertFalse(self.state == other_state, "Expected states to be different")
+def test_comparison_not_equal(build_state, build_state_variant):
+    assert build_state != build_state_variant

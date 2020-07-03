@@ -64,13 +64,19 @@ class TestPackages(unit.TestCase):
             )
         ).mock
 
-    def test_install_stage_packages(self):
+        self.stage_packages_path = Path(self.path)
+
+    def test_fetch_stage_packages(self):
+        fake_package = self.debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
         self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
-            ("fake-package", "1.0", Path(self.path))
+            ("fake-package", "1.0", fake_package)
         ]
 
-        installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["fake-package"], install_dir=self.path, base="core"
+        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+            package_names=["fake-package"],
+            stage_packages_path=self.stage_packages_path,
+            base="core",
         )
 
         self.fake_apt_cache.assert_has_calls(
@@ -89,31 +95,41 @@ class TestPackages(unit.TestCase):
             ]
         )
 
-        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
+        self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
 
-    def test_install_virtual_stage_package(self):
+    def test_fetch_virtual_stage_package(self):
+        fake_package = self.debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
         self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
-            ("fake-package", "1.0", Path(self.path))
+            ("fake-package", "1.0", fake_package)
         ]
 
-        installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["virtual-fake-package"], install_dir=self.path, base="core"
+        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+            package_names=["virtual-fake-package"],
+            stage_packages_path=self.stage_packages_path,
+            base="core",
         )
 
-        self.assertThat(installed_packages, Equals(["fake-package=1.0"]))
+        self.assertThat(fetched_packages, Equals(["fake-package=1.0"]))
 
-    def test_install_stage_package_with_deps(self):
+    def test_fetch_stage_package_with_deps(self):
+        fake_package = self.debs_path / "fake-package_1.0_all.deb"
+        fake_package.touch()
+        fake_package_dep = self.debs_path / "fake-package-dep_1.0_all.deb"
+        fake_package_dep.touch()
         self.fake_apt_cache.return_value.__enter__.return_value.fetch_archives.return_value = [
-            ("fake-package", "1.0", Path(self.path)),
-            ("fake-package-dep", "2.0", Path(self.path)),
+            ("fake-package", "1.0", fake_package),
+            ("fake-package-dep", "2.0", fake_package_dep),
         ]
 
-        installed_packages = repo.Ubuntu.install_stage_packages(
-            package_names=["fake-package"], install_dir=self.path, base="core"
+        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+            package_names=["fake-package"],
+            stage_packages_path=self.stage_packages_path,
+            base="core",
         )
 
         self.assertThat(
-            installed_packages,
+            fetched_packages,
             Equals(sorted(["fake-package=1.0", "fake-package-dep=2.0"])),
         )
 
@@ -124,9 +140,9 @@ class TestPackages(unit.TestCase):
 
         raised = self.assertRaises(
             errors.PackageFetchError,
-            repo.Ubuntu.install_stage_packages,
+            repo.Ubuntu.fetch_stage_packages,
             package_names=["fake-package"],
-            install_dir=self.path,
+            stage_packages_path=Path(self.path),
             base="core",
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
@@ -167,7 +183,7 @@ class BuildPackagesTestCase(unit.TestCase):
             fixtures.MockPatch("subprocess.check_call")
         ).mock
 
-        def get_installed_version(package_name):
+        def get_installed_version(package_name, resolve_virtual_packages=False):
             return "1.0" if "installed" in package_name else None
 
         self.fake_apt_cache.return_value.__enter__.return_value.get_installed_version.side_effect = (

@@ -44,6 +44,7 @@ class Snap:
         assumes: Optional[Set[str]] = None,
         base: Optional[str] = None,
         build_base: Optional[str] = None,
+        compression: Optional[str] = None,
         confinement: Optional[str] = None,
         description: Optional[str] = None,
         environment: Optional[Dict[str, Any]] = None,
@@ -82,6 +83,7 @@ class Snap:
 
         self.base = base
         self.build_base = build_base
+        self.compression = compression
         self.confinement = confinement
         self.description = description
 
@@ -294,6 +296,7 @@ class Snap:
 
         base = snap_dict.pop("base", None)
         build_base = snap_dict.pop("build-base", None)
+        compression = snap_dict.pop("compression", None)
         confinement = snap_dict.pop("confinement", None)
         description = snap_dict.pop("description", None)
         environment = snap_dict.pop("environment", None)
@@ -369,6 +372,7 @@ class Snap:
             assumes=assumes,
             base=base,
             build_base=build_base,
+            compression=compression,
             confinement=confinement,
             description=description,
             environment=environment,
@@ -426,6 +430,9 @@ class Snap:
 
         if self.build_base is not None:
             snap_dict["build-base"] = self.build_base
+
+        if self.compression is not None:
+            snap_dict["compression"] = self.compression
 
         if self.confinement is not None:
             snap_dict["confinement"] = self.confinement
@@ -491,6 +498,7 @@ class Snap:
         # Remove keys that are not for snap.yaml.
         snap_dict.pop("build-base", None)
         snap_dict.pop("adopt-info", None)
+        snap_dict.pop("compression", None)
         snap_dict.pop("package-repositories", None)
 
         # Apply passthrough keys.

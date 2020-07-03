@@ -1,6 +1,7 @@
 #+TITLE: Snapcraft Tasks
 #+STARTUP: content
 #+STARTUP: lognotestate
+#+TODO: TODO(t) STRT(s@/!) | DONE(d!) CANCELED(c@)
 
 * Specifications
 
@@ -18,16 +19,15 @@
 - [X] Add CLI support for =help=
 - [X] Add CLI support for =list-plugins=
 - [ ] Add CLI support for =expand-plugins=
-- [ ] Introduce new custom plugin loading logic for =core20=
+- [X] Introduce new custom plugin loading logic for =core20=
 
 *** TODO [[file:specifications/enabling-experimental-features.org][Enabling Experimental Features]]
 
-*** TODO [[file:specifications/enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [/]
-
-- [ ] Add =click= option to enable experimental feature
-- [ ] Amend schema to allow =compression=
-- [ ] Replace =mksquashfs= with =snap pack=
-- [ ] Toggle compression with =snap pack=
+*** DONE [[file:specifications/enabling-experimental-lzo-compression.org][Enabling Experimental LZO Compression]] [3/3]
+CLOSED: [2020-06-24]
+- [X] Amend schema to allow =compression=
+- [X] Replace =mksquashfs= with =snap pack=
+- [X] Toggle compression with =snap pack=
 
 *** STRT [[file:specifications/progressive-releases.org][Progressive Releases]] [6/11]
 
@@ -43,7 +43,7 @@
 - [ ] Add support for specific channel-map endpoint errors
 - [ ] Remove experimental flag
 
-*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [/]
+*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [6/9]
 
 - [X] System-wide APT configuration for build and stage-packages.
 - [X] Meta support for =package-repositories=: PackageRepository
@@ -54,3 +54,10 @@
 - [ ] Improve error handling when schema validation fails. Nearly everything will fail with: "The =package-repositories[0] property does not match the required schema: <schemas>=
 - [ ] Add multi-arch spread test(s).
 - [ ] Finalize schema and mark stable.
+
+*** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [2/4]
+
+- [X] Add extension variant for master
+- [X] Add extension variant for dev
+- [ ] Add extension variant for beta
+- [ ] Add extension variant for stable

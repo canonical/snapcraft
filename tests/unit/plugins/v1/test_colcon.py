@@ -16,21 +16,13 @@
 
 import logging
 import os
-import os.path
-import re
+import pathlib
 
 import fixtures
+import pytest
 from unittest import mock
 from testscenarios import multiply_scenarios
-from testtools.matchers import (
-    Contains,
-    Equals,
-    FileExists,
-    HasLength,
-    LessThan,
-    MatchesRegex,
-    Not,
-)
+from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
 from snapcraft import repo
 from snapcraft.plugins.v1 import colcon
@@ -297,7 +289,7 @@ class ColconPluginTest(ColconPluginTestBase):
 
         self.dependencies_mock.return_value = {"apt": {"foo"}}
 
-        self.ubuntu_mock.install_stage_packages.side_effect = repo.errors.PackageNotFoundError(
+        self.ubuntu_mock.fetch_stage_packages.side_effect = repo.errors.PackageNotFoundError(
             "foo"
         )
 
@@ -913,13 +905,24 @@ class PullTestCase(ColconPluginTestBase):
 
         # Verify that the dependencies were installed
         self.assertThat(
-            self.ubuntu_mock.install_stage_packages.mock_calls,
+            self.ubuntu_mock.fetch_stage_packages.mock_calls,
             Equals(
                 [
                     mock.call(
-                        install_dir=plugin.installdir,
+                        stage_packages_path=plugin.stage_packages_path,
                         package_names={"bar", "baz", "foo"},
                         base=plugin.project._get_build_base(),
+                    )
+                ]
+            ),
+        )
+        self.assertThat(
+            self.ubuntu_mock.unpack_stage_packages.mock_calls,
+            Equals(
+                [
+                    mock.call(
+                        stage_packages_path=plugin.stage_packages_path,
+                        install_path=pathlib.Path(plugin.installdir),
                     )
                 ]
             ),
@@ -993,99 +996,29 @@ class PullTestCase(ColconPluginTestBase):
         )
 
 
-class _CheckBuildCommand:
-    def __init__(self, test, plugin):
-        self.test = test
-        self.plugin = plugin
+@pytest.fixture
+def options():
+    class Options:
+        colcon_rosdistro = "crystal"
+        colcon_packages = ["my_package"]
+        colcon_packages_ignore = []
+        colcon_source_space = "src"
+        source_subdir = None
+        colcon_cmake_args = []
+        colcon_catkin_cmake_args = []
+        colcon_ament_cmake_args = []
+        build_attributes = []
+        disable_parallel = False
 
-    def __eq__(self, args):
-        # Matching like this for order independence (otherwise it would be
-        # quite fragile)
-        command = " ".join(args)
-        if "debug" in self.test.build_attributes:
-            self.test.assertThat(
-                command, MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug")
-            )
-        else:
-            self.test.assertThat(
-                command, MatchesRegex(".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release")
-            )
-
-        if self.test.colcon_cmake_args:
-            expected_args = " ".join(self.test.colcon_cmake_args)
-            self.test.assertThat(
-                command,
-                MatchesRegex(".*--cmake-args.*{}".format(re.escape(expected_args))),
-            )
-        if self.test.properties.disable_parallel:
-            self.test.assertThat(command, MatchesRegex(".*--parallel-workers=1"))
-        else:
-            self.test.assertThat(
-                command,
-                MatchesRegex(
-                    ".*--parallel-workers={}".format(self.plugin.parallel_build_count)
-                ),
-            )
-        if self.test.colcon_catkin_cmake_args:
-            expected_args = " ".join(self.test.colcon_catkin_cmake_args)
-            self.test.assertThat(
-                command,
-                MatchesRegex(
-                    ".*--catkin-cmake-args.*{}".format(re.escape(expected_args))
-                ),
-            )
-        if self.test.colcon_ament_cmake_args:
-            expected_args = " ".join(self.test.colcon_ament_cmake_args)
-            self.test.assertThat(
-                command,
-                MatchesRegex(
-                    ".*--ament-cmake-args.*{}".format(re.escape(expected_args))
-                ),
-            )
-        if self.test.colcon_packages_ignore:
-            expected_args = " ".join(self.test.colcon_packages_ignore)
-            self.test.assertThat(
-                command,
-                MatchesRegex(
-                    ".*--packages-ignore.*{}".format(re.escape(expected_args))
-                ),
-            )
-
-        if self.test.colcon_packages:
-            self.test.assertThat(
-                command,
-                Contains(
-                    "--packages-select {}".format(" ".join(self.test.colcon_packages))
-                ),
-            )
-        else:
-            self.test.assertThat(command, Not(Contains("--packages-select")))
-
-        self.test.assertThat(args[0:2], Equals(["colcon", "build"]))
-        self.test.assertThat(command, Contains("--merge-install"))
-        self.test.assertThat(
-            command, Contains("--build-base {}".format(self.plugin.builddir))
-        )
-        self.test.assertThat(
-            command, Contains("--base-paths {}".format(self.plugin._ros_package_path))
-        )
-        self.test.assertThat(
-            command, Contains("--install-base {}".format(self.plugin._ros_overlay))
-        )
-
-        return True
+    return Options()
 
 
-class BuildTestCase(ColconPluginTestBase):
+class TestBuildArgs:
 
     package_scenarios = [
         ("one package", {"colcon_packages": ["my_package"]}),
         ("no packages", {"colcon_packages": []}),
         ("all packages", {"colcon_packages": None}),
-        (
-            "all packages single threaded",
-            {"colcon_packages": None, "disable_parallel": True},
-        ),
     ]
 
     build_type_scenarios = [
@@ -1113,6 +1046,10 @@ class BuildTestCase(ColconPluginTestBase):
         ("without packages-ignore", {"colcon_packages_ignore": []}),
     ]
 
+    parallel_scenarios = (
+        ("disabled", dict(disable_parallel=True)),
+        ("enabled", dict(disable_parallel=False)),
+    )
     scenarios = multiply_scenarios(
         package_scenarios,
         build_type_scenarios,
@@ -1120,42 +1057,78 @@ class BuildTestCase(ColconPluginTestBase):
         catkin_args_scenarios,
         ament_args_scenarios,
         packages_ignore_scenarios,
+        parallel_scenarios,
     )
-
-    def setUp(self):
-        super().setUp()
-        self.properties.colcon_packages = self.colcon_packages
-        self.properties.colcon_packages_ignore = self.colcon_packages_ignore
-        self.properties.build_attributes.extend(self.build_attributes)
-        self.properties.colcon_cmake_args = self.colcon_cmake_args
-        self.properties.colcon_catkin_cmake_args = self.colcon_catkin_cmake_args
-        self.properties.colcon_ament_cmake_args = self.colcon_ament_cmake_args
-        if hasattr(self, "disable_parallel"):
-            self.properties.disable_parallel = self.disable_parallel
 
     @mock.patch.object(colcon.ColconPlugin, "run")
     @mock.patch.object(colcon.ColconPlugin, "run_output", return_value="foo")
     @mock.patch.object(colcon.ColconPlugin, "_prepare_build")
     @mock.patch.object(colcon.ColconPlugin, "_finish_build")
     def test_build(
-        self, finish_build_mock, prepare_build_mock, run_output_mock, run_mock
+        self,
+        finish_build_mock,
+        prepare_build_mock,
+        run_output_mock,
+        run_mock,
+        tmp_work_path,
+        project_core18,
+        options,
+        disable_parallel,
+        build_attributes,
+        colcon_packages_ignore,
+        colcon_ament_cmake_args,
+        colcon_catkin_cmake_args,
+        colcon_cmake_args,
+        colcon_packages,
     ):
-        plugin = colcon.ColconPlugin("test-part", self.properties, self.project)
+        options.colcon_packages = colcon_packages
+        options.colcon_packages_ignore = colcon_packages_ignore
+        options.build_attributes.extend(build_attributes)
+        options.colcon_cmake_args = colcon_cmake_args
+        options.colcon_catkin_cmake_args = colcon_catkin_cmake_args
+        options.colcon_ament_cmake_args = colcon_ament_cmake_args
+        options.disable_parallel = disable_parallel
+
+        plugin = colcon.ColconPlugin("test-part", options, project_core18)
         os.makedirs(os.path.join(plugin.sourcedir, "src"))
 
         plugin.build()
 
         prepare_build_mock.assert_called_once_with()
 
-        if self.colcon_packages or self.colcon_packages is None:
-            run_mock.assert_called_with(_CheckBuildCommand(self, plugin))
+        if "debug" in build_attributes:
+            build_type = "Debug"
+        else:
+            build_type = "Release"
+
+        expected_command = ["colcon", "build", "--merge-install"]
+        if colcon_packages:
+            expected_command += ["--packages-select"] + colcon_packages
+        if colcon_packages_ignore:
+            expected_command += ["--packages-ignore"] + colcon_packages_ignore
+        expected_command += [
+            "--build-base",
+            plugin.builddir,
+            "--base-paths",
+            f"{plugin.sourcedir}/src",
+            "--install-base",
+            f"{plugin.installdir}/opt/ros/snap",
+            "--parallel-workers={}".format(1 if disable_parallel else 2),
+            "--cmake-args",
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+        ]
+        if colcon_cmake_args:
+            expected_command += ["-DCMAKE"]
+        if colcon_catkin_cmake_args:
+            expected_command += ["--catkin-cmake-args", "-DCATKIN"]
+        if colcon_ament_cmake_args:
+            expected_command += ["--ament-cmake-args", "-DAMENT"]
+
+        if colcon_packages or colcon_packages is None:
+            assert run_mock.mock_calls[0][1][0] == expected_command
+
         else:
             run_mock.assert_not_called()
-
-        self.assertFalse(
-            self.dependencies_mock.called,
-            "Dependencies should have been discovered in the pull() step",
-        )
 
         finish_build_mock.assert_called_once_with()
 

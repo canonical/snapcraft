@@ -106,7 +106,10 @@ def link_or_copy(source: str, destination: str, follow_symlinks: bool = False) -
     """
 
     try:
-        link(source, destination, follow_symlinks=follow_symlinks)
+        if not follow_symlinks and os.path.islink(source):
+            copy(source, destination)
+        else:
+            link(source, destination, follow_symlinks=follow_symlinks)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
             # os.link will fail if the destination already exists, so let's
@@ -347,7 +350,7 @@ def get_tool_path(command_name: str) -> str:
     """
     command_path: Optional[str] = None
 
-    if common.is_snap():
+    if common.is_snap() and command_name != "snap":
         snap_path = os.getenv("SNAP")
         if snap_path is None:
             raise RuntimeError("SNAP not defined, but SNAP_NAME is?")

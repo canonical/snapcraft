@@ -5,7 +5,10 @@ summary: >-
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
+  SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/make: make-hello
+  SNAP/local_plugin_from_base: local-plugin-from-base-hello
+  SNAP/local_plugin_from_nil: local-plugin-from-nil-hello
   SNAP/python: python-hello
   SNAP/python_staged: python-hello-staged-python
   SNAP/python_with_python_package_dep: python-hello-with-python-package-dep
@@ -32,6 +35,7 @@ restore: |
   # Undo changes to hello
   [ -f hello ] && git checkout hello
   [ -f hello.c ] && git checkout hello.c
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
   [ -f src/main.rs ] && git checkout src/main.rs
@@ -60,6 +64,8 @@ execute: |
     modified_file=hello
   elif [ -f hello.c ]; then
     modified_file=hello.c
+  elif [ -f subdir/hello.c ]; then
+    modified_file=subdir/hello.c
   elif [ -f hello.js ]; then
     modified_file=hello.js
   elif [ -f main.go ]; then

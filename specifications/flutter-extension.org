@@ -1,0 +1,58 @@
+#+TITLE: Flutter Extensions
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-07-02]
+
+* Scope
+
+This extension enables easy creation of snaps that target flutter, specifically
+the flutter desktop configuration.
+
+An extension variant per each /flutter/ channel available shall be available
+that reproduces the setup required to target a given flutter channel, these
+channels are:
+
+- flutter or flutter-stable (ideally, the default).
+- flutter-beta
+- flutter-dev
+- flutter-master
+
+Under the hood, these extensions shall setup the run time part of the extension
+leveraging the use of the gnome-3-28 extension as it is the GNOME stack that the
+flutter desktop integration currently targets.
+
+Use of the =flutter= plugin is optional, the plugin just drives the build for
+flutter project sources.
+
+* Using the extension
+
+As a Snapcraft snap author, given a snap with an application =foo=, the
+following snippet would enable use of the =flutter-master= extension:
+
+#+BEGIN_SRC yaml
+apps:
+  foo:
+    command: foo
+    extension: [flutter-master]
+#+END_SRC
+
+* Differences with the GNOME extension
+
+This extension has many similarities to the GNOME one. To reduce cognitive load
+for a flutter developer working on other platforms and wanting to create a snap,
+a new extension name was decided upon.
+
+This extension shall use the same list of plugs as used for the GNOME
+extensions.
+
+Where it is different is in the use of layouts, as the layouts related to gjs
+and webkit are not required.
+
+In addition to the command-chain generating part, a new part shall be added
+=flutter-extension= and it shall setup flutter will the following commands:
+
+#+BEGIN_SRC sh
+flutter channel master
+flutter config --enable-linux-desktop
+flutter upgrade
+flutter doctor
+#+END_SRC

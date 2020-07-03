@@ -150,7 +150,7 @@
                 },
                 "components": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
@@ -411,6 +411,14 @@
         "epoch": {
             "description": "the snap epoch, used to specify upgrade paths",
             "format": "epoch"
+        },
+        "compression": {
+            "description": "compression to use for snap archive - default is otherwise determined by 'snap pack'",
+            "type": "string",
+            "enum": [
+                "lzo",
+                "xz"
+            ]
         },
         "environment": {
             "type": "object",
@@ -772,6 +780,8 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
+                                    "flutter-dev",
+                                    "flutter-master",
                                     "gnome-3-28",
                                     "gnome-3-34",
                                     "kde-neon"

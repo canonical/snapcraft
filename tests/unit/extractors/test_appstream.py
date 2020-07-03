@@ -37,7 +37,7 @@ def _create_desktop_file(desktop_file_path, icon: str = None) -> None:
     f.close()
 
 
-class AppstreamTestCase(unit.TestCase):
+class TestAppstream:
 
     scenarios = testscenarios.multiply_scenarios(
         [
@@ -108,13 +108,15 @@ class AppstreamTestCase(unit.TestCase):
         ],
     )
 
-    def test_appstream(self):
-        file_name = "foo.{}".format(self.file_extension)
+    def test(
+        self, tmp_work_path, file_extension, key, attributes, param_name, value, expect
+    ):
+        file_name = f"foo.{file_extension}"
         attributes = " ".join(
             '{attribute_name}="{attribute_value}"'.format(
-                attribute_name=attribute, attribute_value=self.attributes[attribute]
+                attribute_name=attribute, attribute_value=attributes[attribute]
             )
-            for attribute in self.attributes
+            for attribute in attributes
         )
         with open(file_name, "w") as f:
             f.write(
@@ -124,16 +126,16 @@ class AppstreamTestCase(unit.TestCase):
                 <component>
                   <{key} {attributes}>{value}</{key}>
                 </component>""".format(
-                        key=self.key, value=self.value, attributes=attributes
+                        key=key, value=value, attributes=attributes
                     )
                 )
             )
 
         open("icon.png", "w").close()
-        kwargs = {self.param_name: self.expect}
+        kwargs = {param_name: expect}
         expected = ExtractedMetadata(**kwargs)
 
-        self.assertThat(appstream.extract(file_name, workdir="."), Equals(expected))
+        assert appstream.extract(file_name, workdir=".") == expected
 
 
 # See LP #1814898 for a description of possible fallbacks
@@ -725,59 +727,7 @@ class AppstreamUnhandledFileTestCase(unit.TestCase):
         self.assertThat(raised.extractor_name, Equals("appstream"))
 
 
-class AppstreamLaunchableTestCase(unit.TestCase):
-
-    scenarios = (
-        (
-            "usr/share",
-            {
-                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop",
-                "workdir": ".",
-            },
-        ),
-        (
-            "usr/share in installdir",
-            {
-                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop",
-                "workdir": "install",
-            },
-        ),
-        (
-            "usr/local/share",
-            {
-                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop",
-                "workdir": ".",
-            },
-        ),
-    )
-
-    def test_appstream_with_launchable(self):
-        os.makedirs(self.workdir, exist_ok=True)
-        appstream_file = os.path.join(self.workdir, "foo.metainfo.xml")
-        with open(appstream_file, "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                <?xml version="1.0" encoding="UTF-8"?>
-                <component>
-                  <launchable type="desktop-id">
-                    com.example.test-app.desktop
-                  </launchable>
-                </component>"""
-                )
-            )
-
-        desktop_file_path = os.path.join(self.workdir, self.desktop_file_path)
-        _create_desktop_file(desktop_file_path)
-
-        extracted = appstream.extract("foo.metainfo.xml", workdir=self.workdir)
-
-        self.assertThat(
-            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
-        )
-
-
-class AppstreamLegacyDesktopTest(unit.TestCase):
+class TestAppstreamLaunchable:
 
     scenarios = (
         (
@@ -794,7 +744,46 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
         ),
     )
 
-    def test_appstream_with_launchable(self):
+    def test(self, tmp_work_path, desktop_file_path):
+        appstream_file = "foo.metainfo.xml"
+        with open(appstream_file, "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                <?xml version="1.0" encoding="UTF-8"?>
+                <component>
+                  <launchable type="desktop-id">
+                    com.example.test-app.desktop
+                  </launchable>
+                </component>"""
+                )
+            )
+
+        _create_desktop_file(desktop_file_path)
+
+        extracted = appstream.extract("foo.metainfo.xml", workdir=".")
+
+        assert extracted.get_desktop_file_paths() == [desktop_file_path]
+
+
+class TestAppstreamLegacyDesktop:
+
+    scenarios = (
+        (
+            "usr/share",
+            {
+                "desktop_file_path": "usr/share/applications/com.example.test/app.desktop"
+            },
+        ),
+        (
+            "usr/local/share",
+            {
+                "desktop_file_path": "usr/local/share/applications/com.example.test/app.desktop"
+            },
+        ),
+    )
+
+    def test_launchable(self, tmp_work_path, desktop_file_path):
         with open("foo.metainfo.xml", "w") as f:
             f.write(
                 textwrap.dedent(
@@ -806,15 +795,13 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
                 )
             )
 
-        _create_desktop_file(self.desktop_file_path)
+        _create_desktop_file(desktop_file_path)
 
         extracted = appstream.extract("foo.metainfo.xml", workdir=".")
 
-        self.assertThat(
-            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
-        )
+        assert extracted.get_desktop_file_paths() == [desktop_file_path]
 
-    def test_appstream_no_desktop_suffix(self):
+    def test_appstream_no_desktop_suffix(self, tmp_work_path, desktop_file_path):
         with open("foo.metainfo.xml", "w") as f:
             f.write(
                 textwrap.dedent(
@@ -826,13 +813,11 @@ class AppstreamLegacyDesktopTest(unit.TestCase):
                 )
             )
 
-        _create_desktop_file(self.desktop_file_path)
+        _create_desktop_file(desktop_file_path)
 
         extracted = appstream.extract("foo.metainfo.xml", workdir=".")
 
-        self.assertThat(
-            extracted.get_desktop_file_paths(), Equals([self.desktop_file_path])
-        )
+        extracted.get_desktop_file_paths() == [desktop_file_path]
 
 
 class AppstreamMultipleLaunchableTestCase(unit.TestCase):

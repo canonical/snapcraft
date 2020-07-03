@@ -20,15 +20,12 @@ from testtools.matchers import Equals
 from snapcraft import yaml_utils
 import snapcraft.internal
 from tests import unit
+from .conftest import Project
 
 
 class PullStateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-
-        class Project:
-            def __init__(self):
-                self.deb_arch = "amd64"
 
         self.project = Project()
         self.property_names = ["foo"]
@@ -104,22 +101,5 @@ class PullStateTestCase(PullStateBaseTestCase):
         self.assertThat(options["deb_arch"], Equals("amd64"))
 
 
-class PullStateNotEqualTestCase(PullStateBaseTestCase):
-
-    scenarios = [
-        ("no property names", dict(other_property="property_names", other_value=[])),
-        (
-            "no part properties",
-            dict(other_property="part_properties", other_value=None),
-        ),
-        ("no project", dict(other_property="project", other_value=None)),
-    ]
-
-    def test_comparison_not_equal(self):
-
-        setattr(self, self.other_property, self.other_value)
-        other_state = snapcraft.internal.states.PullState(
-            self.property_names, self.part_properties, self.project
-        )
-
-        self.assertFalse(self.state == other_state, "Expected states to be different")
+def test_comparison_not_equal(pull_state, pull_state_variant):
+    assert pull_state != pull_state_variant

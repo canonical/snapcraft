@@ -13,12 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fixtures
+
 import logging
 import os
 import tempfile
+import subprocess
 import sys
 
+import fixtures
+import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
 from unittest import mock
 
@@ -463,7 +466,7 @@ class TestSonameCache(unit.TestCase):
         self.assertTrue((self.arch, "soname2.so") in self.soname_cache)
 
 
-class TestSonameCacheErrors(unit.TestCase):
+class TestSonameCacheErrors:
 
     scenarios = (
         ("invalid string key", dict(key="soname.so", partial_message="The key for")),
@@ -483,13 +486,11 @@ class TestSonameCacheErrors(unit.TestCase):
         ),
     )
 
-    def test_error(self):
+    def test_error(self, key, partial_message):
         soname_cache = elf.SonameCache()
-        raised = self.assertRaises(
-            EnvironmentError, soname_cache.__setitem__, self.key, "/soname.so"
-        )
-
-        self.assertThat(str(raised), StartsWith(self.partial_message))
+        with pytest.raises(EnvironmentError) as error:
+            soname_cache.__setitem__(key, "/soname.so")
+            assert str(error).startswith(partial_message)
 
 
 # This is just a subset
@@ -541,7 +542,7 @@ class HandleGlibcTestCase(unit.TestCase):
         )
 
 
-class LddParsingTests(unit.TestCase):
+class TestLddParsing:
     scenarios = [
         (
             "ubuntu 20.04 basic",
@@ -601,18 +602,16 @@ class LddParsingTests(unit.TestCase):
         ),
     ]
 
-    def test_scenario(self):
+    def test_scenario(self, ldd_output, expected, monkeypatch):
         def fake_abspath(path):
             return path
 
-        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
-        self.useFixture(fixtures.MockPatch("os.path.abspath", side_effect=fake_abspath))
-        self.useFixture(
-            fixtures.MockPatch(
-                "subprocess.check_output", return_value=self.ldd_output.encode()
-            )
+        monkeypatch.setattr(os.path, "exists", lambda f: True)
+        monkeypatch.setattr(os.path, "abspath", fake_abspath)
+        monkeypatch.setattr(
+            subprocess, "check_output", lambda *args, **kwargs: ldd_output.encode()
         )
 
         libraries = elf.ldd(path="/bin/foo", ld_library_paths=[])
 
-        self.assertThat(libraries, Equals(self.expected))
+        assert libraries == expected

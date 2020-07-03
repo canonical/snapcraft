@@ -20,6 +20,7 @@ import os
 import subprocess
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals, FileContains, HasLength
 from unittest import mock
 
@@ -29,7 +30,6 @@ import snapcraft
 from snapcraft import storeapi
 from snapcraft.internal import errors, meta
 from snapcraft.plugins.v1 import kernel
-from tests import unit
 from . import PluginsV1BaseTestCase
 
 
@@ -1244,35 +1244,31 @@ ACCEPT=n
         self.assertThat(raised.base, Equals("unsupported-base"))
 
 
-class KernelPluginDefaulTargetsTestCase(unit.TestCase):
+@pytest.mark.parametrize(
+    "deb_arch,expected_target",
+    [
+        ("amd64", "bzImage"),
+        ("i386", "bzImage"),
+        ("arm64", "Image.gz"),
+        ("armhf", "zImage"),
+    ],
+)
+def test_target(deb_arch, expected_target):
+    class Options:
+        build_parameters = []
+        kconfigfile = None
+        kdefconfig = []
+        kconfigs = []
+        kernel_image_target = ""
+        kernel_with_firmware = True
+        kernel_initrd_modules = []
+        kernel_initrd_firmware = []
+        kernel_device_trees = []
+        kernel_initrd_compression = "gz"
 
-    scenarios = [
-        ("amd64", {"deb_arch": "amd64", "expected": "bzImage"}),
-        ("i386", {"deb_arch": "i386", "expected": "bzImage"}),
-        ("arm64", {"deb_arch": "arm64", "expected": "Image.gz"}),
-        ("armhf", {"deb_arch": "armhf", "expected": "zImage"}),
-    ]
+    project = snapcraft.project.Project(target_deb_arch=deb_arch)
+    project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
 
-    def setUp(self):
-        super().setUp()
+    plugin = kernel.KernelPlugin("test-part", Options(), project)
 
-        class Options:
-            build_parameters = []
-            kconfigfile = None
-            kdefconfig = []
-            kconfigs = []
-            kernel_image_target = ""
-            kernel_with_firmware = True
-            kernel_initrd_modules = []
-            kernel_initrd_firmware = []
-            kernel_device_trees = []
-            kernel_initrd_compression = "gz"
-
-        self.options = Options()
-        self.project = snapcraft.project.Project(target_deb_arch=self.deb_arch)
-        self.project._snap_meta = meta.snap.Snap(name="test-snap", base="core18")
-
-    def test_default(self):
-        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
-
-        self.assertThat(plugin.kernel_image_target, Equals(self.expected))
+    assert plugin.kernel_image_target == expected_target

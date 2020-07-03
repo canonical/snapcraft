@@ -16,10 +16,7 @@
 
 from textwrap import dedent
 
-from testtools.matchers import Equals, FileContains
-
 from snapcraft.internal.states import GlobalState
-from tests import unit
 
 
 _scenarios = [
@@ -46,43 +43,44 @@ _scenarios = [
 ]
 
 
-class GlobalStateTest(unit.TestCase):
+class TestGlobalState:
 
     scenarios = _scenarios
 
-    def test_save(self):
+    def test_save(self, tmp_work_path, build_packages, build_snaps, required_grade):
         global_state = GlobalState()
-        global_state.append_build_packages(self.build_packages)
-        global_state.append_build_snaps(self.build_snaps)
-        global_state.set_required_grade(self.required_grade)
+        global_state.append_build_packages(build_packages)
+        global_state.append_build_snaps(build_snaps)
+        global_state.set_required_grade(required_grade)
 
         global_state.save(filepath="state")
 
         prepend = "  - "
 
-        if self.build_packages:
+        if build_packages:
             build_packages = "\n" + "\n".join(
-                ["{}{}".format(prepend, p) for p in self.build_packages]
+                ["{}{}".format(prepend, p) for p in build_packages]
             )
         else:
             build_packages = " []"
 
-        if self.build_snaps:
+        if build_snaps:
             build_snaps = "\n" + "\n".join(
-                ["{}{}".format(prepend, p) for p in self.build_snaps]
+                ["{}{}".format(prepend, p) for p in build_snaps]
             )
         else:
             build_snaps = " []"
 
-        if self.required_grade:
-            required_grade = self.required_grade
+        if required_grade:
+            required_grade = required_grade
         else:
             required_grade = "null"
 
-        self.assertThat(
-            "state",
-            FileContains(
-                dedent(
+        with open("state") as state_file:
+            state_file_contents = state_file.read()
+            assert (
+                state_file_contents
+                == dedent(
                     """\
                     !GlobalState
                     assets:
@@ -91,12 +89,11 @@ class GlobalStateTest(unit.TestCase):
                       required-grade: {}
                     """
                 ).format(build_packages, build_snaps, required_grade)
-            ),
-        )
+            )
 
-    def test_load(self):
-        if self.required_grade:
-            required_grade = self.required_grade
+    def test_load(self, tmp_work_path, build_packages, build_snaps, required_grade):
+        if required_grade:
+            required_grade = required_grade
         else:
             required_grade = "null"
 
@@ -110,23 +107,25 @@ class GlobalStateTest(unit.TestCase):
                   build-snaps: {}
                   required-grade: {}
                 """
-                ).format(self.build_packages, self.build_snaps, required_grade),
+                ).format(build_packages, build_snaps, required_grade),
                 file=state_file,
             )
 
         global_state = GlobalState.load(filepath="state")
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+        assert global_state.get_build_packages() == build_packages
+        assert global_state.get_build_snaps() == build_snaps
 
-    def test_save_load_and_append(self):
+    def test_save_load_and_append(
+        self, tmp_work_path, build_packages, build_snaps, required_grade
+    ):
         global_state = GlobalState()
-        global_state.append_build_packages(self.build_packages)
-        global_state.append_build_snaps(self.build_snaps)
+        global_state.append_build_packages(build_packages)
+        global_state.append_build_snaps(build_snaps)
         global_state.save(filepath="state")
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+        assert global_state.get_build_packages() == build_packages
+        assert global_state.get_build_snaps() == build_snaps
 
         new_packages = ["new-pkg1", "new-pkg2"]
         new_snaps = ["new-snap1", "new-snap2"]
@@ -134,45 +133,41 @@ class GlobalStateTest(unit.TestCase):
         global_state.append_build_packages(new_packages)
         global_state.append_build_snaps(new_snaps)
 
-        self.assertThat(
-            global_state.get_build_packages(),
-            Equals(self.build_packages + new_packages),
-        )
-        self.assertThat(
-            global_state.get_build_snaps(), Equals(self.build_snaps + new_snaps)
-        )
+        assert global_state.get_build_packages() == build_packages + new_packages
 
-    def test_append_duplicate(self):
+        assert global_state.get_build_snaps() == build_snaps + new_snaps
+
+    def test_append_duplicate(
+        self, tmp_work_path, build_packages, build_snaps, required_grade
+    ):
         global_state = GlobalState()
-        global_state.append_build_packages(self.build_packages)
-        global_state.append_build_snaps(self.build_snaps)
+        global_state.append_build_packages(build_packages)
+        global_state.append_build_snaps(build_snaps)
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+        assert global_state.get_build_packages() == build_packages
+        assert global_state.get_build_snaps() == build_snaps
 
-        global_state.append_build_packages(self.build_packages)
-        global_state.append_build_snaps(self.build_snaps)
+        global_state.append_build_packages(build_packages)
+        global_state.append_build_snaps(build_snaps)
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
+        assert global_state.get_build_packages() == build_packages
+        assert global_state.get_build_snaps() == build_snaps
 
-    def test_load_with_missing(self):
+    def test_load_with_missing(
+        self, tmp_work_path, build_packages, build_snaps, required_grade
+    ):
         with open("state", "w") as state_file:
             print("!GlobalState", file=state_file)
             print("assets: ", file=state_file)
-            if self.build_packages:
-                print(
-                    "  build-packages: {}".format(self.build_packages), file=state_file
-                )
-            if self.build_snaps:
-                print("  build-snaps: {}".format(self.build_snaps), file=state_file)
-            if self.required_grade:
-                print(
-                    "  required-grade: {}".format(self.required_grade), file=state_file
-                )
+            if build_packages:
+                print("  build-packages: {}".format(build_packages), file=state_file)
+            if build_snaps:
+                print("  build-snaps: {}".format(build_snaps), file=state_file)
+            if required_grade:
+                print("  required-grade: {}".format(required_grade), file=state_file)
 
         global_state = GlobalState.load(filepath="state")
 
-        self.assertThat(global_state.get_build_packages(), Equals(self.build_packages))
-        self.assertThat(global_state.get_build_snaps(), Equals(self.build_snaps))
-        self.assertThat(global_state.get_required_grade(), Equals(self.required_grade))
+        assert global_state.get_build_packages() == build_packages
+        assert global_state.get_build_snaps() == build_snaps
+        assert global_state.get_required_grade() == required_grade

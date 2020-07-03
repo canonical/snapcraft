@@ -14,51 +14,46 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import testtools
-from testtools.matchers import Equals
-from unittest.mock import patch
+import platform
+import re
+
+import pytest
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._to as _to
 
-from . import GrammarBaseTestCase
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        [{"on amd64,i386": ["foo"]}, {"on amd64,i386": ["bar"]}],
+        [{"on amd64,i386": ["foo"]}, {"on i386,amd64": ["bar"]}],
+    ],
+)
+def test_duplicates(entry):
+    """Test that multiple identical selector sets is an error."""
+
+    processor = grammar.GrammarProcessor(
+        entry, snapcraft.ProjectOptions(), lambda x: True
+    )
+    with pytest.raises(grammar.errors.GrammarSyntaxError) as error:
+        processor.process()
+
+    expected = (
+        "Invalid grammar syntax: found duplicate 'on amd64,i386' "
+        "statements. These should be merged."
+    )
+    assert expected in str(error.value)
 
 
-class GrammarOnDuplicatesTestCase(GrammarBaseTestCase):
-
-    scenarios = [
-        (
-            "same order",
-            {"grammar": [{"on amd64,i386": ["foo"]}, {"on amd64,i386": ["bar"]}]},
-        ),
-        (
-            "different order",
-            {"grammar": [{"on amd64,i386": ["foo"]}, {"on i386,amd64": ["bar"]}]},
-        ),
-    ]
-
-    def test_on_duplicates_raises(self):
-        """Test that multiple identical selector sets is an error."""
-
-        with testtools.ExpectedException(
-            grammar.errors.GrammarSyntaxError,
-            "Invalid grammar syntax: found duplicate 'on amd64,i386' "
-            "statements. These should be merged.",
-        ):
-            processor = grammar.GrammarProcessor(
-                self.grammar, snapcraft.ProjectOptions(), self.checker
-            )
-            processor.process()
-
-
-class BasicGrammarTestCase(GrammarBaseTestCase):
+class TestBasicGrammar:
 
     scenarios = [
         (
             "unconditional",
             {
-                "grammar": ["foo", "bar"],
+                "grammar_entry": ["foo", "bar"],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo", "bar"},
             },
@@ -66,7 +61,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "mixed including",
             {
-                "grammar": ["foo", {"on i386": ["bar"]}],
+                "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "i686",
                 "expected_packages": {"foo", "bar"},
             },
@@ -74,7 +69,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "mixed excluding",
             {
-                "grammar": ["foo", {"on i386": ["bar"]}],
+                "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -82,7 +77,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "on amd64",
             {
-                "grammar": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
+                "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -90,7 +85,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "on i386",
             {
-                "grammar": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
+                "grammar_entry": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "host_arch": "i686",
                 "expected_packages": {"bar"},
             },
@@ -98,7 +93,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "ignored else",
             {
-                "grammar": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
+                "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -106,7 +101,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "used else",
             {
-                "grammar": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
+                "grammar_entry": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "i686",
                 "expected_packages": {"bar"},
             },
@@ -114,7 +109,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested amd64",
             {
-                "grammar": [
+                "grammar_entry": [
                     {"on amd64": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
                 ],
                 "host_arch": "x86_64",
@@ -124,7 +119,9 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested i386",
             {
-                "grammar": [{"on i386": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}],
+                "grammar_entry": [
+                    {"on i386": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}]}
+                ],
                 "host_arch": "i686",
                 "expected_packages": {"bar"},
             },
@@ -132,7 +129,9 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested ignored else",
             {
-                "grammar": [{"on amd64": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}],
+                "grammar_entry": [
+                    {"on amd64": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
+                ],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -140,7 +139,9 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested used else",
             {
-                "grammar": [{"on i386": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}],
+                "grammar_entry": [
+                    {"on i386": [{"on amd64": ["foo"]}, {"else": ["bar"]}]}
+                ],
                 "host_arch": "i686",
                 "expected_packages": {"bar"},
             },
@@ -148,7 +149,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "try",
             {
-                "grammar": [{"try": ["valid"]}],
+                "grammar_entry": [{"try": ["valid"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"valid"},
             },
@@ -156,7 +157,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "try else",
             {
-                "grammar": [{"try": ["invalid"]}, {"else": ["valid"]}],
+                "grammar_entry": [{"try": ["invalid"]}, {"else": ["valid"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"valid"},
             },
@@ -164,7 +165,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested try",
             {
-                "grammar": [{"on amd64": [{"try": ["foo"]}, {"else": ["bar"]}]}],
+                "grammar_entry": [{"on amd64": [{"try": ["foo"]}, {"else": ["bar"]}]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -172,7 +173,9 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "nested try else",
             {
-                "grammar": [{"on i386": [{"try": ["invalid"]}, {"else": ["bar"]}]}],
+                "grammar_entry": [
+                    {"on i386": [{"try": ["invalid"]}, {"else": ["bar"]}]}
+                ],
                 "host_arch": "i686",
                 "expected_packages": {"bar"},
             },
@@ -180,32 +183,32 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         (
             "optional",
             {
-                "grammar": ["foo", {"try": ["invalid"]}],
+                "grammar_entry": ["foo", {"try": ["invalid"]}],
                 "host_arch": "i686",
                 "expected_packages": {"foo"},
             },
         ),
     ]
 
-    @patch("platform.architecture")
-    @patch("platform.machine")
-    def test_basic_grammar(self, platform_machine_mock, platform_architecture_mock):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+    def test_basic_grammar(
+        self, monkeypatch, grammar_entry, host_arch, expected_packages
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         processor = grammar.GrammarProcessor(
-            self.grammar, snapcraft.ProjectOptions(), self.checker
+            grammar_entry, snapcraft.ProjectOptions(), lambda x: "invalid" not in x
         )
-        self.assertThat(processor.process(), Equals(self.expected_packages))
+        assert processor.process() == expected_packages
 
 
-class TransformerGrammarTestCase(GrammarBaseTestCase):
+class TestTransformerGrammar:
 
     scenarios = [
         (
             "unconditional",
             {
-                "grammar": ["foo", "bar"],
+                "grammar_entry": ["foo", "bar"],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo", "bar"},
             },
@@ -213,7 +216,7 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         (
             "mixed including",
             {
-                "grammar": ["foo", {"on i386": ["bar"]}],
+                "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "i686",
                 "expected_packages": {"foo", "bar"},
             },
@@ -221,7 +224,7 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         (
             "mixed excluding",
             {
-                "grammar": ["foo", {"on i386": ["bar"]}],
+                "grammar_entry": ["foo", {"on i386": ["bar"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo"},
             },
@@ -229,7 +232,7 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         (
             "to",
             {
-                "grammar": [{"to i386": ["foo"]}],
+                "grammar_entry": [{"to i386": ["foo"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo:i386"},
             },
@@ -237,7 +240,7 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         (
             "transform applies to nested",
             {
-                "grammar": [{"to i386": [{"on amd64": ["foo"]}]}],
+                "grammar_entry": [{"to i386": [{"on amd64": ["foo"]}]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"foo:i386"},
             },
@@ -245,20 +248,18 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         (
             "not to",
             {
-                "grammar": [{"to amd64": ["foo"]}, {"else": ["bar"]}],
+                "grammar_entry": [{"to amd64": ["foo"]}, {"else": ["bar"]}],
                 "host_arch": "x86_64",
                 "expected_packages": {"bar"},
             },
         ),
     ]
 
-    @patch("platform.architecture")
-    @patch("platform.machine")
     def test_grammar_with_transformer(
-        self, platform_machine_mock, platform_architecture_mock
+        self, monkeypatch, grammar_entry, host_arch, expected_packages
     ):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         # Transform all 'to' statements to include arch
         def _transformer(call_stack, package_name, project_options):
@@ -269,46 +270,47 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
             return package_name
 
         processor = grammar.GrammarProcessor(
-            self.grammar,
+            grammar_entry,
             snapcraft.ProjectOptions(target_deb_arch="i386"),
-            self.checker,
+            lambda x: True,
             transformer=_transformer,
         )
 
-        self.assertThat(processor.process(), Equals(self.expected_packages))
+        assert processor.process() == expected_packages
 
 
-class InvalidGrammarTestCase(GrammarBaseTestCase):
+class TestInvalidGrammar:
 
     scenarios = [
         (
             "unmatched else",
             {
-                "grammar": [{"else": ["foo"]}],
+                "grammar_entry": [{"else": ["foo"]}],
                 "expected_exception": ".*'else' doesn't seem to correspond.*",
             },
         ),
         (
             "unmatched else fail",
             {
-                "grammar": ["else fail"],
+                "grammar_entry": ["else fail"],
                 "expected_exception": ".*'else' doesn't seem to correspond.*",
             },
         ),
         (
             "unexpected type",
             {
-                "grammar": [5],
+                "grammar_entry": [5],
                 "expected_exception": ".*expected grammar section.*but got.*",
             },
         ),
     ]
 
-    def test_invalid_grammar(self):
-        with testtools.ExpectedException(
-            grammar.errors.GrammarSyntaxError, self.expected_exception
-        ):
-            processor = grammar.GrammarProcessor(
-                self.grammar, snapcraft.ProjectOptions(), self.checker
-            )
+    def test_invalid_grammar(self, grammar_entry, expected_exception):
+        processor = grammar.GrammarProcessor(
+            grammar_entry, snapcraft.ProjectOptions(), lambda x: True
+        )
+
+        with pytest.raises(grammar.errors.GrammarSyntaxError) as error:
             processor.process()
+
+        assert re.match(expected_exception, str(error.value))

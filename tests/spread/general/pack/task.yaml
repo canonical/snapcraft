@@ -1,0 +1,32 @@
+summary: Try different compression algorithms set in snapcraft.yaml
+
+systems: [ubuntu-20*]
+
+environment:
+  COMPRESSION/lzo: lzo
+  COMPRESSION/xz: xz
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+prepare: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+  echo "compression: ${COMPRESSION}" >> snap/snapcraft.yaml
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  cd test-snap
+
+  # First with lxd
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+      snapcraft --use-lxd
+      unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"
+      rm ./*.snap
+  fi
+
+  # Then on host.
+  snapcraft --destructive-mode
+  unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"

@@ -17,13 +17,10 @@
 from snapcraft.internal.pluginhandler._dirty_report import Dependency, DirtyReport
 from snapcraft.internal import steps
 
-from testtools.matchers import Equals
 from testscenarios import multiply_scenarios
 
-from tests import unit
 
-
-class DirtyReportGetReportTest(unit.TestCase):
+class TestDirtyReportGetReport:
 
     property_scenarios = [
         ("no properties", dict(dirty_properties=None, properties_report="")),
@@ -93,27 +90,35 @@ class DirtyReportGetReportTest(unit.TestCase):
         property_scenarios, option_scenarios, dependencies_scenarios
     )
 
-    def test_get_report(self):
+    def test_get_report(
+        self,
+        dirty_properties,
+        properties_report,
+        dirty_project_options,
+        options_report,
+        changed_dependencies,
+        dependencies_report,
+    ):
         dirty_report = DirtyReport(
-            dirty_properties=self.dirty_properties,
-            dirty_project_options=self.dirty_project_options,
-            changed_dependencies=self.changed_dependencies,
+            dirty_properties=dirty_properties,
+            dirty_project_options=dirty_project_options,
+            changed_dependencies=changed_dependencies,
         )
 
         expected_report = []
-        if self.properties_report:
-            expected_report.append(self.properties_report)
-        if self.options_report:
-            expected_report.append(self.options_report)
-        if self.dependencies_report:
-            expected_report.append(self.dependencies_report)
+        if properties_report:
+            expected_report.append(properties_report)
+        if options_report:
+            expected_report.append(options_report)
+        if dependencies_report:
+            expected_report.append(dependencies_report)
         if expected_report:
             expected_report.append("")
 
-        self.assertThat(dirty_report.get_report(), Equals("\n".join(expected_report)))
+        assert dirty_report.get_report() == "\n".join(expected_report)
 
 
-class DirtyReportGetSummaryTest(unit.TestCase):
+class TestDirtyReportGetSummary:
 
     scenarios = [
         (
@@ -202,11 +207,17 @@ class DirtyReportGetSummaryTest(unit.TestCase):
         ),
     ]
 
-    def test_get_summary(self):
+    def test_get_summary(
+        self,
+        dirty_properties,
+        dirty_project_options,
+        changed_dependencies,
+        expected_summary,
+    ):
         dirty_report = DirtyReport(
-            dirty_properties=self.dirty_properties,
-            dirty_project_options=self.dirty_project_options,
-            changed_dependencies=self.changed_dependencies,
+            dirty_properties=dirty_properties,
+            dirty_project_options=dirty_project_options,
+            changed_dependencies=changed_dependencies,
         )
 
-        self.assertThat(dirty_report.get_summary(), Equals(self.expected_summary))
+        assert dirty_report.get_summary() == expected_summary

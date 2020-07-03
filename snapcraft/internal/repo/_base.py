@@ -20,6 +20,7 @@ import glob
 import itertools
 import logging
 import os
+import pathlib
 import re
 import shutil
 import stat
@@ -166,10 +167,17 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_stage_packages(
-        cls, *, package_names: List[str], install_dir: str, base: str
+    def fetch_stage_packages(
+        cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
     ) -> List[str]:
-        """Install stage packages to install_dir."""
+        """Fetch stage packages to stage_packages_path."""
+        raise errors.NoNativeBackendError()
+
+    @classmethod
+    def unpack_stage_packages(
+        cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
+    ) -> None:
+        """Unpack stage packages to install_path."""
         raise errors.NoNativeBackendError()
 
     @classmethod

@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 from textwrap import dedent
 
-from testtools.matchers import FileContains, FileExists
+import pytest
 
 from snapcraft.internal.meta.desktop import DesktopFile
 from snapcraft.internal.meta import errors
-from tests import unit
 
 
-class DesktopExecTest(unit.TestCase):
+class TestDesktopExec:
     scenarios = (
         (
             "snap name != app name",
@@ -52,43 +50,42 @@ class DesktopExecTest(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
-        self.snap_name = "foo"
-        self.desktop_file_path = "app.desktop"
-        self.exec = " ".join(["in-snap-exe", self.app_args])
+    def test_generate_desktop_file(
+        self, tmp_work_path, app_name, app_args, expected_exec
+    ):
+        snap_name = "foo"
 
-        with open(self.desktop_file_path, "w") as desktop_file:
+        desktop_file_path = tmp_work_path / "app.desktop"
+        with desktop_file_path.open("w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
-            print("Exec={}".format(self.exec), file=desktop_file)
+            print(
+                "Exec={}".format(" ".join(["in-snap-exe", app_args])), file=desktop_file
+            )
 
-        self.expected_desktop_file = "{}.desktop".format(self.app_name)
-
-    def test_generate_desktop_file(self):
         d = DesktopFile(
-            snap_name=self.snap_name,
-            app_name=self.app_name,
-            filename=self.desktop_file_path,
-            prime_dir=self.path,
+            snap_name=snap_name,
+            app_name=app_name,
+            filename=desktop_file_path,
+            prime_dir=tmp_work_path.as_posix(),
         )
         d.write(gui_dir=".")
 
-        self.assertThat(self.expected_desktop_file, FileExists())
-        self.assertThat(
-            self.expected_desktop_file,
-            FileContains(
-                dedent(
+        expected_desktop_file = tmp_work_path / f"{app_name}.desktop"
+        assert expected_desktop_file.exists()
+        with expected_desktop_file.open() as desktop_file:
+            assert (
+                desktop_file.read()
+                == dedent(
                     """\
             [Desktop Entry]
             Exec={}
 
         """
-                ).format(self.expected_exec)
-            ),
-        )
+                ).format(expected_exec)
+            )
 
 
-class DesktopIconTest(unit.TestCase):
+class TestDesktopIcon:
     scenarios = (
         (
             "icon_path preferred",
@@ -102,128 +99,140 @@ class DesktopIconTest(unit.TestCase):
         ),
         (
             "icon path with ${SNAP}",
-            dict(icon="${SNAP}/foo.png", expected_icon="${SNAP}/foo.png"),
+            dict(
+                icon="${SNAP}/foo.png", icon_path=None, expected_icon="${SNAP}/foo.png"
+            ),
         ),
-        ("icon name", dict(icon="foo", expected_icon="foo")),
+        ("icon name", dict(icon="foo", icon_path=None, expected_icon="foo")),
     )
 
-    def setUp(self):
-        super().setUp()
-        self.snap_name = self.app_name = "foo"
-        self.desktop_file_path = "other.desktop"
+    def test_generate_desktop_file(self, tmp_work_path, icon, icon_path, expected_icon):
+        snap_name = app_name = "foo"
 
-        with contextlib.suppress(AttributeError):
-            open(self.icon_path, "w").close()
-
-        with open(self.desktop_file_path, "w") as desktop_file:
+        desktop_file_path = tmp_work_path / "app.desktop"
+        with desktop_file_path.open("w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
             print("Exec=in-snap-exe", file=desktop_file)
-            print("Icon={}".format(self.icon), file=desktop_file)
+            print("Icon={}".format(icon), file=desktop_file)
 
-        self.expected_desktop_file = "{}.desktop".format(self.app_name)
+        if icon_path is not None:
+            (tmp_work_path / icon_path).touch()
 
-    def test_generate_desktop_file(self):
         d = DesktopFile(
-            snap_name=self.snap_name,
-            app_name=self.app_name,
-            filename=self.desktop_file_path,
-            prime_dir=self.path,
+            snap_name=snap_name,
+            app_name=app_name,
+            filename=desktop_file_path,
+            prime_dir=tmp_work_path.as_posix(),
         )
-        try:
-            d.write(icon_path=self.icon_path, gui_dir=".")
-        except AttributeError:
+        d.write(gui_dir=".")
+
+        if icon_path is not None:
+            d.write(icon_path=icon_path, gui_dir=".")
+        else:
             d.write(gui_dir=".")
 
-        self.assertThat(self.expected_desktop_file, FileExists())
-        self.assertThat(
-            self.expected_desktop_file,
-            FileContains(
-                dedent(
+        expected_desktop_file = tmp_work_path / f"{app_name}.desktop"
+        assert expected_desktop_file.exists()
+        with expected_desktop_file.open() as desktop_file:
+            assert (
+                desktop_file.read()
+                == dedent(
                     """\
             [Desktop Entry]
             Exec=foo
             Icon={}
 
-        """.format(
-                        self.expected_icon
-                    )
-                )
-            ),
-        )
+        """
+                ).format(expected_icon)
+            )
 
-    def test_generate_desktop_file_multisection(self):
-        with open(self.desktop_file_path, "w") as desktop_file:
+    def test_generate_desktop_file_multisection(
+        self, tmp_work_path, icon, icon_path, expected_icon
+    ):
+        snap_name = app_name = "foo"
+
+        desktop_file_path = tmp_work_path / "app.desktop"
+        with desktop_file_path.open("w") as desktop_file:
             print("[Desktop Entry]", file=desktop_file)
             print("Exec=in-snap-exe", file=desktop_file)
-            print("Icon={}".format(self.icon), file=desktop_file)
+            print("Icon={}".format(icon), file=desktop_file)
             print("[Desktop Entry Two]", file=desktop_file)
             print("Exec=in-snap-exe2", file=desktop_file)
-            print("Icon={}".format(self.icon), file=desktop_file)
+            print("Icon={}".format(icon), file=desktop_file)
+
+        if icon_path is not None:
+            (tmp_work_path / icon_path).touch()
 
         d = DesktopFile(
-            snap_name=self.snap_name,
-            app_name=self.app_name,
-            filename=self.desktop_file_path,
-            prime_dir=self.path,
+            snap_name=snap_name,
+            app_name=app_name,
+            filename=desktop_file_path,
+            prime_dir=tmp_work_path.as_posix(),
         )
 
-        try:
-            d.write(icon_path=self.icon_path, gui_dir=".")
-        except AttributeError:
+        if icon_path is not None:
+            d.write(icon_path=icon_path, gui_dir=".")
+        else:
             d.write(gui_dir=".")
 
-        self.assertThat(self.expected_desktop_file, FileExists())
-        self.assertThat(
-            self.expected_desktop_file,
-            FileContains(
-                dedent(
+        expected_desktop_file = tmp_work_path / f"{app_name}.desktop"
+        assert expected_desktop_file.exists()
+        with expected_desktop_file.open() as desktop_file:
+            assert (
+                desktop_file.read()
+                == dedent(
                     """\
             [Desktop Entry]
             Exec=foo
-            Icon={}
+            Icon={0}
 
             [Desktop Entry Two]
             Exec=foo
-            Icon={}
+            Icon={0}
 
-        """.format(
-                        self.expected_icon, self.expected_icon
-                    )
-                )
-            ),
-        )
+        """
+                ).format(expected_icon)
+            )
 
 
-class DesktopFileErrorTest(unit.TestCase):
-    def test_not_found(self):
-        self.assertRaises(
-            errors.InvalidDesktopFileError,
-            DesktopFile,
+def test_not_found(tmp_path):
+    with pytest.raises(errors.InvalidDesktopFileError):
+        DesktopFile(
             snap_name="foo",
             app_name="foo",
             filename="desktop-file-not-found",
-            prime_dir=self.path,
+            prime_dir=tmp_path.as_posix(),
         )
 
-    def test_no_desktop_section(self):
-        with open("foo.desktop", "w") as desktop_file:
-            print("[Random Entry]", file=desktop_file)
-            print("Exec=foo", file=desktop_file)
-            print("Icon=foo", file=desktop_file)
 
-        d = DesktopFile(
-            snap_name="foo", app_name="foo", filename="foo.desktop", prime_dir=self.path
-        )
+def test_no_desktop_section(tmp_work_path):
+    with open("foo.desktop", "w") as desktop_file:
+        print("[Random Entry]", file=desktop_file)
+        print("Exec=foo", file=desktop_file)
+        print("Icon=foo", file=desktop_file)
 
-        self.assertRaises(errors.InvalidDesktopFileError, d.write, gui_dir=self.path)
+    d = DesktopFile(
+        snap_name="foo",
+        app_name="foo",
+        filename="foo.desktop",
+        prime_dir=tmp_work_path.as_posix(),
+    )
 
-    def test_missing_exec_entry(self):
-        with open("foo.desktop", "w") as desktop_file:
-            print("[Desktop Entry]", file=desktop_file)
-            print("Icon=foo", file=desktop_file)
+    with pytest.raises(errors.InvalidDesktopFileError):
+        d.write(gui_dir=tmp_work_path.as_posix())
 
-        d = DesktopFile(
-            snap_name="foo", app_name="foo", filename="foo.desktop", prime_dir=self.path
-        )
 
-        self.assertRaises(errors.InvalidDesktopFileError, d.write, gui_dir=self.path)
+def test_missing_exec_entry(tmp_work_path):
+    with open("foo.desktop", "w") as desktop_file:
+        print("[Desktop Entry]", file=desktop_file)
+        print("Icon=foo", file=desktop_file)
+
+    d = DesktopFile(
+        snap_name="foo",
+        app_name="foo",
+        filename="foo.desktop",
+        prime_dir=tmp_work_path.as_posix(),
+    )
+
+    with pytest.raises(errors.InvalidDesktopFileError):
+        d.write(gui_dir=tmp_work_path.as_posix())
