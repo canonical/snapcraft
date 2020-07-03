@@ -1,5 +1,5 @@
 name: snapcraft
-base: core18
+base: core20
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -63,7 +63,7 @@ parts:
         - execstack
         - gpg
         - gpgv
-        - libffi6
+        - libffi7
         - libsodium23
         - libxml2
         - libxslt1.1
@@ -104,20 +104,4 @@ parts:
         # This is the last step, let's now compile all our pyc files.
         "$SNAPCRAFT_PART_INSTALL/usr/bin/python3" -m compileall -q .
 
-    after: [snapcraft-libs]
-
-  legacy-snapcraft:
-    plugin: python
-    source: https://github.com/snapcore/snapcraft.git
-    source-branch: legacy
-    source-depth: 1
-    requirements:
-        - requirements.txt
-    override-build: |
-        snapcraftctl build
-        $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
-
-        sed -ri 's|(lib/.*/site-packages)|legacy_snapcraft/\1|' $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/sitecustomize.py
-    organize:
-        '*': legacy_snapcraft/
     after: [snapcraft-libs]
