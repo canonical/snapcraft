@@ -85,14 +85,19 @@ class FlutterPlugin(PluginV1):
     def pull(self) -> None:
         super().pull()
 
+        work_path = pathlib.Path(self.sourcedir)
+        if self.options.source_subdir:
+            work_path /= self.options.source_subdir
+
         # Let these errors go through to get them on Sentry.
         if self.options.flutter_revision:
             subprocess.run(
                 f"yes | flutter version {self.options.flutter_revision}",
                 shell=True,
                 check=True,
+                cwd=work_path,
             )
-        subprocess.run(["flutter", "pub", "get"], check=True)
+        subprocess.run(["flutter", "pub", "get"], check=True, cwd=work_path)
 
     def build(self) -> None:
         super().build()
@@ -106,7 +111,7 @@ class FlutterPlugin(PluginV1):
                 "-v",
                 "-t",
                 self.options.flutter_target,
-            ]
+            ],
         )
 
         bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/release/bundle"
