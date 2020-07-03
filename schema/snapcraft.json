@@ -780,6 +780,7 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
+                                    "flutter-dev",
                                     "flutter-master",
                                     "gnome-3-28",
                                     "gnome-3-34",
