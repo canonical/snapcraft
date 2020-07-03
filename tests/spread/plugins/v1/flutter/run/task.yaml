@@ -1,4 +1,6 @@
-summary: Build and run a basic snap from conda packages
+summary: Build and run a basic snap using the flutter plugin and extension
+
+kill-timeout: 20m
 
 environment:
   SNAP_DIR: ../snaps/flutter-hello

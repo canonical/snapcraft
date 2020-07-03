@@ -55,9 +55,9 @@ CLOSED: [2020-06-24]
 - [ ] Add multi-arch spread test(s).
 - [ ] Finalize schema and mark stable.
 
-*** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [1/4]
+*** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [2/4]
 
 - [X] Add extension variant for master
-- [ ] Add extension variant for dev
+- [X] Add extension variant for dev
 - [ ] Add extension variant for beta
 - [ ] Add extension variant for stable
