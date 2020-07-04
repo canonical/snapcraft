@@ -22,6 +22,8 @@ a = Analysis(
         "click",
         "configparser",
         "pkg_resources",
+         # Workaround PyInstaller & SetupTools, https://github.com/pypa/setuptools/issues/1963
+        "pkg_resources.py2_warn",
         "pymacaroons",
         "responses",
     ],
