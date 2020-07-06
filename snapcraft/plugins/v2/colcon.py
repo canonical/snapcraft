@@ -74,7 +74,7 @@ def _get_python_command(env: Dict[str, str], command: List[str]) -> List[str]:
 
     env_flags = [f"{key}={value}" for key, value in env.items()]
 
-    return ["env", "-i", *env_flags, sys.executable, *command]
+    return ["env", "-i", *env_flags, sys.executable, "-S", *command]
 
 
 class ColconPlugin(PluginV2):
