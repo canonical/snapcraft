@@ -62,7 +62,7 @@ class FlutterMetaExtension(type):
         channel = attrs["channel"]
 
         def is_experimental(base: Optional[str]) -> bool:
-            return True
+            return False
 
         def get_supported_bases() -> Tuple[str, ...]:
             return attrs["supported_bases"]
