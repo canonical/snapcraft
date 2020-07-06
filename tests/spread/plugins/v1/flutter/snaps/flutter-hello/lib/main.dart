@@ -1,4 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+final _linkStyle = TextStyle(
+  color: Colors.lightBlue[100],
+  fontStyle: FontStyle.italic,
+  fontSize: 18.0,
+  fontWeight: FontWeight.bold,
+  decoration: TextDecoration.underline,
+);
+
+Future<void> _maybeLaunch(String url) async {
+  if (await canLaunch(url))
+    await launch(
+      url,
+      forceWebView: true,
+      enableJavaScript: true,
+    );
+}
 
 void main() {
   runApp(MyApp());
@@ -103,6 +121,10 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
+            ),
+            InkWell(
+              child: Text("https://snapcraft.io", style: _linkStyle),
+              onTap: () => _maybeLaunch("https://snapcraft.io"),
             ),
           ],
         ),
