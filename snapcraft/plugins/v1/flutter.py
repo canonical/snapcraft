@@ -101,7 +101,7 @@ class FlutterPlugin(PluginV1):
     def build(self) -> None:
         super().build()
 
-        subprocess.run(["flutter", "pub", "get"], check=True, cwd=self.builddir)
+        self.run(["flutter", "pub", "get"])
 
         self.run(
             [
