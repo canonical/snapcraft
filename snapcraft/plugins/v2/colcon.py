@@ -74,7 +74,7 @@ def _get_python_command(env: Dict[str, str], command: List[str]) -> List[str]:
 
     env_flags = [f"{key}={value}" for key, value in env.items()]
 
-    return ["env", *env_flags, sys.executable, *command]
+    return ["env", "-i", *env_flags, sys.executable, *command]
 
 
 class ColconPlugin(PluginV2):
@@ -166,7 +166,7 @@ class ColconPlugin(PluginV2):
     def _get_stage_runtime_dependencies_command(self):
         env = dict(
             (key, os.environ[key])
-            for key in ["SNAP", "SNAP_ARCH", "SNAP_NAME", "SNAP_VERSION"]
+            for key in ["PATH", "SNAP", "SNAP_ARCH", "SNAP_NAME", "SNAP_VERSION"]
             if key in os.environ
         )
         env["LC_ALL"] = "C.UTF-8"
@@ -174,7 +174,15 @@ class ColconPlugin(PluginV2):
 
         return " ".join(
             _get_python_command(
-                env, [os.path.abspath(__file__), "stage-runtime-dependencies"]
+                env,
+                [
+                    os.path.abspath(__file__),
+                    "stage-runtime-dependencies",
+                    "--part-install",
+                    "$SNAPCRAFT_PART_INSTALL",
+                    "--ros-distro",
+                    "$ROS_DISTRO",
+                ],
             )
         )
 
