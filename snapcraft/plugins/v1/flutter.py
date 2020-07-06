@@ -53,10 +53,7 @@ class FlutterPlugin(PluginV1):
             "type": "string",
             "default": "lib/main.dart",
         }
-        schema["properties"]["flutter-revision"] = {
-            "type": "string",
-            "default": None,
-        }
+        schema["properties"]["flutter-revision"] = {"type": "string", "default": None}
         schema["required"] = ["source"]
 
         return schema
@@ -112,7 +109,7 @@ class FlutterPlugin(PluginV1):
                 "-v",
                 "-t",
                 self.options.flutter_target,
-            ],
+            ]
         )
 
         bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/release/bundle"

@@ -39,9 +39,7 @@ def test_schema():
 
 
 def test_get_pull_properties():
-    assert flutter.FlutterPlugin.get_pull_properties() == [
-        "flutter-revision",
-    ]
+    assert flutter.FlutterPlugin.get_pull_properties() == ["flutter-revision"]
 
 
 def test_get_build_properties():
@@ -77,7 +75,7 @@ def test_pull_with_revision(mock_subprocess_run, flutter_plugin):
 
     expected_cwd = pathlib.Path("parts/test-part/src").absolute()
     assert mock_subprocess_run.mock_calls == [
-        call("yes | flutter version foo", shell=True, check=True, cwd=expected_cwd),
+        call("yes | flutter version foo", shell=True, check=True, cwd=expected_cwd)
     ]
 
 
@@ -110,8 +108,8 @@ def test_build(mock_run, flutter_plugin):
                 "-v",
                 "-t",
                 flutter_plugin.options.flutter_target,
-            ],
-        )
+            ]
+        ),
     ]
     assert (pathlib.Path(flutter_plugin.installdir) / "bin/my_app").exists()
 
