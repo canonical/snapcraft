@@ -53,10 +53,7 @@ class FlutterPlugin(PluginV1):
             "type": "string",
             "default": "lib/main.dart",
         }
-        schema["properties"]["flutter-revision"] = {
-            "type": "string",
-            "default": None,
-        }
+        schema["properties"]["flutter-revision"] = {"type": "string", "default": None}
         schema["required"] = ["source"]
 
         return schema
@@ -97,10 +94,11 @@ class FlutterPlugin(PluginV1):
                 check=True,
                 cwd=work_path,
             )
-        subprocess.run(["flutter", "pub", "get"], check=True, cwd=work_path)
 
     def build(self) -> None:
         super().build()
+
+        self.run(["flutter", "pub", "get"])
 
         self.run(
             [
@@ -111,7 +109,7 @@ class FlutterPlugin(PluginV1):
                 "-v",
                 "-t",
                 self.options.flutter_target,
-            ],
+            ]
         )
 
         bundle_dir_path = pathlib.Path(self.builddir) / "build/linux/release/bundle"

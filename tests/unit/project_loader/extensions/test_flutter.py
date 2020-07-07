@@ -63,20 +63,13 @@ def test_extension(extension_class):
         "layout": {
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
-            },
+            }
         },
     }
 
     assert flutter_extension.app_snippet == {
         "command-chain": ["snap/command-chain/desktop-launch"],
-        "plugs": [
-            "desktop",
-            "desktop-legacy",
-            "gsettings",
-            "opengl",
-            "wayland",
-            "x11",
-        ],
+        "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
     }
 
     assert flutter_extension.part_snippet == dict()

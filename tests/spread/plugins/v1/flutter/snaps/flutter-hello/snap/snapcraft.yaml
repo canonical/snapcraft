@@ -16,5 +16,6 @@ apps:
 parts:
   flutter-hello:
     source: .
+    source-subdir: src
     plugin: flutter
     flutter-revision: 3ce26910923b6a5e784df17a8a9a17b50598df4a

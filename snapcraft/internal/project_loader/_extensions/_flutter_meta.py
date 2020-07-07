@@ -134,7 +134,7 @@ class FlutterMetaExtension(type):
             "layout": {
                 "/usr/share/xml/iso-codes": {
                     "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
-                },
+                }
             },
         }
 
