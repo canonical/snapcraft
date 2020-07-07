@@ -206,6 +206,7 @@ def plugin_cli():
 @click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
 @click.option("--ros-distro", envvar="ROS_DISTRO", required=True)
 def stage_runtime_dependencies(part_install: str, ros_distro: str):
+    click.echo("Staging runtime dependencies...")
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
     rosdep_cmd = shutil.which("rosdep")
@@ -218,6 +219,7 @@ def stage_runtime_dependencies(part_install: str, ros_distro: str):
                 dict(), [rosdep_cmd, "resolve", dep.name, "--rosdistro", ros_distro]
             )
             try:
+                click.echo(f"Running {cmd!r}")
                 proc = subprocess.run(
                     cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 )
