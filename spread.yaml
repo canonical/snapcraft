@@ -512,6 +512,7 @@ suites:
 # Extensions tests
  tests/spread/extensions/:
    summary: tests of snapcraft's extensions
+   kill-timeout: 20m
 
 # External snap tests
  tests/spread/snaps/:
