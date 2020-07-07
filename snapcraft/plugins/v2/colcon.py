@@ -209,15 +209,10 @@ def stage_runtime_dependencies(part_install: str, ros_distro: str):
     click.echo("Staging runtime dependencies...")
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
-    rosdep_cmd = shutil.which("rosdep")
-    if not rosdep_cmd:
-        rosdep_cmd = "/snap/snapcraft/current/usr/bin/rosdep"
 
     for pkg in catkin_packages.find_packages(".").values():
         for dep in pkg.exec_depends:
-            cmd = _get_python_command(
-                dict(), [rosdep_cmd, "resolve", dep.name, "--rosdistro", ros_distro]
-            )
+            cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:
                 click.echo(f"Running {cmd!r}")
                 proc = subprocess.run(
