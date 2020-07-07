@@ -268,14 +268,16 @@ class Provider(abc.ABC):
         info = self._load_info()
         provider_base = info.get("base")
         built_by = info.get("created-by-snapcraft-version")
-        if self.project._get_build_base() != provider_base:
+        build_base = self.project._get_build_base()
+
+        if build_base != provider_base:
             if provider_base is None:
                 self.echoer.warning(
                     "Build instance created with incompatible snapcraft, cleaning."
                 )
             else:
                 self.echoer.warning(
-                    f"Project base changed from {provider_base!r} to {provider_base!r}, cleaning build instance."
+                    f"Project base changed from {provider_base!r} to {build_base!r}, cleaning build instance."
                 )
             self.clean_project()
         elif built_by is None:
