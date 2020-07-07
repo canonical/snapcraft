@@ -51,13 +51,13 @@ def test_schema():
 def test_get_build_packages():
     plugin = PythonPlugin(part_name="my-part", options=lambda: None)
 
-    plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
+    assert plugin.get_build_packages() == {"findutils", "python3-venv", "python3-dev"}
 
 
 def test_get_build_environment():
     plugin = PythonPlugin(part_name="my-part", options=lambda: None)
 
-    plugin.get_build_environment() == {
+    assert plugin.get_build_environment() == {
         "PATH": "${SNAPCRAFT_PART_INSTALL}/bin:${PATH}",
         "SNAPCRAFT_PYTHON_INTERPRETER": "python3",
         "SNAPCRAFT_PYTHON_VENV_ARGS": "",
@@ -105,12 +105,15 @@ def test_get_build_commands():
 
     plugin = PythonPlugin(part_name="my-part", options=Options())
 
-    plugin.get_build_commands() == [
-        '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
-        '"${SNAPCRAFT_PART_INSTALL}"',
-        '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
-        "[ -f setup.py ] && pip install  -U .",
-    ] + _FIXUP_BUILD_COMMANDS
+    assert (
+        plugin.get_build_commands()
+        == [
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+            '"${SNAPCRAFT_PART_INSTALL}"',
+            "[ -f setup.py ] && pip install  -U .",
+        ]
+        + _FIXUP_BUILD_COMMANDS
+    )
 
 
 def test_get_build_commands_with_all_properties():
@@ -121,11 +124,14 @@ def test_get_build_commands_with_all_properties():
 
     plugin = PythonPlugin(part_name="my-part", options=Options())
 
-    plugin.get_build_commands() == [
-        '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
-        '"${SNAPCRAFT_PART_INSTALL}"',
-        '. "${SNAPCRAFT_PART_INSTALL}/bin/activate"',
-        "pip install -c 'constraints.txt' -U pip",
-        "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
-        "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
-    ] + _FIXUP_BUILD_COMMANDS
+    assert (
+        plugin.get_build_commands()
+        == [
+            '"${SNAPCRAFT_PYTHON_INTERPRETER}" -m venv ${SNAPCRAFT_PYTHON_VENV_ARGS} '
+            '"${SNAPCRAFT_PART_INSTALL}"',
+            "pip install -c 'constraints.txt' -U pip",
+            "pip install -c 'constraints.txt' -U -r 'requirements.txt'",
+            "[ -f setup.py ] && pip install -c 'constraints.txt' -U .",
+        ]
+        + _FIXUP_BUILD_COMMANDS
+    )
