@@ -84,13 +84,7 @@ class ColconPlugin(PluginV2):
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "colcon-packages": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                },
-                "colcon-cmake-args": {
+                "colcon-ament-cmake-args": {
                     "type": "array",
                     "minitems": 1,
                     "items": {"type": "string"},
@@ -102,11 +96,17 @@ class ColconPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "colcon-ament-cmake-args": {
+                "colcon-cmake-args": {
                     "type": "array",
                     "minitems": 1,
                     "items": {"type": "string"},
                     "default": [],
+                },
+                "colcon-packages": {
+                    "type": "array",
+                    "minitems": 1,
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
                 },
                 "colcon-packages-ignore": {
                     "type": "array",
@@ -125,8 +125,8 @@ class ColconPlugin(PluginV2):
         return {
             "python3-colcon-common-extensions",
             "python3-rosdep",
-            "python3-wstool",
             "python3-rosinstall",
+            "python3-wstool",
         }
 
     def get_build_environment(self) -> Dict[str, str]:
