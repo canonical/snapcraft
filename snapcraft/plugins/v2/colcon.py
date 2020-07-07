@@ -57,7 +57,6 @@
 import click
 import os
 import pathlib
-import shutil
 import subprocess
 import sys
 from typing import Any, Dict, List, Set
