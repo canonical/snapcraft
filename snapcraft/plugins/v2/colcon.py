@@ -215,7 +215,11 @@ def stage_runtime_dependencies(part_install: str, ros_distro: str):
             try:
                 click.echo(f"Running {cmd!r}")
                 proc = subprocess.run(
-                    cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                    cmd,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    env=dict(PATH=os.environ["PATH"]),
                 )
             except subprocess.CalledProcessError as error:
                 click.echo(f"failed to run {cmd!r}: {error.output}")
