@@ -30,22 +30,25 @@ def recursive_data_files(directory, install_directory):
     return data_files
 
 
-def get_git_describe():
-    return (
+def determine_version():
+    # Examples (git describe -> python package version):
+    # 4.1.1-0-gad012482d -> 4.1.1
+    # 4.1.1-16-g2d8943dbc -> 4.1.1.post16+g2d8943dbc
+    version, distance, commit = (
         subprocess.run(
-            ["git", "describe", "--always"], check=True, stdout=subprocess.PIPE
+            ["git", "describe", "--always", "--long"],
+            check=True,
+            stdout=subprocess.PIPE,
         )
         .stdout.decode()
         .strip()
+        .split("-")
     )
 
+    if distance == "0":
+        return version
 
-def determine_version():
-    # 4.0rc1-23-g6f6016573 -> 4.0rc1+git23.g6f6016573
-    version = get_git_describe()
-    version = version.replace("-", "+git", 1)
-    version = version.replace("-", ".")
-    return version
+    return f"{version}.post{distance}+git{commit[1:]}"
 
 
 # Common distribution data
