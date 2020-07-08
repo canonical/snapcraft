@@ -88,14 +88,15 @@ parts:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
-    override-pull: |
-        snapcraftctl pull
-        version="$(git describe --always | sed -e 's/-/+git/;y/-/./')"
-        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        snapcraftctl set-version "$version"
-        snapcraftctl set-grade "$grade"
     override-build: |
         snapcraftctl build
+
+        version="$(python3 setup.py --version)"
+        snapcraftctl set-version "$version"
+
+        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+        snapcraftctl set-grade "$grade"
+
         $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
     override-prime: |
         snapcraftctl prime
