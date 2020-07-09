@@ -474,11 +474,6 @@ class Provider(abc.ABC):
         # Tell Snapcraft it can take ownership of the host.
         env_list.append("SNAPCRAFT_BUILD_ENVIRONMENT=managed-host")
 
-        # Setup PATH so that snaps have precedence.
-        env_list.append(
-            "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        )
-
         # Set the HOME directory.
         env_list.append(f"HOME={self._get_home_directory().as_posix()}")
 
