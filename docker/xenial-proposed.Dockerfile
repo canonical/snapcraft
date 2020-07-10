@@ -10,6 +10,7 @@ RUN apt-get update && \
   apt-get dist-upgrade --yes && \
   apt-get install --yes \
   git \
+  snapd \
   snapcraft/xenial-proposed \
   && \
   apt-get autoclean --yes && \
