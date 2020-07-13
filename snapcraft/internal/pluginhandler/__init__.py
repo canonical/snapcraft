@@ -431,7 +431,7 @@ class PluginHandler:
         if not stage_snaps:
             return
 
-        logger.debug("Unpacking stage-snaps to {!r}".format(self.plugin.stage_snaps))
+        logger.debug("Unpacking stage-snaps to {!r}".format(self.part_install_dir))
         snap_files = iglob(os.path.join(self.part_snaps_dir, "*.snap"))
         snap_sources = (
             sources.Snap(source=s, source_dir=self.part_snaps_dir) for s in snap_files
