@@ -41,7 +41,7 @@ _MESSAGE_REGISTER_PRIVATE = dedent(
     the choice of name and make sure you are confident nobody else will
     have a stronger claim to that particular name. If you are unsure
     then we suggest you prefix the name with your developer identity,
-    As ‘nessita-yoyodyne-www-site-content’."""
+    As '$username-yoyodyne-www-site-content'."""
 )
 _MESSAGE_REGISTER_CONFIRM = dedent(
     """
@@ -51,9 +51,9 @@ _MESSAGE_REGISTER_CONFIRM = dedent(
     If needed, we will rename snaps to ensure that a particular name
     reflects the software most widely expected by our community.
 
-    For example, most people would expect ‘thunderbird’ to be published by
+    For example, most people would expect 'thunderbird' to be published by
     Mozilla. They would also expect to be able to get other snaps of
-    Thunderbird as 'thunderbird-$username'.
+    Thunderbird as '$username-thunderbird'.
 
     Would you say that MOST users will expect {!r} to come from
     you, and be the software you intend to publish there?"""
