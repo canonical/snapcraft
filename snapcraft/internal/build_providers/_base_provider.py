@@ -16,10 +16,11 @@
 
 import abc
 import base64
+import logging
 import os
 import pathlib
+import pkg_resources
 import platform
-import logging
 import shlex
 import shutil
 import sys
@@ -254,14 +255,6 @@ class Provider(abc.ABC):
         # what is on the host
         self._setup_snapcraft()
 
-    def _is_compatible_version(self, built_by: str) -> bool:
-        """Return True if running version is >= built-by version."""
-
-        # We use a bit a of naive string check here.  Re-using Python
-        # versioning comparisons cannot be used because we don't follow
-        # their spec. Apt version comparison would require running on Linux.
-        return snapcraft._get_version() >= built_by
-
     def _ensure_compatible_build_environment(self) -> None:
         """Force clean of build-environment if project is not compatible."""
 
@@ -285,7 +278,9 @@ class Provider(abc.ABC):
                 f"Build environment was created with unknown snapcraft version {built_by!r}, cleaning."
             )
             self.clean_project()
-        elif not self._is_compatible_version(built_by):
+        elif pkg_resources.parse_version(
+            snapcraft._get_version()
+        ) < pkg_resources.parse_version(built_by):
             self.echoer.warning(
                 f"Build environment was created with newer snapcraft version {built_by!r}, cleaning."
             )
