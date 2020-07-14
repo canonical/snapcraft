@@ -91,6 +91,7 @@ export LIBVA_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 # Without that OpenGL using apps do not work with the nVidia drivers.
 # Ref.: https://bugs.launchpad.net/snappy/+bug/1588192
 append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl"
+append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl/vdpau"
 
 # Unity7 export (workaround for https://launchpad.net/bugs/1638405)
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libunity"
