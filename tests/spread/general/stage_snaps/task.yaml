@@ -1,10 +1,8 @@
 summary: stage-snaps
 
-# We currently only have core18 on a stable channel
 systems:
-  - ubuntu-18.04-64
-  - ubuntu-18.04-amd64
-  - ubuntu-18.04-i386
+  - ubuntu-20.04*
+  - ubuntu-18.04*
 
 environment:
   STAGE_SNAPS/default: "hello"
@@ -12,9 +10,13 @@ environment:
   STAGE_SNAPS/n_snaps: "hello, black/latest/edge"
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+
   mkdir test-snap
   cd test-snap
   snapcraft init
+  set_base "snap/snapcraft.yaml"
   
   echo "    stage-snaps: [$STAGE_SNAPS]" >> snap/snapcraft.yaml
 
