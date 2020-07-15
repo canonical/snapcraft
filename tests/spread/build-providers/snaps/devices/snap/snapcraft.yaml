@@ -1,0 +1,20 @@
+name: devices
+version: '0.1'
+summary: Help verify (some) device files can be created in LXD builds
+description: ...
+
+grade: devel
+base: core18
+confinement: strict
+
+parts:
+  test:
+    plugin: nil
+    build-packages:
+      - coreutils
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/dev
+      mknod $SNAPCRAFT_PART_INSTALL/dev/null c 1 3
+      mknod $SNAPCRAFT_PART_INSTALL/dev/zero c 1 5
+      mknod $SNAPCRAFT_PART_INSTALL/dev/random c 1 8
+      mknod $SNAPCRAFT_PART_INSTALL/dev/urandom c 1 9
