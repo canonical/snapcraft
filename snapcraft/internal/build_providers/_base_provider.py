@@ -255,35 +255,36 @@ class Provider(abc.ABC):
         # what is on the host
         self._setup_snapcraft()
 
-    def _ensure_compatible_build_environment(self) -> None:
-        """Force clean of build-environment if project is not compatible."""
-
+    def _check_environment_needs_cleaning(self) -> bool:
         info = self._load_info()
         provider_base = info.get("base")
         built_by = info.get("created-by-snapcraft-version")
         build_base = self.project._get_build_base()
 
-        if build_base != provider_base:
-            if provider_base is None:
-                self.echoer.warning(
-                    "Build instance created with incompatible snapcraft, cleaning."
-                )
-            else:
-                self.echoer.warning(
-                    f"Project base changed from {provider_base!r} to {build_base!r}, cleaning build instance."
-                )
-            self.clean_project()
-        elif built_by is None:
+        if provider_base is None or built_by is None:
             self.echoer.warning(
-                f"Build environment was created with unknown snapcraft version {built_by!r}, cleaning."
+                "Build environment is in unknown state, cleaning first."
             )
-            self.clean_project()
+            return True
+        elif build_base != provider_base:
+            self.echoer.warning(
+                f"Project base changed from {provider_base!r} to {build_base!r}, cleaning first."
+            )
+            return True
         elif pkg_resources.parse_version(
             snapcraft._get_version()
         ) < pkg_resources.parse_version(built_by):
             self.echoer.warning(
-                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning."
+                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning first."
             )
+            return True
+
+        return False
+
+    def _ensure_compatible_build_environment(self) -> None:
+        """Force clean of build-environment if project is not compatible."""
+
+        if self._check_environment_needs_cleaning():
             self.clean_project()
 
     def _install_file(self, *, path: str, content: str, permissions: str) -> None:
