@@ -221,6 +221,9 @@ class LXD(Provider):
         self._container.config["raw.idmap"] = "both {!s} 0".format(
             os.stat(self.project._project_dir).st_uid
         )
+        # Allow container to make safe mknod calls, as documented at
+        # https://linuxcontainers.org/lxd/docs/master/syscall-interception
+        self._container.config["security.syscalls.intercept.mknod"] = "true"
         self._container.save(wait=True)
 
         if self._container.status.lower() != "running":

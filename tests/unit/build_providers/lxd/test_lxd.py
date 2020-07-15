@@ -200,6 +200,7 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-project-name",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
@@ -776,6 +777,7 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-core18",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
