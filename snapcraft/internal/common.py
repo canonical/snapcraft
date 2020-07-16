@@ -19,7 +19,7 @@ import glob
 import logging
 import math
 import os
-from pathlib import Path
+import pathlib
 import shlex
 import shutil
 import subprocess
@@ -27,10 +27,10 @@ import sys
 import tempfile
 import urllib
 from contextlib import suppress
-from typing import Callable, List
+from pathlib import Path
+from typing import Callable, List, Union
 
 from snapcraft.internal import errors
-
 
 SNAPCRAFT_FILES = ["parts", "stage", "prime"]
 _DEFAULT_PLUGINDIR = os.path.join(sys.prefix, "share", "snapcraft", "plugins")
@@ -323,7 +323,7 @@ def format_output_in_columns(
     return result_output
 
 
-def get_bin_paths(*, root: str, existing_only=True) -> List[str]:
+def get_bin_paths(*, root: Union[str, pathlib.Path], existing_only=True) -> List[str]:
     paths = (os.path.join("usr", "sbin"), os.path.join("usr", "bin"), "sbin", "bin")
     rooted_paths = (os.path.join(root, p) for p in paths)
 

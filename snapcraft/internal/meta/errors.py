@@ -171,14 +171,6 @@ class PrimedCommandNotFoundError(errors.SnapcraftError):
         super().__init__(command=command)
 
 
-class ShebangNotFoundError(Exception):
-    """Internal exception for when a shebang is not found."""
-
-
-class ShebangInRoot(Exception):
-    """Internal exception for when a shebang is part of the root."""
-
-
 class SlotValidationError(errors.SnapcraftError):
     fmt = "failed to validate slot={slot_name}: {message}"
 
