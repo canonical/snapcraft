@@ -352,26 +352,26 @@ class Ubuntu(BaseRepo):
         :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
             if installing the packages on the host failed.
         """
-        logger.debug(f"Requested build-packages: {sorted(package_names)!r}")
+        install_required = False
+        package_names = sorted(package_names)
 
-        if cls._check_if_all_packages_installed(package_names):
-            # To get the version list required to return, we mark the installed
-            # packages, but no refresh is required.
-            marked_packages = cls._get_marked_packages(package_names)
-        else:
-            # Ensure we have an up-to-date cache first.
+        logger.debug(f"Requested build-packages: {package_names!r}")
+
+        # Ensure we have an up-to-date cache first if we will have to
+        # install anything.
+        if not cls._check_if_all_packages_installed(package_names):
+            install_required = True
             cls.refresh_build_packages()
 
-            marked_packages = cls._get_marked_packages(package_names)
+        marked_packages = cls._get_marked_packages(package_names)
+        packages = [f"{name}={version}" for name, version in sorted(marked_packages)]
 
-            # TODO: this matches prior behavior, but the version is not
-            # being passed along to apt-get install, even if prescribed
-            # by the user.  We should specify it upon user request.
-            install_packages = sorted([name for name, _ in marked_packages])
+        if install_required:
+            cls._install_packages(packages)
+        else:
+            logger.debug(f"Requested build-packages already installed: {packages!r}")
 
-            cls._install_packages(install_packages)
-
-        return sorted([f"{name}={version}" for name, version in marked_packages])
+        return packages
 
     @classmethod
     def _install_packages(cls, package_names: List[str]) -> None:
@@ -391,6 +391,7 @@ class Ubuntu(BaseRepo):
             "apt-get",
             "--no-install-recommends",
             "-y",
+            "--allow-downgrades",
         ]
         if not is_dumb_terminal():
             apt_command.extend(["-o", "Dpkg::Progress-Fancy=1"])
@@ -401,8 +402,11 @@ class Ubuntu(BaseRepo):
         except subprocess.CalledProcessError:
             raise errors.BuildPackagesNotInstalledError(packages=package_names)
 
+        versionless_names = [get_pkg_name_parts(p)[0] for p in package_names]
         try:
-            subprocess.check_call(["sudo", "apt-mark", "auto"] + package_names, env=env)
+            subprocess.check_call(
+                ["sudo", "apt-mark", "auto"] + versionless_names, env=env
+            )
         except subprocess.CalledProcessError as e:
             logger.warning(
                 "Impossible to mark packages as auto-installed: {}".format(e)
