@@ -262,6 +262,33 @@ class Provider(abc.ABC):
         # settings.
         self._setup_snapd_proxy()
 
+        # Install any CA certificates requested by the user.
+        certs_path = self.build_provider_flags.get("SNAPCRAFT_ADD_CA_CERTIFICATES")
+        if certs_path:
+            self._add_ca_certificates(pathlib.Path(certs_path))
+
+    def _add_ca_certificates(self, certs_path: pathlib.Path) -> None:
+        # Should have been validated by click already.
+        if not certs_path.exists():
+            raise RuntimeError(f"Unable to read CA certificates: {certs_path!r}")
+
+        if certs_path.is_file():
+            certificate_files = [certs_path]
+        elif certs_path.is_dir():
+            certificate_files = [x for x in certs_path.iterdir() if x.is_file()]
+        else:
+            raise RuntimeError(
+                f"Unable to read CA certificates: {certs_path!r} (unhandled file type)"
+            )
+
+        for certificate_file in certificate_files:
+            logger.info(f"Installing CA certificate: {certificate_file}")
+            dst_path = "/usr/local/share/ca-certificates/" + certificate_file.name
+            self._push_file(source=str(certificate_file), destination=dst_path)
+
+        if certificate_files:
+            self._run(["update-ca-certificates"])
+
     def _check_environment_needs_cleaning(self) -> bool:
         info = self._load_info()
         provider_base = info.get("base")
@@ -507,6 +534,10 @@ class Provider(abc.ABC):
 
         # Pass through configurable environment variables.
         for key, value in self.build_provider_flags.items():
+            # Ignore keys that aren't relevant to managed instances.
+            if key in ["SNAPCRAFT_BIND_SSH", "SNAPCRAFT_ADD_CA_CERTIFICATES"]:
+                continue
+
             if not value:
                 continue
 
