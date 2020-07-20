@@ -304,7 +304,7 @@ class PluginOutdatedError(SnapcraftError):
         super().__init__(message=message)
 
 
-class ToolMissingError(SnapcraftReportableError):
+class ToolMissingError(SnapcraftError):
 
     fmt = (
         "A tool snapcraft depends on could not be found: {command_name!r}.\n"
