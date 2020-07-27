@@ -52,7 +52,7 @@ $ snapcraft set-default-track node 17
 Default track for node has been set to 17
 #+END_SRC
 
-If the track is no valid, the output shall follow the convention following by
+If the track is not valid, the output shall follow the convention used in
 the ~SnapcraftException~ class as defined in =snapcraft.internal.errors=. With that
 in mind, the following shall be displayed when an unknown track is specified:
 
