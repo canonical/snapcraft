@@ -73,15 +73,15 @@ Snap Store APIs already exist to implement /setting/ a default track to a given
 track. This is provided by the ~/metadata~ endpoint documented as part of the V1
 Snap Store API [[https://dashboard.snapcraft.io/docs/api/snap.html#managing-snap-metadata][Managing Snap Metadata]].
 
-#+BEGIN_QUOTE
-No work shall go into implementing actual Status changes to tracks as part of
-this body of work.
-#+END_QUOTE
-
 Displaying of track information shall be resolved by the ~channel-map~ endpoint
 defined in the V2 Snap Store API [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]]. For this first implementation
 the default track shall be retrieved from ~snap.default-track~, leaving room for a
 future change to account for ~hidden~ and ~closed~ channel attributes.
+
+In the future, the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]] endpoint shall add a ~status~ attribute for
+tracks which shall return: =active=, =hidden= and =closed=. In this current
+implementation, the Snapcraft logic shall query for this track attribute and
+return a default of =active= for when the attribute is not found.
 
 Use of the API shall be mediated by implementation following the code style used
 in =snapcraft.storeapi=.
