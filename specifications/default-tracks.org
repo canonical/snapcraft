@@ -25,12 +25,12 @@ snapcraft track|list-tracks <snap-name>
 With that criteria, this is how the output shall display for a given snap:
 #+BEGIN_SRC sh
   $ snapcraft list-tracks node
-  Track    Status
-  17       active
-  16       default
-  15       active
-  14       hidden
-  13       closed
+  Track    Status    Created
+  17       active    2020-08-26T12:13:43Z
+  16       default   2020-07-26T12:13:43Z
+  15       active    2020-07-26T12:13:43Z
+  14       hidden    2020-06-26T12:13:43Z
+  13       closed    2020-05-26T12:13:43Z
 #+END_SRC
 
 #+BEGIN_QUOTE
@@ -74,14 +74,15 @@ track. This is provided by the ~/metadata~ endpoint documented as part of the V1
 Snap Store API [[https://dashboard.snapcraft.io/docs/api/snap.html#managing-snap-metadata][Managing Snap Metadata]].
 
 Displaying of track information shall be resolved by the ~channel-map~ endpoint
-defined in the V2 Snap Store API [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]]. For this first implementation
-the default track shall be retrieved from ~snap.default-track~, leaving room for a
-future change to account for ~hidden~ and ~closed~ channel attributes.
+defined in the V2 Snap Store API [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]].
 
-In the future, the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]] endpoint shall add a ~status~ attribute for
-tracks which shall return: =active=, =hidden= and =closed=. In this current
-implementation, the Snapcraft logic shall query for this track attribute and
-return a default of =active= for when the attribute is not found.
+For this first implementation the default track shall be retrieved from the
+=snap.default-track= field. In the future, the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]] endpoint shall add
+a =status= field for a track list item which shall return: =active=, =hidden= and
+=closed=. In this current implementation, the Snapcraft logic shall query for this
+field and set a fallback value of =active= for when the =status= field is not found.
+The =Created= information shall be retrieved from the =creationd-date= field for a track
+list item from the [[*Snap Store API][Snap Store API]] endpoint.
 
 Use of the API shall be mediated by implementation following the code style used
 in =snapcraft.storeapi=.
