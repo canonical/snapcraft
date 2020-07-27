@@ -335,39 +335,32 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
     return hasher.hexdigest()
 
 
-def get_tool_path(command_name: str) -> str:
-    """Return the path to the given command
+def get_snap_tool_path(command_name: str) -> str:
+    """Return the path command found in the snap.
 
-    Return a path to command_name, if Snapcraft is running out of the snap
-    or in legacy mode (snap or sources), it ensures it is using the one in
-    the snap, not the host.
-    If a path cannot be resolved, ToolMissingError is raised.
+    If snapcraft is not running as a snap, shutil.which() is used
+    to resolve the command using PATH.
 
-    : param str command_name: the name of the command to resolve a path for.
-    :raises ToolMissingError: if command_name cannot be resolved to a path.
+    :param command_name: the name of the command to resolve a path for.
+    :raises ToolMissingError: if command_name was not found.
     :return: Path to command
-    :rtype: str
     """
-    command_path: Optional[str] = None
-
-    if common.is_snap() and command_name != "snap":
+    if common.is_snap():
         snap_path = os.getenv("SNAP")
         if snap_path is None:
             raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
 
-        command_path = _command_path_in_root(snap_path, command_name)
+        command_path = _find_command_path_in_root(snap_path, command_name)
     else:
         command_path = shutil.which(command_name)
 
-    # shutil.which will return None if it cannot find command_name but
-    # _command_path_in_root will return an empty string.
-    if not command_path:
+    if command_path is None:
         raise ToolMissingError(command_name=command_name)
 
     return command_path
 
 
-def _command_path_in_root(root, command_name: str) -> str:
+def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),
         os.path.join("usr", "local", "bin"),
@@ -380,7 +373,7 @@ def _command_path_in_root(root, command_name: str) -> str:
         if os.path.exists(path):
             return path
 
-    return ""
+    return None
 
 
 def get_linker_version_from_file(linker_file: str) -> str:
