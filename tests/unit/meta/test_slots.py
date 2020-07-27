@@ -117,6 +117,28 @@ class ContentSlotTests(unit.TestCase):
         self.assertRaises(errors.SlotValidationError, slot.validate)
         self.assertEqual(set(), slot.get_content_dirs(installed_path=""))
 
+    def test_explicit_content(self):
+        slot_dict = OrderedDict({"interface": "content", "content": "content-test"})
+        slot_name = "slot-test"
+
+        slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+
+        assert slot_dict == slot.to_yaml_object()
+
+    def test_explicit_content_with_source(self):
+        slot_dict = OrderedDict(
+            {
+                "interface": "content",
+                "content": "content-test",
+                "source": {"read": "/"},
+            }
+        )
+        slot_name = "slot-test"
+
+        slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+
+        assert slot_dict == slot.to_yaml_object()
+
     def test_read_from_dict(self):
         slot_dict = OrderedDict(
             {
