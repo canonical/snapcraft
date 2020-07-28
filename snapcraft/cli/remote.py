@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import os
 import time
 
 from snapcraft.project import Project
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, errors
 from snapcraft.formatting_utils import humanize_list
 from typing import List
@@ -103,6 +105,9 @@ def remote_build(
         snapcraft remote-build --recover
         snapcraft remote-build --status
     """
+    if os.getenv("SUDO_USER") and os.geteuid() == 0:
+        raise SnapcraftEnvironmentError("'sudo' cannot be used with remote-build")
+
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
 

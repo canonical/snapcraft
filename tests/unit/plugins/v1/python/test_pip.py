@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import subprocess
 
 import fixtures
+import pytest
 from unittest import mock
 
 from testtools.matchers import Contains, Equals, HasLength
@@ -368,7 +370,28 @@ class PipCommandBaseTestCase(PipBaseTestCase):
         self.mock_run.reset_mock()
 
 
-class PipDownloadTest(PipCommandBaseTestCase):
+@pytest.fixture
+def mock_pip_run():
+    patcher = mock.patch.object(_pip.Pip, "_run")
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def pip_instance(tmp_work_path):
+    python_command_path = tmp_work_path / "install_dir/usr/bin/pythontest"
+    python_command_path.parent.mkdir(parents=True)
+    python_command_path.touch()
+
+    return _pip.Pip(
+        python_major_version="test",
+        part_dir="part_dir",
+        install_dir="install_dir",
+        stage_dir="stage_dir",
+    )
+
+
+class TestPipDownload:
 
     scenarios = [
         (
@@ -456,21 +479,35 @@ class PipDownloadTest(PipCommandBaseTestCase):
         ),
     ]
 
-    def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = ["download", "--disable-pip-version-check", "--dest", mock.ANY]
-        common_args.extend(*args)
-        self.mock_run.assert_called_once_with(common_args, **kwargs)
+    def test_with_packages_or_setup_py_or_requirements(
+        self,
+        pip_instance,
+        mock_pip_run,
+        packages,
+        kwargs,
+        expected_args,
+        expected_kwargs,
+    ):
+        pip_instance.download(packages, **kwargs)
 
-    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
-        self.pip.download([])
-        self.mock_run.assert_not_called()
+        args = [
+            "download",
+            "--disable-pip-version-check",
+            "--dest",
+            mock.ANY,
+        ] + expected_args
+        mock_pip_run.assert_called_once_with(args, **expected_kwargs)
 
-    def test_with_packages_or_setup_py_or_requirements(self):
-        self.pip.download(self.packages, **self.kwargs)
-        self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
+
+def test_download_without_packages_or_setup_py_or_requirements_should_noop(
+    mock_pip_run, pip_instance
+):
+    pip_instance.download([])
+
+    mock_pip_run.assert_not_called()
 
 
-class PipInstallTest(PipCommandBaseTestCase):
+class TestPipInstall:
 
     scenarios = [
         (
@@ -596,21 +633,36 @@ class PipInstallTest(PipCommandBaseTestCase):
         ),
     ]
 
-    def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = ["install", "--user", "--no-compile", "--find-links", mock.ANY]
-        common_args.extend(*args)
-        self.mock_run.assert_called_once_with(common_args, **kwargs)
+    def test_with_packages_or_setup_py_or_requirements(
+        self,
+        mock_pip_run,
+        pip_instance,
+        packages,
+        kwargs,
+        expected_args,
+        expected_kwargs,
+    ):
+        pip_instance.install(packages, **kwargs)
 
-    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
-        self.pip.install([])
-        self.mock_run.assert_not_called()
+        args = [
+            "install",
+            "--user",
+            "--no-compile",
+            "--find-links",
+            mock.ANY,
+        ] + expected_args
+        mock_pip_run.assert_called_once_with(args, **expected_kwargs)
 
-    def test_with_packages_or_setup_py_or_requirements(self):
-        self.pip.install(self.packages, **self.kwargs)
-        self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
+
+def test_install_without_packages_or_setup_py_or_requirements_should_noop(
+    mock_pip_run, pip_instance
+):
+    pip_instance.install([])
+
+    mock_pip_run.assert_not_called()
 
 
-class PipInstallFixupShebangTestCase(PipCommandBaseTestCase):
+class TestPipInstallFixupShebang:
 
     scenarios = [
         (
@@ -659,23 +711,22 @@ class PipInstallFixupShebangTestCase(PipCommandBaseTestCase):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
+    def test_install_fixes_shebangs(
+        self, mock_pip_run, pip_instance, file_path, contents, expected
+    ):
+        test_file_path = pathlib.Path(pip_instance._install_dir) / file_path
+        test_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.file_path = os.path.join(self.pip._install_dir, self.file_path)
-        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+        with test_file_path.open("w") as test_file:
+            print(contents, end="", file=test_file)
 
-        with open(self.file_path, "w") as f:
-            f.write(self.contents)
+        pip_instance.install(["foo"])
 
-        self.pip.install(["foo"])
-
-    def test_install_fixes_shebangs(self):
-        with open(self.file_path, "r") as f:
-            self.assertThat(f.read(), Equals(self.expected))
+        with test_file_path.open() as test_file:
+            assert test_file.read() == expected
 
 
-class PipInstallFixupPermissionsTestCase(PipCommandBaseTestCase):
+class TestPipInstallFixupPermissions:
 
     scenarios = [
         ("755", {"file_path": "example.py", "mode": 0o755, "expected_mode": "755"}),
@@ -699,38 +750,31 @@ class PipInstallFixupPermissionsTestCase(PipCommandBaseTestCase):
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
+    def test_install_fixes_permissions(
+        self, mock_pip_run, pip_instance, file_path, mode, expected_mode
+    ):
+        test_file_path = pathlib.Path(pip_instance._install_dir) / file_path
+        test_file_path.parent.mkdir(parents=True, exist_ok=True)
+        test_file_path.touch()
+        test_file_path.chmod(mode)
 
-        self.file_path = os.path.join(self.pip._install_dir, self.file_path)
-        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+        pip_instance.install(["foo"])
 
-        with open(self.file_path, "w") as f:
-            f.write("bubbles!")
-
-        os.chmod(self.file_path, self.mode)
-
-        self.pip.install(["foo"])
-
-    def test_install_fixes_permissions(self):
-        self.assertThat(
-            oct(os.stat(self.file_path).st_mode)[-3:], Equals(self.expected_mode)
-        )
-
-    @mock.patch.object(os, "stat")
-    @mock.patch.object(os.path, "exists", return_value=False)
-    def test_missing_path(self, mock_path_exists, mock_os_stat):
-        _pip._replicate_owner_mode("/nonexistant_path")
-        self.assertFalse(mock_os_stat.called)
-
-    @mock.patch.object(os, "chmod")
-    def test_symlink(self, mock_chmod):
-        os.symlink(self.file_path, "link")
-        _pip._replicate_owner_mode("link")
-        self.assertFalse(mock_chmod.called)
+        assert oct(test_file_path.stat().st_mode)[-3:] == expected_mode
 
 
-class PipWheelTest(PipCommandBaseTestCase):
+@mock.patch.object(os, "chmod")
+def test_symlink(mock_chmod, tmp_work_path):
+    test_file_path = tmp_work_path / "file"
+    test_file_path.touch()
+    pathlib.Path("link").symlink_to(test_file_path)
+
+    _pip._replicate_owner_mode("link")
+
+    assert mock_chmod.called is False
+
+
+class TestPipWheel:
 
     scenarios = [
         (
@@ -818,25 +862,39 @@ class PipWheelTest(PipCommandBaseTestCase):
         ),
     ]
 
-    def _assert_mock_run_with(self, *args, **kwargs):
-        common_args = [
+    def test_with_packages_or_setup_py_or_requirements(
+        mock_common_run_output,
+        mock_pip_run,
+        pip_instance,
+        packages,
+        kwargs,
+        expected_args,
+        expected_kwargs,
+    ):
+        mock_common_run_output.return_value = [
+            '[{"name": "wheel", "version": "1.0"},'
+            '{"name": "setuptools", "version": "1.0"}]'
+        ]
+
+        pip_instance.wheel(packages, **kwargs)
+
+        args = [
             "wheel",
             "--no-index",
             "--find-links",
             mock.ANY,
             "--wheel-dir",
             mock.ANY,
-        ]
-        common_args.extend(*args)
-        self.mock_run.assert_called_once_with(common_args, **kwargs)
+        ] + expected_args
+        mock_pip_run.assert_called_once_with(args, **expected_kwargs)
 
-    def test_without_packages_or_setup_py_or_requirements_should_noop(self):
-        self.pip.wheel([])
-        self.mock_run.assert_not_called()
 
-    def test_with_packages_or_setup_py_or_requirements(self):
-        self.pip.wheel(self.packages, **self.kwargs)
-        self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
+def test_wheel_without_packages_or_setup_py_or_requirements_should_noop(
+    mock_pip_run, pip_instance
+):
+    pip_instance.wheel([])
+
+    mock_pip_run.assert_not_called()
 
 
 class PipListTestCase(PipCommandBaseTestCase):

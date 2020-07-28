@@ -30,6 +30,7 @@ if sys.platform == "linux":
     from .crystal import CrystalPlugin  # noqa: F401
     from .dotnet import DotNetPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
+    from .flutter import FlutterPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
     from .godeps import GodepsPlugin  # noqa: F401
     from .gradle import GradlePlugin  # noqa: F401

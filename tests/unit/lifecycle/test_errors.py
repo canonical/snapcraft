@@ -14,26 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals
-
 from snapcraft.internal.lifecycle import errors
-from tests import unit
 
 
-class ErrorFormattingTest(unit.TestCase):
+class TestErrorFormatting:
 
     scenarios = (
         (
             "PackVerificationError",
             dict(
-                exception=errors.PackVerificationError,
+                exception_class=errors.PackVerificationError,
                 kwargs={},
                 expected_message="Failed to verify directory to pack.",
             ),
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, kwargs, expected_message):
+        assert str(exception_class(**kwargs)) == expected_message

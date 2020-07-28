@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pathlib
 import logging
 import re
 import shutil
@@ -100,6 +101,9 @@ class Rosdep:
         self._ubuntu_distro = ubuntu_distro
         self._base = base
 
+        self._rosdep_stage_packages_path = (
+            pathlib.Path(self._rosdep_path) / "stage_packages"
+        )
         self._rosdep_install_path = os.path.join(self._rosdep_path, "install")
         self._rosdep_sources_path = os.path.join(self._rosdep_path, "sources.list.d")
         self._rosdep_cache_path = os.path.join(self._rosdep_path, "cache")
@@ -113,14 +117,19 @@ class Rosdep:
         os.makedirs(self._rosdep_sources_path)
         os.makedirs(self._rosdep_install_path, exist_ok=True)
         os.makedirs(self._rosdep_cache_path, exist_ok=True)
+        self._rosdep_stage_packages_path.mkdir(exist_ok=True)
 
         # rosdep isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
         logger.info("Installing rosdep...")
-        repo.Ubuntu.install_stage_packages(
+        repo.Ubuntu.fetch_stage_packages(
             package_names=["python-rosdep"],
-            install_dir=self._rosdep_install_path,
+            stage_packages_path=self._rosdep_stage_packages_path,
             base=self._base,
+        )
+        repo.Ubuntu.unpack_stage_packages(
+            stage_packages_path=self._rosdep_stage_packages_path,
+            install_path=pathlib.Path(self._rosdep_install_path),
         )
 
         logger.info("Initializing rosdep database...")

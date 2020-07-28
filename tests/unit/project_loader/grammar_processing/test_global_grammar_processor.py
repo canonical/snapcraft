@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import doctest
+
 from snapcraft.internal.project_loader.grammar_processing import (
     _global_grammar_processor as processor,
 )
-
-import doctest
 
 
 def load_tests(loader, tests, ignore):

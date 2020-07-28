@@ -60,7 +60,7 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("Usage:"))
 
-    def test_promote_edge(self):
+    def test_promote_edge_with_yes(self):
         result = self.run_command(
             [
                 "promote",
@@ -69,13 +69,16 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
                 "edge",
                 "--to-channel",
                 "candidate",
+                "--yes",
             ]
         )
 
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(
             result.output,
-            Contains("'edge' is not a valid set value for --from-channel."),
+            Contains(
+                "'edge' is not a valid set value for --from-channel when using --yes."
+            ),
         )
 
     def test_promote_same(self):

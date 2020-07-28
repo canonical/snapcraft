@@ -21,7 +21,7 @@ import os
 from progressbar import Bar, Percentage, ProgressBar
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from snapcraft.storeapi.errors import StoreUploadError
+from snapcraft.storeapi.errors import StoreUpDownError
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def upload_files(binary_filename, updown_client):
         binary_file.close()
 
     if not response.ok:
-        raise StoreUploadError(response)
+        raise StoreUpDownError(response)
 
     response_data = response.json()
     return {

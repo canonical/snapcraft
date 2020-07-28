@@ -1,0 +1,43 @@
+summary: Use local plugins to build a snap
+
+environment:
+  SNAP_DIR/xcompat1: ../snaps/x-compat-name
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  deb_arch=$(dpkg --print-architecture)
+  sed -i state-pull -e"s/\(.*deb_arch:\) @EXPECTED_ARCHITECTURE@$/\1 $deb_arch/"
+
+restore: |
+  expected_pull_state="$(pwd)/state-pull"
+
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+  git checkout "${expected_pull_state}"
+
+execute: |
+  expected_pull_state="$(pwd)/state-pull"
+
+  cd "$SNAP_DIR"
+
+  snapcraft build
+
+  if [ ! -f parts/x-local-plugin/install/build-stamp ]; then
+      echo "Local plugin failed to create 'build-stamp"
+      exit 1
+  fi
+
+  if ! diff -U10 parts/x-local-plugin/state/pull "$expected_pull_state"; then
+    echo "Pull state does not match"
+    exit 1
+  fi
+

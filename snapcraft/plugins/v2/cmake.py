@@ -59,10 +59,12 @@ class CMakePlugin(PluginV2):
         return {"gcc", "cmake"}
 
     def get_build_environment(self) -> Dict[str, str]:
-        return dict()
+        return {
+            "CMAKE_PREFIX_PATH": "${SNAPCRAFT_STAGE}",
+        }
 
     def _get_cmake_configure_command(self) -> str:
-        cmd = ["cmake", "."] + self.options.cmake_parameters
+        cmd = ["cmake", '"${SNAPCRAFT_PART_SRC_WORK}"'] + self.options.cmake_parameters
 
         return " ".join(cmd)
 

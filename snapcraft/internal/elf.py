@@ -298,8 +298,10 @@ class ElfFile:
         self.elf_type: str = "ET_NONE"
 
         try:
+            logger.debug(f"Extracting ELF attributes: {path}")
             self._extract_attributes()
         except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
+            logger.debug(f"Extracting ELF attributes exception: {str(exception)}")
             raise errors.CorruptedElfFileError(path, exception)
 
     def _extract_attributes(self) -> None:  # noqa: C901
@@ -319,15 +321,22 @@ class ElfFile:
                 elf.header.e_machine,
             )
 
-            for segment in elf.iter_segments():
-                if isinstance(segment, elftools.elf.dynamic.DynamicSegment):
-                    self.is_dynamic = True
-                    for tag in segment.iter_tags("DT_NEEDED"):
+            # Gather attributes from dynamic sections.
+            for section in elf.iter_sections():
+                if not isinstance(section, elftools.elf.dynamic.DynamicSection):
+                    continue
+
+                self.is_dynamic = True
+
+                for tag in section.iter_tags():
+                    if tag.entry.d_tag == "DT_NEEDED":
                         needed = _ensure_str(tag.needed)
                         self.needed[needed] = NeededLibrary(name=needed)
-                    for tag in segment.iter_tags("DT_SONAME"):
+                    elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = _ensure_str(tag.soname)
-                elif segment["p_type"] == "PT_GNU_STACK":
+
+            for segment in elf.iter_segments():
+                if segment["p_type"] == "PT_GNU_STACK":
                     # p_flags holds the bit mask for this segment.
                     # See `man 5 elf`.
                     mode = segment["p_flags"]
@@ -335,10 +344,15 @@ class ElfFile:
                         self.execstack_set = True
                 elif isinstance(segment, elftools.elf.segments.InterpSegment):
                     self.interp = segment.get_interp_name()
-                elif isinstance(segment, elftools.elf.segments.NoteSegment):
-                    for note in segment.iter_notes():
-                        if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
-                            self.build_id = _ensure_str(note.n_desc)
+
+            build_id_section = elf.get_section_by_name(".note.gnu.build-id")
+            if (
+                isinstance(build_id_section, elftools.elf.sections.NoteSection)
+                and build_id_section.header["sh_type"] != "SHT_NOBITS"
+            ):
+                for note in build_id_section.iter_notes():
+                    if note.n_name == "GNU" and note.n_type == "NT_GNU_BUILD_ID":
+                        self.build_id = _ensure_str(note.n_desc)
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.

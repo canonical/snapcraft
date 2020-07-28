@@ -25,7 +25,8 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, TYPE_CHECKING
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
+from pathlib import Path
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
@@ -61,7 +62,8 @@ def _get_data_from_snap_file(snap_path):
                     os.path.join(temp_dir, "squashfs-root"),
                     snap_path,
                     "-e",
-                    os.path.join("meta", "snap.yaml"),
+                    # cygwin unsquashfs on windows uses unix paths.
+                    Path("meta", "snap.yaml").as_posix(),
                 ]
             )
         except subprocess.CalledProcessError:
@@ -272,8 +274,8 @@ def _register_wrapper(method):
     def register_decorator(self, *args, snap_name: str, **kwargs):
         try:
             return method(self, *args, snap_name=snap_name, **kwargs)
-        except storeapi.errors.StorePushError as push_error:
-            if "resource-not-found" not in push_error.error_list:
+        except storeapi.errors.StoreUploadError as upload_error:
+            if "resource-not-found" not in upload_error.error_list:
                 raise
             echo.wrapped(
                 "You are required to register this snap before continuing. "
@@ -333,15 +335,15 @@ class StoreClientCLI(storeapi.StoreClient):
 
     @_login_wrapper
     @_register_wrapper
-    def push_precheck(self, *, snap_name: str) -> None:
-        return super().push_precheck(snap_name=snap_name)
+    def upload_precheck(self, *, snap_name: str) -> None:
+        return super().upload_precheck(snap_name=snap_name)
 
     @_login_wrapper
     @_register_wrapper
-    def push_metadata(
+    def upload_metadata(
         self, *, snap_name: str, metadata: Dict[str, str], force: bool
     ) -> Dict[str, Any]:
-        return super().push_metadata(
+        return super().upload_metadata(
             snap_name=snap_name, metadata=metadata, force=force
         )
 
@@ -653,16 +655,16 @@ def upload_metadata(snap_filename, force):
 
     # hit the server
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
-    store_client.push_metadata(snap_name=snap_name, metadata=metadata, force=force)
+    store_client.upload_precheck(snap_name=snap_name)
+    store_client.upload_metadata(snap_name=snap_name, metadata=metadata, force=force)
     with _get_icon_from_snap_file(snap_filename) as icon:
         metadata = {"icon": icon}
-        store_client.push_binary_metadata(snap_name, metadata, force)
+        store_client.upload_binary_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been uploaded")
 
 
-def upload(snap_filename, release_channels=None):
+def upload(snap_filename, release_channels=None) -> Tuple[str, int]:
     """Upload a snap_filename to the store.
 
     If a cached snap is available, a delta will be generated from
@@ -681,7 +683,7 @@ def upload(snap_filename, release_channels=None):
         "Run upload precheck and verify cached data for {!r}.".format(snap_filename)
     )
     store_client = StoreClientCLI()
-    store_client.push_precheck(snap_name=snap_name)
+    store_client.upload_precheck(snap_name=snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
 
@@ -693,7 +695,7 @@ def upload(snap_filename, release_channels=None):
     source_snap = snap_cache.get(deb_arch=deb_arch)
     sha3_384_available = hasattr(hashlib, "sha3_384")
 
-    result: Dict[str, Any] = None
+    result: Optional[Dict[str, Any]] = None
     if sha3_384_available and source_snap:
         try:
             result = _upload_delta(
@@ -709,10 +711,10 @@ def upload(snap_filename, release_channels=None):
                 "Error generating delta: {}\n"
                 "Falling back to uploading full snap...".format(str(e))
             )
-        except storeapi.errors.StorePushError as push_error:
+        except storeapi.errors.StoreUploadError as upload_error:
             logger.warning(
                 "Unable to upload delta to store: {}\n"
-                "Falling back to uploading full snap...".format(push_error.error_list)
+                "Falling back to uploading full snap...".format(upload_error.error_list)
             )
 
     if result is None:
@@ -724,12 +726,10 @@ def upload(snap_filename, release_channels=None):
             channels=release_channels,
         )
 
-    logger.info("Revision {!r} of {!r} created.".format(result["revision"], snap_name))
-    if release_channels:
-        status(snap_name, deb_arch)
-
     snap_cache.cache(snap_filename=snap_filename)
     snap_cache.prune(deb_arch=deb_arch, keep_hash=calculate_sha3_384(snap_filename))
+
+    return snap_name, result["revision"]
 
 
 def _upload_snap(
@@ -798,7 +798,7 @@ def _upload_delta(
         else:
             raise
     except storeapi.errors.StoreServerError as e:
-        raise storeapi.errors.StorePushError(snap_name, e.response)
+        raise storeapi.errors.StoreUploadError(snap_name, e.response)
     finally:
         if os.path.isfile(delta_filename):
             try:
@@ -897,35 +897,6 @@ def _tabulated_channel_map_tree(channel_map_tree):
         expires_at_header,
     ]
     return tabulate(data, numalign="left", headers=headers, tablefmt="plain")
-
-
-def close(snap_name, channel_names):
-    """Close one or more channels for the specific snap."""
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-
-    try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError as e:
-        raise storeapi.errors.StoreChannelClosingPermissionError(
-            snap_name, DEFAULT_SERIES
-        ) from e
-
-    closed_channels, c_m_tree = store_client.close_channels(
-        snap_id=snap_id, channel_names=channel_names
-    )
-
-    tabulated_status = _tabulated_channel_map_tree(c_m_tree)
-    print(tabulated_status)
-
-    print()
-    if len(closed_channels) == 1:
-        msg = "The {} channel is now closed.".format(closed_channels[0])
-    else:
-        msg = "The {} and {} channels are now closed.".format(
-            ", ".join(closed_channels[:-1]), closed_channels[-1]
-        )
-    logger.info(msg)
 
 
 def download(

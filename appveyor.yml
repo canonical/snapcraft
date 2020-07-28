@@ -8,7 +8,6 @@ environment:
   matrix:
   - PYTHON: C:\Python37-x64
 
-clone_depth: 1
 cache:
 - '%LOCALAPPDATA%\pip\Cache\http'
 - '%LOCALAPPDATA%\pip\Cache\wheels'
@@ -65,7 +64,7 @@ test_script:
     start /wait "SNAPCRAFT INSTALLER" dist\snapcraft-installer.exe /VERYSILENT /ALLUSERS
     "%SNAPCRAFT_INSTALLED_EXE%" version
 
-artifacts:
-- path: dist\snapcraft.exe
-- path: dist\snapcraft-installer.exe
-- path: dist\snapcraft-installer.msix
+#artifacts:
+#- path: dist\snapcraft.exe
+#- path: dist\snapcraft-installer.exe
+#- path: dist\snapcraft-installer.msix

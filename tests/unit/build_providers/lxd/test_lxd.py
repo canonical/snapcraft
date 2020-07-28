@@ -14,23 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pathlib
 import os
 import subprocess
+import sys
 from typing import Any, Dict
 from unittest import mock
 from unittest.mock import call
 
-import fixtures
-from testtools import TestCase
 from testtools.matchers import Equals, FileContains, FileExists
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import _base_provider, errors
 from snapcraft.internal.build_providers._lxd import LXD
-from snapcraft.internal.build_providers._lxd._lxd import _get_resolv_conf_content
 from snapcraft.internal.repo.errors import SnapdConnectionError
 from tests.unit.build_providers import BaseProviderBaseTest
+
+
+if sys.platform == "linux":
+    import pylxd
 
 
 class GetEnv(_base_provider.Provider):
@@ -124,11 +125,13 @@ class FakeContainers:
     def __init__(self):
         self._containers = dict()  # type: Dict[str, FakeContainer]
         self.create_mock = mock.Mock()
+        self.get_mock = mock.Mock()
 
     def exists(self, container_name: str) -> bool:
         return container_name in self._containers
 
     def get(self, container_name: str) -> FakeContainer:
+        self.get_mock(container_name)
         return self._containers[container_name]
 
     def create(self, config: Dict[str, Any], wait: bool) -> FakeContainer:
@@ -140,49 +143,9 @@ class FakeContainers:
 class FakePyLXDClient:
     def __init__(self) -> None:
         self.containers = FakeContainers()
-
-
-class ResolvConfTest(TestCase):
-    def setUp(self):
-        super().setUp()
-        temp_dir = fixtures.TempDir()
-        self.useFixture(temp_dir)
-        self.temp_dir = pathlib.Path(temp_dir.path)
-
-    def test_get_resolv_conf_file(self):
-        resolv_conf_content = "nameserver 1.2.3.4"
-        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
-        with resolv_conf_path.open("w") as resolv_conf_file:
-            print(resolv_conf_content, file=resolv_conf_file, end="")
-
-        self.assertThat(
-            _get_resolv_conf_content(resolv_conf_path), Equals(resolv_conf_content)
-        )
-
-    def test_get_resolv_conf_file_default_nameserver(self):
-        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
-
-        self.assertThat(
-            _get_resolv_conf_content(resolv_conf_path), Equals("nameserver 1.1.1.1")
-        )
-
-    def test_get_resolv_conf_file_from_environment_preferred(self):
-        self.useFixture(
-            fixtures.EnvironmentVariable(
-                "SNAPCRAFT_BUILD_ENVIRONMENT_NAMESERVER", "9.9.9.9"
-            )
-        )
-
-        resolv_conf_content = "nameserver 1.2.3.4"
-        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
-        with resolv_conf_path.open("w") as resolv_conf_file:
-            print(resolv_conf_content, file=resolv_conf_file, end="")
-
-        resolv_conf_path = self.temp_dir / "fake-resolv.conf"
-
-        self.assertThat(
-            _get_resolv_conf_content(resolv_conf_path), Equals("nameserver 9.9.9.9")
-        )
+        self.host_info = {
+            "environment": {"kernel_features": {"seccomp_listener": "true"}}
+        }
 
 
 class LXDBaseTest(BaseProviderBaseTest):
@@ -240,6 +203,7 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-project-name",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
@@ -609,8 +573,9 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "mv",
-                        "/var/tmp/L2V0Yy9yZXNvbHYuY29uZg==",
+                        "ln",
+                        "-sf",
+                        "/run/systemd/resolve/resolv.conf",
                         "/etc/resolv.conf",
                     ]
                 ),
@@ -622,22 +587,9 @@ class LXDInitTest(LXDBaseTest):
                         "--",
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
-                        "chown",
-                        "root:root",
-                        "/etc/resolv.conf",
-                    ]
-                ),
-                call(
-                    [
-                        "/snap/bin/lxc",
-                        "exec",
-                        "snapcraft-project-name",
-                        "--",
-                        "env",
-                        "SNAPCRAFT_HAS_TTY=False",
-                        "chmod",
-                        "0644",
-                        "/etc/resolv.conf",
+                        "systemctl",
+                        "enable",
+                        "systemd-resolved",
                     ]
                 ),
                 call(
@@ -662,7 +614,20 @@ class LXDInitTest(LXDBaseTest):
                         "env",
                         "SNAPCRAFT_HAS_TTY=False",
                         "systemctl",
-                        "start",
+                        "restart",
+                        "systemd-resolved",
+                    ]
+                ),
+                call(
+                    [
+                        "/snap/bin/lxc",
+                        "exec",
+                        "snapcraft-project-name",
+                        "--",
+                        "env",
+                        "SNAPCRAFT_HAS_TTY=False",
+                        "systemctl",
+                        "restart",
                         "systemd-networkd",
                     ]
                 ),
@@ -789,6 +754,14 @@ class LXDInitTest(LXDBaseTest):
         container.delete_mock.assert_called_once_with(wait=True)
         self.assertThat(instance.clean_project(), Equals(True))
 
+    def test_clean_when_missing(self):
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+        self.fake_pylxd_client.containers.get_mock.side_effect = pylxd.exceptions.NotFound(
+            "not found"
+        )
+
+        instance.clean_project()
+
     def test_destroy_when_not_created(self):
         instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
         # This call should not fail
@@ -807,12 +780,44 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-core18",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
                     "server": "https://cloud-images.ubuntu.com/buildd/daily",
                     "protocol": "simplestreams",
                     "alias": "18.04",
+                },
+            },
+            wait=True,
+        )
+
+    def test_create_invalid_base(self):
+        self.project._snap_meta.base = "core19"
+
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+
+        self.assertRaises(errors.ProviderInvalidBaseError, instance.create)
+
+    def test_create_without_syscall_intercept(self):
+        self.fake_pylxd_client.host_info["environment"]["kernel_features"][
+            "seccomp_listener"
+        ] = "false"
+
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+
+        instance.create()
+
+        self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
+            config={
+                "name": "snapcraft-project-name",
+                "raw.idmap": f"both {os.getuid()} 0",
+                "source": {
+                    "mode": "pull",
+                    "type": "image",
+                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
+                    "protocol": "simplestreams",
+                    "alias": "16.04",
                 },
             },
             wait=True,

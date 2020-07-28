@@ -80,6 +80,7 @@ class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):
                         "desktop",
                         "desktop-legacy",
                         "gsettings",
+                        "opengl",
                         "wayland",
                         "x11",
                     ],

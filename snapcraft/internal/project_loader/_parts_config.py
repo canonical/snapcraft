@@ -22,11 +22,10 @@ from typing import Set  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
-from snapcraft.internal.pluginhandler._part_build_environment import (
+from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
-    get_snapcraft_part_environment,
+    get_snapcraft_part_directory_environment,
 )
-from snapcraft import plugins
 from ._env import build_env, build_env_for_stage, runtime_env
 from . import errors, grammar_processing
 
@@ -34,14 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class PartsConfig:
-    def __init__(self, *, parts, project, validator, build_snaps, build_tools):
+    def __init__(self, *, parts, project, validator):
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get("parts", {})
         self._snap_type = parts.get("type", "app")
         self._project = project
         self._validator = validator
-        self.build_snaps = build_snaps
-        self.build_tools = build_tools
 
         self.all_parts = []
         self._part_names = []
@@ -191,17 +188,6 @@ class PartsConfig:
             "properties {!r}.".format(part_name, plugin_name, part_properties)
         )
 
-        if isinstance(plugin, plugins.v1.PluginV1):
-            keys_path = self._project._get_keys_path()
-
-            if any(
-                [
-                    package_repo.install(keys_path=keys_path)
-                    for package_repo in plugin.get_required_package_repositories()
-                ]
-            ):
-                repo.Repo.refresh_build_packages()
-
         stage_packages_repo = repo.Repo
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
@@ -223,21 +209,6 @@ class PartsConfig:
             soname_cache=self._soname_cache,
         )
 
-        self.build_snaps |= grammar_processor.get_build_snaps()
-        self.build_tools |= grammar_processor.get_build_packages()
-
-        if not isinstance(part.plugin, plugins.v1.PluginV1):
-            self.build_snaps |= part.plugin.get_build_snaps()
-            self.build_tools |= part.plugin.get_build_packages()
-
-        # TODO: this should not pass in command but the required package,
-        #       where the required package is to be determined by the
-        #       source handler.
-        if part.source_handler and part.source_handler.command:
-            # TODO get_packages_for_source_type should not be a thing.
-            self.build_tools |= repo.Repo.get_packages_for_source_type(
-                part.source_handler.command
-            )
         self.all_parts.append(part)
 
         return part
@@ -263,7 +234,7 @@ class PartsConfig:
             )
 
             global_env = get_snapcraft_global_environment(self._project)
-            part_env = get_snapcraft_part_environment(part)
+            part_env = get_snapcraft_part_directory_environment(part)
 
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))

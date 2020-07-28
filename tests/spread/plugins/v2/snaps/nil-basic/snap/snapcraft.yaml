@@ -12,7 +12,15 @@ parts:
     plugin: nil
     build-environment:
       - foo: bar
+    override-pull: |
+      env
+      snapcraftctl pull
     override-build: |
-      env | grep foo
+      env
       snapcraftctl build
-
+    override-stage: |
+      env
+      snapcraftctl stage
+    override-prime: |
+      env
+      snapcraftctl prime

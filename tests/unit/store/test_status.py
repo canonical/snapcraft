@@ -22,7 +22,7 @@ from snapcraft.storeapi import status
 from tests import unit
 
 
-class SnapStatusChannelDetailsTest(unit.TestCase):
+class TestSnapStatusChannelDetails:
     scenarios = (
         (
             "specific",
@@ -61,28 +61,25 @@ class SnapStatusChannelDetailsTest(unit.TestCase):
         ),
     )
 
-    def setUp(self):
-        super().setUp()
-        self.status = status.SnapStatusChannelDetails(
-            snap_name="test-snap", arch="arm64", payload=self.payload
+    def test_properties(
+        self,
+        payload,
+        expected_version,
+        expected_channel,
+        expected_info,
+        expected_revision,
+    ):
+        s = status.SnapStatusChannelDetails(
+            snap_name="test-snap", arch="arm64", payload=payload
         )
 
-    def test_properties(self):
-        self.assertThat(self.status.arch, Equals("arm64"))
-        self.assertThat(self.status.version, Equals(self.expected_version))
-        self.assertThat(self.status.channel, Equals(self.expected_channel))
-        self.assertThat(self.status.info, Equals(self.expected_info))
+        assert s.arch == "arm64"
+        assert s.version == expected_version
+        assert s.channel == expected_channel
+        assert s.info == expected_info
+        assert repr(s) == "<SnapStatusChannelDetails: test-snap on arm64>"
 
-    def test_repr(self):
-        self.assertThat(
-            repr(self.status), Equals("<SnapStatusChannelDetails: test-snap on arm64>")
-        )
-
-    def test_iter(self):
-        self.assertThat(
-            list(self.status),
-            Equals(["arm64", self.expected_revision, self.expected_version]),
-        )
+        assert list(s) == ["arm64", expected_revision, expected_version]
 
 
 class SnapStatusTrackTest(unit.TestCase):

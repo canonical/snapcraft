@@ -37,6 +37,9 @@ lxc exec snapcraft-dev -- apt install --yes \
     libapt-pkg-dev \
     libffi-dev \
     libsodium-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
     libyaml-dev \
     make \
     patchelf \
@@ -47,12 +50,12 @@ lxc exec snapcraft-dev -- apt install --yes \
     squashfs-tools
 
 # Create a virtual environment and set it as default 
-lxc exec snapcraft-dev -- sudo -iu ubuntu pyvenv .venv/snapcraft
+lxc exec snapcraft-dev -- sudo -iu ubuntu python3 -m venv .venv/snapcraft
 lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .profile"
 lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .bashrc"
-lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --upgrade pip
+lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --upgrade pip wheel
 
 # Now that /home/ubuntu has been used, add the project
 if ! lxc config device show snapcraft-dev | grep -q snapcraft-project; then
@@ -68,8 +71,8 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu pip install \
 # Install the project for quick tests
 lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --editable snapcraft
 
-# Install black to run static tests
-lxc exec snapcraft-dev -- snap install black --beta --devmode
+# Install black to run static tests.
+lxc exec snapcraft-dev -- snap install black --beta
 
 # Install shellcheck for static tests.
 lxc exec snapcraft-dev -- snap install shellcheck

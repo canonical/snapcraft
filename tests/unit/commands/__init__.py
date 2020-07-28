@@ -109,10 +109,8 @@ class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_lifecycle_execute)
 
-        self.fake_lifecycle_pack = fixtures.MockPatch(
-            "snapcraft.internal.lifecycle.pack", return_value="foo.snap"
-        )
-        self.useFixture(self.fake_lifecycle_pack)
+        self.fake_pack = fixtures.MockPatch("snapcraft.cli.lifecycle._pack")
+        self.useFixture(self.fake_pack)
 
         self.snapcraft_yaml = fixture_setup.SnapcraftYaml(
             self.path,
@@ -280,12 +278,12 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             "processed": True,
             "can_release": True,
             "url": "/fake/url",
-            "revision": 9,
+            "revision": 19,
         }
-        self.fake_store_push_precheck = fixtures.MockPatchObject(
-            storeapi.StoreClient, "push_precheck"
+        self.fake_store_upload_precheck = fixtures.MockPatchObject(
+            storeapi.StoreClient, "upload_precheck"
         )
-        self.useFixture(self.fake_store_push_precheck)
+        self.useFixture(self.fake_store_upload_precheck)
 
         self.fake_store_upload = fixtures.MockPatchObject(
             storeapi.StoreClient, "upload", return_value=self.mock_tracker

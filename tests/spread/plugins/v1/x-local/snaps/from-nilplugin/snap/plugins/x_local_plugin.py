@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins import nil
+from snapcraft.plugins.v1 import NilPlugin
 
 
-class LocalPlugin(nil.NilPlugin):
+class LocalPlugin(NilPlugin):
     @classmethod
     def schema(cls):
         schema = super().schema()

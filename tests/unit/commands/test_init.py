@@ -63,39 +63,15 @@ class InitCommandTestCase(CommandBaseTestCase):
 
 
 class InitCommandExistingProjectTestCase(CommandBaseTestCase):
-
-    scenarios = [
-        (
-            "snap/snapcraft.yaml",
-            {
-                "yaml_path": os.path.join("snap", "snapcraft.yaml"),
-                "message": "snap/snapcraft.yaml already exists!\n",
-            },
-        ),
-        # FIXME: Both snapcraft.yaml and .snapcraft.yaml are deprecated.
-        (
-            "snapcraft.yaml",
-            {
-                "yaml_path": "snapcraft.yaml",
-                "message": "snapcraft.yaml already exists!\n",
-            },
-        ),
-        (
-            ".snapcraft.yaml",
-            {
-                "yaml_path": ".snapcraft.yaml",
-                "message": ".snapcraft.yaml already exists!\n",
-            },
-        ),
-    ]
-
     def test_init_with_existing_yaml(self):
         """Test that init bails if project yaml already exists"""
-        dirname = os.path.dirname(self.yaml_path)
+        yaml_path = os.path.join("snap", "snapcraft.yaml")
+
+        dirname = os.path.dirname(yaml_path)
         if dirname:
             os.mkdir(dirname)
 
-        open(self.yaml_path, "w").close()
+        open(yaml_path, "w").close()
 
         raised = self.assertRaises(
             snapcraft.internal.errors.SnapcraftEnvironmentError,
@@ -103,6 +79,4 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
             ["init"],
         )
 
-        self.assertThat(
-            str(raised), Equals("{} already exists!".format(self.yaml_path))
-        )
+        self.assertThat(str(raised), Equals("{} already exists!".format(yaml_path)))

@@ -13,20 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from subprocess import CalledProcessError
+from typing import List
+from unittest import mock
+
 import requests.exceptions
 from requests.packages import urllib3
-from subprocess import CalledProcessError
-
-from unittest import mock
-from testtools.matchers import Equals
 
 from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
-from tests import unit
-from typing import List
 
 
 def _fake_error_response(status_code):
@@ -35,13 +34,12 @@ def _fake_error_response(status_code):
     return response
 
 
-class ErrorFormattingTestCase(unit.TestCase):
-
+class TestErrorFormatting:
     scenarios = (
         (
             "IncompatibleBaseError",
             {
-                "exception": errors.IncompatibleBaseError,
+                "exception_class": errors.IncompatibleBaseError,
                 "kwargs": {
                     "base": "core18",
                     "linker_version": "2.23",
@@ -58,7 +56,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PrimeFileConflictError",
             {
-                "exception": errors.PrimeFileConflictError,
+                "exception_class": errors.PrimeFileConflictError,
                 "kwargs": {"fileset": {"test-file"}},
                 "expected_message": (
                     "Failed to filter files: "
@@ -73,7 +71,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftAfterPartMissingError",
             {
-                "exception": project_loader_errors.SnapcraftAfterPartMissingError,
+                "exception_class": project_loader_errors.SnapcraftAfterPartMissingError,
                 "kwargs": {"part_name": "test-part1", "after_part_name": "test-part2"},
                 "expected_message": (
                     "Failed to get part information: "
@@ -87,7 +85,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PluginError",
             {
-                "exception": errors.PluginError,
+                "exception_class": errors.PluginError,
                 "kwargs": {"message": "test-message"},
                 "expected_message": "Failed to load plugin: test-message",
             },
@@ -95,7 +93,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PluginBaseError",
             {
-                "exception": errors.PluginBaseError,
+                "exception_class": errors.PluginBaseError,
                 "kwargs": {"part_name": "go-part", "base": "arch"},
                 "expected_message": "The plugin used by part 'go-part' does not support snaps using base 'arch'.",
             },
@@ -103,7 +101,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftPartConflictError",
             {
-                "exception": errors.SnapcraftPartConflictError,
+                "exception_class": errors.SnapcraftPartConflictError,
                 "kwargs": {
                     "part_name": "test-part",
                     "other_part_name": "test-other-part",
@@ -131,7 +129,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidWikiEntryError",
             {
-                "exception": errors.InvalidWikiEntryError,
+                "exception_class": errors.InvalidWikiEntryError,
                 "kwargs": {"error": "test-error"},
                 "expected_message": "Invalid wiki entry: 'test-error'",
             },
@@ -139,7 +137,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PluginOutdatedError",
             {
-                "exception": errors.PluginOutdatedError,
+                "exception_class": errors.PluginOutdatedError,
                 "kwargs": {"message": "test-message"},
                 "expected_message": "This plugin is outdated: test-message",
             },
@@ -147,7 +145,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "RequiredCommandFailure",
             {
-                "exception": errors.RequiredCommandFailure,
+                "exception_class": errors.RequiredCommandFailure,
                 "kwargs": {"command": "test-command"},
                 "expected_message": "'test-command' failed.",
             },
@@ -155,7 +153,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "RequiredCommandNotFound",
             {
-                "exception": errors.RequiredCommandNotFound,
+                "exception_class": errors.RequiredCommandNotFound,
                 "kwargs": {"cmd_list": ["test-command", "test-argument"]},
                 "expected_message": "'test-command' not found.",
             },
@@ -163,7 +161,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "RequiredPathDoesNotExist",
             {
-                "exception": errors.RequiredPathDoesNotExist,
+                "exception_class": errors.RequiredPathDoesNotExist,
                 "kwargs": {"path": "test-path"},
                 "expected_message": "Required path does not exist: 'test-path'",
             },
@@ -171,7 +169,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftPathEntryError",
             {
-                "exception": errors.SnapcraftPathEntryError,
+                "exception_class": errors.SnapcraftPathEntryError,
                 "kwargs": {"value": "test-path", "key": "test-key", "app": "test-app"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -184,7 +182,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidPullPropertiesError",
             {
-                "exception": errors.InvalidPullPropertiesError,
+                "exception_class": errors.InvalidPullPropertiesError,
                 "kwargs": {
                     "plugin_name": "test-plugin",
                     "properties": ["test-property1", "test-property2"],
@@ -199,7 +197,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidBuildPropertiesError",
             {
-                "exception": errors.InvalidBuildPropertiesError,
+                "exception_class": errors.InvalidBuildPropertiesError,
                 "kwargs": {
                     "plugin_name": "test-plugin",
                     "properties": ["test-property1", "test-property2"],
@@ -214,7 +212,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StagePackageDownloadError",
             {
-                "exception": errors.StagePackageDownloadError,
+                "exception_class": errors.StagePackageDownloadError,
                 "kwargs": {"part_name": "test-part", "message": "test-message"},
                 "expected_message": (
                     "Failed to fetch stage packages: "
@@ -226,7 +224,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidContainerImageInfoError",
             {
-                "exception": errors.InvalidContainerImageInfoError,
+                "exception_class": errors.InvalidContainerImageInfoError,
                 "kwargs": {"image_info": "test-image-info"},
                 "expected_message": (
                     "Failed to parse container image info: "
@@ -238,7 +236,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "MissingMetadataFileError",
             {
-                "exception": errors.MissingMetadataFileError,
+                "exception_class": errors.MissingMetadataFileError,
                 "kwargs": {"part_name": "test-part", "path": "test/path"},
                 "expected_message": (
                     "Failed to generate snap metadata: "
@@ -250,7 +248,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "UnhandledMetadataFileTypeError",
             {
-                "exception": errors.UnhandledMetadataFileTypeError,
+                "exception_class": errors.UnhandledMetadataFileTypeError,
                 "kwargs": {"path": "test/path"},
                 "expected_message": (
                     "Failed to extract metadata from 'test/path': "
@@ -262,7 +260,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidExtractorValueError",
             {
-                "exception": errors.InvalidExtractorValueError,
+                "exception_class": errors.InvalidExtractorValueError,
                 "kwargs": {"path": "test/path", "extractor_name": "extractor"},
                 "expected_message": (
                     "Failed to extract metadata from 'test/path': "
@@ -274,7 +272,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PatcherNewerPatchelfError",
             {
-                "exception": errors.PatcherNewerPatchelfError,
+                "exception_class": errors.PatcherNewerPatchelfError,
                 "kwargs": {
                     "elf_file": "test/path",
                     "patchelf_version": "patchelf 0.9",
@@ -297,7 +295,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "PatcherGenericError",
             {
-                "exception": errors.PatcherGenericError,
+                "exception_class": errors.PatcherGenericError,
                 "kwargs": {
                     "elf_file": "test/path",
                     "process_exception": CalledProcessError(
@@ -313,7 +311,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StagePackageMissingError",
             {
-                "exception": errors.StagePackageMissingError,
+                "exception_class": errors.StagePackageMissingError,
                 "kwargs": {"package": "libc6"},
                 "expected_message": (
                     "'libc6' is required inside the snap for this "
@@ -325,7 +323,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftCommandError",
             {
-                "exception": errors.SnapcraftCommandError,
+                "exception_class": errors.SnapcraftCommandError,
                 "kwargs": {
                     "command": "pip install foo",
                     "call_error": CalledProcessError(
@@ -340,7 +338,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftPluginCommandError string command",
             {
-                "exception": errors.SnapcraftPluginCommandError,
+                "exception_class": errors.SnapcraftPluginCommandError,
                 "kwargs": {
                     "command": "make install",
                     "exit_code": -1,
@@ -357,7 +355,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftPluginCommandError list command",
             {
-                "exception": errors.SnapcraftPluginCommandError,
+                "exception_class": errors.SnapcraftPluginCommandError,
                 "kwargs": {
                     "command": ["make", "install"],
                     "exit_code": 2,
@@ -374,7 +372,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "CrossCompilationNotSupported",
             {
-                "exception": errors.CrossCompilationNotSupported,
+                "exception_class": errors.CrossCompilationNotSupported,
                 "kwargs": {"part_name": "my-part"},
                 "expected_message": (
                     "The plugin used by 'my-part' does not support "
@@ -385,7 +383,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "CacheUpdateFailedError",
             {
-                "exception": repo_errors.CacheUpdateFailedError,
+                "exception_class": repo_errors.CacheUpdateFailedError,
                 "kwargs": {"errors": ""},
                 "expected_message": (
                     "Failed to update the package cache: "
@@ -397,7 +395,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "CacheUpdateFailedError",
             {
-                "exception": repo_errors.CacheUpdateFailedError,
+                "exception_class": repo_errors.CacheUpdateFailedError,
                 "kwargs": {"errors": "foo, bar"},
                 "expected_message": (
                     "Failed to update the package cache: "
@@ -409,7 +407,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StoreNetworkError generic error",
             {
-                "exception": store_errors.StoreNetworkError,
+                "exception_class": store_errors.StoreNetworkError,
                 "kwargs": {
                     "exception": requests.exceptions.ConnectionError("bad error")
                 },
@@ -419,7 +417,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StoreNetworkError max retry error",
             {
-                "exception": store_errors.StoreNetworkError,
+                "exception_class": store_errors.StoreNetworkError,
                 "kwargs": {
                     "exception": requests.exceptions.ConnectionError(
                         urllib3.exceptions.MaxRetryError(
@@ -438,7 +436,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "SnapcraftCopyFileNotFoundError",
             {
-                "exception": errors.SnapcraftCopyFileNotFoundError,
+                "exception_class": errors.SnapcraftCopyFileNotFoundError,
                 "kwargs": {"path": "test-path"},
                 "expected_message": (
                     "Failed to copy 'test-path': no such file or directory.\n"
@@ -449,7 +447,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StoreServerError 500",
             {
-                "exception": store_errors.StoreServerError,
+                "exception_class": store_errors.StoreServerError,
                 "kwargs": {"response": _fake_error_response(500)},
                 "expected_message": (
                     "The Snap Store encountered an error while processing your "
@@ -462,7 +460,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StoreServerError 501",
             {
-                "exception": store_errors.StoreServerError,
+                "exception_class": store_errors.StoreServerError,
                 "kwargs": {"response": _fake_error_response(501)},
                 "expected_message": (
                     "The Snap Store encountered an error while processing your "
@@ -475,7 +473,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "MountPointNotFoundError",
             {
-                "exception": errors.MountPointNotFoundError,
+                "exception_class": errors.MountPointNotFoundError,
                 "kwargs": {"mount_point": "test-mount-point"},
                 "expected_message": "Nothing is mounted at 'test-mount-point'",
             },
@@ -483,7 +481,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "RootNotMountedError",
             {
-                "exception": errors.RootNotMountedError,
+                "exception_class": errors.RootNotMountedError,
                 "kwargs": {"root": "test-root"},
                 "expected_message": "'test-root' is not mounted",
             },
@@ -491,7 +489,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidMountinfoFormat",
             {
-                "exception": errors.InvalidMountinfoFormat,
+                "exception_class": errors.InvalidMountinfoFormat,
                 "kwargs": {"row": [1, 2, 3]},
                 "expected_message": "Unable to parse mountinfo row: [1, 2, 3]",
             },
@@ -499,7 +497,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "InvalidStepError",
             {
-                "exception": errors.InvalidStepError,
+                "exception_class": errors.InvalidStepError,
                 "kwargs": {"step_name": "test-step-name"},
                 "expected_message": "'test-step-name' is not a valid lifecycle step",
             },
@@ -507,7 +505,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "NoLatestStepError",
             {
-                "exception": errors.NoLatestStepError,
+                "exception_class": errors.NoLatestStepError,
                 "kwargs": {"part_name": "test-part-name"},
                 "expected_message": "The 'test-part-name' part hasn't run any steps",
             },
@@ -515,7 +513,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "NoNextStepError",
             {
-                "exception": errors.NoNextStepError,
+                "exception_class": errors.NoNextStepError,
                 "kwargs": {"part_name": "test-part-name"},
                 "expected_message": (
                     "The 'test-part-name' part has run through its entire lifecycle"
@@ -525,7 +523,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "StepHasNotRunError",
             {
-                "exception": errors.StepHasNotRunError,
+                "exception_class": errors.StepHasNotRunError,
                 "kwargs": {"part_name": "test-part-name", "step": steps.BUILD},
                 "expected_message": (
                     "The 'test-part-name' part has not yet run the 'build' step"
@@ -535,7 +533,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "ScriptletDuplicateFieldError",
             {
-                "exception": errors.ScriptletDuplicateFieldError,
+                "exception_class": errors.ScriptletDuplicateFieldError,
                 "kwargs": {"field": "foo", "step": steps.PULL},
                 "expected_message": (
                     "Unable to set foo: it was already set in the 'pull' step."
@@ -545,7 +543,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "ToolMissingError",
             {
-                "exception": errors.ToolMissingError,
+                "exception_class": errors.ToolMissingError,
                 "kwargs": {"command_name": "runnable"},
                 "expected_message": (
                     "A tool snapcraft depends on could not be found: 'runnable'.\n"
@@ -556,7 +554,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "NoSuchFileError",
             {
-                "exception": inspection_errors.NoSuchFileError,
+                "exception_class": inspection_errors.NoSuchFileError,
                 "kwargs": {"path": "test-path"},
                 "expected_message": (
                     "Failed to find part that provided path: 'test-path' does not "
@@ -568,7 +566,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "ProvidesInvalidFilePathError",
             {
-                "exception": inspection_errors.ProvidesInvalidFilePathError,
+                "exception_class": inspection_errors.ProvidesInvalidFilePathError,
                 "kwargs": {"path": "test-path"},
                 "expected_message": (
                     "Failed to find part that provides path: 'test-path' is not "
@@ -581,7 +579,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "UntrackedFileError",
             {
-                "exception": inspection_errors.UntrackedFileError,
+                "exception_class": inspection_errors.UntrackedFileError,
                 "kwargs": {"path": "test-path"},
                 "expected_message": (
                     "No known parts provided 'test-path'. It may have been "
@@ -592,17 +590,15 @@ class ErrorFormattingTestCase(unit.TestCase):
         (
             "NoStepsRunError",
             {
-                "exception": inspection_errors.NoStepsRunError,
+                "exception_class": inspection_errors.NoStepsRunError,
                 "kwargs": {},
                 "expected_message": "Failed to get latest step: no steps have run",
             },
         ),
     )
 
-    def test_error_formatting(self):
-        self.assertThat(
-            str(self.exception(**self.kwargs)), Equals(self.expected_message)
-        )
+    def test_error_formatting(self, exception_class, expected_message, kwargs):
+        assert str(exception_class(**kwargs)) == expected_message
 
 
 class StrangeExceptionSimple(errors.SnapcraftException):
@@ -640,13 +636,13 @@ class StrangeExceptionWithFormatting(errors.SnapcraftException):
         return "https://docs.snapcraft.io/the-snapcraft-format/8337"
 
 
-class SnapcraftExceptionTests(unit.TestCase):
+class TestSnapcraftExceptionTests:
 
     scenarios = (
         (
             "StrangeExceptionSimple",
             {
-                "exception": StrangeExceptionSimple,
+                "exception_class": StrangeExceptionSimple,
                 "kwargs": {},
                 "expected_brief": "something's strange, in the neighborhood",
                 "expected_resolution": "who you gonna call? ghostbusters!!",
@@ -658,7 +654,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StrangeExceptionWithFormatting",
             {
-                "exception": StrangeExceptionWithFormatting,
+                "exception_class": StrangeExceptionWithFormatting,
                 "kwargs": {
                     "neighborhood": "Times Square",
                     "ghosts": ["slimer", "puft", "vigo"],
@@ -672,9 +668,21 @@ class SnapcraftExceptionTests(unit.TestCase):
             },
         ),
         (
+            "HostToolNotFoundError",
+            {
+                "exception_class": errors.HostToolNotFoundError,
+                "kwargs": {"command_name": "foo", "package_name": "foo-pkg"},
+                "expected_brief": "A tool snapcraft depends on could not be found: 'foo'",
+                "expected_resolution": "Ensure that 'foo-pkg' is installed.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
             "MissingStateCleanError",
             {
-                "exception": errors.MissingStateCleanError,
+                "exception_class": errors.MissingStateCleanError,
                 "kwargs": {"step": steps.PULL},
                 "expected_brief": "Failed to clean for step 'pull'.",
                 "expected_resolution": "Run `snapcraft clean` and retry build.",
@@ -686,7 +694,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError dirty_properties",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.PULL,
                     "part": "test-part",
@@ -704,7 +712,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError dirty_project_options",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.PULL,
                     "part": "test-part",
@@ -722,7 +730,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError changed_dependencies",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.PULL,
                     "part": "test-part",
@@ -744,7 +752,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError multiple changed_dependencies",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.PULL,
                     "part": "test-part",
@@ -769,7 +777,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError previous step updated",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.STAGE,
                     "part": "test-part",
@@ -787,7 +795,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "StepOutdatedError source updated",
             {
-                "exception": errors.StepOutdatedError,
+                "exception_class": errors.StepOutdatedError,
                 "kwargs": {
                     "step": steps.PULL,
                     "part": "test-part",
@@ -805,7 +813,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapcraftEnvironmentError",
             {
-                "exception": errors.SnapcraftEnvironmentError,
+                "exception_class": errors.SnapcraftEnvironmentError,
                 "kwargs": {"message": "test-message"},
                 "expected_brief": "test-message",
                 "expected_resolution": "",
@@ -817,7 +825,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapcraftDataDirectoryMissingError",
             {
-                "exception": errors.SnapcraftDataDirectoryMissingError,
+                "exception_class": errors.SnapcraftDataDirectoryMissingError,
                 "kwargs": {},
                 "expected_brief": "Cannot find snapcraft's data files.",
                 "expected_resolution": "Re-install snapcraft or verify installation is correct.",
@@ -829,7 +837,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapcraftMissingLinkerInBaseError",
             {
-                "exception": errors.SnapcraftMissingLinkerInBaseError,
+                "exception_class": errors.SnapcraftMissingLinkerInBaseError,
                 "kwargs": {
                     "base": "core18",
                     "linker_path": "/snap/core18/current/lib64/ld-linux.so.2",
@@ -844,7 +852,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "SnapcraftPluginAssertionError",
             {
-                "exception": errors.SnapcraftPluginAssertionError,
+                "exception_class": errors.SnapcraftPluginAssertionError,
                 "kwargs": {"name": "part-name", "reason": "missing important file"},
                 "expected_brief": "Unable to build 'part-name': missing important file",
                 "expected_resolution": "Ensure the part's configuration and sources are correct.",
@@ -856,7 +864,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "XAttributeError",
             {
-                "exception": errors.XAttributeError,
+                "exception_class": errors.XAttributeError,
                 "kwargs": {"path": "/tmp/foo", "key": "foo", "action": "read"},
                 "expected_brief": "Unable to read extended attribute.",
                 "expected_resolution": "Check that your filesystem supports extended attributes.",
@@ -868,7 +876,7 @@ class SnapcraftExceptionTests(unit.TestCase):
         (
             "XAttributeTooLongError",
             {
-                "exception": errors.XAttributeTooLongError,
+                "exception_class": errors.XAttributeTooLongError,
                 "kwargs": {"path": "/tmp/foo", "key": "foo", "value": "bar"},
                 "expected_brief": "Unable to write extended attribute as the key and/or value is too long.",
                 "expected_resolution": "This issue is generally resolved by addressing/truncating the data source of the long data value. In some cases, the filesystem being used will limit the allowable size.",
@@ -877,12 +885,34 @@ class SnapcraftExceptionTests(unit.TestCase):
                 "expected_reportable": True,
             },
         ),
+        (
+            "SnapcraftPluginBuildError",
+            {
+                "exception_class": errors.SnapcraftPluginBuildError,
+                "kwargs": {"part_name": "foo"},
+                "expected_brief": "Failed to build 'foo'.",
+                "expected_resolution": "Check the build logs and ensure the part's configuration and sources are correct.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
     )
 
-    def test_snapcraft_exception_handling(self):
-        exception = self.exception(**self.kwargs)
-        self.assertEquals(self.expected_brief, exception.get_brief())
-        self.assertEquals(self.expected_resolution, exception.get_resolution())
-        self.assertEquals(self.expected_details, exception.get_details())
-        self.assertEquals(self.expected_docs_url, exception.get_docs_url())
-        self.assertEquals(self.expected_reportable, exception.get_reportable())
+    def test_snapcraft_exception_handling(
+        self,
+        exception_class,
+        expected_brief,
+        expected_details,
+        expected_docs_url,
+        expected_reportable,
+        expected_resolution,
+        kwargs,
+    ):
+        exception = exception_class(**kwargs)
+
+        assert expected_brief == exception.get_brief()
+        assert expected_resolution == exception.get_resolution()
+        assert expected_details == exception.get_details()
+        assert expected_docs_url == exception.get_docs_url()
+        assert expected_reportable == exception.get_reportable()

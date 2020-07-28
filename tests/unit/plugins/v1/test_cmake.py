@@ -15,14 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from unittest import mock
+
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import errors
 from snapcraft.plugins.v1 import cmake
 from tests import fixture_setup, unit
-from typing import Any, Dict, List, Tuple
 from . import PluginsV1BaseTestCase
 
 
@@ -176,83 +175,71 @@ class CMakeTest(CMakeBaseTest):
         self.assertThat(raised.base, Equals("unsupported-base"))
 
 
-class CMakeBuildTest(CMakeBaseTest):
+class TestSnapCMakeBuild:
 
-    scenarios: List[Tuple[str, Dict[str, Any]]] = [
-        ("no snaps", dict(build_snaps=[], expected_root_paths=[])),
+    scenarios = [
+        ("no snaps", dict(build_snaps=[], expected_config_flags=[])),
         (
             "one build snap",
             dict(
-                build_snaps=["kde-plasma-sdk"],
-                expected_root_paths=["/snap/kde-plasma-sdk/current"],
+                snaps=["kde-plasma-sdk"],
+                expected_configflags=[
+                    "-DCMAKE_FIND_ROOT_PATH=/snap/kde-plasma-sdk/current"
+                ],
             ),
         ),
         (
             "one build snap, preexisting root find path",
             dict(
-                build_snaps=["kde-plasma-sdk"],
-                expected_root_paths=["/snap/kde-plasma-sdk/current"],
-                find_root_flag="-DCMAKE_FIND_ROOT_PATH=/yocto",
+                snaps=["kde-plasma-sdk"],
+                expected_configflags=[
+                    "-DCMAKE_FIND_ROOT_PATH=/snap/kde-plasma-sdk/current"
+                ],
             ),
-        ),
-        (
-            "one build snap with channel",
-            dict(
-                build_snaps=["kde-plasma-sdk/latest/edge"],
-                expected_root_paths=["/snap/kde-plasma-sdk/current"],
+            (
+                "one build snap with channel",
+                dict(
+                    snaps=["kde-plasma-sdk/latest/edge"],
+                    expected_configflags=[
+                        "-DCMAKE_FIND_ROOT_PATH=/snap/kde-plasma-sdk/current"
+                    ],
+                ),
             ),
         ),
         (
             "two build snap with channel",
             dict(
-                build_snaps=["gnome-sdk", "kde-plasma-sdk/latest/edge"],
-                expected_root_paths=[
-                    "/snap/gnome-sdk/current",
-                    "/snap/kde-plasma-sdk/current",
+                snaps=["gnome-sdk", "kde-plasma-sdk/latest/edge"],
+                expected_configflags=[
+                    "-DCMAKE_FIND_ROOT_PATH=/snap/gnome-sdk/current;/snap/kde-plasma-sdk/current"
                 ],
             ),
         ),
     ]
 
-    def setUp(self):
-        super().setUp()
-        self.options.build_snaps = self.build_snaps
-        if hasattr(self, "find_root_flag"):
-            self.options.configflags = [self.find_root_flag]
+    def test_build(self, project, mock_run, snaps, expected_configflags):
+        class Options:
+            configflags = []
+            source_subdir = None
 
-        if self.expected_root_paths and not hasattr(self, "find_root_flag"):
-            self.expected_configflags = [
-                "-DCMAKE_FIND_ROOT_PATH={}".format(";".join(self.expected_root_paths))
-            ]
-        elif hasattr(self, "find_root_flag"):
-            self.expected_configflags = [
-                "{};{}".format(self.find_root_flag, ";".join(self.expected_root_paths))
-            ]
-        else:
-            self.expected_configflags = []
+            make_parameters = []
+            disable_parallel = False
+            build_snaps = snaps
 
-    def test_build(self):
-        plugin = cmake.CMakePlugin("test-part", self.options, self.project)
+        plugin = cmake.CMakePlugin("test-part", Options(), project)
         os.makedirs(plugin.builddir)
         plugin.build()
 
-        self.run_mock.assert_has_calls(
+        mock_run.assert_has_calls(
             [
                 mock.call(
                     ["cmake", plugin.sourcedir, "-DCMAKE_INSTALL_PREFIX="]
-                    + self.expected_configflags,
-                    cwd=plugin.builddir,
+                    + expected_configflags,
                     env=mock.ANY,
                 ),
+                mock.call(["cmake", "--build", ".", "--", "-j2"], env=mock.ANY),
                 mock.call(
-                    ["cmake", "--build", ".", "--", "-j2"],
-                    cwd=plugin.builddir,
-                    env=mock.ANY,
-                ),
-                mock.call(
-                    ["cmake", "--build", ".", "--target", "install"],
-                    cwd=plugin.builddir,
-                    env=mock.ANY,
+                    ["cmake", "--build", ".", "--target", "install"], env=mock.ANY
                 ),
             ]
         )

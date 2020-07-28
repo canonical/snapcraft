@@ -560,13 +560,11 @@ class PythonCore18Test(PythonPluginBaseTest):
         )
 
 
-class PythonCore16Test(PythonPluginBaseTest):
-    scenarios = (("core", dict(base="core")), ("core16", dict(base="core16")))
-
+class PythonCoreTest(PythonPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        self.project._snap_meta.base = self.base
+        self.project._snap_meta.base = "core"
 
     def test_plugin_stage_packages_python2(self):
         self.options.python_version = "python2"
@@ -582,14 +580,16 @@ class PythonCore16Test(PythonPluginBaseTest):
 
 
 class FileMissingPythonPluginTest(PythonPluginBaseTest):
-
-    scenarios = (
-        ("constraints", dict(property="constraints", file_path="constraints.txt")),
-        ("requirements", dict(property="requirements", file_path="requirements.txt")),
-    )
-
     def test_constraints_file_missing(self):
-        setattr(self.options, self.property, self.file_path)
+        self.options.constraints = "constraints.txt"
+
+        plugin = python.PythonPlugin("test-part", self.options, self.project)
+        setup_directories(plugin, self.options.python_version)
+
+        self.assertRaises(python.SnapcraftPluginPythonFileMissing, plugin.pull)
+
+    def test_requirements_file_missing(self):
+        self.options.requirements = "requirements.txt"
 
         plugin = python.PythonPlugin("test-part", self.options, self.project)
         setup_directories(plugin, self.options.python_version)

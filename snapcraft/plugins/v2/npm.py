@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The nodejs plugin is useful for node/npm based parts.
+"""The npm plugin is useful for node based parts that use npm.
 
-The plugin uses node to install dependencies from `package.json`. It
+The plugin uses npm to install dependencies from `package.json`. It
 also sets up binaries defined in `package.json` into the `PATH`.
 
 This plugin uses the common plugin keywords as well as those for "sources".
@@ -92,13 +92,12 @@ class NpmPlugin(PluginV2):
             f"""\
         if [ ! -f "${{SNAPCRAFT_PART_INSTALL}}/bin/node" ]; then
             curl -s "{node_uri}" | tar xzf - -C "${{SNAPCRAFT_PART_INSTALL}}/" --strip-components=1
-            export PATH="${{SNAPCRAFT_PART_INSTALL}}/bin:${{PATH}}"
         fi
         """
         )
 
     def get_build_environment(self) -> Dict[str, str]:
-        return dict()
+        return dict(PATH="${SNAPCRAFT_PART_INSTALL}/bin:${PATH}")
 
     def get_build_commands(self) -> List[str]:
         return [

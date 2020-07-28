@@ -14,77 +14,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import pathlib
 
-from testtools.matchers import Equals
+import pytest
 
 from snapcraft.project import get_snapcraft_yaml, errors
-from tests import unit
 
 
-class GetSnapcraftYamlTest(unit.TestCase):
-
-    scenarios = [
-        ("snapcraft.yaml", dict(file_path="snapcraft.yaml")),
-        ("snap/snapcraft.yaml", dict(file_path=os.path.join("snap", "snapcraft.yaml"))),
-        (
-            "build-aux",
-            dict(file_path=os.path.join("build-aux", "snap", "snapcraft.yaml")),
-        ),
-        (".snapcraft.yaml", dict(file_path=".snapcraft.yaml")),
+@pytest.fixture(
+    params=[
+        "snapcraft.yaml",
+        "snap/snapcraft.yaml",
+        ".snapcraft.yaml",
+        "build-aux/snap/snapcraft.yaml",
     ]
-
-    def test_get(self):
-        if os.path.dirname(self.file_path):
-            os.makedirs(os.path.dirname(self.file_path))
-        open(self.file_path, "w").close()
-        self.assertThat(get_snapcraft_yaml(), Equals(self.file_path))
-
-
-class GetSnapcraftYamlMissingErrorsTest(unit.TestCase):
-    def test_config_raises_on_missing_snapcraft_yaml(self):
-        """Test that an error is raised if snap/snapcraft.yaml is missing"""
-
-        self.assertRaises(errors.MissingSnapcraftYamlError, get_snapcraft_yaml)
+)
+def stub_snapcraft_yaml_file(tmp_work_path, request):
+    """Return stub snapcraft.yaml file variants to find."""
+    snapcraft_yaml = request.param
+    snapcraft_yaml_path = tmp_work_path / snapcraft_yaml
+    snapcraft_yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    snapcraft_yaml_path.touch()
+    return snapcraft_yaml
 
 
-class GetSnapcraftYamlDuplicateErrorsTest(unit.TestCase):
+def test_get_snapcraft_yaml(stub_snapcraft_yaml_file):
+    assert get_snapcraft_yaml() == stub_snapcraft_yaml_file
 
-    scenarios = [
-        (
-            "snapcraft.yaml and .snapcraft.yaml",
-            dict(file_path1="snapcraft.yaml", file_path2=".snapcraft.yaml"),
-        ),
-        (
-            "snapcraft.yaml and snap/snapcraft.yaml",
-            dict(
-                file_path1="snapcraft.yaml",
-                file_path2=os.path.join("snap", "snapcraft.yaml"),
-            ),
-        ),
-        (
-            ".snapcraft.yaml and snap/snapcraft.yaml",
-            dict(
-                file_path1=".snapcraft.yaml",
-                file_path2=os.path.join("snap", "snapcraft.yaml"),
-            ),
-        ),
-        (
-            "build-aux and snap",
-            dict(
-                file_path1=os.path.join("build-aux", "snap", "snapcraft.yaml"),
-                file_path2=os.path.join("snap", "snapcraft.yaml"),
-            ),
-        ),
-    ]
 
-    def test_duplicates(self):
-        if os.path.dirname(self.file_path1):
-            os.makedirs(os.path.dirname(self.file_path1))
-        open(self.file_path1, "w").close()
+def test_config_raises_on_missing_snapcraft_yaml(tmp_work_path):
+    """Test that an error is raised if snap/snapcraft.yaml is missing"""
+    with pytest.raises(errors.MissingSnapcraftYamlError):
+        get_snapcraft_yaml()
 
-        if os.path.dirname(self.file_path2):
-            os.makedirs(os.path.dirname(self.file_path2))
-        open(self.file_path2, "w").close()
 
-        self.assertRaises(errors.DuplicateSnapcraftYamlError, get_snapcraft_yaml)
+@pytest.fixture(
+    params=["snap/snapcraft.yaml", ".snapcraft.yaml", "build-aux/snap/snapcraft.yaml"]
+)
+def duplicate_stub_snapcraft_yaml_file(stub_snapcraft_yaml_file, request):
+    """Return duplicate stub snapcraft.yaml file variants to find."""
+    snapcraft_yaml = request.param
+
+    if snapcraft_yaml == stub_snapcraft_yaml_file:
+        snapcraft_yaml = "snapcraft.yaml"
+
+    snapcraft_yaml_path = pathlib.Path(snapcraft_yaml)
+    snapcraft_yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    snapcraft_yaml_path.touch()
+    return snapcraft_yaml
+
+
+def test_duplicates(duplicate_stub_snapcraft_yaml_file):
+    with pytest.raises(errors.DuplicateSnapcraftYamlError):
+        get_snapcraft_yaml()

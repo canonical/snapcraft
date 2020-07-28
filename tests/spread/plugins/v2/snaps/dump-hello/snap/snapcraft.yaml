@@ -12,6 +12,6 @@ apps:
     command: hello
 
 parts:
-  nil-part:
+  hello:
     plugin: dump
     source: .

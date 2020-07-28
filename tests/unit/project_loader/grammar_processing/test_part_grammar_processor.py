@@ -15,17 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
+import platform
 from unittest import mock
 
-from testtools.matchers import Equals
 from testscenarios import multiply_scenarios
 
 from snapcraft import project
+from snapcraft.internal import repo as snapcraft_repo
 from snapcraft.internal.project_loader.grammar_processing import (
     PartGrammarProcessor,
     _part_grammar_processor as processor,
 )
-from tests import unit
 
 
 def load_tests(loader, tests, ignore):
@@ -34,7 +34,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class PartGrammarSourceTestCase(unit.TestCase):
+class TestPartGrammarSource:
 
     source_scenarios = [
         (
@@ -203,30 +203,43 @@ class PartGrammarSourceTestCase(unit.TestCase):
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
-    def test_source(self, platform_machine_mock, platform_architecture_mock):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+    def test(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        properties,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         repo = mock.Mock()
         plugin = mock.Mock()
-        plugin.properties = self.properties.copy()
-        expected = getattr(self, "expected_{}".format(self.target_arch))
-        self.assertThat(
+        plugin.properties = properties.copy()
+
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert (
             PartGrammarProcessor(
                 plugin=plugin,
                 properties=plugin.properties,
-                project=project.Project(target_deb_arch=self.target_arch),
+                project=project.Project(target_deb_arch=target_arch),
                 repo=repo,
-            ).get_source(),
-            Equals(expected),
+            ).get_source()
+            == expected_arch[f"expected_{target_arch}"]
         )
+
         # Verify that the original properties haven't changed
-        self.assertThat(plugin.properties, Equals(self.properties))
+        assert plugin.properties == properties
 
 
-class PartGrammarBuildAndStageSnapsTestCase(unit.TestCase):
+class TestPartGrammarBuildAndStageSnaps:
 
     source_scenarios = [
         (
@@ -302,47 +315,66 @@ class PartGrammarBuildAndStageSnapsTestCase(unit.TestCase):
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
-    def setUp(self):
-        super().setUp()
-
-        self.fake_snapd.find_result = [
-            {"hello": {"channels": {"latest/stable": {"confinement": "devmode"}}}}
-        ]
-
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
-    def test_build_snaps(self, platform_machine_mock, platform_architecture_mock):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+    def test_snaps(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        snaps,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
+        monkeypatch.setattr(
+            snapcraft_repo.snaps.SnapPackage,
+            "is_valid_snap",
+            lambda x: "invalid" not in x,
+        )
 
         repo = mock.Mock()
 
         class Plugin:
-            build_snaps = self.snaps
-            stage_snaps = self.snaps
+            build_snaps = snaps
+            stage_snaps = snaps
 
         plugin = Plugin()
-        expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={
                 "build-snaps": {"plugin-preferred"},
                 "stage-snaps": "plugin-preferred",
             },
-            project=project.Project(target_deb_arch=self.target_arch),
+            project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
 
-        self.assertThat(processor.get_build_snaps(), Equals(expected))
-        self.assertThat(processor.get_stage_snaps(), Equals(expected))
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert processor.get_build_snaps() == expected_arch[f"expected_{target_arch}"]
+        assert processor.get_stage_snaps() == expected_arch[f"expected_{target_arch}"]
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
-    def test_build_snaps_plugin_no_attr(
-        self, platform_machine_mock, platform_architecture_mock
+    def test_snaps_no_plugin_attribute(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        snaps,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
     ):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
+        monkeypatch.setattr(
+            snapcraft_repo.snaps.SnapPackage,
+            "is_valid_snap",
+            lambda x: "invalid" not in x,
+        )
 
         repo = mock.Mock()
 
@@ -350,19 +382,23 @@ class PartGrammarBuildAndStageSnapsTestCase(unit.TestCase):
             pass
 
         plugin = Plugin()
-        expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={"build-snaps": self.snaps, "stage-snaps": self.snaps},
-            project=project.Project(target_deb_arch=self.target_arch),
+            properties={"build-snaps": snaps, "stage-snaps": snaps},
+            project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
 
-        self.assertThat(processor.get_build_snaps(), Equals(expected))
-        self.assertThat(processor.get_stage_snaps(), Equals(expected))
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert processor.get_build_snaps() == expected_arch[f"expected_{target_arch}"]
+        assert processor.get_stage_snaps() == expected_arch[f"expected_{target_arch}"]
 
 
-class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
+class TestPartGrammarBuildAndStagePackages:
 
     source_scenarios = [
         (
@@ -429,39 +465,60 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
-    def test_packages(self, platform_machine_mock, platform_architecture_mock):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+    def test_packages(
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        packages,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
+    ):
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         repo = mock.Mock()
 
         class Plugin:
-            build_packages = self.packages
-            stage_packages = self.packages
+            build_packages = packages
+            stage_packages = packages
 
         plugin = Plugin()
-        expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={
                 "build-packages": {"plugin-preferred"},
                 "stage-packages": "plugin-preferred",
             },
-            project=project.Project(target_deb_arch=self.target_arch),
+            project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
-        self.assertThat(processor.get_build_packages(), Equals(expected))
-        self.assertThat(processor.get_stage_packages(), Equals(expected))
 
-    @mock.patch("platform.architecture")
-    @mock.patch("platform.machine")
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert (
+            processor.get_build_packages() == expected_arch[f"expected_{target_arch}"]
+        )
+        assert (
+            processor.get_stage_packages() == expected_arch[f"expected_{target_arch}"]
+        )
+
     def test_packages_plugin_no_attr(
-        self, platform_machine_mock, platform_architecture_mock
+        self,
+        monkeypatch,
+        host_arch,
+        target_arch,
+        packages,
+        expected_amd64,
+        expected_i386,
+        expected_armhf,
     ):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
 
         repo = mock.Mock()
 
@@ -469,15 +526,21 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
             pass
 
         plugin = Plugin()
-        expected = getattr(self, "expected_{}".format(self.target_arch))
         processor = PartGrammarProcessor(
             plugin=plugin,
-            properties={
-                "build-packages": self.packages,
-                "stage-packages": self.packages,
-            },
-            project=project.Project(target_deb_arch=self.target_arch),
+            properties={"build-packages": packages, "stage-packages": packages},
+            project=project.Project(target_deb_arch=target_arch),
             repo=repo,
         )
-        self.assertThat(processor.get_build_packages(), Equals(expected))
-        self.assertThat(processor.get_stage_packages(), Equals(expected))
+
+        expected_arch = dict(
+            expected_amd64=expected_amd64,
+            expected_i386=expected_i386,
+            expected_armhf=expected_armhf,
+        )
+        assert (
+            processor.get_build_packages() == expected_arch[f"expected_{target_arch}"]
+        )
+        assert (
+            processor.get_stage_packages() == expected_arch[f"expected_{target_arch}"]
+        )

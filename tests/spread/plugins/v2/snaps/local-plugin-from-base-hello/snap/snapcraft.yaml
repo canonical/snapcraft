@@ -1,0 +1,16 @@
+name: local-plugin-from-base-hello
+base: core20
+version: "1.0"
+summary: local plugin in snap/plugins
+description: Tests if local plugins load and can build
+confinement: strict
+grade: devel
+
+apps:
+  local-plugin-from-base-hello:
+    command: bin/hello
+
+parts:
+  hello:
+    plugin: x-local-plugin
+    source: .

@@ -14,27 +14,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import testtools
-from testtools.matchers import Equals
-from unittest.mock import patch
+import platform
+import re
+
+import pytest
 
 import snapcraft
-from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._on as on
 import snapcraft.internal.project_loader.grammar._to as to
 import snapcraft.internal.project_loader.grammar._compound as compound
+from snapcraft.internal.project_loader import grammar
 
-from . import GrammarBaseTestCase
 
-
-class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
+class TestCompoundStatementGrammar:
 
     scenarios = [
         (
             "on amd64",
             {
-                "on": "on amd64",
-                "to": "to armhf",
+                "on_arch": "on amd64",
+                "to_arch": "to armhf",
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
@@ -44,8 +43,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "on i386",
             {
-                "on": "on amd64",
-                "to": "to armhf",
+                "on_arch": "on amd64",
+                "to_arch": "to armhf",
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "i686",
@@ -55,8 +54,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "ignored else",
             {
-                "on": "on amd64",
-                "to": "to armhf",
+                "on_arch": "on amd64",
+                "to_arch": "to armhf",
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "x86_64",
@@ -66,8 +65,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "used else",
             {
-                "on": "on amd64",
-                "to": "to i386",
+                "on_arch": "on amd64",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [["bar"]],
                 "host_arch": "i686",
@@ -77,8 +76,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "third else ignored",
             {
-                "on": "on amd64",
-                "to": "to i386",
+                "on_arch": "on amd64",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [["bar"], ["baz"]],
                 "host_arch": "i686",
@@ -88,8 +87,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "third else followed",
             {
-                "on": "on amd64",
-                "to": "to i386",
+                "on_arch": "on amd64",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [[{"on armhf": ["bar"]}], ["baz"]],
                 "host_arch": "i686",
@@ -99,8 +98,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested amd64",
             {
-                "on": "on amd64",
-                "to": "to armhf",
+                "on_arch": "on amd64",
+                "to_arch": "to armhf",
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
@@ -110,8 +109,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested i386",
             {
-                "on": "on i386",
-                "to": "to armhf",
+                "on_arch": "on i386",
+                "to_arch": "to armhf",
                 "body": [{"on amd64": ["foo"]}, {"on i386": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
@@ -121,8 +120,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested body ignored else",
             {
-                "on": "on amd64",
-                "to": "to armhf",
+                "on_arch": "on amd64",
+                "to_arch": "to armhf",
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "x86_64",
@@ -132,8 +131,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested body used else",
             {
-                "on": "on i386",
-                "to": "to armhf",
+                "on_arch": "on i386",
+                "to_arch": "to armhf",
                 "body": [{"on amd64": ["foo"]}, {"else": ["bar"]}],
                 "else_bodies": [],
                 "host_arch": "i686",
@@ -143,8 +142,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested else ignored else",
             {
-                "on": "on armhf",
-                "to": "to i386",
+                "on_arch": "on armhf",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "x86_64",
@@ -154,8 +153,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "nested else used else",
             {
-                "on": "on armhf",
-                "to": "to i386",
+                "on_arch": "on armhf",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [[{"on amd64": ["bar"]}, {"else": ["baz"]}]],
                 "host_arch": "i686",
@@ -165,8 +164,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "with hyphen",
             {
-                "on": "on other-arch",
-                "to": "to yet-another-arch",
+                "on_arch": "on other-arch",
+                "to_arch": "to yet-another-arch",
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
@@ -176,8 +175,8 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         (
             "multiple selectors",
             {
-                "on": "on amd64,i386",
-                "to": "to armhf,arm64",
+                "on_arch": "on amd64,i386",
+                "to_arch": "to armhf,arm64",
                 "body": ["foo"],
                 "else_bodies": [],
                 "host_arch": "x86_64",
@@ -186,38 +185,44 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
         ),
     ]
 
-    @patch("platform.architecture")
-    @patch("platform.machine")
-    def test_compound_statement_grammar(
-        self, platform_machine_mock, platform_architecture_mock
+    def test(
+        self,
+        monkeypatch,
+        on_arch,
+        to_arch,
+        body,
+        else_bodies,
+        host_arch,
+        expected_packages,
     ):
-        platform_machine_mock.return_value = self.host_arch
-        platform_architecture_mock.return_value = ("64bit", "ELF")
+        monkeypatch.setattr(platform, "machine", lambda: host_arch)
+        monkeypatch.setattr(platform, "architecture", lambda: ("64bit", "ELF"))
+
         processor = grammar.GrammarProcessor(
-            None, snapcraft.ProjectOptions(target_deb_arch="armhf"), self.checker
+            None, snapcraft.ProjectOptions(target_deb_arch="armhf"), lambda x: True
         )
         statements = [
-            on.OnStatement(on=self.on, body=None, processor=processor),
-            to.ToStatement(to=self.to, body=None, processor=processor),
+            on.OnStatement(on=on_arch, body=None, processor=processor),
+            to.ToStatement(to=to_arch, body=None, processor=processor),
         ]
         statement = compound.CompoundStatement(
-            statements=statements, body=self.body, processor=processor
+            statements=statements, body=body, processor=processor
         )
 
-        for else_body in self.else_bodies:
+        for else_body in else_bodies:
             statement.add_else(else_body)
 
-        self.assertThat(statement.process(), Equals(self.expected_packages))
+        assert statement.process() == expected_packages
 
 
-class CompoundStatementInvalidGrammarTestCase(GrammarBaseTestCase):
+class TestCompoundStatementInvalidGrammar:
 
     scenarios = [
         (
             "spaces in on selectors",
             {
-                "on": "on amd64, ubuntu",
-                "to": "to i386",
+                "on_arch": "on amd64, ubuntu",
+                "to_arch": "to i386",
                 "body": ["foo"],
                 "else_bodies": [],
                 "expected_exception": grammar.errors.OnStatementSyntaxError,
@@ -228,8 +233,8 @@ class CompoundStatementInvalidGrammarTestCase(GrammarBaseTestCase):
         (
             "spaces in to selectors",
             {
-                "on": "on amd64,ubuntu",
-                "to": "to i386, armhf",
+                "on_arch": "on amd64,ubuntu",
+                "to_arch": "to i386, armhf",
                 "body": ["foo"],
                 "else_bodies": [],
                 "expected_exception": grammar.errors.ToStatementSyntaxError,
@@ -239,22 +244,26 @@ class CompoundStatementInvalidGrammarTestCase(GrammarBaseTestCase):
         ),
     ]
 
-    def test_on_statement_invalid_grammar(self):
-        with testtools.ExpectedException(
-            self.expected_exception, self.expected_message
-        ):
+    def test(
+        self, on_arch, to_arch, body, else_bodies, expected_exception, expected_message
+    ):
+        with pytest.raises(expected_exception) as error:
             processor = grammar.GrammarProcessor(
-                None, snapcraft.ProjectOptions(target_deb_arch="armhf"), self.checker
+                None,
+                snapcraft.ProjectOptions(target_deb_arch="armhf"),
+                lambda x: "invalid" not in x,
             )
             statements = [
-                on.OnStatement(on=self.on, body=None, processor=processor),
-                to.ToStatement(to=self.to, body=None, processor=processor),
+                on.OnStatement(on=on_arch, body=None, processor=processor),
+                to.ToStatement(to=to_arch, body=None, processor=processor),
             ]
             statement = compound.CompoundStatement(
-                statements=statements, body=self.body, processor=processor
+                statements=statements, body=body, processor=processor
             )
 
-            for else_body in self.else_bodies:
+            for else_body in else_bodies:
                 statement.add_else(else_body)
 
             statement.process()
+
+        assert re.match(expected_message, str(error.value))

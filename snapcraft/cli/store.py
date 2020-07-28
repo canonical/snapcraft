@@ -41,7 +41,7 @@ _MESSAGE_REGISTER_PRIVATE = dedent(
     the choice of name and make sure you are confident nobody else will
     have a stronger claim to that particular name. If you are unsure
     then we suggest you prefix the name with your developer identity,
-    As ‘nessita-yoyodyne-www-site-content’."""
+    As '$username-yoyodyne-www-site-content'."""
 )
 _MESSAGE_REGISTER_CONFIRM = dedent(
     """
@@ -51,9 +51,9 @@ _MESSAGE_REGISTER_CONFIRM = dedent(
     If needed, we will rename snaps to ensure that a particular name
     reflects the software most widely expected by our community.
 
-    For example, most people would expect ‘thunderbird’ to be published by
+    For example, most people would expect 'thunderbird' to be published by
     Mozilla. They would also expect to be able to get other snaps of
-    Thunderbird as 'thunderbird-$username'.
+    Thunderbird as '$username-thunderbird'.
 
     Would you say that MOST users will expect {!r} to come from
     you, and be the software you intend to publish there?"""
@@ -184,7 +184,21 @@ def upload(snap_file, release):
         channel_list = None
 
     review_snap(snap_file=snap_file)
-    snapcraft.upload(snap_file, channel_list)
+    snap_name, snap_revision = snapcraft.upload(snap_file, channel_list)
+
+    echo.info("Revision {!r} of {!r} created.".format(snap_revision, snap_name))
+    if channel_list:
+        store_client_cli = StoreClientCLI()
+        snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map,
+                architectures=snap_channel_map.get_revision(
+                    snap_revision
+                ).architectures,
+            )
+        )
 
 
 @storecli.command("upload-metadata")
@@ -369,10 +383,14 @@ def promote(snap_name, from_channel, to_channel, yes):
         raise click.BadOptionUsage(
             "--to-channel", "--from-channel and --to-channel cannot be the same."
         )
-    elif parsed_from_channel.risk == "edge" and parsed_from_channel.branch is None:
+    elif (
+        parsed_from_channel.risk == "edge"
+        and parsed_from_channel.branch is None
+        and yes
+    ):
         raise click.BadOptionUsage(
             "--from-channel",
-            "{!r} is not a valid set value for --from-channel.".format(
+            "{!r} is not a valid set value for --from-channel when using --yes.".format(
                 parsed_from_channel
             ),
         )
@@ -433,7 +451,40 @@ def close(snap_name, channels):
         snapcraft close my-snap beta
         snapcraft close my-snap beta edge
     """
-    snapcraft.close(snap_name, channels)
+    store = storeapi.StoreClient()
+    account_info = store.get_account_information()
+
+    try:
+        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
+    except KeyError:
+        raise storeapi.errors.StoreChannelClosingPermissionError(
+            snap_name, DEFAULT_SERIES
+        )
+
+    # Returned closed_channels cannot be trusted as it returns risks.
+    store.close_channels(snap_id=snap_id, channel_names=channels)
+    if len(channels) == 1:
+        msg = "The {} channel is now closed.".format(channels[0])
+    else:
+        msg = "The {} and {} channels are now closed.".format(
+            ", ".join(channels[:-1]), channels[-1]
+        )
+
+    snap_channel_map = store.get_snap_channel_map(snap_name=snap_name)
+    if snap_channel_map.channel_map:
+        closed_tracks = {storeapi.channels.Channel(c).track for c in channels}
+        existing_architectures = snap_channel_map.get_existing_architectures()
+
+        click.echo(
+            get_tabulated_channel_map(
+                snap_channel_map,
+                architectures=existing_architectures,
+                tracks=closed_tracks,
+            )
+        )
+        click.echo()
+
+    echo.info(msg)
 
 
 @storecli.command()
@@ -460,7 +511,10 @@ def status(snap_name, arch, experimental_progressive_releases):
 
     snap_channel_map = StoreClientCLI().get_snap_channel_map(snap_name=snap_name)
     existing_architectures = snap_channel_map.get_existing_architectures()
-    if arch and arch not in existing_architectures:
+
+    if not snap_channel_map.channel_map:
+        echo.warning("This snap has no released revisions.")
+    elif arch and arch not in existing_architectures:
         echo.warning(f"No revisions for architecture {arch!r}.")
     else:
         if arch:

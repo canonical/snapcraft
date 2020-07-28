@@ -21,9 +21,9 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft import storeapi
-from snapcraft.storeapi.errors import StorePushError
 import tests
+from snapcraft import storeapi
+from snapcraft.storeapi.errors import StoreUploadError
 from . import CommandBaseTestCase
 
 
@@ -31,20 +31,27 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.storeapi.StoreClient.push_precheck")
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.fake_precheck = fixtures.MockPatch(
+            "snapcraft.storeapi.StoreClient.upload_precheck"
+        )
+        self.useFixture(self.fake_precheck)
+
+        self.fake_metadata = fixtures.MockPatchObject(
+            storeapi.StoreClient, "upload_metadata"
+        )
+        self.useFixture(self.fake_metadata)
 
         self.uploaded_icon = None
 
         def _save_updated_icon(snap_name, metadata, force):
             self.uploaded_icon = metadata["icon"].read() if metadata["icon"] else None
 
-        patcher = mock.patch.object(
-            storeapi.StoreClient, "push_binary_metadata", side_effect=_save_updated_icon
+        self.fake_binary_metadata = fixtures.MockPatchObject(
+            storeapi.StoreClient,
+            "upload_binary_metadata",
+            side_effect=_save_updated_icon,
         )
-        self.mock_binary_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.useFixture(self.fake_binary_metadata)
 
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap-with-icon.snap"
@@ -59,11 +66,11 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         if optional_text_metadata is not None:
             text_metadata.update(optional_text_metadata)
 
-        self.mock_metadata.assert_called_once_with(
+        self.fake_metadata.mock.assert_called_once_with(
             snap_name="basic", metadata=text_metadata, force=force
         )
         # binary metadata
-        args, _ = self.mock_binary_metadata.call_args
+        args, _ = self.fake_binary_metadata.mock.call_args
         self.assertEqual(args[0], "basic")
         expected_icon = (
             b'<svg width="256" height="256">\n'
@@ -80,10 +87,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_simple(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
-
         # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
             result = self.run_command(["upload-metadata", self.snap_file])
@@ -97,10 +100,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.assert_expected_metadata_calls(force=False)
 
     def test_with_license_and_title(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__),
             "data",
@@ -122,10 +121,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         )
 
     def test_simple_debug(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
@@ -165,12 +160,10 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_account_info)
 
-        self.fake_store_push_metadata = fixtures.MockPatchObject(
-            storeapi.StoreClient,
-            "push_metadata",
-            side_effect=[storeapi.errors.InvalidCredentialsError("error"), None],
-        )
-        self.useFixture(self.fake_store_push_metadata)
+        self.fake_metadata.mock.side_effect = [
+            storeapi.errors.InvalidCredentialsError("error"),
+            None,
+        ]
 
         result = self.run_command(
             ["upload-metadata", self.snap_file], input="user@example.com\nsecret\n"
@@ -197,13 +190,10 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
                     ]
                 )
 
-        patcher = mock.patch.object(storeapi.StoreClient, "push_precheck")
-        mock_precheck = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_precheck.side_effect = StorePushError("basic", MockResponse())
+        self.fake_precheck.mock.side_effect = StoreUploadError("basic", MockResponse())
 
         raised = self.assertRaises(
-            storeapi.errors.StorePushError,
+            storeapi.errors.StoreUploadError,
             self.run_command,
             ["upload-metadata", self.snap_file],
         )
@@ -214,10 +204,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         )
 
     def test_forced(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "yes")
         )
@@ -231,10 +217,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.assert_expected_metadata_calls(force=True)
 
     def test_snap_without_icon(self):
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
-
         snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
         )
@@ -251,10 +233,6 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
     def test_push_raises_deprecation_warning(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
-
-        patcher = mock.patch.object(storeapi.StoreClient, "push_metadata")
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
 
         # upload metadata
         with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):

@@ -3,19 +3,23 @@
 # Launcher common exports for any desktop app #
 ###############################################
 
+# Note: We avoid using `eval` because we don't want to expand variable names
+#       in paths. For example: LD_LIBRARY_PATH paths might contain `$LIB`.
 function prepend_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\$dir\${$var:+:\$$var}\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${dir}${var:+:$var}"
   fi
 }
 
 function append_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\${$var:+\$$var:}\$dir\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${var:+$var:}${dir}"
   fi
 }
 
@@ -87,6 +91,7 @@ export LIBVA_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 # Without that OpenGL using apps do not work with the nVidia drivers.
 # Ref.: https://bugs.launchpad.net/snappy/+bug/1588192
 append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl"
+append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl/vdpau"
 
 # Unity7 export (workaround for https://launchpad.net/bugs/1638405)
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libunity"
@@ -95,8 +100,8 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libunity"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/pulseaudio"
 
 # EGL vendor files on glvnd enabled systems
-[ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
-    append_dir __EGL_VENDOR_LIBRARY_DIRS "/var/lib/snapd/lib/glvnd/egl_vendor.d"
+append_dir __EGL_VENDOR_LIBRARY_DIRS "/var/lib/snapd/lib/glvnd/egl_vendor.d"
+append_dir __EGL_VENDOR_LIBRARY_DIRS "$SNAP_DESKTOP_RUNTIME/usr/share/glvnd/egl_vendor.d"
 
 # Tell GStreamer where to find its plugins
 export GST_PLUGIN_PATH="$SNAP/usr/lib/$ARCH/gstreamer-1.0"

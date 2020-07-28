@@ -45,10 +45,7 @@ class CollaborateBaseTestCase(StoreCommandsBaseTestCase):
 
 class CollaboratorsCommandTestCase(CollaborateBaseTestCase):
 
-    scenarios = [
-        ("edit-collaborators", {"command_name": "edit-collaborators"}),
-        ("collaborators alias", {"command_name": "collaborators"}),
-    ]
+    command_name = "edit-collaborators"
 
     def test_collaborators_without_snap_name_must_error(self):
         result = self.run_command([self.command_name])
@@ -123,10 +120,7 @@ class CollaboratorsCommandTestCase(CollaborateBaseTestCase):
 
 class CollaborateErrorsTestCase(CollaborateBaseTestCase):
 
-    scenarios = [
-        ("edit-collaborators", {"command_name": "edit-collaborators"}),
-        ("collaborators alias", {"command_name": "collaborators"}),
-    ]
+    command_name = "edit-collaborators"
 
     def test_collaborate_snap_not_found(self):
         raised = self.assertRaises(
@@ -252,19 +246,18 @@ class EditDevelopersTestCase(unit.TestCase):
 
 
 class EditDevelopersOpenEditorTestCase(unit.TestCase):
-
-    scenarios = (
-        ("default", {"editor": None, "expected": "vi"}),
-        ("non-default", {"editor": "test-editor", "expected": "test-editor"}),
-    )
-
     def setUp(self):
         super().setUp()
         patcher = mock.patch("subprocess.check_call")
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_edit_collaborators_must_open_editor(self):
-        self.useFixture(fixtures.EnvironmentVariable("EDITOR", self.editor))
+    def test_edit_collaborators_must_open_editor_default(self):
+        self.useFixture(fixtures.EnvironmentVariable("EDITOR", None))
         assertions._edit_developers({})
-        self.check_call_mock.assert_called_with([self.expected, mock.ANY])
+        self.check_call_mock.assert_called_with(["vi", mock.ANY])
+
+    def test_edit_collaborators_must_open_editor_environment(self):
+        self.useFixture(fixtures.EnvironmentVariable("EDITOR", "test-editor"))
+        assertions._edit_developers({})
+        self.check_call_mock.assert_called_with(["test-editor", mock.ANY])

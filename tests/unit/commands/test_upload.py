@@ -26,8 +26,8 @@ from snapcraft import file_utils, storeapi, internal
 from snapcraft.internal import review_tools
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
-    StorePushError,
     StoreUploadError,
+    StoreUpDownError,
 )
 import tests
 from . import FakeStoreCommandsBaseTestCase
@@ -36,24 +36,6 @@ from . import FakeStoreCommandsBaseTestCase
 class UploadCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()
-
-        self.fake_store_status.mock.return_value = {
-            "amd64": [
-                {
-                    "info": "specific",
-                    "version": "1.0-amd64",
-                    "channel": "stable",
-                    "revision": 2,
-                },
-                {
-                    "info": "specific",
-                    "version": "1.1-amd64",
-                    "channel": "beta",
-                    "revision": 4,
-                },
-                {"info": "tracking", "channel": "edge"},
-            ]
-        }
 
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), "data", "test-snap.snap"
@@ -82,9 +64,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["upload", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertRegexpMatches(
-            self.fake_logger.output, r"Revision 9 of 'basic' created\."
-        )
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -162,9 +142,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["upload", snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertRegexpMatches(
-            self.fake_logger.output, r"Revision 9 of 'basic' created\."
-        )
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=snap_file,
@@ -177,7 +155,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
     def test_upload_without_login_must_ask(self):
-        self.fake_store_push_precheck.mock.side_effect = [
+        self.fake_store_upload_precheck.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
             None,
         ]
@@ -222,8 +200,8 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
                     ]
                 )
 
-        self.fake_store_push_precheck.mock.side_effect = [
-            StorePushError("basic", MockResponse()),
+        self.fake_store_upload_precheck.mock.side_effect = [
+            StoreUploadError("basic", MockResponse()),
             None,
         ]
 
@@ -252,13 +230,15 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
                     ]
                 )
 
-        self.fake_store_push_precheck.mock.side_effect = [
-            StorePushError("basic", MockResponse()),
+        self.fake_store_upload_precheck.mock.side_effect = [
+            StoreUploadError("basic", MockResponse()),
             None,
         ]
 
         raised = self.assertRaises(
-            storeapi.errors.StorePushError, self.run_command, ["upload", self.snap_file]
+            storeapi.errors.StoreUploadError,
+            self.run_command,
+            ["upload", self.snap_file],
         )
 
         self.assertThat(
@@ -274,15 +254,15 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
             text = "stub error"
             reason = "stub reason"
 
-        self.fake_store_upload.mock.side_effect = StoreUploadError(MockResponse())
+        self.fake_store_upload.mock.side_effect = StoreUpDownError(MockResponse())
 
         self.assertRaises(
-            storeapi.errors.StoreUploadError,
+            storeapi.errors.StoreUpDownError,
             self.run_command,
             ["upload", self.snap_file],
         )
 
-    def test_push_raises_deprecation_warning(self):
+    def test_upload_raises_deprecation_warning(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -290,7 +270,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         result = self.run_command(["push", self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created."))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created."))
         self.assertThat(
             fake_logger.output,
             Contains(
@@ -309,11 +289,12 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
     def test_upload_and_release_a_snap(self):
+        self.useFixture
         # Upload
         result = self.run_command(["upload", self.snap_file, "--release", "beta"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created"))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -332,7 +313,7 @@ class UploadCommandTestCase(UploadCommandBaseTestCase):
         )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains("Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains("Revision 19 of 'basic' created"))
         self.fake_store_upload.mock.assert_called_once_with(
             snap_name="basic",
             snap_filename=self.snap_file,
@@ -524,31 +505,8 @@ class UploadCommandDeltasTestCase(UploadCommandBaseTestCase):
 
 
 class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
-
-    scenarios = [
-        (
-            "delete other cache files with valid name",
-            {
-                "cached_snaps": [
-                    "a-cached-snap_0.3_{}_8.snap",
-                    "another-cached-snap_1.0_fakearch_6.snap",
-                ]
-            },
-        ),
-        (
-            "delete other cache files with invalid name",
-            {
-                "cached_snaps": [
-                    "a-cached-snap_0.3_{}.snap",
-                    "cached-snap-without-revision_1.0_fakearch.snap",
-                    "another-cached-snap-without-version_fakearch.snap",
-                ]
-            },
-        ),
-    ]
-
-    def test_upload_revision_prune_snap_cache(self):
-        snap_revision = 9
+    def run_test(self, cached_snaps):
+        snap_revision = 19
 
         self.mock_tracker.track.return_value = {
             "code": "ready_to_release",
@@ -570,7 +528,7 @@ class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
         )
         os.makedirs(snap_cache)
 
-        for cached_snap in self.cached_snaps:
+        for cached_snap in cached_snaps:
             cached_snap = cached_snap.format(deb_arch)
             open(os.path.join(snap_cache, cached_snap), "a").close()
 
@@ -585,7 +543,21 @@ class UploadCommandDeltasWithPruneTestCase(UploadCommandBaseTestCase):
 
         self.assertThat(os.path.join(snap_cache, real_cached_snap), FileExists())
 
-        for snap in self.cached_snaps:
+        for snap in cached_snaps:
             snap = snap.format(deb_arch)
             self.assertThat(os.path.join(snap_cache, snap), Not(FileExists()))
         self.assertThat(len(os.listdir(snap_cache)), Equals(1))
+
+    def test_delete_other_cache_files_with_valid_name(self):
+        self.run_test(
+            ["a-cached-snap_0.3_{}_8.snap", "another-cached-snap_1.0_fakearch_6.snap"]
+        )
+
+    def test_delete_other_cache_file_with_invalid_name(self):
+        self.run_test(
+            [
+                "a-cached-snap_0.3_{}.snap",
+                "cached-snap-without-revision_1.0_fakearch.snap",
+                "another-cached-snap-without-version_fakearch.snap",
+            ]
+        )

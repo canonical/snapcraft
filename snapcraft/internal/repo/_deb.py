@@ -21,11 +21,11 @@ import io
 import lazr.restfulclient.errors
 import logging
 import os
+import pathlib
 import re
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 from typing_extensions import Final
 
@@ -44,8 +44,10 @@ from ._base import BaseRepo, get_pkg_name_parts
 
 logger = logging.getLogger(__name__)
 
-_DEB_CACHE_DIR: Path = Path(BaseDirectory.save_cache_path("snapcraft", "download"))
-_STAGE_CACHE_DIR: Path = Path(
+_DEB_CACHE_DIR: pathlib.Path = pathlib.Path(
+    BaseDirectory.save_cache_path("snapcraft", "download")
+)
+_STAGE_CACHE_DIR: pathlib.Path = pathlib.Path(
     BaseDirectory.save_cache_path("snapcraft", "stage-packages")
 )
 
@@ -205,8 +207,8 @@ def _get_host_arch() -> str:
     return ProjectOptions().deb_arch
 
 
-def _get_dpkg_list_path(base: str) -> Path:
-    return Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
+def _get_dpkg_list_path(base: str) -> pathlib.Path:
+    return pathlib.Path(f"/snap/{base}/current/usr/share/snappy/dpkg.list")
 
 
 def get_packages_in_base(*, base: str) -> List[str]:
@@ -231,7 +233,7 @@ def get_packages_in_base(*, base: str) -> List[str]:
     return package_list
 
 
-def _sudo_write_file(*, dst_path: Path, content: bytes) -> None:
+def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
     """Workaround for writing to privileged files."""
     with tempfile.NamedTemporaryFile() as src_f:
         src_f.write(content)
@@ -314,7 +316,9 @@ class Ubuntu(BaseRepo):
         with AptCache() as apt_cache:
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(pkg_name)
+                installed_version = apt_cache.get_installed_version(
+                    pkg_name, resolve_virtual_packages=True
+                )
 
                 if installed_version is None or (
                     pkg_version is not None and installed_version != pkg_version
@@ -405,13 +409,14 @@ class Ubuntu(BaseRepo):
             )
 
     @classmethod
-    def install_stage_packages(
-        cls, *, package_names: List[str], install_dir: str, base: str
+    def fetch_stage_packages(
+        cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
     ) -> List[str]:
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
 
+        stage_packages_path.mkdir(exist_ok=True)
         with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
             filter_packages = set(get_packages_in_base(base=base))
             apt_cache.update()
@@ -424,19 +429,26 @@ class Ubuntu(BaseRepo):
             ):
                 logger.debug(f"Extracting stage package: {pkg_name}")
                 installed.add(f"{pkg_name}={pkg_version}")
-                with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
-                    # Extract deb package.
-                    cls._extract_deb(str(dl_path), extract_dir)
+                file_utils.link_or_copy(
+                    str(dl_path), str(stage_packages_path / dl_path.name)
+                )
 
-                    # Mark source of files.
-                    marked_name = f"{pkg_name}={pkg_version}"
-                    cls._mark_origin_stage_package(extract_dir, marked_name)
-
-                    # Stage files to install_dir.
-                    file_utils.link_or_copy_tree(extract_dir, install_dir)
-
-        cls.normalize(install_dir)
         return sorted(installed)
+
+    @classmethod
+    def unpack_stage_packages(
+        cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
+    ) -> None:
+        for pkg_path in stage_packages_path.glob("*.deb"):
+            with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
+                # Extract deb package.
+                cls._extract_deb(pkg_path, extract_dir)
+                # Mark source of files.
+                marked_name = cls._extract_deb_name_version(pkg_path)
+                cls._mark_origin_stage_package(extract_dir, marked_name)
+                # Stage files to install_dir.
+                file_utils.link_or_copy_tree(extract_dir, install_path.as_posix())
+        cls.normalize(str(install_path))
 
     @classmethod
     def build_package_is_valid(cls, package_name) -> bool:
@@ -570,8 +582,8 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _find_asset_with_key_id(
-        cls, *, key_id: str, keys_path: Path
-    ) -> Tuple[str, Optional[Path]]:
+        cls, *, key_id: str, keys_path: pathlib.Path
+    ) -> Tuple[str, Optional[pathlib.Path]]:
         # First look for any key asset that matches the key_id fingerprint.
         for key_path in keys_path.glob(pattern="*.asc"):
             key = key_path.read_text()
@@ -594,7 +606,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_gpg_key_id(
-        cls, *, key_id: str, keys_path: Path, key_server: Optional[str] = None
+        cls, *, key_id: str, keys_path: pathlib.Path, key_server: Optional[str] = None
     ) -> bool:
         # If key_id references a local asset, we search and replace the local
         # key_id reference with the actual fingerprint suitable for checking
@@ -642,7 +654,7 @@ class Ubuntu(BaseRepo):
         return key_id
 
     @classmethod
-    def install_ppa(cls, *, keys_path: Path, ppa: str) -> bool:
+    def install_ppa(cls, *, keys_path: pathlib.Path, ppa: str) -> bool:
         owner, name = cls._get_ppa_parts(ppa)
         key_id = cls._get_launchpad_ppa_key_id(ppa)
 
@@ -713,7 +725,7 @@ class Ubuntu(BaseRepo):
         if name not in ["default", "default-security"]:
             name = "snapcraft-" + name
 
-        config_path = Path(f"/etc/apt/sources.list.d/{name}.sources")
+        config_path = pathlib.Path(f"/etc/apt/sources.list.d/{name}.sources")
         if config_path.exists() and config_path.read_text() == config:
             # Already installed and matches, nothing to do.
             logger.debug(f"Ignoring unchanged sources: {config_path}")
@@ -724,7 +736,7 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _extract_deb_name_version(cls, deb_path: str) -> str:
+    def _extract_deb_name_version(cls, deb_path: pathlib.Path) -> str:
         try:
             output = subprocess.check_output(
                 ["dpkg-deb", "--show", "--showformat=${Package}=${Version}", deb_path]
@@ -735,7 +747,7 @@ class Ubuntu(BaseRepo):
         return output.decode().strip()
 
     @classmethod
-    def _extract_deb(cls, deb_path: str, extract_dir: str) -> None:
+    def _extract_deb(cls, deb_path: pathlib.Path, extract_dir: str) -> None:
         """Extract deb and return `<package-name>=<version>`."""
         try:
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
