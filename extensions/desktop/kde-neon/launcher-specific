@@ -4,6 +4,15 @@
 ###################################
 
 # Ensure a sane default for QT_QPA_PLATFORMTHEME.
+if [[ -z "$QT_QPA_PLATFORMTHEME" ]]; then
+  gtk_based_desktops=("GNOME" "X-CINNAMON" "UNITY" "MATE" "XFCE" "LXDE" "Pantheon")
+  for gtk_desktop in "${gtk_based_desktops[@]}"; do
+    if [[ "$XDG_CURRENT_DESKTOP" == *"$gtk_desktop"* ]]; then
+      export QT_QPA_PLATFORMTHEME="gtk3"
+      break
+    fi
+  done
+fi
 export QT_QPA_PLATFORMTHEME=${QT_QPA_PLATFORMTHEME:-kde}
 
 # Add paths for games
