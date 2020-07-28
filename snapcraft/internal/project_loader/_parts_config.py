@@ -76,7 +76,9 @@ class PartsConfig:
             for dep_name in dep_names:
                 dep = self.get_part(dep_name)
                 if not dep:
-                    raise errors.SnapcraftAfterPartMissingError(part.name, dep_name)
+                    raise errors.SnapcraftAfterPartMissingError(
+                        part_name=part.name, after_part_name=dep_name
+                    )
 
                 part.deps.append(dep)
 

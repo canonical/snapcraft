@@ -64,14 +64,16 @@ class Extension(metaclass=abc.ABCMeta):
 
         # A base is required in order to use extensions, so raise an error if not specified.
         if not base:
-            raise errors.ExtensionBaseRequiredError()
+            raise errors.SnapcraftExtensionBaseRequiredError()
 
         if base not in self.get_supported_bases():
-            raise errors.ExtensionUnsupportedBaseError(extension_name, base)
+            raise errors.SnapcraftExtensionUnsupportedBaseError(
+                extension_name=extension_name, base=base
+            )
 
         # Default to devmode if confinement is not set.
         confinement = yaml_data.get("confinement", "devmode")
         if confinement not in self.get_supported_confinement():
-            raise errors.ExtensionUnsupportedConfinementError(
-                extension_name, confinement
+            raise errors.SnapcraftExtensionUnsupportedConfinementError(
+                extension_name=extension_name, confinement=confinement
             )

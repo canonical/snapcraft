@@ -87,7 +87,7 @@ def find_extension(extension_name: str) -> Type[Extension]:
     :raises: errors.ExtensionNotFoundError if the extension is not found
     """
     if extension_name.startswith("_"):
-        raise errors.ExtensionNotFoundError(extension_name)
+        raise errors.SnapcraftExtensionNotFoundError(extension_name=extension_name)
 
     try:
         extension_module = importlib.import_module(
@@ -96,7 +96,7 @@ def find_extension(extension_name: str) -> Type[Extension]:
             )
         )
     except ImportError:
-        raise errors.ExtensionNotFoundError(extension_name)
+        raise errors.SnapcraftExtensionNotFoundError(extension_name=extension_name)
 
     # The extension module requires a class named ExtensionImpl.
     return getattr(extension_module, "ExtensionImpl")
@@ -165,7 +165,9 @@ def _apply_extension(
     for part_name, part_definition in extension.parts.items():
         # If a extension part name clashes with a part that already exists, error.
         if part_name in parts:
-            raise errors.ExtensionPartConflictError(extension_name, part_name)
+            raise errors.SnapcraftExtensionPartConflictError(
+                extension_name=extension_name, part_name=part_name
+            )
 
         parts[part_name] = part_definition
 

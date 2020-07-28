@@ -14,108 +14,116 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft.internal.errors
+from typing import Set
+
+from snapcraft.internal.errors import SnapcraftException
 
 
-class ProjectLoaderError(snapcraft.internal.errors.SnapcraftError):
+class SnapcraftAfterPartMissingError(SnapcraftException):
+    def __init__(self, *, part_name: str, after_part_name: str) -> None:
+        self.part_name = part_name
+        self.after_part_name = after_part_name
 
-    fmt = ""
+    def get_brief(self) -> str:
+        return f"Part {self.part_name!r} after configuration refers to unknown part {self.after_part_name!r}."
 
-
-class InvalidEpochError(ProjectLoaderError):
-
-    fmt = "epochs are positive integers followed by an optional asterisk"
-
-
-class DuplicateAliasError(ProjectLoaderError):
-
-    fmt = "Multiple parts have the same alias defined: {aliases!r}"
-
-    def __str__(self):
-        if isinstance(self.aliases, (list, set)):
-            self.aliases = ",".join(self.aliases)
-
-        return super().__str__()
+    def get_resolution(self) -> str:
+        return "Ensure 'after' configuration and referenced part name is correct."
 
 
-class SnapcraftLogicError(ProjectLoaderError):
+class SnapcraftDuplicateAliasError(SnapcraftException):
+    def __init__(self, *, aliases: Set[str]) -> None:
+        self.aliases = ", ".join(sorted(aliases))
 
-    fmt = "Issue detected while analyzing snapcraft.yaml: {message}"
+    def get_brief(self) -> str:
+        return f"Multiple parts have the same alias defined: {self.aliases}"
 
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
-class ExtensionBaseRequiredError(ProjectLoaderError):
-    fmt = "Extensions can only be used if the snapcraft.yaml specifies a 'base'"
-
-
-class ExtensionNotFoundError(ProjectLoaderError):
-    fmt = (
-        "Failed to find extension {extension_name!r}: "
-        "a extension by that name does not exist.\n"
-        "Check the extension name and try again."
-    )
-
-    def __init__(self, extension_name: str) -> None:
-        super().__init__(extension_name=extension_name)
+    def get_resolution(self) -> str:
+        return "Use each alias only once."
 
 
-class ExtensionPartConflictError(ProjectLoaderError):
-    fmt = (
-        "Failed to apply extension {extension_name!r}: "
-        "this extension adds a part named {part_name!r}, but a part by that name "
-        "already exists.\n"
-        "Rename the {part_name!r} part to something else and try again."
-    )
+class SnapcraftExtensionBaseRequiredError(SnapcraftException):
+    def get_brief(self) -> str:
+        return "Extensions can only be used if the snapcraft.yaml specifies a 'base'."
 
-    def __init__(self, extension_name: str, part_name: str) -> None:
-        super().__init__(extension_name=extension_name, part_name=part_name)
+    def get_resolution(self) -> str:
+        return "Ensure your base configuration is correct."
 
 
-class ExtensionUnsupportedBaseError(ProjectLoaderError):
-    fmt = (
-        "Failed to load extension {extension_name!r}: "
-        "this extension does not support the {base!r} base.\n"
-        "Either use a different extension, or use a base supported by this extension."
-    )
+class SnapcraftExtensionNotFoundError(SnapcraftException):
+    def __init__(self, *, extension_name: str) -> None:
+        self.extension_name = extension_name
 
-    def __init__(self, extension_name: str, base: str) -> None:
-        super().__init__(extension_name=extension_name, base=base)
+    def get_brief(self) -> str:
+        return f"Failed to find extension {self.extension_name!r}."
 
-
-class ExtensionUnsupportedConfinementError(ProjectLoaderError):
-    fmt = (
-        "Failed to load extension {extension_name!r}: "
-        "this extension does not support {confinement!r} confinement.\n"
-        "Either use a different extension, or use a confinement setting "
-        "supported by this extension."
-    )
-
-    def __init__(self, extension_name: str, confinement: str) -> None:
-        super().__init__(extension_name=extension_name, confinement=confinement)
+    def get_resolution(self) -> str:
+        return "Ensure the extension name is correct."
 
 
-class ExtensionMissingDocumentationError(ProjectLoaderError):
-    fmt = (
-        "The {extension_name!r} extension appears to be missing documentation.\n"
-        "We would appreciate it if you created a bug report about this at "
-        "https://launchpad.net/snapcraft/+filebug"
-    )
+class SnapcraftExtensionPartConflictError(SnapcraftException):
+    def __init__(self, *, extension_name: str, part_name: str) -> None:
+        self.extension_name = extension_name
+        self.part_name = part_name
 
-    def __init__(self, extension_name: str) -> None:
-        super().__init__(extension_name=extension_name)
+    def get_brief(self) -> str:
+        return f"Failed to apply extension {self.extension_name!r}."
+
+    def get_details(self) -> str:
+        return f"This extension adds a part named {self.part_name!r}, but a part by that name already exists."
+
+    def get_resolution(self) -> str:
+        return f"Rename the {self.part_name!r} part."
 
 
-class SnapcraftAfterPartMissingError(ProjectLoaderError):
+class SnapcraftExtensionUnsupportedBaseError(SnapcraftException):
+    def __init__(self, *, extension_name: str, base: str) -> None:
+        self.extension_name = extension_name
+        self.base = base
 
-    fmt = (
-        "Failed to get part information: "
-        "Cannot find the definition for part {after_part_name!r}, required by part "
-        "{part_name!r}.\n"
-        "Remote parts are not supported with bases, so make sure that this part is "
-        "defined in the `snapcraft.yaml`."
-    )
+    def get_brief(self) -> str:
+        return f"Failed to load extension {self.extension_name!r}."
 
-    def __init__(self, part_name, after_part_name):
-        super().__init__(part_name=part_name, after_part_name=after_part_name)
+    def get_details(self) -> str:
+        return f"This extension does not support the {self.base!r} base."
+
+    def get_resolution(self) -> str:
+        return "Either use a different extension, or use a base supported by this extension."
+
+
+class SnapcraftExtensionUnsupportedConfinementError(SnapcraftException):
+    def __init__(self, *, extension_name: str, confinement: str) -> None:
+        self.extension_name = extension_name
+        self.confinement = confinement
+
+    def get_brief(self) -> str:
+        return f"Failed to load extension {self.extension_name!r}."
+
+    def get_details(self) -> str:
+        return f"This extension does not support {self.confinement!r} confinement."
+
+    def get_resolution(self) -> str:
+        return "Either use a different extension, or use a confinement supported by this extension."
+
+
+class SnapcraftFilesetReferenceError(SnapcraftException):
+    def __init__(self, *, item: str, step: str) -> None:
+        self.item = item
+        self.step = step
+
+    def get_brief(self) -> str:
+        return f"Fileset {self.item!r} referred to in the {self.step!r} step was not found."
+
+    def get_resolution(self) -> str:
+        return "Ensure the fileset configuration is correct."
+
+
+class SnapcraftInvalidEpochError(SnapcraftException):
+    def __init__(self, *, epoch: str) -> None:
+        self.epoch = epoch
+
+    def get_brief(self) -> str:
+        return f"Invalid epoch format for {self.epoch!r}."
+
+    def get_resolution(self) -> str:
+        return "Valid epochs are positive integers followed by an optional asterisk."

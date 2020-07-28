@@ -56,12 +56,12 @@ def _validate_icon(instance):
     return True
 
 
-@jsonschema.FormatChecker.cls_checks("epoch", raises=errors.InvalidEpochError)
+@jsonschema.FormatChecker.cls_checks("epoch", raises=errors.SnapcraftInvalidEpochError)
 def _validate_epoch(instance):
     str_instance = str(instance)
     pattern = re.compile("^(?:0|[1-9][0-9]*[*]?)$")
     if not pattern.match(str_instance):
-        raise errors.InvalidEpochError()
+        raise errors.SnapcraftInvalidEpochError(epoch=str_instance)
 
     return True
 

@@ -34,7 +34,7 @@ def provides(
     """
     # First of all, ensure the file actually exists before doing any work
     if not os.path.exists(path):
-        raise errors.NoSuchFileError(path)
+        raise errors.SnapcraftNoSuchFileError(path=path)
 
     # Convert file path into absolute path
     absolute_file_path = os.path.abspath(path)
@@ -52,7 +52,7 @@ def provides(
             absolute_file_path, start=project.prime_dir
         )
     else:
-        raise errors.ProvidesInvalidFilePathError(path)
+        raise errors.SnapcraftProvidesInvalidFilePathError(path=path)
 
     is_dir = os.path.isdir(absolute_file_path)
     is_file = os.path.isfile(absolute_file_path)
@@ -65,7 +65,7 @@ def provides(
             providing_parts.add(part)
 
     if not providing_parts:
-        raise errors.UntrackedFileError(path)
+        raise errors.SnapcraftUntrackedFileError(path=path)
 
     return providing_parts
 

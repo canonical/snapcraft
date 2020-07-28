@@ -67,7 +67,7 @@ def extension(ctx, name, **kwargs):
     # Not using inspect.getdoc here since it'll fall back to the base class
     docstring = extension_cls.__doc__
     if not docstring:
-        raise project_loader.errors.ExtensionMissingDocumentationError(name)
+        raise RuntimeError(f"The {name!r} extension is missing required documentation.")
 
     formatter = ctx.make_formatter()
     formatter.write_text(inspect.cleandoc(docstring))

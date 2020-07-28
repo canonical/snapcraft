@@ -14,47 +14,52 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft.internal.errors
+from snapcraft.internal.errors import SnapcraftException
 
 
-class NoSuchFileError(snapcraft.internal.errors.SnapcraftError):
+class SnapcraftNoSuchFileError(SnapcraftException):
+    def __init__(self, *, path: str) -> None:
+        self.path = path
 
-    fmt = (
-        "Failed to find part that provided path: {path!r} does not "
-        "exist.\n"
-        "Check the file path and try again."
-    )
+    def get_brief(self) -> str:
+        return f"Failed to find part that provided path {self.path!r}: file does not exist."
 
-    def __init__(self, path):
-        super().__init__(path=path)
+    def get_resolution(self) -> str:
+        return "Check the file path and try again."
 
 
-class SnapcraftInspectError(snapcraft.internal.errors.SnapcraftError):
+class SnapcraftInspectError(SnapcraftException):
     # Use a different exit code for these errors so the orchestrating snapcraft can
     # differentiate them.
     def get_exit_code(self):
         return 3
 
 
-class ProvidesInvalidFilePathError(SnapcraftInspectError):
+class SnapcraftNoStepsRunError(SnapcraftInspectError):
+    def get_brief(self) -> str:
+        return "Failed to get latest step: no steps have run"
 
-    fmt = (
-        "Failed to find part that provides path: {path!r} is not in the "
-        "staging or priming area.\n"
-        "Ensure the path is in the staging or priming area and try again."
-    )
-
-    def __init__(self, path):
-        super().__init__(path=path)
+    def get_resolution(self) -> str:
+        return "Run 'snapcraft clean' and retry build."
 
 
-class UntrackedFileError(SnapcraftInspectError):
+class SnapcraftProvidesInvalidFilePathError(SnapcraftInspectError):
+    def __init__(self, *, path: str) -> None:
+        self.path = path
 
-    fmt = "No known parts provided {path!r}. It may have been provided by a scriptlet."
+    def get_brief(self) -> str:
+        return f"Failed to find part that provided path {self.path!r}: file is not in the staging or priming area."
 
-    def __init__(self, path):
-        super().__init__(path=path)
+    def get_resolution(self) -> str:
+        return "Ensure the path is in the staging or priming area and try again."
 
 
-class NoStepsRunError(SnapcraftInspectError):
-    fmt = "Failed to get latest step: no steps have run"
+class SnapcraftUntrackedFileError(SnapcraftInspectError):
+    def __init__(self, *, path: str) -> None:
+        self.path = path
+
+    def get_brief(self) -> str:
+        return f"Failed to find part that provided path {self.path!r}: it may have been provided by a scriplet."
+
+    def get_resolution(self) -> str:
+        return "Run 'snapcraft clean' and retry build."

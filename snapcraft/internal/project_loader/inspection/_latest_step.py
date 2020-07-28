@@ -43,6 +43,6 @@ def latest_step(
                 latest_timestamp = timestamp
 
     if not latest_part or not latest_step:
-        raise errors.NoStepsRunError()
+        raise errors.SnapcraftNoStepsRunError()
 
     return (latest_part, latest_step, latest_timestamp)

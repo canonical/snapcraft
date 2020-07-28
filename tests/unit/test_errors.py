@@ -24,8 +24,6 @@ from requests.packages import urllib3
 from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
-from snapcraft.internal.project_loader import errors as project_loader_errors
-from snapcraft.internal.project_loader.inspection import errors as inspection_errors
 
 
 def _fake_error_response(status_code):
@@ -65,20 +63,6 @@ class TestErrorFormatting:
                     "{'test-file'}. "
                     "Edit the `snapcraft.yaml` to make sure that the files "
                     "included in `prime` are also included in `stage`."
-                ),
-            },
-        ),
-        (
-            "SnapcraftAfterPartMissingError",
-            {
-                "exception_class": project_loader_errors.SnapcraftAfterPartMissingError,
-                "kwargs": {"part_name": "test-part1", "after_part_name": "test-part2"},
-                "expected_message": (
-                    "Failed to get part information: "
-                    "Cannot find the definition for part 'test-part2', required by "
-                    "part 'test-part1'.\n"
-                    "Remote parts are not supported with bases, so make sure that this "
-                    "part is defined in the `snapcraft.yaml`."
                 ),
             },
         ),
@@ -549,50 +533,6 @@ class TestErrorFormatting:
                     "A tool snapcraft depends on could not be found: 'runnable'.\n"
                     "Ensure the tool is installed and available, and try again."
                 ),
-            },
-        ),
-        (
-            "NoSuchFileError",
-            {
-                "exception_class": inspection_errors.NoSuchFileError,
-                "kwargs": {"path": "test-path"},
-                "expected_message": (
-                    "Failed to find part that provided path: 'test-path' does not "
-                    "exist.\n"
-                    "Check the file path and try again."
-                ),
-            },
-        ),
-        (
-            "ProvidesInvalidFilePathError",
-            {
-                "exception_class": inspection_errors.ProvidesInvalidFilePathError,
-                "kwargs": {"path": "test-path"},
-                "expected_message": (
-                    "Failed to find part that provides path: 'test-path' is not "
-                    "in the staging or priming area.\n"
-                    "Ensure the path is in the staging or priming area and try "
-                    "again."
-                ),
-            },
-        ),
-        (
-            "UntrackedFileError",
-            {
-                "exception_class": inspection_errors.UntrackedFileError,
-                "kwargs": {"path": "test-path"},
-                "expected_message": (
-                    "No known parts provided 'test-path'. It may have been "
-                    "provided by a scriptlet."
-                ),
-            },
-        ),
-        (
-            "NoStepsRunError",
-            {
-                "exception_class": inspection_errors.NoStepsRunError,
-                "kwargs": {},
-                "expected_message": "Failed to get latest step: no steps have run",
             },
         ),
     )
