@@ -106,7 +106,7 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.StoreRegistrationError(snap_name, response)
 
-    def snap_push_precheck(self, snap_name):
+    def snap_upload_precheck(self, snap_name):
         data = {"name": snap_name, "dry_run": True}
         auth = _macaroon_auth(self.conf)
         response = self.post(
@@ -119,9 +119,9 @@ class SCAClient(Client):
             },
         )
         if not response.ok:
-            raise errors.StorePushError(data["name"], response)
+            raise errors.StoreUploadError(snap_name, response)
 
-    def snap_push_metadata(
+    def snap_upload_metadata(
         self,
         snap_name,
         updown_data,
@@ -159,23 +159,23 @@ class SCAClient(Client):
             },
         )
         if not response.ok:
-            raise errors.StorePushError(data["name"], response)
+            raise errors.StoreUploadError(data["name"], response)
 
         return StatusTracker(response.json()["status_details_url"])
 
-    def push_metadata(self, snap_id, snap_name, metadata, force):
-        """Push the metadata to SCA."""
+    def upload_metadata(self, snap_id, snap_name, metadata, force):
+        """Upload the metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
             self, _macaroon_auth(self.conf), snap_id, snap_name
         )
-        metadata_handler.push(metadata, force)
+        metadata_handler.upload(metadata, force)
 
-    def push_binary_metadata(self, snap_id, snap_name, metadata, force):
-        """Push the binary metadata to SCA."""
+    def upload_binary_metadata(self, snap_id, snap_name, metadata, force):
+        """Upload the binary metadata to SCA."""
         metadata_handler = _metadata.StoreMetadataHandler(
             self, _macaroon_auth(self.conf), snap_id, snap_name
         )
-        metadata_handler.push_binary(metadata, force)
+        metadata_handler.upload_binary(metadata, force)
 
     def snap_release(
         self,
@@ -183,16 +183,14 @@ class SCAClient(Client):
         revision,
         channels,
         delta_format=None,
-        progressive_key: Optional[str] = None,
         progressive_percentage: Optional[int] = None,
     ):
         data = {"name": snap_name, "revision": str(revision), "channels": channels}
         if delta_format:
             data["delta_format"] = delta_format
-        if progressive_percentage is not None and progressive_key is not None:
+        if progressive_percentage is not None:
             data["progressive"] = {
                 "percentage": progressive_percentage,
-                "key": progressive_key,
                 "paused": False,
             }
         auth = _macaroon_auth(self.conf)

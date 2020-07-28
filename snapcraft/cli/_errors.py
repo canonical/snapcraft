@@ -1,7 +1,5 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
 # published by the Free Software Foundation.
@@ -22,21 +20,17 @@ import logging
 import tempfile
 import traceback
 from textwrap import dedent
-from typing import Dict  # noqa: F401
+from typing import Dict
 
 import click
+from raven import Client as RavenClient
+from raven.transport import RequestsHTTPTransport
 
 from . import echo
 import snapcraft
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
 
-# raven is not available on 16.04
-try:
-    from raven import Client as RavenClient
-    from raven.transport import RequestsHTTPTransport
-except ImportError:
-    RavenClient = None
 
 # TODO:
 # - annotate the part and lifecycle step in the message
@@ -366,7 +360,7 @@ def _prompt_sentry():
 
 
 def _submit_trace(exc_info):
-    kwargs = dict()  # Dict[str,str]
+    kwargs: Dict[str, str] = dict()
     if "+git" not in snapcraft.__version__:
         kwargs["release"] = snapcraft.__version__
 

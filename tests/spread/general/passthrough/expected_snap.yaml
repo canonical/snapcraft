@@ -1,0 +1,17 @@
+name: passthrough-tests
+version: '1.0'
+summary: passthrough-tests
+description: passthrough-tests
+apps:
+  test-cmd:
+    command: test-cmd
+    pt-test-app: pt-test-app
+architectures:
+- amd64
+base: core18
+confinement: strict
+grade: devel
+hooks:
+  configure:
+    pt-test-hook: pt-test-hook
+pt-test-snap: pt-test-snap

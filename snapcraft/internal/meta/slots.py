@@ -29,9 +29,21 @@ logger = logging.getLogger(__name__)
 class Slot:
     """Representation of a generic snap slot."""
 
-    def __init__(self, *, slot_name: str) -> None:
+    def __init__(
+        self,
+        *,
+        slot_name: str,
+        slot_dict: Optional[Dict[str, Any]] = None,
+        use_string_representation: bool = False,
+    ) -> None:
         self._slot_name = slot_name
-        self._slot_dict: Dict[str, Any] = {"interface": slot_name}
+
+        if slot_dict is None:
+            self._slot_dict: Dict[str, Any] = dict()
+        else:
+            self._slot_dict = slot_dict
+
+        self.use_string_representation = use_string_representation
 
     @property
     def slot_name(self) -> str:
@@ -41,21 +53,12 @@ class Slot:
     def validate(self) -> None:
         """Validate slot, raising exception on error."""
 
-        if not self._slot_dict:
-            raise SlotValidationError(
-                slot_name=self.slot_name, message="slot has no defined attributes"
-            )
-
-        if "interface" not in self._slot_dict:
-            raise SlotValidationError(
-                slot_name=self.slot_name, message="slot has no defined interface"
-            )
+        # Nothing to validate (yet).
+        return
 
     @classmethod
     def from_dict(cls, *, slot_dict: Dict[str, Any], slot_name: str) -> "Slot":
         """Return applicable Slot instance from dictionary properties."""
-
-        slot_dict = {} if slot_dict is None else slot_dict
         interface = slot_dict.get("interface", slot_name)
 
         # If we explicitly support the type, use it instead.
@@ -64,11 +67,30 @@ class Slot:
             return slot_class.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
         # Handle the general case.
-        slot = Slot(slot_name=slot_name)
-        slot._slot_dict.update(slot_dict)
-        return slot
+        return Slot(slot_name=slot_name, slot_dict=slot_dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    @classmethod
+    def from_object(cls, *, slot_object: Any, slot_name: str) -> "Slot":
+        if slot_object is None:
+            return Slot(slot_name=slot_name)
+        elif isinstance(slot_object, str):
+            slot = Slot(slot_name=slot_name, use_string_representation=True)
+            slot._slot_dict["interface"] = slot_object
+            return slot
+        elif isinstance(slot_object, dict):
+            return Slot.from_dict(slot_dict=slot_object, slot_name=slot_name)
+
+        raise RuntimeError(f"unknown syntax for slot {slot_name!r}: {slot_object!r}")
+
+    def to_yaml_object(self) -> Optional[Dict[str, Any]]:
+        # To output string short-form: "slot-name: interface-type"
+        if self.use_string_representation:
+            return self._slot_dict["interface"]
+
+        # To output shortest-form: "slot-name-is-interface: <empty>"
+        if not self._slot_dict:
+            return None
+
         return OrderedDict(deepcopy(self._slot_dict))
 
     def __repr__(self) -> str:
@@ -88,7 +110,7 @@ class ContentSlot(Slot):
         content: Optional[str] = None,
         read: List[str] = None,
         write: List[str] = None,
-        use_source_key: bool = True
+        use_source_key: bool = True,
     ) -> None:
         super().__init__(slot_name=slot_name)
 
@@ -144,7 +166,7 @@ class ContentSlot(Slot):
 
     @classmethod
     def from_dict(cls, *, slot_dict: Dict[str, Any], slot_name: str) -> "ContentSlot":
-        slot = ContentSlot(slot_name=slot_name)
+        slot = ContentSlot(slot_name=slot_name, content=slot_dict.get("content"))
 
         # Content directories may be nested under "source",
         # but they cannot be in both places according to snapd:
@@ -164,7 +186,7 @@ class ContentSlot(Slot):
 
         return slot
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_yaml_object(self) -> Dict[str, Any]:
         props: List[Tuple[str, Any]] = [("interface", self.interface)]
 
         # Only include content if set explicitly.
@@ -238,7 +260,7 @@ class DbusSlot(Slot):
                 message="valid `name` is required for dbus slot",
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_yaml_object(self) -> Dict[str, Any]:
         """Return dict of dbus slot."""
 
         return OrderedDict(

@@ -28,10 +28,15 @@ from .. import ProjectLoaderBaseTest
 
 
 class ExtensionTestBase(ProjectLoaderBaseTest):
+    def set_attributes(self, kwargs):
+        self.__dict__.update(kwargs)
+
     def setUp(self):
         super().setUp()
 
         # Create a few fake extensions
+        self.useFixture(_build_environment_extension_fixture())
+        self.useFixture(_build_environment2_extension_fixture())
         self.useFixture(_environment_extension_fixture())
         self.useFixture(_plug_extension_fixture())
         self.useFixture(_plug2_extension_fixture())
@@ -196,12 +201,7 @@ class BasicExtensionTest(ExtensionTestBase):
 
 
 class ExtensionOrderConsistencyTest(ExtensionTestBase):
-    scenarios = [
-        ("plug, plug2", {"extensions": "[plug, plug2]"}),
-        ("plug2, plug", {"extensions": "[plug2, plug]"}),
-    ]
-
-    def test_extension_merge(self):
+    def assert_extensions(self, extensions):
         config = self.make_snapcraft_project(
             textwrap.dedent(
                 """\
@@ -222,7 +222,7 @@ class ExtensionOrderConsistencyTest(ExtensionTestBase):
                         part1:
                             plugin: nil
                     """
-            ).format(extensions=self.extensions)
+            ).format(extensions=extensions)
         )
 
         # Verify that both extensions were applied to the app
@@ -230,64 +230,18 @@ class ExtensionOrderConsistencyTest(ExtensionTestBase):
         self.assertThat(config.data["apps"]["test-app"], Contains("plugs"))
         self.assertThat(
             config.data["apps"]["test-app"]["plugs"],
-            Equals(["test-plug", "test-plug2"]),
+            Equals(["test-plug2", "test-plug"]),
         )
+
+    def test_extension_merge_plug_plug2(self):
+        self.assert_extensions("[plug, plug2]")
+
+    def test_extension_merge_plug2_plug(self):
+        self.assert_extensions("[plug2, plug]")
 
 
 class ExtensionMergeTest(ExtensionTestBase):
-    scenarios = [
-        (
-            "merge plugs",
-            {
-                "app_definition": textwrap.dedent(
-                    """\
-                    command: echo 'hello'
-                    plugs: [foo]
-                    extensions: [plug]
-                    """
-                ),
-                "expected_app_definition": {
-                    "command": "echo 'hello'",
-                    "plugs": ["foo", "test-plug"],
-                },
-            },
-        ),
-        (
-            "merge environment",
-            {
-                "app_definition": textwrap.dedent(
-                    """\
-                    command: echo 'hello'
-                    extensions: [environment]
-                    environment:
-                      FOO: BAR
-                    """
-                ),
-                "expected_app_definition": {
-                    "command": "echo 'hello'",
-                    "environment": {"FOO": "BAR", "TEST_EXTENSION": 1},
-                },
-            },
-        ),
-        (
-            "scalars aren't overridden",
-            {
-                "app_definition": textwrap.dedent(
-                    """\
-                    command: echo 'hello'
-                    daemon: forking
-                    extensions: [daemon]
-                    """
-                ),
-                "expected_app_definition": {
-                    "command": "echo 'hello'",
-                    "daemon": "forking",
-                },
-            },
-        ),
-    ]
-
-    def test_extension_merge(self):
+    def run_test(self):
         snapcraft_yaml = textwrap.dedent(
             """\
             name: test
@@ -304,12 +258,13 @@ class ExtensionMergeTest(ExtensionTestBase):
 
             parts:
                 part1:
-                    plugin: nil
+            {part_definition}
             """
         )
         config = self.make_snapcraft_project(
             snapcraft_yaml.format(
-                app_definition=textwrap.indent(self.app_definition, " " * 8)
+                app_definition=textwrap.indent(self.app_definition, " " * 8),
+                part_definition=textwrap.indent(self.part_definition, " " * 8),
             )
         )
 
@@ -321,40 +276,156 @@ class ExtensionMergeTest(ExtensionTestBase):
         self.assertThat(
             config.data["apps"]["test-app"], Equals(self.expected_app_definition)
         )
+        # Verify that the extension took effect on the part
+        self.assertThat(
+            config.data["parts"]["part1"], Equals(self.expected_part_definition)
+        )
 
-
-class ExtensionRootMergeTest(ExtensionTestBase):
-    scenarios = [
-        (
-            "merge environment",
+    def test_merge_plugs(self):
+        self.set_attributes(
             {
-                "root_definition": textwrap.dedent(
+                "app_definition": textwrap.dedent(
                     """\
+                    command: echo 'hello'
+                    plugs: [foo]
+                    extensions: [plug]
+                    """
+                ),
+                "expected_app_definition": {
+                    "command": "echo 'hello'",
+                    "plugs": ["test-plug", "foo"],
+                },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
+            }
+        )
+
+        self.run_test()
+
+    def test_merge_environment(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [environment]
                     environment:
                       FOO: BAR
                     """
                 ),
-                "extensions": "[environment]",
-                "expected_root_definition": {
-                    "environment": {"FOO": "BAR", "TEST_EXTENSION": 1}
+                "expected_app_definition": {
+                    "command": "echo 'hello'",
+                    "environment": {"FOO": "BAR", "TEST_EXTENSION": 1},
                 },
-            },
-        ),
-        (
-            "scalars aren't overridden",
-            {
-                "root_definition": textwrap.dedent(
+                "part_definition": textwrap.dedent(
                     """\
-                    adopt-info: "test-part"
+                    plugin: nil
                     """
                 ),
-                "extensions": "[adopt]",
-                "expected_root_definition": {"adopt-info": "test-part"},
-            },
-        ),
-    ]
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
+            }
+        )
 
-    def test_extension_merge(self):
+        self.run_test()
+
+    def test_merge_build_environment(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [buildenvironment]
+                    """
+                ),
+                "expected_app_definition": {"command": "echo 'hello'"},
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    build-environment:
+                      - PATH: "$PATH:/part-path"
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "nil",
+                    "build-environment": [
+                        {"PATH": "$PATH:/extension-path"},
+                        {"EXTKEY": "EXTVAL"},
+                        {"PATH": "$PATH:/part-path"},
+                    ],
+                    "prime": [],
+                    "stage": [],
+                },
+            }
+        )
+
+        self.run_test()
+
+    def test_merge_multiple_build_environment(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    extensions: [buildenvironment, buildenvironment2]
+                    """
+                ),
+                "expected_app_definition": {"command": "echo 'hello'"},
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    build-environment:
+                      - PATH: "$PATH:/part-path"
+                    """
+                ),
+                "expected_part_definition": {
+                    "plugin": "nil",
+                    "build-environment": [
+                        {"PATH": "$PATH:/extension-path2"},
+                        {"EXTKEY": "EXTVAL2"},
+                        {"PATH": "$PATH:/extension-path"},
+                        {"EXTKEY": "EXTVAL"},
+                        {"PATH": "$PATH:/part-path"},
+                    ],
+                    "prime": [],
+                    "stage": [],
+                },
+            }
+        )
+
+        self.run_test()
+
+    def test_scalar_no_override(self):
+        self.set_attributes(
+            {
+                "app_definition": textwrap.dedent(
+                    """\
+                    command: echo 'hello'
+                    daemon: forking
+                    extensions: [daemon]
+                    """
+                ),
+                "expected_app_definition": {
+                    "command": "echo 'hello'",
+                    "daemon": "forking",
+                },
+                "part_definition": textwrap.dedent(
+                    """\
+                    plugin: nil
+                    """
+                ),
+                "expected_part_definition": {"plugin": "nil", "prime": [], "stage": []},
+            }
+        )
+
+        self.run_test()
+
+
+class ExtensionRootMergeTest(ExtensionTestBase):
+    def run_test(self):
         snapcraft_yaml = textwrap.dedent(
             """\
             name: test
@@ -389,6 +460,39 @@ class ExtensionRootMergeTest(ExtensionTestBase):
         # Verify that the extension took effect on the root of the YAML
         for key, value in self.expected_root_definition.items():
             self.assertThat(config.data[key], Equals(value))
+
+    def test_merge_environment(self):
+        self.set_attributes(
+            {
+                "root_definition": textwrap.dedent(
+                    """\
+                    environment:
+                      FOO: BAR
+                    """
+                ),
+                "extensions": "[environment]",
+                "expected_root_definition": {
+                    "environment": {"FOO": "BAR", "TEST_EXTENSION": 1}
+                },
+            }
+        )
+
+        self.run_test()
+
+    def test_scalars_no_override(self):
+        self.set_attributes(
+            {
+                "root_definition": textwrap.dedent(
+                    """\
+                    adopt-info: "test-part"
+                    """
+                ),
+                "extensions": "[adopt]",
+                "expected_root_definition": {"adopt-info": "test-part"},
+            }
+        )
+
+        self.run_test()
 
 
 class InvalidExtensionTest(ExtensionTestBase):
@@ -673,6 +777,58 @@ def _environment_extension_fixture():
             self.parts = {"extension-part": {"plugin": "nil"}}
 
     return fixture_setup.FakeExtension("environment", ExtensionImpl)
+
+
+def _build_environment_extension_fixture():
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
+            self.root_snippet = {}
+            self.app_snippet = {}
+            self.part_snippet = {
+                "after": ["extension-part"],
+                "build-environment": [
+                    {"PATH": "$PATH:/extension-path"},
+                    {"EXTKEY": "EXTVAL"},
+                ],
+            }
+            self.parts = {"extension-part": {"plugin": "nil"}}
+
+    return fixture_setup.FakeExtension("buildenvironment", ExtensionImpl)
+
+
+def _build_environment2_extension_fixture():
+    class ExtensionImpl(Extension):
+        @staticmethod
+        def get_supported_bases() -> Tuple[str, ...]:
+            return ("core18",)
+
+        @staticmethod
+        def get_supported_confinement() -> Tuple[str, ...]:
+            return ("strict",)
+
+        def __init__(self, extension_name, yaml_data):
+            super().__init__(extension_name=extension_name, yaml_data=yaml_data)
+            self.root_snippet = {}
+            self.app_snippet = {}
+            self.part_snippet = {
+                "after": ["extension-part2"],
+                "build-environment": [
+                    {"PATH": "$PATH:/extension-path2"},
+                    {"EXTKEY": "EXTVAL2"},
+                ],
+            }
+            self.parts = {"extension-part2": {"plugin": "nil"}}
+
+    return fixture_setup.FakeExtension("buildenvironment2", ExtensionImpl)
 
 
 def _plug_extension_fixture():

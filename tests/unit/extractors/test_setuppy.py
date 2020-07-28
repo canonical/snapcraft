@@ -25,7 +25,7 @@ from snapcraft.extractors import _errors
 from tests import unit
 
 
-class SetupPyTestCase(unit.TestCase):
+class TestSetupPy:
 
     metadata = [
         (
@@ -62,15 +62,11 @@ class SetupPyTestCase(unit.TestCase):
 
     scenarios = multiply_scenarios(metadata, tools)
 
-    def setUp(self):
-        super().setUp()
-
-        params = ['    {}="{}",'.format(k, v) for k, v in self.params.items() if v]
+    def create_setuppy(self, import_statement, method, parameters):
+        params = ['    {}="{}",'.format(k, v) for k, v in parameters.items() if v]
 
         fmt = dict(
-            params="\n".join(params),
-            import_statement=self.import_statement,
-            method=self.method,
+            params="\n".join(params), import_statement=import_statement, method=method
         )
 
         with open("setup.py", "w") as setup_file:
@@ -90,11 +86,14 @@ class SetupPyTestCase(unit.TestCase):
                 file=setup_file,
             )
 
-    def test_info_extraction(self):
-        expected = ExtractedMetadata(**self.params)
+    def test(self, tmp_work_path, import_statement, method, params):
+        self.create_setuppy(import_statement, method, params)
+
+        expected = ExtractedMetadata(**params)
         actual = setuppy.extract("setup.py", workdir=".")
-        self.assertThat(str(actual), Equals(str(expected)))
-        self.assertThat(actual, Equals(expected))
+
+        assert str(actual) == str(expected)
+        assert actual == expected
 
 
 class SetupPyErrorsTestCase(unit.TestCase):

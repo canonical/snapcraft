@@ -13,12 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fixtures
+
 import logging
 import os
 import tempfile
+import subprocess
 import sys
 
+import fixtures
+import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
 from unittest import mock
 
@@ -106,6 +109,9 @@ class TestElfFileSmoketest(unit.TestCase):
         # Instead just check that it is a boolean.
         self.assertTrue(isinstance(elf_file.has_debug_info, bool))
 
+        # Ensure type is detered as executable.
+        self.assertThat(elf_file.elf_type, Equals("ET_EXEC"))
+
 
 class TestInvalidElf(unit.TestCase):
     def test_invalid_elf_file(self):
@@ -136,14 +142,7 @@ class TestGetLibraries(TestElfBase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("os.path.exists")
-        self.path_exists_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.path_exists_mock.return_value = True
-
-        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(self.fake_logger)
+        self.useFixture(fixtures.MockPatch("os.path.exists", return_value=True))
 
     def test_get_libraries(self):
         elf_file = self.fake_elf["fake_elf-2.23"]
@@ -233,6 +232,9 @@ class TestGetLibraries(TestElfBase):
         )
 
     def test_get_libraries_ldd_failure_logs_warning(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(self.fake_logger)
+
         elf_file = self.fake_elf["fake_elf-bad-ldd"]
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
@@ -246,6 +248,56 @@ class TestGetLibraries(TestElfBase):
             self.fake_logger.output,
             Contains("Unable to determine library dependencies for"),
         )
+
+    def test_existing_host_library_searched_for(self):
+        elf_file = self.fake_elf["fake_elf-with-host-libraries"]
+
+        class MooLibrary(elf.Library):
+            """A Library implementation that always returns valid for moo."""
+
+            def _is_valid_elf(self, resolved_path: str) -> bool:
+                #  This path is defined in ldd for fake_elf-with-host-libraries.
+                if resolved_path == "/usr/lib/moo.so.2":
+                    return True
+                else:
+                    return super()._is_valid_elf(resolved_path)
+
+        with mock.patch("snapcraft.internal.elf.Library", side_effect=MooLibrary):
+            libs = elf_file.load_dependencies(
+                root_path=self.fake_elf.root_path,
+                core_base_path=self.fake_elf.core_base_path,
+                arch_triplet=self.arch_triplet,
+                content_dirs=self.content_dirs,
+            )
+
+        self.assertThat(libs, Equals({self.fake_elf.root_libraries["moo.so.2"]}))
+
+
+class TestLibrary(TestElfBase):
+    def test_is_valid_elf_ignores_corrupt_files(self):
+        soname = "libssl.so.1.0.0"
+        soname_path = os.path.join(self.path, soname)
+        library = elf.Library(
+            soname=soname,
+            soname_path=soname_path,
+            search_paths=[self.path],
+            core_base_path="/snap/core/current",
+            arch=("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64"),
+            soname_cache=elf.SonameCache(),
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(True))
+
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.elf.ElfFile",
+                side_effect=errors.CorruptedElfFileError(
+                    path=soname_path, error=RuntimeError()
+                ),
+            )
+        )
+
+        self.assertThat(library._is_valid_elf(soname_path), Equals(False))
 
 
 class TestGetElfFiles(TestElfBase):
@@ -414,7 +466,7 @@ class TestSonameCache(unit.TestCase):
         self.assertTrue((self.arch, "soname2.so") in self.soname_cache)
 
 
-class TestSonameCacheErrors(unit.TestCase):
+class TestSonameCacheErrors:
 
     scenarios = (
         ("invalid string key", dict(key="soname.so", partial_message="The key for")),
@@ -434,13 +486,11 @@ class TestSonameCacheErrors(unit.TestCase):
         ),
     )
 
-    def test_error(self):
+    def test_error(self, key, partial_message):
         soname_cache = elf.SonameCache()
-        raised = self.assertRaises(
-            EnvironmentError, soname_cache.__setitem__, self.key, "/soname.so"
-        )
-
-        self.assertThat(str(raised), StartsWith(self.partial_message))
+        with pytest.raises(EnvironmentError) as error:
+            soname_cache.__setitem__(key, "/soname.so")
+            assert str(error).startswith(partial_message)
 
 
 # This is just a subset
@@ -490,3 +540,78 @@ class HandleGlibcTestCase(unit.TestCase):
             root_path=self.path,
             snap_base_path="/snap/snap-name/current",
         )
+
+
+class TestLddParsing:
+    scenarios = [
+        (
+            "ubuntu 20.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007ffcae3e6000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f33eebeb000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007f33eedf2000)
+""",
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 18.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 (0x00007fffeddd1000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007fe500619000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fe500228000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fe500a44000)
+""",
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+        (
+            "ubuntu 16.04 basic",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007ffd71d64000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fda33a16000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007fda33de0000)
+    """,
+                expected={"libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6"},
+            ),
+        ),
+        (
+            "ubuntu 16.04 lspci w/o libpci",
+            dict(
+                ldd_output="""
+\tlinux-vdso.so.1 =>  (0x00007fff305b3000)
+\tlibpci.so.3 => not found
+\tlibkmod.so.2 => /lib/x86_64-linux-gnu/libkmod.so.2 (0x00007faef225c000)
+\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007faef1e92000)
+\t/lib64/ld-linux-x86-64.so.2 (0x00007faef2473000)
+    """,
+                expected={
+                    "libc.so.6": "/lib/x86_64-linux-gnu/libc.so.6",
+                    "libkmod.so.2": "/lib/x86_64-linux-gnu/libkmod.so.2",
+                    "libpci.so.3": "libpci.so.3",
+                },
+            ),
+        ),
+    ]
+
+    def test_scenario(self, ldd_output, expected, monkeypatch):
+        def fake_abspath(path):
+            return path
+
+        monkeypatch.setattr(os.path, "exists", lambda f: True)
+        monkeypatch.setattr(os.path, "abspath", fake_abspath)
+        monkeypatch.setattr(
+            subprocess, "check_output", lambda *args, **kwargs: ldd_output.encode()
+        )
+
+        libraries = elf.ldd(path="/bin/foo", ld_library_paths=[])
+
+        assert libraries == expected

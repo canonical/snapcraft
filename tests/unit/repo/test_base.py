@@ -20,121 +20,99 @@ from textwrap import dedent
 
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft.internal import errors
-from snapcraft.internal.repo import check_for_command
-from snapcraft.internal.repo import BaseRepo
+from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
 from tests import unit
 from . import RepoBaseTestCase
 
 
-class CommandCheckTestCase(unit.TestCase):
-    def test_check_for_command_not_installed(self):
-        self.assertRaises(
-            errors.MissingCommandError, check_for_command, "missing-command"
-        )
-
-    def test_check_for_command_installed(self):
-        check_for_command("sh")
-
-
 class FixXmlToolsTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        (
-            "xml2-config only should fix",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                        "content": "prefix=/usr/foo",
-                        "expected": "prefix=root/usr/foo",
-                    }
-                ]
-            },
-        ),
-        (
-            "xml2-config only should not fix",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                        "content": "prefix=/foo",
-                        "expected": "prefix=/foo",
-                    }
-                ]
-            },
-        ),
-        (
-            "xslt-config only should fix",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                        "content": "prefix=/usr/foo",
-                        "expected": "prefix=root/usr/foo",
-                    }
-                ]
-            },
-        ),
-        (
-            "xslt-config only should not fix",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                        "content": "prefix=/foo",
-                        "expected": "prefix=/foo",
-                    }
-                ]
-            },
-        ),
-        (
-            "xml2-config and xslt-config",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                        "content": "prefix=/usr/foo",
-                        "expected": "prefix=root/usr/foo",
-                    },
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                        "content": "prefix=/usr/foo",
-                        "expected": "prefix=root/usr/foo",
-                    },
-                ]
-            },
-        ),
-        (
-            "xml2-config and xslt-config should not fix",
-            {
-                "files": [
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xml2-config"),
-                        "content": "prefix=/foo",
-                        "expected": "prefix=/foo",
-                    },
-                    {
-                        "path": os.path.join("root", "usr", "bin", "xslt-config"),
-                        "content": "prefix=/foo",
-                        "expected": "prefix=/foo",
-                    },
-                ]
-            },
-        ),
-    ]
-
-    def test_fix_xml_tools(self):
-        for test_file in self.files:
+    def assert_fix(self, files):
+        for test_file in files:
             path = test_file["path"]
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w") as f:
                 f.write(test_file["content"])
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
-        for test_file in self.files:
+        for test_file in files:
             self.assertThat(test_file["path"], FileContains(test_file["expected"]))
+
+    def test_fix_xml2_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                }
+            ]
+        )
+
+    def test_no_fix_xml2_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                }
+            ]
+        )
+
+    def test_fix_xslt_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                }
+            ]
+        )
+
+    def test_no_fix_xslt_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                }
+            ]
+        )
+
+    def test_fix_xml2_xslt_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                },
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/usr/foo",
+                    "expected": "prefix=root/usr/foo",
+                },
+            ]
+        )
+
+    def test_no_fix_xml2_xslt_config(self):
+        self.assert_fix(
+            [
+                {
+                    "path": os.path.join("root", "usr", "bin", "xml2-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                },
+                {
+                    "path": os.path.join("root", "usr", "bin", "xslt-config"),
+                    "content": "prefix=/foo",
+                    "expected": "prefix=/foo",
+                },
+            ]
+        )
 
 
 class FixShebangTestCase(RepoBaseTestCase):
@@ -191,61 +169,47 @@ class FixShebangTestCase(RepoBaseTestCase):
     ]
 
     def test_fix_shebang(self):
-        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-        with open(self.file_path, "w") as fd:
-            fd.write(self.content)
+        for _, data in self.scenarios:
+            os.makedirs(os.path.dirname(data["file_path"]), exist_ok=True)
+            with open(data["file_path"], "w") as fd:
+                fd.write(data["content"])
 
-        BaseRepo("root").normalize("root")
+        BaseRepo.normalize("root")
 
-        with open(self.file_path, "r") as fd:
-            self.assertThat(fd.read(), Equals(self.expected))
+        for _, data in self.scenarios:
+            with open(data["file_path"], "r") as fd:
+                self.expectThat(fd.read(), Equals(data["expected"]))
 
 
 class RemoveUselessFilesTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        (
-            "python3 sitecustomize",
-            {
-                "file_path": os.path.join(
-                    "usr", "lib", "python3.5", "sitecustomize.py"
-                ),
-                "matcher": Not(FileExists()),
-            },
-        ),
-        (
-            "python2 sitecustomize",
-            {
-                "file_path": os.path.join(
-                    "usr", "lib", "python2.7", "sitecustomize.py"
-                ),
-                "matcher": Not(FileExists()),
-            },
-        ),
-        (
-            "unversioned sitecustomize",
-            {
-                "file_path": os.path.join("usr", "lib", "python", "sitecustomize.py"),
-                "matcher": Not(FileExists()),
-            },
-        ),
-        (
-            "random sitecustomize",
-            {
-                "file_path": os.path.join("opt", "python3.5", "sitecustomize.py"),
-                "matcher": FileExists(),
-            },
-        ),
-    ]
-
-    def test_remove_useless_files(self):
-        path = os.path.join("root", self.file_path)
+    def create(self, file_path):
+        path = os.path.join("root", file_path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, "w").close()
 
-        BaseRepo("root").normalize("root")
+        return path
 
-        self.assertThat(path, self.matcher)
+    def test_remove(self):
+        paths = [
+            self.create(p)
+            for p in [
+                os.path.join("usr", "lib", "python3.5", "sitecustomize.py"),
+                os.path.join("usr", "lib", "python2.7", "sitecustomize.py"),
+                os.path.join("usr", "lib", "python", "sitecustomize.py"),
+            ]
+        ]
+
+        BaseRepo.normalize("root")
+
+        for p in paths:
+            self.expectThat(p, Not(FileExists()))
+
+    def test_no_remove(self):
+        path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))
+
+        BaseRepo.normalize("root")
+
+        self.assertThat(path, FileExists())
 
 
 class FixPkgConfigTestCase(RepoBaseTestCase):
@@ -271,7 +235,7 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
                 )
             )
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
         expected_pc_file_content = dedent(
             """\
@@ -294,49 +258,61 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
         self.assertThat(pc_file, FileContains(expected_pc_file_content))
 
 
-class FixSymlinksTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        ("rel-to-a", {"src": "a", "dst": "rel-to-a"}),
-        ("abs-to-a", {"src": "/a", "dst": "abs-to-a"}),
-        ("abs-to-b", {"src": "/b", "dst": "abs-to-b"}),
-        ("rel-to-1", {"src": "1", "dst": "rel-to-1"}),
-        ("abs-to-1", {"src": "/1", "dst": "abs-to-1"}),
-    ]
-
-    def setUp(self):
-        super().setUp()
+class TestFixSymlinks(RepoBaseTestCase):
+    def assert_fix(self, src, dst):
         os.makedirs("a")
         open("1", mode="w").close()
 
-    def test_fix_symlinks(self):
-        os.symlink(self.src, self.dst)
+        os.symlink(src, dst)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
-        self.assertThat(os.readlink(self.dst), Equals(self.src))
+        self.assertThat(os.readlink(dst), Equals(src))
+
+    def test_rel_to_a(self):
+        self.assert_fix("a", "rel-to-a")
+
+    def test_abs_to_a(self):
+        self.assert_fix("/a", "abs-to-a")
 
 
 class FixSUIDTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        ("suid_file", dict(key="suid_file", test_mod=0o4765, expected_mod=0o0765)),
-        ("guid_file", dict(key="guid_file", test_mod=0o2777, expected_mod=0o0777)),
-        (
-            "suid_guid_file",
-            dict(key="suid_guid_file", test_mod=0o6744, expected_mod=0o0744),
-        ),
-        (
-            "suid_guid_sticky_file",
-            dict(key="suid_guid_sticky_file", test_mod=0o7744, expected_mod=0o1744),
-        ),
-    ]
-
-    def test_fix_suid(self):
-        file = os.path.join(self.tempdir, self.key)
+    def assert_mode(self, key, test_mod, expected_mod):
+        file = os.path.join(self.tempdir, key)
         open(file, mode="w").close()
-        os.chmod(file, self.test_mod)
+        os.chmod(file, test_mod)
 
-        BaseRepo(self.tempdir).normalize(self.tempdir)
+        BaseRepo.normalize(self.tempdir)
 
-        self.assertThat(stat.S_IMODE(os.stat(file).st_mode), Equals(self.expected_mod))
+        self.assertThat(stat.S_IMODE(os.stat(file).st_mode), Equals(expected_mod))
+
+    def test_suid(self):
+        self.assert_mode(key="suid_file", test_mod=0o4765, expected_mod=0o0765)
+
+    def test_guid(self):
+        self.assert_mode(key="guid_file", test_mod=0o2777, expected_mod=0o0777)
+
+    def test_suid_guid(self):
+        self.assert_mode(key="suid_guid_file", test_mod=0o6744, expected_mod=0o0744)
+
+    def test_sticky_suid_guid(self):
+        self.assert_mode(
+            key="suid_guid_sticky_file", test_mod=0o7744, expected_mod=0o1744
+        )
+
+
+class TestPkgNameParts(unit.TestCase):
+    def test_get_pkg_name_parts_name_only(self):
+        name, version = get_pkg_name_parts("hello")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals(None))
+
+    def test_get_pkg_name_parts_all(self):
+        name, version = get_pkg_name_parts("hello:i386=2.10-1")
+        self.assertThat(name, Equals("hello:i386"))
+        self.assertThat(version, Equals("2.10-1"))
+
+    def test_get_pkg_name_parts_no_arch(self):
+        name, version = get_pkg_name_parts("hello=2.10-1")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals("2.10-1"))

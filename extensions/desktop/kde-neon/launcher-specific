@@ -4,6 +4,15 @@
 ###################################
 
 # Ensure a sane default for QT_QPA_PLATFORMTHEME.
+if [[ -z "$QT_QPA_PLATFORMTHEME" ]]; then
+  gtk_based_desktops=("GNOME" "X-CINNAMON" "UNITY" "MATE" "XFCE" "LXDE" "Pantheon")
+  for gtk_desktop in "${gtk_based_desktops[@]}"; do
+    if [[ "$XDG_CURRENT_DESKTOP" == *"$gtk_desktop"* ]]; then
+      export QT_QPA_PLATFORMTHEME="gtk3"
+      break
+    fi
+  done
+fi
 export QT_QPA_PLATFORMTHEME=${QT_QPA_PLATFORMTHEME:-kde}
 
 # Add paths for games
@@ -45,7 +54,7 @@ export VLC_PLUGIN_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/vlc/plugi
 export QTCHOOSER_NO_GLOBAL_DIR=1
 export QT_SELECT=5
 # qtchooser hardcodes reference paths, we'll need to rewrite them properly
-[ -d "$XDG_CONFIG_HOME/qtchooser" ] || mkdir -p "$XDG_CONFIG_HOME/qtchooser"
+ensure_dir_exists "$XDG_CONFIG_HOME/qtchooser"
 echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/5.conf"
 echo "$SNAP/usr/lib/$ARCH" >> "$XDG_CONFIG_HOME/qtchooser/5.conf"
 echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/default.conf"
@@ -66,7 +75,7 @@ EOF
 if [ -e "$SNAP_DESKTOP_RUNTIME/usr/share/i18n" ]; then
     export I18NPATH="$SNAP_DESKTOP_RUNTIME/usr/share/i18n"
     locpath="$XDG_DATA_HOME/locale"
-    mkdir -p "$locpath"
+    ensure_dir_exists "$locpath"
     export LOCPATH="$locpath:/usr/lib/locale"
     LC_ALL=C.UTF-8 async_exec "$SNAP/snap/command-chain/locale-gen"
 fi

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -52,10 +52,7 @@ class RevisionsCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
 
 class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
 
-    scenarios = [
-        ("list-revisions", dict(command_name="list-revisions")),
-        ("revisions", dict(command_name="revisions")),
-    ]
+    command_name = "list-revisions"
 
     def test_revisions_without_snap_raises_exception(self):
         result = self.run_command([self.command_name])
@@ -81,61 +78,24 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         )
 
     def test_revisions_with_3rd_party_snap(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
             [self.command_name, "snap-test"],
         )
 
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '16' series.")
-        )
-
     def test_revisions_with_3rd_party_snap_by_arch(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
             [self.command_name, "snap-test", "--arch=arm64"],
         )
 
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'arm64' was not found in '16' series."),
-        )
-
-    def test_revisions_with_3rd_party_snap_by_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            [self.command_name, "snap-test", "--series=18"],
-        )
-
-        self.assertThat(
-            str(raised), Equals("Snap 'snap-test' was not found in '18' series.")
-        )
-
     def test_revisions_by_unknown_arch(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             storeapi.errors.SnapNotFoundError,
             self.run_command,
             [self.command_name, "snap-test", "--arch=some-arch"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' for 'some-arch' was not found in '16' series."),
-        )
-
-    def test_revisions_by_unknown_series(self):
-        raised = self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            [self.command_name, "snap-test", "--series=some-series"],
-        )
-
-        self.assertThat(
-            str(raised),
-            Equals("Snap 'snap-test' was not found in 'some-series' series."),
         )
 
     def test_revisions(self):
@@ -159,6 +119,15 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             "snap-test-snap-id", "16", None
         )
 
+    def test_alias(self):
+        self.command_name = "list-revisions"
+
+        self.fake_store_revisions.mock.return_value = self.expected
+
+        result = self.run_command([self.command_name, "snap-test"])
+
+        self.assertThat(result.exit_code, Equals(0))
+
     def test_revisions_by_arch(self):
         self.fake_store_revisions.mock.return_value = [
             rev for rev in self.expected if rev["arch"] == "amd64"
@@ -179,27 +148,6 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         )
         self.fake_store_revisions.mock.assert_called_once_with(
             "snap-test-snap-id", "16", "amd64"
-        )
-
-    def test_revisions_by_series(self):
-        self.fake_store_revisions.mock.return_value = self.expected
-
-        result = self.run_command([self.command_name, "snap-test", "--series=16"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output,
-            Contains(
-                dedent(
-                    """\
-            Rev.    Uploaded              Arch    Version    Channels
-            2       2016-09-27T19:23:40Z  i386    2.0.1      -
-            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""
-                )
-            ),
-        )  # noqa
-        self.fake_store_revisions.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
         )
 
 

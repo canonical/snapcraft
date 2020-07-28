@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Super Cool App
+Comment=Super Cool App that does everything!
+Icon=${SNAP}/meta/gui/icon.png
+Exec=super-cool-app %U
+Terminal=false
+Type=Application
+Categories=Games;
+Keywords=Games;
+StartupNotify=false

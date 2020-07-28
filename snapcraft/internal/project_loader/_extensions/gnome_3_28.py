@@ -99,14 +99,21 @@ class ExtensionImpl(Extension):
 
         self.app_snippet = {
             "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": ["desktop", "desktop-legacy", "gsettings", "wayland", "x11"],
+            "plugs": [
+                "desktop",
+                "desktop-legacy",
+                "gsettings",
+                "opengl",
+                "wayland",
+                "x11",
+            ],
         }
 
         self.parts = {
-            "gnome-extension": {
+            "gnome-3-28-extension": {
                 "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                 "source-subdir": "gnome",
                 "plugin": "make",
-                "build-packages": ["libgtk-3-dev"],
+                "build-packages": ["gcc", "libgtk-3-dev"],
             }
         }

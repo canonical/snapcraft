@@ -14,18 +14,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from typing import Optional
 from unittest import mock
 
 import fixtures
 from testtools.matchers import Equals
 
-from . import LifecycleCommandsBaseTestCase
+from . import CommandBaseTestCase
 from snapcraft import project
 from snapcraft.internal import steps
 from snapcraft.internal.build_providers.errors import ProviderExecError
 from tests import fixture_setup
 from tests.unit.build_providers import ProviderImpl
+
+
+class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
+
+    yaml_template = """name: {step}-test
+version: "1.0"
+summary: test {step}
+description: if the {step} is successful the state file will be updated
+confinement: strict
+grade: stable
+base: {base}
+
+parts:
+{parts}"""
+
+    yaml_part = """  {step}{iter:d}:
+    plugin: nil"""
+
+    def make_snapcraft_yaml(
+        self, step, n=1, yaml_part=None, create=False, base="core18"
+    ):
+        if not yaml_part:
+            yaml_part = self.yaml_part
+
+        parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
+        super().make_snapcraft_yaml(
+            self.yaml_template.format(step=step, parts=parts, base=base)
+        )
+
+        parts = []
+        for i in range(n):
+            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
+            state_dir = os.path.join(part_dir, "state")
+            parts.append({"part_dir": part_dir, "state_dir": state_dir})
+
+        return parts
 
 
 class BuildEnvironmentParsingTest(LifecycleCommandsBaseTestCase):
@@ -149,36 +186,51 @@ class AssortedBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
 
 
 class ValidBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
-    scenarios = [
-        ("default", dict(env=None, arg=None, result="multipass")),
-        ("host_env", dict(env="host", arg=None, result="host")),
-        ("host_arg", dict(env=None, arg="host", result="host")),
-        ("host_both", dict(env="host", arg="host", result="host")),
-        ("lxd_env", dict(env="lxd", arg=None, result="lxd")),
-        ("lxd_arg", dict(env=None, arg="lxd", result="lxd")),
-        ("lxd_both", dict(env="lxd", arg="lxd", result="lxd")),
-        ("multipass_env", dict(env="multipass", arg=None, result="multipass")),
-        ("multipass_arg", dict(env=None, arg="multipass", result="multipass")),
-        ("multipass_both", dict(env="multipass", arg="multipass", result="multipass")),
-    ]
-
-    def test_valid_clean_providers(self):
+    def assert_run(self, env, arg, result):
         self.useFixture(
-            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", self.env)
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", env)
         )
 
-        if self.result == "host":
-            result = self.run_command(
-                [self.step, "--provider", self.arg, "--destructive-mode"]
-            )
+        if result == "host":
+            res = self.run_command([self.step, "--provider", arg, "--destructive-mode"])
 
             self.mock_get_provider_for.assert_not_called()
         else:
-            result = self.run_command([self.step, "--provider", self.arg])
+            res = self.run_command([self.step, "--provider", arg])
 
-            self.mock_get_provider_for.assert_called_once_with(self.result)
+            self.mock_get_provider_for.assert_called_once_with(result)
 
-        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(res.exit_code, Equals(0))
+
+    def test_default(self):
+        self.assert_run(env=None, arg=None, result="multipass")
+
+    def test_host_env(self):
+        self.assert_run(env="host", arg=None, result="host")
+
+    def test_host_arg(self):
+        self.assert_run(env=None, arg="host", result="host")
+
+    def test_host_both(self):
+        self.assert_run(env="host", arg="host", result="host")
+
+    def test_lxd_env(self):
+        self.assert_run(env="lxd", arg=None, result="lxd")
+
+    def test_lxd_arg(self):
+        self.assert_run(env=None, arg="lxd", result="lxd")
+
+    def test_lxd_both(self):
+        self.assert_run(env="lxd", arg="lxd", result="lxd")
+
+    def test_multipass_env(self):
+        self.assert_run(env="multipass", arg=None, result="multipass")
+
+    def test_multipass_arg(self):
+        self.assert_run(env=None, arg="multipass", result="multipass")
+
+    def test_multipass_both(self):
+        self.assert_run(env="multipass", arg="multipass", result="multipass")
 
 
 class BuildProviderYamlValidationTest(LifecycleCommandsBaseTestCase):

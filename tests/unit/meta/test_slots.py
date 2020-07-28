@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+
+from testtools.matchers import Equals
+
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.slots import Slot, ContentSlot, DbusSlot
+from snapcraft.internal.meta.slots import ContentSlot, DbusSlot, Slot
 from tests import unit
 
 
@@ -31,14 +34,6 @@ class GenericSlotTests(unit.TestCase):
 
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_name, slot_from_dict.slot_name)
-
-    def test_invalid_raises_exception(self):
-        slot_name = "slot-test"
-
-        slot = Slot(slot_name=slot_name)
-        slot._slot_dict = dict({})
-
-        self.assertRaises(errors.SlotValidationError, slot.validate)
 
     def test_from_empty_dict(self):
         slot_dict = OrderedDict({})
@@ -56,6 +51,32 @@ class GenericSlotTests(unit.TestCase):
 
         slot.validate()
 
+    def test_from_object_none(self):
+        slot = Slot.from_object(slot_name="slot-name", slot_object=None)
+        slot.validate()
+
+        self.assertThat(slot._slot_dict, Equals(dict()))
+
+    def test_from_object_string(self):
+        slot = Slot.from_object(slot_name="slot-name", slot_object="some-interface")
+        slot.validate()
+
+        self.assertThat(slot._slot_dict["interface"], Equals("some-interface"))
+        self.assertThat(slot.use_string_representation, Equals(True))
+
+    def test_from_object_dict(self):
+        slot_dict = OrderedDict(
+            {"interface": "some-interface", "someprop": "somevalue"}
+        )
+        slot_name = "slot-test"
+
+        slot = Slot.from_object(slot_object=slot_dict, slot_name=slot_name)
+
+        slot.validate()
+
+        self.assertThat(slot._slot_dict["interface"], Equals("some-interface"))
+        self.assertThat(slot._slot_dict["someprop"], Equals("somevalue"))
+
 
 class ContentSlotTests(unit.TestCase):
     def test_empty(self):
@@ -68,7 +89,7 @@ class ContentSlotTests(unit.TestCase):
         transformed_dict = slot_dict.copy()
         transformed_dict["source"] = {}
 
-        self.assertEqual(transformed_dict, slot.to_dict())
+        self.assertEqual(transformed_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertRaises(errors.SlotValidationError, slot.validate)
         self.assertEqual(set(), slot.get_content_dirs(installed_path=""))
@@ -80,7 +101,7 @@ class ContentSlotTests(unit.TestCase):
         slot = Slot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
 
         self.assertIsInstance(slot, ContentSlot)
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertRaises(errors.SlotValidationError, slot.validate)
         self.assertEqual(set(), slot.get_content_dirs(installed_path=""))
@@ -91,24 +112,53 @@ class ContentSlotTests(unit.TestCase):
 
         slot = ContentSlot(use_source_key=False, slot_name=slot_name)
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertRaises(errors.SlotValidationError, slot.validate)
         self.assertEqual(set(), slot.get_content_dirs(installed_path=""))
 
+    def test_explicit_content(self):
+        slot_dict = OrderedDict({"interface": "content", "content": "content-test"})
+        slot_name = "slot-test"
+
+        slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+
+        assert slot_dict == slot.to_yaml_object()
+
+    def test_explicit_content_with_source(self):
+        slot_dict = OrderedDict(
+            {
+                "interface": "content",
+                "content": "content-test",
+                "source": {"read": "/"},
+            }
+        )
+        slot_name = "slot-test"
+
+        slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
+
+        assert slot_dict == slot.to_yaml_object()
+
     def test_read_from_dict(self):
-        slot_dict = OrderedDict({"interface": "content", "read": ["some/path"]})
+        slot_dict = OrderedDict(
+            {
+                "interface": "content",
+                "content": "explicit-content",
+                "read": ["some/path"],
+            }
+        )
         slot_name = "slot-test"
 
         slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["read"], slot.read)
         self.assertEqual(
             set(slot_dict["read"]), slot.get_content_dirs(installed_path="")
         )
+        self.assertEqual(slot_dict["content"], slot.content)
 
     def test_read_from_dict_force_source_key(self):
         slot_dict = OrderedDict({"interface": "content", "read": ["some/path"]})
@@ -121,7 +171,7 @@ class ContentSlotTests(unit.TestCase):
         transformed_dict["source"] = dict()
         transformed_dict["source"]["read"] = transformed_dict.pop("read")
 
-        self.assertEqual(transformed_dict, slot.to_dict())
+        self.assertEqual(transformed_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["read"], slot.read)
         self.assertEqual(
@@ -137,7 +187,7 @@ class ContentSlotTests(unit.TestCase):
         slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["source"]["read"], slot.read)
         self.assertEqual(
@@ -151,7 +201,7 @@ class ContentSlotTests(unit.TestCase):
         slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["write"], slot.write)
         self.assertEqual(
@@ -169,7 +219,7 @@ class ContentSlotTests(unit.TestCase):
         transformed_dict["source"] = dict()
         transformed_dict["source"]["write"] = transformed_dict.pop("write")
 
-        self.assertEqual(transformed_dict, slot.to_dict())
+        self.assertEqual(transformed_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["write"], slot.write)
         self.assertEqual(
@@ -185,7 +235,7 @@ class ContentSlotTests(unit.TestCase):
         slot = ContentSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["source"]["write"], slot.write)
         self.assertEqual(
@@ -225,7 +275,7 @@ class DbusSlotTests(unit.TestCase):
         )
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["bus"], slot.bus)
         self.assertEqual(slot_dict["name"], slot.name)
@@ -237,7 +287,7 @@ class DbusSlotTests(unit.TestCase):
         slot = DbusSlot.from_dict(slot_dict=slot_dict, slot_name=slot_name)
         slot.validate()
 
-        self.assertEqual(slot_dict, slot.to_dict())
+        self.assertEqual(slot_dict, slot.to_yaml_object())
         self.assertEqual(slot_name, slot.slot_name)
         self.assertEqual(slot_dict["bus"], slot.bus)
         self.assertEqual(slot_dict["name"], slot.name)

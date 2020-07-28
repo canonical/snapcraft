@@ -75,6 +75,7 @@ class ExtensionTest(ProjectLoaderBaseTest):
                         "desktop",
                         "desktop-legacy",
                         "gsettings",
+                        "opengl",
                         "wayland",
                         "x11",
                     ],
@@ -86,11 +87,11 @@ class ExtensionTest(ProjectLoaderBaseTest):
             gnome_extension.parts,
             Equals(
                 {
-                    "gnome-extension": {
+                    "gnome-3-28-extension": {
                         "source": "$SNAPCRAFT_EXTENSIONS_DIR/desktop",
                         "source-subdir": "gnome",
                         "plugin": "make",
-                        "build-packages": ["libgtk-3-dev"],
+                        "build-packages": ["gcc", "libgtk-3-dev"],
                     }
                 }
             ),

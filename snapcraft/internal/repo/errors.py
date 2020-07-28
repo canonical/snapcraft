@@ -16,11 +16,12 @@
 
 from typing import Sequence
 
+from snapcraft.internal.errors import SnapcraftException
 from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
-from typing import List
+from typing import List, Optional
 
 
 class RepoError(errors.SnapcraftError):
@@ -194,3 +195,80 @@ class SnapdConnectionError(RepoError):
 
     def __init__(self, snap_name: str, url: str) -> None:
         super().__init__(snap_name=snap_name, url=url)
+
+
+class AptPPAInstallError(SnapcraftException):
+    def __init__(self, *, ppa: str, reason: str) -> None:
+        self._ppa = ppa
+        self._reason = reason
+
+    def get_brief(self) -> str:
+        return f"Failed to install PPA {self._ppa!r}: {self._reason}"
+
+    def get_resolution(self) -> str:
+        return "Verify PPA is correct and try again."
+
+
+class AptGPGKeyInstallError(SnapcraftException):
+    def __init__(
+        self,
+        *,
+        output: str,
+        key: Optional[str] = None,
+        key_id: Optional[str] = None,
+        key_server: Optional[str] = None,
+    ) -> None:
+        self._output = output
+        self._key = key
+        self._key_id = key_id
+        self._key_server = key_server
+        self._message: str = self._parse_apt_key_output()
+
+    def _parse_apt_key_output(self) -> str:
+        """Convert apt-key's output into a more user-friendly message."""
+        message = self._output.replace(
+            "Warning: apt-key output should not be parsed (stdout is not a terminal)",
+            "",
+        ).strip()
+
+        # Improve error messages that we can.
+        if (
+            "gpg: keyserver receive failed: No data" in message
+            and self._key_id
+            and self._key_server
+        ):
+            message = (
+                f"GPG key {self._key_id!r} not found on key server {self._key_server!r}"
+            )
+        elif (
+            "gpg: keyserver receive failed: Server indicated a failure" in message
+            and self._key_server
+        ):
+            message = (
+                f"unable to establish connection to key server {self._key_server!r}"
+            )
+        elif (
+            "gpg: keyserver receive failed: Connection timed out" in message
+            and self._key_server
+        ):
+            message = f"unable to establish connection to key server {self._key_server!r} (connection timed out)"
+
+        return message
+
+    def get_brief(self) -> str:
+        return f"Failed to install GPG key: {self._message}"
+
+    def get_resolution(self) -> str:
+        return "Verify any configured GPG keys."
+
+    def get_details(self) -> str:
+        details = ""
+
+        if self._key:
+            details += f"GPG key:\n{self._key}\n"
+        if self._key_id:
+            details += f"GPG key ID: {self._key_id}\n"
+        if self._key_server:
+            details += f"GPG key server: {self._key_server}\n"
+
+        return details

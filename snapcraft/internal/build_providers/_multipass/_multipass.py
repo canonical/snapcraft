@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2018-2019 Canonical Ltd
+# Copyright (C) 2018-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -83,9 +83,11 @@ class Multipass(Provider):
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        env_command = self._get_env_command()
+        env_command = super()._get_env_command()
 
-        cmd = ["sudo", "-i"]
+        cmd = ["sudo", "-H"]
+        if not hide_output:
+            cmd.append("-i")
         cmd.extend(env_command)
         cmd.extend(command)
         self._log_run(cmd)
@@ -95,10 +97,9 @@ class Multipass(Provider):
         )
 
     def _get_disk_image(self) -> str:
-        return "snapcraft:{}".format(self.project.info.get_build_base())
+        return "snapcraft:{}".format(self.project._get_build_base())
 
     def _launch(self) -> None:
-        cloud_user_data_filepath = self._get_cloud_user_data()
         image = self._get_disk_image()
 
         cpus = _MachineSetting(envvar="SNAPCRAFT_BUILD_ENVIRONMENT_CPU", default="2")
@@ -113,7 +114,6 @@ class Multipass(Provider):
             mem=mem.get_value(),
             disk=disk.get_value(),
             image=image,
-            cloud_init=cloud_user_data_filepath,
         )
 
     def _start(self):
@@ -135,7 +135,8 @@ class Multipass(Provider):
 
     def _push_file(self, *, source: str, destination: str) -> None:
         destination = "{}:{}".format(self.instance_name, destination)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        with open(source, "rb") as file:
+            self._multipass_cmd.push_file(source=file, destination=destination)
 
     def __init__(
         self,
@@ -198,9 +199,12 @@ class Multipass(Provider):
             return
 
         target = "{}:{}".format(self.instance_name, target)
-        uid_map = {str(os.getuid()): "0"}
-        gid_map = {str(os.getgid()): "0"}
-
+        if sys.platform != "win32":
+            uid_map = {str(os.getuid()): "0"}
+            gid_map = {str(os.getgid()): "0"}
+        else:
+            uid_map = {"0": "0"}
+            gid_map = {"0": "0"}
         self._multipass_cmd.mount(
             source=host_source, target=target, uid_map=uid_map, gid_map=gid_map
         )
@@ -219,12 +223,13 @@ class Multipass(Provider):
 
         # copy file from instance
         source = "{}:{}".format(self.instance_name, name)
-        self._multipass_cmd.copy_files(source=source, destination=destination)
+        with open(destination, "wb") as file:
+            self._multipass_cmd.pull_file(source=source, destination=file)
         if delete:
             self._run(command=["rm", name])
 
     def shell(self) -> None:
-        self._run(command=["/bin/bash"])
+        self._run(command=["/bin/bash", "-i"])
 
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(

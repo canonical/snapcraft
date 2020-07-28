@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2019 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,12 +27,10 @@ import threading
 import testscenarios
 import testtools
 
-import snapcraft
-from snapcraft.project import _schema
-from snapcraft.internal import common, elf, steps
-from snapcraft.internal.project_loader import grammar_processing
+from snapcraft.internal import common, steps
 from tests import fake_servers, fixture_setup
 from tests.file_utils import get_snapcraft_path
+from tests.unit.part_loader import load_part
 
 
 class ContainsList(list):
@@ -129,7 +127,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixture_setup.TempXDG(self.xdg_path))
         self.fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
-        self.useFixture(fixture_setup.SilentSnapProgress())
         # Some tests will directly or indirectly change the plugindir, which
         # is a module variable. Make sure that it is returned to the original
         # value when a test ends.
@@ -265,54 +262,25 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         part_name,
         plugin_name=None,
         part_properties=None,
-        project_options=None,
+        project=None,
         stage_packages_repo=None,
+        snap_name="test-snap",
         base="core18",
+        build_base=None,
         confinement="strict",
         snap_type="app",
     ):
-        if not plugin_name:
-            plugin_name = "nil"
-        properties = {"plugin": plugin_name}
-        if part_properties:
-            properties.update(part_properties)
-        if not project_options:
-            project_options = snapcraft.ProjectOptions()
-
-        validator = _schema.Validator()
-        schema = validator.part_schema
-        definitions_schema = validator.definitions_schema
-        plugin = snapcraft.internal.pluginhandler.load_plugin(
+        return load_part(
             part_name=part_name,
             plugin_name=plugin_name,
-            properties=properties,
-            project_options=project_options,
-            part_schema=schema,
-            definitions_schema=definitions_schema,
-        )
-
-        if not stage_packages_repo:
-            stage_packages_repo = mock.Mock()
-        grammar_processor = grammar_processing.PartGrammarProcessor(
-            plugin=plugin,
-            properties=properties,
-            project=project_options,
-            repo=stage_packages_repo,
-        )
-
-        return snapcraft.internal.pluginhandler.PluginHandler(
-            plugin=plugin,
-            part_properties=properties,
-            project_options=project_options,
-            part_schema=schema,
-            definitions_schema=definitions_schema,
-            grammar_processor=grammar_processor,
+            part_properties=part_properties,
+            project=project,
             stage_packages_repo=stage_packages_repo,
-            snap_base_path="/snap/fake-name/current",
+            snap_name=snap_name,
             base=base,
+            build_base=build_base,
             confinement=confinement,
             snap_type=snap_type,
-            soname_cache=elf.SonameCache(),
         )
 
 

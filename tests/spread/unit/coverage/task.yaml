@@ -13,8 +13,5 @@ execute: |
   # shellcheck source=/dev/null
   source "$HOME/venv/snapcraft/bin/activate"
   cd /snapcraft
-  coverage erase
-  coverage run --branch --source snapcraft -m unittest discover -b -v -s tests.unit -t .
-  coverage report
-  coverage xml
+  ./runtests.sh tests/unit/
   codecov --token="$CODECOV_TOKEN"

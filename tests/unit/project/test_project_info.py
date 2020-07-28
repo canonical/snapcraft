@@ -17,6 +17,7 @@
 from tests import unit
 from textwrap import dedent
 
+import pytest
 from testtools.matchers import Equals, Is, MatchesRegex
 
 from snapcraft.project._project_info import ProjectInfo
@@ -144,49 +145,6 @@ class ProjectInfoTest(unit.TestCase):
         raw_snapcraft = info.get_raw_snapcraft()
         self.assertThat(raw_snapcraft.get("name"), Equals("foo"))
 
-    def test_get_build_base_for_defined_base(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: test
-            base: core20
-        """
-            )
-        )
-
-        info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-
-        self.assertThat(info.get_build_base(), Equals("core20"))
-
-    def test_get_build_base_for_defined_type_base(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: core20
-            type: base
-        """
-            )
-        )
-
-        info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-
-        self.assertThat(info.get_build_base(), Equals("core20"))
-
-    def test_get_build_base_build_base_overrides(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            dedent(
-                """\
-            name: core20
-            type: base
-            build-base: core
-        """
-            )
-        )
-
-        info = ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
-
-        self.assertThat(info.get_build_base(), Equals("core"))
-
 
 class InvalidYamlTest(unit.TestCase):
     def test_tab_in_yaml(self):
@@ -300,31 +258,26 @@ class InvalidYamlTest(unit.TestCase):
         )
 
 
-class YamlEncodingsTest(unit.TestCase):
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig", "utf-16"])
+def test_different_encodings_loads(tmp_work_path, encoding):
+    snapcraft_yaml = dedent(
+        """\
+        name: test
+        version: "1"
+        summary: test
+        description: ñoño test
+        confinement: strict
+        grade: stable
 
-    scenarios = [
-        (encoding, dict(encoding=encoding))
-        for encoding in ["utf-8", "utf-8-sig", "utf-16"]
-    ]
+        parts:
+          part1:
+            plugin: go
+            stage-packages: [fswebcam]
+    """
+    )
 
-    def test_config_loads_with_different_encodings_loads(self):
-        snapcraft_yaml = dedent(
-            """\
-            name: test
-            version: "1"
-            summary: test
-            description: ñoño test
-            confinement: strict
-            grade: stable
+    snapcraft_yaml_path = tmp_work_path / "snapcraft.yaml"
+    with snapcraft_yaml_path.open("w", encoding=encoding) as snapcraft_file:
+        print(snapcraft_yaml, file=snapcraft_file)
 
-            parts:
-              part1:
-                plugin: go
-                stage-packages: [fswebcam]
-        """
-        )
-
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            snapcraft_yaml, encoding=self.encoding
-        )
-        ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+    ProjectInfo(snapcraft_yaml_file_path=snapcraft_yaml_path.as_posix())

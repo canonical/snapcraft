@@ -174,7 +174,14 @@ def _apply_extension_property(existing_property: Any, extension_property: Any):
     if existing_property:
         # If the property is not scalar, merge them
         if isinstance(existing_property, list) and isinstance(extension_property, list):
-            return _merge_lists(existing_property, extension_property)
+            merged = extension_property + existing_property
+
+            # If the lists are just strings, remove duplicates.
+            if all(isinstance(item, str) for item in merged):
+                return _remove_list_duplicates(merged)
+
+            return merged
+
         elif isinstance(existing_property, dict) and isinstance(
             extension_property, dict
         ):
@@ -188,17 +195,17 @@ def _apply_extension_property(existing_property: Any, extension_property: Any):
     return extension_property
 
 
-def _merge_lists(list1: List[str], list2: List[str]) -> List[str]:
-    """Merge two lists while maintaining order and removing duplicates."""
-    seen = set()  # type: Set[str]
-    merged = list()  # type: List[str]
+def _remove_list_duplicates(seq: List[str]) -> List[str]:
+    """De-dupe string list maintaining ordering."""
+    seen: Set[str] = set()
+    deduped: List[str] = list()
 
-    for item in list1 + list2:
+    for item in seq:
         if item not in seen:
             seen.add(item)
-            merged.append(item)
+            deduped.append(item)
 
-    return merged
+    return deduped
 
 
 def _validate_extension_format(extension_names):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import List, Optional, Sequence
+from typing import Optional, List, Sequence, Set
 
-from snapcraft import config, storeapi
+from snapcraft import config, plugins, storeapi
 from snapcraft.internal import (
     common,
     errors,
@@ -27,8 +27,10 @@ from snapcraft.internal import (
     states,
     steps,
 )
+from snapcraft.internal.pluginhandler._part_environment import (
+    get_snapcraft_part_directory_environment,
+)
 from snapcraft.internal.meta._snap_packaging import create_snap_packaging
-
 from ._status_cache import StatusCache
 
 
@@ -50,6 +52,38 @@ def _get_required_grade(*, base: Optional[str], arch: str) -> str:
         return "devel"
     else:
         return "stable"
+
+
+def _install_build_packages(build_packages: Set[str]) -> List[str]:
+    return repo.Repo.install_build_packages(build_packages)
+
+
+def _install_build_snaps(build_snaps: Set[str], content_snaps: Set[str]) -> List[str]:
+    if common.is_process_container() and build_snaps:
+        installed_snaps: List[str] = []
+        logger.warning(
+            (
+                "The following snaps are required but not installed as snapcraft "
+                "is running inside docker or podman container: {}.\n"
+                "Please ensure the environment is properly setup before continuing.\n"
+                "Ignore this message if the appropriate measures have already been taken".format(
+                    ", ".join(build_snaps)
+                )
+            )
+        )
+    else:
+        installed_snaps = repo.snaps.install_snaps(build_snaps)
+        for content_snap in content_snaps:
+            try:
+                installed_snaps += repo.snaps.install_snaps([content_snap])
+            except repo.snaps.errors.SnapUnavailableError:
+                logger.warning(
+                    f"Could not install snap defined in plug {content_snap!r}. "
+                    "The missing library report may have false positives listed if those "
+                    "libraries are provided by the content snap."
+                )
+
+    return installed_snaps
 
 
 def execute(
@@ -76,29 +110,10 @@ def execute(
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
-    installed_packages = repo.Repo.install_build_packages(project_config.build_tools)
-    if installed_packages is None:
-        raise ValueError(
-            "The repo backend is not returning the list of installed packages"
-        )
-
-    content_snaps = project_config.project._get_content_snaps()
-    required_snaps = project_config.build_snaps | content_snaps
-
-    if common.is_process_container():
-        installed_snaps: List[str] = []
-        logger.warning(
-            (
-                "The following snaps are required but not installed as snapcraft "
-                "is running inside docker or podman container: {}.\n"
-                "Please ensure the environment is properly setup before continuing.\n"
-                "Ignore this message if the appropriate measures have already been taken".format(
-                    ", ".join(required_snaps)
-                )
-            )
-        )
-    else:
-        installed_snaps = repo.snaps.install_snaps(required_snaps)
+    installed_packages = _install_build_packages(project_config.get_build_packages())
+    installed_snaps = _install_build_snaps(
+        project_config.get_build_snaps(), project_config.project._get_content_snaps()
+    )
 
     try:
         global_state = states.GlobalState.load(
@@ -121,7 +136,7 @@ def execute(
     executor = _Executor(project_config)
     executor.run(step, part_names)
     if not executor.steps_were_run:
-        logger.warn(
+        logger.warning(
             "The requested action has already been taken. Consider\n"
             "specifying parts, or clean the steps you want to run again."
         )
@@ -137,7 +152,7 @@ def execute(
 def _replace_in_part(part):
     for key, value in part.plugin.options.__dict__.items():
         replacements = project_loader.environment_to_replacements(
-            project_loader.snapcraft_part_environment(part)
+            get_snapcraft_part_directory_environment(part)
         )
 
         value = project_loader.replace_attr(value, replacements)
@@ -297,8 +312,9 @@ class _Executor:
             notify_part_progress(part, "Preparing to {}".format(step.name), debug=True)
             preparation_function()
 
-        common.env = self.parts_config.build_env_for_part(part)
-        common.env.extend(self.config.project_env())
+        if isinstance(part.plugin, plugins.v1.PluginV1):
+            common.env = self.parts_config.build_env_for_part(part)
+            common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
 

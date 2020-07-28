@@ -3,19 +3,23 @@
 # Launcher common exports for any desktop app #
 ###############################################
 
+# Note: We avoid using `eval` because we don't want to expand variable names
+#       in paths. For example: LD_LIBRARY_PATH paths might contain `$LIB`.
 function prepend_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\$dir\${$var:+:\$$var}\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${dir}${var:+:$var}"
   fi
 }
 
 function append_dir() {
-  local var="$1"
+  local -n var="$1"
   local dir="$2"
-  if [ -d "$dir" ]; then
-    eval "export $var=\"\${$var:+\$$var:}\$dir\""
+  # We can't check if the dir exists when the dir contains variables
+  if [[ "$dir" == *"\$"*  || -d "$dir" ]]; then
+    export "${!var}=${var:+$var:}${dir}"
   fi
 }
 
@@ -87,6 +91,7 @@ export LIBVA_DRIVERS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/dri"
 # Without that OpenGL using apps do not work with the nVidia drivers.
 # Ref.: https://bugs.launchpad.net/snappy/+bug/1588192
 append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl"
+append_dir LD_LIBRARY_PATH "/var/lib/snapd/lib/gl/vdpau"
 
 # Unity7 export (workaround for https://launchpad.net/bugs/1638405)
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libunity"
@@ -95,8 +100,8 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libunity"
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/pulseaudio"
 
 # EGL vendor files on glvnd enabled systems
-[ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
-    append_dir __EGL_VENDOR_LIBRARY_DIRS "/var/lib/snapd/lib/glvnd/egl_vendor.d"
+append_dir __EGL_VENDOR_LIBRARY_DIRS "/var/lib/snapd/lib/glvnd/egl_vendor.d"
+append_dir __EGL_VENDOR_LIBRARY_DIRS "$SNAP_DESKTOP_RUNTIME/usr/share/glvnd/egl_vendor.d"
 
 # Tell GStreamer where to find its plugins
 export GST_PLUGIN_PATH="$SNAP/usr/lib/$ARCH/gstreamer-1.0"
@@ -133,7 +138,7 @@ ensure_dir_exists "$XDG_CACHE_HOME"
 
 # Create $XDG_RUNTIME_DIR if not exists (to be removed when LP: #1656340 is fixed)
 # shellcheck disable=SC2174
-[ -n "$XDG_RUNTIME_DIR" ] && ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
+ensure_dir_exists "$XDG_RUNTIME_DIR" -m 700
 
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/locale"
@@ -155,14 +160,19 @@ if [ "$HOME" != "$SNAP_USER_DATA" ] && ! is_subpath "$XDG_CONFIG_HOME" "$HOME"; 
   done
 fi
 
-if can_open_file "$REALHOME/.config/user-dirs.dirs" && can_open_file "$REALHOME/.config/user-dirs.locale"; then
+if can_open_file "$REALHOME/.config/user-dirs.dirs"; then
   # shellcheck disable=SC2154
   if [ "$needs_update" = true ] || [ "$needs_xdg_reload" = true ]; then
     sed "/^#/!s#\$HOME#${REALHOME}#g" "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs"
-    cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
-    for f in user-dirs.dirs user-dirs.locale; do
-      md5sum < "$REALHOME/.config/$f" > "$XDG_CONFIG_HOME/$f.md5sum"
-    done
+    md5sum < "$REALHOME/.config/user-dirs.dirs" > "$XDG_CONFIG_HOME/user-dirs.dirs.md5sum"
+    # It's possible user-dirs.dirs exists when user-dirs.locale doesn't. This
+    # simply means the user opted to never ask to translate their user dirs
+    if can_open_file "$REALHOME/.config/user-dirs.locale"; then
+      cp -a "$REALHOME/.config/user-dirs.locale" "$XDG_CONFIG_HOME"
+      md5sum < "$REALHOME/.config/user-dirs.locale" > "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+    elif [ -f "$XDG_CONFIG_HOME/user-dirs.locale.md5sum" ]; then
+      rm "$XDG_CONFIG_HOME/user-dirs.locale.md5sum"
+    fi
     needs_xdg_reload=true
   fi
 else
@@ -194,7 +204,7 @@ fi
 if [ "$needs_xdg_links" = true ]; then
   for ((i = 0; i < ${#XDG_SPECIAL_DIRS_PATHS[@]}; i++)); do
     b="$(realpath "${XDG_SPECIAL_DIRS_PATHS[$i]}" --relative-to="$HOME")"
-    if [ -e "$REALHOME/$b" ]; then
+    if [[ "$b" != "." && -e "$REALHOME/$b" ]]; then
       [ -d "$HOME/$b" ] && rmdir "$HOME/$b" 2> /dev/null
       [ ! -e "$HOME/$b" ] && ln -s "$REALHOME/$b" "$HOME/$b"
     fi
@@ -294,7 +304,7 @@ if [ "$needs_update" = true ]; then
   # This fontconfig fragment is installed in a location that is
   # included by the system fontconfig configuration: namely the
   # etc/fonts/conf.d/50-user.conf file.
-  mkdir -p "$XDG_CONFIG_HOME/fontconfig"
+  ensure_dir_exists "$XDG_CONFIG_HOME/fontconfig"
   async_exec make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
 
   # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
@@ -325,7 +335,7 @@ export GIO_MODULE_DIR="$XDG_CACHE_HOME/gio-modules"
 function compile_giomodules {
   if [ -f "$1/glib-2.0/gio-querymodules" ]; then
     rm -rf "$GIO_MODULE_DIR"
-    mkdir -p "$GIO_MODULE_DIR"
+    ensure_dir_exists "$GIO_MODULE_DIR"
     ln -s "$1"/gio/modules/*.so "$GIO_MODULE_DIR"
     "$1/glib-2.0/gio-querymodules" "$GIO_MODULE_DIR"
   fi
@@ -339,7 +349,7 @@ GS_SCHEMA_DIR="$XDG_DATA_HOME/glib-2.0/schemas"
 function compile_schemas {
   if [ -f "$1" ]; then
     rm -rf "$GS_SCHEMA_DIR"
-    mkdir -p "$GS_SCHEMA_DIR"
+    ensure_dir_exists "$GS_SCHEMA_DIR"
     for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
       schema_dir="${data_dirs_array[$i]}/glib-2.0/schemas"
       if [ -f "$schema_dir/gschemas.compiled" ]; then
@@ -368,9 +378,14 @@ fi
 DCONF_DEST_USER_DIR="$SNAP_USER_DATA/.config/dconf"
 if [ ! -f "$DCONF_DEST_USER_DIR/user" ]; then
   if [ -f "$REALHOME/.config/dconf/user" ]; then
-    mkdir -p "$DCONF_DEST_USER_DIR"
+    ensure_dir_exists "$DCONF_DEST_USER_DIR"
     ln -s "$REALHOME/.config/dconf/user" "$DCONF_DEST_USER_DIR"
   fi
+fi
+# symlink the runtime dconf file as well
+if [ -r "$XDG_RUNTIME_DIR/../dconf/user" ]; then
+  ensure_dir_exists "$XDG_RUNTIME_DIR/dconf"
+  ln -sf "../../dconf/user" "$XDG_RUNTIME_DIR/dconf/user"
 fi
 
 # Testability support
@@ -381,7 +396,7 @@ append_dir LD_LIBRARY_PATH "$SNAP/testability/$ARCH/mesa"
 # Gdk-pixbuf loaders
 export GDK_PIXBUF_MODULE_FILE="$XDG_CACHE_HOME/gdk-pixbuf-loaders.cache"
 export GDK_PIXBUF_MODULEDIR="$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders"
-if [ "$needs_update" = true ]; then
+if [ "$needs_update" = true ] || [ ! -f "$GDK_PIXBUF_MODULE_FILE" ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
   if [ -f "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
     async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
@@ -391,7 +406,7 @@ fi
 # Icon themes cache
 if [ "$needs_update" = true ]; then
   rm -rf "$XDG_DATA_HOME/icons"
-  mkdir -p "$XDG_DATA_HOME/icons"
+  ensure_dir_exists "$XDG_DATA_HOME/icons"
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
     # The runtime and theme content snaps should already contain icon caches
     # so we skip them to optimise app start time.
@@ -402,7 +417,7 @@ if [ "$needs_update" = true ]; then
       if [ -f "$theme/index.theme" ] && [ ! -f "$theme/icon-theme.cache" ]; then
         theme_dir="$XDG_DATA_HOME/icons/$(basename "$theme")"
         if [ ! -d "$theme_dir" ]; then
-          mkdir -p "$theme_dir"
+          ensure_dir_exists "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
           if [ -f "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" ]; then
             async_exec "$SNAP_DESKTOP_RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
@@ -421,7 +436,7 @@ gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
 for f in "${gtk_configs[@]}"; do
   dest="$XDG_CONFIG_HOME/$f"
   if [ ! -L "$dest" ]; then
-    mkdir -p "$(dirname "$dest")"
+    ensure_dir_exists "$(dirname "$dest")"
     ln -s "$REALHOME/.config/$f" "$dest"
   fi
 done

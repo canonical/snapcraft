@@ -260,6 +260,11 @@ class FakeStore(fixtures.Fixture):
                 ),
             )
         )
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAP_STORE_DASHBOARD_ROOT_URL", self.fake_store_api_server_fixture.url
+            )
+        )
 
         self.fake_store_search_server_fixture = FakeStoreSearchServerRunning()
         self.useFixture(self.fake_store_search_server_fixture)
@@ -339,6 +344,12 @@ class FakeStoreSearchServerRunning(FakeServerRunning):
 class StagingStore(fixtures.Fixture):
     def setUp(self):
         super().setUp()
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                "SNAP_STORE_DASHBOARD_ROOT_URL",
+                "https://dashboard.staging.snapcraft.io/",
+            )
+        )
         self.useFixture(
             fixtures.EnvironmentVariable(
                 "UBUNTU_STORE_API_ROOT_URL",
@@ -573,15 +584,31 @@ class SnapcraftYaml(fixtures.Fixture):
         path,
         name="test-snap",
         base="core18",
+        build_base=None,
         version="test-version",
         summary="test-summary",
         description="test-description",
         confinement="strict",
         architectures=None,
+        apps=None,
+        parts=None,
+        type="app",
     ):
         super().__init__()
+
+        if apps is None:
+            apps = dict()
+
+        if parts is None:
+            parts = dict()
+
         self.path = path
-        self.data = {"confinement": confinement, "parts": {}, "apps": {}}
+        self.data = {
+            "confinement": confinement,
+            "parts": parts,
+            "apps": apps,
+            "type": type,
+        }
         if name is not None:
             self.data["name"] = name
         if version is not None:
@@ -594,6 +621,8 @@ class SnapcraftYaml(fixtures.Fixture):
             self.data["architectures"] = architectures
         if base is not None:
             self.data["base"] = base
+        if build_base is not None:
+            self.data["build-base"] = build_base
 
     def update_part(self, name, data):
         part = {name: data}
@@ -722,4 +751,4 @@ class FakeSnapcraftIsASnap(fixtures.Fixture):
 
         self.useFixture(fixtures.EnvironmentVariable("SNAP", "/snap/snapcraft/current"))
         self.useFixture(fixtures.EnvironmentVariable("SNAP_NAME", "snapcraft"))
-        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "devel"))
+        self.useFixture(fixtures.EnvironmentVariable("SNAP_VERSION", "4.0"))

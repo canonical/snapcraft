@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import pathlib
 import subprocess
 
 import fixtures
@@ -33,9 +34,25 @@ class RunTest(unit.TestCase):
         )
         self.useFixture(self.fake_check_output)
 
+        self.user_common_path = pathlib.Path(self.path) / "common"
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.internal.review_tools._runner._get_review_tools_user_common",
+                return_value=self.user_common_path,
+            )
+        )
+
+        self.fake_snap_path = pathlib.Path("fake.snap")
+        self.fake_snap_path.touch()
+
     def assert_fake_check_output_called(self):
         self.fake_check_output.mock.assert_called_once_with(
-            [self.review_tools_path, "fake.snap", "--json"],
+            [
+                self.review_tools_path,
+                self.user_common_path / self.fake_snap_path,
+                "--json",
+                "--allow-classic",
+            ],
             env={"SNAP_ENFORCE_RESQUASHFS": "0"},
             stderr=subprocess.STDOUT,
         )
@@ -72,7 +89,7 @@ class RunTest(unit.TestCase):
 
     def test_review_errors(self):
         self.fake_check_output.mock.side_effect = subprocess.CalledProcessError(
-            cmd=[self.review_tools_path, "fake.snap", "--json"],
+            cmd=[self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             returncode=3,
             output=json.dumps(
                 {
@@ -97,7 +114,7 @@ class RunTest(unit.TestCase):
 
     def test_review_unkown_error_bubbles_up(self):
         self.fake_check_output.mock.side_effect = subprocess.CalledProcessError(
-            cmd=[self.review_tools_path, "fake.snap", "--json"],
+            cmd=[self.review_tools_path, "fake.snap", "--json", "--allow-classic"],
             returncode=4,
             output=b"unknown",
         )

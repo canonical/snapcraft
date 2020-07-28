@@ -22,27 +22,23 @@ from typing import Set  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import elf, pluginhandler, repo
-from ._env import (
-    build_env,
-    build_env_for_stage,
-    runtime_env,
-    snapcraft_global_environment,
-    snapcraft_part_environment,
+from snapcraft.internal.pluginhandler._part_environment import (
+    get_snapcraft_global_environment,
+    get_snapcraft_part_directory_environment,
 )
+from ._env import build_env, build_env_for_stage, runtime_env
 from . import errors, grammar_processing
 
 logger = logging.getLogger(__name__)
 
 
 class PartsConfig:
-    def __init__(self, *, parts, project, validator, build_snaps, build_tools):
+    def __init__(self, *, parts, project, validator):
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get("parts", {})
         self._snap_type = parts.get("type", "app")
         self._project = project
         self._validator = validator
-        self.build_snaps = build_snaps
-        self.build_tools = build_tools
 
         self.all_parts = []
         self._part_names = []
@@ -114,8 +110,9 @@ class PartsConfig:
 
         return sorted_parts
 
-    def get_dependencies(self, part_name, *, recursive=False):
-        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+    def get_dependencies(
+        self, part_name: str, *, recursive: bool = False
+    ) -> Set[pluginhandler.PluginHandler]:
         """Returns a set of all the parts upon which part_name depends."""
 
         dependency_names = set(self.after_requests.get(part_name, []))
@@ -131,8 +128,9 @@ class PartsConfig:
 
         return dependencies
 
-    def get_reverse_dependencies(self, part_name, *, recursive=False):
-        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+    def get_reverse_dependencies(
+        self, part_name: str, *, recursive: bool = False
+    ) -> Set[pluginhandler.PluginHandler]:
         """Returns a set of all the parts that depend upon part_name."""
 
         reverse_dependency_names = set()
@@ -180,10 +178,9 @@ class PartsConfig:
             plugin_name=plugin_name,
             part_name=part_name,
             properties=part_properties,
-            project_options=self._project,
+            project=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
-            local_plugins_dir=self._project.local_plugins_dir,
         )
 
         logger.debug(
@@ -191,14 +188,7 @@ class PartsConfig:
             "properties {!r}.".format(part_name, plugin_name, part_properties)
         )
 
-        sources = getattr(plugin, "PLUGIN_STAGE_SOURCES", None)
-        keyrings = getattr(plugin, "PLUGIN_STAGE_KEYRINGS", None)
-        stage_packages_repo = repo.Repo(
-            plugin.osrepodir,
-            sources=sources,
-            keyrings=keyrings,
-            project_options=self._project,
-        )
+        stage_packages_repo = repo.Repo
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
@@ -210,29 +200,15 @@ class PartsConfig:
         part = pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=part_properties,
-            project_options=self._project,
+            project=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
             snap_base_path=path.join("/", "snap", self._project.info.name, "current"),
-            base=self._project.info.base,
-            confinement=self._project.info.confinement,
-            snap_type=self._snap_type,
             soname_cache=self._soname_cache,
         )
 
-        self.build_snaps |= grammar_processor.get_build_snaps()
-        self.build_tools |= grammar_processor.get_build_packages()
-
-        # TODO: this should not pass in command but the required package,
-        #       where the required package is to be determined by the
-        #       source handler.
-        if part.source_handler and part.source_handler.command:
-            # TODO get_packages_for_source_type should not be a thing.
-            self.build_tools |= repo.Repo.get_packages_for_source_type(
-                part.source_handler.command
-            )
         self.all_parts.append(part)
 
         return part
@@ -245,11 +221,11 @@ class PartsConfig:
 
         if root_part:
             # this has to come before any {}/usr/bin
-            env += part.env(part.plugin.installdir)
-            env += runtime_env(part.plugin.installdir, self._project.arch_triplet)
+            env += part.env(part.part_install_dir)
+            env += runtime_env(part.part_install_dir, self._project.arch_triplet)
             env += runtime_env(stagedir, self._project.arch_triplet)
             env += build_env(
-                part.plugin.installdir,
+                part.part_install_dir,
                 self._project.info.name,
                 self._project.arch_triplet,
             )
@@ -257,8 +233,8 @@ class PartsConfig:
                 stagedir, self._project.info.name, self._project.arch_triplet
             )
 
-            global_env = snapcraft_global_environment(self._project)
-            part_env = snapcraft_part_environment(part)
+            global_env = get_snapcraft_global_environment(self._project)
+            part_env = get_snapcraft_part_directory_environment(part)
 
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))

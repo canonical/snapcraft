@@ -16,7 +16,6 @@
 
 import os
 import tarfile
-import fixtures
 from unittest import mock
 
 import requests
@@ -27,13 +26,6 @@ from tests import unit
 
 
 class TestTar(unit.FakeFileHTTPServerBasedTestCase):
-
-    scenarios = [("TERM=dumb", dict(term="dumb")), ("TERM=vt100", dict(term="vt100"))]
-
-    def setUp(self):
-        self.useFixture(fixtures.EnvironmentVariable("TERM", self.term))
-        super().setUp()
-
     @mock.patch("snapcraft.sources.Tar.provision")
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
         plugin_name = "test_plugin"

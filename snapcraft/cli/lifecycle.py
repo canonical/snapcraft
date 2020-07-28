@@ -14,18 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
 import logging
 import typing
-from typing import Optional
 import os
+import shutil
+import subprocess
+import sys
+import time
+from typing import List, Optional
 
 import click
+import progressbar
 
 from . import echo
 from ._command import SnapcraftProjectCommand
-from ._config import enable_snapcraft_config_file
 from ._options import (
-    add_build_options,
     add_provider_options,
     apply_host_provider_flags,
     get_build_provider,
@@ -36,6 +40,7 @@ from snapcraft.internal import (
     build_providers,
     deprecations,
     errors,
+    indicators,
     lifecycle,
     project_loader,
     steps,
@@ -60,25 +65,36 @@ def _execute(  # noqa: C901
     shell: bool = False,
     shell_after: bool = False,
     setup_prime_try: bool = False,
-    **kwargs
+    **kwargs,
 ) -> "Project":
     # Cleanup any previous errors.
     _clean_provider_error()
 
     build_provider = get_build_provider(**kwargs)
+    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    apply_host_provider_flags(build_provider_flags)
+
     is_managed_host = build_provider == "managed-host"
 
-    project = get_project(is_managed_host=is_managed_host, **kwargs)
-    build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    # Temporary fix to ignore target_arch.
+    if kwargs.get("target_arch") is not None and build_provider in ["multipass", "lxd"]:
+        echo.warning(
+            "Ignoring '--target-arch' flag.  This flag requires --destructive-mode and is unsupported with Multipass and LXD build providers."
+        )
+        kwargs.pop("target_arch")
 
-    conduct_project_sanity_check(project)
+    project = get_project(is_managed_host=is_managed_host, **kwargs)
+    conduct_project_sanity_check(project, **kwargs)
 
     if build_provider in ["host", "managed-host"]:
-        apply_host_provider_flags(build_provider_flags)
         project_config = project_loader.load_config(project)
         lifecycle.execute(step, project_config, parts)
         if pack_project:
-            _pack(project.prime_dir, output=output)
+            _pack(
+                project.prime_dir,
+                compression=project._snap_meta.compression,
+                output=output,
+            )
     else:
         build_provider_class = build_providers.get_provider_for(build_provider)
         try:
@@ -87,7 +103,7 @@ def _execute(  # noqa: C901
             if provider_error.prompt_installable:
                 if echo.is_tty_connected() and echo.confirm(
                     "Support for {!r} needs to be set up. "
-                    "Would you like to do that it now?".format(provider_error.provider)
+                    "Would you like to do it now?".format(provider_error.provider)
                 ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
@@ -136,9 +152,73 @@ def _execute(  # noqa: C901
     return project
 
 
-def _pack(directory: str, *, output: Optional[str]) -> None:
-    snap_name = lifecycle.pack(directory, output)
-    echo.info("Snapped {}".format(snap_name))
+def _run_pack(snap_command: List[str]) -> str:
+    ret = None
+    stdout = ""
+    stderr = ""
+    with subprocess.Popen(
+        snap_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    ) as proc:
+        if indicators.is_dumb_terminal():
+            echo.info("Snapping...")
+            ret = proc.wait()
+        else:
+            message = f"\033[0;32mSnapping \033[0m"
+            progress_indicator = progressbar.ProgressBar(
+                widgets=[message, progressbar.AnimatedMarker()],
+                # From progressbar.ProgressBar.update(...).
+                maxval=progressbar.UnknownLength,
+            )
+            progress_indicator.start()
+            for counter in itertools.count():
+                progress_indicator.update(counter)
+                time.sleep(0.2)
+                ret = proc.poll()
+                if ret is not None:
+                    break
+            progress_indicator.finish()
+
+        if proc.stdout is not None:
+            stdout = proc.stdout.read().decode()
+        if proc.stderr is not None:
+            stderr = proc.stderr.read().decode()
+        logger.debug(f"stdout: {stdout} | stderr: {stderr}")
+
+    if ret != 0:
+        raise RuntimeError(
+            f"Failed to create snap, snap command failed:\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        )
+
+    try:
+        snap_filename = stdout.split(":")[1].strip()
+    except IndexError:
+        logger.debug("Failed to parse snap pack outpout: {stdout}")
+        snap_filename = stdout
+
+    return snap_filename
+
+
+def _pack(
+    directory: str, *, compression: Optional[str] = None, output: Optional[str]
+) -> None:
+    snap_path = shutil.which("snap")
+    if snap_path is None:
+        raise errors.HostToolNotFoundError(command_name="snap", package_name="snapd")
+
+    command = [snap_path, "pack"]
+    # When None, just use snap pack's default settings.
+    if compression is not None:
+        if compression != "xz":
+            echo.warning(
+                f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
+            )
+        command.extend(["--compression", compression])
+    if output is not None:
+        command.extend(["--filename", output])
+    command.append(directory)
+
+    snap_filename = _run_pack(command)
+    echo.info(f"Snapped {snap_filename}")
 
 
 def _clean_provider_error() -> None:
@@ -157,7 +237,6 @@ def _retrieve_provider_error(instance) -> None:
 
 
 @click.group()
-@add_build_options()
 @add_provider_options()
 @click.pass_context
 def lifecyclecli(ctx, **kwargs):
@@ -165,7 +244,6 @@ def lifecyclecli(ctx, **kwargs):
 
 
 @lifecyclecli.command()
-@enable_snapcraft_config_file()
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
@@ -177,9 +255,7 @@ def init():
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
 @click.pass_context
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def pull(ctx, parts, **kwargs):
@@ -195,8 +271,6 @@ def pull(ctx, parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
@@ -212,8 +286,6 @@ def build(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
@@ -229,8 +301,6 @@ def stage(parts, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
@@ -246,8 +316,6 @@ def prime(parts, **kwargs):
 
 
 @lifecyclecli.command("try")
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 def try_command(**kwargs):
     """Try a snap on the host, priming if necessary.
@@ -265,8 +333,6 @@ def try_command(**kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
-@add_build_options()
 @add_provider_options()
 @click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
@@ -285,7 +351,7 @@ def snap(directory, output, **kwargs):
         deprecations.handle_deprecation_notice("dn6")
         _pack(directory, output=output)
     else:
-        _execute(steps.PRIME, parts=[], pack_project=True, output=output, **kwargs)
+        _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
@@ -307,7 +373,6 @@ def pack(directory, output, **kwargs):
 
 
 @lifecyclecli.command(cls=SnapcraftProjectCommand)
-@enable_snapcraft_config_file()
 @click.pass_context
 @add_provider_options()
 @click.argument("parts", nargs=-1, metavar="<part>...", required=False)
@@ -328,7 +393,13 @@ def clean(ctx, parts, unprime, step, **kwargs):
 
     build_provider = get_build_provider(**kwargs)
     build_provider_flags = get_build_provider_flags(build_provider, **kwargs)
+    apply_host_provider_flags(build_provider_flags)
+
     is_managed_host = build_provider == "managed-host"
+
+    # Temporary fix to ignore target_arch, silently for clean.
+    if "target_arch" in kwargs and build_provider in ["multipass", "lxd"]:
+        kwargs.pop("target_arch")
 
     try:
         project = get_project(is_managed_host=is_managed_host)
@@ -340,7 +411,6 @@ def clean(ctx, parts, unprime, step, **kwargs):
         raise click.BadOptionUsage("--unprime", "no such option: --unprime")
 
     if build_provider in ["host", "managed-host"]:
-        apply_host_provider_flags(build_provider_flags)
         step = steps.PRIME if unprime else None
         lifecycle.clean(project, parts, step)
     else:
@@ -352,8 +422,9 @@ def clean(ctx, parts, unprime, step, **kwargs):
                 instance.clean(part_names=parts)
         else:
             build_provider_class(project=project, echoer=echo).clean_project()
-            # Clear the prime directory on the host
-            lifecycle.clean(project, parts, steps.PRIME)
+            # Clear the prime directory on the host, unless on Windows.
+            if sys.platform != "win32":
+                lifecycle.clean(project, parts, steps.PRIME)
 
 
 if __name__ == "__main__":

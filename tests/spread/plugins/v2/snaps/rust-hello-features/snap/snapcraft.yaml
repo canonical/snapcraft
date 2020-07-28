@@ -1,0 +1,19 @@
+name: rust-hello-features
+version: "1.0"
+summary: A simple rust project with conditional features.
+description: |
+  Snap used to test conditional features in rust.
+
+base: core20
+confinement: strict
+grade: devel
+
+apps:
+  rust-hello-features:
+    command: bin/rust-hello-features
+
+parts:
+  hello:
+    plugin: rust
+    source: .
+    rust-features: [conditional-feature-present]

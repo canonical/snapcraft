@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2019 Canonical Ltd
+# Copyright (C) 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,14 +16,13 @@
 
 import copy
 import contextlib
+import distutils.util
 import itertools
 import logging
 import os
 import re
-import shlex
 import shutil
 import stat
-import subprocess
 from typing import Any, Dict, List, Optional, Set  # noqa
 
 from snapcraft import file_utils, formatting_utils, yaml_utils
@@ -335,9 +334,6 @@ class _SnapPackaging:
         self._parts_dir = project_config.project.parts_dir
 
         self._arch_triplet = project_config.project.arch_triplet
-        self._is_host_compatible_with_base = (
-            project_config.project.is_host_compatible_with_base
-        )
         self.meta_dir = os.path.join(self._prime_dir, "meta")
         self.meta_gui_dir = os.path.join(self.meta_dir, "gui")
         self._config_data = project_config.data.copy()
@@ -362,9 +358,13 @@ class _SnapPackaging:
 
     def finalize_snap_meta_commands(self) -> None:
         for app_name, app in self._snap_meta.apps.items():
-            app.prime_commands(
-                base=self._project_config.project.info.base, prime_dir=self._prime_dir
-            )
+            # Prime commands only if adapter != "none",
+            # otherwise leave as-is.
+            if app.adapter != ApplicationAdapter.NONE:
+                app.prime_commands(
+                    base=self._project_config.project.info.base,
+                    prime_dir=self._prime_dir,
+                )
 
     def finalize_snap_meta_command_chains(self) -> None:
         snapcraft_runner = self._generate_snapcraft_runner()
@@ -433,41 +433,66 @@ class _SnapPackaging:
                 "gadget.yaml", os.path.join(self.meta_dir, "gadget.yaml")
             )
 
+    def _assemble_runtime_environment(self) -> str:
+        # Classic confinement or building on a host that does not match the target base
+        # means we cannot setup an environment that will work.
+        if self._config_data["confinement"] == "classic":
+            # Temporary workaround for snapd bug not expanding PATH:
+            # We generate an empty runner which addresses the issue.
+            # https://bugs.launchpad.net/snapd/+bug/1860369
+            return ""
+
+        env = list()
+        if self._project_config.project._snap_meta.base in ("core", "core16", "core18"):
+            common.env = self._project_config.snap_env()
+            assembled_env = common.assemble_env()
+            common.reset_env()
+
+            assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
+            env.append(self._install_path_pattern.sub("$SNAP", assembled_env))
+        else:
+            # TODO use something local to the meta package and
+            # only add paths for directory items that actually exist.
+            runtime_env = project_loader.runtime_env(
+                self._prime_dir, self._project_config.project.arch_triplet
+            )
+            for e in runtime_env:
+                env.append(re.sub(self._prime_dir, "$SNAP", e))
+
+        env.append('export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"')
+
+        return "\n".join(env)
+
     def _generate_snapcraft_runner(self) -> Optional[str]:
         """Create runner if required.
 
         Return path relative to prime directory, if created."""
 
-        # Classic confinement or building on a host that does not match the target base
-        # means we cannot setup an environment that will work.
+        # If there are no apps, or type is snapd, no need to create a runner.
+        if not self._snap_meta.apps or self._config_data.get("type") == "snapd":
+            return None
+
+        # No more command-chain for core20 and classic confinement.
+        # This was a workaround for LP: #1860369.
         if (
-            self._config_data["confinement"] == "classic"
-            or not self._is_host_compatible_with_base
-            or not self._snap_meta.apps
+            self._snap_meta.base not in ("core", "core16", "core18", None)
+            and self._snap_meta.confinement == "classic"
         ):
             return None
+
+        assembled_env = self._assemble_runtime_environment()
 
         meta_runner = os.path.join(
             self._prime_dir, "snap", "command-chain", "snapcraft-runner"
         )
 
-        common.env = self._project_config.snap_env()
-        assembled_env = common.assemble_env()
-        assembled_env = assembled_env.replace(self._prime_dir, "$SNAP")
-        assembled_env = self._install_path_pattern.sub("$SNAP", assembled_env)
+        os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
+        with open(meta_runner, "w") as f:
+            print("#!/bin/sh", file=f)
+            print(assembled_env, file=f)
+            print('exec "$@"', file=f)
+        os.chmod(meta_runner, 0o755)
 
-        if assembled_env:
-            os.makedirs(os.path.dirname(meta_runner), exist_ok=True)
-            with open(meta_runner, "w") as f:
-                print("#!/bin/sh", file=f)
-                print(assembled_env, file=f)
-                print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH", file=f
-                )
-                print('exec "$@"', file=f)
-            os.chmod(meta_runner, 0o755)
-
-        common.reset_env()
         return os.path.relpath(meta_runner, self._prime_dir)
 
     def _record_manifest_and_source_snapcraft_yaml(self):
@@ -480,7 +505,7 @@ class _SnapPackaging:
             os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
-        if os.environ.get("SNAPCRAFT_BUILD_INFO"):
+        if distutils.util.strtobool(os.environ.get("SNAPCRAFT_BUILD_INFO", "n")):
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
             annotated_snapcraft = _manifest.annotate_snapcraft(
@@ -523,6 +548,7 @@ class _SnapPackaging:
         hooks_dir = os.path.join(self._prime_dir, "meta", "hooks")
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
+
             for hook_name in os.listdir(snap_hooks_dir):
                 file_path = os.path.join(snap_hooks_dir, hook_name)
                 # Make sure the hook is executable
@@ -551,6 +577,8 @@ class _SnapPackaging:
                 shutil.copy2(os.path.join(gui_src, f), self.meta_gui_dir)
 
     def _write_wrap_exe(self, wrapexec, wrappath, shebang=None, args=None, cwd=None):
+        assembled_env = self._assemble_runtime_environment()
+
         if args:
             quoted_args = ['"{}"'.format(arg) for arg in args]
         else:
@@ -575,37 +603,10 @@ class _SnapPackaging:
             print("#!/bin/sh", file=f)
             if cwd:
                 print("{}".format(cwd), file=f)
+            print(assembled_env, file=f)
             print("exec {} {}".format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
-
-    def _wrap_exe(self, command, basename=None):
-        execparts = shlex.split(command)
-        exepath = os.path.join(self._prime_dir, execparts[0])
-        if basename:
-            wrappath = os.path.join(self._prime_dir, basename) + ".wrapper"
-        else:
-            wrappath = exepath + ".wrapper"
-        shebang = None
-
-        if os.path.exists(wrappath):
-            os.remove(wrappath)
-
-        wrapexec = "$SNAP/{}".format(execparts[0])
-        if not os.path.exists(exepath) and "/" not in execparts[0]:
-            _find_bin(execparts[0], self._prime_dir)
-            wrapexec = execparts[0]
-        else:
-            with open(exepath, "rb") as exefile:
-                # If the file has a she-bang, the path might be pointing to
-                # the local 'parts' dir. Extract it so that _write_wrap_exe
-                # will have a chance to rewrite it.
-                if exefile.read(2) == b"#!":
-                    shebang = exefile.readline().strip().decode("utf-8")
-
-        self._write_wrap_exe(wrapexec, wrappath, shebang=shebang, args=execparts[1:])
-
-        return os.path.relpath(wrappath, self._prime_dir)
 
     def validate_common_ids(self) -> None:
         if (
@@ -625,15 +626,6 @@ class _SnapPackaging:
                         common_id=app_common_id, app=app
                     )
                 )
-
-
-def _find_bin(binary, basedir):
-    # If it doesn't exist it might be in the path
-    logger.debug("Checking that {!r} is in the $PATH".format(binary))
-    try:
-        shell_utils.which(binary, cwd=basedir)
-    except subprocess.CalledProcessError:
-        raise meta_errors.CommandError(binary)
 
 
 def _prepare_hook(hook_path):

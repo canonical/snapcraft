@@ -15,12 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import codecs
 import os
-import re
+import subprocess
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 
 def recursive_data_files(directory, install_directory):
@@ -31,44 +30,32 @@ def recursive_data_files(directory, install_directory):
     return data_files
 
 
+def determine_version():
+    # Examples (git describe -> python package version):
+    # 4.1.1-0-gad012482d -> 4.1.1
+    # 4.1.1-16-g2d8943dbc -> 4.1.1.post16+g2d8943dbc
+    version, distance, commit = (
+        subprocess.run(
+            ["git", "describe", "--always", "--long"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        .stdout.decode()
+        .strip()
+        .split("-")
+    )
+
+    if distance == "0":
+        return version
+
+    return f"{version}.post{distance}+git{commit[1:]}"
+
+
 # Common distribution data
 name = "snapcraft"
-version = "devel"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
 url = "https://github.com/snapcore/snapcraft"
-packages = [
-    "snapcraft",
-    "snapcraft.cli",
-    "snapcraft.cli.snapcraftctl",
-    "snapcraft.extractors",
-    "snapcraft.integrations",
-    "snapcraft.internal",
-    "snapcraft.internal.cache",
-    "snapcraft.internal.build_providers",
-    "snapcraft.internal.build_providers._lxd",
-    "snapcraft.internal.build_providers._multipass",
-    "snapcraft.internal.deltas",
-    "snapcraft.internal.lifecycle",
-    "snapcraft.internal.meta",
-    "snapcraft.internal.pluginhandler",
-    "snapcraft.internal.project_loader",
-    "snapcraft.internal.project_loader.grammar",
-    "snapcraft.internal.project_loader.grammar_processing",
-    "snapcraft.internal.project_loader.inspection",
-    "snapcraft.internal.project_loader._extensions",
-    "snapcraft.internal.remote_build",
-    "snapcraft.internal.repo",
-    "snapcraft.internal.review_tools",
-    "snapcraft.internal.sources",
-    "snapcraft.internal.states",
-    "snapcraft.project",
-    "snapcraft.plugins",
-    "snapcraft.plugins._ros",
-    "snapcraft.plugins._python",
-    "snapcraft.storeapi",
-]
-package_data = {"snapcraft.internal.repo": ["manifest.txt"]}
 license = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -84,15 +71,6 @@ classifiers = [
     "Topic :: System :: Software Distribution",
 ]
 
-# look/set what version we have
-changelog = "debian/changelog"
-if os.path.exists(changelog):
-    head = codecs.open(changelog, encoding="utf-8").readline()
-    match = re.compile(r".*\((.*)\).*").match(head)
-    if match:
-        version = match.group(1)
-
-
 # snapcraftctl is not in console_scripts because we need a clean environment.
 # Only include it for Linux.
 if sys.platform == "linux":
@@ -102,12 +80,11 @@ else:
 
 setup(
     name=name,
-    version=version,
+    version=determine_version(),
     description=description,
     author_email=author_email,
     url=url,
-    packages=packages,
-    package_data=package_data,
+    packages=find_namespace_packages(),
     license=license,
     classifiers=classifiers,
     scripts=scripts,

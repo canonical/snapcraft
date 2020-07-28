@@ -18,6 +18,7 @@ import logging
 import os
 import re
 
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.project import Project
 
 logger = logging.getLogger(__name__)
@@ -25,15 +26,16 @@ logger = logging.getLogger(__name__)
 
 _EXPECTED_SNAP_DIR_PATTERNS = {
     re.compile(r"^snapcraft.yaml$"),
-    re.compile(r"^.snapcraft(/state)?$"),
-    re.compile(r"^hooks(/.*)?$"),
-    re.compile(r"^local(/.*)?$"),
-    re.compile(r"^plugins(/.*)?$"),
-    re.compile(r"^gui(/.*\.(png|svg|desktop))?$"),
+    re.compile(r"^.snapcraft([/|\\]state)?$"),
+    re.compile(r"^hooks([/|\\].*)?$"),
+    re.compile(r"^keys([/|\\].*\.(asc))?$"),
+    re.compile(r"^local([/|\\].*)?$"),
+    re.compile(r"^plugins([/|\\].*)?$"),
+    re.compile(r"^gui([/|\\].*\.(png|svg|desktop))?$"),
 }
 
 
-def conduct_project_sanity_check(project: Project) -> None:
+def conduct_project_sanity_check(project: Project, **kwargs) -> None:
     """Sanity check the project itself before continuing.
 
     The checks done here are meant to be light, and not rely on the build environment.
@@ -48,6 +50,22 @@ def conduct_project_sanity_check(project: Project) -> None:
     if os.path.isdir(snap_dir_path):
         # TODO: move this check to the ProjectInfo class.
         _check_snap_dir(snap_dir_path)
+
+    if project._snap_meta.package_repositories and not os.getenv(
+        "SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"
+    ):
+        raise SnapcraftEnvironmentError(
+            "*EXPERIMENTAL* 'package-repositories' configured, but not enabled. "
+            "Enable with '--enable-experimental-package-repositories' flag."
+        )
+
+    if (
+        project._get_build_base() in ["core20"]
+        and kwargs.get("target_arch") is not None
+    ):
+        raise SnapcraftEnvironmentError(
+            "--target-arch has been deprecated and is no longer supported on core20."
+        )
 
 
 def _check_snap_dir(snap_dir_path: str) -> None:

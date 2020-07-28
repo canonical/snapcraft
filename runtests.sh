@@ -39,7 +39,8 @@ run_static_tests() {
     mypy .
 
     echo "Running codespell"
-    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec" -q4
+    codespell -q4 -L keyserver \
+      -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,changelog,.git,.hg,.mypy_cache,.tox,.venv,_build,buck-out,__pycache__,build,dist,.vscode,parts,stage,prime,test_appstream.py,./snapcraft.spec,./.direnv"
 
     echo "Running shellcheck"
     # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
@@ -52,20 +53,10 @@ run_static_tests() {
 
 run_snapcraft_tests(){
     test_suite="$1"
-    use_run="$2"
 
-    if [[ -n "$use_run" ]]; then
-        python3 -m unittest -b -v run "$test_suite"
-    elif [[ -n "$(command -v coverage)" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
+    if [[ "$test_suite" == "tests/unit"* ]]; then
         # Run with coverage results, if available.
-        python3 -m coverage erase
-        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
-
-        coverage report
-        echo
-        echo "Run 'python3-coverage html' to get a nice report"
-        echo "View it by running 'x-www-browser htmlcov'"
-        echo
+        pytest --cov-report=xml --cov=snapcraft tests/unit/
     else
         python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi

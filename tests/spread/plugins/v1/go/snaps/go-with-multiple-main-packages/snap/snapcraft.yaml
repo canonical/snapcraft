@@ -1,0 +1,15 @@
+name: go-with-multiple-main-packages
+version: "0"
+summary: test the use of multiple main packages
+description: |
+  "This tests out LP: #1599328 and verifies the mechanism to work
+  in such scenarios."
+
+grade: devel
+base: core18
+
+parts:
+  multiple-mains:
+      source: .
+      plugin: go
+      go-importpath: main

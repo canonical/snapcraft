@@ -1,8 +1,0 @@
-summary: Run the python driven lifecycle tests
-
-systems:
-  - ubuntu-16.04*
-
-execute: |
-  cd /snapcraft
-  ./runtests.sh tests/integration/snapd

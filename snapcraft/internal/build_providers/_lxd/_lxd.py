@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
 import logging
 import os
 import subprocess
 import sys
 import urllib.parse
 import warnings
+from time import sleep
 from typing import Dict, Optional, Sequence
 
 from .._base_provider import Provider
@@ -139,11 +141,6 @@ class LXD(Provider):
             is_ephemeral=is_ephemeral,
             build_provider_flags=build_provider_flags,
         )
-        self.echoer.warning(
-            "The LXD provider is offered as a technology preview for early adopters.\n"
-            "The command line interface, container names or lifecycle handling may "
-            "change in upcoming releases."
-        )
         # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
         lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
         endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
@@ -164,7 +161,7 @@ class LXD(Provider):
     ) -> Optional[bytes]:
         self._ensure_container_running()
 
-        env_command = self._get_env_command()
+        env_command = super()._get_env_command()
 
         # TODO: use pylxd
         cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
@@ -183,15 +180,21 @@ class LXD(Provider):
                 provider_name=self._get_provider_name(),
                 command=command,
                 exit_code=process_error.returncode,
+                output=process_error.output,
             ) from process_error
 
         return output
 
     def _launch(self) -> None:
-        config = {
-            "name": self.instance_name,
-            "source": get_image_source(base=self.project.info.get_build_base()),
-        }
+        build_base = self.project._get_build_base()
+        try:
+            source = get_image_source(base=build_base)
+        except KeyError:
+            raise errors.ProviderInvalidBaseError(
+                provider_name=self._get_provider_name(), build_base=build_base
+            )
+
+        config = {"name": self.instance_name, "source": source}
 
         try:
             container = self._lxd_client.containers.create(config, wait=True)
@@ -199,13 +202,16 @@ class LXD(Provider):
             raise errors.ProviderLaunchError(
                 provider_name=self._get_provider_name(), error_message=lxd_api_error
             ) from lxd_api_error
-        container.config["user.user-data"] = self._get_cloud_user_data_string()
-        # This is setup by cloud init, but set it here to be on the safer side.
-        container.config["environment.SNAPCRAFT_BUILD_ENVIRONMENT"] = "managed-host"
         container.save(wait=True)
         self._container = container
 
         self._start()
+
+    def _supports_syscall_interception(self) -> bool:
+        # syscall interception relies on the seccomp_listener kernel feature
+        environment = self._lxd_client.host_info.get("environment", {})
+        kernel_features = environment.get("kernel_features", {})
+        return kernel_features.get("seccomp_listener", "false") == "true"
 
     def _start(self):
         if not self._lxd_client.containers.exists(self.instance_name):
@@ -215,14 +221,16 @@ class LXD(Provider):
             self._container = self._lxd_client.containers.get(self.instance_name)
 
         self._container.sync()
-        self._container.config["environment.SNAPCRAFT_HAS_TTY"] = str(
-            sys.stdout.isatty()
-        )
+
         # map to the owner of the directory we are eventually going to write the
         # snap to.
         self._container.config["raw.idmap"] = "both {!s} 0".format(
             os.stat(self.project._project_dir).st_uid
         )
+        # If possible, allow container to make safe mknod calls. Documented at
+        # https://linuxcontainers.org/lxd/docs/master/syscall-interception
+        if self._supports_syscall_interception():
+            self._container.config["security.syscalls.intercept.mknod"] = "true"
         self._container.save(wait=True)
 
         if self._container.status.lower() != "running":
@@ -234,9 +242,7 @@ class LXD(Provider):
                     provider_name=self._get_provider_name(), error_message=lxd_api_error
                 ) from lxd_api_error
 
-        # Ensure cloud init is done
-        self.echoer.wrapped("Waiting for cloud-init")
-        self._run(command=["cloud-init", "status", "--wait"])
+        self.echoer.wrapped("Waiting for container to be ready")
 
     def _stop(self):
         # If _container is still None here it means creation/starting was not
@@ -336,7 +342,13 @@ class LXD(Provider):
         was_cleaned = super().clean_project()
         if was_cleaned:
             if self._container is None:
-                self._container = self._lxd_client.containers.get(self.instance_name)
+                try:
+                    self._container = self._lxd_client.containers.get(
+                        self.instance_name
+                    )
+                except pylxd.exceptions.NotFound:
+                    # If no container found, nothing to delete.
+                    return was_cleaned
             self._stop()
             self._container.delete(wait=True)
         return was_cleaned
@@ -365,6 +377,97 @@ class LXD(Provider):
 
     def shell(self) -> None:
         self._run(command=["/bin/bash"])
+
+    def _wait_for_systemd(self) -> None:
+        # systemctl states we care about here are:
+        # - running: The system is fully operational. Process returncode: 0
+        # - degraded: The system is operational but one or more units failed.
+        #             Process returncode: 1
+        for i in range(40):
+            try:
+                self._run(["systemctl", "is-system-running"], hide_output=True)
+                break
+            except errors.ProviderExecError as exec_error:
+                if exec_error.output is not None:
+                    running_state = exec_error.output.decode().strip()
+                    if running_state == "degraded":
+                        break
+                    logger.debug(f"systemctl is-system-running: {running_state!r}")
+                sleep(0.5)
+        else:
+            self.echoer.warning("Timed out waiting for systemd to be ready...")
+
+    def _wait_for_network(self) -> None:
+        self.echoer.wrapped("Waiting for network to be ready...")
+        for i in range(40):
+            try:
+                self._run(["getent", "hosts", "snapcraft.io"], hide_output=True)
+                break
+            except errors.ProviderExecError:
+                sleep(0.5)
+        else:
+            self.echoer.warning("Failed to setup networking.")
+
+    def _setup_environment(self) -> None:
+        if self._container is None:
+            raise RuntimeError("Attempted to use container before starting.")
+
+        super()._setup_environment()
+
+        self._install_file(
+            path="/etc/systemd/network/10-eth0.network",
+            content=dedent(
+                """
+                [Match]
+                Name=eth0
+
+                [Network]
+                DHCP=ipv4
+                LinkLocalAddressing=ipv6
+
+                [DHCP]
+                RouteMetric=100
+                UseMTU=true
+                """
+            ),
+            permissions="0644",
+        )
+
+        self._install_file(
+            path="/etc/hostname", content=self.instance_name, permissions="0644"
+        )
+
+        self._wait_for_systemd()
+
+        # Use resolv.conf managed by systemd-resolved.
+        self._run(["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"])
+
+        self._run(["systemctl", "enable", "systemd-resolved"])
+        self._run(["systemctl", "enable", "systemd-networkd"])
+
+        self._run(["systemctl", "restart", "systemd-resolved"])
+        self._run(["systemctl", "restart", "systemd-networkd"])
+
+        self._wait_for_network()
+
+        # Setup snapd to bootstrap.
+        self._run(["apt-get", "update"])
+
+        # First install fuse and udev, snapd requires them.
+        # Snapcraft requires dirmngr
+        self._run(["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"])
+
+        # the system needs networking
+        self._run(["systemctl", "enable", "systemd-udevd"])
+        self._run(["systemctl", "start", "systemd-udevd"])
+
+        # And only then install snapd.
+        self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
+        self._run(["systemctl", "start", "snapd"])
+
+    def _setup_snapcraft(self):
+        self._wait_for_network()
+        super()._setup_snapcraft()
 
     def _ensure_container_running(self) -> None:
         # Sanity check - developer error if container not initialized.

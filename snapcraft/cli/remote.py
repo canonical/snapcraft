@@ -15,15 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import os
 import time
 
 from snapcraft.project import Project
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, errors
 from snapcraft.formatting_utils import humanize_list
 from typing import List
 from xdg import BaseDirectory
 from . import echo
-from ._config import enable_snapcraft_config_file
 from ._options import get_project, PromptOption
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
@@ -36,7 +37,6 @@ def remotecli():
 
 
 @remotecli.command("remote-build")
-@enable_snapcraft_config_file()
 @click.option("--recover", is_flag=True, help="Recover interrupted build.")
 @click.option("--status", is_flag=True, help="Display remote build status.")
 @click.option(
@@ -105,6 +105,9 @@ def remote_build(
         snapcraft remote-build --recover
         snapcraft remote-build --status
     """
+    if os.getenv("SUDO_USER") and os.geteuid() == 0:
+        raise SnapcraftEnvironmentError("'sudo' cannot be used with remote-build")
+
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
 
@@ -115,8 +118,9 @@ def remote_build(
     project = get_project()
 
     # TODO: use project.is_legacy() when available.
-    base = project.info.get_build_base()
-    if base is None:
+    try:
+        project._get_build_base()
+    except RuntimeError:
         raise errors.BaseRequiredError()
 
     # Use a hash of current working directory to distinguish between other

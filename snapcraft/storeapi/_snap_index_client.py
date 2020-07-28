@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2019 Canonical Ltd
+# Copyright 2016-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -95,7 +95,7 @@ class SnapIndexClient(Client):
         url = "v2/snaps/info/{}".format(snap_name)
         resp = self.get(url, headers=headers, params=params)
         if resp.status_code == 404:
-            raise errors.SnapNotFoundError(snap_name, arch)
+            raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
         resp.raise_for_status()
 
         return SnapInfo(resp.json())
@@ -117,7 +117,7 @@ class SnapIndexClient(Client):
         )
         response = self.get(url, headers=headers)
         if response.status_code != 200:
-            raise errors.SnapNotFoundError(snap_id, series=constants.DEFAULT_SERIES)
+            raise errors.SnapNotFoundError(snap_id=snap_id)
         return response.json()
 
     def get(self, url, headers=None, params=None, stream=False):

@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 class FakeStoreAPIServer(base.BaseFakeServer):
 
     _DEV_API_PATH = "/dev/api/"
+    _V2_DEV_API_PATH = "/api/v2/snaps/"
 
     def __init__(self, fake_store, server_address):
         super().__init__(server_address)
@@ -150,6 +151,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method="GET",
         )
         configurator.add_view(self.snap_state, route_name="snap_state")
+
+        configurator.add_route(
+            "snap_channel_map",
+            urllib.parse.urljoin(self._V2_DEV_API_PATH, "{snap}/channel-map"),
+            request_method="GET",
+        )
+        configurator.add_view(self.snap_channel_map, route_name="snap_channel_map")
 
         configurator.add_route(
             "snap_validations",
@@ -1113,6 +1121,80 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             json.dumps(output).encode(), response_code, [("Content-Type", content_type)]
+        )
+
+    def snap_channel_map(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+        logger.debug("Handling snap channel_map request")
+        snap = request.matchdict["snap"]
+        snap_channel_map = {
+            "channel-map": [
+                {
+                    "architecture": "all",
+                    "channel": "2.1/beta",
+                    "expiration-date": None,
+                    "revision": 1,
+                    "progressive": {"paused": None, "percentage": None},
+                    "when": "2020-02-03T20:58:37Z",
+                }
+            ],
+            "revisions": [
+                {
+                    "architectures": [
+                        "amd64",
+                        "arm64",
+                        "armhf",
+                        "i386",
+                        "s390x",
+                        "ppc64el",
+                    ],
+                    "revision": 1,
+                    "version": "10",
+                }
+            ],
+            "snap": {
+                "name": snap,
+                "channels": [
+                    {
+                        "branch": None,
+                        "fallback": None,
+                        "name": "2.1/stable",
+                        "risk": "stable",
+                        "track": "2.1",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "2.1/stable",
+                        "name": "2.1/candidate",
+                        "risk": "candidate",
+                        "track": "2.1",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "2.1/candidate",
+                        "name": "2.1/beta",
+                        "risk": "beta",
+                        "track": "2.1",
+                    },
+                    {
+                        "branch": None,
+                        "fallback": "2.1/beta",
+                        "name": "2.1/edge",
+                        "risk": "edge",
+                        "track": "2.1",
+                    },
+                ],
+                "default-track": "2.1",
+            },
+        }
+
+        response_code = 200
+        content_type = "application/json"
+        return response.Response(
+            json.dumps(snap_channel_map).encode(),
+            response_code,
+            [("Content-Type", content_type)],
         )
 
     def snap_state(self, request):

@@ -11,12 +11,14 @@ prepare: |
   chown ubuntu "$SNAP_DIR"
 
 restore: |
+  SUDO_CMD="sudo -iu ubuntu env -i PATH=$PATH"
+
   # export the full path for sudo to work
   SNAP_DIR="$(realpath "$SNAP_DIR")"
   export SNAP_DIR
   cd "$SNAP_DIR"
 
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
+  $SUDO_CMD bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   rm -f ./*.snap
 
   chown root "$SNAP_DIR"
@@ -26,19 +28,21 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  SUDO_CMD="sudo -iu ubuntu env -i PATH=$PATH"
+
   # export the full path for sudo to work
   SNAP_DIR="$(realpath "$SNAP_DIR")"
   export SNAP_DIR
   cd "$SNAP_DIR"
 
   # lxd mounting as root is just not going to work.
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft prime --use-lxd"
+  $SUDO_CMD bash -c "cd $SNAP_DIR && snapcraft prime --use-lxd"
   if [ -d prime ]; then
       echo "The prime directory should not be exposed"
       exit 1
   fi
 
-  sudo -iu ubuntu bash -c "cd $SNAP_DIR && snapcraft try --use-lxd"
+  $SUDO_CMD bash -c "cd $SNAP_DIR && snapcraft try --use-lxd"
   snap try prime
   [ "$(make-hello)" = "hello world" ]
 

@@ -27,9 +27,20 @@ logger = logging.getLogger(__name__)
 class Plug:
     """Generic plug."""
 
-    def __init__(self, *, plug_name: str) -> None:
+    def __init__(
+        self,
+        *,
+        plug_name: str,
+        plug_dict: Optional[Dict[str, Any]] = None,
+        use_string_representation: bool = False,
+    ) -> None:
         self._plug_name = plug_name
-        self._plug_dict: Dict[str, Any] = {"interface": plug_name}
+        if plug_dict is None:
+            self._plug_dict: Dict[str, Any] = dict()
+        else:
+            self._plug_dict = plug_dict
+
+        self.use_string_representation = use_string_representation
 
     @property
     def plug_name(self) -> str:
@@ -40,21 +51,12 @@ class Plug:
     def validate(self) -> None:
         """Validate plug, raising an exception on failure."""
 
-        if not self._plug_dict:
-            raise PlugValidationError(
-                plug_name=self.plug_name, message="plug has no defined attributes"
-            )
-
-        if "interface" not in self._plug_dict:
-            raise PlugValidationError(
-                plug_name=self.plug_name, message="plug has no defined interface"
-            )
+        # Nothing to validate (yet).
+        return
 
     @classmethod
     def from_dict(cls, *, plug_dict: Dict[str, Any], plug_name: str) -> "Plug":
         """Create plug from dictionary."""
-
-        plug_dict = {} if plug_dict is None else plug_dict
         interface = plug_dict.get("interface", plug_name)
 
         plug_class = PLUG_MAPPINGS.get(interface, None)
@@ -66,8 +68,27 @@ class Plug:
         plug._plug_dict.update(plug_dict)
         return plug
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Create dictionary from plug."""
+    @classmethod
+    def from_object(cls, *, plug_object: Any, plug_name: str) -> "Plug":
+        if plug_object is None:
+            return Plug(plug_name=plug_name)
+        elif isinstance(plug_object, str):
+            plug = Plug(plug_name=plug_name, use_string_representation=True)
+            plug._plug_dict["interface"] = plug_object
+            return plug
+        elif isinstance(plug_object, dict):
+            return Plug.from_dict(plug_dict=plug_object, plug_name=plug_name)
+
+        raise RuntimeError(f"unknown syntax for plug {plug_name!r}: {plug_object!r}")
+
+    def to_yaml_object(self) -> Any:
+        # To output string short-form: "slot-name: interface-type"
+        if self.use_string_representation:
+            return self._plug_dict["interface"]
+
+        # To output shortest-form: "slot-name-is-interface: <empty>"
+        if not self._plug_dict:
+            return None
 
         return OrderedDict(deepcopy(self._plug_dict))
 
@@ -150,7 +171,7 @@ class ContentPlug(Plug):
             default_provider=plug_dict.get("default-provider", None),
         )
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_yaml_object(self) -> Dict[str, str]:
         props = [("interface", self.interface)]
 
         # Only include content if set explicitly.

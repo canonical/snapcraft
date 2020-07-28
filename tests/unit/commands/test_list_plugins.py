@@ -13,20 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from unittest import mock
 
+import fixtures
 from testtools.matchers import Equals, Contains
 
+import snapcraft
 from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
 class ListPluginsCommandTestCase(CommandBaseTestCase):
 
-    scenarios = [
-        ("list-plugins", {"command_name": "list-plugins"}),
-        ("plugins alias", {"command_name": "plugins"}),
-    ]
+    command_name = "list-plugins"
 
     default_plugin_output = (
         "fake      dotruby         kernelz  checkbox-provider  oxide  hornet      dumper  "
@@ -69,28 +67,79 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         # Generate fake plugin data
         iter_modules_result = (("", p, "") for p in self.plugin_list)
 
-        patcher = mock.patch("pkgutil.iter_modules")
-        modules_mock = patcher.start()
-        modules_mock.return_value = iter_modules_result
-        self.addCleanup(patcher.stop)
+        self.fake_iter_modules = fixtures.MockPatch(
+            "pkgutil.iter_modules", return_value=iter_modules_result
+        )
+        self.useFixture(self.fake_iter_modules)
+
+    def test_default_from_snapcraft_yaml(self):
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core18",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output, Contains("Displaying plugins available for 'core18")
+        )
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v1.__path__
+        )
+
+    def test_alias(self):
+        self.command_name = "plugins"
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core18",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_core20_list(self):
+        result = self.run_command([self.command_name, "--base", "core20"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output, Contains("Displaying plugins available for 'core20")
+        )
+
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v2.__path__
+        )
 
     def test_list_plugins_non_tty(self):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)
 
-        result = self.run_command([self.command_name])
+        result = self.run_command([self.command_name, "--base", "core18"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(self.default_plugin_output))
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v1.__path__
+        )
 
     def test_list_plugins_large_terminal(self):
         fake_terminal = fixture_setup.FakeTerminal(columns=999)
         self.useFixture(fake_terminal)
 
-        result = self.run_command([self.command_name])
+        result = self.run_command([self.command_name, "--base", "core18"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Equals(self.default_plugin_output))
+        self.assertThat(result.output, Contains(self.default_plugin_output))
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v1.__path__
+        )
 
     def test_list_plugins_small_terminal(self):
         fake_terminal = fixture_setup.FakeTerminal(columns=60)
@@ -105,8 +154,11 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             "planton         fake-tools         pmake",
         ]
 
-        result = self.run_command([self.command_name])
+        result = self.run_command([self.command_name, "--base", "core18"])
 
         self.assertThat(result.exit_code, Equals(0))
-        output_slice = [o.strip() for o in result.output.splitlines()]
+        output_slice = [o.strip() for o in result.output.splitlines()][1:]
         self.assertThat(output_slice, Equals(expected_output))
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v1.__path__
+        )

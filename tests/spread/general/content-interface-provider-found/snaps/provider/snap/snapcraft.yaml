@@ -1,0 +1,21 @@
+name: content-test
+version: '0.1'
+summary: snap using a plug with a content interface should install
+description: |
+  Defining a plug using the content interface should install the snap
+  listed under default-provider.
+
+grade: devel
+base: core18
+confinement: devmode
+
+plugs:
+  content-interface:
+    content: content-interface
+    interface: content
+    target: $SNAP/content
+    default-provider: hello
+
+parts:
+  empty:
+    plugin: nil

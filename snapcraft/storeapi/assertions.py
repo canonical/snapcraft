@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017,2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -57,7 +57,7 @@ class _BaseAssertion:
         try:
             return snaps[self._snap_name]["snap-id"]
         except KeyError:
-            raise errors.SnapNotFoundError(self._snap_name)
+            raise errors.SnapNotFoundError(snap_name=self._snap_name)
 
     def __init__(self, *, snap_name, signing_key=None):
         """Create an instance to handle an assertion.

@@ -14,220 +14,268 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import logging
-import os
 
-import fixtures
-from testtools.matchers import Equals
+import pytest
 
 from snapcraft.internal.meta import command, errors
-from tests import unit
 
 
-class CommandMangleTest(unit.TestCase):
+class TestCommandMangle:
     scenarios = (
         (
             "no change",
-            dict(command_path="foo", command="foo bar", expected_command="foo bar"),
+            dict(
+                command_path="foo",
+                command_value="foo bar",
+                expected_command="foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
+            ),
         ),
         (
             "no change subpath",
             dict(
                 command_path="bin/foo",
-                command="bin/foo bar",
+                command_value="bin/foo bar",
                 expected_command="bin/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "starts with $SNAP",
             dict(
                 command_path="foo",
-                command="$SNAP/foo bar",
+                command_value="$SNAP/foo bar",
                 expected_command="foo bar",
                 expected_log="Stripped '$SNAP/' from command '$SNAP/foo bar'.",
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "quoted environment variable",
             dict(
-                command_path="foo", command='foo "$bar"', expected_command='foo "$bar"'
+                command_path="foo",
+                command_value='foo "$bar"',
+                expected_command='foo "$bar"',
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "starts with $SNAP with subpath",
             dict(
                 command_path="bin/foo",
-                command="$SNAP/bin/foo bar",
+                command_value="$SNAP/bin/foo bar",
                 expected_command="bin/foo bar",
                 expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find bin",
             dict(
                 command_path="bin/foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="bin/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find sbin",
             dict(
                 command_path="sbin/foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="sbin/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find usr/bin",
             dict(
                 command_path="usr/bin/foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="usr/bin/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find usr/sbin",
             dict(
                 command_path="usr/sbin/foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="usr/sbin/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find in root",
             dict(
-                command="sh bar",
+                command_path=None,
+                command_value="sh bar",
                 expected_command="/bin/sh bar",
                 expected_log=(
                     "The command 'sh bar' was not found in the prime directory, "
                     "it has been changed to '/bin/sh'."
                 ),
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find in non standard path",
             dict(
                 command_path="bar/foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="bar/foo bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "find in non stardard path and preferred over root",
             dict(
-                command_path="bar/sh", command="sh bar", expected_command="bar/sh bar"
+                command_path="bar/sh",
+                command_value="sh bar",
+                expected_command="bar/sh bar",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "relative shebang",
             dict(
                 command_path="foo",
-                command="foo bar",
+                command_value="foo bar",
                 expected_command="bin/python $SNAP/foo bar",
+                expected_log=None,
                 shebang="#!/usr/bin/env $SNAP/bin/python",
-                interpreter="bin/python",
+                interpreter_path="bin/python",
             ),
         ),
         (
             "root shebang",
             dict(
                 command_path="bin/foo",
-                command="bin/foo bar",
+                command_value="bin/foo bar",
                 expected_command="bin/foo bar",
+                expected_log=None,
                 shebang="/bin/python",
-                interpreter="/bin/python",
+                interpreter_path="/bin/python",
             ),
         ),
         (
             "pathless shebang",
             dict(
                 command_path="bin/foo",
-                command="bin/foo bar",
+                command_value="bin/foo bar",
                 expected_command="bin/python $SNAP/bin/foo bar",
+                expected_log=None,
                 shebang="#!/usr/bin/env python",
-                interpreter="bin/python",
+                interpreter_path="bin/python",
             ),
         ),
         (
             "pathless shebang with $SNAP leading command",
             dict(
                 command_path="bin/foo",
-                command="$SNAP/bin/foo bar",
+                command_value="$SNAP/bin/foo bar",
                 expected_command="bin/python $SNAP/bin/foo bar",
                 expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
                 shebang="#!/usr/bin/env python",
-                interpreter="bin/python",
+                interpreter_path="bin/python",
             ),
         ),
         (
             "with environment variable",
             dict(
                 command_path="bin/foo",
-                command="bin/foo bar $SNAP_DATA",
+                command_value="bin/foo bar $SNAP_DATA",
                 expected_command="bin/foo bar $SNAP_DATA",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
         (
             "single quotes preserved",
             dict(
                 command_path="bin/foo",
-                command="bin/foo bar '$SNAP_DATA'",
+                command_value="bin/foo bar '$SNAP_DATA'",
                 expected_command="bin/foo bar '$SNAP_DATA'",
+                expected_log=None,
+                shebang="",
+                interpreter_path=None,
             ),
         ),
     )
 
-    def setUp(self):
-        super().setUp()
+    def test_mangle(
+        self,
+        caplog,
+        tmp_work_path,
+        command_path,
+        command_value,
+        expected_command,
+        expected_log,
+        shebang,
+        interpreter_path,
+    ):
+        caplog.set_level(logging.INFO)
 
-        self.prime_dir = os.path.join(self.path, "prime")
-        with contextlib.suppress(AttributeError):
-            command_path = os.path.join(self.prime_dir, self.command_path)
-            os.makedirs(os.path.dirname(command_path))
-            with open(command_path, "w") as command_file:
-                with contextlib.suppress(AttributeError):
-                    print(self.shebang, file=command_file)
-            os.chmod(command_path, 0o755)
+        if command_path is not None:
+            command_path = tmp_work_path / command_path
+            command_path.parent.mkdir(parents=True, exist_ok=True)
+            with command_path.open("w") as command_file:
+                print(shebang, file=command_file)
+            command_path.chmod(0o755)
 
-        with contextlib.suppress(AttributeError):
-            if not self.interpreter.startswith("/"):
-                interpreter_path = os.path.join(self.prime_dir, self.interpreter)
-                os.makedirs(os.path.dirname(interpreter_path), exist_ok=True)
-                open(interpreter_path, "w").close()
-                os.chmod(interpreter_path, 0o755)
+        if interpreter_path is not None and not interpreter_path.startswith("/"):
+            interpreter_path = tmp_work_path / interpreter_path
+            interpreter_path.parent.mkdir(parents=True, exist_ok=True)
+            interpreter_path.touch()
+            interpreter_path.chmod(0o755)
 
-        self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(self.fake_logger)
-
-    def test_mangle(self):
-        self.assertThat(
-            command._massage_command(command=self.command, prime_dir=self.prime_dir),
-            Equals(self.expected_command),
-        )
-        try:
-            self.assertThat(self.fake_logger.output.strip(), Equals(self.expected_log))
-        except AttributeError:
-            self.assertThat(self.fake_logger.output.strip(), Equals(""))
-
-
-class CommandMangleFindErrorTest(unit.TestCase):
-    def test_find_binary_not_found(self):
-        self.assertRaises(
-            errors.PrimedCommandNotFoundError,
-            command._massage_command,
-            command="not-found",
-            prime_dir=self.path,
+        assert (
+            command._massage_command(
+                command=command_value, prime_dir=tmp_work_path.as_posix()
+            )
+            == expected_command
         )
 
-    def test_binary_not_executable(self):
-        os.mkdir("bin")
-        open(os.path.join("bin", "not-executable"), "w").close()
+        if expected_log is not None:
+            assert caplog.records[0].message == expected_log
+        else:
+            assert len(caplog.records) == 0
 
-        self.assertRaises(
-            errors.PrimedCommandNotFoundError,
-            command._massage_command,
-            command="not-executable",
-            prime_dir=self.path,
+
+def test_find_binary_not_found(tmp_path):
+    with pytest.raises(errors.PrimedCommandNotFoundError):
+        command._massage_command(command="not-found", prime_dir=tmp_path.as_posix())
+
+
+def test_binary_not_executable(tmp_work_path):
+    exec_path = tmp_work_path / "bin" / "not-executable"
+    exec_path.parent.mkdir()
+    exec_path.touch()
+
+    with pytest.raises(errors.PrimedCommandNotFoundError):
+        command._massage_command(
+            command="not-executable", prime_dir=tmp_work_path.as_posix()
         )

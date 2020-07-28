@@ -222,7 +222,7 @@ class Config(object):
 
                 # FIXME: We don't know this for sure when loading the config.
                 # Need a better separation of concerns.
-                logger.warn(
+                logger.warning(
                     "Using local configuration ({!r}), changes will not be "
                     "persisted.".format(file_path)
                 )

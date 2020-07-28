@@ -1,0 +1,40 @@
+summary: Verify LXD builds can make (some) device nodes
+
+systems:
+  - -ubuntu-16.04*    # kernel does not support syscall interception
+
+environment:
+  SNAP_DIR: ../snaps/devices
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+  cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft clean --use-lxd
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft --use-lxd
+  sudo snap install devices_*.snap --dangerous
+
+  # Check that the snap includes the expected character device files
+  [ -c /snap/devices/current/dev/null ]
+  [ -c /snap/devices/current/dev/zero ]
+  [ -c /snap/devices/current/dev/random ]
+  [ -c /snap/devices/current/dev/urandom ]

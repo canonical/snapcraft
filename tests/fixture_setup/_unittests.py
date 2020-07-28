@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import collections
 import os
 import pkgutil
 import shutil
@@ -30,6 +29,7 @@ import fixtures
 
 import snapcraft
 from snapcraft.internal import elf
+from snapcraft.plugins._plugin_finder import get_plugin_for_base
 from tests.file_utils import get_snapcraft_path
 
 
@@ -103,17 +103,23 @@ class FakePlugin(fixtures.Fixture):
 
     def __init__(self, plugin_name, plugin_class):
         super().__init__()
-        self._import_name = "snapcraft.plugins.{}".format(plugin_name.replace("-", "_"))
+        self._plugin_name = plugin_name
         self._plugin_class = plugin_class
 
     def _setUp(self):
-        plugin_module = ModuleType(self._import_name)
-        setattr(plugin_module, self._plugin_class.__name__, self._plugin_class)
-        sys.modules[self._import_name] = plugin_module
-        self.addCleanup(self._remove_module)
+        self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.plugins.get_plugin_for_base", side_effect=self.get_plugin
+            )
+        )
 
-    def _remove_module(self):
-        del sys.modules[self._import_name]
+    def get_plugin(self, plugin_name, *, build_base):
+        if plugin_name == self._plugin_name:
+            plugin_class = self._plugin_class
+        else:
+            plugin_class = get_plugin_for_base(self._plugin_name, build_base=build_base)
+
+        return plugin_class
 
 
 def _fake_elffile_extract_attributes(self):
@@ -128,6 +134,7 @@ def _fake_elffile_extract_attributes(self):
         "fake_elf-with-core-libs",
         "fake_elf-with-missing-libs",
         "fake_elf-bad-patchelf",
+        "fake_elf-with-host-libraries",
     ]:
         glibc = elf.NeededLibrary(name="libc.so.6")
         glibc.add_version("GLIBC_2.2.5")
@@ -299,6 +306,9 @@ class FakeElf(fixtures.Fixture):
             "fake_elf-shared-object": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-shared-object")
             ),
+            "fake_elf-with-host-libraries": elf.ElfFile(
+                path=os.path.join(self.root_path, "fake_elf-with-host-libraries")
+            ),
             "fake_elf-bad-ldd": elf.ElfFile(
                 path=os.path.join(self.root_path, "fake_elf-bad-ldd")
             ),
@@ -329,9 +339,16 @@ class FakeElf(fixtures.Fixture):
                 if elf_file.path.endswith("fake_elf-bad-patchelf"):
                     f.write(b"nointerpreter")
 
-        self.root_libraries = {"foo.so.1": os.path.join(self.root_path, "foo.so.1")}
+        self.root_libraries = {
+            "foo.so.1": os.path.join(self.root_path, "foo.so.1"),
+            "moo.so.2": os.path.join(self.root_path, "non-standard", "moo.so.2"),
+        }
 
-        for root_library in self.root_libraries.values():
+        barsnap_elf = os.path.join(self.core_base_path, "barsnap.so.2")
+        elf_list = [*self.root_libraries.values(), barsnap_elf]
+
+        for root_library in elf_list:
+            os.makedirs(os.path.dirname(root_library), exist_ok=True)
             with open(root_library, "wb") as f:
                 f.write(b"\x7fELF")
 
@@ -424,204 +441,6 @@ class FakeSnapCommand(fixtures.Fixture):
             return "Downloaded  ".encode()
 
 
-class FakeAptCache(fixtures.Fixture):
-    class Cache:
-        def __init__(self):
-            super().__init__()
-            self.packages = collections.OrderedDict()
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            pass
-
-        def __setitem__(self, key, item):
-            package_parts = key.split("=")
-            package_name = package_parts[0]
-            version = package_parts[1] if len(package_parts) > 1 else item.version
-            if package_name in self.packages:
-                self.packages[package_name].version = version
-            else:
-                if version and not item.version:
-                    item.version = version
-                self.packages[package_name] = item
-
-        def __getitem__(self, key):
-            if "=" in key:
-                key = key.split("=")[0]
-            return self.packages[key]
-
-        def __contains__(self, key):
-            return key in self.packages
-
-        def __iter__(self):
-            return iter(self.packages.values())
-
-        def open(self):
-            pass
-
-        def close(self):
-            pass
-
-        def update(self, *args, **kwargs):
-            pass
-
-        def get_changes(self):
-            return [
-                self.packages[package]
-                for package in self.packages
-                if self.packages[package].marked_install
-            ]
-
-        def get_providing_packages(self, package_name):
-            providing_packages = []
-            for package in self.packages:
-                if package_name in self.packages[package].provides:
-                    providing_packages.append(self.packages[package])
-            return providing_packages
-
-        def is_virtual_package(self, package_name):
-            is_virtual = False
-            if package_name not in self.packages:
-                for package in self.packages:
-                    if package_name in self.packages[package].provides:
-                        return True
-            return is_virtual
-
-    def __init__(self, packages=None):
-        super().__init__()
-        self.packages = packages if packages else []
-
-    def setUp(self):
-        super().setUp()
-        temp_dir_fixture = fixtures.TempDir()
-        self.useFixture(temp_dir_fixture)
-        self.path = temp_dir_fixture.path
-        patcher = mock.patch("snapcraft.repo._deb.apt.Cache")
-        self.mock_apt_cache = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.cache = self.Cache()
-        self.mock_apt_cache.return_value = self.cache
-        for package, version in self.packages:
-            self.add_package(FakeAptCachePackage(package, version))
-
-        def fetch_binary(package_candidate, destination):
-            path = os.path.join(self.path, "{}.deb".format(package_candidate.name))
-            open(path, "w").close()
-            return path
-
-        patcher = mock.patch("snapcraft.repo._deb._AptCache.fetch_binary")
-        mock_fetch_binary = patcher.start()
-        mock_fetch_binary.side_effect = fetch_binary
-        self.addCleanup(patcher.stop)
-
-        # Add all the packages in the manifest.
-        with open(
-            os.path.join(
-                get_snapcraft_path(), "snapcraft", "internal", "repo", "manifest.txt"
-            )
-        ) as manifest_file:
-            self.add_packages([line.strip() for line in manifest_file])
-
-    def add_package(self, package):
-        package.temp_dir = self.path
-        self.cache[package.name] = package
-
-    def add_packages(self, package_names):
-        for name in package_names:
-            self.cache[name] = FakeAptCachePackage(name)
-
-
-class FakeAptCachePackage:
-    def __init__(
-        self,
-        name,
-        version=None,
-        installed=None,
-        temp_dir=None,
-        provides=None,
-        priority="non-essential",
-    ):
-        super().__init__()
-        self.temp_dir = temp_dir
-        self.name = name
-        self._version = None
-        self.versions = {}
-        self.version = version
-        self.candidate = self
-        self.dependencies = []
-        self.conflicts = []
-        self.provides = provides if provides else []
-        if installed:
-            # XXX The installed attribute requires some values that the fake
-            # package also requires. The shortest path to do it that I found
-            # was to get installed to return the same fake package.
-            self.installed = self
-        else:
-            self.installed = None
-        self.priority = priority
-        self.marked_install = False
-        self.is_auto_installed = False
-
-    def __str__(self):
-        if "=" in self.name:
-            return self.name
-        else:
-            return "{}={}".format(self.name, self.version)
-
-    @property
-    def is_auto_removable(self):
-        return self.marked_install and self.is_auto_installed
-
-    @property
-    def version(self):
-        return self._version
-
-    @version.setter
-    def version(self, version):
-        self._version = version
-        if version is not None:
-            self.versions.update({version: self})
-
-    def mark_install(self, *, auto_fix=True, from_user=True):
-        if not self.installed:
-            # First, verify dependencies are valid. If not, bail.
-            for or_set in self.dependencies:
-                for dep in or_set:
-                    if "broken" in dep.name:
-                        return
-
-            for or_set in self.dependencies:
-                if or_set and or_set[0].target_versions:
-                    # Install the first target version of the first OR
-                    or_set[0].target_versions[0].mark_install(
-                        auto_fix=auto_fix, from_user=from_user
-                    )
-            for conflict in self.conflicts:
-                conflict.mark_keep()
-
-            self.marked_install = True
-            self.is_auto_installed = not from_user
-
-    def mark_auto(self, auto=True):
-        self.is_auto_installed = auto
-
-    def mark_keep(self):
-        self.marked_install = False
-        self.is_auto_installed = False
-
-    def get_dependencies(self, _):
-        return []
-
-
-class FakeAptBaseDependency:
-    def __init__(self, name, target_versions):
-        self.name = name
-        self.target_versions = target_versions
-
-
 class FakeSnapcraftctl(fixtures.Fixture):
     def _setUp(self):
         super()._setUp()
@@ -669,12 +488,3 @@ class FakeMultipass(fixtures.Fixture):
 
         multipass = os.path.join(tempdir, "multipass")
         os.symlink("/bin/true", multipass)
-
-
-class SilentSnapProgress(fixtures.Fixture):
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch("snapcraft.internal.lifecycle._packer.ProgressBar")
-        patcher.start()
-        self.addCleanup(patcher.stop)

@@ -18,7 +18,7 @@ export GTK_IM_MODULE_FILE="$GTK_IM_MODULE_DIR/immodules.cache"
 # shellcheck disable=SC2154
 if [ "$needs_update" = true ]; then
   rm -rf "$GTK_IM_MODULE_DIR"
-  mkdir -p "$GTK_IM_MODULE_DIR"
+  ensure_dir_exists "$GTK_IM_MODULE_DIR"
   ln -s "$SNAP_DESKTOP_RUNTIME"/usr/lib/"$ARCH"/gtk-3.0/3.0.0/immodules/*.so "$GTK_IM_MODULE_DIR"
   async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
 fi

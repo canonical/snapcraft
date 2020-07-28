@@ -21,68 +21,217 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft.cli._options as options
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
 
 
-class TestProviderOptions(unit.TestCase):
+class TestProviderOptions:
     scenarios = [
-        ("host empty", dict(provider="host", kwargs=dict())),
-        ("host http proxy", dict(provider="host", kwargs=dict(http_proxy="1.1.1.1"))),
-        ("host https proxy", dict(provider="host", kwargs=dict(https_proxy="1.1.1.1"))),
+        ("host empty", dict(provider="host", kwargs=dict(), flags=dict())),
+        (
+            "host http proxy",
+            dict(
+                provider="host",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "host https proxy",
+            dict(
+                provider="host",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "host build info",
+            dict(
+                provider="host",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "host build info off",
+            dict(provider="host", kwargs=dict(enable_manifest=False), flags=dict()),
+        ),
+        (
+            "host image info",
+            dict(
+                provider="host",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
+        ),
         (
             "host all",
             dict(
                 provider="host",
                 kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
             ),
         ),
-        ("lxd empty", dict(provider="lxd", kwargs=dict())),
-        ("lxd http proxy", dict(provider="lxd", kwargs=dict(http_proxy="1.1.1.1"))),
-        ("lxd https proxy", dict(provider="lxd", kwargs=dict(https_proxy="1.1.1.1"))),
+        ("lxd empty", dict(provider="lxd", kwargs=dict(), flags=dict())),
+        (
+            "lxd http proxy",
+            dict(
+                provider="lxd",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "lxd https proxy",
+            dict(
+                provider="lxd",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "lxd build info",
+            dict(
+                provider="lxd",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "lxd image info",
+            dict(
+                provider="lxd",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
+        ),
         (
             "lxd all",
             dict(
-                provider="lxd", kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1")
+                provider="lxd",
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
-        ("managed-host empty", dict(provider="managed-host", kwargs=dict())),
+        (
+            "managed-host empty",
+            dict(provider="managed-host", kwargs=dict(), flags=dict()),
+        ),
         (
             "managed-host http proxy",
-            dict(provider="managed-host", kwargs=dict(http_proxy="1.1.1.1")),
+            dict(
+                provider="managed-host",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
         ),
         (
             "managed-host https proxy",
-            dict(provider="managed-host", kwargs=dict(https_proxy="1.1.1.1")),
+            dict(
+                provider="managed-host",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "managed-host build info",
+            dict(
+                provider="managed-host",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "managed-host image info",
+            dict(
+                provider="managed-host",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
         ),
         (
             "managed-host all",
             dict(
                 provider="managed-host",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
-        ("multipass empty", dict(provider="multipass", kwargs=dict())),
+        ("multipass empty", dict(provider="multipass", kwargs=dict(), flags=dict())),
         (
             "multipass http proxy",
-            dict(provider="multipass", kwargs=dict(http_proxy="1.1.1.1")),
+            dict(
+                provider="multipass",
+                kwargs=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1"),
+            ),
         ),
         (
             "multipass https proxy",
-            dict(provider="multipass", kwargs=dict(https_proxy="1.1.1.1")),
+            dict(
+                provider="multipass",
+                kwargs=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1"),
+            ),
+        ),
+        (
+            "multipass build info",
+            dict(
+                provider="multipass",
+                kwargs=dict(enable_manifest=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+            ),
+        ),
+        (
+            "multipass image info",
+            dict(
+                provider="multipass",
+                kwargs=dict(manifest_image_information="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+            ),
         ),
         (
             "multipass all",
             dict(
                 provider="multipass",
-                kwargs=dict(http_proxy="1.1.1.1", https_proxy="1.1.1.1"),
+                kwargs=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    enable_manifest=True,
+                    manifest_image_information="{}",
+                ),
+                flags=dict(
+                    http_proxy="1.1.1.1",
+                    https_proxy="1.1.1.1",
+                    SNAPCRAFT_BUILD_INFO=True,
+                    SNAPCRAFT_IMAGE_INFO="{}",
+                ),
             ),
         ),
     ]
 
-    def test_valid_flags(self):
-        flags = options.get_build_provider_flags(self.provider, **self.kwargs)
-
-        self.assertThat(flags, Equals(self.kwargs))
+    def test(self, provider, kwargs, flags):
+        assert options.get_build_provider_flags(provider, **kwargs) == flags
 
 
 class TestInvalidBuildProviderFlags(unit.TestCase):
@@ -150,3 +299,52 @@ class TestInvalidBuildProviderFlags(unit.TestCase):
                 "invalid-provider",
                 **kwargs,
             )
+
+
+class TestSudo(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.useFixture(
+            fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", "host")
+        )
+        self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
+        self.fake_euid = self.useFixture(
+            fixtures.MockPatch("os.geteuid", return_value=0)
+        ).mock
+
+    def test_click_error_with_sudo_for_providers(self):
+        for provider in ["lxd", "multipass"]:
+            self.useFixture(
+                fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", provider)
+            )
+
+            self.fake_euid.return_value = 0
+            self.assertRaisesRegex(
+                SnapcraftEnvironmentError,
+                f"^'sudo' cannot be used with build provider '{provider}'$",
+                options._sanity_check_build_provider_flags,
+                provider,
+            )
+
+    def test_click_no_error_with_sudo_non_root_for_providers(self):
+        for provider in ["lxd", "multipass"]:
+            self.useFixture(
+                fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", provider)
+            )
+
+            self.fake_euid.return_value = 1000
+            options._sanity_check_build_provider_flags(provider)
+
+    @mock.patch("click.echo")
+    def test_click_warn_sudo_with_host(self, echo_mock):
+        options._sanity_check_build_provider_flags("host")
+        echo_mock.assert_called_once_with(
+            "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+        )
+
+    @mock.patch("click.echo")
+    def test_click_no_warn_sudo_non_root_with_host(self, echo_mock):
+        self.fake_euid.return_value = 1000
+        options._sanity_check_build_provider_flags("host")
+        echo_mock.assert_not_called()

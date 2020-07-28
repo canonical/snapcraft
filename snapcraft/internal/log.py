@@ -77,3 +77,4 @@ def configure(logger_name=None, log_level=None):
         logging.getLogger("requests").setLevel(log_level)
     else:
         logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("gnupg").setLevel(logging.WARNING)

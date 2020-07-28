@@ -4,10 +4,12 @@ flake8==3.7.9
 pyflakes==2.1.1
 fixtures==3.0.0
 mccabe==0.6.1
-mypy==0.740
+mypy==0.770
 testscenarios==0.5.0
 pexpect==4.7.0
 pycodestyle==2.5.0
 pyftpdlib==1.5.5
 pyramid==1.10.4
-pyinstaller==3.5; sys_platform == 'win32'
+pyinstaller==3.6; sys_platform == 'win32'
+pytest==5.4.2
+pytest-cov==2.9.0

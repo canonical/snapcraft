@@ -1,0 +1,66 @@
+#+TITLE: 20200316 Enabling Experimental Features
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-03-15]
+
+* Scope
+It is often required to release a feature for Snapcraft *hidden* behind flags to
+not inadvertently make use of them without tending to the consequences for its
+potential instability, the instability can be present in different ways:
+
+- The feature itself is not stable or does not consider all the corner cases.
+- The command line interface is subject to change.
+- The command output is subject to change.
+
+This document defines a common pattern to follow to enable features that must be
+disabled by default.
+
+* Guidelines
+These are the guidelines to enable a feature through a feature flag:
+
+- The feature flag toggle shall be present as a command line option and as an
+  environment variable.
+- The feature flag toggle shall always be present in the help.
+- When the feature flag is toggled a warning shall be displayed.
+
+In general features are enabled with options on the command line interface with
+the following pattern =--experimental-<feature>= and with an environment
+variable =SNAPCRAFT_EXPERIMENTAL_<FEATURE>=.
+
+** Enabling feature that affects =snapcraft.yaml=
+Given the feature *feature*, the syntax shall have the following pattern:
+#+BEGIN_SRC sh
+snapcraft --experimental-feaure
+#+END_SRC
+And through the environment variable:
+#+BEGIN_SRC sh
+SNAPCRAFT_EXPERIMENTAL_FEATURE=y snapcraft
+#+END_SRC
+
+If =snapcraft-yaml= makes use of a feature that requires a feature flag and
+error shall be presented with hints about enabling the experimental feature.
+
+** Using a feature enabled by command line options
+Given the feature *feature* enabled by use of the =--feature= option, the
+syntax shall have the following pattern:
+#+BEGIN_SRC sh
+snapcraft --feature --experimental-feature
+#+END_SRC
+And through the environment variable:
+#+BEGIN_SRC sh
+SNAPCRAFT_EXPERIMENTAL_FEATURE=y snapcraft --feature
+#+END_SRC
+
+When using =--feature= without using the experimental flag, a command line
+option error shall be presented.
+
+** Using a feature that affects output
+To expose new output through a feature flag the syntax shall have the following pattern:
+#+BEGIN_SRC sh
+snapcraft --experimental-feature
+#+END_SRC
+And through the environment variable:
+#+BEGIN_SRC sh
+SNAPCRAFT_EXPERIMENTAL_FEATURE=y snapcraft
+#+END_SRC
+
+When the flag is not present, the *stable* output must be shown.

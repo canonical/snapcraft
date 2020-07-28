@@ -1,0 +1,24 @@
+name: fake-snapd
+version: "1.0"
+summary: test snapd type
+description: |
+  some of the characteristics from the snapd snap
+  (1) adapter is none
+  (2) build-base is core
+  (3) no base is specified
+  (4) type is unspecified
+
+build-base: core
+grade: stable
+
+parts:
+  fake-snapd:
+    plugin: make
+    source: .
+    build-packages:
+      - gcc
+
+apps:
+  fake-snapd:
+    command: bin/fake-snapd
+    adapter: none

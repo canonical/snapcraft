@@ -17,7 +17,6 @@ import functools
 import logging
 import os
 import sys
-from distutils import util
 
 import click
 
@@ -29,20 +28,17 @@ from .discovery import discoverycli
 from .legacy import legacycli
 from .lifecycle import lifecyclecli
 from .store import storecli
-from .inspect import inspectcli
 from .remote import remotecli
 from .help import helpcli
 from .extensions import extensioncli
 from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
-from .ci import cicli
 from ._command_group import SnapcraftGroup
-from ._options import add_build_options, add_provider_options
+from ._options import add_provider_options
 from ._errors import exception_handler
 
 
 command_groups = [
     storecli,
-    cicli,
     assertionscli,
     containerscli,
     discoverycli,
@@ -51,7 +47,6 @@ command_groups = [
     lifecyclecli,
     extensioncli,
     versioncli,
-    inspectcli,
     remotecli,
 ]
 
@@ -65,19 +60,12 @@ command_groups = [
     message=SNAPCRAFT_VERSION_TEMPLATE, version=snapcraft.__version__  # type: ignore
 )
 @click.pass_context
-@add_build_options(hidden=True)
 @add_provider_options(hidden=True)
 @click.option("--debug", "-d", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
-    # Debugging snapcraft itself is not tied to debugging a snapcraft project.
-    try:
-        is_snapcraft_developer_debug = util.strtobool(
-            os.getenv("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG", "n")
-        )
-    except ValueError:
-        is_snapcraft_developer_debug = False
+    is_snapcraft_developer_debug = kwargs["enable_developer_debug"]
     if is_snapcraft_developer_debug:
         log_level = logging.DEBUG
         click.echo(

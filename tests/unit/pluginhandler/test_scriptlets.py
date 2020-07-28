@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import functools
 import os
 import subprocess
 import textwrap
 
+import fixtures
 import testtools
 from testtools.matchers import Equals
 from testscenarios.scenarios import multiply_scenarios
@@ -63,6 +63,18 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
         os.mkdir("src")
         open(os.path.join("src", "version.txt"), "w").write("v1.0")
 
+        fake_install_build_packages = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_packages",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_packages)
+
+        fake_install_build_snaps = fixtures.MockPatch(
+            "snapcraft.internal.lifecycle._runner._install_build_snaps",
+            return_value=list(),
+        )
+        self.useFixture(fake_install_build_snaps)
+
     def test_scriptlet_after_repull(self):
         self.run_command(["prime"])
 
@@ -83,60 +95,69 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
         self.assertThat(z["version"], Equals("v2.0"))
 
 
-class ScriptletSetterTestCase(unit.TestCase):
+class TestScriptletSetter:
 
     scenarios = [
         ("set-version", {"setter": "set-version", "getter": "get_version"}),
         ("set-grade", {"setter": "set-grade", "getter": "get_grade"}),
     ]
 
-    def test_set_in_pull(self):
-        handler = self.load_part(
+    def test_set_in_pull(self, tmp_work_path, setter, getter):
+        handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-pull": "snapcraftctl {} test-value".format(self.setter)
+                "override-pull": "snapcraftctl {} test-value".format(setter)
             },
         )
 
         handler.pull()
-        metadata = handler.get_pull_state().scriptlet_metadata
-        self.assertThat(getattr(metadata, self.getter)(), Equals("test-value"))
 
-    def test_set_in_build(self):
-        handler = self.load_part(
+        pull_metadata = handler.get_pull_state().scriptlet_metadata
+
+        assert getattr(pull_metadata, getter)() == "test-value"
+
+    def test_set_in_build(self, tmp_work_path, setter, getter):
+        handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-build": "snapcraftctl {} test-value".format(self.setter)
+                "override-build": "snapcraftctl {} test-value".format(setter)
             },
         )
 
         handler.pull()
         handler.build()
-        metadata = handler.get_build_state().scriptlet_metadata
-        self.assertThat(getattr(metadata, self.getter)(), Equals("test-value"))
-        self.assertFalse(handler.get_pull_state().scriptlet_metadata)
 
-    def test_set_in_stage(self):
-        handler = self.load_part(
+        pull_metadata = handler.get_pull_state().scriptlet_metadata
+        build_metadata = handler.get_build_state().scriptlet_metadata
+
+        assert getattr(pull_metadata, getter)() is None
+        assert getattr(build_metadata, getter)() == "test-value"
+
+    def test_set_in_stage(self, tmp_work_path, setter, getter):
+        handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-stage": "snapcraftctl {} test-value".format(self.setter)
+                "override-stage": "snapcraftctl {} test-value".format(setter)
             },
         )
 
         handler.pull()
         handler.build()
         handler.stage()
-        metadata = handler.get_stage_state().scriptlet_metadata
-        self.assertThat(getattr(metadata, self.getter)(), Equals("test-value"))
-        self.assertFalse(handler.get_pull_state().scriptlet_metadata)
-        self.assertFalse(handler.get_build_state().scriptlet_metadata)
 
-    def test_set_in_prime(self):
-        handler = self.load_part(
+        pull_metadata = handler.get_pull_state().scriptlet_metadata
+        build_metadata = handler.get_build_state().scriptlet_metadata
+        stage_metadata = handler.get_stage_state().scriptlet_metadata
+
+        assert getattr(pull_metadata, getter)() is None
+        assert getattr(build_metadata, getter)() is None
+        assert getattr(stage_metadata, getter)() == "test-value"
+
+    def test_set_in_prime(self, tmp_work_path, setter, getter):
+        handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-prime": "snapcraftctl {} test-value".format(self.setter)
+                "override-prime": "snapcraftctl {} test-value".format(setter)
             },
         )
 
@@ -144,51 +165,102 @@ class ScriptletSetterTestCase(unit.TestCase):
         handler.build()
         handler.stage()
         handler.prime()
-        metadata = handler.get_prime_state().scriptlet_metadata
-        self.assertThat(getattr(metadata, self.getter)(), Equals("test-value"))
-        self.assertFalse(handler.get_pull_state().scriptlet_metadata)
-        self.assertFalse(handler.get_build_state().scriptlet_metadata)
-        self.assertFalse(handler.get_stage_state().scriptlet_metadata)
+
+        pull_metadata = handler.get_pull_state().scriptlet_metadata
+        build_metadata = handler.get_build_state().scriptlet_metadata
+        stage_metadata = handler.get_stage_state().scriptlet_metadata
+        prime_metadata = handler.get_prime_state().scriptlet_metadata
+
+        assert getattr(pull_metadata, getter)() is None
+        assert getattr(build_metadata, getter)() is None
+        assert getattr(stage_metadata, getter)() is None
+        assert getattr(prime_metadata, getter)() == "test-value"
 
 
-class ScriptletMultipleSettersErrorTestCase(unit.TestCase):
+class TestScriptletMultipleSettersError:
 
     scriptlet_scenarios = [
-        ("override-pull", {"override_pull": "snapcraftctl {setter} 1"}),
-        ("override-build", {"override_build": "snapcraftctl {setter} 2"}),
-        ("override-stage", {"override_stage": "snapcraftctl {setter} 3"}),
-        ("override-prime", {"override_prime": "snapcraftctl {setter} 4"}),
+        (
+            "override-pull/build",
+            {
+                "override_pull": "snapcraftctl {setter} 1",
+                "override_build": "snapcraftctl {setter} 2",
+                "override_stage": None,
+                "override_prime": None,
+            },
+        ),
+        (
+            "override-pull/stage",
+            {
+                "override_pull": "snapcraftctl {setter} 1",
+                "override_build": None,
+                "override_stage": "snapcraftctl {setter} 3",
+                "override_prime": None,
+            },
+        ),
+        (
+            "override-pull/prime",
+            {
+                "override_pull": "snapcraftctl {setter} 1",
+                "override_build": None,
+                "override_stage": None,
+                "override_prime": "snapcraftctl {setter} 4",
+            },
+        ),
+        (
+            "override-build/stage",
+            {
+                "override_pull": None,
+                "override_build": "snapcraftctl {setter} 2",
+                "override_stage": "snapcraftctl {setter} 3",
+                "override_prime": None,
+            },
+        ),
+        (
+            "override-build/prime",
+            {
+                "override_pull": None,
+                "override_build": "snapcraftctl {setter} 2",
+                "override_stage": None,
+                "override_prime": "snapcraftctl {setter} 4",
+            },
+        ),
+        (
+            "override-stage/prime",
+            {
+                "override_pull": None,
+                "override_build": None,
+                "override_stage": "snapcraftctl {setter} 3",
+                "override_prime": "snapcraftctl {setter} 4",
+            },
+        ),
     ]
-
-    multiple_setters_scenarios = multiply_scenarios(
-        scriptlet_scenarios, scriptlet_scenarios
-    )
 
     setter_scenarios = [
         ("set-version", {"setter": "set-version"}),
         ("set-grade", {"setter": "set-grade"}),
     ]
 
-    scenarios = multiply_scenarios(setter_scenarios, multiple_setters_scenarios)
+    scenarios = multiply_scenarios(setter_scenarios, scriptlet_scenarios)
 
-    def test_set_multiple_times(self):
+    def test_set_multiple_times(
+        self,
+        tmp_work_path,
+        setter,
+        override_pull,
+        override_build,
+        override_stage,
+        override_prime,
+    ):
         part_properties = {}
-        with contextlib.suppress(AttributeError):
-            part_properties["override-pull"] = self.override_pull.format(
-                setter=self.setter
-            )
-        with contextlib.suppress(AttributeError):
-            part_properties["override-build"] = self.override_build.format(
-                setter=self.setter
-            )
-        with contextlib.suppress(AttributeError):
-            part_properties["override-stage"] = self.override_stage.format(
-                setter=self.setter
-            )
-        with contextlib.suppress(AttributeError):
-            part_properties["override-prime"] = self.override_prime.format(
-                setter=self.setter
-            )
+        if override_pull is not None:
+            part_properties["override-pull"] = override_pull.format(setter=setter)
+        if override_build is not None:
+            part_properties["override-build"] = override_build.format(setter=setter)
+        if override_stage is not None:
+            part_properties["override-stage"] = override_stage.format(setter=setter)
+        if override_prime is not None:
+            part_properties["override-prime"] = override_prime.format(setter=setter)
 
         # A few of these test cases result in only one of these scriptlets
         # being set. In that case, we actually want to double them up (i.e.
@@ -198,7 +270,7 @@ class ScriptletMultipleSettersErrorTestCase(unit.TestCase):
             for key, value in part_properties.items():
                 part_properties[key] += "\n{}".format(value)
 
-        handler = self.load_part("test_part", part_properties=part_properties)
+        handler = unit.load_part("test_part", part_properties=part_properties)
 
         with testtools.ExpectedException(errors.ScriptletRunError):
             silent_popen = functools.partial(

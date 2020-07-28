@@ -1,0 +1,99 @@
+#+TITLE: Progressive Releases
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-03-29]
+
+* Scope
+*Progressive Releases* is scoped to defining how /progressive releases/ are
+executed and how their /status/ is displayed.
+
+* Enabling the feature
+As an experimental feature, an option must be used to enable this feature as
+defined on [[file:20200316-enabling-experimental-features.org][Enabling Experimental Features]].
+
+Such that a /progressive/ =status= can only be shown or a /progressive/
+=release= executed if combined with the experimental flag:
+
+#+BEGIN_SRC sh
+snapcraft <status|release> --experimental-progressive-releases
+#+END_SRC
+
+Or with the following environment variable defined:
+#+BEGIN_SRC sh
+SNAPCRAFT_EXPERIMENTAL_PROGRESSIVE_RELEASES=y snapcraft <status|release>
+#+END_SRC
+
+When the flag is used, the following shall be displayed using
+=snapcraft.cli.echo.warning=:
+
+#+BEGIN_SRC sh
+*EXPERIMENTAL* progressive releases in use.
+#+END_SRC
+
+* User Experience
+** Showing Progress
+Progress shall be displayed when used when the definitions in [[*Enabling the feature][Enabling the feature]]
+are satisfied.
+
+When run, for the case of a snap that has a /progressive release/ on the =edge=
+channel set to 80% with 71% for the /progressive release/ and 23% of the
+population on the actual release, the following behavior shall be observed:
+
+#+BEGIN_SRC sh
+$ snapcraft status candycane
+Track     Arch    Channel    Version    Revision    Progress
+latest    all     stable     -          -           -
+                  candidate  -          -           -
+                  beta       0.6        8           23 → 20%
+                             10         13          71 → 80%
+                  edge       ↑          ↑           -
+#+END_SRC
+
+If a /progressive release/ is done on =edge= while =edge= is currently
+following =beta=, then following information shall be observed:
+
+#+BEGIN_SRC sh
+$ snapcraft status candycane
+Track     Arch    Channel    Version    Revision    Progress
+latest    all     stable     -          -           -
+                  candidate  -          -           -
+                  beta       10         13           -
+                  edge       ↑          ↑           55 → 40%
+                             11         15          44 → 60%
+#+END_SRC
+
+** Executing a Release
+To execute a /progressive release/ the following syntax shall be used, assuming
+the definitions in [[*Enabling the feature][Enabling the feature]] are followed:
+
+#+BEGIN_SRC sh
+$ snapcraft release <snap-name> <revision> <channel,channel,...> --progressive <percentage>
+#+END_SRC
+
+Will create a /progressive release/ for each =channel= with a percentage of
+=percentage=. After successfully releasing status as defined in [[*Showing Progress][Showing Progress]]
+scoped to tracks in =channel= the architecture of =revision= shall be displayed
+followed by the list of opened channels.
+
+When the progressive =percentage= is set to 100%, a normal release shall take
+place.
+
+* Implementation
+** Snap Store API
+New API is required to implement the /progressive releases/ feature. That is
+provided by the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][channel-map]] endpoint.
+
+Use of the API shall be mediated by implementation following the code style used
+in =snapcraft.storeapi=.
+
+The existing [[https://dashboard.snapcraft.io/docs/api/snap.html#release-a-snap-build-to-a-channel][release]] endpoint now takes a new parameter =progressive= where the
+=percentage= for the release is set.
+
+As this API is the preferred mechanism used for displaying /status/, the [[https://dashboard.snapcraft.io/docs/api/snap.html#retrieve-the-publishing-state-of-a-snap][state]]
+endpoint shall be removed from the code base.
+
+** Affected commands
+These commands are affected as they display status information on command execution:
+- =release=
+- =status=
+- =promote=
+- =close=

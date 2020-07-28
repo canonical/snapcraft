@@ -202,6 +202,10 @@ class Application:
 
         # Apply passthrough keys.
         app_dict.update(self.passthrough)
+
+        # Ensure passthrough is removed.
+        app_dict.pop("passthrough", None)
+
         return app_dict
 
     def __repr__(self) -> str:

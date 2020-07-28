@@ -16,10 +16,10 @@
 
 from collections import OrderedDict
 
-from testtools.matchers import Is
+from testtools.matchers import Equals, Is
 
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.plugs import Plug, ContentPlug
+from snapcraft.internal.meta.plugs import ContentPlug, Plug
 from tests import unit
 
 
@@ -34,14 +34,6 @@ class GenericPlugTests(unit.TestCase):
 
         self.assertEqual(plug_name, plug.plug_name)
         self.assertEqual(plug_name, plug_from_dict.plug_name)
-
-    def test_invalid_raises_exception(self):
-        plug_name = "plug-test"
-
-        plug = Plug(plug_name=plug_name)
-        plug._plug_dict = dict({})
-
-        self.assertRaises(errors.PlugValidationError, plug.validate)
 
     def test_from_empty_dict(self):
         plug_dict = OrderedDict({})
@@ -58,6 +50,30 @@ class GenericPlugTests(unit.TestCase):
         plug = Plug.from_dict(plug_dict=plug_dict, plug_name=plug_name)
 
         plug.validate()
+
+    def test_from_object_none(self):
+        plug = Plug.from_object(plug_name="plug-name", plug_object=None)
+        plug.validate()
+
+        self.assertThat(plug._plug_dict, Equals(dict()))
+
+    def test_from_object_string(self):
+        plug = Plug.from_object(plug_name="plug-name", plug_object="some-interface")
+        plug.validate()
+
+        self.assertThat(plug._plug_dict["interface"], Equals("some-interface"))
+        self.assertThat(plug.use_string_representation, Equals(True))
+
+    def test_from_object_dict(self):
+        plug_dict = OrderedDict(
+            {"interface": "some-interface", "someprop": "somevalue"}
+        )
+        plug_name = "plug-test"
+
+        plug = Plug.from_object(plug_object=plug_dict, plug_name=plug_name)
+
+        plug.validate()
+        self.assertThat(plug._plug_dict["interface"], Equals("some-interface"))
 
 
 class ContentPlugTests(unit.TestCase):
@@ -97,7 +113,7 @@ class ContentPlugTests(unit.TestCase):
         transformed_dict = plug_dict.copy()
         transformed_dict["default-provider"] = plug_provider
 
-        self.assertEqual(transformed_dict, plug.to_dict())
+        self.assertEqual(transformed_dict, plug.to_yaml_object())
         self.assertEqual(plug_name, plug.plug_name)
         self.assertEqual(plug_dict["content"], plug.content)
         self.assertEqual(plug_dict["target"], plug.target)

@@ -15,6 +15,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from ._clean import clean  # noqa: F401
 from ._init import init  # noqa: F401
-from ._packer import pack  # noqa: F401
 from ._runner import execute  # noqa: F401
 from ._status_cache import StatusCache  # noqa: F401

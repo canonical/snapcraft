@@ -1,6 +1,7 @@
 #!/bin/sh
 
 deactivate() {
+    unset SNAP_STORE_DASHBOARD_ROOT_URL
     unset UBUNTU_STORE_API_ROOT_URL
     unset UBUNTU_STORE_SEARCH_ROOT_URL
     unset UBUNTU_STORE_UPLOAD_ROOT_URL
@@ -11,6 +12,7 @@ deactivate() {
     unset deactivate
 }
 
+export SNAP_STORE_DASHBOARD_ROOT_URL="https://dashboard.staging.snapcraft.io/"
 export UBUNTU_STORE_API_ROOT_URL="https://dashboard.staging.snapcraft.io/dev/api/"
 export UBUNTU_STORE_SEARCH_ROOT_URL="https://api.staging.snapcraft.io/"
 export UBUNTU_STORE_UPLOAD_ROOT_URL="https://upload.apps.staging.ubuntu.com/"

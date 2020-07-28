@@ -269,18 +269,6 @@ class SnapcraftOrganizeError(SnapcraftError):
         super().__init__(part_name=part_name, message=message)
 
 
-class MissingCommandError(SnapcraftError):
-
-    fmt = (
-        "Failed to run command: "
-        "One or more packages are missing, please install:"
-        " {required_commands!r}"
-    )
-
-    def __init__(self, required_commands):
-        super().__init__(required_commands=required_commands)
-
-
 class InvalidWikiEntryError(SnapcraftError):
 
     fmt = (
@@ -752,3 +740,30 @@ class SnapcraftPluginAssertionError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Ensure the part's configuration and sources are correct."
+
+
+class SnapcraftPluginBuildError(SnapcraftException):
+    """An exception to raise when the PluginV2 build fails at runtime."""
+
+    def __init__(self, *, part_name: str) -> None:
+        self._part_name = part_name
+
+    def get_brief(self) -> str:
+        return f"Failed to build {self._part_name!r}."
+
+    def get_resolution(self) -> str:
+        return "Check the build logs and ensure the part's configuration and sources are correct."
+
+
+class HostToolNotFoundError(SnapcraftException):
+    """An exception to raise when a host tool is required, but not found."""
+
+    def __init__(self, *, command_name: str, package_name: str) -> None:
+        self._command_name = command_name
+        self._package_name = package_name
+
+    def get_brief(self) -> str:
+        return f"A tool snapcraft depends on could not be found: {self._command_name!r}"
+
+    def get_resolution(self) -> str:
+        return f"Ensure that {self._package_name!r} is installed."

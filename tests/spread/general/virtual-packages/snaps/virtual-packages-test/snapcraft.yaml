@@ -1,0 +1,23 @@
+name: virtual-packages-tests
+version: "1.0"
+summary: virtual-packages-tests
+description: virtual-packages-tests
+
+base: core18
+grade: devel
+confinement: strict
+
+parts:
+  virtual-packages-tests:
+    plugin: nil
+    source: .
+    override-build:
+      install -m 0755 hello $SNAPCRAFT_PART_INSTALL/
+    build-packages:
+      - uglifyjs
+    stage-packages:
+      - uglifyjs
+
+apps:
+  hello:
+    command: hello

@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pathlib
-from typing import Optional
+from typing import Dict, Optional
 from unittest import mock
 
 from snapcraft.project import Project
-
+from snapcraft.internal.meta.snap import Snap
 from tests import fixture_setup, unit
 from snapcraft.internal.build_providers._base_provider import Provider
 
@@ -47,6 +47,12 @@ class ProviderImpl(Provider):
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
+        self.loaded_info: Optional[Dict[str, str]] = None
+
+    def _load_info(self) -> Dict[str, str]:
+        if self.loaded_info is None:
+            return super()._load_info()
+        return self.loaded_info
 
     def _run(self, command, hide_output=False) -> Optional[bytes]:
         return self.run_mock(command)
@@ -124,11 +130,11 @@ class ProviderImpl(Provider):
 
 
 def get_project(base: str = "core16") -> Project:
-    with open("snapcraft.yaml", "w") as snapcraft_file:
-        print("name: project-name", file=snapcraft_file)
-        print("base: {}".format(base), file=snapcraft_file)
-
-    return Project(snapcraft_yaml_file_path="snapcraft.yaml")
+    project = Project()
+    project._snap_meta = Snap(
+        name="project-name", base=base, version="1.0", confinement="strict"
+    )
+    return project
 
 
 class BaseProviderBaseTest(unit.TestCase):
@@ -146,23 +152,6 @@ class BaseProviderBaseTest(unit.TestCase):
         self.addCleanup(patcher.stop)
 
         self.project = get_project()
-
-        self.echoer_mock = mock.Mock()
-
-
-class BaseProviderWithBasesBaseTest(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
-
-        self.instance_name = "snapcraft-project-name"
-
-        patcher = mock.patch(
-            "snapcraft.internal.build_providers._base_provider.SnapInjector"
-        )
-        self.snap_injector_mock = patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.echoer_mock = mock.Mock()
 

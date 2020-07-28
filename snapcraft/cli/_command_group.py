@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2019 Canonical Ltd
+# Copyright (C) 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,12 +21,14 @@ from . import echo
 
 _CMD_DEPRECATED_REPLACEMENTS = {
     "strip": "prime",
-    "upload": "push",
+    "push": "upload",
+    "push-metadata": "upload-metadata",
     "history": "list-revisions",
+    "list-registered": "list",
+    "registered": "list",
 }
 
 _CMD_ALIASES = {
-    "registered": "list-registered",
     "keys": "list-keys",
     "revisions": "list-revisions",
     "plugins": "list-plugins",
@@ -34,7 +36,13 @@ _CMD_ALIASES = {
     "extensions": "list-extensions",
 }
 
-_CMD_DEPRECATION_NOTICES = {"history": "dn4"}
+_CMD_DEPRECATION_NOTICES = {
+    "history": "dn4",
+    "push": "dn11",
+    "push-metadata": "dn11",
+    "list-registered": "dn12",
+    "registered": "dn12",
+}
 
 _CMD_LEGACY = ["cleanbuild", "refresh", "search", "update", "define"]
 
@@ -64,9 +72,6 @@ class SnapcraftGroup(click.Group):
         # Let's keep edit-collaborators hidden until we get the green light
         # from the store.
         commands.pop(commands.index("edit-collaborators"))
-
-        # Inspect is for internal usage: hide it
-        commands.pop(commands.index("inspect"))
 
         # Hide the legacy commands
         for command in _CMD_LEGACY:

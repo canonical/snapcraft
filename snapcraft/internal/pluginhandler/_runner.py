@@ -22,9 +22,9 @@ import sys
 import tempfile
 import textwrap
 import time
-from typing import Any, Callable, Dict  # noqa
+from typing import Any, Callable, Dict
 
-from snapcraft.internal import common, errors
+from snapcraft.internal import common, errors, steps
 
 
 class Runner:
@@ -37,26 +37,33 @@ class Runner:
         self,
         *,
         part_properties: Dict[str, Any],
+        partdir: str,
         sourcedir: str,
         builddir: str,
         stagedir: str,
         primedir: str,
-        builtin_functions: "Dict[str, Callable[..., None]]"
+        builtin_functions: Dict[str, Callable[..., None]],
+        env_generator: Callable[..., str],
     ) -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
+        :param str partdir: the root directory for this part.
         :param str sourcedir: The source directory for this part.
         :param str builddir: The build directory for this part.
         :param str stagedir: The staging area.
         :param str primedir: The priming area.
         :param dict builtin_functions: Dict of builtin function names to
                                        actual callables.
+        :param str env_generator: a callable to provide environment settings
+                                  for the part.
         """
+        self._partdir = partdir
         self._sourcedir = sourcedir
         self._builddir = builddir
         self._stagedir = stagedir
         self._primedir = primedir
         self._builtin_functions = builtin_functions
+        self._env_generator = env_generator
 
         self._override_pull_scriptlet = part_properties.get("override-pull")
         self._override_build_scriptlet = part_properties.get("override-build")
@@ -67,32 +74,55 @@ class Runner:
         """Run override-pull scriptlet."""
         if self._override_pull_scriptlet:
             self._run_scriptlet(
-                "override-pull", self._override_pull_scriptlet, self._sourcedir
+                "override-pull",
+                self._override_pull_scriptlet,
+                self._sourcedir,
+                steps.PULL,
             )
 
     def build(self) -> None:
         """Run override-build scriptlet."""
         if self._override_build_scriptlet:
             self._run_scriptlet(
-                "override-build", self._override_build_scriptlet, self._builddir
+                "override-build",
+                self._override_build_scriptlet,
+                self._builddir,
+                steps.BUILD,
             )
 
     def stage(self) -> None:
         """Run override-stage scriptlet."""
         if self._override_stage_scriptlet:
             self._run_scriptlet(
-                "override-stage", self._override_stage_scriptlet, self._stagedir
+                "override-stage",
+                self._override_stage_scriptlet,
+                self._stagedir,
+                steps.STAGE,
             )
 
     def prime(self) -> None:
         """Run override-prime scriptlet."""
         if self._override_prime_scriptlet:
             self._run_scriptlet(
-                "override-prime", self._override_prime_scriptlet, self._primedir
+                "override-prime",
+                self._override_prime_scriptlet,
+                self._primedir,
+                steps.PRIME,
             )
 
-    def _run_scriptlet(self, scriptlet_name: str, scriptlet: str, workdir: str) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
+    def _run_scriptlet(
+        self, scriptlet_name: str, scriptlet: str, workdir: str, step: steps.Step
+    ) -> None:
+        if common.is_snap():
+            # Since the snap is classic, there is no $PATH pointing into the snap, which
+            # means snapcraftctl won't be found. We can't use aliases since they don't
+            # persist into subshells. However, we know that snapcraftctl lives in its own
+            # directory, so adding that to the PATH should have no ill side effects.
+            snapcraftctl_env = 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"'
+        else:
+            snapcraftctl_env = ""
+
+        with tempfile.TemporaryDirectory(dir=self._partdir) as tempdir:
             call_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "function_call"))
             feedback_fifo = _NonBlockingRWFifo(os.path.join(tempdir, "call_feedback"))
 
@@ -105,14 +135,18 @@ class Runner:
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
+                {snapcraftctl_env}
+
                 {env}
+
                 {scriptlet}"""
             ).format(
                 interpreter=sys.executable,
                 call_fifo=call_fifo.path,
                 feedback_fifo=feedback_fifo.path,
                 scriptlet=scriptlet,
-                env=_get_env(),
+                snapcraftctl_env=snapcraftctl_env,
+                env=self._env_generator(step),
             )
 
             with tempfile.TemporaryFile(mode="w+") as script_file:
@@ -221,16 +255,3 @@ class _NonBlockingRWFifo:
     def close(self) -> None:
         if self._fd is not None:
             os.close(self._fd)
-
-
-def _get_env():
-    env = ""
-    if common.is_snap():
-        # Since the snap is classic, there is no $PATH pointing into the snap, which
-        # means snapcraftctl won't be found. We can't use aliases since they don't
-        # persist into subshells. However, we know that snapcraftctl lives in its own
-        # directory, so adding that to the PATH should have no ill side effects.
-        env += 'export PATH="$PATH:$SNAP/bin/scriptlet-bin"\n'
-    env += common.assemble_env()
-
-    return env

@@ -1,0 +1,19 @@
+name: missing-lib
+version: 'test1'
+summary: test
+description: test
+grade: stable
+base: core18
+confinement: strict
+
+parts:
+  pciutils:
+    plugin: nil
+    build-packages:
+      - pciutils
+    override-build: |
+      install -D -m 0755 /usr/bin/lspci $SNAPCRAFT_PART_INSTALL/usr/bin/lspci
+
+apps:
+  lspci:
+    command: usr/bin/lspci

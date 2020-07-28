@@ -20,14 +20,12 @@ from testtools.matchers import Equals
 from snapcraft import yaml_utils
 import snapcraft.internal
 from tests import unit
+from .conftest import Project
 
 
 class PrimeStateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
-
-        class Project:
-            pass
 
         self.project = Project()
         self.files = {"foo"}
@@ -87,29 +85,5 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
         self.assertFalse(self.state.project_options_of_interest(self.project))
 
 
-class PrimeStateNotEqualTestCase(PrimeStateBaseTestCase):
-
-    scenarios = [
-        ("no files", dict(other_property="files", other_value=set())),
-        ("no directories", dict(other_property="directories", other_value=set())),
-        (
-            "no dependency paths",
-            dict(other_property="dependency_paths", other_value=set()),
-        ),
-        (
-            "no part properties",
-            dict(other_property="part_properties", other_value=None),
-        ),
-    ]
-
-    def test_comparison_not_equal(self):
-        setattr(self, self.other_property, self.other_value)
-        other_state = snapcraft.internal.states.PrimeState(
-            self.files,
-            self.directories,
-            self.dependency_paths,
-            self.part_properties,
-            self.project,
-        )
-
-        self.assertFalse(self.state == other_state, "Expected states to be different")
+def test_comparison_not_equal(prime_state, prime_state_variant):
+    assert prime_state != prime_state_variant

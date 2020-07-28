@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2018 Canonical Ltd
+# Copyright (C) 2015-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,19 +23,16 @@ import re
 import jsonschema
 from typing import List, Set
 
-from snapcraft import project, formatting_utils
-from snapcraft.internal import common, deprecations, repo, states, steps
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft import plugins, project, formatting_utils
+from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.pluginhandler._part_environment import (
+    get_snapcraft_global_environment,
+)
 from snapcraft.project._schema import Validator
 from ._parts_config import PartsConfig
 from ._extensions import apply_extensions
-from ._env import (
-    build_env_for_stage,
-    runtime_env,
-    snapcraft_global_environment,
-    environment_to_replacements,
-)
+from ._env import build_env_for_stage, runtime_env, environment_to_replacements
 from . import errors, grammar_processing, replace_attr
 
 
@@ -198,7 +195,7 @@ class Config:
         return self.parts.all_parts
 
     def __init__(self, project: project.Project) -> None:
-        self.build_snaps = set()  # type: Set[str]
+        self.build_snaps: Set[str] = set()
         self.project = project
 
         # raw_snapcraft_yaml is read only, create a new copy
@@ -217,41 +214,16 @@ class Config:
 
         self._ensure_no_duplicate_app_aliases()
 
-        grammar_processor = grammar_processing.GlobalGrammarProcessor(
+        self._global_grammar_processor = grammar_processing.GlobalGrammarProcessor(
             properties=self.data, project=project
         )
-
-        self.build_tools = grammar_processor.get_build_packages()
-        self.build_tools |= set(project.additional_build_packages)
-
-        # If version: git is used we want to add "git" to build-packages
-        if self.data.get("version") == "git":
-            self.build_tools.add("git")
 
         # XXX: Resetting snap_meta due to above mangling of data.
         # Convergence to operating on snap_meta will remove this requirement...
         project._snap_meta = Snap.from_dict(self.data)
 
-        # Always add the base for building for non os and base snaps
-        if project.info.base is None and project.info.type in ("app", "gadget"):
-            raise SnapcraftEnvironmentError(
-                "A base is required for snaps of type {!r}.".format(project.info.type)
-            )
-        if project.info.base is not None:
-            # If the base is already installed by other means, skip its installation.
-            # But, we should always add it when in a docker environment so
-            # the creator of said docker image is aware that it is required.
-            if common.is_process_container() or not repo.snaps.SnapPackage.is_snap_installed(
-                project.info.base
-            ):
-                self.build_snaps.add(project.info.base)
-
         self.parts = PartsConfig(
-            parts=self.data,
-            project=project,
-            validator=self.validator,
-            build_snaps=self.build_snaps,
-            build_tools=self.build_tools,
+            parts=self.data, project=project, validator=self.validator
         )
 
     def _ensure_no_duplicate_app_aliases(self):
@@ -273,12 +245,73 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
+    def install_package_repositories(self) -> None:
+        keys_path = self.project._get_keys_path()
+
+        # Install repositories configured by 'package-repositories'.
+        changes = [
+            package_repo.install(keys_path=keys_path)
+            for package_repo in self.project._snap_meta.package_repositories
+        ]
+
+        # Install repositories configured by v1 plugins.
+        for part in self.all_parts:
+            if isinstance(part.plugin, plugins.v1.PluginV1):
+                changes += [
+                    package_repo.install(keys_path=keys_path)
+                    for package_repo in part.plugin.get_required_package_repositories()
+                ]
+
+        if any(changes):
+            repo.Repo.refresh_build_packages()
+
+    def get_build_packages(self) -> Set[str]:
+        # Install/update configured package repositories.
+        self.install_package_repositories()
+
+        build_packages = self._global_grammar_processor.get_build_packages()
+        build_packages |= set(self.project.additional_build_packages)
+
+        if self.project._snap_meta.version == "git":
+            build_packages.add("git")
+
+        for part in self.all_parts:
+            build_packages |= part._grammar_processor.get_build_packages()
+
+            # TODO: this should not pass in command but the required package,
+            #       where the required package is to be determined by the
+            #       source handler.
+            if part.source_handler and part.source_handler.command:
+                # TODO get_packages_for_source_type should not be a thing.
+                build_packages |= repo.Repo.get_packages_for_source_type(
+                    part.source_handler.command
+                )
+
+            if not isinstance(part.plugin, plugins.v1.PluginV1):
+                build_packages |= part.plugin.get_build_packages()
+
+        return build_packages
+
+    def get_build_snaps(self) -> Set[str]:
+        build_snaps = set()
+
+        # Add the base.
+        if self.project._snap_meta.base is not None:
+            build_snaps.add(self.project._snap_meta.base)
+
+        for part in self.all_parts:
+            build_snaps |= part._grammar_processor.get_build_snaps()
+            if not isinstance(part.plugin, plugins.v1.PluginV1):
+                build_snaps |= part.plugin.get_build_snaps()
+
+        return build_snaps
+
     def get_project_state(self, step: steps.Step):
         """Returns a dict of states for the given step of each part."""
 
         state = {}
         for part in self.parts.all_parts:
-            state[part.name] = states.get_state(part.plugin.statedir, step)
+            state[part.name] = states.get_state(part.part_state_dir, step)
 
         return state
 
@@ -322,7 +355,9 @@ class Config:
     def project_env(self):
         return [
             '{}="{}"'.format(variable, value)
-            for variable, value in snapcraft_global_environment(self.project).items()
+            for variable, value in get_snapcraft_global_environment(
+                self.project
+            ).items()
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -332,7 +367,7 @@ class Config:
                 continue
 
             replacements = environment_to_replacements(
-                snapcraft_global_environment(self.project)
+                get_snapcraft_global_environment(self.project)
             )
 
             snapcraft_yaml[key] = replace_attr(snapcraft_yaml[key], replacements)
@@ -389,8 +424,8 @@ def _create_architecture_list(architectures, current_arch):
     if not architectures:
         return [_Architecture(build_on=[current_arch])]
 
-    build_architectures = []  # type: List[str]
-    architecture_list = []  # type: List[_Architecture]
+    build_architectures: List[str] = []
+    architecture_list: List[_Architecture] = []
     for item in architectures:
         if isinstance(item, str):
             build_architectures.append(item)

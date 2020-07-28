@@ -24,6 +24,7 @@ from testtools.matchers import Contains, Equals, StartsWith
 from snapcraft.cli.help import _TOPICS
 from snapcraft.cli._runner import run
 
+from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
@@ -58,10 +59,45 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains("1234567890..."))
 
-    def test_print_module_help_for_valid_plugin(self):
+    def test_print_module_help_for_valid_plugin_default_base(self):
         result = self.run_command(["help", "nil"])
 
-        expected = "The nil plugin is"
+        expected = "Displaying help for the 'nil' plugin for 'core20'."
+        output = result.output[: len(expected)]
+        self.assertThat(
+            output,
+            Equals(expected),
+            "The help message does not start with {!r} but with "
+            "{!r} instead".format(expected, output),
+        )
+
+    def test_print_module_help_for_valid_plugin_with_base(self):
+        for base in ("core", "core18", "core20"):
+            result = self.run_command(["help", "nil", "--base", base])
+
+            expected = f"Displaying help for the 'nil' plugin for {base!r}."
+            output = result.output[: len(expected)]
+            self.expectThat(
+                output,
+                Equals(expected),
+                "The help message does not start with {!r} but with "
+                "{!r} instead".format(expected, output),
+            )
+
+    def test_print_module_help_for_valid_plugin_snapcraft_yaml(self):
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core18",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+        result = self.run_command(["help", "python", "--base", "core18"])
+
+        expected = (
+            "Displaying help for the 'python' plugin for 'core18'.\n\n"
+            "The python plugin can be used for"
+        )
         output = result.output[: len(expected)]
         self.assertThat(
             output,
@@ -71,15 +107,15 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         )
 
     def test_print_module_named_with_dashes_help_for_valid_plugin(self):
-        result = self.run_command(["help", "plainbox-provider"])
+        result = self.run_command(["help", "plainbox-provider", "--base", "core18"])
 
-        expected = " Create parts"
+        expected = "Displaying help for the 'plainbox-provider' plugin for 'core18'."
         self.assertThat(result.output, StartsWith(expected))
 
     def test_show_module_help_with_devel_for_valid_plugin(self):
         result = self.run_command(["help", "nil", "--devel"])
 
-        expected = "Help on module snapcraft.plugins.nil in snapcraft.plugins"
+        expected = "Help on module snapcraft.plugins.v2.nil in snapcraft.plugins"
         output = result.output[: len(expected)]
 
         self.assertThat(
@@ -143,34 +179,30 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
 
 class TopicWithDevelTestCase(HelpCommandBaseTestCase):
-
-    scenarios = [(topic, dict(topic=topic)) for topic in _TOPICS]
-
     def test_print_topic_help_with_devel_for_valid_topic(self):
         expected = {
             "sources": "Help on package snapcraft",
             "plugins": "Help on package snapcraft",
         }
 
-        result = self.run_command(["help", self.topic, "--devel"])
-        output = result.output[: len(expected[self.topic])]
-        self.assertThat(
-            output,
-            Equals(expected[self.topic]),
-            "The help message does not start with {!r} but with "
-            "{!r} instead".format(expected[self.topic], output),
-        )
+        for topic in _TOPICS:
+            result = self.run_command(["help", topic, "--devel"])
+            output = result.output[: len(expected[topic])]
+            self.assertThat(
+                output,
+                Equals(expected[topic]),
+                "The help message does not start with {!r} but with "
+                "{!r} instead".format(expected[topic], output),
+            )
 
 
 class TestHelpForCommand(HelpCommandBaseTestCase):
-
-    scenarios = [(c, dict(command=c)) for c in run.commands]
-
     def test_help_for_command(self):
-        result = self.run_command(["help", self.command])
-        self.assertThat(result.exit_code, Equals(0))
-        # Verify that the first line of help text is correct
-        # to ensure no name squatting takes place.
-        self.assertThat(
-            result.output, Contains(run.commands[self.command].help.split("\n")[0])
-        )
+        for command in run.commands:
+            result = self.run_command(["help", command])
+            self.assertThat(result.exit_code, Equals(0))
+            # Verify that the first line of help text is correct
+            # to ensure no name squatting takes place.
+            self.assertThat(
+                result.output, Contains(run.commands[command].help.split("\n")[0])
+            )

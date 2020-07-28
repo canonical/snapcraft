@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2019 Canonical Ltd
+# Copyright (C) 2019-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -242,7 +242,7 @@ class SnapInfo:
 
         if not risk_match:
             channel = "{}/{}".format(track, risk) if track else risk
-            raise errors.SnapNotFoundError(name=self.name, channel=channel)
+            raise errors.SnapNotFoundError(snap_name=self.name, channel=channel)
 
         # We assume the API will not return duplicate mappings
         return risk_match[0]
