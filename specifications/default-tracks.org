@@ -1,0 +1,88 @@
+#+TITLE: Default Tracks
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-07-20]
+
+* Scope
+Allow for operations relevant to default tracks using the Snapcraft command
+line.
+
+The new commands introduced shall allow for viewing tracks and their
+corresponding status as well as setting a track as a default one.
+
+* User Experience
+** Viewing Tracks
+A new command shall be introduced, =snapcraft list-tracks= with an alias of
+=tracks=. The command shall display the list of available tracks with potential
+status values of =active=, =hidden= and =closed=. When a default track is set, the
+status shall be set to =default= which will implicitly mean it is =active=.
+ 
+The command shall be defined as:
+
+#+BEGIN_SRC sh
+snapcraft track|list-tracks <snap-name>
+#+END_SRC
+
+With that criteria, this is how the output shall display for a given snap:
+#+BEGIN_SRC sh
+  $ snapcraft list-tracks node
+  Track    Status    Created
+  17       active    2020-08-26T12:13:43Z
+  16       default   2020-07-26T12:13:43Z
+  15       active    2020-07-26T12:13:43Z
+  14       hidden    2020-06-26T12:13:43Z
+  13       closed    2020-05-26T12:13:43Z
+#+END_SRC
+
+#+BEGIN_QUOTE
+The =hidden= and =closed= Status values are shown for illustration purposes, only
+active and default shall be implemented as part of this specification.
+#+END_QUOTE
+
+** Setting a default track
+Setting a default track shall have an explicit command to do so.
+
+#+BEGIN_SRC sh
+$ snapcraft set-default-track <snap-name> <revision>
+#+END_SRC
+
+When setting a valid track, this is what the command shall output:
+
+#+BEGIN_SRC sh
+$ snapcraft set-default-track node 17
+Default track for node has been set to 17
+#+END_SRC
+
+If the track is not valid, the output shall follow the convention used in
+the ~SnapcraftException~ class as defined in =snapcraft.internal.errors=. With that
+in mind, the following shall be displayed when an unknown track is specified:
+
+#+BEGIN_SRC sh
+$ snapcraft set-default-track node 18
+The specified track is not exist for node.
+
+Recommended resolution:
+Run 'snapcraft list-tracks' to see the available tracks.
+
+For more information, checkout:
+https://snapcraft.io/docs/release-management
+#+END_SRC
+
+* Implementation
+** Snap Store API
+Snap Store APIs already exist to implement /setting/ a default track to a given
+track. This is provided by the ~/metadata~ endpoint documented as part of the V1
+Snap Store API [[https://dashboard.snapcraft.io/docs/api/snap.html#managing-snap-metadata][Managing Snap Metadata]].
+
+Displaying of track information shall be resolved by the ~channel-map~ endpoint
+defined in the V2 Snap Store API [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]].
+
+For this first implementation the default track shall be retrieved from the
+=snap.default-track= field. In the future, the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]] endpoint shall add
+a =status= field for a track list item which shall return: =active=, =hidden= and
+=closed=. In this current implementation, the Snapcraft logic shall query for this
+field and set a fallback value of =active= when the =status= field is not found.
+The =Created= information shall be retrieved from the =creation-date= field for a track
+list item from the [[*Snap Store API][Snap Store API]] endpoint.
+
+Use of the API shall be mediated by implementation following the code style used
+in =snapcraft.storeapi=.
