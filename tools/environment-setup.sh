@@ -43,6 +43,7 @@ lxc exec snapcraft-dev -- apt install --yes \
     libyaml-dev \
     make \
     patchelf \
+    python3-apt \
     python3-dev \
     python3-pip \
     python3-venv \

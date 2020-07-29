@@ -85,6 +85,8 @@ parts:
     plugin: python
     requirements:
         - requirements.txt
+    stage-packages:
+        - python3-apt
     organize:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
