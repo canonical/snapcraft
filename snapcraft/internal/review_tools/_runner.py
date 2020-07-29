@@ -23,7 +23,7 @@ from . import errors
 
 
 _REVIEW_TOOLS_PATH = pathlib.Path("/snap/bin/review-tools.snap-review")
-_REVIEW_TOOLS_SNAP_USER_COMMON = pathlib.Path("~/snap/review-tools/common")
+_REVIEW_TOOLS_SNAP_USER_COMMON = pathlib.Path("~/snap/review-tools/common").expanduser()
 
 
 def is_available() -> bool:
@@ -40,7 +40,7 @@ def _snap_in_review_tools_common(method):
             _get_review_tools_user_common() / pathlib.Path(snap_filename).name
         )
         # Create the directory tree for the cases where the review-tools have not run before.
-        snap_filename_common_path.parent.mkdir(parents=True)
+        snap_filename_common_path.parent.mkdir(parents=True, exist_ok=True)
         file_utils.link_or_copy(snap_filename, str(snap_filename_common_path))
 
         try:

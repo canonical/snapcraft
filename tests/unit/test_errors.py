@@ -668,6 +668,18 @@ class TestSnapcraftExceptionTests:
             },
         ),
         (
+            "HostToolNotFoundError",
+            {
+                "exception_class": errors.HostToolNotFoundError,
+                "kwargs": {"command_name": "foo", "package_name": "foo-pkg"},
+                "expected_brief": "A tool snapcraft depends on could not be found: 'foo'",
+                "expected_resolution": "Ensure that 'foo-pkg' is installed.",
+                "expected_details": None,
+                "expected_docs_url": None,
+                "expected_reportable": False,
+            },
+        ),
+        (
             "MissingStateCleanError",
             {
                 "exception_class": errors.MissingStateCleanError,

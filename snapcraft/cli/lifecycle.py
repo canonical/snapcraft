@@ -18,6 +18,7 @@ import itertools
 import logging
 import typing
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -35,7 +36,6 @@ from ._options import (
     get_build_provider_flags,
     get_project,
 )
-from snapcraft import file_utils
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -103,7 +103,7 @@ def _execute(  # noqa: C901
             if provider_error.prompt_installable:
                 if echo.is_tty_connected() and echo.confirm(
                     "Support for {!r} needs to be set up. "
-                    "Would you like to do that it now?".format(provider_error.provider)
+                    "Would you like to do it now?".format(provider_error.provider)
                 ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
@@ -201,7 +201,9 @@ def _run_pack(snap_command: List[str]) -> str:
 def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
-    snap_path = file_utils.get_tool_path("snap")
+    snap_path = shutil.which("snap")
+    if snap_path is None:
+        raise errors.HostToolNotFoundError(command_name="snap", package_name="snapd")
 
     command = [snap_path, "pack"]
     # When None, just use snap pack's default settings.
