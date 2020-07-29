@@ -486,9 +486,9 @@ class Patcher:
         if preferred_patchelf_path:
             self._patchelf_cmd = preferred_patchelf_path
         else:
-            self._patchelf_cmd = file_utils.get_tool_path("patchelf")
+            self._patchelf_cmd = file_utils.get_snap_tool_path("patchelf")
 
-        self._strip_cmd = file_utils.get_tool_path("strip")
+        self._strip_cmd = file_utils.get_snap_tool_path("strip")
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.

@@ -32,7 +32,7 @@ from pathlib import Path
 from snapcraft.cli import echo
 from tabulate import tabulate
 
-from snapcraft.file_utils import calculate_sha3_384, get_tool_path
+from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
 from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
 from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
-        unsquashfs_path = get_tool_path("unsquashfs")
+        unsquashfs_path = get_snap_tool_path("unsquashfs")
         try:
             output = subprocess.check_output(
                 [
@@ -80,7 +80,7 @@ def _get_data_from_snap_file(snap_path):
 def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
-        unsquashfs_path = get_tool_path("unsquashfs")
+        unsquashfs_path = get_snap_tool_path("unsquashfs")
         try:
             output = subprocess.check_output(
                 [

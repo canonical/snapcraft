@@ -159,7 +159,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # We do not want the paths to affect every test we have.
         patcher = mock.patch(
-            "snapcraft.file_utils.get_tool_path", side_effect=lambda x: x
+            "snapcraft.file_utils.get_snap_tool_path", side_effect=lambda x: x
         )
         patcher.start()
         self.addCleanup(patcher.stop)
