@@ -80,8 +80,8 @@ For this first implementation the default track shall be retrieved from the
 =snap.default-track= field. In the future, the [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map][Snap Channel Map]] endpoint shall add
 a =status= field for a track list item which shall return: =active=, =hidden= and
 =closed=. In this current implementation, the Snapcraft logic shall query for this
-field and set a fallback value of =active= for when the =status= field is not found.
-The =Created= information shall be retrieved from the =creationd-date= field for a track
+field and set a fallback value of =active= when the =status= field is not found.
+The =Created= information shall be retrieved from the =creation-date= field for a track
 list item from the [[*Snap Store API][Snap Store API]] endpoint.
 
 Use of the API shall be mediated by implementation following the code style used
