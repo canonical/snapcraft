@@ -103,7 +103,7 @@ def _execute(  # noqa: C901
             if provider_error.prompt_installable:
                 if echo.is_tty_connected() and echo.confirm(
                     "Support for {!r} needs to be set up. "
-                    "Would you like to do that it now?".format(provider_error.provider)
+                    "Would you like to do it now?".format(provider_error.provider)
                 ):
                     build_provider_class.setup_provider(echoer=echo)
                 else:
