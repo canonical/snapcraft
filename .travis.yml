@@ -30,20 +30,6 @@ jobs:
         - pip3 install --user -r requirements-devel.txt
       script:
         - ./runtests.sh static
-    # CLA check, only in pull requests, not coming from the bot.
-    - stage: static
-      name:  CLA check
-      addons:
-        apt:
-          packages:
-            - git
-            - python-launchpadlib
-      if: type = pull_request AND sender != snappy-m-o
-      git:
-        depth: false
-      script:
-        - ./tools/cla_check.py
-
     - stage: unit and snap
       name: unit tests
       script:
@@ -132,3 +118,16 @@ jobs:
         - cd docker
         - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
         - docker run snapcore/snapcraft:${RISK} snapcraft --version
+    # CLA check, only in pull requests, not coming from the bot.
+    - stage: cla
+      name:  CLA check
+      addons:
+        apt:
+          packages:
+            - git
+            - python-launchpadlib
+      if: type = pull_request AND sender != snappy-m-o
+      git:
+        depth: false
+      script:
+        - ./tools/cla_check.py
