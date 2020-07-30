@@ -285,7 +285,7 @@ suites:
      pyvenv "$HOME/venv/snapcraft"
      # shellcheck source=/dev/null
      source "$HOME/venv/snapcraft/bin/activate"
-     pip install --upgrade pip wheel setuptools
+     pip install --upgrade wheel setuptools
      cd /snapcraft
      pip install -r requirements.txt -r requirements-devel.txt codecov
      pip install -e .
@@ -537,15 +537,12 @@ suites:
    systems:
      - ubuntu-18.04*
    environment:
-     # TODO: make generic
-     PIP_COMMAND: "/root/.local/bin/pip"
      SNAPCRAFT_PACKAGE_TYPE: "snap"
    prepare: |
      apt-get update
      apt-get install --yes gcc g++ make python3-dev python3-pip python3-wheel libffi-dev libsodium-dev libapt-pkg-dev squashfs-tools xdelta3 bzr git mercurial subversion libxml2-dev libxslt-dev
-     pip3 install --user --upgrade pip
-     $PIP_COMMAND install --user --upgrade wheel setuptools
-     $PIP_COMMAND install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
+     pip3 install --user --upgrade wheel setuptools
+     pip3 install --user -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
      # Move the snapcraft modules out of the way
      mv /snapcraft/snapcraft /snapcraft.bak
    restore: |

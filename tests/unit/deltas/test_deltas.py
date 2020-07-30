@@ -44,7 +44,7 @@ class BaseDeltaGenerationTestCase(TestCase):
 
         self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.file_utils.get_tool_path",
+                "snapcraft.file_utils.get_snap_tool_path",
                 side_effect=lambda x: os.path.join("/usr", "bin", x),
             )
         )
