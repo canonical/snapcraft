@@ -911,8 +911,8 @@ class TestSnapcraftExceptionTests:
     ):
         exception = exception_class(**kwargs)
 
-        assert expected_brief == exception.get_brief()
-        assert expected_resolution == exception.get_resolution()
-        assert expected_details == exception.get_details()
-        assert expected_docs_url == exception.get_docs_url()
-        assert expected_reportable == exception.get_reportable()
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable
