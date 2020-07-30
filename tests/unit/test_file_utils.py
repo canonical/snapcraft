@@ -312,13 +312,13 @@ class TestGetToolPath:
         fake_exists.paths = [abs_tool_path]
         monkeypatch.setattr(shutil, "which", lambda x: abs_tool_path.as_posix())
 
-        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
+        assert file_utils.get_snap_tool_path("tool-command") == abs_tool_path.as_posix()
 
     def test_get_tool_from_snapcraft_snap_path(self, in_snap, tool_path, fake_exists):
         abs_tool_path = pathlib.Path("/snap/snapcraft/current") / tool_path
         fake_exists.paths = [abs_tool_path]
 
-        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
+        assert file_utils.get_snap_tool_path("tool-command") == abs_tool_path.as_posix()
 
     def test_get_tool_from_docker_snap_path(
         self, monkeypatch, in_snap, tool_path, fake_exists
@@ -327,22 +327,22 @@ class TestGetToolPath:
         fake_exists.paths = [abs_tool_path]
         monkeypatch.setattr(common, "is_process_container", lambda: True)
 
-        assert file_utils.get_tool_path("tool-command") == abs_tool_path.as_posix()
+        assert file_utils.get_snap_tool_path("tool-command") == abs_tool_path.as_posix()
 
 
 class GetToolPathErrorsTest(testtools.TestCase):
-    def test_get_tool_path_fails(self):
+    def test_get_snap_tool_path_fails(self):
         self.assertRaises(
             file_utils.ToolMissingError,
-            file_utils.get_tool_path,
+            file_utils.get_snap_tool_path,
             "non-existent-tool-command",
         )
 
-    def test_get_tool_path_in_container_fails_root(self):
+    def test_get_snap_tool_path_in_container_fails_root(self):
         self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         self.assertRaises(
             file_utils.ToolMissingError,
-            file_utils.get_tool_path,
+            file_utils.get_snap_tool_path,
             "non-existent-tool-command",
         )

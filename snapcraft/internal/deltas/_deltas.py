@@ -56,7 +56,7 @@ class BaseDeltasGenerator:
         self.target_path = target_path
         self.delta_format = delta_format
         self.delta_file_extname = delta_file_extname
-        self.delta_tool_path = file_utils.get_tool_path(delta_tool)
+        self.delta_tool_path = file_utils.get_snap_tool_path(delta_tool)
 
         # some pre-checks
         self._check_properties()
