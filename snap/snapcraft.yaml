@@ -90,6 +90,10 @@ parts:
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
     override-build: |
+        # pip 20.2 breaks python3-apt, so we pin
+        # the version of pip installed before building
+        PYTHONHOME=/usr PYTHONUSERBASE=$SNAPCRAFT_PART_INSTALL $SNAPCRAFT_PART_INSTALL/usr/bin/python3 -m pip install pip==20.1 --user
+
         snapcraftctl build
 
         version="$(python3 setup.py --version)"
