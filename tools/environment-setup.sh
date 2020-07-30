@@ -55,7 +55,7 @@ lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .profile"
 lxc exec snapcraft-dev -- sudo -iu ubuntu bash -c \
     "echo 'source /home/ubuntu/.venv/snapcraft/bin/activate' >> .bashrc"
-lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --upgrade pip wheel
+lxc exec snapcraft-dev -- sudo -iu ubuntu pip install --upgrade wheel
 
 # Now that /home/ubuntu has been used, add the project
 if ! lxc config device show snapcraft-dev | grep -q snapcraft-project; then
