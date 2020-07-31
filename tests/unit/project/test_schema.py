@@ -540,6 +540,36 @@ def test_invalid_part_names(data, name):
     assert str(error.value).endswith(expected_message)
 
 
+def test_invalid_arch_build_on_all_others():
+    data = {
+        "name": "my-package-1",
+        "base": "core18",
+        "version": "1.0-snapcraft1~ppa1",
+        "summary": "my summary less that 79 chars",
+        "description": "description which can be pretty long",
+        "adopt-info": "part1",
+        "parts": {"part1": {"plugin": "project", "parse-info": ["test-metadata-file"]}},
+        "architectures": [{"build-on": ["amd64", "all"]}],
+    }
+
+    import os
+    import json
+    import jsonschema
+    from snapcraft.internal import common
+
+    schema_file = os.path.abspath(
+        os.path.join(common.get_schemadir(), "snapcraft.json")
+    )
+
+    with open(schema_file) as fp:
+        schema = json.load(fp)
+    jsonschema.validate(instance=data, schema=schema)
+
+    Validator(data).validate()
+
+    assert str(error.value) == "x"
+
+
 class TestInvalidArchitectures:
 
     scenarios = [

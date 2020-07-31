@@ -243,7 +243,7 @@ class Config:
             else:
                 seen.add(alias)
         if duplicates:
-            raise errors.DuplicateAliasError(aliases=duplicates)
+            raise errors.SnapcraftDuplicateAliasError(aliases=duplicates)
 
     def install_package_repositories(self) -> None:
         keys_path = self.project._get_keys_path()
@@ -394,10 +394,7 @@ def _expand_filesets_for(step, properties):
             try:
                 new_step_set.extend(filesets[item[1:]])
             except KeyError:
-                raise errors.SnapcraftLogicError(
-                    "'{}' referred to in the '{}' fileset but it is not "
-                    "in filesets".format(item, step)
-                )
+                raise errors.SnapcraftFilesetReferenceError(item=item, step=step)
         else:
             new_step_set.append(item)
 

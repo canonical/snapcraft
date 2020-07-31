@@ -265,15 +265,10 @@ class AliasesTest(ProjectLoaderBaseTest):
             ("test2", dict(command="test", aliases=["testing"])),
         ]
         raised = self.assertRaises(
-            errors.DuplicateAliasError, self.make_snapcraft_project, apps
+            errors.SnapcraftDuplicateAliasError, self.make_snapcraft_project, apps
         )
 
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Multiple parts have the same alias defined: {!r}".format("testing")
-            ),
-        )
+        assert str(raised) == "Multiple parts have the same alias defined: testing"
 
     def test_invalid_alias(self):
         apps = [("test", dict(command="test", aliases=[".test"]))]

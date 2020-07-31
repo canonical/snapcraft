@@ -104,9 +104,7 @@ class PartsConfig:
                     top_part = part
                     break
             if not top_part:
-                raise errors.SnapcraftLogicError(
-                    "circular dependency chain found in parts definition"
-                )
+                raise errors.SnapcraftCircularDependencyError()
             sorted_parts = [top_part] + sorted_parts
             self.all_parts.remove(top_part)
 

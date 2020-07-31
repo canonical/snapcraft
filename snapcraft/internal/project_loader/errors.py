@@ -31,6 +31,14 @@ class SnapcraftAfterPartMissingError(SnapcraftException):
         return "Ensure 'after' configuration and referenced part name is correct."
 
 
+class SnapcraftCircularDependencyError(SnapcraftException):
+    def get_brief(self) -> str:
+        return f"Circular dependency chain found in parts definition."
+
+    def get_resolution(self) -> str:
+        return "Ensure the each part's 'after' configuration is correct."
+
+
 class SnapcraftDuplicateAliasError(SnapcraftException):
     def __init__(self, *, aliases: Set[str]) -> None:
         self.aliases = ", ".join(sorted(aliases))

@@ -229,12 +229,9 @@ class DependenciesTest(ProjectLoaderBaseTest):
         """
         )
         raised = self.assertRaises(
-            errors.SnapcraftLogicError, self.make_snapcraft_project, snapcraft_yaml
-        )
-
-        self.assertThat(
-            raised.message,
-            Equals("circular dependency chain found in parts definition"),
+            errors.SnapcraftCircularDependencyError,
+            self.make_snapcraft_project,
+            snapcraft_yaml,
         )
 
 
@@ -260,15 +257,12 @@ class FilesetsTest(unit.TestCase):
         self.properties["stage"] = ["$3"]
 
         raised = self.assertRaises(
-            errors.SnapcraftLogicError,
+            errors.SnapcraftFilesetReferenceError,
             _config._expand_filesets_for,
             "stage",
             self.properties,
         )
 
-        self.assertThat(
-            str(raised),
-            Contains(
-                "'$3' referred to in the 'stage' fileset but it is not in filesets"
-            ),
+        assert (
+            str(raised) == "Fileset '$3' referred to in the 'stage' step was not found."
         )
