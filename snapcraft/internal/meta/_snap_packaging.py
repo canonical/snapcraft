@@ -14,27 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import contextlib
+import copy
 import distutils.util
 import itertools
 import logging
 import os
+import pathlib
 import re
 import shutil
 import stat
+import urllib
 from typing import Any, Dict, List, Optional, Set  # noqa
 
-from snapcraft import file_utils, formatting_utils, yaml_utils
-from snapcraft import shell_utils, extractors
-from snapcraft.project import _schema
-from snapcraft.internal import common, errors, project_loader, states
-from snapcraft.internal.project_loader import _config
+import requests
+
+from snapcraft import extractors, file_utils, formatting_utils, shell_utils, yaml_utils
 from snapcraft.extractors import _metadata
+from snapcraft.internal import common, errors, project_loader, states
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.meta import errors as meta_errors, _manifest, _version
+from snapcraft.internal.meta import _manifest, _version
+from snapcraft.internal.meta import errors as meta_errors
 from snapcraft.internal.meta.application import ApplicationAdapter
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.project_loader import _config
+from snapcraft.project import _schema
 
 logger = logging.getLogger(__name__)
 
@@ -172,17 +176,10 @@ def _adopt_keys(
     overrides = ((k, v) for k, v in metadata_dict.items() if k not in ignore)
 
     for key, value in overrides:
-        if key not in config_data:
-            if key == "icon":
-                # Extracted appstream icon paths will be relative to the runtime tree,
-                # so rebase it on the snap source root.
-                value = os.path.join(prime_dir, str(value))
-                if _icon_file_exists() or not os.path.exists(str(value)):
-                    # Do not overwrite the icon file.
-                    continue
-            config_data[key] = value
-        else:
+        if key in config_data:
             ignored_keys.add(key)
+        else:
+            config_data[key] = value
 
     if "desktop_file_paths" in metadata_dict and "common_id" in metadata_dict:
         app_name = _get_app_name_from_common_id(
@@ -199,24 +196,24 @@ def _adopt_keys(
     return ignored_keys
 
 
-def _icon_file_exists() -> bool:
+def _find_icon_file() -> Optional[pathlib.Path]:
     """Check if the icon is specified as a file in the assets dir.
 
     The icon file can be in two directories: 'setup/gui' (deprecated) or
     'snap/gui'. The icon can be named 'icon.png' or 'icon.svg'.
 
-    :returns: True if the icon file exists, False otherwise.
+    :returns: Path of found icon, None otherwise.
     """
     for icon_path in (
-        os.path.join(asset_dir, "gui", icon_file)
+        pathlib.Path(asset_dir, "gui", icon_file)
         for (asset_dir, icon_file) in itertools.product(
             ["setup", "snap"], ["icon.png", "icon.svg"]
         )
     ):
-        if os.path.exists(icon_path):
-            return True
-    else:
-        return False
+        if icon_path.exists():
+            return icon_path
+
+    return None
 
 
 def _get_app_name_from_common_id(
@@ -356,6 +353,53 @@ class _SnapPackaging:
                 if os.path.splitext(f)[1] == ".desktop":
                     os.remove(os.path.join(self.meta_gui_dir, f))
 
+    def _finalize_icon(self) -> Optional[pathlib.Path]:
+        """Make sure icon is properly configured, fetching from a remote
+        http(s) URL, if required, and placing in the meta/gui directory."""
+
+        # Nothing to do if no icon is configured, search for existing icon.
+        icon: Optional[str] = self._config_data.get("icon")
+        if icon is None and self._extracted_metadata is not None:
+            icon = self._extracted_metadata.get_icon()
+
+        if icon is None:
+            return _find_icon_file()
+
+        # Extracted appstream icon paths will either:
+        # (1) point to a file relative to prime
+        # (2) point to a remote http(s) url
+        #
+        # The 'icon' specified in the snapcraft.yaml has the same
+        # constraint as (2) and would have already been validated
+        # as existing by the schema.  So we can treat it the same
+        # at this point, regardless of the source of the icon.
+        parsed_url = urllib.parse.urlparse(icon)
+        parsed_path = pathlib.Path(parsed_url.path)
+        icon_ext = parsed_path.suffix[1:]
+        target_icon_path = pathlib.Path(self.meta_gui_dir, f"icon.{icon_ext}")
+
+        os.makedirs(self.meta_gui_dir, exist_ok=True)
+        if parsed_url.scheme in ["http", "https"]:
+            # Remote - fetch URL and write to target.
+            logger.info(f"Fetching icon from {icon!r}.")
+            icon_data = requests.get(icon).content
+            target_icon_path.write_bytes(icon_data)
+        elif parsed_url.scheme == "":
+            source_path = pathlib.Path(self._prime_dir, parsed_path)
+            if source_path.exists():
+                # Local - the path should be relative to prime, copy to target.
+                file_utils.link_or_copy(str(parsed_path), str(target_icon_path))
+            elif parsed_path.exists():
+                # Fall back to checking relative to project.
+                file_utils.link_or_copy(str(parsed_path), str(target_icon_path))
+            else:
+                # No icon found, fall back to searching for existing icon.
+                return _find_icon_file()
+        else:
+            raise RuntimeError(f"Unexpected icon path: {parsed_url!r}")
+
+        return target_icon_path
+
     def finalize_snap_meta_commands(self) -> None:
         for app_name, app in self._snap_meta.apps.items():
             # Prime commands only if adapter != "none",
@@ -400,11 +444,12 @@ class _SnapPackaging:
         # declarative items take over.
         self._setup_gui()
 
-        # Extracted metadata (e.g. from the AppStream) can override the
-        # icon location.
-        icon_path: Optional[str] = None
-        if self._extracted_metadata:
-            icon_path = self._extracted_metadata.get_icon()
+        icon_path = self._finalize_icon()
+        if icon_path is not None:
+            icon_path = icon_path.relative_to(self._prime_dir)
+            relative_icon_path: Optional[str] = str(icon_path)
+        else:
+            relative_icon_path = None
 
         snap_name = self._project_config.project.info.name
         for app_name, app in self._snap_meta.apps.items():
@@ -413,18 +458,9 @@ class _SnapPackaging:
                 snap_name=snap_name,
                 prime_dir=self._prime_dir,
                 gui_dir=self.meta_gui_dir,
-                icon_path=icon_path,
+                icon_path=relative_icon_path,
             )
             app.validate_command_chain_executables(self._prime_dir)
-
-        if "icon" in self._config_data:
-            # TODO: use developer.ubuntu.com once it has updated documentation.
-            icon_ext = self._config_data["icon"].split(os.path.extsep)[-1]
-            icon_path = os.path.join(self.meta_gui_dir, "icon.{}".format(icon_ext))
-            os.makedirs(self.meta_gui_dir, exist_ok=True)
-            if os.path.exists(icon_path):
-                os.unlink(icon_path)
-            file_utils.link_or_copy(self._config_data["icon"], icon_path)
 
         if self._config_data.get("type", "") == "gadget":
             if not os.path.exists("gadget.yaml"):

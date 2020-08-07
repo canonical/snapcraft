@@ -19,28 +19,34 @@ import logging
 import os
 import os.path
 import re
-
-import jsonschema
+import urllib
 from typing import List, Set
 
-from snapcraft import plugins, project, formatting_utils
+import jsonschema
+
+from snapcraft import formatting_utils, plugins, project
 from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
 from snapcraft.project._schema import Validator
-from ._parts_config import PartsConfig
-from ._extensions import apply_extensions
-from ._env import build_env_for_stage, runtime_env, environment_to_replacements
-from . import errors, grammar_processing, replace_attr
 
+from . import errors, grammar_processing, replace_attr
+from ._env import build_env_for_stage, environment_to_replacements, runtime_env
+from ._extensions import apply_extensions
+from ._parts_config import PartsConfig
 
 logger = logging.getLogger(__name__)
 
 
 @jsonschema.FormatChecker.cls_checks("icon-path")
 def _validate_icon(instance):
+    parsed_url = urllib.parse.urlparse(instance)
+    if parsed_url.scheme in ["http", "https"]:
+        # Allow remote URLs that may come from appstream.
+        return True
+
     allowed_extensions = [".png", ".svg"]
     extension = os.path.splitext(instance.lower())[1]
     if extension not in allowed_extensions:
