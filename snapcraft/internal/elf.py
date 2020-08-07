@@ -35,8 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 def _ldd_resolve(soname: str, soname_path: str) -> Tuple[str, str]:
-    logger.debug(f"_ldd_resolve: {soname!r} {soname_path!r}")
-
     # If found, resolve the path components.  We can safely determine that
     # ldd found the match if it returns an absolute path.  For additional
     # safety, check that it exists.  See example ldd output in ldd() below.
@@ -62,7 +60,6 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
 
     env = os.environ.copy()
     env["LD_LIBRARY_PATH"] = ":".join(ld_library_paths)
-    logger.debug(f"invoking ldd with ld library paths: {ld_library_paths!r}")
 
     try:
         # ldd output sample:
@@ -74,7 +71,6 @@ def ldd(path: str, ld_library_paths: List[str]) -> Dict[str, str]:
         ldd_lines = (
             subprocess.check_output(["ldd", path], env=env).decode().splitlines()
         )
-        logger.debug(f"ldd output:\n{ldd_lines}")
     except subprocess.CalledProcessError:
         logger.warning("Unable to determine library dependencies for {!r}".format(path))
         return libraries
@@ -651,7 +647,6 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
         # No need to crawl links-- the original should be here, too.
         path = os.path.join(root, part_file)  # type: str
         if os.path.islink(path):
-            logger.debug("Skipped link {!r} while finding dependencies".format(path))
             continue
 
         # Ignore if file does not have ELF header.
