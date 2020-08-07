@@ -242,15 +242,9 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
 
     # Check if running as sudo.
     if os.getenv("SUDO_USER") and os.geteuid() == 0:
-        if build_provider in ["lxd", "multipass"]:
-            raise errors.SnapcraftEnvironmentError(
-                f"'sudo' cannot be used with build provider {build_provider!r}"
-            )
-
-        if build_provider in ["host"]:
-            click.echo(
-                "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
-            )
+        warning(
+            "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+        )
 
 
 def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:

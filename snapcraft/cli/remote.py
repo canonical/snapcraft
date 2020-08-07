@@ -14,18 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import click
 import os
 import time
-
-from snapcraft.project import Project
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal.remote_build import WorkTree, LaunchpadClient, errors
-from snapcraft.formatting_utils import humanize_list
 from typing import List
+
+import click
 from xdg import BaseDirectory
+
+from snapcraft.formatting_utils import humanize_list
+from snapcraft.internal.remote_build import LaunchpadClient, WorkTree, errors
+from snapcraft.project import Project
+
 from . import echo
-from ._options import get_project, PromptOption
+from ._options import PromptOption, get_project
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 
@@ -33,7 +34,6 @@ _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "s390x"]
 @click.group()
 def remotecli():
     """Remote build commands"""
-    pass
 
 
 @remotecli.command("remote-build")
@@ -106,7 +106,9 @@ def remote_build(
         snapcraft remote-build --status
     """
     if os.getenv("SUDO_USER") and os.geteuid() == 0:
-        raise SnapcraftEnvironmentError("'sudo' cannot be used with remote-build")
+        echo.warning(
+            "Running with 'sudo' may cause permission errors and is discouraged."
+        )
 
     if not launchpad_accept_public_upload:
         raise errors.AcceptPublicUploadError()
