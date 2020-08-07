@@ -2,6 +2,9 @@ summary: >-
   Build, clean, build, modify and rebuild, and run hello
   with different plugin configurations
 
+# ROS2/colcon takes about 15 minutes to run.
+kill-timeout: 20m
+
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
