@@ -179,6 +179,17 @@ def _adopt_keys(
         if key in config_data:
             ignored_keys.add(key)
         else:
+            if key == "icon":
+                # Extracted appstream icon paths will be relative to prime.
+                icon = pathlib.Path(prime_dir, str(value))
+                if not icon.exists():
+                    # Cannot find icon, ignore silently.
+                    continue
+
+                if _find_icon_file() is None:
+                    # Already have icon file, do not overwrite.
+                    continue
+
             config_data[key] = value
 
     if "desktop_file_paths" in metadata_dict and "common_id" in metadata_dict:
@@ -446,7 +457,8 @@ class _SnapPackaging:
 
         icon_path = self._finalize_icon()
         if icon_path is not None:
-            icon_path = icon_path.relative_to(self._prime_dir)
+            if str(icon_path).startswith(self._prime_dir):
+                icon_path = icon_path.relative_to(self._prime_dir)
             relative_icon_path: Optional[str] = str(icon_path)
         else:
             relative_icon_path = None

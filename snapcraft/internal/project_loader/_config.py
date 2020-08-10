@@ -51,7 +51,7 @@ def _validate_icon(instance):
     extension = os.path.splitext(instance.lower())[1]
     if extension not in allowed_extensions:
         raise jsonschema.exceptions.ValidationError(
-            "'icon' must be either a .png or a .svg"
+            f"icon {instance!r} must be either a .png or a .svg"
         )
 
     if not os.path.exists(instance):
