@@ -68,6 +68,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The URI to ros master setting the env variable ROS_MASTER_URI. Defaults
       to http://localhost:11311.
+    - skip-keys:
+      (list of strings)
+      List of catkin packages to skip when resolving dependencies. This is useful
+      when a package has not been added to rosdep but is known to be installed.
 """
 
 import contextlib
@@ -256,6 +260,14 @@ class CatkinPlugin(PluginV1):
 
         schema["required"] = ["source"]
 
+        schema["properties"]["skip-keys"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
+        }
+
         return schema
 
     @classmethod
@@ -269,6 +281,7 @@ class CatkinPlugin(PluginV1):
             "underlay",
             "rosinstall-files",
             "recursive-rosinstall",
+            "skip-keys",
         ]
 
     @classmethod
@@ -514,7 +527,7 @@ class CatkinPlugin(PluginV1):
     def _setup_dependencies(self, rosdep, catkin):
         # Parse the Catkin packages to pull out their system dependencies
         system_dependencies = _find_system_dependencies(
-            self.catkin_packages, rosdep, catkin
+            self.catkin_packages, rosdep, catkin, self.options.skip_keys
         )
 
         # If the package requires roscore, resolve it into a system dependency
@@ -837,7 +850,7 @@ class CatkinPlugin(PluginV1):
         return fileset
 
 
-def _find_system_dependencies(catkin_packages, rosdep, catkin):
+def _find_system_dependencies(catkin_packages, rosdep, catkin, skip_keys):
     """Find system dependencies for a given set of Catkin packages."""
 
     resolved_dependencies = {}
@@ -853,7 +866,10 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
         # let's get the dependencies for the entire workspace.
         dependencies |= rosdep.get_dependencies()
 
-    for dependency in dependencies:
+    # Remove skip keys
+    filtered_dependencies = [x for x in dependencies if x not in skip_keys]
+
+    for dependency in filtered_dependencies:
         _resolve_package_dependencies(
             catkin_packages, dependency, catkin, rosdep, resolved_dependencies
         )

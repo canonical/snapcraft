@@ -145,6 +145,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTest):
             "rosinstall-files",
             "recursive-rosinstall",
             "catkin-ros-master-uri",
+            "skip-keys",
         )
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
@@ -1909,7 +1910,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
 
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo"}, self.rosdep_mock, self.catkin_mock
+                {"foo"}, self.rosdep_mock, self.catkin_mock, {}
             ),
             Equals({"apt": {"baz"}}),
         )
@@ -1922,7 +1923,9 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock.resolve_dependency.return_value = {"apt": {"baz"}}
 
         self.assertThat(
-            catkin._find_system_dependencies(None, self.rosdep_mock, self.catkin_mock),
+            catkin._find_system_dependencies(
+                None, self.rosdep_mock, self.catkin_mock, {}
+            ),
             Equals({"apt": {"baz"}}),
         )
 
@@ -1933,7 +1936,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
     def test_find_system_dependencies_local_only(self):
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock
+                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock, {}
             ),
             HasLength(0),
         )
@@ -1950,7 +1953,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
 
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo"}, self.rosdep_mock, self.catkin_mock
+                {"foo"}, self.rosdep_mock, self.catkin_mock, {}
             ),
             HasLength(0),
         )
@@ -1971,7 +1974,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.catkin_mock.find.side_effect = _fake_find
         self.assertThat(
             catkin._find_system_dependencies(
-                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock
+                {"foo", "bar"}, self.rosdep_mock, self.catkin_mock, {}
             ),
             Equals({"apt": {"quux"}}),
         )
@@ -1996,6 +1999,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             {"foo"},
             self.rosdep_mock,
             self.catkin_mock,
+            {},
         )
 
         self.assertThat(
@@ -2018,6 +2022,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             {"foo"},
             self.rosdep_mock,
             self.catkin_mock,
+            {},
         )
 
         self.assertThat(
