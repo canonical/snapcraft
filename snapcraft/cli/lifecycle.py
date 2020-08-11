@@ -16,26 +16,17 @@
 
 import itertools
 import logging
-import typing
 import os
-import shutil
 import subprocess
 import sys
 import time
+import typing
 from typing import List, Optional
 
 import click
 import progressbar
 
-from . import echo
-from ._command import SnapcraftProjectCommand
-from ._options import (
-    add_provider_options,
-    apply_host_provider_flags,
-    get_build_provider,
-    get_build_provider_flags,
-    get_project,
-)
+from snapcraft import file_utils
 from snapcraft.internal import (
     build_providers,
     deprecations,
@@ -46,8 +37,17 @@ from snapcraft.internal import (
     steps,
 )
 from snapcraft.project._sanity_checks import conduct_project_sanity_check
-from ._errors import TRACEBACK_MANAGED, TRACEBACK_HOST
 
+from . import echo
+from ._command import SnapcraftProjectCommand
+from ._errors import TRACEBACK_HOST, TRACEBACK_MANAGED
+from ._options import (
+    add_provider_options,
+    apply_host_provider_flags,
+    get_build_provider,
+    get_build_provider_flags,
+    get_project,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -201,11 +201,10 @@ def _run_pack(snap_command: List[str]) -> str:
 def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
-    snap_path = shutil.which("snap")
-    if snap_path is None:
-        raise errors.HostToolNotFoundError(command_name="snap", package_name="snapd")
 
-    command = [snap_path, "pack"]
+    snap_path = file_utils.get_host_tool_path(command_name="snap", package_name="snapd")
+
+    command = [str(snap_path), "pack"]
     # When None, just use snap pack's default settings.
     if compression is not None:
         if compression != "xz":

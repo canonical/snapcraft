@@ -21,18 +21,12 @@ import shutil
 import subprocess
 from unittest import mock
 
+import pytest
 import testtools
 from testtools.matchers import Equals
 
 from snapcraft import file_utils
-from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    RequiredCommandFailure,
-    RequiredCommandNotFound,
-    RequiredPathDoesNotExist,
-    SnapcraftEnvironmentError,
-    SnapcraftError,
-)
+from snapcraft.internal import common, errors
 from tests import fixture_setup, unit
 
 
@@ -91,7 +85,7 @@ class TestLinkOrCopyTree(unit.TestCase):
 
     def test_link_file_to_file_raises(self):
         raised = self.assertRaises(
-            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
+            errors.SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
         )
 
         self.assertThat(str(raised), Equals("'1' is not a directory"))
@@ -99,7 +93,7 @@ class TestLinkOrCopyTree(unit.TestCase):
     def test_link_file_into_directory(self):
         os.mkdir("qux")
         raised = self.assertRaises(
-            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
+            errors.SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "1", "qux"
         )
 
         self.assertThat(str(raised), Equals("'1' is not a directory"))
@@ -113,7 +107,7 @@ class TestLinkOrCopyTree(unit.TestCase):
     def test_link_directory_overwrite_file_raises(self):
         open("qux", "w").close()
         raised = self.assertRaises(
-            SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "foo", "qux"
+            errors.SnapcraftEnvironmentError, file_utils.link_or_copy_tree, "foo", "qux"
         )
 
         self.assertThat(
@@ -190,11 +184,11 @@ class RequiresCommandSuccessTestCase(unit.TestCase):
         mock_check_call.side_effect = [FileNotFoundError()]
 
         raised = self.assertRaises(
-            RequiredCommandNotFound,
+            errors.RequiredCommandNotFound,
             file_utils.requires_command_success("foo").__enter__,
         )
 
-        self.assertIsInstance(raised, SnapcraftError)
+        self.assertIsInstance(raised, errors.SnapcraftError)
         self.assertThat(str(raised), Equals("'foo' not found."))
 
     @mock.patch("subprocess.check_call")
@@ -202,10 +196,11 @@ class RequiresCommandSuccessTestCase(unit.TestCase):
         mock_check_call.side_effect = [subprocess.CalledProcessError(1, "x")]
 
         raised = self.assertRaises(
-            RequiredCommandFailure, file_utils.requires_command_success("foo").__enter__
+            errors.RequiredCommandFailure,
+            file_utils.requires_command_success("foo").__enter__,
         )
 
-        self.assertIsInstance(raised, SnapcraftError)
+        self.assertIsInstance(raised, errors.SnapcraftError)
         self.assertThat(str(raised), Equals("'foo' failed."))
 
     def test_requires_command_success_broken(self):
@@ -223,7 +218,7 @@ class RequiresCommandSuccessTestCase(unit.TestCase):
         ]
 
         raised = self.assertRaises(
-            RequiredCommandNotFound,
+            errors.RequiredCommandNotFound,
             file_utils.requires_command_success(
                 "foo", not_found_fmt="uhm? {cmd_list!r} -> {command}"
             ).__enter__,
@@ -232,7 +227,7 @@ class RequiresCommandSuccessTestCase(unit.TestCase):
         self.assertThat(str(raised), Equals("uhm? ['foo'] -> foo"))
 
         raised = self.assertRaises(
-            RequiredCommandFailure,
+            errors.RequiredCommandFailure,
             file_utils.requires_command_success(
                 "foo", failure_fmt="failed {cmd_list!r} -> {command}"
             ).__enter__,
@@ -252,15 +247,16 @@ class RequiresPathExistsTestCase(unit.TestCase):
 
     def test_requires_path_exists_fails(self):
         raised = self.assertRaises(
-            RequiredPathDoesNotExist, file_utils.requires_path_exists("foo").__enter__
+            errors.RequiredPathDoesNotExist,
+            file_utils.requires_path_exists("foo").__enter__,
         )
 
-        self.assertIsInstance(raised, SnapcraftError)
+        self.assertIsInstance(raised, errors.SnapcraftError)
         self.assertThat(str(raised), Equals("Required path does not exist: 'foo'"))
 
     def test_requires_path_exists_custom_error(self):
         raised = self.assertRaises(
-            RequiredPathDoesNotExist,
+            errors.RequiredPathDoesNotExist,
             file_utils.requires_path_exists(
                 "foo", error_fmt="what? {path!r}"
             ).__enter__,
@@ -285,7 +281,7 @@ class TestGetLinkerFromFile(unit.TestCase):
 class TestGetLinkerFromFileErrors(unit.TestCase):
     def test_bad_file_formatlinker_raises_exception(self):
         self.assertRaises(
-            SnapcraftEnvironmentError,
+            errors.SnapcraftEnvironmentError,
             file_utils.get_linker_version_from_file,
             linker_file="lib64/ld-linux-x86-64.so.2",
         )
@@ -330,10 +326,24 @@ class TestGetToolPath:
         assert file_utils.get_snap_tool_path("tool-command") == abs_tool_path.as_posix()
 
 
+def test_get_host_tool_finds_command(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda x: "/usr/bin/foo")
+
+    assert file_utils.get_host_tool_path(command_name="foo", package_name="foo")
+
+
+def test_get_host_tool_failure(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda x: None)
+    with pytest.raises(errors.SnapcraftHostToolNotFoundError) as error:
+        file_utils.get_host_tool_path(command_name="foo", package_name="foo-pkg")
+        assert error.command_name == "foo"
+        assert error.package_name == "foo-pkg"
+
+
 class GetToolPathErrorsTest(testtools.TestCase):
     def test_get_snap_tool_path_fails(self):
         self.assertRaises(
-            file_utils.ToolMissingError,
+            errors.ToolMissingError,
             file_utils.get_snap_tool_path,
             "non-existent-tool-command",
         )
@@ -342,7 +352,7 @@ class GetToolPathErrorsTest(testtools.TestCase):
         self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         self.assertRaises(
-            file_utils.ToolMissingError,
+            errors.ToolMissingError,
             file_utils.get_snap_tool_path,
             "non-existent-tool-command",
         )
