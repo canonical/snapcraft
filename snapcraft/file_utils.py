@@ -120,7 +120,7 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     :param str destination: The destination to be linked to source.
     :param bool follow_symlinks: Whether or not symlinks should be followed.
 
-    :raises errors.SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
     """
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
@@ -151,7 +151,7 @@ def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     :param str destination: Where to put the copy.
     :param bool follow_symlinks: Whether or not symlinks should be followed.
 
-    :raises errors.SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
     """
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
@@ -357,7 +357,7 @@ def get_snap_tool_path(command_name: str) -> str:
     to resolve the command using PATH.
 
     :param command_name: the name of the command to resolve a path for.
-    :raises errors.ToolMissingError: if command_name was not found.
+    :raises ToolMissingError: if command_name was not found.
     :return: Path to command
     """
     if common.is_snap():
