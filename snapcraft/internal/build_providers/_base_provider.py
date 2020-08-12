@@ -251,6 +251,10 @@ class Provider(abc.ABC):
             # And make sure we are using the latest from that cache.
             self._run(["apt-get", "dist-upgrade", "--yes"])
 
+            # Install any packages that might be missing from the base
+            # image, but may be required for snapcraft to function.
+            self._run(["apt-get", "install", "--yes", "apt-transport-https"])
+
         # We always setup snapcraft after a start to bring it up to speed with
         # what is on the host
         self._setup_snapcraft()
