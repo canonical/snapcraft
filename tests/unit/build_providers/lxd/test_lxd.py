@@ -143,6 +143,9 @@ class FakeContainers:
 class FakePyLXDClient:
     def __init__(self) -> None:
         self.containers = FakeContainers()
+        self.host_info = {
+            "environment": {"kernel_features": {"seccomp_listener": "true"}}
+        }
 
 
 class LXDBaseTest(BaseProviderBaseTest):
@@ -200,6 +203,7 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-project-name",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
@@ -776,6 +780,7 @@ class LXDInitTest(LXDBaseTest):
             config={
                 "name": "snapcraft-core18",
                 "raw.idmap": f"both {os.getuid()} 0",
+                "security.syscalls.intercept.mknod": "true",
                 "source": {
                     "mode": "pull",
                     "type": "image",
@@ -793,6 +798,30 @@ class LXDInitTest(LXDBaseTest):
         instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
 
         self.assertRaises(errors.ProviderInvalidBaseError, instance.create)
+
+    def test_create_without_syscall_intercept(self):
+        self.fake_pylxd_client.host_info["environment"]["kernel_features"][
+            "seccomp_listener"
+        ] = "false"
+
+        instance = LXDTestImpl(project=self.project, echoer=self.echoer_mock)
+
+        instance.create()
+
+        self.fake_pylxd_client.containers.create_mock.assert_called_once_with(
+            config={
+                "name": "snapcraft-project-name",
+                "raw.idmap": f"both {os.getuid()} 0",
+                "source": {
+                    "mode": "pull",
+                    "type": "image",
+                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
+                    "protocol": "simplestreams",
+                    "alias": "16.04",
+                },
+            },
+            wait=True,
+        )
 
 
 class LXDLaunchedTest(LXDBaseTest):

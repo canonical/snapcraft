@@ -15,6 +15,7 @@ assumes:
 apps:
   snapcraft:
     environment:
+      PATH: "/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/snapcraft
@@ -29,7 +30,7 @@ build-packages:
   - libsodium-dev
   - liblzma-dev
   - libxml2-dev
-  - libxslt-dev
+  - libxslt1-dev
   - libyaml-dev
   - patch
   - sed
@@ -116,14 +117,19 @@ parts:
         # Put snapcraftctl into its own directory that can be included in the PATH
         # without including other binaries.
         bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
-    override-pull: |
-        snapcraftctl pull
-        version="$(git describe --always | sed -e 's/-/+git/;y/-/./')"
-        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        snapcraftctl set-version "$version"
-        snapcraftctl set-grade "$grade"
     override-build: |
+        # pip 20.2 breaks python3-apt, so we pin
+        # the version of pip installed before building
+        PYTHONHOME=/usr PYTHONUSERBASE=$SNAPCRAFT_PART_INSTALL $SNAPCRAFT_PART_INSTALL/usr/bin/python3 -m pip install pip==20.1 --user
+
         snapcraftctl build
+
+        version="$(python3 setup.py --version)"
+        snapcraftctl set-version "$version"
+
+        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+        snapcraftctl set-grade "$grade"
+
         $SNAPCRAFT_PROJECT_DIR/tools/snapcraft-override-build.sh
     override-prime: |
         snapcraftctl prime

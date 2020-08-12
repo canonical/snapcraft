@@ -207,6 +207,12 @@ class LXD(Provider):
 
         self._start()
 
+    def _supports_syscall_interception(self) -> bool:
+        # syscall interception relies on the seccomp_listener kernel feature
+        environment = self._lxd_client.host_info.get("environment", {})
+        kernel_features = environment.get("kernel_features", {})
+        return kernel_features.get("seccomp_listener", "false") == "true"
+
     def _start(self):
         if not self._lxd_client.containers.exists(self.instance_name):
             raise errors.ProviderInstanceNotFoundError(instance_name=self.instance_name)
@@ -221,6 +227,10 @@ class LXD(Provider):
         self._container.config["raw.idmap"] = "both {!s} 0".format(
             os.stat(self.project._project_dir).st_uid
         )
+        # If possible, allow container to make safe mknod calls. Documented at
+        # https://linuxcontainers.org/lxd/docs/master/syscall-interception
+        if self._supports_syscall_interception():
+            self._container.config["security.syscalls.intercept.mknod"] = "true"
         self._container.save(wait=True)
 
         if self._container.status.lower() != "running":

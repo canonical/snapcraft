@@ -30,7 +30,6 @@ def test_schema():
         "$schema": "http://json-schema.org/draft-04/schema#",
         "additionalProperties": False,
         "properties": {
-            "flutter-channel": {"enum": ["dev", "master"], "type": "string"},
             "flutter-revision": {"default": None, "type": "string"},
             "flutter-target": {"default": "lib/main.dart", "type": "string"},
         },
@@ -40,10 +39,7 @@ def test_schema():
 
 
 def test_get_pull_properties():
-    assert flutter.FlutterPlugin.get_pull_properties() == [
-        "flutter-channel",
-        "flutter-revision",
-    ]
+    assert flutter.FlutterPlugin.get_pull_properties() == ["flutter-revision"]
 
 
 def test_get_build_properties():
@@ -58,6 +54,7 @@ def flutter_options():
         flutter_channel = "stable"
         flutter_target = "lib/main.dart"
         flutter_revision = None
+        source_subdir = ""
 
     return Options()
 
@@ -71,31 +68,20 @@ def flutter_plugin(tmp_work_path, project, flutter_options):
 def test_pull(mock_subprocess_run, flutter_plugin):
     flutter_plugin.pull()
 
-    assert mock_subprocess_run.mock_calls == [
-        call(
-            ["flutter", "channel", flutter_plugin.options.flutter_channel], check=True
-        ),
-        call(["flutter", "config", "--enable-linux-desktop"], check=True),
-        call(["flutter", "upgrade"], check=True),
-        call(["flutter", "doctor"], check=True),
-        call(["flutter", "pub", "get"], check=True),
-    ]
-
 
 def test_pull_with_revision(mock_subprocess_run, flutter_plugin):
     flutter_plugin.options.flutter_revision = "foo"
     flutter_plugin.pull()
 
+    expected_cwd = pathlib.Path("parts/test-part/src").absolute()
     assert mock_subprocess_run.mock_calls == [
-        call(
-            ["flutter", "channel", flutter_plugin.options.flutter_channel], check=True
-        ),
-        call(["flutter", "config", "--enable-linux-desktop"], check=True),
-        call(["flutter", "upgrade"], check=True),
-        call(["flutter", "doctor"], check=True),
-        call("yes | flutter version foo", shell=True, check=True,),
-        call(["flutter", "pub", "get"], check=True),
+        call("yes | flutter version foo", shell=True, check=True, cwd=expected_cwd)
     ]
+
+
+def test_pull_from_subdir(mock_subprocess_run, flutter_plugin):
+    flutter_plugin.options.source_subdir = "subdir"
+    flutter_plugin.pull()
 
 
 def test_build(mock_run, flutter_plugin):
@@ -112,6 +98,7 @@ def test_build(mock_run, flutter_plugin):
     flutter_plugin.build()
 
     assert mock_run.mock_calls == [
+        call(["flutter", "pub", "get"]),
         call(
             [
                 "flutter",
@@ -122,7 +109,7 @@ def test_build(mock_run, flutter_plugin):
                 "-t",
                 flutter_plugin.options.flutter_target,
             ]
-        )
+        ),
     ]
     assert (pathlib.Path(flutter_plugin.installdir) / "bin/my_app").exists()
 

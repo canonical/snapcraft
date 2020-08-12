@@ -1,6 +1,7 @@
 #+TITLE: Snapcraft Tasks
 #+STARTUP: content
 #+STARTUP: lognotestate
+#+TODO: TODO(t) STRT(s@/!) | DONE(d!) CANCELED(c@)
 
 * Specifications
 
@@ -42,7 +43,7 @@ CLOSED: [2020-06-24]
 - [ ] Add support for specific channel-map endpoint errors
 - [ ] Remove experimental flag
 
-*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [/]
+*** STRT [[file:specifications/package-repositories.org][Package Repositories]] [6/9]
 
 - [X] System-wide APT configuration for build and stage-packages.
 - [X] Meta support for =package-repositories=: PackageRepository
@@ -53,3 +54,17 @@ CLOSED: [2020-06-24]
 - [ ] Improve error handling when schema validation fails. Nearly everything will fail with: "The =package-repositories[0] property does not match the required schema: <schemas>=
 - [ ] Add multi-arch spread test(s).
 - [ ] Finalize schema and mark stable.
+
+*** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [2/4]
+
+- [X] Add extension variant for master
+- [X] Add extension variant for dev
+- [ ] Add extension variant for beta
+- [ ] Add extension variant for stable
+
+*** TODO [[file:specifications/default-tracks.org][Default Tracks]] [0/3]
+
+- [ ] Implement =snapcraft set-default-tracks=
+- [ ] Implement =snapcraft list-tracks=
+- [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
+

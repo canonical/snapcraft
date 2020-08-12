@@ -22,9 +22,6 @@ For more information check the 'plugins' topic for the former and the
 
 Additionally, this plugin uses the following plugin-specific keywords:
 
-    - flutter-channel
-      (string)
-      Which Flutter channel to use for the build
     - flutter-revision
       (string)
       Which Flutter revision to use for the build. This must be a valid
@@ -32,6 +29,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - flutter-target
       (string, default: lib/main.dart)
       The main entry-point file of the application
+
+This plugin works best with the flutter related extensions.
 """
 
 import logging
@@ -50,25 +49,18 @@ class FlutterPlugin(PluginV1):
     @classmethod
     def schema(cls) -> Dict[str, Any]:
         schema = super().schema()
-        schema["properties"]["flutter-channel"] = {
-            "type": "string",
-            "enum": ["dev", "master"],
-        }
         schema["properties"]["flutter-target"] = {
             "type": "string",
             "default": "lib/main.dart",
         }
-        schema["properties"]["flutter-revision"] = {
-            "type": "string",
-            "default": None,
-        }
+        schema["properties"]["flutter-revision"] = {"type": "string", "default": None}
         schema["required"] = ["source"]
 
         return schema
 
     @classmethod
     def get_pull_properties(cls) -> List[str]:
-        return ["flutter-channel", "flutter-revision"]
+        return ["flutter-revision"]
 
     @classmethod
     def get_build_properties(cls) -> List[str]:
@@ -82,8 +74,6 @@ class FlutterPlugin(PluginV1):
                 part_name=self.name, base=project._get_build_base()
             )
 
-        self.build_snaps.extend(["flutter/latest/stable"])
-
         logger.warning(
             "The flutter plugin is currently in beta, its API may break. Use at your "
             "own risk."
@@ -92,21 +82,23 @@ class FlutterPlugin(PluginV1):
     def pull(self) -> None:
         super().pull()
 
+        work_path = pathlib.Path(self.sourcedir)
+        if self.options.source_subdir:
+            work_path /= self.options.source_subdir
+
         # Let these errors go through to get them on Sentry.
-        subprocess.run(["flutter", "channel", self.options.flutter_channel], check=True)
-        subprocess.run(["flutter", "config", "--enable-linux-desktop"], check=True)
-        subprocess.run(["flutter", "upgrade"], check=True)
-        subprocess.run(["flutter", "doctor"], check=True)
         if self.options.flutter_revision:
             subprocess.run(
                 f"yes | flutter version {self.options.flutter_revision}",
                 shell=True,
                 check=True,
+                cwd=work_path,
             )
-        subprocess.run(["flutter", "pub", "get"], check=True)
 
     def build(self) -> None:
         super().build()
+
+        self.run(["flutter", "pub", "get"])
 
         self.run(
             [

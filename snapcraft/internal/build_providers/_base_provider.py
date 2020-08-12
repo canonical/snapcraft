@@ -16,10 +16,11 @@
 
 import abc
 import base64
+import logging
 import os
 import pathlib
+import pkg_resources
 import platform
-import logging
 import shlex
 import shutil
 import sys
@@ -254,39 +255,36 @@ class Provider(abc.ABC):
         # what is on the host
         self._setup_snapcraft()
 
-    def _is_compatible_version(self, built_by: str) -> bool:
-        """Return True if running version is >= built-by version."""
+    def _check_environment_needs_cleaning(self) -> bool:
+        info = self._load_info()
+        provider_base = info.get("base")
+        built_by = info.get("created-by-snapcraft-version")
+        build_base = self.project._get_build_base()
 
-        # We use a bit a of naive string check here.  Re-using Python
-        # versioning comparisons cannot be used because we don't follow
-        # their spec. Apt version comparison would require running on Linux.
-        return snapcraft._get_version() >= built_by
+        if provider_base is None or built_by is None:
+            self.echoer.warning(
+                "Build environment is in unknown state, cleaning first."
+            )
+            return True
+        elif build_base != provider_base:
+            self.echoer.warning(
+                f"Project base changed from {provider_base!r} to {build_base!r}, cleaning first."
+            )
+            return True
+        elif pkg_resources.parse_version(
+            snapcraft._get_version()
+        ) < pkg_resources.parse_version(built_by):
+            self.echoer.warning(
+                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning first."
+            )
+            return True
+
+        return False
 
     def _ensure_compatible_build_environment(self) -> None:
         """Force clean of build-environment if project is not compatible."""
 
-        info = self._load_info()
-        provider_base = info.get("base")
-        built_by = info.get("created-by-snapcraft-version")
-        if self.project._get_build_base() != provider_base:
-            if provider_base is None:
-                self.echoer.warning(
-                    "Build instance created with incompatible snapcraft, cleaning."
-                )
-            else:
-                self.echoer.warning(
-                    f"Project base changed from {provider_base!r} to {provider_base!r}, cleaning build instance."
-                )
-            self.clean_project()
-        elif built_by is None:
-            self.echoer.warning(
-                f"Build environment was created with unknown snapcraft version {built_by!r}, cleaning."
-            )
-            self.clean_project()
-        elif not self._is_compatible_version(built_by):
-            self.echoer.warning(
-                f"Build environment was created with newer snapcraft version {built_by!r}, cleaning."
-            )
+        if self._check_environment_needs_cleaning():
             self.clean_project()
 
     def _install_file(self, *, path: str, content: str, permissions: str) -> None:
@@ -471,11 +469,6 @@ class Provider(abc.ABC):
 
         # Tell Snapcraft it can take ownership of the host.
         env_list.append("SNAPCRAFT_BUILD_ENVIRONMENT=managed-host")
-
-        # Setup PATH so that snaps have precedence.
-        env_list.append(
-            "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        )
 
         # Set the HOME directory.
         env_list.append(f"HOME={self._get_home_directory().as_posix()}")

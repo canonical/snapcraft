@@ -384,7 +384,6 @@ class BaseProviderTest(BaseProviderBaseTest):
                 [
                     "env",
                     "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
-                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
                     "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                 ]
@@ -405,7 +404,6 @@ class BaseProviderTest(BaseProviderBaseTest):
                 [
                     "env",
                     "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
-                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
                     "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=True",
@@ -430,7 +428,6 @@ class BaseProviderTest(BaseProviderBaseTest):
                 [
                     "env",
                     "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
-                    "PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
                     "HOME=/root",
                     "SNAPCRAFT_HAS_TTY=False",
                     "http_proxy=http://127.0.0.1:8080",
