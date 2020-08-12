@@ -58,3 +58,19 @@ class TestErrorFormatting:
 
     def test_error_formatting(self, exception_class, kwargs, expected_message):
         assert str(exception_class(**kwargs)) == expected_message
+
+
+def test_SnapcraftExperimentalExtensionsRequiredError():
+    error = errors.SnapcraftExperimentalExtensionsRequiredError(extension_name="foo")
+
+    assert (
+        error.get_brief()
+        == "Experimental extension 'foo' is required, but not enabled."
+    )
+    assert error.get_details() is None
+    assert (
+        error.get_resolution()
+        == "This extension may be enabled with the '--enable-experimental-extensions' parameter."
+    )
+    assert error.get_docs_url() is None
+    assert error.get_exit_code() == 2

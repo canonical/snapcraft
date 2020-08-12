@@ -61,6 +61,9 @@ class FlutterMetaExtension(type):
         # Not setting these is a development error.
         channel = attrs["channel"]
 
+        def is_experimental(base: Optional[str]) -> bool:
+            return False
+
         def get_supported_bases() -> Tuple[str, ...]:
             return attrs["supported_bases"]
 
@@ -106,6 +109,7 @@ class FlutterMetaExtension(type):
                 get_supported_confinement.__name__: staticmethod(
                     get_supported_confinement
                 ),
+                is_experimental.__name__: staticmethod(is_experimental),
                 __repr__.__name__: __repr__,
                 __init__.__name__: __init__,
             },
