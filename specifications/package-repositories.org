@@ -16,13 +16,15 @@ availability of:
 - python-packages
 
 The scope of this spec will focus on the configuration of =apt= repositories,
-affecting the availability of =build-packages= and =stage-pagickages=.
+affecting the availability of =build-packages= and =stage-packages=.
 
 * Enabling the feature
 
-Simply configure =package-repositories= in snapcraft.yaml.  Snapcraft will log
-a warning that the feature is experimental until the schema is to be considered
-stable.
+Configure =package-repositories= in snapcraft.yaml.
+
+As an experimental feature, =--enable-experimental-package-repositories= will be
+required. Snapcraft will log a warning that the feature is experimental until
+the schema is to be considered stable.
 
 * Schema for package-repositories
 
@@ -86,15 +88,15 @@ stable.
 
   - Supports =$SNAPCRAFT_APT_HOST_ARCH= variable.
 
-- *Default:* If unspecified, architectures is assumed to match the host's architecture, i.e. =[$SNAPCRAFT_APT_HOST_ARCH]=.
+- *Default:* If unspecified, architectures is assumed to match the host's architecture, i.e. =architectures: [$SNAPCRAFT_APT_HOST_ARCH]=.
 
 - *Examples:*
 
-  - architectures: [i386]
+  - =architectures: [i386]=
 
-  - architectures: [i386, amd64]
+  - =rchitectures: [i386, amd64]=
 
-  - architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]
+  - =architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]=
 
 ** Property: deb-types (optional)
 
@@ -106,9 +108,9 @@ stable.
 
 - *Examples:*
 
-  - deb-types: [deb]
+  - =deb-types: [deb]=
 
-  - deb-types: [deb, deb-src]
+  - =deb-types: [deb, deb-src]=
 
 ** Property: components (required)
 
@@ -116,33 +118,37 @@ stable.
 
 - *Description:* Apt repository components to enable: e.g. =main=, =multiverse=, =unstable=.
 
+  May be empty, e.g.: =components: []=
+
 - *Examples:*
 
-  - components: [main]
+  - =components: []=
 
-  - components: [main, multiverse, universe, restricted]
+  - =components: [main]=
+
+  - =components: [main, multiverse, universe, restricted]=
 
 ** Property: key-id (required)
 
   - *Type:* string
 
-  - *Description:* GPG key identifier / fingerprint.  May be used to identify a key by:
+  - *Description:* GPG key identifier.  May be used to identify a key by:
 
-    - Key ID
+    - GPG Key ID
 
-    - Thumbprint
+    - GPG Key Thumbprint/Fingerprint
 
-    - Project asset key file in: =<project>/snap/keys/<key-id>.asc=
+    - Snapcraft project asset name found at: =<project>/snap/keys/<key-id>.asc=
 
   - *Format:* alphanumeric, dash =-=, and underscores =_= permitted.
 
   - *Examples:*
 
-    - GPG Key Thumbprint: =key-id: 590CA3D8E4826565BE3200526A634116E00F4C82=
+    - =key-id: 590CA3D8E4826565BE3200526A634116E00F4C82=
 
-    - GPG Key ID: =key-id: 6A634116E00F4C82=
+    - =key-id: 6A634116E00F4C82=
 
-    - Matching =<project>/snap/keys/custom-repo.asc=: =key-id: custom-repo=
+    - =key-id: my-org-repo=
 
 ** Property: key-server (optional)
 
@@ -170,7 +176,11 @@ stable.
 
     - Supports =$SNAPCRAFT_APT_RELEASE= variable for snapcraft to populate base's release name (e.g. =xenial=).
 
+    - If your deb URL does not look like it has a suite defined, it is likely that the suite is =/=.
+
   - *Examples:*
+
+    - =suites: [/]=
 
     - =suites: [xenial]=
 
@@ -187,6 +197,8 @@ stable.
   - *Examples:*
 
     - =url: http://archive.canonical.com/ubuntu=
+
+    - =url: https://apt-repo.com/stuff=
 
 * Example configurations
 
@@ -208,11 +220,11 @@ package-repositories:
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
   - type: apt
-    deb-types: [deb, deb-src]
-    components: [main, multiverse, restricted, universe]
-    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
-    key-id: test-key
-    url: http://archive.ubuntu.com/ubuntu
+    deb-types: [deb]
+    components: []
+    suites: [/]
+    key-id: 7fa2af80
+    url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64`
 #+END_SRC
 
 * Exploratory: overriding default snapcraft image sources configuration
@@ -289,4 +301,3 @@ GPG key server: <key-server>
 
 All GPG keys will be imported into a new keyring:
 =/etc/apt/trusted.gpg.d/snapcraft.gpg=
-

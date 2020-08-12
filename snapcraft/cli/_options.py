@@ -21,10 +21,10 @@ from typing import Any, Dict, List, Optional
 
 import click
 
-from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt, warning
 from snapcraft.internal import common, errors
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project, get_snapcraft_yaml
 
 
 class PromptOption(click.Option):
@@ -161,6 +161,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         envvar="SNAPCRAFT_IMAGE_INFO",
         supported_providers=["host", "lxd", "managed-host", "multipass"],
         hidden=True,
+    ),
+    dict(
+        param_decls="--enable-experimental-extensions",
+        is_flag=True,
+        help="Enable extensions that are experimental and not considered stable.",
+        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
     ),
     dict(
         param_decls="--enable-experimental-package-repositories",
@@ -372,4 +379,7 @@ def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
 
     # Log any experimental flags in use.
     if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
-        warning("*EXPERIMENTAL* package-repositories in use")
+        warning("*EXPERIMENTAL* package-repositories enabled.")
+
+    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
+        warning("*EXPERIMENTAL* extensions enabled.")

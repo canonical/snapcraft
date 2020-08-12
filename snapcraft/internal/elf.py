@@ -21,16 +21,15 @@ import re
 import shutil
 import subprocess
 import tempfile
-from typing import Dict, FrozenSet, List, Optional, Set, Sequence, Tuple, Union
+from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
 
+import elftools.common.exceptions
 import elftools.elf.elffile
 from elftools.construct import ConstructError
-import elftools.common.exceptions
 from pkg_resources import parse_version
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, repo
-
 
 logger = logging.getLogger(__name__)
 
@@ -581,7 +580,7 @@ class Patcher:
             origin_rpaths = existing_rpaths + origin_rpaths
 
         origin_paths = ":".join((r for r in origin_rpaths if r))
-        core_base_rpaths = ":".join(base_rpaths)
+        core_base_rpaths = ":".join(sorted(base_rpaths))
 
         if origin_paths and core_base_rpaths:
             return "{}:{}".format(origin_paths, core_base_rpaths)
