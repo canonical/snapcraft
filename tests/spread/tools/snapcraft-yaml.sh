@@ -1,21 +1,28 @@
 #!/bin/bash -e
 
+get_base()
+{
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
+        echo "core20"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
+        echo "core18"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
+        echo "core"
+    else
+	echo ""
+    fi
+}
+
 set_base()
 {
     snapcraft_yaml_path="$1"
 
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-        base="core20"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-18.04 ]]; then
-        base="core18"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-16.04 ]]; then
-        # Use core instead of core16 (LP: #1819290)
-        base="core"
-    else
+    base="$(get_base)"
+    if [[ -z "$base" ]]; then
         echo "Test not supported for $SPREAD_SYSTEM"
         exit 1
     fi
-    
+
     if grep -q "^base:" "$snapcraft_yaml_path"; then
         sed -i "s/base:.*/base: $base/g" "$snapcraft_yaml_path"
     else

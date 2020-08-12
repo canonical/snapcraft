@@ -15,123 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 from textwrap import dedent
 
-import fixtures
 import testscenarios
-from testtools.matchers import (
-    Contains,
-    FileContains,
-    FileExists,
-    MatchesRegex,
-    Not,
-    StartsWith,
-)
+from testtools.matchers import Contains, FileContains, FileExists, Not
 
-from tests import integration, fixture_setup
+from tests import integration
 
 
 class PrimeTestCase(integration.TestCase):
-    def test_classic_confinement(self):
-        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("The autopkgtest armhf runners can't install snaps")
-        project_dir = "classic-build"
-
-        # The first run should fail as the environment variable is not
-        # set but we can only test this on clean systems.
-        if not os.path.exists(os.path.join(os.path.sep, "snap", "core", "current")):
-            try:
-                self.run_snapcraft(["prime"], project_dir)
-            except subprocess.CalledProcessError:
-                pass
-            else:
-                self.fail("This should fail as SNAPCRAFT_SETUP_CORE is not set")
-
-        # Now we set the required environment variable
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_SETUP_CORE", "1"))
-
-        self.run_snapcraft(["prime"], project_dir)
-
-        bin_path = os.path.join(self.prime_dir, "bin", "hello-classic")
-        self.assertThat(bin_path, FileExists())
-
-        interpreter = subprocess.check_output(
-            [self.patchelf_command, "--print-interpreter", bin_path]
-        ).decode()
-        expected_interpreter = r"^/snap/core/current/.*"
-        self.assertThat(interpreter, MatchesRegex(expected_interpreter))
-
-        # We check stage to make sure the hard link is broken.
-        staged_bin_path = os.path.join(self.stage_dir, "bin", "hello-classic")
-        self.assertThat(staged_bin_path, FileExists())
-
-        staged_interpreter = subprocess.check_output(
-            [self.patchelf_command, "--print-interpreter", staged_bin_path]
-        ).decode()
-        self.assertThat(staged_interpreter, MatchesRegex(r"^/lib.*"))
-
-    def test_classic_confinement_patchelf_disabled(self):
-        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("The autopkgtest armhf runners can't install snaps")
-        project_dir = "classic-build"
-
-        # Now we set the required environment variable
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_SETUP_CORE", "1"))
-
-        self.copy_project_to_cwd(project_dir)
-
-        # Create a new snapcraft.yaml
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, base=None, confinement="classic"
-        )
-        snapcraft_yaml.update_part(
-            "hello",
-            {"source": ".", "plugin": "make", "build-attributes": ["no-patchelf"]},
-        )
-        self.useFixture(snapcraft_yaml)
-
-        self.run_snapcraft("prime")
-
-        bin_path = os.path.join(self.prime_dir, "bin", "hello-classic")
-        self.assertThat(bin_path, FileExists())
-
-        interpreter = subprocess.check_output(
-            [self.patchelf_command, "--print-interpreter", bin_path]
-        ).decode()
-        self.assertThat(interpreter, StartsWith("/lib"))
-
-    def test_classic_confinement_with_existing_rpath(self):
-        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("The autopkgtest armhf runners can't install snaps")
-        project_dir = "classic-build-existing-rpath"
-
-        # The first run should fail as the environment variable is not
-        # set but we can only test this on clean systems.
-        if not os.path.exists(os.path.join(os.path.sep, "snap", "core", "current")):
-            try:
-                self.run_snapcraft(["prime"], project_dir)
-            except subprocess.CalledProcessError:
-                pass
-            else:
-                self.fail("This should fail as SNAPCRAFT_SETUP_CORE is not set")
-
-        # Now we set the required environment variable
-        self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_SETUP_CORE", "1"))
-
-        self.run_snapcraft(["prime"], project_dir)
-
-        bin_path = os.path.join(self.prime_dir, "bin", "hello-classic")
-        self.assertThat(bin_path, FileExists())
-
-        rpath = (
-            subprocess.check_output([self.patchelf_command, "--print-rpath", bin_path])
-            .decode()
-            .strip()
-        )
-        expected_rpath = "$ORIGIN/../fake-lib:/snap/core/current/"
-        self.assertThat(rpath, StartsWith(expected_rpath))
-
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft("prime", "prime-from-stage")
         self.assertThat(os.path.join(self.prime_dir, "without-a"), FileExists())
