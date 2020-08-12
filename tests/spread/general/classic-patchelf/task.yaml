@@ -1,0 +1,48 @@
+summary: Build a classic snap and validates elf patching
+
+environment:
+  SNAP_DIR: ../snaps/classic-patchelf
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  apt-get install patchelf dpkg-dev -y
+  apt-mark auto patchelf dpkg-dev
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  cd "$SNAP_DIR"
+  cat snap/snapcraft.yaml
+  snapcraft prime
+
+  arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
+
+  # Verify typical binary.
+  patchelf --print-interpreter prime/bin/hello-classic | MATCH "^/snap/$base/current/lib.*ld-linux-.*.so.*"
+  patchelf --print-rpath prime/bin/hello-classic | MATCH "^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+
+  # Verify binary w/ existing rpath.
+  patchelf --print-interpreter prime/bin/hello-classic-existing-rpath | MATCH "^/snap/$base/current/lib.*ld-linux-.*.so.*"
+  patchelf --print-rpath prime/bin/hello-classic-existing-rpath | MATCH "^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+
+  # Verify untouched no-patchelf.
+  patchelf --print-interpreter prime/bin/hello-classic-no-patchelf | MATCH "^/lib.*ld-linux.*.so.*"
+  rpath="$(patchelf --print-rpath prime/bin/hello-classic-no-patchelf)"
+  if [[ -n "${rpath}" ]]; then
+     echo "found rpath with no-patchelf: ${rpath}"
+     exit 1
+  fi
