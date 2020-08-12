@@ -4,7 +4,8 @@
 all: hello-classic
 
 install: hello-classic
-	install -d $(DESTDIR)/bin
-	install $^ $(DESTDIR)/bin/
+	install -d $(DESTDIR)/bin/
+	install -D $^ $(DESTDIR)/bin/
 
 hello-classic: hello-classic.c
+	$(CC) hello-classic.c -o hello-classic -lcurl
