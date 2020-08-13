@@ -71,7 +71,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - skip-keys:
       (list of strings)
       List of catkin packages to skip when resolving dependencies. This is useful
-      when a package has not been added to rosdep but is known to be installed.
+      when a package has not been added to rosdep but is known to be staged.
 """
 
 import contextlib
@@ -258,15 +258,15 @@ class CatkinPlugin(PluginV1):
             "default": "http://localhost:11311",
         }
 
-        schema["required"] = ["source"]
-
         schema["properties"]["skip-keys"] = {
             "type": "array",
-            "minitems": 1,
+            "minItems": 0,
             "uniqueItems": True,
             "items": {"type": "string"},
             "default": [],
         }
+
+        schema["required"] = ["source"]
 
         return schema
 
@@ -334,6 +334,12 @@ class CatkinPlugin(PluginV1):
         self.catkin_packages = None
         if options.catkin_packages is not None:
             self.catkin_packages = set(options.catkin_packages)
+
+        # Get a unique set of skip-keys
+        self.skip_keys = set()
+        if options.skip_keys is not None:
+            self.skip_keys = set(options.skip_keys)
+
         self.stage_packages_path = pathlib.Path(self.partdir) / "catkin_stage_packages"
         self._rosdep_path = os.path.join(self.partdir, "rosdep")
         self._catkin_path = os.path.join(self.partdir, "catkin")
@@ -527,7 +533,7 @@ class CatkinPlugin(PluginV1):
     def _setup_dependencies(self, rosdep, catkin):
         # Parse the Catkin packages to pull out their system dependencies
         system_dependencies = _find_system_dependencies(
-            self.catkin_packages, rosdep, catkin, self.options.skip_keys
+            self.catkin_packages, rosdep, catkin, self.skip_keys
         )
 
         # If the package requires roscore, resolve it into a system dependency
@@ -866,10 +872,7 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin, skip_keys):
         # let's get the dependencies for the entire workspace.
         dependencies |= rosdep.get_dependencies()
 
-    # Remove skip keys
-    filtered_dependencies = [x for x in dependencies if x not in skip_keys]
-
-    for dependency in filtered_dependencies:
+    for dependency in dependencies - skip_keys:
         _resolve_package_dependencies(
             catkin_packages, dependency, catkin, rosdep, resolved_dependencies
         )

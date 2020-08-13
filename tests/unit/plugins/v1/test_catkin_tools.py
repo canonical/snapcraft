@@ -38,6 +38,7 @@ class CatkinToolsPluginBaseTest(PluginsV1BaseTestCase):
             underlay = None
             rosinstall_files = None
             build_attributes = []
+            skip_keys = []
 
         self.properties = props()
 
@@ -133,6 +134,7 @@ def options():
         underlay = None
         rosinstall_files = None
         build_attributes = []
+        skip_keys = []
 
     return Options()
 
