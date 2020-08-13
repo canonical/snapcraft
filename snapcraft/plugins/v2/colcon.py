@@ -78,31 +78,31 @@ class ColconPlugin(PluginV2):
             "properties": {
                 "colcon-ament-cmake-args": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "colcon-catkin-cmake-args": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "colcon-cmake-args": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "colcon-packages": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                 },
                 "colcon-packages-ignore": {
                     "type": "array",
-                    "minItems": 1,
+                    "minItems": 0,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
