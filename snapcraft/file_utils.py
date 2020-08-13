@@ -333,12 +333,11 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
 def get_host_tool_path(*, command_name: str, package_name: str) -> pathlib.Path:
     """Return the path of command_name found on the host.
 
-    Using shutil.which() to find the host-provided command,
-    raises SnapcraftHostMissingToolError if not found.
+    Uses shutil.which() to find the host-provided command.
 
     :param command_name: name of the command to resolve a path for.
     :param package_name: package <command_name> is usually found in.
-    :raises SnapcraftHosterrors.ToolMissingError: if command_name not found.
+    :raises SnapcraftHostToolMissingError: if command_name not found.
     :return: Path to command.
     """
     command_path = shutil.which(command_name)
