@@ -17,11 +17,12 @@
 import itertools
 import logging
 import os
+import pathlib
 import subprocess
 import sys
 import time
 import typing
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import click
 import progressbar
@@ -152,7 +153,7 @@ def _execute(  # noqa: C901
     return project
 
 
-def _run_pack(snap_command: List[str]) -> str:
+def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
     ret = None
     stdout = ""
     stderr = ""
@@ -204,7 +205,7 @@ def _pack(
 
     snap_path = file_utils.get_host_tool_path(command_name="snap", package_name="snapd")
 
-    command = [str(snap_path), "pack"]
+    command: List[Union[str, pathlib.Path]] = [snap_path, "pack"]
     # When None, just use snap pack's default settings.
     if compression is not None:
         if compression != "xz":
