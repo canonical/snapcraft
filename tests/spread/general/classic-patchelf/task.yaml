@@ -32,15 +32,15 @@ execute: |
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
   # Verify typical binary.
-  patchelf --print-interpreter prime/bin/hello-classic | MATCH "^/snap/$base/current/lib.*ld-linux-.*.so.*"
+  patchelf --print-interpreter prime/bin/hello-classic | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
   patchelf --print-rpath prime/bin/hello-classic | MATCH "^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
 
   # Verify binary w/ existing rpath.
-  patchelf --print-interpreter prime/bin/hello-classic-existing-rpath | MATCH "^/snap/$base/current/lib.*ld-linux-.*.so.*"
+  patchelf --print-interpreter prime/bin/hello-classic-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
   patchelf --print-rpath prime/bin/hello-classic-existing-rpath | MATCH "^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
 
   # Verify untouched no-patchelf.
-  patchelf --print-interpreter prime/bin/hello-classic-no-patchelf | MATCH "^/lib.*ld-linux.*.so.*"
+  patchelf --print-interpreter prime/bin/hello-classic-no-patchelf | MATCH "^/lib.*ld.*.so.*"
   rpath="$(patchelf --print-rpath prime/bin/hello-classic-no-patchelf)"
   if [[ -n "${rpath}" ]]; then
      echo "found rpath with no-patchelf: ${rpath}"
