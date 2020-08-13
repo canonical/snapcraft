@@ -334,8 +334,10 @@ def test_get_host_tool_finds_command(monkeypatch):
 
 def test_get_host_tool_failure(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda x: None)
+
     with pytest.raises(errors.SnapcraftHostToolNotFoundError) as error:
         file_utils.get_host_tool_path(command_name="foo", package_name="foo-pkg")
+
         assert error.command_name == "foo"
         assert error.package_name == "foo-pkg"
 
