@@ -87,5 +87,5 @@ class CMakePlugin(PluginV2):
         return [
             self._get_cmake_configure_command(),
             'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-            'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
+            'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
         ]

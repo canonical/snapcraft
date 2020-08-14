@@ -78,7 +78,7 @@ def test_get_build_commands():
     assert plugin.get_build_commands() == [
         'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Unix Makefiles"',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
+        'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
 
 
@@ -92,7 +92,7 @@ def test_get_build_commands_ninja():
     assert plugin.get_build_commands() == [
         'cmake "${SNAPCRAFT_PART_SRC_WORK}" -G "Ninja"',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
+        'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
 
 
@@ -115,5 +115,5 @@ def test_get_build_commands_with_cmake_parameters():
         '-DCMAKE_SPACED_ARGS="foo bar" '
         '-DCMAKE_USING_ENV="$SNAPCRAFT_PART_INSTALL"/bar',
         'cmake --build . -- -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"',
-        'cmake --build . --target install -- DESTDIR="${SNAPCRAFT_PART_INSTALL}"',
+        'DESTDIR="${SNAPCRAFT_PART_INSTALL}" cmake --build . --target install',
     ]
