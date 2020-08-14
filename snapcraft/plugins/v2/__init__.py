@@ -22,6 +22,7 @@ from ._plugin import PluginV2  # noqa: F401
 if sys.platform == "linux":
     from .autotools import AutotoolsPlugin  # noqa: F401
     from .cmake import CMakePlugin  # noqa: F401
+    from .colcon import ColconPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
     from .go import GoPlugin  # noqa: F401
     from .make import MakePlugin  # noqa: F401

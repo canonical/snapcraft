@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from typing import Dict, Type, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Type, Union
 
 from snapcraft.internal import errors
+
 from . import v1, v2
 
 PluginTypes = Union[Type[v1.PluginV1], Type[v2.PluginV2]]
@@ -57,11 +58,12 @@ if sys.platform == "linux" or TYPE_CHECKING:
         },
         "core20": {
             "autotools": v2.AutotoolsPlugin,
-            "dump": v2.DumpPlugin,
             "cmake": v2.CMakePlugin,
+            "colcon": v2.ColconPlugin,
+            "dump": v2.DumpPlugin,
+            "go": v2.GoPlugin,
             "make": v2.MakePlugin,
             "meson": v2.MesonPlugin,
-            "go": v2.GoPlugin,
             "nil": v2.NilPlugin,
             "npm": v2.NpmPlugin,
             "python": v2.PythonPlugin,

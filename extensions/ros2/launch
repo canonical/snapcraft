@@ -1,0 +1,19 @@
+#!/bin/bash
+
+function source_with_prefix() {
+    export COLCON_CURRENT_PREFIX="$1"
+    if [ ! -f "$COLCON_CURRENT_PREFIX/local_setup.bash" ]; then
+      echo "error: $COLCON_CURRENT_PREFIX/local_setup.bash not found"
+      exit 1
+    fi
+    # shellcheck disable=SC1090
+    source "$COLCON_CURRENT_PREFIX/local_setup.bash"
+}
+
+# Save off parameters, the sourced setup scripts may manipulate them.
+original_args=("$@")
+
+source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
+source_with_prefix "$SNAP"
+
+exec "${original_args[@]}"
