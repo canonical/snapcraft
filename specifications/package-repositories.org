@@ -94,7 +94,7 @@ the schema is to be considered stable.
 
   - =architectures: [i386]=
 
-  - =rchitectures: [i386, amd64]=
+  - =architectures: [i386, amd64]=
 
   - =architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]=
 
