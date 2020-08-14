@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-
 from abc import ABC, abstractmethod
+from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+
 from snapcraft import formatting_utils
 from snapcraft.internal import steps
-from subprocess import CalledProcessError
-from typing import Dict, List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from snapcraft.internal.pluginhandler._dirty_report import DirtyReport
@@ -755,7 +755,7 @@ class SnapcraftPluginBuildError(SnapcraftException):
         return "Check the build logs and ensure the part's configuration and sources are correct."
 
 
-class HostToolNotFoundError(SnapcraftException):
+class SnapcraftHostToolNotFoundError(SnapcraftException):
     """An exception to raise when a host tool is required, but not found."""
 
     def __init__(self, *, command_name: str, package_name: str) -> None:
