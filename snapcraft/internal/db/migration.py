@@ -21,13 +21,7 @@ from typing import Any, ClassVar, Dict
 
 import tinydb
 
-import snapcraft
-
-logger = logging.getLogger()
-
-
-def get_snapcraft_version() -> str:
-    return snapcraft.__version__
+logger = logging.getLogger(__name__)
 
 
 class Migration(metaclass=abc.ABCMeta):
@@ -35,8 +29,9 @@ class Migration(metaclass=abc.ABCMeta):
 
     SCHEMA_VERSION: ClassVar[int] = 0
 
-    def __init__(self, db: tinydb.TinyDB) -> None:
+    def __init__(self, *, db: tinydb.TinyDB, snapcraft_version: str) -> None:
         self.db = db
+        self._snapcraft_version = snapcraft_version
 
     def _query_control_record(self) -> Dict[str, Any]:
         """Query control record (single document in 'control' table)."""
@@ -65,7 +60,7 @@ class Migration(metaclass=abc.ABCMeta):
         migration_table.insert(
             {
                 "schema_version": self.SCHEMA_VERSION,
-                "snapcraft_version": get_snapcraft_version(),
+                "snapcraft_version": self._snapcraft_version,
                 "timestamp": str(datetime.now(tz=None)),
             }
         )
@@ -84,12 +79,12 @@ class Migration(metaclass=abc.ABCMeta):
 
         if self.SCHEMA_VERSION <= current_schema_version:
             logger.debug(
-                f"migration {self.SCHEMA_VERSION} already applied, ignoring..."
+                f"Migration apply: migration {self.SCHEMA_VERSION} already applied, ignoring..."
             )
             return current_schema_version
 
         logger.debug(
-            f"applying migration for {self.SCHEMA_VERSION} for {control_record}"
+            f"Migration apply: applying migration for {self.SCHEMA_VERSION} for {control_record}"
         )
         self._migrate()
         self._record_migration()
@@ -106,7 +101,7 @@ class MigrationV1(Migration):
         control_table = self.db.table("control")
         control_table.insert(
             {
-                "created_with_snapcraft_version": get_snapcraft_version(),
+                "created_with_snapcraft_version": self._snapcraft_version,
                 "schema_version": self.SCHEMA_VERSION,
             }
         )

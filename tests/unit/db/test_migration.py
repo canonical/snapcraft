@@ -30,32 +30,23 @@ def test_db():
 
 
 @pytest.fixture(autouse=True)
-def mock_snapcraft_version(monkeypatch):
-    monkeypatch.setattr(migration.snapcraft, "__version__", 42)
-
-
-@pytest.fixture(autouse=True)
 def mock_datetime(monkeypatch):
     datetime_mock = Mock(wraps=datetime.datetime)
     datetime_mock.now.return_value = datetime.datetime(2020, 1, 2, 3, 4, 5, 6)
     monkeypatch.setattr(migration, "datetime", datetime_mock)
 
 
-def test_get_snapcraft_version(monkeypatch):
-    assert migration.get_snapcraft_version() == 42
-
-
 def test_migration_on_empty_db(test_db):
-    m = migration.MigrationV1(test_db)
+    m = migration.MigrationV1(db=test_db, snapcraft_version="42")
     m.apply()
 
     assert test_db.table("control").all() == [
-        {"created_with_snapcraft_version": 42, "schema_version": 1}
+        {"created_with_snapcraft_version": "42", "schema_version": 1}
     ]
     assert test_db.table("migration").all() == [
         {
             "schema_version": 1,
-            "snapcraft_version": 42,
+            "snapcraft_version": "42",
             "timestamp": "2020-01-02 03:04:05.000006",
         }
     ]
@@ -63,27 +54,27 @@ def test_migration_on_empty_db(test_db):
 
 def test_no_migration_on_v1_db(test_db):
     test_db.table("control").insert(
-        {"created_with_snapcraft_version": 42, "schema_version": 1}
+        {"created_with_snapcraft_version": "42", "schema_version": 1}
     )
 
-    m = migration.MigrationV1(test_db)
+    m = migration.MigrationV1(db=test_db, snapcraft_version="42")
     m.apply()
 
     assert test_db.table("control").all() == [
-        {"created_with_snapcraft_version": 42, "schema_version": 1}
+        {"created_with_snapcraft_version": "42", "schema_version": 1}
     ]
     assert test_db.table("migration").all() == []
 
 
 def test_no_migration_on_v2_db(test_db):
     test_db.table("control").insert(
-        {"created_with_snapcraft_version": 42, "schema_version": 2}
+        {"created_with_snapcraft_version": "42", "schema_version": 2}
     )
 
-    m = migration.MigrationV1(test_db)
+    m = migration.MigrationV1(db=test_db, snapcraft_version="42")
     m.apply()
 
     assert test_db.table("control").all() == [
-        {"created_with_snapcraft_version": 42, "schema_version": 2}
+        {"created_with_snapcraft_version": "42", "schema_version": 2}
     ]
     assert test_db.table("migration").all() == []

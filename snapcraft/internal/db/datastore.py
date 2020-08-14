@@ -21,9 +21,11 @@ from typing import Any, Dict, List, Type
 import tinydb
 import yaml
 
+import snapcraft
+
 from . import errors, migration
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class _YAMLStorage(tinydb.Storage):
@@ -31,23 +33,34 @@ class _YAMLStorage(tinydb.Storage):
 
     def __init__(self, path: str):
         self.path = pathlib.Path(path)
+        logger.debug(f"_YAMLStorage init {self.path}")
 
-    def read(self) -> Dict[Any, Any]:
+    def read(self) -> Dict[str, Any]:
         """Read database from file."""
+        logger.debug(f"_YAMLStorage read: {self.path}")
         try:
-            text_data = self.path.read_text()
+            with open(self.path, "r") as fd:
+                db_data = yaml.safe_load(fd)
         except FileNotFoundError:
             return dict()
 
-        return yaml.safe_load(text_data)
+        if not isinstance(db_data, dict) or any(
+            [not isinstance(k, str) for k in db_data.keys()]
+        ):
+            raise RuntimeError(
+                f"Invalid datastore contents for {str(self.path)}: {db_data!r}"
+            )
+
+        return db_data
 
     def write(self, data) -> None:
         """Write database (data) to file."""
-        logger.debug(f"saving datstore: {self.path} {data}")
+        logger.debug(f"_YAMLStorage write: {self.path} data={data!r}")
         self.path.write_text(yaml.dump(data))
 
     def close(self):
         """Nothing to do since we do not keep <path> open."""
+        logger.debug(f"_YAMLStorage close: {self.path}")
 
 
 class _YAMLStorageReadOnly(_YAMLStorage):
@@ -70,8 +83,10 @@ class Datastore:
         path: pathlib.Path,
         migrations: List[Type[migration.Migration]],
         read_only: bool = False,
+        snapcraft_version: str = snapcraft.__version__,
     ) -> None:
         self.path = path
+        self._snapcraft_version = snapcraft_version
 
         if read_only:
             storage_class = _YAMLStorageReadOnly
@@ -80,7 +95,11 @@ class Datastore:
 
         self.db = tinydb.TinyDB(str(path), storage=storage_class)
 
-        logger.debug(f"opened datstore: {self.path} read_only: {read_only}")
+        logger.debug(f"Datastore init: {self.path} read_only={read_only}")
+
+        # Force the datastore to be read by making a query, otherwise it is
+        # only read on the first access.
+        _ = self.db.tables()
 
         # Nothing left to do if opening in read-only mode.
         if read_only:
@@ -90,7 +109,9 @@ class Datastore:
         supported_version: int = 0
 
         for migration_class in migrations:
-            current_version = migration_class(self.db).apply()
+            current_version = migration_class(
+                db=self.db, snapcraft_version=self._snapcraft_version
+            ).apply()
             supported_version = migration_class.SCHEMA_VERSION
 
         if current_version > supported_version:
@@ -109,4 +130,4 @@ class Datastore:
     def close(self) -> None:
         """Close database."""
         self.db.close()
-        logger.debug(f"closed datastore: {self.path}")
+        logger.debug(f"Datastore close: {self.path}")

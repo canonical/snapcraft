@@ -25,24 +25,30 @@ from snapcraft.internal.db import datastore, errors, migration
 
 
 @pytest.fixture(autouse=True)
-def mock_snapcraft_version(monkeypatch):
-    monkeypatch.setattr(migration.snapcraft, "__version__", 42)
-
-
-@pytest.fixture(autouse=True)
 def mock_datetime(monkeypatch):
     datetime_mock = Mock(wraps=datetime.datetime)
     datetime_mock.now.return_value = datetime.datetime(2020, 1, 2, 3, 4, 5, 6)
     monkeypatch.setattr(migration, "datetime", datetime_mock)
 
 
-def test_get_snapcraft_version(monkeypatch):
-    assert migration.get_snapcraft_version() == 42
+def test_open_invalid_data(tmp_path):
+    db_path = tmp_path / "db.yaml"
+    db_path.write_text("invalid")
+
+    with pytest.raises(RuntimeError) as error:
+        with datastore.Datastore(path=db_path, migrations=[]) as _:
+            assert False
+
+    assert (
+        error.value.args[0]
+        == f"Invalid datastore contents for {str(db_path)}: 'invalid'"
+    )
 
 
 def test_create_no_migration(tmp_path):
     db_path = tmp_path / "db.yaml"
-    with datastore.Datastore(path=db_path, migrations=[]) as db:
+
+    with datastore.Datastore(path=db_path, migrations=[], snapcraft_version="42") as db:
         assert isinstance(db, tinydb.TinyDB) is True
         db.table("test").insert({"foo": "bar"})
 
@@ -57,7 +63,10 @@ def test_create_no_migration(tmp_path):
 
 def test_create_default_migration(tmp_path):
     db_path = tmp_path / "db.yaml"
-    with datastore.Datastore(path=db_path, migrations=[migration.MigrationV1]) as db:
+
+    with datastore.Datastore(
+        path=db_path, migrations=[migration.MigrationV1], snapcraft_version="42"
+    ) as db:
         assert isinstance(db, tinydb.TinyDB) is True
         db.table("test").insert({"foo": "bar"})
 
@@ -65,12 +74,12 @@ def test_create_default_migration(tmp_path):
         """\
         control:
           '1':
-            created_with_snapcraft_version: 42
+            created_with_snapcraft_version: '42'
             schema_version: 1
         migration:
           '1':
             schema_version: 1
-            snapcraft_version: 42
+            snapcraft_version: '42'
             timestamp: '2020-01-02 03:04:05.000006'
         test:
           '1':
@@ -81,10 +90,10 @@ def test_create_default_migration(tmp_path):
 
 def test_unknown_version(tmp_path):
     db_path = tmp_path / "db.yaml"
-    control_record = {"created_with_snapcraft_version": 42, "schema_version": 3}
+    control_record = {"created_with_snapcraft_version": "42", "schema_version": 3}
 
     # Populate test db with schema version greater than 1.
-    with datastore.Datastore(path=db_path, migrations=[]) as db:
+    with datastore.Datastore(path=db_path, migrations=[], snapcraft_version="42") as db:
         assert isinstance(db, tinydb.TinyDB) is True
         db.table("control").insert(control_record)
 
