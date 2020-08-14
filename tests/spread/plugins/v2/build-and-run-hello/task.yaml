@@ -5,6 +5,7 @@ summary: >-
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
+  SNAP/cmake_ninja: cmake-hello-ninja
   SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/make: make-hello
   SNAP/local_plugin_from_base: local-plugin-from-base-hello

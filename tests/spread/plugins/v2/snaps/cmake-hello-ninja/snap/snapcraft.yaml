@@ -1,17 +1,15 @@
-name: cmake-hello
+name: cmake-hello-ninja
 version: "1.0"
 summary: test the cmake plugin
 description: |
-  This is a basic cmake snap. It just prints a hello world.
-  If you want to add other functionalities to this snap, please don't.
-  Make a new one.
+  Test cmake using Ninja build generator.
 
 grade: devel
 base: core20
 confinement: strict
 
 apps:
-  cmake-hello:
+  cmake-hello-ninja:
     command: usr/bin/cmake-hello
 
 parts:
