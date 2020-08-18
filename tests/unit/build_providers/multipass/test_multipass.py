@@ -23,12 +23,11 @@ import fixtures
 import pytest
 from testtools.matchers import Equals
 
-from tests.unit.build_providers import BaseProviderBaseTest, get_project
 from snapcraft.internal import steps
-from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal.build_providers import _base_provider, errors
 from snapcraft.internal.build_providers._multipass import Multipass, MultipassCommand
-
+from snapcraft.internal.errors import SnapcraftEnvironmentError
+from tests.unit.build_providers import BaseProviderBaseTest, get_project
 
 _DEFAULT_INSTANCE_INFO = dedent(
     """\
@@ -743,6 +742,36 @@ class TestMultipassWithBases:
                     "install",
                     "--yes",
                     "apt-transport-https",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "snap",
+                    "unset",
+                    "system",
+                    "proxy.http",
+                ],
+                hide_output=False,
+                instance_name="snapcraft-project-name",
+            ),
+            call(
+                command=[
+                    "sudo",
+                    "-H",
+                    "-i",
+                    "env",
+                    "SNAPCRAFT_HAS_TTY=False",
+                    "snap",
+                    "unset",
+                    "system",
+                    "proxy.https",
                 ],
                 hide_output=False,
                 instance_name="snapcraft-project-name",

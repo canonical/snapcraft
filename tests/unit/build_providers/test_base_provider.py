@@ -18,10 +18,12 @@ import contextlib
 import os
 import pathlib
 from textwrap import dedent
-from unittest.mock import call, patch, Mock
+from unittest.mock import Mock, call, patch
 
 import fixtures
-from testtools.matchers import Equals, EndsWith, DirExists, Not
+from testtools.matchers import DirExists, EndsWith, Equals, Not
+
+from snapcraft.internal.build_providers import errors
 
 from . import (
     BaseProviderBaseTest,
@@ -29,7 +31,6 @@ from . import (
     ProviderImpl,
     get_project,
 )
-from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -176,11 +177,31 @@ class BaseProviderTest(BaseProviderBaseTest):
                     call(["apt-get", "update"]),
                     call(["apt-get", "dist-upgrade", "--yes"]),
                     call(["apt-get", "install", "--yes", "apt-transport-https"]),
+                    call(["snap", "unset", "system", "proxy.http"]),
+                    call(["snap", "unset", "system", "proxy.https"]),
                 ]
             ),
         )
 
         self.assertThat(provider.provider_project_dir, DirExists())
+
+    def test_launch_instance_with_proxies(self):
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={
+                "http_proxy": "http://1.2.3.4:8080",
+                "https_proxy": "http://2.3.4.5:8080",
+            },
+        )
+        provider.launch_instance()
+
+        provider.run_mock.assert_has_calls(
+            [
+                call(["snap", "set", "system", "proxy.http=http://1.2.3.4:8080"]),
+                call(["snap", "set", "system", "proxy.https=http://2.3.4.5:8080"]),
+            ]
+        )
 
     def test_expose_prime(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -351,7 +372,12 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.start_mock.assert_any_call()
-        provider.run_mock.assert_not_called()
+
+        # Verify the updates that take place on each start.
+        provider.run_mock.mock_calls == [
+            call(["snap", "unset", "system", "proxy.http"]),
+            call(["snap", "unset", "system", "proxy.https"]),
+        ]
 
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)
