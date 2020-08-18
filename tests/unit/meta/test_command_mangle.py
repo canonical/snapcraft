@@ -29,7 +29,7 @@ class TestCommandMangle:
                 command_path="foo",
                 command_value="foo bar",
                 expected_command="foo bar",
-                expected_log=None,
+                expected_logs=[],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -40,7 +40,7 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="bin/foo bar",
                 expected_command="bin/foo bar",
-                expected_log=None,
+                expected_logs=[],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -51,7 +51,10 @@ class TestCommandMangle:
                 command_path="foo",
                 command_value="$SNAP/foo bar",
                 expected_command="foo bar",
-                expected_log="Stripped '$SNAP/' from command '$SNAP/foo bar'.",
+                expected_logs=[
+                    "Found unneeded '$SNAP/' in command '$SNAP/foo bar'.",
+                    "The command '$SNAP/foo bar' has been changed to 'foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -62,7 +65,7 @@ class TestCommandMangle:
                 command_path="foo",
                 command_value='foo "$bar"',
                 expected_command='foo "$bar"',
-                expected_log=None,
+                expected_logs=[],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -73,7 +76,10 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="$SNAP/bin/foo bar",
                 expected_command="bin/foo bar",
-                expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
+                expected_logs=[
+                    "Found unneeded '$SNAP/' in command '$SNAP/bin/foo bar'.",
+                    "The command '$SNAP/bin/foo bar' has been changed to 'bin/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -84,7 +90,10 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="foo bar",
                 expected_command="bin/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo' for 'foo bar' was resolved to 'bin/foo'.",
+                    "The command 'foo bar' has been changed to 'bin/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -95,7 +104,10 @@ class TestCommandMangle:
                 command_path="sbin/foo",
                 command_value="foo bar",
                 expected_command="sbin/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo' for 'foo bar' was resolved to 'sbin/foo'.",
+                    "The command 'foo bar' has been changed to 'sbin/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -106,7 +118,10 @@ class TestCommandMangle:
                 command_path="usr/bin/foo",
                 command_value="foo bar",
                 expected_command="usr/bin/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo' for 'foo bar' was resolved to 'usr/bin/foo'.",
+                    "The command 'foo bar' has been changed to 'usr/bin/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -117,7 +132,10 @@ class TestCommandMangle:
                 command_path="usr/sbin/foo",
                 command_value="foo bar",
                 expected_command="usr/sbin/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo' for 'foo bar' was resolved to 'usr/sbin/foo'.",
+                    "The command 'foo bar' has been changed to 'usr/sbin/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -128,10 +146,10 @@ class TestCommandMangle:
                 command_path=None,
                 command_value="sh bar",
                 expected_command="/bin/sh bar",
-                expected_log=(
-                    "The command 'sh bar' was not found in the prime directory, "
-                    "it has been changed to '/bin/sh'."
-                ),
+                expected_logs=[
+                    "The command 'sh' for 'sh bar' was resolved to '/bin/sh'.",
+                    "The command 'sh bar' has been changed to '/bin/sh bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -142,7 +160,10 @@ class TestCommandMangle:
                 command_path="bar/foo",
                 command_value="foo bar",
                 expected_command="bar/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo' for 'foo bar' was resolved to 'bar/foo'.",
+                    "The command 'foo bar' has been changed to 'bar/foo bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -153,7 +174,10 @@ class TestCommandMangle:
                 command_path="bar/sh",
                 command_value="sh bar",
                 expected_command="bar/sh bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'sh' for 'sh bar' was resolved to 'bar/sh'.",
+                    "The command 'sh bar' has been changed to 'bar/sh bar'.",
+                ],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -164,7 +188,9 @@ class TestCommandMangle:
                 command_path="foo",
                 command_value="foo bar",
                 expected_command="bin/python $SNAP/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The command 'foo bar' has been changed to 'bin/python $SNAP/foo bar' to safely account for the interpreter.",
+                ],
                 shebang="#!/usr/bin/env $SNAP/bin/python",
                 interpreter_path="bin/python",
             ),
@@ -175,7 +201,7 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="bin/foo bar",
                 expected_command="bin/foo bar",
-                expected_log=None,
+                expected_logs=[],
                 shebang="/bin/python",
                 interpreter_path="/bin/python",
             ),
@@ -186,7 +212,10 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="bin/foo bar",
                 expected_command="bin/python $SNAP/bin/foo bar",
-                expected_log=None,
+                expected_logs=[
+                    "The interpreter 'python' for 'bin/foo bar' was resolved to 'bin/python'.",
+                    "The command 'bin/foo bar' has been changed to 'bin/python $SNAP/bin/foo bar' to safely account for the interpreter.",
+                ],
                 shebang="#!/usr/bin/env python",
                 interpreter_path="bin/python",
             ),
@@ -197,7 +226,11 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="$SNAP/bin/foo bar",
                 expected_command="bin/python $SNAP/bin/foo bar",
-                expected_log="Stripped '$SNAP/' from command '$SNAP/bin/foo bar'.",
+                expected_logs=[
+                    "The interpreter 'python' for '$SNAP/bin/foo bar' was resolved to 'bin/python'.",
+                    "Found unneeded '$SNAP/' in command '$SNAP/bin/foo bar'.",
+                    "The command '$SNAP/bin/foo bar' has been changed to 'bin/python $SNAP/bin/foo bar' to safely account for the interpreter.",
+                ],
                 shebang="#!/usr/bin/env python",
                 interpreter_path="bin/python",
             ),
@@ -208,7 +241,7 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="bin/foo bar $SNAP_DATA",
                 expected_command="bin/foo bar $SNAP_DATA",
-                expected_log=None,
+                expected_logs=[],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -219,7 +252,7 @@ class TestCommandMangle:
                 command_path="bin/foo",
                 command_value="bin/foo bar '$SNAP_DATA'",
                 expected_command="bin/foo bar '$SNAP_DATA'",
-                expected_log=None,
+                expected_logs=[],
                 shebang="",
                 interpreter_path=None,
             ),
@@ -233,7 +266,7 @@ class TestCommandMangle:
         command_path,
         command_value,
         expected_command,
-        expected_log,
+        expected_logs,
         shebang,
         interpreter_path,
     ):
@@ -253,21 +286,44 @@ class TestCommandMangle:
             interpreter_path.chmod(0o755)
 
         assert (
-            command._massage_command(
-                command=command_value, prime_dir=tmp_work_path.as_posix()
+            command._SnapCommandResolver.resolve_snap_command_entry(
+                command=command_value, prime_path=tmp_work_path
             )
             == expected_command
         )
 
-        if expected_log is not None:
-            assert caplog.records[0].message == expected_log
-        else:
-            assert len(caplog.records) == 0
+        log_messages = [r.message for r in caplog.records]
+        assert log_messages == expected_logs
 
 
 def test_find_binary_not_found(tmp_path):
     with pytest.raises(errors.PrimedCommandNotFoundError):
-        command._massage_command(command="not-found", prime_dir=tmp_path.as_posix())
+        command._SnapCommandResolver.resolve_snap_command_entry(
+            command="not-found", prime_path=tmp_path
+        )
+
+
+def test_find_ambigious_command_multiple_targets(tmp_work_path, caplog):
+    caplog.set_level(logging.INFO)
+    command_paths = [tmp_work_path / "bin/xc", tmp_work_path / "usr/bin/xc"]
+    for command_path in command_paths:
+        command_path.parent.mkdir(parents=True, exist_ok=True)
+        command_path.touch()
+        command_path.chmod(0o755)
+
+    assert (
+        command._SnapCommandResolver.resolve_snap_command_entry(
+            command="xc", prime_path=tmp_work_path
+        )
+        == "bin/xc"
+    )
+
+    log_messages = [r.message for r in caplog.records]
+    assert log_messages == [
+        "Multiple binaries matching for ambiguous command 'xc': ['bin/xc', 'usr/bin/xc']",
+        "The command 'xc' for 'xc' was resolved to 'bin/xc'.",
+        "The command 'xc' has been changed to 'bin/xc'.",
+    ]
 
 
 def test_binary_not_executable(tmp_work_path):
@@ -276,6 +332,6 @@ def test_binary_not_executable(tmp_work_path):
     exec_path.touch()
 
     with pytest.raises(errors.PrimedCommandNotFoundError):
-        command._massage_command(
-            command="not-executable", prime_dir=tmp_work_path.as_posix()
+        command._SnapCommandResolver.resolve_snap_command_entry(
+            command="not-executable", prime_path=tmp_work_path
         )
