@@ -303,6 +303,29 @@ def test_find_binary_not_found(tmp_path):
         )
 
 
+def test_find_ambigious_command_multiple_targets(tmp_work_path, caplog):
+    caplog.set_level(logging.INFO)
+    command_paths = [tmp_work_path / "bin/xc", tmp_work_path / "usr/bin/xc"]
+    for command_path in command_paths:
+        command_path.parent.mkdir(parents=True, exist_ok=True)
+        command_path.touch()
+        command_path.chmod(0o755)
+
+    assert (
+        command._SnapCommandResolver.resolve_snap_command_entry(
+            command="xc", prime_path=tmp_work_path
+        )
+        == "bin/xc"
+    )
+
+    log_messages = [r.message for r in caplog.records]
+    assert log_messages == [
+        "Multiple binaries matching for ambiguous command 'xc': ['bin/xc', 'usr/bin/xc']",
+        "The command 'xc' for 'xc' was resolved to 'bin/xc'.",
+        "The command 'xc' has been changed to 'bin/xc'.",
+    ]
+
+
 def test_binary_not_executable(tmp_work_path):
     exec_path = tmp_work_path / "bin" / "not-executable"
     exec_path.parent.mkdir()

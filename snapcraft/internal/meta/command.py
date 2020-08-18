@@ -72,13 +72,14 @@ class _SnapCommandResolver:
         )
 
         # Warn if we have multiple potential hits.
-        if len(primed_binary_paths) > 1:
-            logger.warning(
-                f"Multiple binaries matching for ambiguous command {command!r}, using {primed_binary_paths[0]!r}."
-            )
-
-        # Return first hit, if any.
-        if primed_binary_paths:
+        if len(primed_binary_paths) > 0:
+            if len(primed_binary_paths) > 1:
+                matches = [
+                    str(p.relative_to(self._prime_path)) for p in primed_binary_paths
+                ]
+                logger.warning(
+                    f"Multiple binaries matching for ambiguous command {command!r}: {matches!r}"
+                )
             return primed_binary_paths[0]
 
         # Last chance to find in the prime_dir, mostly for backwards compatibility,
