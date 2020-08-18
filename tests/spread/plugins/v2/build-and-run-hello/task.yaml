@@ -8,6 +8,7 @@ kill-timeout: 20m
 environment:
   SNAP/autotools: autotools-hello
   SNAP/cmake: cmake-hello
+  SNAP/cmake_ninja: cmake-hello-ninja
   SNAP/cmake_subdir: cmake-hello-subdir
   SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
   SNAP/make: make-hello
