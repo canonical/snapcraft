@@ -65,9 +65,21 @@ class _SnapCommandResolver:
             pathlib.Path(p, command)
             for p in common.get_bin_paths(root=self._prime_path)
         )
-        for binary_path in binary_paths:
-            if _executable_is_valid(binary_path):
-                return binary_path
+
+        # Final all potential hits, sorting to ensure consistent behavior.
+        primed_binary_paths = sorted(
+            [p for p in binary_paths if _executable_is_valid(p)]
+        )
+
+        # Warn if we have multiple potential hits.
+        if len(primed_binary_paths) > 1:
+            logger.warning(
+                f"Multiple binaries matching for ambiguous command {command!r}, using {primed_binary_paths[0]!r}."
+            )
+
+        # Return first hit, if any.
+        if primed_binary_paths:
+            return primed_binary_paths[0]
 
         # Last chance to find in the prime_dir, mostly for backwards compatibility,
         # to find the executable, historical snaps like those built with the catkin
