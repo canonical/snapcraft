@@ -190,7 +190,7 @@ class SnapTrack:
     """
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
+    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
         jsonschema.validate(
             payload,
             CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["tracks"][
@@ -220,7 +220,7 @@ class SnapTrack:
         *,
         name: str,
         status: str,
-        creation_date: str,
+        creation_date: Optional[str],
         version_pattern: Optional[str],
     ) -> None:
         self.name = name

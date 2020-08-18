@@ -755,7 +755,7 @@ def list_tracks(snap_name: str) -> None:
     snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
 
     # Iterate over the entries, replace None with - for consistent presentation
-    track_table = (
+    track_table: List[List[str]] = [
         [
             track.name,
             track.status,
@@ -763,12 +763,12 @@ def list_tracks(snap_name: str) -> None:
             track.version_pattern if track.version_pattern else "-",
         ]
         for track in snap_channel_map.snap.tracks
-    )
+    ]
 
     click.echo(
         tabulate(
             # Sort by "creation-date".
-            sorted(track_table, key=lambda c: c[2]),
+            sorted(track_table, key=operator.itemgetter(2)),
             headers=["Name", "Status", "Creation-Date", "Version-Pattern"],
             tablefmt="plain",
         )
