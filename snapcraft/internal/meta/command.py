@@ -39,7 +39,7 @@ _FMT_SNAPD_WRAPPER = (
 
 
 def _get_shebang_from_file(file_path: pathlib.Path) -> Optional[str]:
-    """Returns the shebang from file_path."""
+    """Get the shebang from specified file."""
     with open(file_path, "rb") as exefile:
         if exefile.read(2) != b"#!":
             return None
@@ -58,9 +58,8 @@ class _SnapCommandResolver:
     def _find_executable(self, command: str) -> Optional[pathlib.Path]:
         """Find executable in common binary path locations.
 
-        Returns:
-          Path to executable found, whether it is in searched
-          prime directory paths, or on host using shutil.which().
+        :return: Path to executable found, whether it is in searched
+            prime directory paths, or on host using shutil.which().
         """
         binary_paths = (
             pathlib.Path(p, command)
@@ -91,9 +90,8 @@ class _SnapCommandResolver:
         Effectively performs the job of "/usr/bin/env", ignoring
         it if used as the (initial) interpreter.
 
-        Returns:
-          Resolved and normalized interpreter path, if any.
-          Incorporate arguments found in shebang.
+        :return: Resolved and normalized interpreter path, if any.
+            Incorporate arguments found in shebang.
         """
         interpreter = self.get_command_interpreter()
         if interpreter is None:
@@ -143,8 +141,7 @@ class _SnapCommandResolver:
     def resolve_command(self) -> str:
         """Resolve the given command, searching prime directory or host if needed.
 
-        Returns:
-          Resolved and normalized command string.
+        :return: Resolved and normalized command string.
         """
         command_parts = shlex.split(self.command, posix=False)
 
@@ -176,7 +173,10 @@ class _SnapCommandResolver:
         return " ".join(command_parts)
 
     def get_command_interpreter(self) -> Optional[str]:
-        """Return interpreter (shebang) for self.command, if any."""
+        """Get interpreter (shebang) for executable pointed to by self.command.
+
+        :return: Interpreter string, else None if none found.
+        """
         command_parts = shlex.split(self.command, posix=False)
 
         command_path = pathlib.Path(self._prime_path, command_parts[0])
@@ -190,8 +190,7 @@ class _SnapCommandResolver:
         resolving ambiguous commands either relative to prime, or absolute
         to host/base.
 
-        Returns:
-          Resolved and normalized command, accounting for the interpreter,
+        :return: Resolved and normalized command, accounting for the interpreter,
           if required.
         """
         # Strip leading unneed $SNAP from command, if present.
@@ -236,13 +235,10 @@ class _SnapCommandResolver:
         """Resolve and normalize a given snap command entry, taking
         the interpreter into account, if appropriate.
 
-        Args:
-          command: command to resolve and normalize.
-          prime_path: path to prime directory.
-
-        Returns:
-          Resolved and normalized command string suitable for a snap.yaml
-          if no wrapper is required.
+        :param command: command to resolve and normalize.
+        :param prime_path: path to prime directory.
+        :return: Resolved and normalized command string suitable for a snap.yaml
+            if no wrapper is required.
         """
         # If command is absolute, nothing to resolve.
         if command.startswith("/"):
