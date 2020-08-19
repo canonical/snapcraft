@@ -9,6 +9,7 @@ environment:
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
+  - ubuntu-20.04
   - ubuntu-20.04-64
   - ubuntu-20.04-amd64
   - ubuntu-20.04-arm64
