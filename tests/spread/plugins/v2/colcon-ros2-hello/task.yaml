@@ -2,13 +2,14 @@ summary: >-
   Build, clean, build, modify and rebuild, and run hello
   for ros2/colcon.
 
-kill-timeout: 30m
+kill-timeout: 180m
 
 environment:
   SNAP/colcon_ros2_foxy_rlcpp_hello: colcon-ros2-foxy-rlcpp-hello
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
 systems:
+  - ubuntu-20.04-64
   - ubuntu-20.04-amd64
   - ubuntu-20.04-arm64
 
