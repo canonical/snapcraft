@@ -34,6 +34,7 @@ _CMD_ALIASES = {
     "plugins": "list-plugins",
     "collaborators": "edit-collaborators",
     "extensions": "list-extensions",
+    "tracks": "list-tracks",
 }
 
 _CMD_DEPRECATION_NOTICES = {

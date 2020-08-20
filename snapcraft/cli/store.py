@@ -728,3 +728,48 @@ def whoami():
             "In order to view the correct email you will need to "
             "logout and login again."
         )
+
+
+@storecli.command()
+@click.argument("snap-name", metavar="<snap-name>")
+def list_tracks(snap_name: str) -> None:
+    """List channel tracks for <snap-name>.
+
+    This command has an alias of `tracks`.
+
+    Track status, creation dates and version patterns are returned alongside
+    the track names in a space formatted table.
+
+    Possible Status values are:
+
+    \b
+    - active, visible tracks available for installation
+    - default, the default track to install from when not explicit
+    - hidden, tracks available for installation but unlisted
+    - closed, tracks that are no longer available to install from
+
+    A version pattern is a regular expression that restricts a snap revision
+    from being released to a track if the version string set does not match.
+    """
+    store_client_cli = StoreClientCLI()
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+
+    # Iterate over the entries, replace None with - for consistent presentation
+    track_table: List[List[str]] = [
+        [
+            track.name,
+            track.status,
+            track.creation_date if track.creation_date else "-",
+            track.version_pattern if track.version_pattern else "-",
+        ]
+        for track in snap_channel_map.snap.tracks
+    ]
+
+    click.echo(
+        tabulate(
+            # Sort by "creation-date".
+            sorted(track_table, key=operator.itemgetter(2)),
+            headers=["Name", "Status", "Creation-Date", "Version-Pattern"],
+            tablefmt="plain",
+        )
+    )

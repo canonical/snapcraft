@@ -184,6 +184,51 @@ class SnapChannel:
         self.fallback = fallback
 
 
+class SnapTrack:
+    """
+    Represents a Track from for snap.
+    """
+
+    @classmethod
+    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
+        jsonschema.validate(
+            payload,
+            CHANNEL_MAP_JSONSCHEMA["properties"]["snap"]["properties"]["tracks"][
+                "items"
+            ],
+        )
+        return cls(
+            name=payload["name"],
+            status=payload["status"],
+            creation_date=payload["creation-date"],
+            version_pattern=payload["version-pattern"],
+        )
+
+    def marshal(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "status": self.status,
+            "creation-date": self.creation_date,
+            "version-pattern": self.version_pattern,
+        }
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: {self.name!r}>"
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        status: str,
+        creation_date: Optional[str],
+        version_pattern: Optional[str],
+    ) -> None:
+        self.name = name
+        self.status = status
+        self.creation_date = creation_date
+        self.version_pattern = version_pattern
+
+
 class Snap:
     """Represents a Snap structure from the Snap Store."""
 
@@ -193,17 +238,25 @@ class Snap:
         return cls(
             name=payload["name"],
             channels=[SnapChannel.unmarshal(sc) for sc in payload["channels"]],
+            tracks=[SnapTrack.unmarshal(st) for st in payload["tracks"]],
         )
 
     def marshal(self) -> Dict[str, Any]:
-        return {"name": self.name, "channels": [sc.marshal() for sc in self.channels]}
+        return {
+            "name": self.name,
+            "channels": [sc.marshal() for sc in self.channels],
+            "tracks": [st.marshal() for st in self.tracks],
+        }
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: {self.name!r}>"
 
-    def __init__(self, *, name: str, channels: List[SnapChannel]) -> None:
+    def __init__(
+        self, *, name: str, channels: List[SnapChannel], tracks: List[SnapTrack]
+    ) -> None:
         self.name = name
         self.channels = channels
+        self.tracks = tracks
 
 
 class ChannelMap:

@@ -62,9 +62,9 @@ CLOSED: [2020-06-24]
 - [ ] Add extension variant for beta
 - [ ] Add extension variant for stable
 
-*** TODO [[file:specifications/default-tracks.org][Default Tracks]] [0/3]
+*** TODO [[file:specifications/default-tracks.org][Default Tracks]] [1/3]
 
 - [ ] Implement =snapcraft set-default-tracks=
-- [ ] Implement =snapcraft list-tracks=
+- [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
 
