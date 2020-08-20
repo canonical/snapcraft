@@ -16,26 +16,29 @@
 import functools
 import logging
 import os
+import pathlib
 import sys
 
 import click
 
 import snapcraft
 from snapcraft.internal import log
+
+from ._command_group import SnapcraftGroup
+from ._errors import exception_handler
+from ._options import add_provider_options
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
+from .extensions import extensioncli
+from .help import helpcli
 from .legacy import legacycli
 from .lifecycle import lifecyclecli
-from .store import storecli
 from .remote import remotecli
-from .help import helpcli
-from .extensions import extensioncli
-from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
-from ._command_group import SnapcraftGroup
-from ._options import add_provider_options
-from ._errors import exception_handler
+from .store import storecli
+from .version import SNAPCRAFT_VERSION_TEMPLATE, versioncli
 
+logger = logging.getLogger(__name__)
 
 command_groups = [
     storecli,
@@ -49,6 +52,34 @@ command_groups = [
     versioncli,
     remotecli,
 ]
+
+
+def configure_requests_ca() -> None:
+    """Force `requests` library to use host certificates, if found.
+
+    Otherwise it will use the ones provided by `certifi`, which may be
+    out of date or missing user-installed certificates.
+
+    The bundle paths below should cover the majority of the Linux
+    ecosystem, but OS X and Windows are currently unhandled which results
+    in default behavior (use the certifi certificates).
+    """
+    ca_bundle_paths = [
+        p
+        for p in [
+            pathlib.Path("/etc/ssl/certs/ca-certificates.crt"),
+            pathlib.Path("/etc/pki/tls/certs/ca-bundle.crt"),
+        ]
+        if p.exists()
+    ]
+
+    if "REQUESTS_CA_BUNDLE" not in os.environ and ca_bundle_paths:
+        os.environ["REQUESTS_CA_BUNDLE"] = str(ca_bundle_paths[0])
+
+    if "REQUESTS_CA_BUNDLE" in os.environ:
+        logger.debug(
+            f"configure_requests_ca: using {os.environ['REQUESTS_CA_BUNDLE']!r} for certificate verification"
+        )
 
 
 @click.group(
@@ -83,6 +114,9 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
+
+    # Configure `requests` library to use system certificates.
+    configure_requests_ca()
 
     # Payload information about argv
     ctx.obj = dict(argv=sys.argv)
