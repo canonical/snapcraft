@@ -19,24 +19,23 @@ import base64
 import logging
 import os
 import pathlib
-import pkg_resources
 import platform
 import shlex
 import shutil
 import sys
 import tempfile
 from textwrap import dedent
-from typing import Optional, Sequence
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Sequence
 
+import pkg_resources
 from xdg import BaseDirectory
 
 import snapcraft
+from snapcraft import yaml_utils
+from snapcraft.internal import common, steps
+
 from . import errors
 from ._snap import SnapInjector
-from snapcraft.internal import common, steps
-from snapcraft import yaml_utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -255,9 +254,13 @@ class Provider(abc.ABC):
             # image, but may be required for snapcraft to function.
             self._run(["apt-get", "install", "--yes", "apt-transport-https"])
 
-        # We always setup snapcraft after a start to bring it up to speed with
-        # what is on the host
+        # Always setup snapcraft after a start to bring it up to speed with
+        # what is on the host.
         self._setup_snapcraft()
+
+        # Always update snapd proxy settings to match current http(s) proxy
+        # settings.
+        self._setup_snapd_proxy()
 
     def _check_environment_needs_cleaning(self) -> bool:
         info = self._load_info()
@@ -465,6 +468,20 @@ class Provider(abc.ABC):
         snap_injector.add(snap_name="snapcraft")
 
         snap_injector.apply()
+
+    def _setup_snapd_proxy(self) -> None:
+        """Configure snapd proxy settings from http(s)_proxy."""
+        http_proxy = self.build_provider_flags.get("http_proxy")
+        if http_proxy:
+            self._run(["snap", "set", "system", f"proxy.http={http_proxy}"])
+        else:
+            self._run(["snap", "unset", "system", "proxy.http"])
+
+        https_proxy = self.build_provider_flags.get("https_proxy")
+        if https_proxy:
+            self._run(["snap", "set", "system", f"proxy.https={https_proxy}"])
+        else:
+            self._run(["snap", "unset", "system", "proxy.https"])
 
     def _get_env_command(self) -> Sequence[str]:
         """Get command sequence for `env` with configured flags."""
