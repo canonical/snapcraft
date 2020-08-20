@@ -16,6 +16,8 @@
 
 from testtools.matchers import Equals, HasLength, Is, IsInstance
 
+import pytest
+
 from snapcraft.storeapi.v2 import channel_map
 from tests import unit
 
@@ -140,6 +142,34 @@ class SnapChannelTest(unit.TestCase):
         self.expectThat(sc.marshal(), Equals(self.payload))
 
 
+_TRACK_PAYLOADS = [
+    {
+        "name": "latest",
+        "status": "active",
+        "creation-date": None,
+        "version-pattern": None,
+    },
+    {
+        "name": "1.0",
+        "status": "default",
+        "creation-date": "2019-10-17T14:11:59Z",
+        "version-pattern": "1.*",
+    },
+]
+
+
+@pytest.mark.parametrize("payload", _TRACK_PAYLOADS)
+def test_snap_track(payload):
+    st = channel_map.SnapTrack.unmarshal(payload)
+
+    assert repr(st) == f"<SnapTrack: {st.name!r}>"
+    assert st.name == payload["name"]
+    assert st.status == payload["status"]
+    assert st.creation_date == payload["creation-date"]
+    assert st.version_pattern == payload["version-pattern"]
+    assert st.marshal() == payload
+
+
 class RevisionTest(unit.TestCase):
     def test_revision(self):
         payload = {"revision": 2, "version": "2.0", "architectures": ["amd64", "arm64"]}
@@ -176,6 +206,20 @@ class SnapTest(unit.TestCase):
                     "risk": "candidate",
                     "branch": None,
                     "fallback": "latest/stable",
+                },
+            ],
+            "tracks": [
+                {
+                    "name": "track1",
+                    "creation-date": "2019-10-17T14:11:59Z",
+                    "status": "default",
+                    "version-pattern": None,
+                },
+                {
+                    "name": "track2",
+                    "creation-date": None,
+                    "status": "active",
+                    "version-pattern": None,
                 },
             ],
         }
@@ -247,6 +291,20 @@ class ChannelMapTest(unit.TestCase):
                         "risk": "candidate",
                         "branch": None,
                         "fallback": "latest/stable",
+                    },
+                ],
+                "tracks": [
+                    {
+                        "name": "track1",
+                        "creation-date": "2019-10-17T14:11:59Z",
+                        "status": "default",
+                        "version-pattern": None,
+                    },
+                    {
+                        "name": "track2",
+                        "creation-date": None,
+                        "status": "active",
+                        "version-pattern": None,
                     },
                 ],
             },
