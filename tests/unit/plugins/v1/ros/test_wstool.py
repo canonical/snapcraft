@@ -17,13 +17,12 @@
 import os
 import pathlib
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Contains, Equals
 
-from snapcraft.plugins.v1._ros import wstool
-
 import snapcraft
+from snapcraft.plugins.v1._ros import wstool
 from tests import unit
 
 
@@ -33,7 +32,7 @@ class WstoolTestCase(unit.TestCase):
         self.project = snapcraft.ProjectOptions()
         self.wstool = wstool.Wstool("package_path", "wstool_path", self.project, "core")
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft.repo.AptRepo")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

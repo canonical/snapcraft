@@ -21,8 +21,9 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import storeapi, internal
 import tests
+from snapcraft import internal, storeapi
+
 from . import CommandBaseTestCase
 
 
@@ -53,7 +54,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.useFixture(self.snap_test)
 
     @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_snapd_not_installed(self, mock_installed, mock_check_output):
         mock_installed.return_value = False
 
@@ -68,7 +69,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch("subprocess.check_output")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_nonexisting_snap(self, mock_installed, mock_check_output):
         mock_installed.return_value = True
 
@@ -83,7 +84,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         )
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_invalid_snap(self, mock_installed):
         mock_installed.return_value = True
         snap_path = os.path.join(
@@ -101,7 +102,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_missing_account_info(
         self,
         mock_installed,
@@ -132,7 +133,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_no_usable_keys(
         self,
         mock_installed,
@@ -168,7 +169,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_no_usable_named_key(
         self,
         mock_installed,
@@ -202,7 +203,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_unregistered_key(
         self,
         mock_installed,
@@ -241,7 +242,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_snapd_failure(
         self,
         mock_installed,
@@ -281,7 +282,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_locally_successfully(
         self,
         mock_installed,
@@ -322,7 +323,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_missing_grade(
         self,
         mock_installed,
@@ -368,7 +369,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("subprocess.check_output")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_upload_successfully(
         self,
         mock_installed,
@@ -421,7 +422,7 @@ class SignBuildTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi._sca_client.SCAClient, "push_snap_build")
     @mock.patch.object(storeapi._sca_client.SCAClient, "get_account_information")
     @mock.patch("snapcraft._store._get_data_from_snap_file")
-    @mock.patch("snapcraft.internal.repo.Repo.is_package_installed")
+    @mock.patch("snapcraft.internal.repo.AptRepo.is_package_installed")
     def test_sign_build_upload_existing(
         self,
         mock_installed,

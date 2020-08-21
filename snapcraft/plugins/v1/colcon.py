@@ -56,23 +56,23 @@ Additionally, this plugin uses the following plugin-specific keywords:
       quoting each argument with a leading space.
 """
 
-import contextlib
 import collections
+import contextlib
+import logging
 import os
 import pathlib
-import logging
 import re
 import shutil
 import textwrap
 from typing import List
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils
 from snapcraft.internal import errors, mangling, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 logger = logging.getLogger(__name__)
 
@@ -383,14 +383,14 @@ class ColconPlugin(PluginV1):
 
         logger.info("Installing apt dependencies...")
         try:
-            repo.Ubuntu.fetch_stage_packages(
+            repo.AptRepo.fetch_stage_packages(
                 package_names=apt_dependencies,
                 stage_packages_path=self.stage_packages_path,
                 base=self.project._get_build_base(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise ColconAptDependencyFetchError(e.message)
-        repo.Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=self.stage_packages_path,
             install_path=pathlib.Path(self.installdir),
         )

@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import pathlib
-import logging
 import re
 import shutil
 import subprocess
@@ -122,12 +122,12 @@ class Rosdep:
         # rosdep isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
         logger.info("Installing rosdep...")
-        repo.Ubuntu.fetch_stage_packages(
+        repo.AptRepo.fetch_stage_packages(
             package_names=["python-rosdep"],
             stage_packages_path=self._rosdep_stage_packages_path,
             base=self._base,
         )
-        repo.Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=self._rosdep_stage_packages_path,
             install_path=pathlib.Path(self._rosdep_install_path),
         )
@@ -184,7 +184,7 @@ class Rosdep:
             #
             # 1) The dependency we're trying to lookup.
             # 2) The rosdistro being used.
-            # 3) The version of Ubuntu being used, even if we're running on
+            # 3) The version of AptRepo being used, even if we're running on
             #    something else.
             output = self._run(
                 [

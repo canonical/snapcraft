@@ -23,9 +23,9 @@ from subprocess import CalledProcessError
 from unittest import mock
 from unittest.mock import call
 
+import fixtures
 import testtools
 from testtools.matchers import Equals
-import fixtures
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
@@ -37,7 +37,7 @@ class TestPackages(unit.TestCase):
         super().setUp()
 
         self.fake_apt_cache = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo._deb.AptCache")
+            fixtures.MockPatch("snapcraft.internal.repo.apt_cache.AptCache")
         ).mock
 
         self.fake_run = self.useFixture(
@@ -48,8 +48,8 @@ class TestPackages(unit.TestCase):
         self.debs_path = Path(self.path, "debs")
         self.debs_path.mkdir(parents=True, exist_ok=False)
 
-        repo._deb._DEB_CACHE_DIR = self.debs_path
-        repo._deb._STAGE_CACHE_DIR = self.stage_cache_path
+        repo.apt._DEB_CACHE_DIR = self.debs_path
+        repo.apt._STAGE_CACHE_DIR = self.stage_cache_path
 
         @contextlib.contextmanager
         def fake_tempdir(*, suffix: str, **kwargs):
@@ -59,7 +59,7 @@ class TestPackages(unit.TestCase):
 
         self.fake_tmp_mock = self.useFixture(
             fixtures.MockPatch(
-                "snapcraft.internal.repo._deb.tempfile.TemporaryDirectory",
+                "snapcraft.internal.repo.apt.tempfile.TemporaryDirectory",
                 new=fake_tempdir,
             )
         ).mock
@@ -73,7 +73,7 @@ class TestPackages(unit.TestCase):
             ("fake-package", "1.0", fake_package)
         ]
 
-        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+        fetched_packages = repo.AptRepo.fetch_stage_packages(
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
@@ -89,7 +89,7 @@ class TestPackages(unit.TestCase):
                 .__enter__()
                 .unmark_packages(
                     required_names={"fake-package"},
-                    filtered_names=set(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
+                    filtered_names=set(repo.apt._DEFAULT_FILTERED_STAGE_PACKAGES),
                 ),
                 call().__enter__().fetch_archives(self.debs_path),
             ]
@@ -104,7 +104,7 @@ class TestPackages(unit.TestCase):
             ("fake-package", "1.0", fake_package)
         ]
 
-        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+        fetched_packages = repo.AptRepo.fetch_stage_packages(
             package_names=["virtual-fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
@@ -122,7 +122,7 @@ class TestPackages(unit.TestCase):
             ("fake-package-dep", "2.0", fake_package_dep),
         ]
 
-        fetched_packages = repo.Ubuntu.fetch_stage_packages(
+        fetched_packages = repo.AptRepo.fetch_stage_packages(
             package_names=["fake-package"],
             stage_packages_path=self.stage_packages_path,
             base="core",
@@ -140,7 +140,7 @@ class TestPackages(unit.TestCase):
 
         raised = self.assertRaises(
             errors.PackageFetchError,
-            repo.Ubuntu.fetch_stage_packages,
+            repo.AptRepo.fetch_stage_packages,
             package_names=["fake-package"],
             stage_packages_path=Path(self.path),
             base="core",
@@ -160,7 +160,7 @@ class TestSourcesFormatting(unit.TestCase):
             """
         )
 
-        sources_list = repo._deb._format_sources_list(sources_list)
+        sources_list = repo.apt._format_sources_list(sources_list)
 
         expected_sources_list = textwrap.dedent(
             """
@@ -176,7 +176,7 @@ class BuildPackagesTestCase(unit.TestCase):
         super().setUp()
 
         self.fake_apt_cache = self.useFixture(
-            fixtures.MockPatch("snapcraft.internal.repo._deb.AptCache")
+            fixtures.MockPatch("snapcraft.internal.repo.apt.apt_cache.AptCache")
         ).mock
 
         self.fake_run = self.useFixture(
@@ -193,9 +193,7 @@ class BuildPackagesTestCase(unit.TestCase):
         self.useFixture(fixtures.MockPatch("os.environ.copy", return_value={}))
 
         self.fake_is_dumb_terminal = self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft.repo._deb.is_dumb_terminal", return_value=True
-            )
+            fixtures.MockPatch("snapcraft.repo.apt.is_dumb_terminal", return_value=True)
         ).mock
 
     def test_install_build_package(self):
@@ -206,7 +204,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("dependency-package", "1.0"),
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(
+        build_packages = repo.AptRepo.install_build_packages(
             ["package-installed", "package", "versioned-package=2.0"]
         )
 
@@ -270,7 +268,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package-installed", "1.0")
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(["package-installed"])
+        build_packages = repo.AptRepo.install_build_packages(["package-installed"])
 
         self.assertThat(build_packages, Equals(["package-installed=1.0"]))
         self.assertThat(self.fake_run.mock_calls, Equals([]))
@@ -280,7 +278,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package-installed", "1.0")
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(["package-installed=1.0"])
+        build_packages = repo.AptRepo.install_build_packages(["package-installed=1.0"])
 
         self.assertThat(build_packages, Equals(["package-installed=1.0"]))
         self.assertThat(self.fake_run.mock_calls, Equals([]))
@@ -290,7 +288,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package-installed", "3.0")
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(["package-installed=3.0"])
+        build_packages = repo.AptRepo.install_build_packages(["package-installed=3.0"])
 
         self.assertThat(build_packages, Equals(["package-installed=3.0"]))
         self.assertThat(
@@ -331,7 +329,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package", "1.0")
         ]
 
-        build_packages = repo.Ubuntu.install_build_packages(["virtual-package"])
+        build_packages = repo.AptRepo.install_build_packages(["virtual-package"])
 
         self.assertThat(build_packages, Equals(["package=1.0"]))
         self.assertThat(
@@ -373,7 +371,7 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package", "1.0")
         ]
 
-        repo.Ubuntu.install_build_packages(["package"])
+        repo.AptRepo.install_build_packages(["package"])
 
         self.assertThat(
             self.fake_run.mock_calls,
@@ -417,7 +415,7 @@ class BuildPackagesTestCase(unit.TestCase):
 
         self.assertRaises(
             errors.BuildPackageNotFoundError,
-            repo.Ubuntu.install_build_packages,
+            repo.AptRepo.install_build_packages,
             ["package-invalid"],
         )
 
@@ -426,21 +424,19 @@ class BuildPackagesTestCase(unit.TestCase):
             ("package", "1.0")
         ]
         self.useFixture(
-            fixtures.MockPatch(
-                "snapcraft.internal.repo._deb.Ubuntu.refresh_build_packages"
-            )
+            fixtures.MockPatch("snapcraft.internal.repo.AptRepo.refresh_build_packages")
         )
 
         self.fake_run.side_effect = CalledProcessError(100, "apt-get")
         raised = self.assertRaises(
             errors.BuildPackagesNotInstalledError,
-            repo.Ubuntu.install_build_packages,
+            repo.AptRepo.install_build_packages,
             ["package"],
         )
         self.assertThat(raised.packages, Equals("package"))
 
     def test_refresh_buid_packages(self):
-        repo.Ubuntu.refresh_build_packages()
+        repo.AptRepo.refresh_build_packages()
 
         self.fake_run.assert_called_once_with(
             ["sudo", "--preserve-env", "apt-get", "update"]
@@ -451,7 +447,7 @@ class BuildPackagesTestCase(unit.TestCase):
             returncode=1, cmd=["sudo", "--preserve-env", "apt-get", "update"]
         )
         self.assertRaises(
-            errors.CacheUpdateFailedError, repo.Ubuntu.refresh_build_packages
+            errors.CacheUpdateFailedError, repo.AptRepo.refresh_build_packages
         )
 
         self.assertThat(
@@ -485,26 +481,26 @@ class PackageForFileTest(unit.TestCase):
         )
 
     def test_get_package_for_file(self):
-        self.assertThat(repo.Ubuntu.get_package_for_file("/bin/bash"), Equals("bash"))
+        self.assertThat(repo.AptRepo.get_package_for_file("/bin/bash"), Equals("bash"))
 
     def test_get_package_for_file_with_no_leading_slash(self):
-        self.assertThat(repo.Ubuntu.get_package_for_file("bin/bash"), Equals("bash"))
+        self.assertThat(repo.AptRepo.get_package_for_file("bin/bash"), Equals("bash"))
 
     def test_get_package_for_file_with_diversions(self):
-        self.assertThat(repo.Ubuntu.get_package_for_file("/bin/sh"), Equals("dash"))
+        self.assertThat(repo.AptRepo.get_package_for_file("/bin/sh"), Equals("dash"))
 
     def test_get_package_for_file_not_found(self):
         self.assertRaises(
             repo.errors.FileProviderNotFound,
-            repo.Ubuntu.get_package_for_file,
+            repo.AptRepo.get_package_for_file,
             "/bin/not-found",
         )
 
 
-class TestUbuntuInstallRepo(unit.TestCase):
+class TestAptRepoInstallRepo(unit.TestCase):
     @mock.patch("subprocess.run")
     def test_install_gpg(self, mock_run):
-        repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
+        repo.AptRepo.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
 
         env = os.environ.copy()
         env["LANG"] = "C.UTF-8"
@@ -516,7 +512,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                         "sudo",
                         "apt-key",
                         "--keyring",
-                        repo.Ubuntu._SNAPCRAFT_INSTALLED_GPG_KEYRING,
+                        repo.AptRepo._SNAPCRAFT_INSTALLED_GPG_KEYRING,
                         "add",
                         "-",
                     ],
@@ -531,7 +527,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
 
     @mock.patch("subprocess.run")
     def test_install_gpg_key_id(self, mock_run):
-        repo.Ubuntu.install_gpg_key_id(key_id="FAKE_KEYID", keys_path=Path(self.path))
+        repo.AptRepo.install_gpg_key_id(key_id="FAKE_KEYID", keys_path=Path(self.path))
 
         env = os.environ.copy()
         env["LANG"] = "C.UTF-8"
@@ -566,16 +562,16 @@ class TestUbuntuInstallRepo(unit.TestCase):
 
         raised = self.assertRaises(
             errors.AptGPGKeyInstallError,
-            repo.Ubuntu.install_gpg_key_id,
+            repo.AptRepo.install_gpg_key_id,
             key_id="FAKE_KEYID",
             keys_path=Path(self.path),
         )
 
         self.assertThat(raised._output, Equals("some error"))
 
-    @mock.patch("snapcraft.internal.repo._deb._sudo_write_file")
+    @mock.patch("snapcraft.internal.repo.apt._sudo_write_file")
     def test_install_sources(self, mock_write):
-        new_sources = repo.Ubuntu.install_sources(
+        new_sources = repo.AptRepo.install_sources(
             architectures=["amd64", "arm64"],
             components=["test-component"],
             deb_types=["deb", "deb-src"],
@@ -601,13 +597,13 @@ class TestUbuntuInstallRepo(unit.TestCase):
         self.assertThat(new_sources, Equals(True))
 
     @mock.patch("subprocess.run")
-    @mock.patch("snapcraft.internal.repo._deb.Launchpad")
-    @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
+    @mock.patch("snapcraft.internal.repo.apt.Launchpad")
+    @mock.patch("snapcraft.internal.repo.AptRepo.install_sources")
     def test_install_ppa(self, mock_install_sources, mock_launchpad, mock_run):
         mock_launchpad.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
             "FAKE-SIGNING-KEY"
         )
-        repo.Ubuntu.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
+        repo.AptRepo.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
 
         env = os.environ.copy()
         env["LANG"] = "C.UTF-8"
@@ -652,7 +648,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_ppa_invalid(self):
         raised = self.assertRaises(
             errors.AptPPAInstallError,
-            repo.Ubuntu.install_ppa,
+            repo.AptRepo.install_ppa,
             keys_path=Path(self.path),
             ppa="testppa",
         )
@@ -667,7 +663,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
 
         raised = self.assertRaises(
             errors.AptGPGKeyInstallError,
-            repo.Ubuntu.install_gpg_key,
+            repo.AptRepo.install_gpg_key,
             key_id="FAKE_KEYID",
             key="FAKEKEY",
         )
@@ -679,11 +675,11 @@ class TestGetPackagesInBase(testtools.TestCase):
     def test_hardcoded_bases(self):
         for base in ("core", "core16", "core18"):
             self.expectThat(
-                repo._deb.get_packages_in_base(base=base),
-                Equals(repo._deb._DEFAULT_FILTERED_STAGE_PACKAGES),
+                repo.apt.get_packages_in_base(base=base),
+                Equals(repo.apt._DEFAULT_FILTERED_STAGE_PACKAGES),
             )
 
-    @mock.patch.object(repo._deb, "_get_dpkg_list_path")
+    @mock.patch.object(repo.apt, "_get_dpkg_list_path")
     def test_package_list_from_dpkg_list(self, mock_dpkg_list_path):
         temp_dir = self.useFixture(fixtures.TempDir())
         dpkg_list_path = Path(f"{temp_dir.path}/dpkg.list")
@@ -709,7 +705,7 @@ class TestGetPackagesInBase(testtools.TestCase):
             )
 
         self.expectThat(
-            repo._deb.get_packages_in_base(base="core20"),
+            repo.apt.get_packages_in_base(base="core20"),
             Equals(
                 [
                     "adduser",
@@ -722,10 +718,27 @@ class TestGetPackagesInBase(testtools.TestCase):
             ),
         )
 
-    @mock.patch.object(repo._deb, "_get_dpkg_list_path")
+    @mock.patch.object(repo.apt, "_get_dpkg_list_path")
     def test_package_empty_list_from_missing_dpkg_list(self, mock_dpkg_list_path):
         temp_dir = self.useFixture(fixtures.TempDir())
         dpkg_list_path = Path(f"{temp_dir.path}/dpkg.list")
         mock_dpkg_list_path.return_value = dpkg_list_path
 
-        self.expectThat(repo._deb.get_packages_in_base(base="core22"), Equals(list()))
+        self.expectThat(repo.apt.get_packages_in_base(base="core22"), Equals(list()))
+
+
+class TestPkgNameParts(unit.TestCase):
+    def test_get_pkg_name_parts_name_only(self):
+        name, version = repo.apt.get_pkg_name_parts("hello")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals(None))
+
+    def test_get_pkg_name_parts_all(self):
+        name, version = repo.apt.get_pkg_name_parts("hello:i386=2.10-1")
+        self.assertThat(name, Equals("hello:i386"))
+        self.assertThat(version, Equals("2.10-1"))
+
+    def test_get_pkg_name_parts_no_arch(self):
+        name, version = repo.apt.get_pkg_name_parts("hello=2.10-1")
+        self.assertThat(name, Equals("hello"))
+        self.assertThat(version, Equals("2.10-1"))

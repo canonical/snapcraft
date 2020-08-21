@@ -63,7 +63,7 @@ from typing import Any, Dict, List, Set
 import click
 from catkin_pkg import packages as catkin_packages
 
-from snapcraft.internal.repo import Ubuntu
+from snapcraft.internal import repo
 from snapcraft.plugins.v1._ros.rosdep import _parse_rosdep_resolve_dependencies
 from snapcraft.plugins.v2 import PluginV2
 
@@ -231,14 +231,14 @@ def stage_runtime_dependencies(part_install: str, ros_distro: str):
         stage_packages_path = install_path.parent / "stage_packages"
 
         click.echo(f"Fetching stage packages: {package_names!r}")
-        Ubuntu.fetch_stage_packages(
+        repo.AptRepo.fetch_stage_packages(
             package_names=package_names,
             base="core20",
             stage_packages_path=stage_packages_path,
         )
 
         click.echo(f"Unpacking stage packages: {package_names!r}")
-        Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=stage_packages_path, install_path=install_path
         )
 

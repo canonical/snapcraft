@@ -20,8 +20,8 @@ from textwrap import dedent
 
 from testtools.matchers import Equals, FileContains, FileExists, Not
 
-from snapcraft.internal.repo._base import BaseRepo, get_pkg_name_parts
-from tests import unit
+from snapcraft.internal.repo.apt import AptRepo
+
 from . import RepoBaseTestCase
 
 
@@ -33,7 +33,7 @@ class FixXmlToolsTestCase(RepoBaseTestCase):
             with open(path, "w") as f:
                 f.write(test_file["content"])
 
-        BaseRepo.normalize("root")
+        AptRepo.normalize("root")
 
         for test_file in files:
             self.assertThat(test_file["path"], FileContains(test_file["expected"]))
@@ -174,7 +174,7 @@ class FixShebangTestCase(RepoBaseTestCase):
             with open(data["file_path"], "w") as fd:
                 fd.write(data["content"])
 
-        BaseRepo.normalize("root")
+        AptRepo.normalize("root")
 
         for _, data in self.scenarios:
             with open(data["file_path"], "r") as fd:
@@ -199,7 +199,7 @@ class RemoveUselessFilesTestCase(RepoBaseTestCase):
             ]
         ]
 
-        BaseRepo.normalize("root")
+        AptRepo.normalize("root")
 
         for p in paths:
             self.expectThat(p, Not(FileExists()))
@@ -207,7 +207,7 @@ class RemoveUselessFilesTestCase(RepoBaseTestCase):
     def test_no_remove(self):
         path = self.create(os.path.join("opt", "python3.5", "sitecustomize.py"))
 
-        BaseRepo.normalize("root")
+        AptRepo.normalize("root")
 
         self.assertThat(path, FileExists())
 
@@ -235,7 +235,7 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
                 )
             )
 
-        BaseRepo.normalize(self.tempdir)
+        AptRepo.normalize(self.tempdir)
 
         expected_pc_file_content = dedent(
             """\
@@ -265,7 +265,7 @@ class TestFixSymlinks(RepoBaseTestCase):
 
         os.symlink(src, dst)
 
-        BaseRepo.normalize(self.tempdir)
+        AptRepo.normalize(self.tempdir)
 
         self.assertThat(os.readlink(dst), Equals(src))
 
@@ -282,7 +282,7 @@ class FixSUIDTestCase(RepoBaseTestCase):
         open(file, mode="w").close()
         os.chmod(file, test_mod)
 
-        BaseRepo.normalize(self.tempdir)
+        AptRepo.normalize(self.tempdir)
 
         self.assertThat(stat.S_IMODE(os.stat(file).st_mode), Equals(expected_mod))
 
@@ -299,20 +299,3 @@ class FixSUIDTestCase(RepoBaseTestCase):
         self.assert_mode(
             key="suid_guid_sticky_file", test_mod=0o7744, expected_mod=0o1744
         )
-
-
-class TestPkgNameParts(unit.TestCase):
-    def test_get_pkg_name_parts_name_only(self):
-        name, version = get_pkg_name_parts("hello")
-        self.assertThat(name, Equals("hello"))
-        self.assertThat(version, Equals(None))
-
-    def test_get_pkg_name_parts_all(self):
-        name, version = get_pkg_name_parts("hello:i386=2.10-1")
-        self.assertThat(name, Equals("hello:i386"))
-        self.assertThat(version, Equals("2.10-1"))
-
-    def test_get_pkg_name_parts_no_arch(self):
-        name, version = get_pkg_name_parts("hello=2.10-1")
-        self.assertThat(name, Equals("hello"))
-        self.assertThat(version, Equals("2.10-1"))

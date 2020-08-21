@@ -39,8 +39,9 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import repo
 from snapcraft.internal import errors
-from snapcraft.plugins.v1 import catkin, _ros
+from snapcraft.plugins.v1 import _ros, catkin
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -68,7 +69,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
         self.ros_distro = "kinetic"
         self.ubuntu_distro = "xenial"
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft.repo.AptRepo")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -2104,7 +2105,7 @@ class CatkinFindTestCase(unit.TestCase):
             "kinetic", "workspace_path", "catkin_path", self.project
         )
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft.repo.AptRepo")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

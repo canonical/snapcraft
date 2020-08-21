@@ -24,24 +24,24 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from subprocess import Popen
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, TYPE_CHECKING
 from pathlib import Path
+from subprocess import Popen
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Tuple
+
+from tabulate import tabulate
+
+from snapcraft import storeapi, yaml_utils
 
 # Ideally we would move stuff into more logical components
 from snapcraft.cli import echo
-from tabulate import tabulate
-
 from snapcraft.file_utils import calculate_sha3_384, get_snap_tool_path
-from snapcraft import storeapi, yaml_utils
 from snapcraft.internal import cache, deltas, repo
-from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.internal.deltas.errors import (
     DeltaGenerationError,
     DeltaGenerationTooBigError,
 )
+from snapcraft.internal.errors import SnapDataExtractionError, ToolMissingError
 from snapcraft.storeapi.constants import DEFAULT_SERIES
-
 
 if TYPE_CHECKING:
     from snapcraft.storeapi._status_tracker import StatusTracker
@@ -467,7 +467,7 @@ def _export_key(name, account_id):
 
 
 def list_keys():
-    if not repo.Repo.is_package_installed("snapd"):
+    if not repo.AptRepo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("list-keys")
     keys = list(_get_usable_keys())
     account_info = StoreClientCLI().get_account_information()
@@ -498,7 +498,7 @@ def list_keys():
 
 
 def create_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
+    if not repo.AptRepo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("create-key")
     if not name:
         name = "default"
@@ -534,7 +534,7 @@ def _maybe_prompt_for_key(name):
 
 
 def register_key(name):
-    if not repo.Repo.is_package_installed("snapd"):
+    if not repo.AptRepo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("register-key")
     key = _maybe_prompt_for_key(name)
     store_client = StoreClientCLI()
@@ -580,7 +580,7 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
 
 
 def sign_build(snap_filename, key_name=None, local=False):
-    if not repo.Repo.is_package_installed("snapd"):
+    if not repo.AptRepo.is_package_installed("snapd"):
         raise storeapi.errors.MissingSnapdError("sign-build")
 
     if not os.path.exists(snap_filename):

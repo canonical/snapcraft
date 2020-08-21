@@ -66,7 +66,7 @@ class PackageRepositoryAptPpa(PackageRepository):
         self.ppa = ppa
 
     def install(self, *, keys_path: Path) -> bool:
-        return repo.Ubuntu.install_ppa(keys_path=keys_path, ppa=self.ppa)
+        return repo.AptRepo.install_ppa(keys_path=keys_path, ppa=self.ppa)
 
     def marshal(self) -> Dict[str, Any]:
         data = dict(type="apt")
@@ -125,12 +125,12 @@ class PackageRepositoryApt(PackageRepository):
 
     def install(self, keys_path: Path) -> bool:
         # First install associated GPG key.
-        new_key: bool = repo.Ubuntu.install_gpg_key_id(
+        new_key: bool = repo.AptRepo.install_gpg_key_id(
             keys_path=keys_path, key_id=self.key_id, key_server=self.key_server
         )
 
         # Now install sources file.
-        new_sources: bool = repo.Ubuntu.install_sources(
+        new_sources: bool = repo.AptRepo.install_sources(
             architectures=self.architectures,
             components=self.components,
             deb_types=self.deb_types,

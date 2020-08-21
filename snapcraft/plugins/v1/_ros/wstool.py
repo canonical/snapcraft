@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import pathlib
-import logging
 import subprocess
 import sys
 from typing import List
@@ -85,12 +85,12 @@ class Wstool:
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
         logger.info("Installing wstool...")
-        repo.Ubuntu.fetch_stage_packages(
+        repo.AptRepo.fetch_stage_packages(
             package_names=["python-wstool"],
             stage_packages_path=self._wstool_stage_packages_path,
             base=self._base,
         )
-        repo.Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=self._wstool_stage_packages_path,
             install_path=pathlib.Path(self._wstool_install_path),
         )

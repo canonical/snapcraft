@@ -98,7 +98,7 @@ class PullStateTestCase(StateBaseTestCase):
 
 
 class StateTestCase(StateBaseTestCase):
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft.internal.repo.AptRepo")
     def test_pull_state(self, repo_mock):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
         self.assertThat(self.handler.next_step(), Equals(steps.PULL))
@@ -131,7 +131,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue("deb_arch" in state.project_options)
 
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft.internal.repo.AptRepo")
     def test_pull_state_with_extracted_metadata(self, repo_mock):
         self.handler = self.load_part(
             "test_part",
@@ -202,7 +202,7 @@ class StateTestCase(StateBaseTestCase):
             files, Equals([os.path.join(self.handler.part_source_dir, "metadata-file")])
         )
 
-    @patch("snapcraft.internal.repo.Repo")
+    @patch("snapcraft.internal.repo.AptRepo")
     def test_pull_state_with_scriptlet_metadata(self, repo_mock):
         self.handler = self.load_part(
             "test_part",

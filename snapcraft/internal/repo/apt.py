@@ -14,33 +14,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import fileinput
 import functools
-import gnupg
+import glob
 import io
-import lazr.restfulclient.errors
+import itertools
 import logging
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
-from typing_extensions import Final
 
+import gnupg
+import lazr.restfulclient.errors
 from launchpadlib.launchpad import Launchpad
+from typing_extensions import Final
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.project._project_options import ProjectOptions
-from snapcraft.internal import os_release
+from snapcraft.internal import mangling, os_release, xattrs
 from snapcraft.internal.indicators import is_dumb_terminal
+from snapcraft.project._project_options import ProjectOptions
 
-from . import errors
-from .apt_cache import AptCache
-from ._base import BaseRepo, get_pkg_name_parts
-
+from . import apt_cache, errors, fixups
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +255,7 @@ def _sudo_write_file(*, dst_path: pathlib.Path, content: bytes) -> None:
             raise RuntimeError(f"failed to run: {command!r}")
 
 
-class Ubuntu(BaseRepo):
+class AptRepo:
     _SNAPCRAFT_INSTALLED_GPG_KEYRING: Final[
         str
     ] = "/etc/apt/trusted.gpg.d/snapcraft.gpg"
@@ -264,14 +265,49 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def get_package_libraries(cls, package_name: str) -> Set[str]:
+        """Return a list of libraries in package_name.
+
+        Given the contents of package_name, return the subset of what are
+        considered libraries from those contents, be it static or shared.
+
+        :param package: package name to get library contents from.
+        :returns: a list of libraries that package_name provides. This includes
+                  directories.
+        """
+
         return _run_dpkg_query_list_files(package_name)
 
     @classmethod
     def get_package_for_file(cls, file_path: str) -> str:
+        """Return the package name that provides file_path.
+
+        :param file_path: the absolute path to the file to search for.
+        :returns: package name that provides file_path.
+        :raises snapcraft.repo.errors.FileProviderNotFound:
+            if file_path is not provided by any package.
+        """
         return _run_dpkg_query_search(file_path)
 
     @classmethod
-    def get_packages_for_source_type(cls, source_type):
+    def get_packages_for_source_type(cls, source_type: str) -> Set[str]:
+        """Return a list of packages required to to work with source_type.
+
+        source_type can be any of the following:
+
+        - bzr
+        - deb
+        - rpm
+        - git
+        - hg
+        - mercurial
+        - subversion
+        - svn
+        - tar
+        - zip
+
+        :param source_type: a VCS source type to handle.
+        :returns: a set of packages that need to be installed on the host.
+        """
         if source_type == "bzr":
             packages = {"bzr"}
         elif source_type == "git":
@@ -293,6 +329,14 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def refresh_build_packages(cls) -> None:
+        """Refresh the build packages cache.
+
+        If refreshing is not possible
+        snapcraft.repo.errors.CacheUpdateFailedError should be raised
+
+        :raises snapcraft.repo.errors.NoNativeBackendError:
+            if the method is not implemented in the subclass.
+        """
         try:
             cmd = ["sudo", "--preserve-env", "apt-get", "update"]
             logger.debug(f"Executing: {cmd!r}")
@@ -313,10 +357,10 @@ class Ubuntu(BaseRepo):
         :return True if _all_ packages are installed (with correct versions).
         """
 
-        with AptCache() as apt_cache:
+        with apt_cache.AptCache() as cache:
             for package in package_names:
                 pkg_name, pkg_version = get_pkg_name_parts(package)
-                installed_version = apt_cache.get_installed_version(
+                installed_version = cache.get_installed_version(
                     pkg_name, resolve_virtual_packages=True
                 )
 
@@ -329,28 +373,35 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _get_marked_packages(cls, package_names: List[str]) -> List[Tuple[str, str]]:
-        with AptCache() as apt_cache:
+        with apt_cache.AptCache() as cache:
             try:
-                apt_cache.mark_packages(set(package_names))
+                cache.mark_packages(set(package_names))
             except errors.PackageNotFoundError as error:
                 raise errors.BuildPackageNotFoundError(error.package_name)
 
-            return apt_cache.get_marked_packages()
+            return cache.get_marked_packages()
 
     @classmethod
     def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
 
+        This method needs to be implemented by using the appropriate method
+        to install packages on the system. If possible they should be marked
+        as automatically installed to allow for easy removal.
+        The method should return a list of the actually installed packages
+        in the form "package=version".
+
+        If one of the packages cannot be found
+        snapcraft.repo.errors.BuildPackageNotFoundError should be raised.
+        If dependencies for a package cannot be resolved
+        snapcraft.repo.errors.PackageBrokenError should be raised.
+        If installing a package on the host failed
+        snapcraft.repo.errors.BuildPackagesNotInstalledError should be raised.
+
         :param package_names: a list of package names to install.
-        :type package_names: a list of strings.
         :return: a list with the packages installed and their versions.
-        :rtype: list of strings.
-        :raises snapcraft.repo.errors.BuildPackageNotFoundError:
-            if one of the packages was not found.
-        :raises snapcraft.repo.errors.PackageBrokenError:
-            if dependencies for one of the packages cannot be resolved.
-        :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
-            if installing the packages on the host failed.
+        :raises snapcraft.repo.errors.NoNativeBackendError:
+            if the method is not implemented in the subclass.
         """
         logger.debug(f"Requested build-packages: {sorted(package_names)!r}")
 
@@ -412,21 +463,20 @@ class Ubuntu(BaseRepo):
     def fetch_stage_packages(
         cls, *, package_names: List[str], base: str, stage_packages_path: pathlib.Path
     ) -> List[str]:
+        """Fetch stage packages to stage_packages_path."""
         logger.debug(f"Requested stage-packages: {sorted(package_names)!r}")
 
         installed: Set[str] = set()
 
         stage_packages_path.mkdir(exist_ok=True)
-        with AptCache(stage_cache=_STAGE_CACHE_DIR) as apt_cache:
+        with apt_cache.AptCache(stage_cache=_STAGE_CACHE_DIR) as cache:
             filter_packages = set(get_packages_in_base(base=base))
-            apt_cache.update()
-            apt_cache.mark_packages(set(package_names))
-            apt_cache.unmark_packages(
+            cache.update()
+            cache.mark_packages(set(package_names))
+            cache.unmark_packages(
                 required_names=set(package_names), filtered_names=filter_packages
             )
-            for pkg_name, pkg_version, dl_path in apt_cache.fetch_archives(
-                _DEB_CACHE_DIR
-            ):
+            for pkg_name, pkg_version, dl_path in cache.fetch_archives(_DEB_CACHE_DIR):
                 logger.debug(f"Extracting stage package: {pkg_name}")
                 installed.add(f"{pkg_name}={pkg_version}")
                 file_utils.link_or_copy(
@@ -439,6 +489,7 @@ class Ubuntu(BaseRepo):
     def unpack_stage_packages(
         cls, *, stage_packages_path: pathlib.Path, install_path: pathlib.Path
     ) -> None:
+        """Unpack stage packages to install_path."""
         for pkg_path in stage_packages_path.glob("*.deb"):
             with tempfile.TemporaryDirectory(suffix="deb-extract") as extract_dir:
                 # Extract deb package.
@@ -451,21 +502,34 @@ class Ubuntu(BaseRepo):
         cls.normalize(str(install_path))
 
     @classmethod
-    def build_package_is_valid(cls, package_name) -> bool:
-        with AptCache() as apt_cache:
-            return apt_cache.is_package_valid(package_name)
+    def build_package_is_valid(cls, package_name: str) -> bool:
+        """Check that a given package is valid on the host.
+
+        :param package_name: a package name to check.
+        """
+        with apt_cache.AptCache() as cache:
+            return cache.is_package_valid(package_name)
 
     @classmethod
-    def is_package_installed(cls, package_name) -> bool:
-        with AptCache() as apt_cache:
-            return apt_cache.get_installed_version(package_name) is not None
+    def is_package_installed(cls, package_name: str) -> bool:
+        """Return a bool indicating if package_name is installed.
+
+        :param package_name: the package name to query.
+        :returns: True if package_name is installed if not False.
+        """
+        with apt_cache.AptCache() as cache:
+            return cache.get_installed_version(package_name) is not None
 
     @classmethod
     def get_installed_packages(cls) -> List[str]:
-        with AptCache() as apt_cache:
+        """Return a list of the installed packages and their versions.
+
+        :returns: List of strings with the form package=version.
+        """
+        with apt_cache.AptCache() as cache:
             return [
                 f"{pkg_name}={pkg_version}"
-                for pkg_name, pkg_version in apt_cache.get_installed_packages().items()
+                for pkg_name, pkg_version in cache.get_installed_packages().items()
             ]
 
     @classmethod
@@ -536,6 +600,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_gpg_key(cls, *, key_id: str, key: str) -> bool:
+        """Install trusted GPG key."""
         if cls._is_key_id_installed(key_id):
             # Already installed, nothing to do.
             return False
@@ -754,8 +819,138 @@ class Ubuntu(BaseRepo):
         except subprocess.CalledProcessError:
             raise errors.UnpackError(deb_path)
 
+    @classmethod
+    def normalize(cls, unpackdir: str) -> None:
+        """Normalize artifacts in unpackdir.
+
+        Repo specific packages are generally created to live in a specific
+        distro. What normalize does is scan through the unpacked artifacts
+        and slightly modifies them to work better with snapcraft projects
+        when building and to also work within a snap's environment.
+
+        :param str unpackdir: directory where files where unpacked.
+        """
+        cls._remove_useless_files(unpackdir)
+        cls._fix_artifacts(unpackdir)
+        cls._fix_xml_tools(unpackdir)
+        cls._fix_shebangs(unpackdir)
+
+    @classmethod
+    def _mark_origin_stage_package(
+        cls, sources_dir: str, stage_package: str
+    ) -> Set[str]:
+        """Mark all files in sources_dir as coming from stage_package."""
+        file_list = set()
+        for (root, dirs, files) in os.walk(sources_dir):
+            for file_name in files:
+                file_path = os.path.join(root, file_name)
+
+                # Mark source.
+                xattrs.write_origin_stage_package(file_path, stage_package)
+
+                file_path = os.path.relpath(root, sources_dir)
+                file_list.add(file_path)
+
+        return file_list
+
+    @classmethod
+    def _remove_useless_files(cls, unpackdir: str) -> None:
+        """Remove files that aren't useful or will clash with other parts."""
+        sitecustomize_files = glob.glob(
+            os.path.join(unpackdir, "usr", "lib", "python*", "sitecustomize.py")
+        )
+        for sitecustomize_file in sitecustomize_files:
+            os.remove(sitecustomize_file)
+
+    @classmethod
+    def _fix_artifacts(cls, unpackdir: str) -> None:
+        """Perform various modifications to unpacked artifacts.
+
+        Sometimes distro packages will contain absolute symlinks (e.g. if the
+        relative path would go all the way to root, they just do absolute). We
+        can't have that, so instead clean those absolute symlinks.
+
+        Some unpacked items will also contain suid binaries which we do not
+        want in the resulting snap.
+        """
+        for root, dirs, files in os.walk(unpackdir):
+            # Symlinks to directories will be in dirs, while symlinks to
+            # non-directories will be in files.
+            for entry in itertools.chain(files, dirs):
+                path = os.path.join(root, entry)
+                if os.path.islink(path) and os.path.isabs(os.readlink(path)):
+                    cls._fix_symlink(path, unpackdir, root)
+                elif os.path.exists(path):
+                    fixups.fix_filemode(path)
+
+                if path.endswith(".pc") and not os.path.islink(path):
+                    fixups.fix_pkg_config(unpackdir, path)
+
+    @classmethod
+    def _fix_xml_tools(cls, unpackdir: str) -> None:
+        xml2_config_path = os.path.join(unpackdir, "usr", "bin", "xml2-config")
+        with contextlib.suppress(FileNotFoundError):
+            file_utils.search_and_replace_contents(
+                xml2_config_path,
+                re.compile(r"prefix=/usr"),
+                "prefix={}/usr".format(unpackdir),
+            )
+
+        xslt_config_path = os.path.join(unpackdir, "usr", "bin", "xslt-config")
+        with contextlib.suppress(FileNotFoundError):
+            file_utils.search_and_replace_contents(
+                xslt_config_path,
+                re.compile(r"prefix=/usr"),
+                "prefix={}/usr".format(unpackdir),
+            )
+
+    @classmethod
+    def _fix_symlink(cls, path: str, unpackdir: str, root: str) -> None:
+        host_target = os.readlink(path)
+        if host_target in cls.get_package_libraries("libc6"):
+            logger.debug(
+                "Not fixing symlink {!r}: it's pointing to libc".format(host_target)
+            )
+            return
+
+        target = os.path.join(unpackdir, os.readlink(path)[1:])
+        if not os.path.exists(target) and not _try_copy_local(path, target):
+            return
+        os.remove(path)
+        os.symlink(os.path.relpath(target, root), path)
+
+    @classmethod
+    def _fix_shebangs(cls, unpackdir: str) -> None:
+        """Change hard-coded shebangs in unpacked files to use env."""
+        mangling.rewrite_python_shebangs(unpackdir)
+
 
 def _format_sources_list(sources_list: str):
     release = os_release.OsRelease().version_codename()
 
     return sources_list.replace("$SNAPCRAFT_APT_RELEASE", release)
+
+
+def get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = None
+    with contextlib.suppress(ValueError):
+        name, version = pkg_name.split("=")
+
+    return name, version
+
+
+def _try_copy_local(path: str, target: str) -> bool:
+    real_path = os.path.realpath(path)
+    if os.path.exists(real_path):
+        logger.warning(
+            "Copying needed target link from the system {}".format(real_path)
+        )
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copyfile(os.readlink(path), target)
+        return True
+    else:
+        logger.warning("{} will be a dangling symlink".format(path))
+        return False

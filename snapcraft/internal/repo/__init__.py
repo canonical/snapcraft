@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2020 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,14 +16,19 @@
 
 """Operations with platform specific package repositories."""
 
+from snapcraft.internal.os_release import OsRelease
+import snapcraft.internal.errors
+
+try:
+    distro = OsRelease().id()
+except snapcraft.internal.errors.OsReleaseIdError:
+    distro = "unknown"
+
+if distro == "ubuntu":
+    from .apt import AptRepo
+else:
+    AptRepo = None  # type: ignore
+
 from . import errors  # noqa
 from . import snaps  # noqa
-from . import _platform
-from ._base import BaseRepo  # noqa
-from ._base import fix_pkg_config  # noqa
-
-# Imported for backwards compatibility with plugins
-if _platform._is_deb_based():
-    from ._deb import Ubuntu  # noqa
-
-Repo = _platform._get_repo_for_platform()
+from .fixups import fix_pkg_config  # noqa

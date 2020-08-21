@@ -20,6 +20,7 @@ from unittest import mock
 import pytest
 
 from snapcraft.plugins.v1 import catkin_tools
+
 from . import PluginsV1BaseTestCase
 
 
@@ -51,7 +52,7 @@ class CatkinToolsPluginTestCase(CatkinToolsPluginBaseTest):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft.repo.AptRepo")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

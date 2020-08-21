@@ -72,24 +72,24 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import contextlib
 import glob
+import logging
 import os
 import pathlib
-import tempfile
-import logging
 import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import textwrap
-from typing import List, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Set
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils, formatting_utils
 from snapcraft.internal import common, errors, mangling, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -541,14 +541,14 @@ class CatkinPlugin(PluginV1):
 
         logger.info("Installing apt dependencies...")
         try:
-            repo.Ubuntu.fetch_stage_packages(
+            repo.AptRepo.fetch_stage_packages(
                 package_names=apt_dependencies,
                 stage_packages_path=self.stage_packages_path,
                 base=self.project._get_build_base(),
             )
         except repo.errors.PackageNotFoundError as e:
             raise CatkinAptDependencyFetchError(e.message)
-        repo.Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=self.stage_packages_path,
             install_path=pathlib.Path(self.installdir),
         )
@@ -984,12 +984,12 @@ class _Catkin:
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
         logger.info("Installing catkin...")
-        repo.Ubuntu.fetch_stage_packages(
+        repo.AptRepo.fetch_stage_packages(
             package_names=["ros-{}-catkin".format(self._ros_distro)],
             stage_packages_path=self._catkin_stage_packages_path,
             base=self._project._get_build_base(),
         )
-        repo.Ubuntu.unpack_stage_packages(
+        repo.AptRepo.unpack_stage_packages(
             stage_packages_path=self._catkin_stage_packages_path,
             install_path=pathlib.Path(self._catkin_install_path),
         )

@@ -783,7 +783,7 @@ class EnsureLXDTest(LXDBaseTest):
 
         # Thou shall not fail
         with mock.patch(
-            "snapcraft.internal.repo.Repo.is_package_installed", return_value=False
+            "snapcraft.internal.repo.AptRepo.is_package_installed", return_value=False
         ):
             LXD.ensure_provider()
 
@@ -794,7 +794,7 @@ class EnsureLXDTest(LXDBaseTest):
 
         # Thou shall not fail
         with mock.patch(
-            "snapcraft.internal.repo.Repo.is_package_installed", return_value=True
+            "snapcraft.internal.repo.AptRepo.is_package_installed", return_value=True
         ):
             raised = self.assertRaises(SnapcraftEnvironmentError, LXD.ensure_provider)
 

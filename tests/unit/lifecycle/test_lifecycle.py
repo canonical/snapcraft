@@ -30,10 +30,11 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.internal import errors, pluginhandler, lifecycle, project_loader, steps
+from snapcraft.internal import errors, lifecycle, pluginhandler, project_loader, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
 from tests import fixture_setup
+
 from . import LifecycleTestBase
 
 
@@ -266,7 +267,7 @@ class ExecutionTestCase(LifecycleTestBase):
         )
 
     @mock.patch.object(snapcraft.BasePlugin, "enable_cross_compilation")
-    @mock.patch("snapcraft.repo.Repo.install_build_packages")
+    @mock.patch("snapcraft.repo.AptRepo.install_build_packages")
     @mock.patch("snapcraft.repo.snaps.install_snaps")
     def test_pull_is_dirty_if_target_arch_changes(
         self,

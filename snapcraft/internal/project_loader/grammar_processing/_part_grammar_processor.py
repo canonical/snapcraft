@@ -16,9 +16,9 @@
 
 from typing import Any, Dict, Set
 
-from snapcraft import project, BasePlugin
-from snapcraft.internal.project_loader import grammar
+from snapcraft import BasePlugin, project
 from snapcraft.internal import repo
+from snapcraft.internal.project_loader import grammar
 
 from ._package_transformer import package_transformer
 
@@ -78,7 +78,7 @@ class PartGrammarProcessor:
         plugin: BasePlugin,
         properties: Dict[str, Any],
         project: project.Project,
-        repo: "repo.Ubuntu"
+        repo: "repo.AptRepo"
     ) -> None:
         self._plugin = plugin
         self._properties = properties

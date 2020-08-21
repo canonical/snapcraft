@@ -35,4 +35,4 @@ def refresh(debug, **kwargs):
     Examples:
         snapcraft refresh
     """
-    repo.Repo.refresh_build_packages()
+    repo.AptRepo.refresh_build_packages()

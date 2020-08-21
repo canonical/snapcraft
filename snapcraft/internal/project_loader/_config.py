@@ -19,22 +19,22 @@ import logging
 import os
 import os.path
 import re
-
-import jsonschema
 from typing import List, Set
 
-from snapcraft import plugins, project, formatting_utils
+import jsonschema
+
+from snapcraft import formatting_utils, plugins, project
 from snapcraft.internal import deprecations, repo, states, steps
 from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
 )
 from snapcraft.project._schema import Validator
-from ._parts_config import PartsConfig
-from ._extensions import apply_extensions
-from ._env import build_env_for_stage, runtime_env, environment_to_replacements
-from . import errors, grammar_processing, replace_attr
 
+from . import errors, grammar_processing, replace_attr
+from ._env import build_env_for_stage, environment_to_replacements, runtime_env
+from ._extensions import apply_extensions
+from ._parts_config import PartsConfig
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +263,7 @@ class Config:
                 ]
 
         if any(changes):
-            repo.Repo.refresh_build_packages()
+            repo.AptRepo.refresh_build_packages()
 
     def get_build_packages(self) -> Set[str]:
         # Install/update configured package repositories.
@@ -283,7 +283,7 @@ class Config:
             #       source handler.
             if part.source_handler and part.source_handler.command:
                 # TODO get_packages_for_source_type should not be a thing.
-                build_packages |= repo.Repo.get_packages_for_source_type(
+                build_packages |= repo.AptRepo.get_packages_for_source_type(
                     part.source_handler.command
                 )
 

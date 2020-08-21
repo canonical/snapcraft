@@ -17,13 +17,12 @@
 import os
 import pathlib
 import subprocess
-
 from unittest import mock
+
 from testtools.matchers import Equals
 
-from snapcraft.plugins.v1._ros import rosdep
-
 import snapcraft
+from snapcraft.plugins.v1._ros import rosdep
 from tests import unit
 
 
@@ -40,7 +39,7 @@ class RosdepTestCase(unit.TestCase):
             base="core",
         )
 
-        patcher = mock.patch("snapcraft.repo.Ubuntu")
+        patcher = mock.patch("snapcraft.repo.AptRepo")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

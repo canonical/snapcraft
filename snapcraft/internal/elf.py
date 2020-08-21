@@ -701,7 +701,7 @@ def find_linker(*, root_path: str, snap_base_path: str) -> str:
     """
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
-    libc6_libraries_list = repo.Repo.get_package_libraries("libc6")
+    libc6_libraries_list = repo.AptRepo.get_package_libraries("libc6")
 
     # For security reasons, we do not want to automatically pull in
     # libraries but expect them to be consciously brought in by stage-packages

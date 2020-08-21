@@ -17,17 +17,17 @@
 import logging
 import os
 import pathlib
+from unittest import mock
 
 import fixtures
 import pytest
-from unittest import mock
 from testscenarios import multiply_scenarios
 from testtools.matchers import Contains, Equals, FileExists, HasLength, LessThan, Not
 
 from snapcraft import repo
-from snapcraft.plugins.v1 import colcon
-from snapcraft.plugins.v1 import _ros
+from snapcraft.plugins.v1 import _ros, colcon
 from tests import unit
+
 from . import PluginsV1BaseTestCase
 
 
@@ -51,7 +51,7 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         self.ubuntu_distro = "bionic"
 
         self.ubuntu_mock = self.useFixture(
-            fixtures.MockPatch("snapcraft.repo.Ubuntu")
+            fixtures.MockPatch("snapcraft.repo.AptRepo")
         ).mock
 
         self.dependencies_mock = self.useFixture(

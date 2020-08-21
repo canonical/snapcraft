@@ -16,18 +16,18 @@
 
 import logging
 import os
-import tempfile
 import subprocess
 import sys
+import tempfile
+from unittest import mock
 
 import fixtures
 import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
-from unittest import mock
 
 from snapcraft import ProjectOptions
-from snapcraft.internal import errors, elf
-from tests import unit, fixture_setup
+from snapcraft.internal import elf, errors
+from tests import fixture_setup, unit
 
 
 class TestElfBase(unit.TestCase):
@@ -518,7 +518,7 @@ class HandleGlibcTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch("snapcraft.internal.repo.Repo.get_package_libraries")
+        patcher = mock.patch("snapcraft.internal.repo.AptRepo.get_package_libraries")
         self.get_packages_mock = patcher.start()
         self.get_packages_mock.return_value = self._setup_libc6()
         self.addCleanup(patcher.stop)

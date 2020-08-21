@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import apt
 import logging
 import os
 import re
@@ -23,10 +22,13 @@ from contextlib import ContextDecorator
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+import apt
+
 from snapcraft.internal import common
 from snapcraft.internal.indicators import is_dumb_terminal
-from snapcraft.internal.repo import errors
-from snapcraft.internal.repo._base import get_pkg_name_parts
+
+from . import apt as _apt
+from . import errors
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +197,7 @@ class AptCache(ContextDecorator):
                 "Marking {!r} (and its dependencies) to be fetched".format(name)
             )
 
-            name_arch, version = get_pkg_name_parts(name)
+            name_arch, version = _apt.get_pkg_name_parts(name)
             if name_arch not in self.cache:
                 raise errors.PackageNotFoundError(name_arch)
 

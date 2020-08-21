@@ -14,21 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
 import logging
 import os
 import subprocess
 import sys
 import urllib.parse
 import warnings
+from textwrap import dedent
 from time import sleep
 from typing import Dict, Optional, Sequence
 
-from .._base_provider import Provider
-from .._base_provider import errors
-from ._images import get_image_source
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+
+from .._base_provider import Provider, errors
+from ._images import get_image_source
 
 # LXD is only supported on Linux and causes issues when imported on Windows.
 # We conditionally import it and rely on ensure_provider() to check OS before
@@ -87,9 +87,9 @@ class LXD(Provider):
         try:
             # TODO: add support for more distributions. Maybe refactor a bit so that Repo behaves
             # similar to a build provider.
-            if repo.Repo.is_package_installed("lxd") or repo.Repo.is_package_installed(
-                "lxd-client"
-            ):
+            if repo.AptRepo.is_package_installed(
+                "lxd"
+            ) or repo.AptRepo.is_package_installed("lxd-client"):
                 raise SnapcraftEnvironmentError(
                     (
                         "The {!r} provider does not support having the 'lxd' or "

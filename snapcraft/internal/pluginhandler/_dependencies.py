@@ -19,7 +19,6 @@ from typing import Sequence, Set
 
 from snapcraft.internal import repo
 
-
 _MSG_EXTEND_STAGE_PACKAGES = (
     "The {part_name!r} part is missing libraries that are not "
     "included in the snap or base. They can be satisfied by adding the following "
@@ -54,7 +53,7 @@ class MissingDependencyResolver:
     def _process(self, elf_files: Sequence[str]) -> None:
         for elf_file in elf_files:
             try:
-                stage_package = repo.Repo.get_package_for_file(
+                stage_package = repo.AptRepo.get_package_for_file(
                     file_path=os.path.join(os.path.sep, elf_file)
                 )
                 self._stage_packages_dependencies.add(stage_package)
