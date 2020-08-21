@@ -368,6 +368,7 @@
                 "base",
                 "gadget",
                 "kernel",
+                "os",
                 "snapd"
             ]
         },
@@ -1085,6 +1086,30 @@
                     "required": [
                         "build-base"
                     ]
+                },
+                {
+                    "usage": "type: os (with a build-base)",
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "os"
+                            ]
+                        }
+                    },
+                    "allOf": [
+                        {
+                            "required": [
+                                "build-base"
+                            ]
+                        },
+                        {
+                            "not": {
+                                "required": [
+                                    "base"
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -1109,7 +1134,6 @@
         "name",
         "parts"
     ],
-
     "dependencies": {
         "license-agreement": [
             "license"
