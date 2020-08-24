@@ -53,7 +53,7 @@ in mind, the following shall be displayed when an unknown track is specified:
 
 #+BEGIN_SRC sh
 $ snapcraft set-default-track node 18
-The specified track is not exist for 'node'.
+The specified track does not exist for 'node'.
 
 Recommended resolution:
 Run 'snapcraft list-tracks' to see the available tracks.
