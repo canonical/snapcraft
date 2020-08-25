@@ -103,12 +103,9 @@ def test_get_build_commands(monkeypatch):
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
         "rosdep install --from-paths . --default-yes --ignore-packages-from-source",
-        "colcon build --merge-install --install-base $SNAPCRAFT_PART_INSTALL "
-        "--parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
-        "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
-        "/test/colcon.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO",
+        "colcon build --merge-install --install-base $SNAPCRAFT_PART_INSTALL --parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
+        "env LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
+        "/test/colcon.py stage-runtime-dependencies",
     ]
 
 
@@ -135,6 +132,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
             SNAP_ARCH="TESTARCH",
             SNAP_NAME="TESTSNAPNAME",
             SNAP_VERSION="TESTV1",
+            http_proxy="http://foo",
+            https_proxy="https://bar",
         ),
     )
 
@@ -148,10 +147,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
         "package2... --ament-cmake-args ament args... --catkin-cmake-args catkin "
         "args... --parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
-        "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
+        "env LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
-        "/test/python3 -I "
-        "/test/colcon.py "
-        "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
-        "--ros-distro $ROS_DISTRO",
+        "http_proxy=http://foo https_proxy=https://bar "
+        "/test/python3 -I /test/colcon.py stage-runtime-dependencies",
     ]
