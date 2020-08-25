@@ -68,3 +68,17 @@ CLOSED: [2020-06-24]
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
 
+*** TODO [[file:specifications/configurable-apt-mirror.org][Configurable APT Mirror]] [0/7]
+- [ ] Add =--snapcraft-apt-mirror= command-line argument with matching
+  =SNAPCRAFT_APT_MIRROR= environment variable.
+- [ ] Replace usage of =SNAPCRAFT_BUILD_EVNIRONMENT_PRIMARY_MIRROR= with
+  =SNAPCRAFT_APT_MIRROR=.
+- [ ] Remove configurable security mirror.
+- [ ] Move apt configuration in base provider into own
+  =_setup_apt_configuration()=.
+- [ ] Implement abstract _pull_file() in base provider, allowing
+  the base provider to get a file from the target.
+- [ ] Call =_setup_apt_configuration()= on every run, not just
+  creation.
+- [ ] Optimize =_setup_apt_configuration()= to detect changes to configuration
+  using =_pull_file()=, issuing an =apt update= if modified.
