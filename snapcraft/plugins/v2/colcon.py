@@ -157,7 +157,15 @@ class ColconPlugin(PluginV2):
     def _get_stage_runtime_dependencies_command(self):
         env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8")
 
-        for key in ["PATH", "SNAP", "SNAP_ARCH", "SNAP_NAME", "SNAP_VERSION"]:
+        for key in [
+            "PATH",
+            "SNAP",
+            "SNAP_ARCH",
+            "SNAP_NAME",
+            "SNAP_VERSION",
+            "http_proxy",
+            "https_proxy",
+        ]:
             if key in os.environ:
                 env[key] = os.environ[key]
 
