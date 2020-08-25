@@ -157,7 +157,12 @@ class ColconPlugin(PluginV2):
     def _get_stage_runtime_dependencies_command(self):
         env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8")
 
-        for key in ["PATH", "SNAP", "SNAP_ARCH", "SNAP_NAME", "SNAP_VERSION"]:
+        for key in [
+            "SNAP",
+            "SNAP_ARCH",
+            "SNAP_NAME",
+            "SNAP_VERSION",
+        ]:
             if key in os.environ:
                 env[key] = os.environ[key]
 
@@ -165,16 +170,11 @@ class ColconPlugin(PluginV2):
         return " ".join(
             [
                 "env",
-                "-i",
                 *env_flags,
                 sys.executable,
                 "-I",
                 os.path.abspath(__file__),
                 "stage-runtime-dependencies",
-                "--part-install",
-                "$SNAPCRAFT_PART_INSTALL",
-                "--ros-distro",
-                "$ROS_DISTRO",
             ]
         )
 
