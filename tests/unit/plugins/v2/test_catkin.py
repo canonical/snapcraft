@@ -18,39 +18,27 @@ import os
 import sys
 
 import snapcraft.plugins.v2._ros as _ros
-import snapcraft.plugins.v2.colcon as colcon
+import snapcraft.plugins.v2.catkin as catkin
 
 
 def test_schema():
-    assert colcon.ColconPlugin.get_schema() == {
+    assert catkin.CatkinPlugin.get_schema() == {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "additionalProperties": False,
         "properties": {
-            "colcon-ament-cmake-args": {
+            "catkin-cmake-args": {
                 "default": [],
                 "items": {"type": "string"},
                 "minItems": 0,
                 "type": "array",
             },
-            "colcon-catkin-cmake-args": {
-                "default": [],
-                "items": {"type": "string"},
-                "minItems": 0,
-                "type": "array",
-            },
-            "colcon-cmake-args": {
-                "default": [],
-                "items": {"type": "string"},
-                "minItems": 0,
-                "type": "array",
-            },
-            "colcon-packages": {
+            "catkin-packages": {
                 "items": {"type": "string"},
                 "minItems": 0,
                 "type": "array",
                 "uniqueItems": True,
             },
-            "colcon-packages-ignore": {
+            "catkin-packages-ignore": {
                 "default": [],
                 "items": {"type": "string"},
                 "minItems": 0,
@@ -63,35 +51,28 @@ def test_schema():
 
 
 def test_get_build_packages():
-    plugin = colcon.ColconPlugin(part_name="my-part", options=lambda: None)
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=lambda: None)
 
     assert plugin.get_build_packages() == {
-        "python3-colcon-common-extensions",
         "python3-rosdep",
-        "python3-rosinstall",
-        "python3-wstool",
     }
 
 
 def test_get_build_environment():
-    plugin = colcon.ColconPlugin(part_name="my-part", options=lambda: None)
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=lambda: None)
 
     assert plugin.get_build_environment() == {
-        "AMENT_PYTHON_EXECUTABLE": "/usr/bin/python3",
-        "COLCON_PYTHON_EXECUTABLE": "/usr/bin/python3",
         "ROS_PYTHON_VERSION": "3",
     }
 
 
 def test_get_build_commands(monkeypatch):
     class Options:
-        colcon_ament_cmake_args = list()
-        colcon_catkin_cmake_args = list()
-        colcon_cmake_args = list()
-        colcon_packages = list()
-        colcon_packages_ignore = list()
+        catkin_cmake_args = list()
+        catkin_packages = list()
+        catkin_packages_ignore = list()
 
-    plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
     monkeypatch.setattr(sys, "path", ["", "/test"])
     monkeypatch.setattr(sys, "executable", "/test/python3")
@@ -99,13 +80,13 @@ def test_get_build_commands(monkeypatch):
     monkeypatch.setattr(os, "environ", dict())
 
     assert plugin.get_build_commands() == [
-        ". /opt/ros/$ROS_DISTRO/setup.sh",
+        "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
         "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
-        "colcon build --merge-install --install-base $SNAPCRAFT_PART_INSTALL "
-        "--parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
+        "catkin_make_isolated --install --merge --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
+        "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 /test/python3 -I "
         "/test/_ros.py "
         "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
@@ -115,13 +96,11 @@ def test_get_build_commands(monkeypatch):
 
 def test_get_build_commands_with_all_properties(monkeypatch):
     class Options:
-        colcon_ament_cmake_args = ["ament", "args..."]
-        colcon_catkin_cmake_args = ["catkin", "args..."]
-        colcon_cmake_args = ["cmake", "args..."]
-        colcon_packages = ["package1", "package2..."]
-        colcon_packages_ignore = ["ipackage1", "ipackage2..."]
+        catkin_cmake_args = ["cmake", "args..."]
+        catkin_packages = ["package1", "package2..."]
+        catkin_packages_ignore = ["ipackage1", "ipackage2..."]
 
-    plugin = colcon.ColconPlugin(part_name="my-part", options=Options())
+    plugin = catkin.CatkinPlugin(part_name="my-part", options=Options())
 
     monkeypatch.setattr(sys, "path", ["", "/test"])
     monkeypatch.setattr(sys, "executable", "/test/python3")
@@ -142,19 +121,19 @@ def test_get_build_commands_with_all_properties(monkeypatch):
     )
 
     assert plugin.get_build_commands() == [
-        ". /opt/ros/$ROS_DISTRO/setup.sh",
+        "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
         "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep "
         "init; fi",
         "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
         "rosdep install --default-yes --ignore-packages-from-source --from-paths .",
-        "colcon build --merge-install --install-base $SNAPCRAFT_PART_INSTALL "
-        "--packages-ignore ipackage1 ipackage2... --packages-select package1 "
-        "package2... --ament-cmake-args ament args... --catkin-cmake-args catkin "
-        "args... --parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
+        "catkin_make_isolated --install --merge --install-space $SNAPCRAFT_PART_INSTALL/opt/ros/$ROS_DISTRO "
+        "-j $SNAPCRAFT_PARALLEL_BUILD_COUNT --pkg package1 package2... "
+        "--ignore-pkg ipackage1 ipackage2... --cmake-args cmake args...",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
         "http_proxy=http://foo https_proxy=https://bar "
-        "/test/python3 -I /test/_ros.py "
+        "/test/python3 -I "
+        "/test/_ros.py "
         "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]

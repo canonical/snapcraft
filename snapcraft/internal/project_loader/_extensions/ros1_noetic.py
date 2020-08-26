@@ -22,13 +22,11 @@ from typing_extensions import Final
 
 from ._extension import Extension
 
-_PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
-
 
 class ExtensionImpl(Extension):
-    """Drives ROS 2 build and runtime environment for snap."""
+    """Drives ROS 1 build and runtime environment for snap."""
 
-    ROS_DISTRO: Final[str] = "foxy"
+    ROS_DISTRO: Final[str] = "noetic"
 
     @staticmethod
     def get_supported_bases() -> Tuple[str, ...]:
@@ -55,7 +53,7 @@ class ExtensionImpl(Extension):
             "package-repositories": [
                 {
                     "type": "apt",
-                    "url": "http://repo.ros2.org/ubuntu/main",
+                    "url": "http://packages.ros.org/ros/ubuntu",
                     "components": ["main"],
                     "deb-types": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
@@ -66,7 +64,7 @@ class ExtensionImpl(Extension):
         }
 
         self.app_snippet = {
-            "command-chain": ["snap/command-chain/ros2-launch"],
+            "command-chain": ["snap/command-chain/ros1-launch"],
             "environment": {
                 "ROS_DISTRO": self.ROS_DISTRO,
                 "PYTHONPATH": ":".join(python_paths),
@@ -76,10 +74,10 @@ class ExtensionImpl(Extension):
         self.part_snippet = {"build-environment": [{"ROS_DISTRO": self.ROS_DISTRO}]}
 
         self.parts = {
-            f"ros2-{self.ROS_DISTRO}-extension": {
-                "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros2",
+            f"ros1-{self.ROS_DISTRO}-extension": {
+                "source": "$SNAPCRAFT_EXTENSIONS_DIR/ros1",
                 "plugin": "nil",
-                "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros2-launch",
-                "build-packages": [f"ros-{self.ROS_DISTRO}-ros-core"],
+                "override-build": "install -D -m 0755 launch ${SNAPCRAFT_PART_INSTALL}/snap/command-chain/ros1-launch",
+                "build-packages": [f"ros-{self.ROS_DISTRO}-catkin"],
             }
         }
