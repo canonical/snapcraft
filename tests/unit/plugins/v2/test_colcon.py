@@ -135,6 +135,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
             SNAP_ARCH="TESTARCH",
             SNAP_NAME="TESTSNAPNAME",
             SNAP_VERSION="TESTV1",
+            http_proxy="http://foo",
+            https_proxy="https://bar",
         ),
     )
 
@@ -150,8 +152,8 @@ def test_get_build_commands_with_all_properties(monkeypatch):
         "args... --parallel-workers ${SNAPCRAFT_PARALLEL_BUILD_COUNT}",
         "env -i LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/bin:/test SNAP=TESTSNAP "
         "SNAP_ARCH=TESTARCH SNAP_NAME=TESTSNAPNAME SNAP_VERSION=TESTV1 "
-        "/test/python3 -I "
-        "/test/colcon.py "
+        "http_proxy=http://foo https_proxy=https://bar "
+        "/test/python3 -I /test/colcon.py "
         "stage-runtime-dependencies --part-install $SNAPCRAFT_PART_INSTALL "
         "--ros-distro $ROS_DISTRO",
     ]

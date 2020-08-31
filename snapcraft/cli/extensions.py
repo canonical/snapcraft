@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import click
 import collections
 import inspect
+import os
 import sys
+
+import click
 import tabulate
 
-from ._options import get_project
-from snapcraft.internal import project_loader
 from snapcraft import yaml_utils
+from snapcraft.internal import project_loader
+
+from ._options import get_project
 
 
 @click.group()
@@ -75,8 +78,15 @@ def extension(ctx, name, **kwargs):
 
 
 @extensioncli.command("expand-extensions")
+@click.option(
+    "--enable-experimental-extensions",
+    is_flag=True,
+    envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+)
 def expand_extensions(**kwargs):
     """Display snapcraft.yaml with all extensions applied."""
+    if kwargs.get("enable_experimental_extensions"):
+        os.environ["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"] = "True"
 
     project = get_project(**kwargs)
     yaml_with_extensions = project_loader.apply_extensions(
