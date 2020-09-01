@@ -18,7 +18,7 @@ apps:
 
 package-repositories:
   - type: apt
-    deb-types: [deb, deb-src]
+    formats: [deb, deb-src]
     components: [main]
     suites: [$SNAPCRAFT_APT_RELEASE]
     key-id: f1831ddafc42e99d

@@ -98,7 +98,7 @@ the schema is to be considered stable.
 
   - =architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]=
 
-** Property: deb-types (optional)
+** Property: formats (optional)
 
 - *Type:* list[string]
 
@@ -108,9 +108,9 @@ the schema is to be considered stable.
 
 - *Examples:*
 
-  - =deb-types: [deb]=
+  - =formats: [deb]=
 
-  - =deb-types: [deb, deb-src]=
+  - =formats: [deb, deb-src]=
 
 ** Property: components (required)
 
@@ -213,14 +213,14 @@ package-repositories:
     ppa: snappy-dev/snapcraft-daily
 
   - type: apt
-    deb-types: [deb, deb-src]
+    formats: [deb, deb-src]
     components: [main]
     suites: [$SNAPCRAFT_APT_RELEASE]
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
   - type: apt
-    deb-types: [deb]
+    formats: [deb]
     components: []
     suites: [/]
     key-id: 7fa2af80
@@ -241,7 +241,7 @@ E.g.:
 package-repositories:
   - type: apt
     name: default
-    deb-types: [deb, deb-src]
+    formats: [deb, deb-src]
     components: [main, multiverse, restricted, universe]
     suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
@@ -249,7 +249,7 @@ package-repositories:
 
   - type: apt
     name: default-security
-    deb-types: [deb, deb-src]
+    formats: [deb, deb-src]
     components: [main, multiverse, restricted, universe]
     suites: [$SNAPCRAFT_APT_RELEASE-security]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
