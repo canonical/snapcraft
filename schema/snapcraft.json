@@ -154,7 +154,7 @@
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
-                        "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
+                        "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'.  Must be empty if suites are paths (ending with '/')."
                     }
                 },
                 "key-id": {

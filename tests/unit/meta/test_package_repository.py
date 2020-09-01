@@ -190,6 +190,52 @@ class DebTests(unit.TestCase):
             str(error), MatchesRegex("invalid deb repository object:.*(extra keys)")
         )
 
+    def test_invalid_mixed_suites(self):
+        test_dict = {
+            "architectures": ["amd64", "i386"],
+            "components": ["main", "multiverse"],
+            "deb-types": ["deb", "deb-src"],
+            "key-id": "test-key-id",
+            "key-server": "keyserver.ubuntu.com",
+            "name": "test-name",
+            "suites": ["xenial", "/"],
+            "type": "apt",
+            "url": "http://archive.ubuntu.com/ubuntu",
+        }
+
+        error = self.assertRaises(
+            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
+        )
+        self.assertThat(
+            str(error),
+            MatchesRegex(
+                "invalid deb repository object:.*(mixed suites - paths ending with '/' and non-path names)"
+            ),
+        )
+
+    def test_invalid_path_suite_with_components(self):
+        test_dict = {
+            "architectures": ["amd64", "i386"],
+            "components": ["main", "multiverse"],
+            "deb-types": ["deb", "deb-src"],
+            "key-id": "test-key-id",
+            "key-server": "keyserver.ubuntu.com",
+            "name": "test-name",
+            "suites": ["some-path/"],
+            "type": "apt",
+            "url": "http://archive.ubuntu.com/ubuntu",
+        }
+
+        error = self.assertRaises(
+            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
+        )
+        self.assertThat(
+            str(error),
+            MatchesRegex(
+                "invalid deb repository object:.*(pathed suite with components)"
+            ),
+        )
+
 
 class RepoTests(unit.TestCase):
     def test_marshal_none(self):

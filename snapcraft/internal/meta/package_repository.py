@@ -233,6 +233,17 @@ class PackageRepositoryApt(PackageRepository):
         if data_copy:
             raise RuntimeError(f"invalid deb repository object: {data!r} (extra keys)")
 
+        suite_is_path = any(s.endswith("/") for s in suites)
+        if suite_is_path and not all(s.endswith("/") for s in suites):
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (mixed suites - paths ending with '/' and non-path names)"
+            )
+
+        if suite_is_path and len(components) > 0:
+            raise RuntimeError(
+                f"invalid deb repository object: {data!r} (pathed suite with components)"
+            )
+
         return cls(
             architectures=architectures,
             components=components,

@@ -120,6 +120,8 @@ the schema is to be considered stable.
 
   May be empty, e.g.: =components: []=
 
+  _MUST_ be empty if =suites= refers to an absolute path (ends with =/=).
+
 - *Examples:*
 
   - =components: []=
@@ -177,6 +179,9 @@ the schema is to be considered stable.
     - Supports =$SNAPCRAFT_APT_RELEASE= variable for snapcraft to populate base's release name (e.g. =xenial=).
 
     - If your deb URL does not look like it has a suite defined, it is likely that the suite is =/=.
+
+    - If suite(s) refer to a path (i.e. ends with =/=), then =components= _MUST_
+      be empty (or unspecified).
 
   - *Examples:*
 
