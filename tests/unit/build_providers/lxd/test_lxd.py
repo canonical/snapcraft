@@ -206,7 +206,7 @@ class LXDInitTest(LXDBaseTest):
                 "source": {
                     "mode": "pull",
                     "type": "image",
-                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
+                    "server": "https://cloud-images.ubuntu.com/buildd/releases",
                     "protocol": "simplestreams",
                     "alias": "16.04",
                 },
@@ -546,7 +546,7 @@ class LXDInitTest(LXDBaseTest):
                 "source": {
                     "mode": "pull",
                     "type": "image",
-                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
+                    "server": "https://cloud-images.ubuntu.com/buildd/releases",
                     "protocol": "simplestreams",
                     "alias": "18.04",
                 },
@@ -577,7 +577,7 @@ class LXDInitTest(LXDBaseTest):
                 "source": {
                     "mode": "pull",
                     "type": "image",
-                    "server": "https://cloud-images.ubuntu.com/buildd/daily",
+                    "server": "https://cloud-images.ubuntu.com/buildd/releases",
                     "protocol": "simplestreams",
                     "alias": "16.04",
                 },
