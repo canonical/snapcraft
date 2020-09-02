@@ -10,7 +10,7 @@ prepare: |
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "snaps/$SNAP/snap/snapcraft.yaml"
+  set_base "snap/snapcraft.yaml"
 
   echo "license: MIT" >> snap/snapcraft.yaml
 
