@@ -39,9 +39,9 @@ execute: |
 
   # Regression test for LP: #1660852. Make sure --help actually gets passed to
   # roslaunch instead of being eaten by setup.sh.
-  $("$SNAP") --help | MATCH "Usage: roslaunch"
+  "$SNAP" --help | MATCH "Usage: roslaunch"
 
   # Run the ROS system. By default this will never exit, but the snap supports
-  # an `exit-after-receive` parameter that, if true, will cause the system to
+  # an `exit_after_receive` parameter that, if true, will cause the system to
   # shutdown after the listener has successfully received a message.
-  $("$SNAP") exit_after_receive:=true | MATCH "I heard Hello world"
+  "$SNAP" exit_after_receive:=true | MATCH "I heard Hello world"
