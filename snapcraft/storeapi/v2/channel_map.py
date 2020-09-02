@@ -30,9 +30,7 @@ https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 
 
 class Progressive:
-    """
-    Represents Progressive information for a MappedChannel.
-    """
+    """Represent Progressive information for a MappedChannel."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Progressive":
@@ -56,9 +54,7 @@ class Progressive:
 
 
 class MappedChannel:
-    """
-    Represents a Channel from a channel List for channel-map.
-    """
+    """Represent a mapped channel item for "channel-map" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "MappedChannel":
@@ -102,9 +98,7 @@ class MappedChannel:
 
 
 class Revision:
-    """
-    Represents a Revision in the revisions List.
-    """
+    """Represent a revision item for "revisions" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Revision":
@@ -136,9 +130,7 @@ class Revision:
 
 
 class SnapChannel:
-    """
-    Represents a Channel from a channel List for snap.
-    """
+    """Represent a channel item in "channels" in Snap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
@@ -185,9 +177,7 @@ class SnapChannel:
 
 
 class SnapTrack:
-    """
-    Represents a Track from for snap.
-    """
+    """Represent a track item in "tracks" in Snap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
@@ -230,7 +220,7 @@ class SnapTrack:
 
 
 class Snap:
-    """Represents a Snap structure from the Snap Store."""
+    """Represent "snap" in ChannelMap."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
@@ -260,9 +250,7 @@ class Snap:
 
 
 class ChannelMap:
-    """
-    Represents the data returned from the channel-map call from the Snap Store.
-    """
+    """Represent the data returned from the channel-map Snap Store endpoint."""
 
     @classmethod
     def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":
