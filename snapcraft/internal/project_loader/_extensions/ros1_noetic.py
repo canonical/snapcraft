@@ -55,7 +55,7 @@ class ExtensionImpl(Extension):
                     "type": "apt",
                     "url": "http://packages.ros.org/ros/ubuntu",
                     "components": ["main"],
-                    "deb-types": ["deb"],
+                    "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
                     "key-server": "keyserver.ubuntu.com",
                     "suites": ["$SNAPCRAFT_APT_RELEASE"],
