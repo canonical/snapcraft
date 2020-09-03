@@ -1,0 +1,214 @@
+* Environment Management: Scope
+
+Specification of how Snapcraft manages local and remote build
+environments and their lifecycle.
+
+This includes locally and remotely provisioned containers, VMs and build
+services such as Launchpad.
+
+* Terminology
+
+** Snapcraft Build Environment Counter (build-count)
+
+Counter that increments every time Snapcraft creates a new build environment.
+Initialized to zero =0=.  Tracked in the environment-manager datastore.
+
+** Snapcraft Project Path (project-path)
+
+Absolute path to a Snapcraft project directory (containing Snapcraft.yaml,
+etc.).
+
+** Snapcraft Project Name (project-name)
+
+Name of snap (specified in =snapcraft.yaml='s =name= field).
+
+** Snapcraft Project (project-instance)
+
+An instance of a Snapcraft project, found in =project-path=.
+
+No more than one =project-instance= can exist in =project-path=.
+
+There may be multiple =project-instance(s)= for a given =project-name=
+(e.g. user working on multiple project copies simultaneously).
+
+** Project Build Environment Instance Naming (build-instance-id)
+
+The build environment's user-facing name.
+
+Format: =snapcraft-<build-count>-<project-name>=
+
+** Project Build Environment Instance (build-instance)
+
+Project build environment instance, identified with =build-instance-id=. No more
+than one =build-instance= can exist for a given =project-instance= and
+=provider=.
+
+** Environment Manager Datastore (environment-manager-datastore)
+
+Snapcraft's persistent data storage for managing =build-instances(s)= throughout
+their lifecycle.
+
+* Build Instance Lifecycle
+
+** Creation
+
+Snapcraft shall re-use a previously instantiated =build-instance= for
+=project-instance=, if available for the configured provider.
+
+If no matching =build-instance= exists for the configured provider,
+=snapcraft= shall create a new instance, naming it =build-instance-id=.
+
+** Re-using Build Environments
+
+When a =build-instance= is going to be re-used, Snapcraft shall first verify
+it was created:
+
+1. by a compatible version of Snapcraft
+
+2. with image matching current upstream image (via hash/fingerprint)
+
+If any of these checks fail, Snapcraft shall automatically clean the
+=build-instance= and instantiate a new =build-instance= for use.
+
+** Removal
+
+When a =build-instance= is removed by Snapcraft, all associated metadata must
+also be purged.
+
+* User Options for Removing Build Environment Instances
+
+Snapcraft shall provide the user with options to perform on-demand removal of
+Snapcraft-created =build-instance(s)=.
+
+** =snapcraft clean=
+
+=snapcraft clean= shall remove all =build-instance(s)= associated with the
+current =project-instance=. This extends current =snapcraft clean= behavior to
+clean all known instances for all possible providers for =project-instance=.
+
+** =snapcraft clean --all-projects=
+
+Extends =snapcraft clean= behavior to clean all =build-instance(s)= created by
+Snapcraft, for all =project-instance(s)=.
+
+For additional safety, =--dry-run= argument shall be supported to log all
+=build-instance(s)= that would be cleaned if =--dry-run= were not present.
+
+* Environment Manager Datastore
+
+Snapcraft shall utilize a TinyDB-based datastore with YAML storage. TinyDB
+provides database functionality, including support for queries, which shall
+support operations to maintain build environments throughout their lifecycle.
+
+This =environment-manager-datastore= shall be per-user such that Snapcraft does
+not require root. The =environment-manager-datastore= shall reside in
+=<user-data>/snapcraft/environment-manager.yaml=, where =<user-data>= is the
+first defined value of:
+  1. $SNAP_USER_DATA
+  2. $XDG_DATA_HOME
+  3. $HOME/.local/share
+
+** Table Schema
+
+*** Control
+
+The =environment-manager-datastore= shall have a =Control= table with one, and
+only one, =control= record:
+
+|--------------------------------+---------+--------------------------------------------------+---------|
+| field                          | type    | description                                      | example |
+|--------------------------------+---------+--------------------------------------------------+---------|
+| created_with_snapcraft_version | string  | Version of Snapcraft that created this document.  | "4.0.1" |
+| schema_version                 | integer | Version of schema used by the datastore.         | 3       |
+|--------------------------------+---------+--------------------------------------------------+---------|
+
+- Any =environment-manager-datastore= without this table and =control= record
+  must be considered invalid.
+
+*** Migrations
+
+The =environment-manager-datastore= shall have a =Migrations= table with an
+array of =migration= records:
+
+|-------------------+---------+------------------------------------------------------------------------+-------------------------------|
+| field             | type    | description                                                            | example                       |
+|-------------------+---------+------------------------------------------------------------------------+-------------------------------|
+| schema_version    | integer | Version of schema this migration migrated datastore to.                | 3                             |
+| timestamp         | string  | UTC timestamp of when this migration occurred (ISO 6801 format + "Z"). | "2020-09-03T08:45:29.000599Z" |
+| snapcraft_version | string  | Version of Snapcraft that performed this migration.                    | "4.0.1"                       |
+|-------------------+---------+------------------------------------------------------------------------+-------------------------------|
+
+- When migrating a database, each migration shall be logged in the
+  =environment-manager-datastore= for triaging purposes.
+
+- Any =environment-manager-datastore= without this table shall be considered
+  invalid.
+
+*** BuildEnvironments
+
+The =environment-manager-datastore= shall have a =BuildEnvironments= table with
+an array of =build-environment= records:
+
+|--------------------+--------+--------------------------------------------------------------------------+-------------------------------|
+| field              | type   | description                                                              | example                       |
+|--------------------+--------+--------------------------------------------------------------------------+-------------------------------|
+| provider           | string | Name of build provider, e.g. ["host", "lxd", "multipass", "launchapad"]. | "multipass"                   |
+| timestamp_created  | string | UTC timestamp of when =build-instance= was created.                      | "2020-09-03T08:45:29.000599Z" |
+| timestamp_accessed | string | UTC timestamp of when =build-instance= was last used by Snapcraft.       | "2020-09-03T08:45:29.000599Z" |
+| snapcraft_version  | string | Version of Snapcraft that created this environment.                      | "4.0.1"                       |
+| project_name       | string | Name of project (as derived from snapcraft.yaml).                        | "my-snap-name"                |
+| project_path       | string | Path to project.                                                         | "/home/user/git/my-snap-name" |
+| build_instance_id  | string | Unique identifier for project.                                           | "snapcraft-4-my-snap-name"    |
+|--------------------+--------+--------------------------------------------------------------------------+-------------------------------|
+
+- Whenever an environment is created or updated, the record is created/updated.
+  When cleaning the environment, the =build-environment= record is purged.
+
+*** LXD
+
+The =environment-manager-datastore= shall have a =LXD= table with an array of
+=lxd-environment= records:
+
+|------------------------------+--------+---------------------------------------------+---------------------------------------------------|
+| field                        | type   | description                                 | example                                           |
+|------------------------------+--------+---------------------------------------------+---------------------------------------------------|
+| build_instance_id            | string | Unique identifier for =build-instance=.     | "snapcraft-4-my-snap-name"                        |
+| image_source_server          | string | URL of remote server image was pulled from. | "https://cloud-images.ubuntu.com/buildd/releases" |
+| image_source_server_protocol | string | Protocol of server.                         | "simplestreams"                                   |
+| image_source_alias           | string | Alias of image.                             | "16.04"                                           |
+| image_fingerprint            | string | Image fingerprint.                          | "1f1a6e97b643"                                    |
+|------------------------------+--------+---------------------------------------------+---------------------------------------------------|
+
+- Records any LXD-specific attributes related to a build-environment.
+
+*** Multipass
+
+The =environment-manager-datastore= shall have a =Multipass= table with an array
+of =multipass-environment= records:
+
+|-------------------+--------+-----------------------------------------+----------------------------|
+| field             | type   | description                             | example                    |
+|-------------------+--------+-----------------------------------------+----------------------------|
+| build_instance_id | string | Unique identifier for =build-instance=. | "snapcraft-4-my-snap-name" |
+| image_name        | string | Image used to create =build-instance=.  | "20.04"                    |
+| image_hash        | string | Image hash.                             | "c14a2047c6ba"             |
+|-------------------+--------+-----------------------------------------+----------------------------|
+
+- Records any Multipass-specific attributes related to a build-environment.
+
+*** Launchpad
+
+The =environment-manager-datastore= shall have a =Launchpad= table with an array
+of =launchpad-build= records:
+
+|-------------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+| field             | type   | description                             | example                                                                                |
+|-------------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+| build_instance_id | string | Unique identifier for =build-instance=. | "snapcraft-4-my-snap-name"                                                             |
+| git_url           | string | URL to Launchpad git repository.        | "https://<launchpad-user>@git.launchpad.net/~<launchpad-user>/+git/<repository-name>/" |
+| launchpad_user    | string | Launchpad username.                     | "user"                                                                                 |
+| snap_name         | string | Name of snap registered with Launchpad. | "snapcraft-4-my-snap-name"                                          |
+|-------------------+--------+-----------------------------------------+----------------------------------------------------------------------------------------|
+
+- Records metadata about any builds pushed to Launchpad using =snapcraft
+  remote-build=.

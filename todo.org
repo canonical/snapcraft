@@ -55,6 +55,13 @@ CLOSED: [2020-06-24]
 - [ ] Add multi-arch spread test(s).
 - [ ] Finalize schema and mark stable.
 
+*** STRT [[file:specifications/environment-management.org][Build Environment Management]] [/]
+
+- [ ] Implement =snapcraft clean --all-project= command.
+- [ ] Implement =snapcraft clean --all-projects --dry-run= command.
+- [ ] Update providers to match documented lifecycle.
+- [ ] Update documentation on snapcraft.io.
+
 *** STRT [[file:specifications/flutter-extension.org][Flutter Extension]] [2/4]
 
 - [X] Add extension variant for master
@@ -68,4 +75,3 @@ CLOSED: [2020-06-24]
 - [ ] Error handling for setting invalid track names ([[https://bugs.launchpad.net/snapcraft/+bug/1892553][LP: 1892553]])
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
-
