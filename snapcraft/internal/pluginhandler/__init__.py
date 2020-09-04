@@ -975,6 +975,7 @@ class PluginHandler:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
                 project=self._project,
+                build_attributes=self._build_attributes,
                 snap_base_path=self._snap_base_path,
                 stage_packages=self._part_properties.get("stage-packages", []),
             )

@@ -21,6 +21,7 @@ from typing import Dict  # noqa: F401
 
 from snapcraft.internal import elf
 from snapcraft.internal import errors
+from snapcraft.internal.pluginhandler import BuildAttributes
 from snapcraft.project import Project
 
 
@@ -35,6 +36,7 @@ class PartPatcher:
         *,
         elf_files: FrozenSet[elf.ElfFile],
         project: Project,
+        build_attributes: BuildAttributes,
         snap_base_path: str,
         stage_packages: List[str],
     ) -> None:
@@ -49,7 +51,10 @@ class PartPatcher:
         """
         self._elf_files = elf_files
         self._project = project
-        self._is_classic = project._snap_meta.confinement == "classic"
+        self._patching_required = build_attributes.enable_patchelf() or (
+            project._snap_meta.confinement == "classic"
+            and not build_attributes.no_patchelf()
+        )
         self._snap_base_path = snap_base_path
         # If libc6 is staged, to avoid symbol mixups we will resort to
         # glibc mangling.
@@ -152,9 +157,9 @@ class PartPatcher:
         ):
             logger.debug("Host is not compatible with base")
             self._verify_compat()
-        logger.debug("Is classic: {!r}".format(self._is_classic))
+        logger.debug("Is patching required: {!r}".format(self._patching_required))
         logger.debug("Is libc6 in stage-packages: {!r}".format(self._is_libc6_staged))
-        if not (self._is_classic or self._is_libc6_staged):
+        if not (self._patching_required or self._is_libc6_staged):
             return
 
         if self._is_libc6_staged:
@@ -165,7 +170,7 @@ class PartPatcher:
                 "libc6 has been staged into the snap: only do this if you know what "
                 "what you are doing."
             )
-        elif self._is_classic:
+        elif self._patching_required:
             dynamic_linker = self._project.get_core_dynamic_linker(
                 self._project._snap_meta.base, expand=False
             )
