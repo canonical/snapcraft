@@ -739,6 +739,23 @@ def set_default_track(snap_name: str, track_name: str):
     The track must be a valid active track for this operation to be successful.
     """
     store_client_cli = StoreClientCLI()
+
+    # Client-side check to verify that the selected track exists.
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+    active_tracks = [
+        track.name
+        for track in snap_channel_map.snap.tracks
+        if track.status in ("default", "active")
+    ]
+    if track_name not in active_tracks:
+        echo.exit_error(
+            brief=f"The specified track does not exist for {snap_name!r}.",
+            resolution="Ensure the track exists and try again.",
+            details="Valid tracks: {}.".format(
+                ", ".join([f"{t!r}" for t in active_tracks])
+            ),
+        )
+
     metadata = dict(default_track=track_name)
     store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
 

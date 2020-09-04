@@ -43,7 +43,7 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         ]
 
         result = self.run_command(
-            ["set-default-track", "snap-test", "track"],
+            ["set-default-track", "snap-test", "2.0"],
             input="user@example.com\nsecret\n",
         )
         self.assertThat(
@@ -51,9 +51,15 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_set_default_track(self):
-        result = self.run_command(["set-default-track", "snap-test", "track"])
+        result = self.run_command(["set-default-track", "snap-test", "2.0"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_metadata.mock.assert_called_once_with(
-            snap_name="snap-test", metadata=dict(default_track="track"), force=True
+            snap_name="snap-test", metadata=dict(default_track="2.0"), force=True
         )
+
+    def test_invalid_track_fails(self):
+        result = self.run_command(["set-default-track", "snap-test", "3.0"])
+
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains("'2.0', 'latest'"))
