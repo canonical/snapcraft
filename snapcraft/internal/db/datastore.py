@@ -39,7 +39,7 @@ class _YAMLStorage(tinydb.Storage):
         """Read database from file."""
         logger.debug(f"_YAMLStorage read: {self.path}")
         try:
-            with open(self.path, "r") as fd:
+            with self.path.open() as fd:
                 db_data = yaml.safe_load(fd)
         except FileNotFoundError:
             return dict()

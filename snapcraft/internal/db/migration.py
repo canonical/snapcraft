@@ -61,7 +61,7 @@ class Migration(metaclass=abc.ABCMeta):
             {
                 "schema_version": self.SCHEMA_VERSION,
                 "snapcraft_version": self._snapcraft_version,
-                "timestamp": str(datetime.now(tz=None)),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
         )
 

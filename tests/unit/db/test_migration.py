@@ -32,7 +32,7 @@ def test_db():
 @pytest.fixture(autouse=True)
 def mock_datetime(monkeypatch):
     datetime_mock = Mock(wraps=datetime.datetime)
-    datetime_mock.now.return_value = datetime.datetime(2020, 1, 2, 3, 4, 5, 6)
+    datetime_mock.utcnow.return_value = datetime.datetime(2020, 1, 2, 3, 4, 5, 6)
     monkeypatch.setattr(migration, "datetime", datetime_mock)
 
 
@@ -47,7 +47,7 @@ def test_migration_on_empty_db(test_db):
         {
             "schema_version": 1,
             "snapcraft_version": "42",
-            "timestamp": "2020-01-02 03:04:05.000006",
+            "timestamp": "2020-01-02T03:04:05.000006Z",
         }
     ]
 
