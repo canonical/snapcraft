@@ -1,0 +1,21 @@
+name: catkin-ros1-noetic-roscpp-hello
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 1 roscpp-based workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-ros1-noetic-roscpp-hello:
+    command: opt/ros/noetic/lib/catkin_ros1_roscpp_hello/catkin_ros1_roscpp_hello
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+
+parts:
+  hello:
+    plugin: catkin
+    source: .
+    build-packages: [g++, make]

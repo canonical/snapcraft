@@ -54,21 +54,12 @@
       - ROS_DISTRO: "foxy"
 """
 
-import os
-import pathlib
-import subprocess
-import sys
 from typing import Any, Dict, List, Set
 
-import click
-from catkin_pkg import packages as catkin_packages
-
-from snapcraft.internal.repo import Repo
-from snapcraft.plugins.v1._ros.rosdep import _parse_rosdep_resolve_dependencies
-from snapcraft.plugins.v2 import PluginV2
+from snapcraft.plugins.v2 import _ros
 
 
-class ColconPlugin(PluginV2):
+class ColconPlugin(_ros.RosPlugin):
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
@@ -110,26 +101,26 @@ class ColconPlugin(PluginV2):
             },
         }
 
-    def get_build_snaps(self) -> Set[str]:
-        return set()
-
     def get_build_packages(self) -> Set[str]:
-        return {
+        return super().get_build_packages() | {
             "python3-colcon-common-extensions",
-            "python3-rosdep",
             "python3-rosinstall",
             "python3-wstool",
         }
 
     def get_build_environment(self) -> Dict[str, str]:
-        return {
-            "AMENT_PYTHON_EXECUTABLE": "/usr/bin/python3",
-            "COLCON_PYTHON_EXECUTABLE": "/usr/bin/python3",
-            "ROS_PYTHON_VERSION": "3",
-        }
+        env = super().get_build_environment()
+        env.update(
+            {
+                "AMENT_PYTHON_EXECUTABLE": "/usr/bin/python3",
+                "COLCON_PYTHON_EXECUTABLE": "/usr/bin/python3",
+            }
+        )
 
-    def _get_colcon_build_command(self) -> str:
-        cmd: List[str] = [
+        return env
+
+    def _get_build_commands(self) -> List[str]:
+        cmd = [
             "colcon",
             "build",
             "--merge-install",
@@ -152,104 +143,4 @@ class ColconPlugin(PluginV2):
         # Specify the number of workers
         cmd.extend(["--parallel-workers", "${SNAPCRAFT_PARALLEL_BUILD_COUNT}"])
 
-        return " ".join(cmd)
-
-    def _get_stage_runtime_dependencies_command(self):
-        env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8")
-
-        for key in [
-            "PATH",
-            "SNAP",
-            "SNAP_ARCH",
-            "SNAP_NAME",
-            "SNAP_VERSION",
-            "http_proxy",
-            "https_proxy",
-        ]:
-            if key in os.environ:
-                env[key] = os.environ[key]
-
-        env_flags = [f"{key}={value}" for key, value in env.items()]
-        return " ".join(
-            [
-                "env",
-                "-i",
-                *env_flags,
-                sys.executable,
-                "-I",
-                os.path.abspath(__file__),
-                "stage-runtime-dependencies",
-                "--part-install",
-                "$SNAPCRAFT_PART_INSTALL",
-                "--ros-distro",
-                "$ROS_DISTRO",
-            ]
-        )
-
-    def get_build_commands(self) -> List[str]:
-        return [
-            ". /opt/ros/$ROS_DISTRO/setup.sh",
-            "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then sudo rosdep init; fi",
-            "rosdep update --include-eol-distros --rosdistro $ROS_DISTRO",
-            "rosdep install --from-paths . --default-yes --ignore-packages-from-source",
-            self._get_colcon_build_command(),
-            self._get_stage_runtime_dependencies_command(),
-        ]
-
-
-@click.group()
-def plugin_cli():
-    pass
-
-
-@plugin_cli.command()
-@click.option("--part-install", envvar="SNAPCRAFT_PART_INSTALL", required=True)
-@click.option("--ros-distro", envvar="ROS_DISTRO", required=True)
-def stage_runtime_dependencies(part_install: str, ros_distro: str):
-    click.echo("Staging runtime dependencies...")
-    # TODO: support python packages (only apt currently supported)
-    apt_packages: Set[str] = set()
-
-    for pkg in catkin_packages.find_packages(".").values():
-        for dep in pkg.exec_depends:
-            cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
-            try:
-                click.echo(f"Running {cmd!r}")
-                proc = subprocess.run(
-                    cmd,
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    env=dict(PATH=os.environ["PATH"]),
-                )
-            except subprocess.CalledProcessError as error:
-                click.echo(f"failed to run {cmd!r}: {error.output}")
-
-            parsed = _parse_rosdep_resolve_dependencies(
-                dep, proc.stdout.decode().strip()
-            )
-            apt_packages |= parsed.pop("apt", set())
-
-            if parsed:
-                click.echo(f"unhandled dependencies: {parsed!r}")
-
-    if apt_packages:
-        package_names = sorted(apt_packages)
-        install_path = pathlib.Path(part_install)
-        stage_packages_path = install_path.parent / "stage_packages"
-
-        click.echo(f"Fetching stage packages: {package_names!r}")
-        Repo.fetch_stage_packages(
-            package_names=package_names,
-            base="core20",
-            stage_packages_path=stage_packages_path,
-        )
-
-        click.echo(f"Unpacking stage packages: {package_names!r}")
-        Repo.unpack_stage_packages(
-            stage_packages_path=stage_packages_path, install_path=install_path
-        )
-
-
-if __name__ == "__main__":
-    plugin_cli()
+        return [" ".join(cmd)]

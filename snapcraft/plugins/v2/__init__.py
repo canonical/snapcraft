@@ -21,6 +21,7 @@ from ._plugin import PluginV2  # noqa: F401
 # The plugin code requires imports that are platform specific.
 if sys.platform == "linux":
     from .autotools import AutotoolsPlugin  # noqa: F401
+    from .catkin import CatkinPlugin  # noqa: F401
     from .cmake import CMakePlugin  # noqa: F401
     from .colcon import ColconPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401
