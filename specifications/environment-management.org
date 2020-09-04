@@ -118,7 +118,7 @@ only one, =control= record:
 |--------------------------------+---------+--------------------------------------------------+---------|
 | field                          | type    | description                                      | example |
 |--------------------------------+---------+--------------------------------------------------+---------|
-| created_with_snapcraft_version | string  | Version of Snapcraft that created this document.  | "4.0.1" |
+| created_with_snapcraft_version | string  | Version of Snapcraft that created this document. | "4.0.1" |
 | schema_version                 | integer | Version of schema used by the datastore.         | 3       |
 |--------------------------------+---------+--------------------------------------------------+---------|
 
