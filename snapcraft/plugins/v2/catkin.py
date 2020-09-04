@@ -29,15 +29,10 @@
 
     - catkin-cmake-args:
       (list of strings)
-      Arguments to pass to cmake projects. Note that any arguments here which match
-      catkin arguments need to be prefixed with a space. This can be done by quoting
-      each argument with a leading space.
+      Arguments to pass to cmake projects.
 
-    This plugin expects the build-environment `ROS_DISTRO` and `ROS_BUILD_BASE`
-    to be populated by the `ros-<distro>` extension.
-
-    This plugin also expects certain variables that are specified by the extension,
-    specific to the ROS distro.  If not using the extension, set these in your
+    This plugin requires certain variables that are specified by the extension,
+    specific to the ROS distro. If you're not using the extension, set these in your
     `build-environment`:
       - ROS_DISTRO: "noetic"
 """

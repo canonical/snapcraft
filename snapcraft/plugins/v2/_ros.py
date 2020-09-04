@@ -46,8 +46,7 @@ class RosPlugin(PluginV2):
         }
 
     def _get_workspace_activation_commands(self) -> List[str]:
-        """
-        Return a list of commands source a ROS workspace.
+        """Return a list of commands source a ROS workspace.
 
         The commands returned will be run before doing anything else.
         They will be run in a single shell instance with the rest of
@@ -62,8 +61,7 @@ class RosPlugin(PluginV2):
 
     @abc.abstractmethod
     def _get_build_commands(self) -> List[str]:
-        """
-        Return a list of commands to run during the build step.
+        """Return a list of commands to run during the build step.
 
         The commands returned will be run after rosdep is used to install
         build dependencies, and before staging runtime dependencies.

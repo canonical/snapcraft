@@ -24,7 +24,7 @@ from ._extension import Extension
 
 
 class ExtensionImpl(Extension):
-    """Drives ROS 1 build and runtime environment for snap."""
+    """Setup a ROS 1 build and runtime environment suitable for a snap."""
 
     ROS_DISTRO: Final[str] = "noetic"
 
