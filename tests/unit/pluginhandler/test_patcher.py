@@ -19,6 +19,7 @@ from unittest import mock
 import pytest
 
 from snapcraft import file_utils
+from snapcraft.internal.pluginhandler import BuildAttributes
 from snapcraft.internal.pluginhandler import PartPatcher
 from tests.unit import load_part
 
@@ -50,6 +51,7 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
+            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=["libc6"],
         )
@@ -77,6 +79,7 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
+            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=[],
         )
@@ -97,6 +100,7 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
+            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=[],
         )
@@ -151,6 +155,7 @@ def test_patcher_called(monkeypatch, mock_partpatcher):
     mock_partpatcher.assert_called_with(
         elf_files=frozenset(),
         project=mock.ANY,
+        build_attributes=mock.ANY,
         snap_base_path="/snap/fake-name/current",
         stage_packages=[],
     )
