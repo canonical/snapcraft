@@ -22,6 +22,7 @@ from ._plugin import PluginV2  # noqa: F401
 if sys.platform == "linux":
     from .autotools import AutotoolsPlugin  # noqa: F401
     from .catkin import CatkinPlugin  # noqa: F401
+    from .catkin_tools import CatkinToolsPlugin  # noqa: F401
     from .cmake import CMakePlugin  # noqa: F401
     from .colcon import ColconPlugin  # noqa: F401
     from .dump import DumpPlugin  # noqa: F401

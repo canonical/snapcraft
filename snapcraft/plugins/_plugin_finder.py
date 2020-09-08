@@ -59,6 +59,7 @@ if sys.platform == "linux" or TYPE_CHECKING:
         "core20": {
             "autotools": v2.AutotoolsPlugin,
             "catkin": v2.CatkinPlugin,
+            "catkin-tools": v2.CatkinToolsPlugin,
             "cmake": v2.CMakePlugin,
             "colcon": v2.ColconPlugin,
             "dump": v2.DumpPlugin,
