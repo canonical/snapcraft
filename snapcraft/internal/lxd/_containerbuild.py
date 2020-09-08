@@ -44,7 +44,7 @@ _NETWORK_PROBE_COMMAND = dedent(
     import urllib.request
     import sys
 
-    check_url = "http://connectivity-check.ubuntu.com/"
+    check_url = "http://start.ubuntu.com/connectivity-check.html"
     try:
         urllib.request.urlopen(check_url, timeout=5)
     except urllib.error.URLError as e:
