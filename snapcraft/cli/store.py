@@ -749,10 +749,10 @@ def set_default_track(snap_name: str, track_name: str):
     ]
     if track_name not in active_tracks:
         echo.exit_error(
-            brief=f"The specified track does not exist for {snap_name!r}.",
-            resolution="Ensure the track exists and try again.",
-            details="Valid tracks: {}.".format(
-                ", ".join([f"{t!r}" for t in active_tracks])
+            brief=f"The specified track {track_name!r} does not exist for {snap_name!r}.",
+            resolution=f"Ensure the {track_name!r} track exists for the {snap_name!r} snap and try again.",
+            details="Valid tracks for {!r}: {}.".format(
+                snap_name, ", ".join([f"{t!r}" for t in active_tracks])
             ),
         )
 

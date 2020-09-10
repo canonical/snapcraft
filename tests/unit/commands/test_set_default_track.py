@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import snapcraft
 import fixtures
 from testtools.matchers import Contains, Equals
 
@@ -59,7 +60,18 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_invalid_track_fails(self):
+        mock_wrap = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.cli.echo.exit_error", wraps=snapcraft.cli.echo.exit_error
+            )
+        ).mock
+
         result = self.run_command(["set-default-track", "snap-test", "3.0"])
 
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains("'2.0', 'latest'"))
+        mock_wrap.assert_called_once_with(
+            brief="The specified track '3.0' does not exist for 'snap-test'.",
+            details="Valid tracks for 'snap-test': '2.0', 'latest'.",
+            resolution="Ensure the '3.0' track exists for the 'snap-test' snap and try again.",
+        )
