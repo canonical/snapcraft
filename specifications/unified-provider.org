@@ -1,0 +1,82 @@
+#+TITLE: Unified Provider
+#+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
+#+DATE: [2020-09-11]
+
+* Scope:
+
+Snapcraft currently implements build providers for LXD and Multipass.  Host
+builds are driven with independent logic, and Launchpad is indendently
+implemented for remote-build.  With the re-introduction of remote LXD support,
+it is desirable to refactor all providers into a consistent implementation that
+has varied support for Snapcraft capabilities.
+
+This document defines an approach to refactor build provider
+=snapcraft.internal.build_providers._base_provider.Provider= such that it would
+support all current build providers (Host, Launchpad, LXD, Managed-Host,
+Multipass) and potential future providers (Remote LXD, etc.).
+
+* Provider Refactoring
+
+** Current Public Interfaces
+
+- setup_provider()
+- mount_project()
+- expose_prime()
+- execute_step()
+- pack_project()
+- clean(part_names)
+- clean_project()
+- shell()
+
+** Proposed Public Interfaces:
+
+|--------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------|
+| method                                     | description                                                            | raises                                           |
+|--------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------|
+| setup_provider(interactive: bool) -> None  | installs/configures provider, optionally allowing for user prompting   | ProviderNotInstalled, ProviderConfigurationError |
+| execute_step(step: steps.Step) -> None     | executes (up to and including) step                                    | NotImplementedError                              |
+| expose_prime(path: pathlib.Path) -> None   | mount project =prime= directory to host at specified path              | NotImplementedError                              |
+| snap() -> None                             | snap project (building as required), writing snap to host project dir. |                                                  |
+| clean_parts(part_names: List[str]) -> None | clean project parts                                                    | NotImplementedError                              |
+| clean()                                    | clean all project artifacts, including build-instance, if applicable.  |                                                  |
+| shell()                                    | launch interactive shell with build-instance, if applicable.           | NotImplementedError                              |
+|--------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------|
+
+*** Summary of changes:
+- Remove =mount_project()=. Project path will be provided to __init__() and will
+  be verified/mounted as required.
+- Refactor =setup_provider()= and =ensure_provider()= and =ProviderNotFound= to
+  a simpler =setup_provider()= with a parameter enabling user interactive mode
+  to allow anything that needs to be installed or configured.
+- Rename =pack_project()= to =snap()=, adding the implication that build steps
+  are to be executed as required.
+- Rename =clean()= to =clean_parts()=, to improve clarity of scope.
+- Rename =clean_project()= to =clean()=, to improve clarity of scope.
+
+** Migrate current logic into new providers:
+- HostProvider
+- ManagedHostProvider, inherits much of HostProvider.
+- LaunchpadProvider
+- RemoteLXDProvider, inherits much of LXDProvider, overrides the (now internal)
+  equivalent of mount_project() behavior with a rsync from host to remote.
+
+* CLI Handling
+
+** Provider NotImplementedError
+
+Certain commands will not supported by all providers. E.g.
+- =snapcraft try= is not compatible with Launchpad, Remote LXD, Host
+- =snapcraft <step>= is not compatible with Lauchpad, Remote LXD
+- =snapcraft clean <parts>= is not compatible wiht Launchpad, Remote LXD
+
+In these cases, the applicable CLI methods will catch the NotImplementedError
+and inform the user that this command is not available with the current
+configured provider, e.g.:
+
+=Sorry, '<command>' is not available for the currently configured provider
+'<provider>'.=
+
+For =snapcraft clean <parts>=:
+
+=Sorry, specifying parts '<parts>' for 'snapcraft clean' is not supported by the
+currently configured provider '<provider>'.=
