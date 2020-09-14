@@ -48,8 +48,8 @@ Multipass) and potential future providers (Remote LXD, etc.).
 - Refactor =setup_provider()= and =ensure_provider()= and =ProviderNotFound= to
   a simpler =setup_provider()= with a parameter enabling user interactive mode
   to allow anything that needs to be installed or configured.
-- Rename =pack_project()= to =snap()=, adding the implication that build steps
-  are to be executed as required.
+- Replace =pack_project()= with =snap()=, adding the implication that build steps
+  are to be executed as required (and packing may not be done by Snapcraft).
 - Rename =clean()= to =clean_parts()=, to improve clarity of scope.
 - Rename =clean_project()= to =clean()=, to improve clarity of scope.
 
