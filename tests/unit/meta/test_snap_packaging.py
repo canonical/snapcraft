@@ -27,11 +27,10 @@ from tests import fixture_setup, unit
 
 class SnapPackagingRunnerTests(unit.TestCase):
     def _get_snap_packaging(self, **yaml_args):
-        parts = dict(part1=dict(plugin="nil"))
+        if "parts" not in yaml_args:
+            yaml_args["parts"] = dict(part1=dict(plugin="nil"))
 
-        snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, parts=parts, **yaml_args
-        )
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path, **yaml_args)
         self.useFixture(snapcraft_yaml)
 
         project = Project(
@@ -137,17 +136,18 @@ class SnapPackagingRunnerTests(unit.TestCase):
 
     def test_assembled_runtime_environment_strict(self):
         apps = dict(testapp=dict(command="echo"))
+        parts = {"part1": {"plugin": "nil", "build-attributes": ["enable-patchelf"]}}
 
         sp = self._get_snap_packaging(
-            apps=apps, confinement="strict", type="app", base="core"
+            apps=apps, parts=parts, confinement="strict", type="app", base="core"
         )
 
         assembled_env = sp._assemble_runtime_environment()
 
+        # Verify that, since all parts are using patchelf, no LD_LIBRARY_PATH is set
         expected_env = textwrap.dedent(
             """
             export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-            export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"
             """
         ).strip()
 

@@ -459,7 +459,16 @@ class _SnapPackaging:
             for e in runtime_env:
                 env.append(re.sub(self._prime_dir, "$SNAP", e))
 
-        env.append('export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"')
+        if all(
+            [
+                part._build_attributes.enable_patchelf()
+                for part in self._project_config.all_parts
+            ]
+        ):
+            # All ELF files have had rpath and interpreter patched. Strip all LD_LIBRARY_PATH variables
+            env = [e for e in env if not e.startswith("export LD_LIBRARY_PATH=")]
+        else:
+            env.append('export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH"')
 
         return "\n".join(env)
 
