@@ -18,7 +18,6 @@ Multipass) and potential future providers (Remote LXD, etc.).
 * Provider Refactoring
 
 ** Current Public Interfaces
-
 - setup_provider()
 - mount_project()
 - expose_prime()
@@ -45,9 +44,6 @@ Multipass) and potential future providers (Remote LXD, etc.).
 *** Summary of changes:
 - Remove =mount_project()=. Project path will be provided to __init__() and will
   be verified/mounted as required.
-- Refactor =setup_provider()= and =ensure_provider()= and =ProviderNotFound= to
-  a simpler =setup_provider()= with a parameter enabling user interactive mode
-  to allow anything that needs to be installed or configured.
 - Replace =pack_project()= with =snap()=, adding the implication that build steps
   are to be executed as required (and packing may not be done by Snapcraft).
 - Rename =clean()= to =clean_parts()=, to improve clarity of scope.
