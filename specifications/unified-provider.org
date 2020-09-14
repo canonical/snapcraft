@@ -36,10 +36,10 @@ Multipass) and potential future providers (Remote LXD, etc.).
 | setup_provider(interactive: bool) -> None  | installs/configures provider, optionally allowing for user prompting   | ProviderNotInstalled, ProviderConfigurationError |
 | execute_step(step: steps.Step) -> None     | executes (up to and including) step                                    | NotImplementedError                              |
 | expose_prime(path: pathlib.Path) -> None   | mount project =prime= directory to host at specified path              | NotImplementedError                              |
-| snap() -> None                             | snap project (building as required), writing snap to host project dir. |                                                  |
+| snap() -> pathlib.Path                     | snap project (building as required), writing snap to host project dir. |                                                  |
 | clean_parts(part_names: List[str]) -> None | clean project parts                                                    | NotImplementedError                              |
-| clean()                                    | clean all project artifacts, including build-instance, if applicable.  |                                                  |
-| shell()                                    | launch interactive shell with build-instance, if applicable.           | NotImplementedError                              |
+| clean() -> None                            | clean all project artifacts, including build-instance, if applicable.  |                                                  |
+| shell() -> None                            | launch interactive shell with build-instance, if applicable.           | NotImplementedError                              |
 |--------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------|
 
 *** Summary of changes:
