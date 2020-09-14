@@ -128,7 +128,6 @@ class GodepsPlugin(PluginV1):
 
         # Chicken and egg - godeps itself has dependency requirements, otherwise
         # newer versions of go-toml will fail to build on older golang versions.
-        # For now we
         gotoml_path = os.path.join(self._gopath_src, "github.com/pelletier/go-toml")
         self.run(
             ["git", "checkout", "4e9e0ee19b60b13eb79915933f44d8ed5f268bdd"],
