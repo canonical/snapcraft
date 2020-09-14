@@ -18,6 +18,7 @@ Multipass) and potential future providers (Remote LXD, etc.).
 * Provider Refactoring
 
 ** Current Public Interfaces
+- ensure_provider()
 - setup_provider()
 - mount_project()
 - expose_prime()
@@ -29,19 +30,24 @@ Multipass) and potential future providers (Remote LXD, etc.).
 
 ** Proposed Public Interfaces:
 
-|--------------------------------------------+---------------------------------------------------------------------------+--------------------------------------------------|
-| method                                     | description                                                               | raises                                           |
-|--------------------------------------------+---------------------------------------------------------------------------+--------------------------------------------------|
-| setup_provider(interactive: bool) -> None  | installs/configures provider, optionally allowing for user prompting      | ProviderNotInstalled, ProviderConfigurationError |
-| execute_step(step: steps.Step) -> None     | executes (up to and including) step                                       | NotImplementedError                              |
-| expose_prime(path: pathlib.Path) -> None   | mount project =prime= directory to host at specified path                 | NotImplementedError                              |
-| snap() -> List[pathlib.Path]               | snap project (building as required), writing snap(s) to host project dir. |                                                  |
-| clean_parts(part_names: List[str]) -> None | clean project parts                                                       | NotImplementedError                              |
-| clean() -> None                            | clean all project artifacts, including build-instance, if applicable.     |                                                  |
-| shell() -> None                            | launch interactive shell with build-instance, if applicable.              | NotImplementedError                              |
-|--------------------------------------------+---------------------------------------------------------------------------+--------------------------------------------------|
+|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
+| method                                     | description                                                               | raises                                                |
+|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
+| is_provider_ready() -> bool                | checks if provider is ready w/o installation or configuration             |                                                       |
+| setup_provider(echoer) -> None             | installs/configures provider, allowing for user prompting                 | ProviderInstallationError, ProviderConfigurationError |
+| execute_step(step: steps.Step) -> None     | executes (up to and including) step                                       | NotImplementedError                                   |
+| expose_prime(path: pathlib.Path) -> None   | mount project =prime= directory to host at specified path                 | NotImplementedError                                   |
+| snap() -> List[pathlib.Path]               | snap project (building as required), writing snap(s) to host project dir. |                                                       |
+| clean_parts(part_names: List[str]) -> None | clean project parts                                                       | NotImplementedError                                   |
+| clean() -> None                            | clean all project artifacts, including build-instance, if applicable.     |                                                       |
+| shell() -> None                            | launch interactive shell with build-instance, if applicable.              | NotImplementedError                                   |
+|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
 
 *** Summary of changes:
+- Rename =ensure_provider()= to =is_provider_ready()=, scoping to see if
+  provider is ready without needing installation or further configuration.
+  Remove exceptions.  CLI will invoke setup_provider() if terminal is
+  interactive, allowing user to perform any install/configuration as necessary.
 - Remove =mount_project()=. Project path will be provided to __init__() and will
   be verified/mounted as required.
 - Replace =pack_project()= with =snap()=, adding the implication that build steps
