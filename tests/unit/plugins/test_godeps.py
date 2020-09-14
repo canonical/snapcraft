@@ -158,7 +158,7 @@ class GodepsPluginTestCase(unit.TestCase):
         os.makedirs(os.path.join(plugin.project.stage_dir, "usr", "lib"))
         plugin.pull()
 
-        self.assertThat(self.run_mock.call_count, Equals(2))
+        self.assertThat(self.run_mock.call_count, Equals(6))
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]["env"]
             self.assertTrue("GOPATH" in env, "Expected environment to include GOPATH")
@@ -193,26 +193,43 @@ class GodepsPluginTestCase(unit.TestCase):
 
         plugin.pull()
 
-        self.assertThat(self.run_mock.call_count, Equals(2))
-        self.run_mock.assert_has_calls(
-            [
-                mock.call(
-                    ["go", "get", "github.com/rogpeppe/godeps"],
-                    cwd=plugin._gopath_src,
-                    env=mock.ANY,
-                ),
-                mock.call(
-                    [
-                        "godeps",
-                        "-t",
-                        "-u",
-                        os.path.join(plugin.sourcedir, self.options.godeps_file),
-                    ],
-                    cwd=plugin._gopath_src,
-                    env=mock.ANY,
-                ),
-            ]
-        )
+        assert self.run_mock.mock_calls == [
+            mock.call(
+                ["go", "get", "-d", "github.com/rogpeppe/godeps"],
+                cwd=plugin._gopath_src,
+                env=mock.ANY,
+            ),
+            mock.call(
+                ["git", "checkout", "4e9e0ee19b60b13eb79915933f44d8ed5f268bdd"],
+                cwd=plugin._gopath_src + "/github.com/pelletier/go-toml",
+                env=mock.ANY,
+            ),
+            mock.call(
+                ["git", "checkout", "d6ce6262d87e3a4e153e86023ff56ae771554a41"],
+                cwd=plugin._gopath_src + "/github.com/kisielk/gotool",
+                env=mock.ANY,
+            ),
+            mock.call(
+                ["git", "checkout", "1937f90a1bb43667aff4059b1bab13eb15121e8e"],
+                cwd=plugin._gopath_src + "/golang.org/x/tools",
+                env=mock.ANY,
+            ),
+            mock.call(
+                ["go", "install", "github.com/rogpeppe/godeps"],
+                cwd=plugin._gopath_src,
+                env=mock.ANY,
+            ),
+            mock.call(
+                [
+                    "godeps",
+                    "-t",
+                    "-u",
+                    os.path.join(plugin.sourcedir, self.options.godeps_file),
+                ],
+                cwd=plugin._gopath_src,
+                env=mock.ANY,
+            ),
+        ]
 
         self.assertTrue(os.path.exists(plugin._gopath))
         self.assertTrue(os.path.exists(plugin._gopath_src))
