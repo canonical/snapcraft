@@ -67,7 +67,7 @@ Multipass) and potential future providers (Remote LXD, etc.).
 Certain commands will not supported by all providers. E.g.
 - =snapcraft try= is not compatible with Launchpad, Remote LXD, Host
 - =snapcraft <step>= is not compatible with Lauchpad, Remote LXD
-- =snapcraft clean <parts>= is not compatible wiht Launchpad, Remote LXD
+- =snapcraft clean <parts>= is not compatible with Launchpad, Remote LXD
 
 In these cases, the applicable CLI methods will catch the NotImplementedError
 and inform the user that this command is not available with the current
