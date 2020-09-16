@@ -206,7 +206,7 @@ class ProviderV2:
 ** SnapcraftProviderUnsupportedMethodError
 
 Certain commands will not supported by all providers. E.g.
-- =snapcraft <step>= is not compatible with Lauchpad.
+- =snapcraft <step>= is not compatible with Launchpad.
 - =snapcraft clean <parts>= is not compatible with Launchpad
 
 In these cases, the applicable CLI methods will catch the
@@ -217,15 +217,17 @@ is not available with the current configured provider.
 
 If attempting to run a lifecycle command (other than =snap=) and
 the provider does not support it, fail with the following error:
-='<command>' is not available for the currently configured provider
+
+=The command '<command>' is not supported by the currently configured provider
 '<provider>'.=
 
 For =--debug=, =--shell=, and =--shell-after= options:
-='<command>' does not support option '<option>' for the currently configured
-provider.=
+
+=The option '<option>' for command '<command>' is not supported by the currently
+configured provider '<provider>'.=
 
 
-*** Clean command with parts =snapcraft clean <parts>=:
+*** Clean command with parts =snapcraft clean <parts>=
 
 =Specifying parts '<parts>' for 'snapcraft clean' is not supported by the
 currently configured provider '<provider>'.=
