@@ -19,7 +19,6 @@ from unittest import mock
 import pytest
 
 from snapcraft import file_utils
-from snapcraft.internal.pluginhandler import BuildAttributes
 from snapcraft.internal.pluginhandler import PartPatcher
 from tests.unit import load_part
 
@@ -51,7 +50,6 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
-            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=["libc6"],
         )
@@ -79,7 +77,6 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
-            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=[],
         )
@@ -100,7 +97,6 @@ class TestStaticBasePatching:
         patcher = PartPatcher(
             elf_files=frozenset(["foo"]),
             project=handler._project,
-            build_attributes=BuildAttributes([]),
             snap_base_path="/snap/test-snap/current",
             stage_packages=[],
         )
@@ -121,18 +117,75 @@ def mock_partpatcher():
 class TestPrimeTypeExcludesPatching:
 
     scenarios = (
-        ("kernel", dict(snap_type="kernel", snap_name="test-snap")),
-        ("gadget", dict(snap_type="gadget", snap_name="test-snap")),
-        ("base", dict(snap_type="base", snap_name="core18")),
-        ("os", dict(snap_type="os", snap_name="test-snap")),
+        (
+            "kernel",
+            dict(
+                snap_type="kernel",
+                snap_name="test-snap",
+                confinement=None,
+                build_attributes=None,
+            ),
+        ),
+        (
+            "gadget",
+            dict(
+                snap_type="gadget",
+                snap_name="test-snap",
+                confinement=None,
+                build_attributes=None,
+            ),
+        ),
+        (
+            "base",
+            dict(
+                snap_type="base",
+                snap_name="core18",
+                confinement=None,
+                build_attributes=None,
+            ),
+        ),
+        (
+            "os",
+            dict(
+                snap_type="os",
+                snap_name="test-snap",
+                confinement=None,
+                build_attributes=None,
+            ),
+        ),
+        (
+            "strict app",
+            dict(
+                snap_type="app",
+                snap_name="test-snap",
+                confinement="strict",
+                build_attributes=None,
+            ),
+        ),
+        (
+            "classic but disabled",
+            dict(
+                snap_type="app",
+                snap_name="test-snap",
+                confinement="classic",
+                build_attributes=["no-patchelf"],
+            ),
+        ),
     )
 
-    def test_no_patcher_called(self, mock_partpatcher, snap_type, snap_name):
+    def test_no_patcher_called(
+        self, mock_partpatcher, snap_type, snap_name, confinement, build_attributes
+    ):
+        part_properties = {"source-subdir": "src"}
+        if build_attributes:
+            part_properties["build-attributes"] = build_attributes
+
         handler = load_part(
             "test-part",
             snap_name=snap_name,
-            part_properties={"source-subdir": "src"},
+            part_properties=part_properties,
             snap_type=snap_type,
+            confinement=confinement,
         )
 
         handler.prime()
@@ -140,22 +193,57 @@ class TestPrimeTypeExcludesPatching:
         mock_partpatcher.assert_not_called()
 
 
-def test_patcher_called(monkeypatch, mock_partpatcher):
-    monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
+class TestPrimeTypeIncludesPatching:
 
-    handler = load_part(
-        "test-part",
-        part_properties={"source-subdir": "src"},
-        snap_type="app",
-        base="core18",
+    scenarios = (
+        (
+            "classic",
+            dict(confinement="classic", build_attributes=None, stage_packages=None),
+        ),
+        (
+            "strict but enabled",
+            dict(
+                confinement="strict",
+                build_attributes=["enable-patchelf"],
+                stage_packages=None,
+            ),
+        ),
+        (
+            "libc staged",
+            dict(confinement="strict", build_attributes=None, stage_packages=["libc6"]),
+        ),
     )
 
-    handler.prime()
+    def test_patcher_called(
+        self,
+        monkeypatch,
+        mock_partpatcher,
+        confinement,
+        build_attributes,
+        stage_packages,
+    ):
+        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
 
-    mock_partpatcher.assert_called_with(
-        elf_files=frozenset(),
-        project=mock.ANY,
-        build_attributes=mock.ANY,
-        snap_base_path="/snap/fake-name/current",
-        stage_packages=[],
-    )
+        part_properties = {"source-subdir": "src"}
+        if build_attributes:
+            part_properties["build-attributes"] = build_attributes
+        if stage_packages:
+            part_properties["stage-packages"] = stage_packages
+        else:
+            stage_packages = list()
+
+        handler = load_part(
+            "test-part",
+            snap_type="app",
+            part_properties=part_properties,
+            confinement=confinement,
+        )
+
+        handler.prime()
+
+        mock_partpatcher.assert_called_with(
+            elf_files=frozenset(),
+            project=mock.ANY,
+            snap_base_path="/snap/fake-name/current",
+            stage_packages=stage_packages,
+        )

@@ -965,21 +965,42 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        if self._build_attributes.no_patchelf():
-            logger.warning(
-                "The primed files for part {!r} will not be verified for "
-                "correctness or patched: build-attributes: [no-patchelf] "
-                "is set.".format(self.name)
+        # ELF files in this part need to have their rpath and interpreter patched
+        # to use the in-snap version in the following scenario:
+        #
+        #   - `enable-patchelf` is a build attribute
+        #   OR
+        #     - The base is defined
+        #     AND
+        #       - The base is not one of the static bases
+        #     AND
+        #       - The snap uses classic confinement
+        #       OR
+        #         - libc has been staged (as opposed to being in the base snap)
+        patching_required = self._build_attributes.enable_patchelf() or (
+            self._project._snap_meta.base
+            and not self._project.is_static_base(self._project._snap_meta.base)
+            and (
+                self._project._snap_meta.confinement == "classic"
+                or "libc6" in self._part_properties.get("stage-packages", [])
             )
-        else:
-            part_patcher = PartPatcher(
-                elf_files=elf_files,
-                project=self._project,
-                build_attributes=self._build_attributes,
-                snap_base_path=self._snap_base_path,
-                stage_packages=self._part_properties.get("stage-packages", []),
-            )
-            part_patcher.patch()
+        )
+
+        if patching_required:
+            if self._build_attributes.no_patchelf():
+                logger.warning(
+                    "The primed files for part {!r} will not be verified for "
+                    "correctness or patched: build-attributes: [no-patchelf] "
+                    "is set.".format(self.name)
+                )
+            else:
+                part_patcher = PartPatcher(
+                    elf_files=elf_files,
+                    project=self._project,
+                    snap_base_path=self._snap_base_path,
+                    stage_packages=self._part_properties.get("stage-packages", []),
+                )
+                part_patcher.patch()
 
         return self._calculate_dependency_paths(split_dependencies)
 
