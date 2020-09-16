@@ -122,7 +122,7 @@ class TestPrimeTypeExcludesPatching:
             dict(
                 snap_type="kernel",
                 snap_name="test-snap",
-                confinement=None,
+                confinement="strict",
                 build_attributes=None,
             ),
         ),
@@ -131,7 +131,7 @@ class TestPrimeTypeExcludesPatching:
             dict(
                 snap_type="gadget",
                 snap_name="test-snap",
-                confinement=None,
+                confinement="strict",
                 build_attributes=None,
             ),
         ),
@@ -140,7 +140,7 @@ class TestPrimeTypeExcludesPatching:
             dict(
                 snap_type="base",
                 snap_name="core18",
-                confinement=None,
+                confinement="strict",
                 build_attributes=None,
             ),
         ),
@@ -149,7 +149,7 @@ class TestPrimeTypeExcludesPatching:
             dict(
                 snap_type="os",
                 snap_name="test-snap",
-                confinement=None,
+                confinement="strict",
                 build_attributes=None,
             ),
         ),
