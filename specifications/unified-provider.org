@@ -2,13 +2,27 @@
 #+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
 #+DATE: [2020-09-11]
 
-* Scope:
+* Summary
 
-Snapcraft currently implements build providers for LXD and Multipass.  Host
-builds are driven with independent logic, and Launchpad is indendently
-implemented for remote-build.  With the re-introduction of remote LXD support,
-it is desirable to refactor all providers into a consistent implementation that
-has varied support for Snapcraft capabilities.
+** What are we trying to do
+
+Unify all build providers with a set of interfaces that can support
+all providers, each with their own limitations and capabilities.
+
+This will allow us to more easily introduce new providers, such
+as Remote LXD, and improve consistency for existing ones.
+
+** How is it done today
+
+Snapcraft currently implements build providers for LXD and Multipass
+with =snapcraft.internal.build_providers._base_provider.Provider=.
+
+Host builds are driven with independent logic in =snapcraft.cli=.
+
+Launchpad is independently implemented with =snapcraft remote-build=
+logic in =snapcraft.cli.remote= and =snapcraft.internal.remote_build=.
+
+** What is new with this approach
 
 This document defines an approach to refactor build provider
 =snapcraft.internal.build_providers._base_provider.Provider= such that it would
@@ -17,7 +31,7 @@ Multipass) and potential future providers (Remote LXD, etc.).
 
 * Provider Refactoring
 
-** Current Public Interfaces
+** Current public interfaces
 - ensure_provider()
 - setup_provider()
 - mount_project()
@@ -28,57 +42,197 @@ Multipass) and potential future providers (Remote LXD, etc.).
 - clean_project()
 - shell()
 
-** Proposed Public Interfaces:
+** Proposed draft of public interfaces
 
-|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
-| method                                     | description                                                               | raises                                                |
-|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
-| is_provider_ready() -> bool                | checks if provider is ready w/o installation or configuration             |                                                       |
-| setup_provider(echoer) -> None             | installs/configures provider, allowing for user prompting                 | ProviderInstallationError, ProviderConfigurationError |
-| execute_step(step: steps.Step) -> None     | executes (up to and including) step                                       | NotImplementedError                                   |
-| expose_prime(path: pathlib.Path) -> None   | mount project =prime= directory to host at specified path                 | NotImplementedError                                   |
-| snap() -> List[pathlib.Path]               | snap project (building as required), writing snap(s) to host project dir. |                                                       |
-| clean_parts(part_names: List[str]) -> None | clean project parts                                                       | NotImplementedError                                   |
-| clean() -> None                            | clean all project artifacts, including build-instance, if applicable.     |                                                       |
-| shell() -> None                            | launch interactive shell with build-instance, if applicable.              | NotImplementedError                                   |
-|--------------------------------------------+---------------------------------------------------------------------------+-------------------------------------------------------|
+#+begin_src python
+class ProviderV2:
+  def __init__(self, project_dir: pathlib.Path, project: Project, environment_manager_db: tinydb.TinyDB, ...) ->
+  None:
+    """Save instance attributes, take no actions."""
+    ...
 
-*** Summary of changes:
-- Rename =ensure_provider()= to =is_provider_ready()=, scoping to see if
-  provider is ready without needing installation or further configuration.
-  Remove exceptions.  CLI will invoke setup_provider() if terminal is
-  interactive, allowing user to perform any install/configuration as necessary.
-- Remove =mount_project()=. Project path will be provided to __init__() and will
-  be verified/mounted as required.
+  def __enter__(self) -> Provider:
+    """Start-of-session actions, not to include launching VMs/instances.
+
+    Examples include:
+    - querying datastore for relevant properties/configuration.
+    """
+    ...
+    return self
+
+  def __exit__(self) -> None:
+    """End-of-session cleanup that may be configurable.
+
+    Includes closing datastore handle and any provider-specific
+    actions that are configured to be taken.
+
+    Examples include:
+    - scheduling stop for build-instance VM/container
+    - removing temporary files or artifacts
+    - purging build-instance
+    """
+
+  def is_provider_ready(self) -> bool:
+    """Check if provider is accessible.
+
+      As applicable, validate that the provider is:
+      - installed
+      - configured
+      - running
+      - compatible
+
+      Used as a pre-check prior to initiating build. If False, indicates that
+      additional installation, or configuration must be performed by user, which
+      can be done with setup_provider().
+
+      :returns: True if ready, False if further setup is required.
+
+      """
+
+      ...
+
+    def setup_provider(self, interactive: bool) -> None:
+      """Install/configure as necessary.
+
+      If interactive, prompt user for all necessary changes. If non-interactive,
+      attempt to make all necessary changes.
+
+      :param interactive: Toggle for user input.
+
+      :raises ProviderSetupError: if provider has dependencies that need to be
+      installed, or configuration that must be changed.
+      """
+
+      ...
+
+    def execute_step(self, step: step.Step, part_name: Optional[List[str]]) -> None
+      """Execute (up to, and including) specified step.
+
+      :param step: Step to execute.
+      :param part_names: Optional list of part names to execute step for.
+
+      :raises SnapcraftProviderUnsupportedMethod: if provider does not support
+      executing steps.
+      """
+
+      ...
+
+    def expose_prime(self, prime_dir: pathlib.Path) -> None:
+      """Make project's prime directory available to host's prime_dir.
+
+      Implementations should use the most performant approach available
+      for the given provider (i.e. bind mounting directory from container).
+
+      :param prime_dir: Directory to mount/sync prime directory to on host.
+
+      :raises SnapcraftProviderUnsupportedMethod: if provider does not support
+      syncing/mounting project's prime directory.
+      """
+
+    def snap(self, output_dir: pathlib.Path) -> List[pathlib.Path]:
+      """Snap project, building as required.
+
+      Write output snaps to host project directory.
+
+      :param output_dir: Directory to write snaps to.
+
+      :returns: Path to snap(s) created from build.
+      """
+
+      ...
+
+     def clean_parts(self, part_names: List[str]) -> None:
+      """Clean specified parts.
+
+      :param part_names: List of parts to clean.
+
+      :raises SnapcraftProviderUnsupportedMethod: if provider does not support
+      executing steps.
+      """
+
+      ...
+
+    def clean(self) -> None:
+      """Clean all artifacts of project and build environment.
+
+      Purges all artifacts from using the provider to build the
+      project.  This includes build-instances (containers/VMs) and
+      associated metadata and records.
+
+      This does not include any artifacts that have resulted from
+      a call to snap(), i.e. snap files or build logs.
+      """
+
+      ...
+
+    def shell(self, step: Optional[step.Step], part_name: Optional[str]) -> None:
+      """Launch an interactive shell to build-instance.
+
+      If available, load environment used for the given step and part_name.
+      Step and part_name must both be supplied for environment to be loaded,
+      otherwise both are ignored.
+
+      Note this method does not imply execute_step(), it is up to the caller
+      to launch the shell at the appropriate time.
+
+      :param step: step to load environment for.
+      :param part_name: part_name to load environment for.  If step is specified,
+      but not a part_name.
+
+      :raises SnapcraftProviderUnsupportedMethod: if provider does not support
+      providing a shell.
+      """
+
+      ...
+#+end_src
+
+*** Summary of changes against current provider:
+- =is_provider_ready()= replaces classmethod =ensure_provider()=.
+- =setup_provider()= becomes an instance method, supporting non-interactive
+  configuration, if possible.
+- Removes =mount_project()= interface. Provider will mount project as required.
 - Replace =pack_project()= with =snap()=, adding the implication that build steps
-  are to be executed as required (and packing may not be done by Snapcraft).
+  are to be executed as required, removing the implication that Snapcraft itself
+  invokes the packing (Snapcraft may just fetch the output of the provider).
 - Rename =clean()= to =clean_parts()=, to improve clarity of scope.
 - Rename =clean_project()= to =clean()=, to improve clarity of scope.
+- Context manager =__enter__()= and =__exit__()= are currently used to define
+  the lifetime start/stop status of containers. =__enter__()= will no longer
+  start an instance, but =_exit()= will continue to stop the instance, if
+  configured (and applicable) to do so.
 
-** Migrate current logic into new providers:
-- HostProvider
-- ManagedHostProvider, inherits much of HostProvider.
-- LaunchpadProvider
-- RemoteLXDProvider, inherits much of LXDProvider, overrides the (now internal)
-  equivalent of mount_project() behavior with a rsync from host to remote.
+* CLI Refactoring
 
-* CLI Handling
-
-** Provider NotImplementedError
+** SnapcraftProviderUnsupportedMethodError
 
 Certain commands will not supported by all providers. E.g.
-- =snapcraft try= is not compatible with Launchpad, Remote LXD, Host
-- =snapcraft <step>= is not compatible with Lauchpad, Remote LXD
-- =snapcraft clean <parts>= is not compatible with Launchpad, Remote LXD
+- =snapcraft <step>= is not compatible with Lauchpad.
+- =snapcraft clean <parts>= is not compatible with Launchpad
 
-In these cases, the applicable CLI methods will catch the NotImplementedError
-and inform the user that this command is not available with the current
-configured provider, e.g.:
+In these cases, the applicable CLI methods will catch the
+=SnapcraftProviderUnsupportedMethodError= and inform the user that this command
+is not available with the current configured provider.
 
-=Sorry, '<command>' is not available for the currently configured provider
+*** Lifecycle command =snapcraft <step> ...=
+
+If attempting to run a lifecycle command (other than =snap=) and
+the provider does not support it, fail with the following error:
+='<command>' is not available for the currently configured provider
 '<provider>'.=
 
-For =snapcraft clean <parts>=:
+For =--debug=, =--shell=, and =--shell-after= options:
+='<command>' does not support option '<option>' for the currently configured
+provider.=
 
-=Sorry, specifying parts '<parts>' for 'snapcraft clean' is not supported by the
+
+*** Clean command with parts =snapcraft clean <parts>=:
+
+=Specifying parts '<parts>' for 'snapcraft clean' is not supported by the
 currently configured provider '<provider>'.=
+
+** Trying harder with =snapcraft try=
+
+Extend =snapcraft try= to invoke =snap try= on behalf of the user. This way,
+Snapcraft can attempt to do the correct thing when a provider may not support
+=expose_prime()= (i.e. by unpacking a snap or otherwise syncing the remote prime
+directory).
