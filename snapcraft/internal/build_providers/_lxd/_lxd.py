@@ -440,13 +440,16 @@ class LXD(Provider):
         self._wait_for_systemd()
 
         # Use resolv.conf managed by systemd-resolved.
-        self._run(["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"])
+        self._run(
+            ["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"],
+            hide_output=True,
+        )
 
-        self._run(["systemctl", "enable", "systemd-resolved"])
-        self._run(["systemctl", "enable", "systemd-networkd"])
+        self._run(["systemctl", "enable", "systemd-resolved"], hide_output=True)
+        self._run(["systemctl", "enable", "systemd-networkd"], hide_output=True)
 
-        self._run(["systemctl", "restart", "systemd-resolved"])
-        self._run(["systemctl", "restart", "systemd-networkd"])
+        self._run(["systemctl", "restart", "systemd-resolved"], hide_output=True)
+        self._run(["systemctl", "restart", "systemd-networkd"], hide_output=True)
 
         self._wait_for_network()
 
@@ -458,12 +461,12 @@ class LXD(Provider):
         self._run(["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"])
 
         # the system needs networking
-        self._run(["systemctl", "enable", "systemd-udevd"])
-        self._run(["systemctl", "start", "systemd-udevd"])
+        self._run(["systemctl", "enable", "systemd-udevd"], hide_output=True)
+        self._run(["systemctl", "start", "systemd-udevd"], hide_output=True)
 
         # And only then install snapd.
         self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
-        self._run(["systemctl", "start", "snapd"])
+        self._run(["systemctl", "start", "snapd"], hide_output=True)
 
     def _setup_snapcraft(self):
         self._wait_for_network()

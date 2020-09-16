@@ -1,0 +1,23 @@
+name: catkin-tools-cmake-args
+version: "1.0"
+summary: exercise catkin-tools-packages option
+description: |
+  A ROS 1 workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-tools-cmake-args:
+    command: opt/ros/noetic/lib/customizable_message/customizable_message
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+
+parts:
+  test-part:
+    plugin: catkin-tools
+    source: .
+    build-packages: [g++, make]
+
+    catkin-tools-cmake-args: [-DMESSAGE="hello snap"]

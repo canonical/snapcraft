@@ -1,0 +1,20 @@
+#!/bin/bash
+
+function activate_workspace() {
+    rosdir="$1"
+    setup_sh="$rosdir/setup.bash"
+
+    if [ ! -f "$setup_sh" ]; then
+        echo "error: $setup_sh not found"
+        exit 1
+    fi
+    # shellcheck disable=SC1090
+    _CATKIN_SETUP_DIR="$rosdir" source "$setup_sh"
+}
+
+# Save off parameters, the sourced setup scripts may manipulate them.
+original_args=("$@")
+
+activate_workspace "$SNAP/opt/ros/$ROS_DISTRO"
+
+exec "${original_args[@]}"
