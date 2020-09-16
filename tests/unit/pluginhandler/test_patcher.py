@@ -174,8 +174,16 @@ class TestPrimeTypeExcludesPatching:
     )
 
     def test_no_patcher_called(
-        self, mock_partpatcher, snap_type, snap_name, confinement, build_attributes
+        self,
+        monkeypatch,
+        mock_partpatcher,
+        snap_type,
+        snap_name,
+        confinement,
+        build_attributes,
     ):
+        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
+
         part_properties = {"source-subdir": "src"}
         if build_attributes:
             part_properties["build-attributes"] = build_attributes
