@@ -732,6 +732,38 @@ def whoami():
 
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
+@click.argument("track_name", metavar="<track>")
+def set_default_track(snap_name: str, track_name: str):
+    """Set the default track for <snap-name> to <track>.
+
+    The track must be a valid active track for this operation to be successful.
+    """
+    store_client_cli = StoreClientCLI()
+
+    # Client-side check to verify that the selected track exists.
+    snap_channel_map = store_client_cli.get_snap_channel_map(snap_name=snap_name)
+    active_tracks = [
+        track.name
+        for track in snap_channel_map.snap.tracks
+        if track.status in ("default", "active")
+    ]
+    if track_name not in active_tracks:
+        echo.exit_error(
+            brief=f"The specified track {track_name!r} does not exist for {snap_name!r}.",
+            resolution=f"Ensure the {track_name!r} track exists for the {snap_name!r} snap and try again.",
+            details="Valid tracks for {!r}: {}.".format(
+                snap_name, ", ".join([f"{t!r}" for t in active_tracks])
+            ),
+        )
+
+    metadata = dict(default_track=track_name)
+    store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
+
+    echo.info(f"Default track for {snap_name!r} set to {track_name!r}.")
+
+
+@storecli.command()
+@click.argument("snap-name", metavar="<snap-name>")
 def list_tracks(snap_name: str) -> None:
     """List channel tracks for <snap-name>.
 

@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
+from textwrap import dedent
 from unittest import mock
-from tests import unit
 
+import fixtures
 from snapcraft.cli import echo
+from tests import unit
 
 
 class EchoTestCase(unit.TestCase):
@@ -113,3 +114,88 @@ class EchoTestCase(unit.TestCase):
             show_default=True,
             err=False,
         )
+
+
+def test_exit_error_required_kwargs(mock_echo_error, mock_sys_exit):
+    echo.exit_error(brief="You failed!", resolution="Try again!")
+
+    mock_echo_error.assert_called_once_with(
+        dedent(
+            """\
+    You failed!
+
+    Recommended resolution:
+    Try again!"""
+        )
+    )
+    mock_sys_exit.assert_called_once_with(2)
+
+
+def test_exit_error_all_kwargs(mock_echo_error, mock_sys_exit):
+    echo.exit_error(
+        brief="You failed!",
+        resolution="Try again!",
+        details="Try harder!",
+        docs_url="https://snapcraft.io/failure",
+        exit_code=5,
+    )
+
+    mock_echo_error.assert_called_once_with(
+        dedent(
+            """\
+    You failed!
+
+    Recommended resolution:
+    Try again!
+
+    Detailed information:
+    Try harder!
+
+    For more information, check out:
+    https://snapcraft.io/failure"""
+        )
+    )
+    mock_sys_exit.assert_called_once_with(5)
+
+
+def test_exit_error_all_kwargs_except_details(mock_echo_error, mock_sys_exit):
+    echo.exit_error(
+        brief="You failed!",
+        resolution="Try again!",
+        docs_url="https://snapcraft.io/failure",
+        exit_code=255,
+    )
+
+    mock_echo_error.assert_called_once_with(
+        dedent(
+            """\
+    You failed!
+
+    Recommended resolution:
+    Try again!
+
+    For more information, check out:
+    https://snapcraft.io/failure"""
+        )
+    )
+    mock_sys_exit.assert_called_once_with(255)
+
+
+def test_exit_error_all_kwargs_except_docs_url(mock_echo_error, mock_sys_exit):
+    echo.exit_error(
+        brief="You failed!", resolution="Try again!", details="Try harder!", exit_code=7
+    )
+
+    mock_echo_error.assert_called_once_with(
+        dedent(
+            """\
+    You failed!
+
+    Recommended resolution:
+    Try again!
+
+    Detailed information:
+    Try harder!"""
+        )
+    )
+    mock_sys_exit.assert_called_once_with(7)

@@ -18,12 +18,13 @@
 These methods, which are named after common logging levels, wrap around
 click.echo adding the corresponding color codes for each level.
 """
-import click
 import distutils.util
 import os
 import sys
+from typing import Any, Optional
 
-from typing import Any
+import click
+
 from snapcraft.internal import common
 
 
@@ -67,6 +68,30 @@ def error(msg: str) -> None:
     If the terminal supports color the output will be red.
     """
     click.echo("\033[0;31m{}\033[0m".format(msg))
+
+
+def exit_error(
+    *,
+    brief: str,
+    resolution: Optional[str] = None,
+    details: Optional[str] = None,
+    docs_url: Optional[str] = None,
+    exit_code: int = 2
+):
+    """Display an error and gracefully exit."""
+    message_parts = [brief]
+
+    if resolution is not None:
+        message_parts.extend(["", "Recommended resolution:", resolution])
+
+    if details is not None:
+        message_parts.extend(["", "Detailed information:", details])
+
+    if docs_url is not None:
+        message_parts.extend(["", "For more information, check out:", docs_url])
+
+    error("\n".join(message_parts))
+    sys.exit(exit_code)
 
 
 def confirm(

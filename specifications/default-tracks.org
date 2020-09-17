@@ -37,14 +37,14 @@ With that criteria, this is how the output shall display for a given snap:
 Setting a default track shall have an explicit command to do so.
 
 #+BEGIN_SRC sh
-$ snapcraft set-default-track <snap-name> <revision>
+$ snapcraft set-default-track <snap-name> <track>
 #+END_SRC
 
 When setting a valid track, this is what the command shall output:
 
 #+BEGIN_SRC sh
 $ snapcraft set-default-track node 17
-Default track for node has been set to 17
+Default track for 'node' set to '17'.
 #+END_SRC
 
 If the track is not valid, the output shall follow the convention used in
@@ -53,7 +53,7 @@ in mind, the following shall be displayed when an unknown track is specified:
 
 #+BEGIN_SRC sh
 $ snapcraft set-default-track node 18
-The specified track is not exist for node.
+The specified track does not exist for 'node'.
 
 Recommended resolution:
 Run 'snapcraft list-tracks' to see the available tracks.

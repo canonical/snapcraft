@@ -26,7 +26,7 @@ _PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
 
 
 class ExtensionImpl(Extension):
-    """Drives ROS2 build and runtime environment for snap."""
+    """Drives ROS 2 build and runtime environment for snap."""
 
     ROS_DISTRO: Final[str] = "foxy"
 
@@ -57,7 +57,7 @@ class ExtensionImpl(Extension):
                     "type": "apt",
                     "url": "http://repo.ros2.org/ubuntu/main",
                     "components": ["main"],
-                    "deb-types": ["deb"],
+                    "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
                     "key-server": "keyserver.ubuntu.com",
                     "suites": ["$SNAPCRAFT_APT_RELEASE"],

@@ -150,7 +150,7 @@ class PackageRepositoryApt(PackageRepository):
         data["components"] = self.components
 
         if self.deb_types:
-            data["deb-types"] = self.deb_types
+            data["formats"] = self.deb_types
 
         data["key-id"] = self.key_id
 
@@ -172,7 +172,7 @@ class PackageRepositoryApt(PackageRepository):
 
         architectures = data_copy.pop("architectures", None)
         components = data_copy.pop("components", None)
-        deb_types = data_copy.pop("deb-types", None)
+        deb_types = data_copy.pop("formats", None)
         key_id = data_copy.pop("key-id", None)
         key_server = data_copy.pop("key-server", None)
         name = data_copy.pop("name", None)
@@ -204,7 +204,7 @@ class PackageRepositoryApt(PackageRepository):
             deb_type not in ["deb", "deb-src"] for deb_type in deb_types
         ):
             raise RuntimeError(
-                f"invalid deb repository object: {data!r} (invalid deb-types)"
+                f"invalid deb repository object: {data!r} (invalid formats)"
             )
 
         if not isinstance(key_id, str):
