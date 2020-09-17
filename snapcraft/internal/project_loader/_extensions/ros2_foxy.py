@@ -26,7 +26,7 @@ _PLATFORM_SNAP = dict(core18="gnome-3-34-1804")
 
 
 class ExtensionImpl(Extension):
-    """Drives ROS2 build and runtime environment for snap."""
+    """Drives ROS 2 build and runtime environment for snap."""
 
     ROS_DISTRO: Final[str] = "foxy"
 

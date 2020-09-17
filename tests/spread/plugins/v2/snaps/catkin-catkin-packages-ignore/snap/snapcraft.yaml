@@ -1,0 +1,25 @@
+name: catkin-catkin-packages-ignore
+version: "1.0"
+summary: exercise catkin-packages-ignore option
+description: |
+  A ROS 1 workspace.
+
+grade: stable
+confinement: strict
+base: core20
+
+apps:
+  catkin-catkin-packages-ignore:
+    command: opt/ros/noetic/lib/package2/package2
+    plugs: [network, network-bind]
+    extensions: [ros1-noetic]
+
+parts:
+  test-part:
+    plugin: catkin
+    source: .
+    build-packages: [g++, make]
+
+    # By default, all packages in the workspace will be built. Request
+    # that package1 is ignored.
+    catkin-packages-ignore: [package1]

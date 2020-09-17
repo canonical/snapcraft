@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import snapcraft
 import fixtures
 from testtools.matchers import Contains, Equals
 
@@ -43,7 +44,7 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         ]
 
         result = self.run_command(
-            ["set-default-track", "snap-test", "track"],
+            ["set-default-track", "snap-test", "2.0"],
             input="user@example.com\nsecret\n",
         )
         self.assertThat(
@@ -51,9 +52,26 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_set_default_track(self):
-        result = self.run_command(["set-default-track", "snap-test", "track"])
+        result = self.run_command(["set-default-track", "snap-test", "2.0"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.fake_metadata.mock.assert_called_once_with(
-            snap_name="snap-test", metadata=dict(default_track="track"), force=True
+            snap_name="snap-test", metadata=dict(default_track="2.0"), force=True
+        )
+
+    def test_invalid_track_fails(self):
+        mock_wrap = self.useFixture(
+            fixtures.MockPatch(
+                "snapcraft.cli.echo.exit_error", wraps=snapcraft.cli.echo.exit_error
+            )
+        ).mock
+
+        result = self.run_command(["set-default-track", "snap-test", "3.0"])
+
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains("'2.0', 'latest'"))
+        mock_wrap.assert_called_once_with(
+            brief="The specified track '3.0' does not exist for 'snap-test'.",
+            details="Valid tracks for 'snap-test': '2.0', 'latest'.",
+            resolution="Ensure the '3.0' track exists for the 'snap-test' snap and try again.",
         )
