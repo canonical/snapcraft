@@ -16,15 +16,19 @@
 
 import logging
 import os
+import shutil
+import subprocess
 import sys
 from typing import Dict, Optional, Sequence
+
+from snapcraft.internal import repo
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-
+from ._windows import windows_install_multipass, windows_reload_multipass_path_env
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +69,67 @@ class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
     @classmethod
-    def ensure_provider(cls):
-        MultipassCommand.ensure_multipass(platform=sys.platform)
+    def is_provider_ready(cls) -> bool:
+        if sys.platform == "win32":
+            # Reload path env just in case multipass was installed without
+            # launching a new command prompt / shell.
+            windows_reload_multipass_path_env()
+
+        return shutil.which("multipass") is not None
 
     @classmethod
-    def setup_provider(cls, *, echoer) -> None:
-        MultipassCommand.setup_multipass(echoer=echoer, platform=sys.platform)
+    def _install_multipass_darwin(cls) -> None:
+        try:
+            subprocess.check_call(["brew", "cask", "install", "multipass"])
+        except subprocess.CalledProcessError:
+            raise SnapcraftEnvironmentError(
+                "Failed to install multipass using homebrew.\n"
+                "Verify your homebrew installation and try again.\n"
+                "Alternatively, manually install multipass by running 'brew cask install multipass'."
+            )
+
+    @classmethod
+    def _install_multipass_linux(cls) -> None:
+        repo.snaps.install_snaps(["multipass/latest/stable"])
+
+    @classmethod
+    def _install_multipass(cls, *, echoer, platform: str = sys.platform) -> None:
+        if platform == "linux":
+            cls._install_multipass_linux()
+        elif platform == "darwin":
+            cls._install_multipass_darwin()
+        elif platform == "win32":
+            windows_install_multipass(echoer=echoer)
+        else:
+            raise SnapcraftEnvironmentError(
+                "Multipass is not supported on this platform",
+            )
+
+    @classmethod
+    def setup_provider(
+        cls, *, interactive: bool, echoer, platform: str = sys.platform
+    ) -> None:
+        if shutil.which("multipass") is None:
+            if interactive and not echoer.confirm(
+                "Multipass needs to be installed. Would you like to do that now?"
+            ):
+                if platform == "linux":
+                    raise SnapcraftEnvironmentError(
+                        "To install Multipass, run: sudo snap install multipass",
+                    )
+                elif platform == "darwin":
+                    raise SnapcraftEnvironmentError(
+                        "To install Multipass, run: brew cask install multipass",
+                    )
+                elif platform == "win32":
+                    raise SnapcraftEnvironmentError(
+                        "Install Multipass from: https://multipass.run/"
+                    )
+
+            cls._install_multipass(echoer=echoer, platform=platform)
+
+        # Wait for multipassd to be available.
+        MultipassCommand._wait_for_multipass_ready(echoer=echoer)
 
     @classmethod
     def _get_is_snap_injection_capable(cls) -> bool:

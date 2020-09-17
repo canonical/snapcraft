@@ -96,13 +96,40 @@ class Provider(abc.ABC):
 
     @classmethod
     @abc.abstractclassmethod
-    def ensure_provider(cls) -> None:
-        """Necessary steps to ensure the provider is correctly setup."""
+    def is_provider_ready(cls) -> bool:
+        """Check if provider is accessible.
+
+        As applicable, validate that the provider is:
+        - installed
+        - configured
+        - running
+        - compatible
+
+        Used as a pre-check prior to initiating build. If False, indicates that
+        additional installation, or configuration must be performed by user, which
+        can be done with setup_provider().
+
+        If True, the provider is expected to be usable to build the project.
+
+        :returns: True if ready, False if further setup is required.
+        """
 
     @classmethod
     @abc.abstractclassmethod
-    def setup_provider(cls, *, echoer) -> None:
-        """Necessary steps to install the provider on the host."""
+    def setup_provider(cls, *, interactive: bool, echoer) -> None:
+        """Install/configure as necessary.
+
+        If interactive, prompt user for all necessary changes. If non-interactive,
+        attempt to make all necessary changes.
+
+        Once completed, the provider is expected to be usable to build the project.
+
+        :param interactive: Toggle for user input.
+        :param echoer: Echo interface for communicating with user.
+
+        :raises SnapcraftEnvironmentError: if provider has dependencies that need to be
+        installed, or configuration that must be changed, or is incompatible with host.
+        """
 
     @classmethod
     @abc.abstractclassmethod

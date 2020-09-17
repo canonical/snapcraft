@@ -14,24 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
 import logging
 import os
+import re
 import subprocess
 import sys
 import urllib.parse
 import warnings
+from textwrap import dedent
 from time import sleep
 from typing import Dict, Optional, Sequence
 
-from .._base_provider import Provider
-from .._base_provider import errors
-from ._images import get_image_source
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
+from .._base_provider import Provider, errors
+from ._images import get_image_source
+
 # LXD is only supported on Linux and causes issues when imported on Windows.
-# We conditionally import it and rely on ensure_provider() to check OS before
+# We conditionally import it and rely on setup_provider() to check OS before
 # using pylxd.
 if sys.platform == "linux":
     import pylxd
@@ -55,55 +56,55 @@ class LXD(Provider):
     _LXC_BIN = os.path.join(os.path.sep, "snap", "bin", "lxc")
 
     @classmethod
-    def ensure_provider(cls):
-        error_message = None  # type: Optional[str]
-        prompt_installable = False
+    def is_provider_ready(cls) -> bool:
+        if (
+            sys.platform != "linux"
+            or not cls._is_lxd_installed()
+            or not cls._is_lxd_compatible()
+        ):
+            return False
 
-        if sys.platform != "linux":
-            error_message = "LXD is not supported on this platform"
-        else:
-            try:
-                if not repo.snaps.SnapPackage.is_snap_installed("lxd"):
-                    error_message = (
-                        "The LXD snap is required to continue: snap install lxd"
-                    )
-                    prompt_installable = True
-            except repo.errors.SnapdConnectionError:
-                error_message = (
-                    "snap support is required to continue: "
-                    "https://docs.snapcraft.io/installing-snapd/6735"
-                )
-
-        if error_message is not None:
-            raise errors.ProviderNotFound(
-                provider=cls._get_provider_name(),
-                prompt_installable=prompt_installable,
-                error_message=error_message,
-            )
-
-        # If we reach this point, it means the lxd snap is properly setup.
-        # Now is the time for additional sanity checks to ensure the provider
-        # will work.
-        try:
-            # TODO: add support for more distributions. Maybe refactor a bit so that Repo behaves
-            # similar to a build provider.
-            if repo.Repo.is_package_installed("lxd") or repo.Repo.is_package_installed(
-                "lxd-client"
-            ):
-                raise SnapcraftEnvironmentError(
-                    (
-                        "The {!r} provider does not support having the 'lxd' or "
-                        "'lxd-client' deb packages installed. To completely migrate "
-                        "to the LXD snap run 'lxd.migrate' and try again."
-                    ).format(cls._get_provider_name())
-                )
-        except repo.errors.NoNativeBackendError:
-            pass
+        return True
 
     @classmethod
-    def setup_provider(cls, *, echoer) -> None:
+    def _is_lxd_installed(cls) -> bool:
+        return os.path.exists(cls._LXD_BIN) and os.path.exists(cls._LXC_BIN)
+
+    @classmethod
+    def _is_lxd_compatible(cls) -> bool:
+        try:
+            proc = subprocess.run(
+                [cls._LXD_BIN, "version"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as call_error:
+            raise SnapcraftEnvironmentError(
+                f"Failed to request LXD version: {call_error.stdout} {call_error.stderr}"
+            ) from call_error
+
+        # Should be version string, e.g. "4.3".
+        version_output = proc.stdout.decode()
+        matches = re.search(r"(\d+)\.(\d+).*", version_output)
+        if not matches:
+            logger.error(f"Failed to parse LXD version: {version_output}")
+            return False
+
+        try:
+            major_version = matches.group(1)
+            minor_version = matches.group(2)
+        except IndexError:
+            logger.error(f"Failed to parse LXD version: {version_output}")
+            return False
+
+        return int(major_version) >= 4 and int(minor_version) >= 0
+
+    @classmethod
+    def _install_lxd(cls) -> None:
         repo.snaps.install_snaps(["lxd/latest/stable"])
 
+    @classmethod
+    def _wait_for_lxd_ready(cls) -> None:
         try:
             subprocess.check_output([cls._LXD_BIN, "waitready", "--timeout=30"])
         except subprocess.CalledProcessError as call_error:
@@ -111,6 +112,8 @@ class LXD(Provider):
                 "Timeout reached waiting for LXD to start."
             ) from call_error
 
+    @classmethod
+    def _initialize_lxd_config(cls) -> None:
         try:
             subprocess.check_output([cls._LXD_BIN, "init", "--auto"])
         except subprocess.CalledProcessError as call_error:
@@ -118,6 +121,24 @@ class LXD(Provider):
                 "Failed to initialize LXD. "
                 "Try manually initializing before trying again: lxd init --auto."
             ) from call_error
+
+    @classmethod
+    def setup_provider(cls, *, interactive: bool, echoer) -> None:
+        if sys.platform != "linux":
+            raise errors.SnapcraftEnvironmentError(
+                "LXD is not supported on this platform",
+            )
+
+        if interactive and not echoer.confirm(
+            "LXD needs to be installed. Would you like to do that now?"
+        ):
+            raise SnapcraftEnvironmentError(
+                "To install LXD, run: sudo snap install lxd",
+            )
+
+        cls._install_lxd()
+        cls._wait_for_lxd_ready()
+        cls._initialize_lxd_config()
 
     @classmethod
     def _get_provider_name(cls):

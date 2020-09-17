@@ -16,12 +16,13 @@
 
 import logging
 import os.path
-import requests
 import shutil
-import simplejson
 import subprocess
 import sys
 import tempfile
+
+import requests
+import simplejson
 
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal.build_providers.errors import (
@@ -190,7 +191,7 @@ def _download_multipass(dl_dir: str, echoer) -> str:
     return dl_path
 
 
-def windows_install_multipass(echoer) -> None:
+def windows_install_multipass(*, echoer) -> None:
     """Download and install multipass."""
 
     assert sys.platform == "win32"

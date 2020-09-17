@@ -98,19 +98,13 @@ def _execute(  # noqa: C901
             )
     else:
         build_provider_class = build_providers.get_provider_for(build_provider)
-        try:
-            build_provider_class.ensure_provider()
-        except build_providers.errors.ProviderNotFound as provider_error:
-            if provider_error.prompt_installable:
-                if echo.is_tty_connected() and echo.confirm(
-                    "Support for {!r} needs to be set up. "
-                    "Would you like to do it now?".format(provider_error.provider)
-                ):
-                    build_provider_class.setup_provider(echoer=echo)
-                else:
-                    raise provider_error
+        if not build_provider_class.is_provider_ready():
+            if echo.is_tty_connected():
+                build_provider_class.setup_provider(interactive=True, echoer=echo)
             else:
-                raise provider_error
+                echo.exit_error(
+                    brief=f"Build provider {build_provider!r} is not installed or configured."
+                )
 
         with build_provider_class(
             project=project, echoer=echo, build_provider_flags=build_provider_flags
