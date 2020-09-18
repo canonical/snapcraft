@@ -56,7 +56,7 @@ class _SnapManager:
         snap_name: str,
         remote_snap_dir: str,
         latest_revision: Optional[str],
-        inject_from_host: bool = True
+        inject_from_host: bool = True,
     ) -> None:
         self.snap_name = snap_name
         self._remote_snap_dir = remote_snap_dir
@@ -194,9 +194,11 @@ class _SnapManager:
             install_cmd = ["snap", op.name.lower()]
             snap_channel = _get_snap_channel(self.snap_name)
             store_snap_info = storeapi.StoreClient().cpi.get_info(self.snap_name)
+            logger.info("get_channel:")
             snap_channel_map = store_snap_info.get_channel_mapping(
                 risk=snap_channel.risk, track=snap_channel.track
             )
+            logger.info(f"snap_channel_map: {snap_channel_map}")
             snap_revision = snap_channel_map.revision
             if snap_channel_map.confinement == "classic":
                 install_cmd.append("--classic")
@@ -300,7 +302,7 @@ class SnapInjector:
         registry_filepath: str,
         runner: Callable[..., Optional[bytes]],
         file_pusher: Callable[..., None],
-        inject_from_host: bool = True
+        inject_from_host: bool = True,
     ) -> None:
         """
         Initialize a SnapInjector instance.
@@ -383,6 +385,7 @@ class SnapInjector:
 
         # Install snaps and assertions.
         for snap in snaps:
+            logger.info(f"{snap} {snap.get_op()} {snap.get_snap_install_cmd()}")
             if snap.get_op() == _SnapOp.INJECT:
                 snap.push_host_snap(file_pusher=self._file_pusher)
                 self._runner(snap.get_assertion_ack_cmd())

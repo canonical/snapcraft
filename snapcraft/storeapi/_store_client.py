@@ -280,9 +280,7 @@ class StoreClient:
         except_hash: str = ""
     ):
         snap_info = self.cpi.get_info(snap_name)
-        channel_mapping = snap_info.get_channel_mapping(
-            risk=risk, track=track, arch=arch
-        )
+        channel_mapping = snap_info.get_channel_mapping(risk=risk, track=track)
         if channel_mapping.download.sha3_384 == except_hash:
             return channel_mapping.download.sha3_384
 

@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from testtools.matchers import Equals
 
 from snapcraft.internal.project_loader._extensions.gnome_3_34 import ExtensionImpl
+from tests.unit.commands import CommandBaseTestCase
 
 from .. import ProjectLoaderBaseTest
-
-from tests.unit.commands import CommandBaseTestCase
 
 
 class ExtensionTest(ProjectLoaderBaseTest, CommandBaseTestCase):

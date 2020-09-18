@@ -234,11 +234,15 @@ class SnapInfo:
         else:
             track_filter = track
 
-        arch_match = (
-            c
-            for c in self.channel_map
-            if arch is None or c.channel_details.architecture == arch
-        )
+        if arch:
+            arch_match = (
+                c
+                for c in self.channel_map
+                if arch is None or c.channel_details.architecture == arch
+            )
+        else:
+            arch_match = (c for c in self.channel_map)
+
         track_match = (c for c in arch_match if c.channel_details.track == track_filter)
         risk_match = [c for c in track_match if c.channel_details.risk == risk]
 

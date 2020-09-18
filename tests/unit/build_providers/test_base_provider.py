@@ -222,21 +222,21 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         # False.
         provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=False)
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
         )
 
         # Not present.
         provider.build_provider_flags = dict()
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [call(self.project._project_dir, "/root/project")]
         )
 
         # True.
         provider.build_provider_flags = dict(SNAPCRAFT_BIND_SSH=True)
-        provider.mount_project()
+        provider._mount_project()
         provider.mount_mock.assert_has_calls(
             [
                 call(self.project._project_dir, "/root/project"),

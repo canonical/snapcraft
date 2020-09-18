@@ -14,32 +14,184 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
 import logging
 import os
+import pathlib
+import shlex
 import subprocess
 import sys
-import urllib.parse
-import warnings
+from textwrap import dedent
 from time import sleep
-from typing import Dict, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
-from .._base_provider import Provider
-from .._base_provider import errors
-from ._images import get_image_source
+import yaml
+
+from snapcraft import file_utils
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
-# LXD is only supported on Linux and causes issues when imported on Windows.
-# We conditionally import it and rely on ensure_provider() to check OS before
-# using pylxd.
-if sys.platform == "linux":
-    import pylxd
+from .._base_provider import Provider, errors
 
 logger = logging.getLogger(__name__)
-# Filter out attribute setting warnings for properties that exist in LXD operations
-# but are unhandled in pylxd.
-warnings.filterwarnings("ignore", module="pylxd.models.operation")
+
+_LXD_BUILDD_REMOTE_NAME = "snapcraft-buildd-images"
+_LXD_BUILDD_IMAGES = {
+    "core": "16.04",
+    "core16": "16.04",
+    "core18": "18.04",
+    "core20": "20.04",
+}
+
+
+class LXC:
+    """LXC Wrapper."""
+
+    def __init__(self, *, remote: str, name: str) -> None:
+        """Manage instance via `lxc`.
+
+        :param remote: name of instance remote.
+        :param name: name of instance.
+        """
+        self.remote = remote
+        self.name = name
+        self.lxc_command = file_utils.get_host_tool_path(
+            command_name="lxc", package_name="lxd"
+        )
+        self.long_name = self.remote + ":" + self.name
+
+    def add_remote(self, name: str, addr: str, protocol: str = "simplestreams") -> None:
+        """Add a public remote."""
+        self._lxc_run(
+            ["remote", "add", name, addr, f"--protocol={protocol}"], check=True,
+        )
+
+    def delete(self):
+        """Purge instance."""
+        self._lxc_run(["delete", self.long_name, "--force"], check=True)
+
+    def execute(self, command: List[str]):
+        """Execute command in instance, allowing output to console."""
+        return self._lxc_run(["exec", self.long_name, "--", *command], check=True)
+
+    def execute_check_output(self, command: List[str]):
+        """Execute command in instance, capturing output."""
+        return self._lxc_run(
+            ["exec", self.long_name, "--", *command],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+
+    def execute_popen(self, command: List[str], **popen_kwargs):
+        """Execute command in instance, using Popen."""
+        command = [str(self.lxc_command), "exec", self.long_name, "--", *command]
+        quoted = " ".join([shlex.quote(c) for c in command])
+        logger.info(f"Running: {quoted}")
+        return subprocess.Popen(command, **popen_kwargs)
+
+    def get_instances(self) -> List[Dict[str, Any]]:
+        """Get instance state information."""
+        proc = self._lxc_run(
+            ["list", "--format=yaml", self.long_name],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
+
+    def get_instance_state(self) -> Optional[Dict[str, Any]]:
+        """Get instance state, if instance exists."""
+        instances = self.get_instances()
+        if not instances:
+            return None
+
+        for instance in self.get_instances():
+            if instance["name"] == self.name:
+                return instance
+        return None
+
+    def get_remotes(self) -> Dict[str, Any]:
+        """Get list of remotes.
+
+        :returns: dictionary with remote name mapping to config.
+        """
+        proc = self._lxc_run(
+            ["remote", "list", "--format=yaml"], stdout=subprocess.PIPE, check=True,
+        )
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
+
+    def get_server_config(self) -> Dict[str, Any]:
+        """Get server config that instance is running on."""
+        proc = self._lxc_run(
+            ["info", self.remote + ":"], stdout=subprocess.PIPE, check=True,
+        )
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
+
+    def launch(self, *, image_remote: str, image_name: str) -> None:
+        """Launch instance."""
+        self._lxc_run(
+            ["launch", ":".join([image_remote, image_name]), self.long_name],
+            check=True,
+        )
+
+    def is_instance_running(self) -> bool:
+        """Check if instance is running."""
+        instance_state = self.get_instance_state()
+        if instance_state is None:
+            return False
+
+        return instance_state["status"] == "Running"
+
+    def map_uid_to_root(self, uid: int) -> None:
+        """Map specified uid on host to root in container."""
+        self.set_config_key(
+            key="raw.idmap", value=f"both {uid!s} 0",
+        )
+
+    def mount(self, device_name: str, source: str, path: str) -> None:
+        """Mount host source directory to target mount point."""
+        self._lxc_run(
+            [
+                "config",
+                "device",
+                "add",
+                self.long_name,
+                device_name,
+                f"source={source}",
+                f"path={path}",
+            ],
+            check=True,
+        )
+
+    def set_config_key(self, key: str, value: str) -> None:
+        """Set instance configuration key."""
+        self._lxc_run(["config", "set", self.long_name, key, value], check=True)
+
+    def pull_file(self, *, source: str, destination: str) -> None:
+        """Get file from instance."""
+        self._lxc_run(
+            ["file", "pull", self.long_name + source, destination], check=True,
+        )
+
+    def push_file(self, *, source: str, destination: str) -> None:
+        """Push file to instance."""
+        self._lxc_run(
+            ["file", "push", source, self.long_name + destination], check=True,
+        )
+
+    def start(self) -> None:
+        """Start container."""
+        self._lxc_run(["start", self.long_name], check=True)
+
+    def stop(self) -> None:
+        """Stop container."""
+        self._lxc_run(["stop", self.long_name], check=True)
+
+    def _lxc_run(self, lxc_args: List[str], **kwargs):
+        command = [str(self.lxc_command), *lxc_args]
+        quoted = " ".join([shlex.quote(c) for c in command])
+        logger.info(f"Running: {quoted}")
+        return subprocess.run(command, **kwargs)
 
 
 class LXD(Provider):
@@ -52,7 +204,6 @@ class LXD(Provider):
     # classic confinement and require using the lxd snap, the lxd and lxc
     # binaries should be found in /snap/bin
     _LXD_BIN = os.path.join(os.path.sep, "snap", "bin", "lxd")
-    _LXC_BIN = os.path.join(os.path.sep, "snap", "bin", "lxc")
 
     @classmethod
     def ensure_provider(cls):
@@ -123,17 +274,19 @@ class LXD(Provider):
     def _get_provider_name(cls):
         return "LXD"
 
-    @classmethod
-    def _get_is_snap_injection_capable(cls) -> bool:
-        return True
+    def _get_is_snap_injection_capable(self) -> bool:
+        return self._lxd_remote is None
 
     def __init__(
         self,
         *,
         project,
         echoer,
+        build_provider_flags: Dict[str, str],
         is_ephemeral: bool = False,
-        build_provider_flags: Dict[str, str] = None,
+        lxd_image_remote_addr: str = "https://cloud-images.ubuntu.com/buildd/releases",
+        lxd_image_remote_name: str = "snapcraft-buildd-images",
+        lxd_image_remote_protocol: str = "simplestreams",
     ) -> None:
         super().__init__(
             project=project,
@@ -141,151 +294,130 @@ class LXD(Provider):
             is_ephemeral=is_ephemeral,
             build_provider_flags=build_provider_flags,
         )
-        # This endpoint is hardcoded everywhere lxc/lxd-pkg-snap#33
-        lxd_socket_path = "/var/snap/lxd/common/lxd/unix.socket"
-        endpoint = "http+unix://{}".format(urllib.parse.quote(lxd_socket_path, safe=""))
-        try:
-            self._lxd_client: pylxd.Client = pylxd.Client(endpoint=endpoint)
-        except pylxd.client.exceptions.ClientConnectionFailed:
-            raise errors.ProviderCommunicationError(
-                provider_name=self._get_provider_name(),
-                message="cannot connect to the LXD socket ({!r}).".format(
-                    lxd_socket_path
-                ),
-            )
 
-        self._container: Optional[pylxd.models.container.Container] = None
+        # TODO: I regret using generalized build_provider_flags.
+        self._lxd_remote: str = build_provider_flags.get(
+            "SNAPCRAFT_LXD_REMOTE", "local"
+        )
+
+        self._lxd_image_remote_addr = lxd_image_remote_addr
+        self._lxd_image_remote_name = lxd_image_remote_name
+        self._lxd_image_remote_protocol = lxd_image_remote_protocol
+
+        # TODO: Add build_base an parameter, removing project.
+        build_base = project._get_build_base()
+        lxd_image_name = _LXD_BUILDD_IMAGES.get(build_base)
+        if lxd_image_name is None:
+            raise errors.ProviderInvalidBaseError(
+                provider_name=self._get_provider_name(), build_base=build_base
+            )
+        self._lxd_image_name = lxd_image_name
+
+        self._lxc = LXC(remote=self._lxd_remote, name=self.instance_name)
 
     def _run(
         self, command: Sequence[str], hide_output: bool = False
     ) -> Optional[bytes]:
-        self._ensure_container_running()
-
         env_command = super()._get_env_command()
 
-        # TODO: use pylxd
-        cmd = [self._LXC_BIN, "exec", self.instance_name, "--"]
-        cmd.extend(env_command)
-        cmd.extend(command)
-        self._log_run(cmd)
+        if hide_output:
+            proc = self._lxc.execute_check_output([*env_command, *command])
+            return proc.stdout
 
-        output = None
-        try:
-            if hide_output:
-                output = subprocess.check_output(cmd)
-            else:
-                subprocess.check_call(cmd)
-        except subprocess.CalledProcessError as process_error:
-            raise errors.ProviderExecError(
-                provider_name=self._get_provider_name(),
-                command=command,
-                exit_code=process_error.returncode,
-                output=process_error.output,
-            ) from process_error
+        self._lxc.execute([*env_command, *command])
+        return None
 
-        return output
-
-    def _launch(self) -> None:
-        build_base = self.project._get_build_base()
-        try:
-            source = get_image_source(base=build_base)
-        except KeyError:
-            raise errors.ProviderInvalidBaseError(
-                provider_name=self._get_provider_name(), build_base=build_base
-            )
-
-        config = {"name": self.instance_name, "source": source}
-
-        try:
-            container = self._lxd_client.containers.create(config, wait=True)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderLaunchError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            ) from lxd_api_error
-        container.save(wait=True)
-        self._container = container
-
-        self._start()
-
-    def _supports_syscall_interception(self) -> bool:
-        # syscall interception relies on the seccomp_listener kernel feature
-        environment = self._lxd_client.host_info.get("environment", {})
-        kernel_features = environment.get("kernel_features", {})
-        return kernel_features.get("seccomp_listener", "false") == "true"
-
-    def _start(self):
-        if not self._lxd_client.containers.exists(self.instance_name):
-            raise errors.ProviderInstanceNotFoundError(instance_name=self.instance_name)
-
-        if self._container is None:
-            self._container = self._lxd_client.containers.get(self.instance_name)
-
-        self._container.sync()
-
-        # map to the owner of the directory we are eventually going to write the
-        # snap to.
-        self._container.config["raw.idmap"] = "both {!s} 0".format(
-            os.stat(self.project._project_dir).st_uid
-        )
-        # If possible, allow container to make safe mknod calls. Documented at
-        # https://linuxcontainers.org/lxd/docs/master/syscall-interception
-        if self._supports_syscall_interception():
-            self._container.config["security.syscalls.intercept.mknod"] = "true"
-        self._container.save(wait=True)
-
-        if self._container.status.lower() != "running":
-            try:
-                self._container.start(wait=True)
-            except pylxd.exceptions.LXDAPIException as lxd_api_error:
-                print(self._container.status)
-                raise errors.ProviderStartError(
-                    provider_name=self._get_provider_name(), error_message=lxd_api_error
-                ) from lxd_api_error
-
-        self.echoer.wrapped("Waiting for container to be ready")
-
-    def _stop(self):
-        # If _container is still None here it means creation/starting was not
-        # successful.
-        if self._container is None:
+    def _configure_image_remote(self) -> None:
+        remotes = self._lxc.get_remotes()
+        matching_remote = remotes.get(self._lxd_image_remote_name)
+        if matching_remote:
+            if (
+                matching_remote.get("addr") != self._lxd_image_remote_addr
+                or matching_remote.get("protocol") != self._lxd_image_remote_protocol
+            ):
+                raise SnapcraftEnvironmentError(
+                    f"Unexpected LXD remote: {matching_remote!r}"
+                )
             return
 
-        self._container.sync()
+        self._lxc.add_remote(
+            name=self._lxd_image_remote_name,
+            addr=self._lxd_image_remote_addr,
+            protocol=self._lxd_image_remote_protocol,
+        )
 
-        if self._container.status.lower() != "stopped":
-            try:
-                self._container.stop(wait=True)
-            except pylxd.exceptions.LXDAPIException as lxd_api_error:
-                raise errors.ProviderStopError(
-                    provider_name=self._get_provider_name(), error_message=lxd_api_error
-                ) from lxd_api_error
+    def _enable_instance_mknod(self) -> None:
+        """Enable mknod in container, if possible.
+
+        See: https://linuxcontainers.org/lxd/docs/master/syscall-interception
+        """
+        cfg = self._lxc.get_server_config()
+        env = cfg.get("environment", dict())
+        kernel_features = env.get("kernel_features", dict())
+        seccomp_listener = kernel_features.get("seccomp_listener", "false")
+
+        if seccomp_listener == "true":
+            self._lxc.set_config_key(
+                key="security.syscalls.intercept.mknod", value="true",
+            )
+
+    def _launch(self) -> None:
+        self._configure_image_remote()
+        self._lxc.launch(
+            image_remote=self._lxd_image_remote_name, image_name=self._lxd_image_name
+        )
+        self._enable_instance_mknod()
+
+    def _start(self):
+        instance_state = self._lxc.get_instance_state()
+        if instance_state is None:
+            raise errors.ProviderInstanceNotFoundError(instance_name=self.instance_name)
+
+        if instance_state["status"] != "Running":
+            self._lxc.start()
+        self.echoer.wrapped("Waiting for container to be ready")
 
     def _push_file(self, *, source: str, destination: str) -> None:
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
+        self._lxc.push_file(source=source, destination=destination)
 
-        self._ensure_container_running()
+    def _sync_project(self) -> None:
+        """Naive sync to remote using tarball."""
 
-        # TODO: better handling of larger files.
-        with open(source, "rb") as source_data:
-            source_contents = source_data.read()
+        logger.info("Syncing project to remote container...")
+        target_path = self._get_target_project_directory()
 
-        try:
-            self._container.files.put(destination, source_contents)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderFileCopyError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            )
+        self._lxc.execute(["rm", "-rf", target_path])
+        self._lxc.execute(["mkdir", "-p", target_path])
+
+        tar_path = file_utils.get_host_tool_path(command_name="tar", package_name="tar")
+        archive_proc = subprocess.Popen(
+            [tar_path, "cpf", "-", "-C", self.project._project_dir, "."],
+            stdout=subprocess.PIPE,
+        )
+
+        target_proc = self._lxc.execute_popen(
+            ["tar", "xpvf", "-", "-C", target_path], stdin=archive_proc.stdout,
+        )
+
+        # Allow archive_proc to receive a SIGPIPE if target_proc exits.
+        if archive_proc.stdout:
+            archive_proc.stdout.close()
+
+        # Waot until done.
+        target_proc.communicate()
 
     def create(self) -> None:
         """Create the LXD instance and setup the build environment."""
         self.echoer.info("Launching a container.")
         self.launch_instance()
+        if self._lxd_remote == "local":
+            self._mount_project()
+        else:
+            self._sync_project()
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
-        self._stop()
+        self._lxc.stop()
 
     def _get_mount_name(self, target: str) -> str:
         """Provide a formatted name for target mount point."""
@@ -306,77 +438,81 @@ class LXD(Provider):
 
     def _is_mounted(self, target: str) -> bool:
         """Query if there is a mount at target mount point."""
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
+        device_name = self._get_mount_name(target)
 
-        name = self._get_mount_name(target)
-        return name in self._container.devices
+        instance_state = self._lxc.get_instance_state()
+        if instance_state is None:
+            return False
+
+        instance_devices = instance_state.get("devices")
+        if not instance_devices:
+            return False
+
+        return device_name in instance_devices
 
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
+        device_name = self._get_mount_name(target)
 
-        if self._is_mounted(target):
-            # Nothing to do if already mounted.
-            return
-
-        name = self._get_mount_name(target)
-        self._container.sync()
-        self._container.devices[name] = {
-            "type": "disk",
-            "source": host_source,
-            "path": target,
-        }
-
-        try:
-            self._container.save(wait=True)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderMountError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            ) from lxd_api_error
+        self._lxc.mount(device_name=device_name, source=host_source, path=target)
 
     def clean_project(self) -> bool:
         was_cleaned = super().clean_project()
-        if was_cleaned:
-            if self._container is None:
-                try:
-                    self._container = self._lxd_client.containers.get(
-                        self.instance_name
-                    )
-                except pylxd.exceptions.NotFound:
-                    # If no container found, nothing to delete.
-                    return was_cleaned
-            self._stop()
-            self._container.delete(wait=True)
+
+        instance_state = self._lxc.get_instance_state()
+        if instance_state:
+            self._lxc.delete()
+            was_cleaned = True
+
         return was_cleaned
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
-
-        self._ensure_container_running()
-
-        # TODO: better handling of larger files.
-        try:
-            source_data = self._container.files.get(name)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderFileCopyError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            )
-        else:
-            with open(destination, "wb") as destination_data:
-                destination_data.write(source_data)
-        if delete and self._container.files.delete_available:
-            self._container.files.delete(name)
-        if delete and not self._container.files.delete_available:
-            logger.warning("File deletion not supported by this LXD version.")
+        self._lxc.pull_file(source=name, destination=destination)
+        if delete:
+            self._lxc.execute(["rm", "-f", name])
 
     def shell(self) -> None:
-        self._run(command=["/bin/bash"])
+        self._lxc.execute(["/bin/bash"])
+
+    def pack_project(self, *, output: Optional[str] = None) -> None:
+        if self._lxd_remote == "local":
+            return super().pack_project(output=output)
+
+        # Get temp directory.
+        proc = self._lxc.execute_check_output(["mktemp", "-d"])
+        output_dir = pathlib.Path(proc.stdout.decode().strip())
+
+        out = output_dir
+        if output:
+            output_path = pathlib.Path(output)
+            if not output_path.is_dir():
+                out = out / output_path.name
+
+        command = ["snapcraft", "snap"]
+        command.extend(["--output", out.as_posix()])
+        self._run(command=command)
+
+        proc = self._lxc.execute_check_output(
+            ["bash", "-c", f"cd {output_dir.as_posix()}; ls -1"]
+        )
+
+        logger.debug(f"built snaps: {proc.stdout}")
+
+        # Remote LXD only supports one output snap, but this is a
+        # generalized pattern that'll work for providers that support
+        # more than one (e.g. launchpad).
+        snap_paths = [
+            pathlib.Path(self.project._project_dir, artifact)
+            for artifact in proc.stdout.decode().strip().split("\n")
+        ]
+
+        logger.debug(f"output snap paths: {snap_paths}")
+
+        for dst in snap_paths:
+            src = pathlib.Path(output_dir, pathlib.Path(dst).name)
+            self._lxc.pull_file(source=str(src), destination=str(dst))
+
+        # snap() would return these paths.
 
     def _wait_for_systemd(self) -> None:
         # systemctl states we care about here are:
@@ -385,14 +521,12 @@ class LXD(Provider):
         #             Process returncode: 1
         for i in range(40):
             try:
-                self._run(["systemctl", "is-system-running"], hide_output=True)
+                self._lxc.execute_check_output(["systemctl", "is-system-running"])
                 break
-            except errors.ProviderExecError as exec_error:
-                if exec_error.output is not None:
-                    running_state = exec_error.output.decode().strip()
-                    if running_state == "degraded":
-                        break
-                    logger.debug(f"systemctl is-system-running: {running_state!r}")
+            except subprocess.CalledProcessError as error:
+                if "degraded" in error.stdout:
+                    break
+                logger.debug(f"systemctl is-system-running: {error.stdout!r}")
                 sleep(0.5)
         else:
             self.echoer.warning("Timed out waiting for systemd to be ready...")
@@ -401,7 +535,7 @@ class LXD(Provider):
         self.echoer.wrapped("Waiting for network to be ready...")
         for i in range(40):
             try:
-                self._run(["getent", "hosts", "snapcraft.io"], hide_output=True)
+                self._lxc.execute_check_output(["getent", "hosts", "snapcraft.io"])
                 break
             except errors.ProviderExecError:
                 sleep(0.5)
@@ -409,9 +543,6 @@ class LXD(Provider):
             self.echoer.warning("Failed to setup networking.")
 
     def _setup_environment(self) -> None:
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
-
         super()._setup_environment()
 
         self._install_file(
@@ -440,49 +571,33 @@ class LXD(Provider):
         self._wait_for_systemd()
 
         # Use resolv.conf managed by systemd-resolved.
-        self._run(
-            ["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"],
-            hide_output=True,
+        self._lxc.execute_check_output(
+            ["ln", "-sf", "/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"]
         )
 
-        self._run(["systemctl", "enable", "systemd-resolved"], hide_output=True)
-        self._run(["systemctl", "enable", "systemd-networkd"], hide_output=True)
+        self._lxc.execute_check_output(["systemctl", "enable", "systemd-resolved"])
+        self._lxc.execute_check_output(["systemctl", "enable", "systemd-networkd"])
 
-        self._run(["systemctl", "restart", "systemd-resolved"], hide_output=True)
-        self._run(["systemctl", "restart", "systemd-networkd"], hide_output=True)
+        self._lxc.execute_check_output(["systemctl", "restart", "systemd-resolved"])
+        self._lxc.execute_check_output(["systemctl", "restart", "systemd-networkd"])
 
         self._wait_for_network()
 
         # Setup snapd to bootstrap.
-        self._run(["apt-get", "update"])
+        self._lxc.execute(["apt-get", "update"])
 
         # First install fuse and udev, snapd requires them.
         # Snapcraft requires dirmngr
-        self._run(["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"])
+        self._lxc.execute(["apt-get", "install", "dirmngr", "udev", "fuse", "--yes"])
 
         # the system needs networking
-        self._run(["systemctl", "enable", "systemd-udevd"], hide_output=True)
-        self._run(["systemctl", "start", "systemd-udevd"], hide_output=True)
+        self._lxc.execute_check_output(["systemctl", "enable", "systemd-udevd"])
+        self._lxc.execute_check_output(["systemctl", "start", "systemd-udevd"])
 
         # And only then install snapd.
-        self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
-        self._run(["systemctl", "start", "snapd"], hide_output=True)
+        self._lxc.execute(["apt-get", "install", "snapd", "sudo", "--yes"])
+        self._lxc.execute_check_output(["systemctl", "start", "snapd"])
 
     def _setup_snapcraft(self):
         self._wait_for_network()
         super()._setup_snapcraft()
-
-    def _ensure_container_running(self) -> None:
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
-
-        self._container.sync()
-        if self._container.status.lower() != "running":
-            raise errors.ProviderFileCopyError(
-                provider_name=self._get_provider_name(),
-                error_message=(
-                    "Container is not running, the current state is: {!r}. "
-                    "Ensure it has not been modified by external factors and try again"
-                ).format(self._container.status),
-            )

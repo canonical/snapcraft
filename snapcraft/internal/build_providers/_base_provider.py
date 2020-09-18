@@ -19,7 +19,6 @@ import base64
 import logging
 import os
 import pathlib
-import platform
 import shlex
 import shutil
 import sys
@@ -109,9 +108,8 @@ class Provider(abc.ABC):
     def _get_provider_name(cls) -> str:
         """Return the provider name."""
 
-    @classmethod
-    @abc.abstractclassmethod
-    def _get_is_snap_injection_capable(cls) -> bool:
+    @abc.abstractmethod
+    def _get_is_snap_injection_capable(self) -> bool:
         """Return whether the provider can install snaps from the host."""
 
     @abc.abstractmethod
@@ -152,10 +150,13 @@ class Provider(abc.ABC):
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
 
-    def mount_project(self) -> None:
+    def _get_target_project_directory(self) -> str:
+        return (self._get_home_directory() / "project").as_posix()
+
+    def _mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
-        target = (self._get_home_directory() / "project").as_posix()
+        target = self._get_target_project_directory()
         self._mount(self.project._project_dir, target)
 
         if self.build_provider_flags.get("SNAPCRAFT_BIND_SSH"):
@@ -244,6 +245,9 @@ class Provider(abc.ABC):
             # Configure environment for snapcraft use.
             self._setup_environment()
 
+            # Configure apt.
+            self._setup_environment_apt()
+
             # Refresh repository caches.
             self._run(["apt-get", "update"])
 
@@ -320,6 +324,12 @@ class Provider(abc.ABC):
         finally:
             os.unlink(temp_file_path)
 
+    def _get_arch(self) -> str:
+        arch = self._run(["arch"], hide_output=True)
+        if not arch:
+            raise RuntimeError("unexpected arch output")
+        return arch.decode()
+
     def _get_code_name_from_build_base(self):
         build_base = self.project._get_build_base()
 
@@ -330,22 +340,22 @@ class Provider(abc.ABC):
             "core20": "focal",
         }[build_base]
 
-    def _get_primary_mirror(self) -> str:
+    def _get_primary_mirror(self, target_arch: str) -> str:
         primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if primary_mirror is None:
-            if platform.machine() in ["AMD64", "i686", "x86_64"]:
+            if target_arch in ["i686", "x86_64"]:
                 primary_mirror = "http://archive.ubuntu.com/ubuntu"
             else:
                 primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
 
         return primary_mirror
 
-    def _get_security_mirror(self) -> str:
+    def _get_security_mirror(self, target_arch: str) -> str:
         security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if security_mirror is None:
-            if platform.machine() in ["AMD64", "i686", "x86_64"]:
+            if target_arch in ["i686", "x86_64"]:
                 security_mirror = "http://security.ubuntu.com/ubuntu"
             else:
                 security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -385,6 +395,11 @@ class Provider(abc.ABC):
             permissions="0755",
         )
 
+    def _setup_environment_apt(self) -> None:
+        target_arch = self._get_arch()
+        primary_mirror = self._get_primary_mirror(target_arch)
+        security_mirror = self._get_security_mirror(target_arch)
+
         self._install_file(path="/etc/apt/sources.list", content="", permissions="0644")
 
         self._install_file(
@@ -396,7 +411,7 @@ class Provider(abc.ABC):
                     Suites: {release} {release}-updates
                     Components: main multiverse restricted universe
                     """.format(
-                    primary_mirror=self._get_primary_mirror(),
+                    primary_mirror=primary_mirror,
                     release=self._get_code_name_from_build_base(),
                 )
             ),
@@ -412,7 +427,7 @@ class Provider(abc.ABC):
                         Suites: {release}-security
                         Components: main multiverse restricted universe
                         """.format(
-                    security_mirror=self._get_security_mirror(),
+                    security_mirror=security_mirror,
                     release=self._get_code_name_from_build_base(),
                 )
             ),
@@ -445,11 +460,13 @@ class Provider(abc.ABC):
         # or if the provider cannot handle snap mounts.
         # This latter problem should go away when API for retrieving snaps
         # through snapd is generally available.
+        #
         if self._get_is_snap_injection_capable():
             inject_from_host = common.is_snap()
         else:
             inject_from_host = False
 
+        logger.info(f"snap inject: {inject_from_host}")
         snap_injector = SnapInjector(
             registry_filepath=registry_filepath,
             runner=self._run,
