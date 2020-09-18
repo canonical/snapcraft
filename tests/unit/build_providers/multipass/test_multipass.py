@@ -233,6 +233,7 @@ class MultipassTest(BaseProviderBaseTest):
                 ],
             )
         )
+        self.useFixture(fixtures.MockPatchObject(instance, "_mount_project",))
 
         instance.create()
 
@@ -441,7 +442,6 @@ class TestMultipassWithBases:
         with MultipassTestImpl(
             project=get_project(base=base), echoer=mock.Mock(), is_ephemeral=False
         ) as instance:
-            instance.mount_project()
             instance.execute_step(steps.PULL)
 
         multipass_cmd().launch.assert_called_once_with(
@@ -463,12 +463,14 @@ class TestMultipassWithBases:
             assert kwargs["hide_output"] is False
             assert kwargs["instance_name"] == "snapcraft-project-name"
 
-        multipass_cmd().mount.assert_called_once_with(
-            source=mock.ANY,
-            target="snapcraft-project-name:/root/project",
-            uid_map={str(os.getuid()): "0"},
-            gid_map={str(os.getgid()): "0"},
-        )
+        assert multipass_cmd().mount.mock_calls == [
+            mock.call(
+                source=mock.ANY,
+                target="snapcraft-project-name:/root/project",
+                uid_map={str(os.getuid()): "0"},
+                gid_map={str(os.getgid()): "0"},
+            )
+        ]
         multipass_cmd().umount.assert_not_called()
 
         assert multipass_cmd().info.call_count == 3
@@ -519,7 +521,7 @@ class TestMultipassWithBases:
         ) as instance:
             instance._mount_prime_directory()
 
-        multipass_cmd().mount.assert_called_once_with(
+        multipass_cmd().mount.assert_any_call(
             source=mock.ANY,
             target="snapcraft-project-name:/root/prime",
             uid_map={str(os.getuid()): "0"},
