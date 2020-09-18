@@ -78,3 +78,24 @@ CLOSED: [2020-06-24]
 - [ ] Error handling for setting invalid track names ([[https://bugs.launchpad.net/snapcraft/+bug/1892553][LP: 1892553]])
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
+
+*** STRT [[file:specifications/unified-provider.org] Unified Provider]] [2/4]
+
+- [ ] Add =is_provider_ready()= interface.
+- [ ] Refactor =Provider.setup_provider()=.
+- [ ] Drop =ensure_provider()= usage with =is_provider_ready()=.
+- [ ] Make =mount_project()= private, perform on create for LXD & Multipass.
+- [ ] Add =snap()= interface, executing build steps as required, outputting snap.
+- [ ] Refactor CLI, replacing =pack_project()= with =snap()=.
+- [ ] Rename =clean()= to =clean_parts()=.
+- [ ] Rename =clean_project()= to =clean()=.
+- [ ] Start & create LXD instance on demand, not from =__enter__=.
+- [ ] Start & create Multipass instance on demand, not from =__enter__=.
+- [ ] Implement =HostProvider=, removing special-case logic from
+  =snapcraft.cli= for host, and managed-host.
+- [ ] Add CLI handling for =SnapcraftProviderUnsupportedMethodError= on
+  lifecycle commands.
+- [ ] Add CLI handling for =SnapcraftProviderUnsupportedMethodError= on
+  lifecycle command options (--debug, --shell, --shell-after).
+- [ ] Update =snapcraft try= to perform =snap try=, rather than simply
+  exposing prime.

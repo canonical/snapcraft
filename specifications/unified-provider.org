@@ -99,8 +99,7 @@ class ProviderV2:
 
       :param interactive: Toggle for user input.
 
-      :raises ProviderSetupError: if provider has dependencies that need to be
-      installed, or configuration that must be changed.
+      :raises SnapcraftEnvironmentError: for failures setting up provider.
       """
 
       ...
