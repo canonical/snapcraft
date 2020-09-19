@@ -46,13 +46,12 @@ Multipass) and potential future providers (Remote LXD, etc.).
 
 #+begin_src python
 class Provider(abc.ABC):
-  def __init__(self, project_dir: pathlib.Path, project: Project, environment_manager_db: tinydb.TinyDB, ...) ->
+  def __init__(self, project: Project, **bp_kwargs) ->
   None:
     """Save instance attributes, take no actions."""
 
   def __enter__(self) -> Provider:
-    """Start-of-session actions, not to include launching VMs/instances.
-    """
+    """Start-of-session actions, not to include launching VMs/instances."""
 
   def __exit__(self) -> None:
     """End-of-session cleanup that may be configurable.
@@ -91,8 +90,6 @@ class Provider(abc.ABC):
       :raises SnapcraftEnvironmentError: for failures setting up provider.
       """
 
-      ...
-
     def execute_step(self, step: step.Step, part_name: Optional[List[str]]) -> None
       """Execute (up to, and including) specified step.
 
@@ -102,8 +99,6 @@ class Provider(abc.ABC):
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
           executing steps.
       """
-
-      ...
 
     def expose_prime(self, prime_dir: pathlib.Path) -> None:
       """Make project's prime directory available to host's prime_dir.
