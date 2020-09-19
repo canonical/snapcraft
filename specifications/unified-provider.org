@@ -86,8 +86,6 @@ class ProviderV2:
 
       """
 
-      ...
-
     def setup_provider(self, interactive: bool) -> None:
       """Install/configure as necessary.
 
