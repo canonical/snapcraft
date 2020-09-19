@@ -49,7 +49,6 @@ class ProviderV2:
   def __init__(self, project_dir: pathlib.Path, project: Project, environment_manager_db: tinydb.TinyDB, ...) ->
   None:
     """Save instance attributes, take no actions."""
-    ...
 
   def __enter__(self) -> Provider:
     """Start-of-session actions, not to include launching VMs/instances.
