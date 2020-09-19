@@ -56,8 +56,6 @@ class ProviderV2:
     Examples include:
     - querying datastore for relevant properties/configuration.
     """
-    ...
-    return self
 
   def __exit__(self) -> None:
     """End-of-session cleanup that may be configurable.
