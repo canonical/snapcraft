@@ -9,8 +9,8 @@
 Unify all build providers with a set of interfaces that can support
 all providers, each with their own limitations and capabilities.
 
-This will allow us to more easily introduce new providers, such
-as Remote LXD, and improve consistency for existing ones.
+This will allow us to more easily introduce new providers and improve
+consistency for existing ones.
 
 ** How is it done today
 
