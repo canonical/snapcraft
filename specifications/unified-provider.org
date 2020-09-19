@@ -45,28 +45,22 @@ Multipass) and potential future providers (Remote LXD, etc.).
 ** Proposed draft of public interfaces
 
 #+begin_src python
-class ProviderV2:
+class Provider(abc.ABC):
   def __init__(self, project_dir: pathlib.Path, project: Project, environment_manager_db: tinydb.TinyDB, ...) ->
   None:
     """Save instance attributes, take no actions."""
 
   def __enter__(self) -> Provider:
     """Start-of-session actions, not to include launching VMs/instances.
-
-    Examples include:
-    - querying datastore for relevant properties/configuration.
     """
 
   def __exit__(self) -> None:
     """End-of-session cleanup that may be configurable.
 
-    Includes closing datastore handle and any provider-specific
-    actions that are configured to be taken.
-
     Examples include:
     - scheduling stop for build-instance VM/container
     - removing temporary files or artifacts
-    - purging build-instance
+    - purging ephemeral build-instance
     """
 
   def is_provider_ready(self) -> bool:
@@ -106,7 +100,7 @@ class ProviderV2:
       :param part_names: Optional list of part names to execute step for.
 
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
-      executing steps.
+          executing steps.
       """
 
       ...
@@ -120,7 +114,7 @@ class ProviderV2:
       :param prime_dir: Directory to mount/sync prime directory to on host.
 
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
-      syncing/mounting project's prime directory.
+          syncing/mounting project's prime directory.
       """
 
     def snap(self, output_dir: pathlib.Path) -> List[pathlib.Path]:
@@ -133,18 +127,14 @@ class ProviderV2:
       :returns: Path to snap(s) created from build.
       """
 
-      ...
-
      def clean_parts(self, part_names: List[str]) -> None:
       """Clean specified parts.
 
       :param part_names: List of parts to clean.
 
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
-      executing steps.
+          executing steps.
       """
-
-      ...
 
     def clean(self) -> None:
       """Clean all artifacts of project and build environment.
@@ -156,8 +146,6 @@ class ProviderV2:
       This does not include any artifacts that have resulted from
       a call to snap(), i.e. snap files or build logs.
       """
-
-      ...
 
     def shell(self, step: Optional[step.Step], part_name: Optional[str]) -> None:
       """Launch an interactive shell to build-instance.
@@ -171,10 +159,10 @@ class ProviderV2:
 
       :param step: step to load environment for.
       :param part_name: part_name to load environment for.  If step is specified,
-      but not a part_name.
+           but not a part_name.
 
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
-      providing a shell.
+           providing a shell.
       """
 #+end_src
 
