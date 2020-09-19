@@ -176,8 +176,6 @@ class ProviderV2:
       :raises SnapcraftProviderUnsupportedMethod: if provider does not support
       providing a shell.
       """
-
-      ...
 #+end_src
 
 *** Summary of changes against current provider:
