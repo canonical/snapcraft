@@ -108,6 +108,14 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=["lxd"],
     ),
     dict(
+        param_decls="--lxd-remote",
+        metavar="<lxd-remote>",
+        help="LXD remote to use.",
+        envvar="SNAPCRAFT_LXD_REMOTE",
+        supported_providers=["lxd"],
+        default="local",
+    ),
+    dict(
         param_decls="--provider",
         envvar="SNAPCRAFT_BUILD_ENVIRONMENT",
         show_envvar=False,

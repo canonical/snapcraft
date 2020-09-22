@@ -152,10 +152,13 @@ class Provider(abc.ABC):
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
 
+    def _get_target_project_directory(self) -> str:
+        return (self._get_home_directory() / "project").as_posix()
+
     def _mount_project(self) -> None:
         """Provider steps needed to make the project available to the instance.
         """
-        target = (self._get_home_directory() / "project").as_posix()
+        target = self._get_target_project_directory()
         self._mount(self.project._project_dir, target)
 
         if self.build_provider_flags.get("SNAPCRAFT_BIND_SSH"):
