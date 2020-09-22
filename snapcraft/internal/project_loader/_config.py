@@ -248,12 +248,12 @@ class Config:
 
     def _get_required_package_repositories(self) -> List[PackageRepository]:
         package_repos = self.project._snap_meta.package_repositories.copy()
+        
         v1_plugins = [
             part.plugin
             for part in self.all_parts
             if isinstance(part.plugin, plugins.v1.PluginV1)
         ]
-
         for plugin in v1_plugins:
             package_repos.extend(plugin.get_required_package_repositories())
 
