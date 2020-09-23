@@ -290,16 +290,13 @@ function make_user_fontconfig {
   if [ -d "$REALHOME/.fonts" ]; then
     echo "  <dir>$REALHOME/.fonts</dir>"
   fi
-  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
-    if [ -d "${data_dirs_array[$i]}/fonts" ]; then
-      echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
-    fi
-  done
   echo '  <include ignore_missing="yes">conf.d</include>'
+  echo "  <include ignore_missing=\"yes\">${FONTCONFIG_FILE}</include>"
   # We need to include this default cachedir first so that caching
   # works: without it, fontconfig will try to write to the real user home
   # cachedir and be blocked by AppArmor.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
+  echo "  <cachedir>$SNAP_DATA/fontconfig</cachedir>"
   if [ -d "$REALHOME/.cache/fontconfig" ]; then
     echo "  <cachedir>$REALHOME/.cache/fontconfig</cachedir>"
   fi
