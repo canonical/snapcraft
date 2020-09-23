@@ -53,7 +53,7 @@ class LXC:
         )
         self.long_name = self.remote + ":" + self.name
 
-    def enable_mknod(self) -> None:
+    def _enable_mknod(self) -> None:
         """Enable mknod in container, if possible.
 
         See: https://linuxcontainers.org/lxd/docs/master/syscall-interception
@@ -80,6 +80,12 @@ class LXC:
             stderr=subprocess.PIPE,
         )
         return proc.stdout, proc.stderr
+
+    def launch(self, image: str) -> None:
+        proc = subprocess.run(
+            [self.lxc_command, "launch", image, self.long_name],
+            stdout=subprocess.PIPE,
+        )
 
     def get_state(self) -> Dict[str, Any]:
         """Get instance state information."""
@@ -118,7 +124,7 @@ class LXC:
         """Check if instance is running."""
         return self.get_state()["status"] == "Running"
 
-    def map_uid_to_root(self, uid: int) -> None:
+    def _map_uid_to_root(self, uid: int) -> None:
         """Map specified uid on host to root in container."""
         self._lxc.config_set(
             key="raw.idmap", value=f"both {uid!s} 0",
