@@ -149,6 +149,11 @@ def _execute(  # noqa: C901
             else:
                 if shell or shell_after:
                     instance.shell()
+
+            if pack_project:
+                paths = instance.snap()
+                for path in paths:
+                    echo.info(f"Snapped: {path}")
     return project
 
 

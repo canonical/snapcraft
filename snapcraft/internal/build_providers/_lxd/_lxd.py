@@ -16,11 +16,10 @@
 
 import logging
 import os
+import pathlib
 import shlex
-import stat
 import subprocess
 import sys
-import tempfile
 from textwrap import dedent
 from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
@@ -72,17 +71,23 @@ class LXC:
 
     def execute(self, command: List[str]):
         """Execute command in instance, allowing output to console."""
-        self._lxc_run(["exec", self.long_name, "--", *command], check=True)
+        return self._lxc_run(["exec", self.long_name, "--", *command], check=True)
 
     def execute_check_output(self, command: List[str]):
         """Execute command in instance, capturing output."""
-        proc = self._lxc_run(
+        return self._lxc_run(
             ["exec", self.long_name, "--", *command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
         )
-        return proc.stdout, proc.stderr
+
+    def execute_popen(self, command: List[str], **popen_kwargs):
+        """Execute command in instance, using Popen."""
+        command = [str(self.lxc_command), "exec", self.long_name, "--", *command]
+        quoted = " ".join([shlex.quote(c) for c in command])
+        logger.info(f"Running: {quoted}")
+        return subprocess.Popen(command, **popen_kwargs)
 
     def get_instances(self) -> List[Dict[str, Any]]:
         """Get instance state information."""
@@ -125,7 +130,7 @@ class LXC:
     def launch(self, *, image_remote: str, image_name: str) -> None:
         """Launch instance."""
         self._lxc_run(
-            ["launch", ":".join([image_remote, image_name]), self.long_name,],
+            ["launch", ":".join([image_remote, image_name]), self.long_name],
             check=True,
         )
 
@@ -317,8 +322,8 @@ class LXD(Provider):
         env_command = super()._get_env_command()
 
         if hide_output:
-            stdout, _ = self._lxc.execute_check_output([*env_command, *command])
-            return stdout
+            proc = self._lxc.execute_check_output([*env_command, *command])
+            return proc.stdout
 
         self._lxc.execute([*env_command, *command])
         return None
@@ -377,53 +382,30 @@ class LXD(Provider):
         self._lxc.push_file(source=source, destination=destination)
 
     def _sync_project(self) -> None:
+        """Naive sync to remote using tarball."""
+
         logger.info("Syncing project to remote container...")
-        self._lxc.execute(["apt", "install", "rsync", "--yes"])
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix="fake-ssh", delete=False
-        ) as f:
-            f.write(
-                dedent(
-                    f"""\
-                #!/bin/sh -x
-                shift
-                exec lxc exec -T {self._lxd_remote}:{self.instance_name} -- "$@"
-                """
-                )
-            )
-
-            fake_ssh_path = f.name
-            print(fake_ssh_path)
-
-        st = os.stat(fake_ssh_path)
-        os.chmod(fake_ssh_path, st.st_mode | stat.S_IEXEC)
-
-        rsync_path = file_utils.get_host_tool_path(
-            command_name="rsync", package_name="rsync"
-        )
         target_path = self._get_target_project_directory()
 
-        command = [
-            str(rsync_path),
-            "-avPz",
-            "-e",
-            fake_ssh_path,
-            self.project._project_dir,
-            f"remote_container:{target_path}",
-        ]
+        self._lxc.execute(["rm", "-rf", target_path])
+        self._lxc.execute(["mkdir", "-p", target_path])
 
-        quoted = " ".join([shlex.quote(c) for c in command])
-        logger.info(f"Running: {quoted}")
+        tar_path = file_utils.get_host_tool_path(command_name="tar", package_name="tar")
+        archive_proc = subprocess.Popen(
+            [tar_path, "cpf", "-", "-C", self.project._project_dir, "."],
+            stdout=subprocess.PIPE,
+        )
 
-        try:
-            subprocess.run(command, check=True)
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(
-                f"Failed to rsync to remote container: {error.stdout} {error.stderr}"
-            )
+        target_proc = self._lxc.execute_popen(
+            ["tar", "xpvf", "-", "-C", target_path], stdin=archive_proc.stdout,
+        )
 
-        os.unlink(fake_ssh_path)
+        # Allow archive_proc to receive a SIGPIPE if target_proc exits.
+        if archive_proc.stdout:
+            archive_proc.stdout.close()
+
+        # Waot until done.
+        target_proc.communicate()
 
     def create(self) -> None:
         """Create the LXD instance and setup the build environment."""
@@ -492,6 +474,28 @@ class LXD(Provider):
 
     def shell(self) -> None:
         self._lxc.execute(["/bin/bash"])
+
+    def snap(self) -> List[pathlib.Path]:
+        """Naive snap implementation to gather built snaps.
+
+        Naive enough to grab anything with the .snap, whether
+        it was built or not.
+        """
+        target_path = self._get_target_project_directory()
+        proc = self._lxc.execute_check_output(
+            ["bash", "-c", f"ls -1 {target_path}/*.snap"]
+        )
+
+        snap_paths = [
+            pathlib.Path(self.project._project_dir, pathlib.Path(p).name)
+            for p in proc.stdout.decode().strip().split("\n")
+        ]
+
+        for dst in snap_paths:
+            src = pathlib.Path(target_path, pathlib.Path(dst).name)
+            self._lxc.pull_file(source=str(src), destination=str(dst))
+
+        return snap_paths
 
     def _wait_for_systemd(self) -> None:
         # systemctl states we care about here are:
