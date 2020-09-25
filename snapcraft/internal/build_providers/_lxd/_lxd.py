@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
 import logging
 import os
+import shlex
 import stat
 import subprocess
 import sys
@@ -25,20 +25,27 @@ from textwrap import dedent
 from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
 
+import yaml
+
 from snapcraft import file_utils
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 from .._base_provider import Provider, errors
-from ._images import get_image_source
 
 logger = logging.getLogger(__name__)
-# Filter out attribute setting warnings for properties that exist in LXD operations
-# but are unhandled in pylxd.
+
+_LXD_BUILDD_REMOTE_NAME = "snapcraft-buildd-images"
+_LXD_BUILDD_IMAGES = {
+    "core": "16.04",
+    "core16": "16.04",
+    "core18": "18.04",
+    "core20": "20.04",
+}
 
 
 class LXC:
-    """LXC Instance Manager."""
+    """LXC Wrapper."""
 
     def __init__(self, *, remote: str, name: str) -> None:
         """Manage instance via `lxc`.
@@ -53,102 +60,133 @@ class LXC:
         )
         self.long_name = self.remote + ":" + self.name
 
-    def _enable_mknod(self) -> None:
-        """Enable mknod in container, if possible.
+    def add_remote(self, name: str, addr: str, protocol: str = "simplestreams") -> None:
+        """Add a public remote."""
+        self._lxc_run(
+            ["remote", "add", name, addr, f"--protocol={protocol}"], check=True,
+        )
 
-        See: https://linuxcontainers.org/lxd/docs/master/syscall-interception
-        """
-        cfg = self.get_server_config()
-        env = cfg.get("environment", dict())
-        kernel_features = env.get("kernel_features", dict())
-        seccomp_listener = kernel_features.get("seccomp_listener", "false")
-
-        if seccomp_listener == "true":
-            self.config_set(
-                key="security.syscalls.intercept.mknod", value="true",
-            )
+    def delete(self):
+        """Purge instance."""
+        self._lxc_run(["delete", self.long_name, "--force"], check=True)
 
     def execute(self, command: List[str]):
         """Execute command in instance, allowing output to console."""
-        subprocess.run([self.lxc_command, "exec", self.long_name, "--", *command])
+        self._lxc_run(["exec", self.long_name, "--", *command], check=True)
 
     def execute_check_output(self, command: List[str]):
         """Execute command in instance, capturing output."""
-        proc = subprocess.run(
-            [self.lxc_command, "exec", self.long_name, "--", *command],
+        proc = self._lxc_run(
+            ["exec", self.long_name, "--", *command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            check=True,
         )
         return proc.stdout, proc.stderr
 
-    def launch(self, image: str) -> None:
-        proc = subprocess.run(
-            [self.lxc_command, "launch", image, self.long_name],
-            stdout=subprocess.PIPE,
-        )
-
-    def get_state(self) -> Dict[str, Any]:
+    def get_instances(self) -> List[Dict[str, Any]]:
         """Get instance state information."""
-        proc = subprocess.run(
-            [self.lxc_command, "list", "--format=yaml", self.log_name],
+        proc = self._lxc_run(
+            ["list", "--format=yaml", self.long_name],
             stdout=subprocess.PIPE,
+            check=True,
         )
-        return yaml.load(proc.stdout)[0]
 
-    def get_config(self) -> Dict[str, Any]:
-        """Get instance configuration."""
-        return self.get_state()["config"]
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
 
-    def get_config_key(self, key: str) -> str:
-        """Get instance configuration key."""
-        proc = subprocess.run(
-            [self.lxc_command, "config", "get", self.long_name, key],
-            stdout=subprocess.PIPE,
+    def get_instance_state(self) -> Optional[Dict[str, Any]]:
+        """Get instance state, if instance exists."""
+        instances = self.get_instances()
+        if not instances:
+            return None
+
+        for instance in self.get_instances():
+            if instance["name"] == self.name:
+                return instance
+        return None
+
+    def get_remotes(self) -> Dict[str, Any]:
+        """Get list of remotes.
+
+        :returns: dictionary with remote name mapping to config.
+        """
+        proc = self._lxc_run(
+            ["remote", "list", "--format=yaml"], stdout=subprocess.PIPE, check=True,
         )
-        return proc.stdout
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
 
     def get_server_config(self) -> Dict[str, Any]:
         """Get server config that instance is running on."""
-        proc = subprocess.run(
-            [self.lxc_command, "info", self.remote + ":"], stdout=subprocess.PIPE,
+        proc = self._lxc_run(
+            ["info", self.remote + ":"], stdout=subprocess.PIPE, check=True,
         )
-        return yaml.load(proc.stdout)
+        return yaml.load(proc.stdout, Loader=yaml.FullLoader)
 
-    def launch(self, image_remote: str, image_name: str) -> None:
+    def launch(self, *, image_remote: str, image_name: str) -> None:
         """Launch instance."""
-        subprocess.run(
-            [self.lxc_command, launch, ":".join(image_remote, image_name), self.long_name]
+        self._lxc_run(
+            ["launch", ":".join([image_remote, image_name]), self.long_name,],
+            check=True,
         )
 
     def is_instance_running(self) -> bool:
         """Check if instance is running."""
-        return self.get_state()["status"] == "Running"
+        instance_state = self.get_instance_state()
+        if instance_state is None:
+            return False
 
-    def _map_uid_to_root(self, uid: int) -> None:
+        return instance_state["status"] == "Running"
+
+    def map_uid_to_root(self, uid: int) -> None:
         """Map specified uid on host to root in container."""
-        self._lxc.config_set(
+        self.set_config_key(
             key="raw.idmap", value=f"both {uid!s} 0",
+        )
+
+    def mount(self, device_name: str, source: str, path: str) -> None:
+        """Mount host source directory to target mount point."""
+        self._lxc_run(
+            [
+                "config",
+                "device",
+                "add",
+                self.long_name,
+                device_name,
+                f"source={source}",
+                f"path={path}",
+            ],
+            check=True,
         )
 
     def set_config_key(self, key: str, value: str) -> None:
         """Set instance configuration key."""
-        subprocess.run([self.lxc_command, "config", "set", self.long_name, key, value])
+        self._lxc_run(["config", "set", self.long_name, key, value], check=True)
 
     def pull_file(self, *, source: str, destination: str) -> None:
         """Get file from instance."""
-        subprocess.run([self.lxc_command, "pull", self.long_name + source, destination])
+        self._lxc_run(
+            ["file", "pull", self.long_name + source, destination], check=True,
+        )
 
     def push_file(self, *, source: str, destination: str) -> None:
         """Push file to instance."""
-        subprocess.run([self.lxc_command, "push", source, self.long_name + destination])
+        self._lxc_run(
+            ["file", "push", source, self.long_name + destination], check=True,
+        )
 
     def start(self) -> None:
         """Start container."""
-        subprocess.run([self.lxc_command, "start", self.long_name])
+        self._lxc_run(["start", self.long_name], check=True)
 
     def stop(self) -> None:
         """Stop container."""
-        subprocess.run([self.lxc_command, "stop", self.long_name])
+        self._lxc_run(["stop", self.long_name], check=True)
+
+    def _lxc_run(self, lxc_args: List[str], **kwargs):
+        command = [str(self.lxc_command), *lxc_args]
+        quoted = " ".join([shlex.quote(c) for c in command])
+        logger.info(f"Running: {quoted}")
+        return subprocess.run(command, **kwargs)
 
 
 class LXD(Provider):
@@ -242,6 +280,9 @@ class LXD(Provider):
         echoer,
         build_provider_flags: Dict[str, str],
         is_ephemeral: bool = False,
+        lxd_image_remote_addr: str = "https://cloud-images.ubuntu.com/buildd/releases",
+        lxd_image_remote_name: str = "snapcraft-buildd-images",
+        lxd_image_remote_protocol: str = "simplestreams",
     ) -> None:
         super().__init__(
             project=project,
@@ -250,54 +291,110 @@ class LXD(Provider):
             build_provider_flags=build_provider_flags,
         )
 
+        # TODO: I regret using generalized build_provider_flags.
         self._lxd_remote: str = build_provider_flags.get(
             "SNAPCRAFT_LXD_REMOTE", "local"
         )
 
-        self._lxc = LXC(remote=self._lxd_remote, name=self.instance_name)
+        self._lxd_image_remote_addr = lxd_image_remote_addr
+        self._lxd_image_remote_name = lxd_image_remote_name
+        self._lxd_image_remote_protocol = lxd_image_remote_protocol
 
-    def _run(self, command: Sequence[str], hide_output: bool = False) -> Optional[bytes]:
-        env_command = super()._get_env_command()
-
-        if hide_output:
-            self._lxc.execute_check_output([*env_command, *command])
-        else:
-            self._lxc.execute([*env_command, *command])
-
-    def _launch(self) -> None:
-        build_base = self.project._get_build_base()
-        try:
-            source = get_image_source(base=build_base)
-        except KeyError:
+        # TODO: Add build_base an parameter, removing project.
+        build_base = project._get_build_base()
+        lxd_image_name = _LXD_BUILDD_IMAGES.get(build_base)
+        if lxd_image_name is None:
             raise errors.ProviderInvalidBaseError(
                 provider_name=self._get_provider_name(), build_base=build_base
             )
+        self._lxd_image_name = lxd_image_name
 
-        self._lxc_lxc.execute_check_output(["launch", source, self._instance_name])
+        self._lxc = LXC(remote=self._lxd_remote, name=self.instance_name)
+
+    def _run(
+        self, command: Sequence[str], hide_output: bool = False
+    ) -> Optional[bytes]:
+        env_command = super()._get_env_command()
+
+        if hide_output:
+            stdout, _ = self._lxc.execute_check_output([*env_command, *command])
+            return stdout
+
+        self._lxc.execute([*env_command, *command])
+        return None
+
+    def _configure_image_remote(self) -> None:
+        remotes = self._lxc.get_remotes()
+        matching_remote = remotes.get(self._lxd_image_remote_name)
+        if matching_remote:
+            if (
+                matching_remote.get("addr") != self._lxd_image_remote_addr
+                or matching_remote.get("protocol") != self._lxd_image_remote_protocol
+            ):
+                raise SnapcraftEnvironmentError(
+                    f"Unexpected LXD remote: {matching_remote!r}"
+                )
+            return
+
+        self._lxc.add_remote(
+            name=self._lxd_image_remote_name,
+            addr=self._lxd_image_remote_addr,
+            protocol=self._lxd_image_remote_protocol,
+        )
+
+    def _enable_instance_mknod(self) -> None:
+        """Enable mknod in container, if possible.
+
+        See: https://linuxcontainers.org/lxd/docs/master/syscall-interception
+        """
+        cfg = self._lxc.get_server_config()
+        env = cfg.get("environment", dict())
+        kernel_features = env.get("kernel_features", dict())
+        seccomp_listener = kernel_features.get("seccomp_listener", "false")
+
+        if seccomp_listener == "true":
+            self._lxc.set_config_key(
+                key="security.syscalls.intercept.mknod", value="true",
+            )
+
+    def _launch(self) -> None:
+        self._configure_image_remote()
+        self._lxc.launch(
+            image_remote=self._lxd_image_remote_name, image_name=self._lxd_image_name
+        )
+        self._enable_instance_mknod()
 
     def _start(self):
-        self.lxc.start()
+        instance_state = self._lxc.get_instance_state()
+        if instance_state is None:
+            raise errors.ProviderInstanceNotFoundError(instance_name=self.instance_name)
+
+        if instance_state["status"] != "Running":
+            self._lxc.start()
         self.echoer.wrapped("Waiting for container to be ready")
 
-    def _push_file(self, *, source: str, destination: str) -> none:
+    def _push_file(self, *, source: str, destination: str) -> None:
         self._lxc.push_file(source=source, destination=destination)
 
     def _sync_project(self) -> None:
         logger.info("Syncing project to remote container...")
+        self._lxc.execute(["apt", "install", "rsync", "--yes"])
+
         with tempfile.NamedTemporaryFile(
             mode="w", suffix="fake-ssh", delete=False
         ) as f:
             f.write(
                 dedent(
-                    f"""
+                    f"""\
                 #!/bin/sh -x
                 shift
-                exec lxc exec -T {self.instance_name} -- "$@"
+                exec lxc exec -T {self._lxd_remote}:{self.instance_name} -- "$@"
                 """
                 )
             )
 
             fake_ssh_path = f.name
+            print(fake_ssh_path)
 
         st = os.stat(fake_ssh_path)
         os.chmod(fake_ssh_path, st.st_mode | stat.S_IEXEC)
@@ -307,17 +404,20 @@ class LXD(Provider):
         )
         target_path = self._get_target_project_directory()
 
+        command = [
+            str(rsync_path),
+            "-avPz",
+            "-e",
+            fake_ssh_path,
+            self.project._project_dir,
+            f"remote_container:{target_path}",
+        ]
+
+        quoted = " ".join([shlex.quote(c) for c in command])
+        logger.info(f"Running: {quoted}")
+
         try:
-            subprocess.run(
-                [
-                    rsync_path,
-                    "-avPz",
-                    "-e",
-                    fake_ssh_path,
-                    self.project._project_dir,
-                    f"remote_container:{target_path}",
-                ]
-            )
+            subprocess.run(command, check=True)
         except subprocess.CalledProcessError as error:
             raise RuntimeError(
                 f"Failed to rsync to remote container: {error.stdout} {error.stderr}"
@@ -329,14 +429,14 @@ class LXD(Provider):
         """Create the LXD instance and setup the build environment."""
         self.echoer.info("Launching a container.")
         self.launch_instance()
-        if self._lxd_remote != "local":
+        if self._lxd_remote == "local":
             self._mount_project()
         else:
             self._sync_project()
 
     def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
-        self._stop()
+        self._lxc.stop()
 
     def _get_mount_name(self, target: str) -> str:
         """Provide a formatted name for target mount point."""
@@ -357,58 +457,38 @@ class LXD(Provider):
 
     def _is_mounted(self, target: str) -> bool:
         """Query if there is a mount at target mount point."""
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
+        device_name = self._get_mount_name(target)
 
-        name = self._get_mount_name(target)
-        return name in self._container.devices
+        instance_state = self._lxc.get_instance_state()
+        if instance_state is None:
+            return False
+
+        instance_devices = instance_state.get("devices")
+        if not instance_devices:
+            return False
+
+        return device_name in instance_devices
 
     def _mount(self, host_source: str, target: str) -> None:
         """Mount host source directory to target mount point."""
-        # Sanity check - developer error if container not initialized.
-        if self._container is None:
-            raise RuntimeError("Attempted to use container before starting.")
+        device_name = self._get_mount_name(target)
 
-        if self._is_mounted(target):
-            # Nothing to do if already mounted.
-            return
-
-        name = self._get_mount_name(target)
-        self._container.sync()
-        self._container.devices[name] = {
-            "type": "disk",
-            "source": host_source,
-            "path": target,
-        }
-
-        try:
-            self._container.save(wait=True)
-        except pylxd.exceptions.LXDAPIException as lxd_api_error:
-            raise errors.ProviderMountError(
-                provider_name=self._get_provider_name(), error_message=lxd_api_error
-            ) from lxd_api_error
+        self._lxc.mount(device_name=device_name, source=host_source, path=target)
 
     def clean_project(self) -> bool:
-        if
         was_cleaned = super().clean_project()
-        if was_cleaned:
-            if self._container is None:
-                try:
-                    self._container = self._lxd_client.containers.get(
-                        self.instance_name
-                    )
-                except pylxd.exceptions.NotFound:
-                    # If no container found, nothing to delete.
-                    return was_cleaned
-            self._stop()
-            self._container.delete(wait=True)
+
+        instance_state = self._lxc.get_instance_state()
+        if instance_state:
+            self._lxc.delete()
+            was_cleaned = True
+
         return was_cleaned
 
     def pull_file(self, name: str, destination: str, delete: bool = False) -> None:
         self._lxc.pull_file(source=name, destination=destination)
         if delete:
-            self._lxc.execute(["rm", "-f", source])
+            self._lxc.execute(["rm", "-f", name])
 
     def shell(self) -> None:
         self._lxc.execute(["/bin/bash"])
@@ -425,7 +505,7 @@ class LXD(Provider):
             except subprocess.CalledProcessError as error:
                 if "degraded" in error.stdout:
                     break
-                logger.debug(f"systemctl is-system-running: {running_state!r}")
+                logger.debug(f"systemctl is-system-running: {error.stdout!r}")
                 sleep(0.5)
         else:
             self.echoer.warning("Timed out waiting for systemd to be ready...")

@@ -21,6 +21,7 @@ from unittest import mock
 from testtools.matchers import Contains, Equals
 
 from snapcraft.internal import steps
+
 from . import LifecycleCommandsBaseTestCase
 
 
