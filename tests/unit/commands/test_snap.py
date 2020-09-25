@@ -21,6 +21,7 @@ from unittest import mock
 from testtools.matchers import Contains, Equals
 
 from snapcraft.internal import steps
+
 from . import LifecycleCommandsBaseTestCase
 
 
@@ -52,6 +53,13 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.fake_get_provider_for.mock.assert_called_once_with("multipass")
         self.assert_build_provider_calls(output="foo.snap")
+
+    def test_output_using_defaults_with_dir(self):
+        result = self.run_command(["snap", "--output", "/tmp"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.fake_get_provider_for.mock.assert_called_once_with("multipass")
+        self.assert_build_provider_calls(output="/tmp")
 
     def test_shell_using_defaults(self):
         result = self.run_command(["snap", "--shell"])
@@ -100,6 +108,18 @@ class TestSnap(LifecycleCommandsBaseTestCase):
         )
         self.fake_pack.mock.assert_called_once_with(
             os.path.join(self.path, "prime"), compression=None, output="foo.snap"
+        )
+
+    def test_output_using_destructive_mode_with_directory(self):
+        result = self.run_command(["snap", "--destructive-mode", "--output", "/tmp"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.fake_get_provider_for.mock.assert_not_called()
+        self.fake_lifecycle_execute.mock.assert_called_once_with(
+            steps.PRIME, mock.ANY, tuple()
+        )
+        self.fake_pack.mock.assert_called_once_with(
+            os.path.join(self.path, "prime"), compression=None, output="/tmp"
         )
 
     def test_deprecated_snap_dir(self):

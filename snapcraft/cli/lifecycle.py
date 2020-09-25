@@ -202,6 +202,23 @@ def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
 def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
+    output_file = None
+    output_dir = None
+
+    # Output may be:
+    # (1) a directory path to output snaps to
+    # (2) an explicit file path to output snap to
+    # (3) unspecified (None), output to current directory (project directory)
+    if output:
+        output_path = pathlib.Path(output)
+        output_parent = output_path.parent
+        if output_path.is_dir():
+            output_dir = str(output_path)
+        elif output_parent and output_parent != pathlib.Path("."):
+            output_dir = str(output_parent)
+            output_file = output_path.name
+        else:
+            output_file = output
 
     snap_path = file_utils.get_host_tool_path(command_name="snap", package_name="snapd")
 
@@ -213,10 +230,16 @@ def _pack(
                 f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
             )
         command.extend(["--compression", compression])
-    if output is not None:
-        command.extend(["--filename", output])
+
+    if output_file:
+        command.extend(["--filename", output_file])
+
     command.append(directory)
 
+    if output_dir:
+        command.append(output_dir)
+
+    logger.debug(f"Running pack command: {command}")
     snap_filename = _run_pack(command)
     echo.info(f"Snapped {snap_filename}")
 
