@@ -475,27 +475,45 @@ class LXD(Provider):
     def shell(self) -> None:
         self._lxc.execute(["/bin/bash"])
 
-    def snap(self) -> List[pathlib.Path]:
-        """Naive snap implementation to gather built snaps.
+    def pack_project(self, *, output: Optional[str] = None) -> None:
+        if self._lxd_remote == "local":
+            return super().pack_project(output=output)
 
-        Naive enough to grab anything with the .snap, whether
-        it was built or not.
-        """
-        target_path = self._get_target_project_directory()
+        # Get temp directory.
+        proc = self._lxc.execute_check_output(["mktemp", "-d"])
+        output_dir = pathlib.Path(proc.stdout.decode().strip())
+
+        out = output_dir
+        if output:
+            output_path = pathlib.Path(output)
+            if not output_path.is_dir():
+                out = out / output_path.name
+
+        command = ["snapcraft", "snap"]
+        command.extend(["--output", out.as_posix()])
+        self._run(command=command)
+
         proc = self._lxc.execute_check_output(
-            ["bash", "-c", f"ls -1 {target_path}/*.snap"]
+            ["bash", "-c", f"cd {output_dir.as_posix()}; ls -1"]
         )
 
+        logger.debug(f"built snaps: {proc.stdout}")
+
+        # Remote LXD only supports one output snap, but this is a
+        # generalized pattern that'll work for providers that support
+        # more than one (e.g. launchpad).
         snap_paths = [
-            pathlib.Path(self.project._project_dir, pathlib.Path(p).name)
-            for p in proc.stdout.decode().strip().split("\n")
+            pathlib.Path(self.project._project_dir, artifact)
+            for artifact in proc.stdout.decode().strip().split("\n")
         ]
 
+        logger.debug(f"output snap paths: {snap_paths}")
+
         for dst in snap_paths:
-            src = pathlib.Path(target_path, pathlib.Path(dst).name)
+            src = pathlib.Path(output_dir, pathlib.Path(dst).name)
             self._lxc.pull_file(source=str(src), destination=str(dst))
 
-        return snap_paths
+        # snap() would return these paths.
 
     def _wait_for_systemd(self) -> None:
         # systemctl states we care about here are:

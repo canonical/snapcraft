@@ -149,11 +149,6 @@ def _execute(  # noqa: C901
             else:
                 if shell or shell_after:
                     instance.shell()
-
-            if pack_project:
-                paths = instance.snap()
-                for path in paths:
-                    echo.info(f"Snapped: {path}")
     return project
 
 
@@ -207,6 +202,20 @@ def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
 
+    output_file = None
+    output_dir = None
+
+    if output:
+        output_path = pathlib.Path(output)
+        output_parent = output_path.parent
+        if output_path.is_dir():
+            output_dir = str(output_path)
+        elif output_parent and output_parent != pathlib.Path("."):
+            output_dir = str(output_parent)
+            output_file = output_path.name
+        else:
+            output_file = output
+
     snap_path = file_utils.get_host_tool_path(command_name="snap", package_name="snapd")
 
     command: List[Union[str, pathlib.Path]] = [snap_path, "pack"]
@@ -217,10 +226,16 @@ def _pack(
                 f"EXPERIMENTAL: Setting the squash FS compression to {compression!r}."
             )
         command.extend(["--compression", compression])
-    if output is not None:
-        command.extend(["--filename", output])
+
+    if output_file:
+        command.extend(["--filename", output_file])
+
     command.append(directory)
 
+    if output_dir:
+        command.append(output_dir)
+
+    echo.info(f"Running pack command: {command}")
     snap_filename = _run_pack(command)
     echo.info(f"Snapped {snap_filename}")
 
