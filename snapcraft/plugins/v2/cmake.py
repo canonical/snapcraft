@@ -28,6 +28,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - cmake-parameters
       (list of strings)
       parameters to pass to the build using the common cmake semantics.
+
+    - cmake-generator
+      (string; default: "Unix Makefiles")
+      Determine what native build system is to be used.
+      Can be either `ninja` or `Unix Makefiles` (default).
 """
 
 from typing import Any, Dict, List, Set

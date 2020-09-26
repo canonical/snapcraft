@@ -19,13 +19,13 @@ import logging
 import os
 import os.path
 import re
-import urllib
 from typing import List, Set
 
 import jsonschema
 
 from snapcraft import formatting_utils, plugins, project
 from snapcraft.internal import deprecations, repo, states, steps
+from snapcraft.internal.meta.package_repository import PackageRepository
 from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.pluginhandler._part_environment import (
     get_snapcraft_global_environment,
@@ -41,22 +41,12 @@ logger = logging.getLogger(__name__)
 
 
 @jsonschema.FormatChecker.cls_checks("icon-path")
-def _validate_icon(instance):
-    parsed_url = urllib.parse.urlparse(instance)
-    if parsed_url.scheme in ["http", "https"]:
-        # Allow remote URLs that may come from appstream.
-        return True
-
+def _validate_icon(icon):
     allowed_extensions = [".png", ".svg"]
-    extension = os.path.splitext(instance.lower())[1]
+    extension = os.path.splitext(icon.lower())[1]
     if extension not in allowed_extensions:
         raise jsonschema.exceptions.ValidationError(
-            f"icon {instance!r} must be either a .png or a .svg"
-        )
-
-    if not os.path.exists(instance):
-        raise jsonschema.exceptions.ValidationError(
-            "Specified icon '{}' does not exist".format(instance)
+            f"icon {icon!r} must be either a .png or a .svg"
         )
 
     return True
@@ -251,23 +241,31 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
-    def install_package_repositories(self) -> None:
-        keys_path = self.project._get_keys_path()
+    def _get_required_package_repositories(self) -> List[PackageRepository]:
+        package_repos = self.project._snap_meta.package_repositories.copy()
 
-        # Install repositories configured by 'package-repositories'.
-        changes = [
-            package_repo.install(keys_path=keys_path)
-            for package_repo in self.project._snap_meta.package_repositories
+        v1_plugins = [
+            part.plugin
+            for part in self.all_parts
+            if isinstance(part.plugin, plugins.v1.PluginV1)
         ]
+        for plugin in v1_plugins:
+            package_repos.extend(plugin.get_required_package_repositories())
 
-        # Install repositories configured by v1 plugins.
-        for part in self.all_parts:
-            if isinstance(part.plugin, plugins.v1.PluginV1):
-                changes += [
-                    package_repo.install(keys_path=keys_path)
-                    for package_repo in part.plugin.get_required_package_repositories()
-                ]
+        return package_repos
 
+    def install_package_repositories(self) -> None:
+        package_repos = self._get_required_package_repositories()
+        if not package_repos:
+            return
+
+        # Install pre-requisite packages for apt-key, if not installed.
+        repo.Repo.install_build_packages(package_names=["gnupg", "dirmngr"])
+
+        keys_path = self.project._get_keys_path()
+        changes = [
+            package_repo.install(keys_path=keys_path) for package_repo in package_repos
+        ]
         if any(changes):
             repo.Repo.refresh_build_packages()
 
