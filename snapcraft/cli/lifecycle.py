@@ -202,13 +202,18 @@ def _run_pack(snap_command: List[Union[str, pathlib.Path]]) -> str:
 def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
+    """Pack a snap.
+    
+    :param directory: directory to snap
+    :param compression: compression type to use, None for defaults
+    :param output: Output may either be:
+        (1) a directory path to output snaps to
+        (2) an explicit file path to output snap to
+        (3) unpsecified/None to output to current (project) directory
+    """
     output_file = None
     output_dir = None
 
-    # Output may be:
-    # (1) a directory path to output snaps to
-    # (2) an explicit file path to output snap to
-    # (3) unspecified (None), output to current directory (project directory)
     if output:
         output_path = pathlib.Path(output)
         output_parent = output_path.parent
