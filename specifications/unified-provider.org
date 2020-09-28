@@ -112,7 +112,7 @@ class Provider(abc.ABC):
       """
 
     def snap(self, output_dir: pathlib.Path) -> List[pathlib.Path]:
-      """Snap project, building as required.
+      """Snap project, executing lifecycle steps as required.
 
       Write output snaps to host project directory.
 
