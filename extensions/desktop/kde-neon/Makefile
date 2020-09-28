@@ -2,13 +2,13 @@
 
 SRC_DIR ?= .
 
-DATA_DIR		:= $(DESTDIR)/data-dir
-BIN_DIR			:= $(DESTDIR)/snap/command-chain
-LIB_DIR			:= $(DESTDIR)/lib
-DEST_LAUNCHER		:= desktop-launch
-LOCALE_GENERATOR	:= locale-gen
-BINDTEXTDOMAIN		:= bindtextdomain.so
-DEST_CONFIGURE_HOOK	:= hooks-configure-desktop
+DATA_DIR             := $(DESTDIR)/data-dir
+BIN_DIR              := $(DESTDIR)/snap/command-chain
+LIB_DIR              := $(DESTDIR)/lib
+DEST_LAUNCHER        := desktop-launch
+LOCALE_GENERATOR     := locale-gen
+BINDTEXTDOMAIN       := bindtextdomain.so
+DEST_CONFIGURE_HOOK  := hooks-configure-desktop
 
 build: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 

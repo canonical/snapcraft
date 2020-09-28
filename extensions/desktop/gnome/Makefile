@@ -2,13 +2,13 @@
 
 SRC_DIR ?= .
 
-PLATFORM_DIR 		:= $(DESTDIR)/gnome-platform
-DATA_DIR	     	:= $(DESTDIR)/data-dir
-BIN_DIR      		:= $(DESTDIR)/snap/command-chain
-LIB_DIR	     		:= $(DESTDIR)/lib
-DEST_LAUNCHER		:= desktop-launch
-BINDTEXTDOMAIN		:= bindtextdomain.so
-DEST_CONFIGURE_HOOK	:= hooks-configure-desktop
+PLATFORM_DIR         := $(DESTDIR)/gnome-platform
+DATA_DIR             := $(DESTDIR)/data-dir
+BIN_DIR              := $(DESTDIR)/snap/command-chain
+LIB_DIR              := $(DESTDIR)/lib
+DEST_LAUNCHER        := desktop-launch
+BINDTEXTDOMAIN       := bindtextdomain.so
+DEST_CONFIGURE_HOOK  := hooks-configure-desktop
 
 build: $(DEST_LAUNCHER) $(DEST_CONFIGURE_HOOK)
 
