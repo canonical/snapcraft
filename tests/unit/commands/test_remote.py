@@ -20,9 +20,9 @@ import fixtures
 from testtools.matchers import Contains, Equals
 
 import snapcraft.internal.remote_build.errors as errors
-from snapcraft.internal.errors import SnapcraftEnvironmentError
-from . import CommandBaseTestCase
 from tests import fixture_setup
+
+from . import CommandBaseTestCase
 
 
 class RemoteBuildTests(CommandBaseTestCase):
@@ -74,20 +74,16 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.mock_lc.start_build.assert_not_called()
         self.mock_lc.cleanup.assert_not_called()
 
-    def test_remote_build_sudo_errors(self):
+    @mock.patch("snapcraft.cli.remote.echo")
+    def test_remote_build_sudo_errors(self, mock_echo):
         self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
-
         self.useFixture(fixtures.MockPatch("os.geteuid", return_value=0))
 
-        self.assertRaises(
-            SnapcraftEnvironmentError,
-            self.run_command,
-            ["remote-build", "--launchpad-accept-public-upload"],
-        )
-
-    def test_remote_build_sudo_non_root_no_errors(self):
-        self.useFixture(fixtures.EnvironmentVariable("SUDO_USER", "testuser"))
-
-        self.useFixture(fixtures.MockPatch("os.geteuid", return_value=1000))
-
         self.run_command(["remote-build", "--launchpad-accept-public-upload"])
+        assert mock_echo.has_calls(
+            [
+                mock.call.warning(
+                    "Running with 'sudo' may cause permission errors and is discouraged."
+                )
+            ]
+        )

@@ -1,0 +1,51 @@
+#+TITLE: ROS2 (Foxy) Extensions
+#+AUTHOR: Chris Patterson <chris.patterson@canonical.com>
+#+DATE: [2020-07-03]
+
+* Scope
+
+This extension is intended to help a ROS2 developer build a snap
+of their colcon-based project.
+
+Initially the target is ROS2 Foxy, which runs atop Ubuntu 20.04 (core20).
+
+* Using the extension
+
+As a Snapcraft snap author, given a snap with an application =foo=, the
+following snippet would enable use of the =ros2-foxy= extension:
+
+#+BEGIN_SRC yaml
+apps:
+  foo:
+    command: foo
+    extension: [ros2-foxy]
+#+END_SRC
+
+* Build-time Environment
+
+** APT Repository
+
+The ROS2 extension will enable the apt repository for installation
+of ROS2 packages: =http://repo.ros2.org/ubuntu/main=
+
+** Build Packages
+
+The ROS2 extension installs the =ros-<distro>-ros-core= build package
+to install the common set of required packages.  Projects may need to
+include additional packages depending on their setup, or rely on rosdep
+to fetch the build packages specified in their manifests.
+
+* Runtime Environment
+
+The ROS2 extension will install a ros2-launch script, meant to replace
+the typical =setup.sh= used by ROS2 to configure the environment.
+This script will be inserted into the command-chain for any app configured
+to enable the extension.
+
+In addition to the launch script, the extension defines:
+
+- =ROS_DISTRO= to specify the ROS2 distro (foxy)
+
+- =PYTHONPATH= to configure a working Python envirnonment
+  in case the application uses python.
+

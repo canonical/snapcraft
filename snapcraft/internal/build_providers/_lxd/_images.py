@@ -30,7 +30,7 @@ def get_image_source(*, base: str) -> Dict[str, str]:
     return dict(
         type="image",
         mode="pull",
-        server="https://cloud-images.ubuntu.com/buildd/daily",
+        server="https://cloud-images.ubuntu.com/buildd/releases",
         protocol="simplestreams",
         alias=_BASE_IMAGE[base],
     )

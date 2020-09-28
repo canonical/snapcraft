@@ -1,0 +1,21 @@
+name: cmake-hello-ninja
+version: "1.0"
+summary: test the cmake plugin
+description: |
+  Test cmake using Ninja build generator.
+
+grade: devel
+base: core20
+confinement: strict
+
+apps:
+  cmake-hello-ninja:
+    command: usr/bin/cmake-hello
+
+parts:
+  hello:
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
+    cmake-generator: Ninja
+    source: .

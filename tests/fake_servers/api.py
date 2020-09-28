@@ -1185,6 +1185,20 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                         "track": "2.1",
                     },
                 ],
+                "tracks": [
+                    {
+                        "name": "latest",
+                        "status": "active",
+                        "creation-date": None,
+                        "version-pattern": None,
+                    },
+                    {
+                        "name": "1.0",
+                        "status": "default",
+                        "creation-date": "2019-10-17T14:11:59Z",
+                        "version-pattern": "1.*",
+                    },
+                ],
                 "default-track": "2.1",
             },
         }

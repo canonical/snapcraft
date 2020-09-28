@@ -16,12 +16,19 @@
 
 import contextlib
 import os
+import platform
 import pathlib
+import tempfile
 from textwrap import dedent
-from unittest.mock import call, patch, Mock
+from unittest.mock import Mock, call, patch
 
 import fixtures
-from testtools.matchers import Equals, EndsWith, DirExists, Not
+import pytest
+from testtools.matchers import DirExists, EndsWith, Equals, Not
+
+from snapcraft.project import Project
+from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.build_providers import errors
 
 from . import (
     BaseProviderBaseTest,
@@ -29,7 +36,6 @@ from . import (
     ProviderImpl,
     get_project,
 )
-from snapcraft.internal.build_providers import errors
 
 
 class BaseProviderTest(BaseProviderBaseTest):
@@ -175,11 +181,32 @@ class BaseProviderTest(BaseProviderBaseTest):
                     call(["chmod", "0644", "/etc/apt/apt.conf.d/00-snapcraft"]),
                     call(["apt-get", "update"]),
                     call(["apt-get", "dist-upgrade", "--yes"]),
+                    call(["apt-get", "install", "--yes", "apt-transport-https"]),
+                    call(["snap", "unset", "system", "proxy.http"]),
+                    call(["snap", "unset", "system", "proxy.https"]),
                 ]
             ),
         )
 
         self.assertThat(provider.provider_project_dir, DirExists())
+
+    def test_launch_instance_with_proxies(self):
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={
+                "http_proxy": "http://1.2.3.4:8080",
+                "https_proxy": "http://2.3.4.5:8080",
+            },
+        )
+        provider.launch_instance()
+
+        provider.run_mock.assert_has_calls(
+            [
+                call(["snap", "set", "system", "proxy.http=http://1.2.3.4:8080"]),
+                call(["snap", "set", "system", "proxy.https=http://2.3.4.5:8080"]),
+            ]
+        )
 
     def test_expose_prime(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
@@ -217,132 +244,6 @@ class BaseProviderTest(BaseProviderBaseTest):
             ]
         )
 
-    def test_setup_environment_content_amd64(self):
-        self.useFixture(fixtures.MockPatch("platform.machine", return_value="x86_64"))
-        recorded_files = dict()
-
-        @contextlib.contextmanager
-        def fake_namedtempfile(*, suffix: str, **kwargs):
-            # Usage hides the file basename in the suffix.
-            tmp_path = os.path.join(self.path, "tmpfile")
-            with open(tmp_path, "wb") as f_write:
-                yield f_write
-            with open(tmp_path, "r") as f_read:
-                recorded_files[suffix] = f_read.read()
-
-        self.useFixture(
-            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
-        )
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_environment()
-
-        self.expectThat(
-            recorded_files,
-            Equals(
-                {
-                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
-                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
-                    "_snapcraft_prompt": dedent(
-                        """\
-                        #!/bin/bash
-                        if [[ "$PWD" =~ ^$HOME.* ]]; then
-                            path="${PWD/#$HOME/\\ ..}"
-                            if [[ "$path" == " .." ]]; then
-                                ps1=""
-                            else
-                                ps1="$path"
-                            fi
-                        else
-                            ps1="$PWD"
-                        fi
-                        echo -n $ps1
-                        """
-                    ),
-                    "default.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://archive.ubuntu.com/ubuntu
-                        Suites: xenial xenial-updates
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "default-security.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://security.ubuntu.com/ubuntu
-                        Suites: xenial-security
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "sources.list": "",
-                }
-            ),
-        )
-
-    def test_setup_environment_content_arm64(self):
-        self.useFixture(fixtures.MockPatch("platform.machine", return_value="aarch64"))
-        recorded_files = dict()
-
-        @contextlib.contextmanager
-        def fake_namedtempfile(*, suffix: str, **kwargs):
-            # Usage hides the file basename in the suffix.
-            tmp_path = os.path.join(self.path, "tmpfile")
-            with open(tmp_path, "wb") as f_write:
-                yield f_write
-            with open(tmp_path, "r") as f_read:
-                recorded_files[suffix] = f_read.read()
-
-        self.useFixture(
-            fixtures.MockPatch("tempfile.NamedTemporaryFile", new=fake_namedtempfile)
-        )
-
-        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
-        provider._setup_environment()
-
-        self.expectThat(
-            recorded_files,
-            Equals(
-                {
-                    ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
-                    "00-snapcraft": 'Apt::Install-Recommends "false";\n',
-                    "_snapcraft_prompt": dedent(
-                        """\
-                        #!/bin/bash
-                        if [[ "$PWD" =~ ^$HOME.* ]]; then
-                            path="${PWD/#$HOME/\\ ..}"
-                            if [[ "$path" == " .." ]]; then
-                                ps1=""
-                            else
-                                ps1="$path"
-                            fi
-                        else
-                            ps1="$PWD"
-                        fi
-                        echo -n $ps1
-                        """
-                    ),
-                    "default.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://ports.ubuntu.com/ubuntu-ports
-                        Suites: xenial xenial-updates
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "default-security.sources": dedent(
-                        """\
-                        Types: deb deb-src
-                        URIs: http://ports.ubuntu.com/ubuntu-ports
-                        Suites: xenial-security
-                        Components: main multiverse restricted universe
-                    """
-                    ),
-                    "sources.list": "",
-                }
-            ),
-        )
-
     def test_start_instance(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
@@ -350,7 +251,12 @@ class BaseProviderTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.start_mock.assert_any_call()
-        provider.run_mock.assert_not_called()
+
+        # Verify the updates that take place on each start.
+        provider.run_mock.mock_calls == [
+            call(["snap", "unset", "system", "proxy.http"]),
+            call(["snap", "unset", "system", "proxy.https"]),
+        ]
 
         # Given the way we constructe this test, this directory should not exist
         # TODO add robustness to start. (LP: #1792242)
@@ -660,3 +566,89 @@ class TestCompatibilityClean:
             provider.clean_project_mock.assert_called_once_with()
         else:
             provider.clean_project_mock.assert_not_called()
+
+
+_ARCHIVES = {
+    "x86": {
+        "main": "http://archive.ubuntu.com/ubuntu",
+        "security": "http://security.ubuntu.com/ubuntu",
+    },
+    "ports": {
+        "main": "http://ports.ubuntu.com/ubuntu-ports",
+        "security": "http://ports.ubuntu.com/ubuntu-ports",
+    },
+}
+
+
+@pytest.mark.parametrize(
+    "machine_platform",
+    [
+        ("x86_64", _ARCHIVES["x86"]),
+        ("AMD64", _ARCHIVES["x86"]),
+        ("aarch64", _ARCHIVES["ports"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "distro", [("core", "xenial"), ("core18", "bionic"), ("core20", "focal")]
+)
+def test_setup_environment_content_x86(
+    tmp_work_path, monkeypatch, machine_platform, distro
+):
+    snapcraft_project = Project()
+    snapcraft_project._snap_meta = Snap(name="test-snap", base=distro[0])
+
+    monkeypatch.setattr(platform, "machine", lambda: machine_platform[0])
+
+    recorded_files = dict()
+
+    @contextlib.contextmanager
+    def fake_namedtempfile(*, suffix: str, **kwargs):
+        # Usage hides the file basename in the suffix.
+        tmp_path = os.path.join("tmpfile")
+        with open(tmp_path, "wb") as f_write:
+            yield f_write
+        with open(tmp_path, "r") as f_read:
+            recorded_files[suffix] = f_read.read()
+
+    monkeypatch.setattr(tempfile, "NamedTemporaryFile", fake_namedtempfile)
+
+    provider = ProviderImpl(project=snapcraft_project, echoer=Mock())
+    provider._setup_environment()
+
+    assert recorded_files == {
+        ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
+        "00-snapcraft": 'Apt::Install-Recommends "false";\n',
+        "_snapcraft_prompt": dedent(
+            """\
+            #!/bin/bash
+            if [[ "$PWD" =~ ^$HOME.* ]]; then
+                path="${PWD/#$HOME/\\ ..}"
+                if [[ "$path" == " .." ]]; then
+                    ps1=""
+                else
+                    ps1="$path"
+                fi
+            else
+                ps1="$PWD"
+            fi
+            echo -n $ps1
+            """
+        ),
+        "default.sources": dedent(
+            f"""\
+                Types: deb
+                URIs: {machine_platform[1]["main"]}
+                Suites: {distro[1]} {distro[1]}-updates
+                Components: main multiverse restricted universe
+            """
+        ),
+        "default-security.sources": dedent(
+            f"""\
+                Types: deb
+                URIs: {machine_platform[1]["security"]}
+                Suites: {distro[1]}-security
+                Components: main multiverse restricted universe
+            """
+        ),
+        "sources.list": "",
+    }

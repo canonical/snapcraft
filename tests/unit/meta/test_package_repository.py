@@ -90,7 +90,7 @@ class DebTests(unit.TestCase):
                 {
                     "architectures": ["amd64", "i386"],
                     "components": ["main", "multiverse"],
-                    "deb-types": ["deb", "deb-src"],
+                    "formats": ["deb", "deb-src"],
                     "key-id": "test-key-id",
                     "key-server": "keyserver.ubuntu.com",
                     "name": "test-name",
@@ -118,7 +118,7 @@ class DebTests(unit.TestCase):
                 {
                     "architectures": ["amd64", "i386"],
                     "components": ["main", "multiverse"],
-                    "deb-types": ["deb", "deb-src"],
+                    "formats": ["deb", "deb-src"],
                     "key-id": "test-key-id",
                     "key-server": "keyserver.ubuntu.com",
                     "name": "http_archive_ubuntu_com_ubuntu",
@@ -133,7 +133,7 @@ class DebTests(unit.TestCase):
         test_dict = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
-            "deb-types": ["deb", "deb-src"],
+            "formats": ["deb", "deb-src"],
             "key-id": "test-key-id",
             "key-server": "keyserver.ubuntu.com",
             "name": "test-name",
@@ -153,7 +153,7 @@ class DebTests(unit.TestCase):
         test_dict = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
-            "deb-types": ["deb", "deb-src"],
+            "formats": ["deb", "deb-src"],
             "key-id": "test-key-id",
             "key-server": "keyserver.ubuntu.com",
             "name": "test-name",
@@ -173,7 +173,7 @@ class DebTests(unit.TestCase):
         test_dict = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
-            "deb-types": ["deb", "deb-src"],
+            "formats": ["deb", "deb-src"],
             "key-id": "test-key-id",
             "key-server": "keyserver.ubuntu.com",
             "name": "test-name",
@@ -217,7 +217,7 @@ class RepoTests(unit.TestCase):
         test_dict = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
-            "deb-types": ["deb", "deb-src"],
+            "formats": ["deb", "deb-src"],
             "key-id": "test-key-id",
             "key-server": "keyserver.ubuntu.com",
             "name": "test-name",
@@ -241,7 +241,7 @@ class RepoTests(unit.TestCase):
         test_deb = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
-            "deb-types": ["deb", "deb-src"],
+            "formats": ["deb", "deb-src"],
             "key-id": "test-key-id",
             "key-server": "keyserver.ubuntu.com",
             "name": "test-name",

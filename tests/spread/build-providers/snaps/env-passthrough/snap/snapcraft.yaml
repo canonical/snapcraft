@@ -12,5 +12,5 @@ parts:
   test:
     plugin: nil
     override-pull: |
-      echo "http_proxy=${http_proxy}"
-      echo "https_proxy=${https_proxy}"
+      echo "TEST:SNAPCRAFT_ENABLE_DEVELOPER_DEBUG=$SNAPCRAFT_ENABLE_DEVELOPER_DEBUG"
+      echo "TEST:SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=$SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"
