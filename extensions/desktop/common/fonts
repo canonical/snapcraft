@@ -38,6 +38,6 @@ EOF
 
 export FONTCONFIG_FILE="${SNAP_DATA}/fontconfig/fonts.conf"
 
-"${SNAP}/snap/command-chain/snapcraft-runner" "${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose
+"${SNAP_DESKTOP_RUNTIME}/usr/bin/fc-cache" --force --system-only --verbose
 
 exec "$@"
