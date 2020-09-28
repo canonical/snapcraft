@@ -231,7 +231,7 @@ def _pack(
             )
         command.extend(["--compression", compression])
 
-    if output_file:
+    if output_file is not None:
         command.extend(["--filename", output_file])
 
     command.append(directory)
