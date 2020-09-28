@@ -14,27 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager, suppress
 import errno
 import hashlib
 import logging
-import re
 import os
+import pathlib
+import re
 import shutil
 import stat
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator, List, Optional, Set
+from contextlib import contextmanager, suppress
+from typing import Callable, Generator, List, Optional, Pattern, Set
 
-from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    RequiredCommandFailure,
-    RequiredCommandNotFound,
-    RequiredPathDoesNotExist,
-    SnapcraftEnvironmentError,
-    SnapcraftCopyFileNotFoundError,
-    ToolMissingError,
-)
+from snapcraft.internal import common, errors
 
 if sys.version_info < (3, 6):
     import sha3  # noqa
@@ -145,7 +138,7 @@ def link(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     try:
         os.link(source_path, destination, follow_symlinks=False)
     except FileNotFoundError:
-        raise SnapcraftCopyFileNotFoundError(source)
+        raise errors.SnapcraftCopyFileNotFoundError(source)
 
 
 def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> None:
@@ -168,7 +161,7 @@ def copy(source: str, destination: str, *, follow_symlinks: bool = False) -> Non
     try:
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
     except FileNotFoundError:
-        raise SnapcraftCopyFileNotFoundError(source)
+        raise errors.SnapcraftCopyFileNotFoundError(source)
     uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
     gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
     try:
@@ -200,12 +193,14 @@ def link_or_copy_tree(
     """
 
     if not os.path.isdir(source_tree):
-        raise SnapcraftEnvironmentError("{!r} is not a directory".format(source_tree))
+        raise errors.SnapcraftEnvironmentError(
+            "{!r} is not a directory".format(source_tree)
+        )
 
     if not os.path.isdir(destination_tree) and (
         os.path.exists(destination_tree) or os.path.islink(destination_tree)
     ):
-        raise SnapcraftEnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             "Cannot overwrite non-directory {!r} with directory "
             "{!r}".format(destination_tree, source_tree)
         )
@@ -294,11 +289,11 @@ def requires_command_success(
     except FileNotFoundError:
         if not_found_fmt is not None:
             kwargs["fmt"] = not_found_fmt
-        raise RequiredCommandNotFound(**kwargs)
+        raise errors.RequiredCommandNotFound(**kwargs)
     except subprocess.CalledProcessError:
         if failure_fmt is not None:
             kwargs["fmt"] = failure_fmt
-        raise RequiredCommandFailure(**kwargs)
+        raise errors.RequiredCommandFailure(**kwargs)
     yield
 
 
@@ -308,7 +303,7 @@ def requires_path_exists(path: str, error_fmt: str = None) -> Generator:
         kwargs = dict(path=path)
         if error_fmt is not None:
             kwargs["fmt"] = error_fmt
-        raise RequiredPathDoesNotExist(**kwargs)
+        raise errors.RequiredPathDoesNotExist(**kwargs)
     yield
 
 
@@ -335,39 +330,51 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
     return hasher.hexdigest()
 
 
-def get_tool_path(command_name: str) -> str:
-    """Return the path to the given command
+def get_host_tool_path(*, command_name: str, package_name: str) -> pathlib.Path:
+    """Return the path of command_name found on the host.
 
-    Return a path to command_name, if Snapcraft is running out of the snap
-    or in legacy mode (snap or sources), it ensures it is using the one in
-    the snap, not the host.
-    If a path cannot be resolved, ToolMissingError is raised.
+    Uses shutil.which() to find the host-provided command.
 
-    : param str command_name: the name of the command to resolve a path for.
-    :raises ToolMissingError: if command_name cannot be resolved to a path.
-    :return: Path to command
-    :rtype: str
+    :param command_name: name of the command to resolve a path for.
+    :param package_name: package <command_name> is usually found in.
+    :raises SnapcraftHostToolMissingError: if command_name not found.
+    :return: Path to command.
     """
-    command_path: Optional[str] = None
+    command_path = shutil.which(command_name)
+    if command_path is None:
+        raise errors.SnapcraftHostToolNotFoundError(
+            command_name=command_name, package_name=package_name
+        )
 
-    if common.is_snap() and command_name != "snap":
+    return pathlib.Path(command_path)
+
+
+def get_snap_tool_path(command_name: str) -> str:
+    """Return the path command found in the snap.
+
+    If snapcraft is not running as a snap, shutil.which() is used
+    to resolve the command using PATH.
+
+    :param command_name: the name of the command to resolve a path for.
+    :raises ToolMissingError: if command_name was not found.
+    :return: Path to command
+    """
+    if common.is_snap():
         snap_path = os.getenv("SNAP")
         if snap_path is None:
             raise RuntimeError("SNAP not defined, but SNAP_NAME is?")
 
-        command_path = _command_path_in_root(snap_path, command_name)
+        command_path = _find_command_path_in_root(snap_path, command_name)
     else:
         command_path = shutil.which(command_name)
 
-    # shutil.which will return None if it cannot find command_name but
-    # _command_path_in_root will return an empty string.
-    if not command_path:
-        raise ToolMissingError(command_name=command_name)
+    if command_path is None:
+        raise errors.ToolMissingError(command_name=command_name)
 
     return command_path
 
 
-def _command_path_in_root(root, command_name: str) -> str:
+def _find_command_path_in_root(root, command_name: str) -> Optional[str]:
     for bin_directory in (
         os.path.join("usr", "local", "sbin"),
         os.path.join("usr", "local", "bin"),
@@ -380,7 +387,7 @@ def _command_path_in_root(root, command_name: str) -> str:
         if os.path.exists(path):
             return path
 
-    return ""
+    return None
 
 
 def get_linker_version_from_file(linker_file: str) -> str:
@@ -392,14 +399,14 @@ def get_linker_version_from_file(linker_file: str) -> str:
                             the linker from libc6 or related.
     :returns: the version extracted from the linker file.
     :rtype: string
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+    :raises snapcraft.internal.errors.errors.SnapcraftEnvironmentError:
        if linker_file is not of the expected format.
     """
     m = re.search(r"ld-(?P<linker_version>[\d.]+).so$", linker_file)
     if not m:
         # This is a programmatic error, we don't want to be friendly
         # about this.
-        raise SnapcraftEnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             "The format for the linker should be of the of the form "
             "<root>/ld-<X>.<Y>.so. {!r} does not match that format. "
             "Ensure you are targeting an appropriate base".format(linker_file)

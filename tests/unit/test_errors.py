@@ -22,10 +22,10 @@ import requests.exceptions
 from requests.packages import urllib3
 
 from snapcraft.internal import errors, pluginhandler, steps
-from snapcraft.internal.repo import errors as repo_errors
-from snapcraft.storeapi import errors as store_errors
 from snapcraft.internal.project_loader import errors as project_loader_errors
 from snapcraft.internal.project_loader.inspection import errors as inspection_errors
+from snapcraft.internal.repo import errors as repo_errors
+from snapcraft.storeapi import errors as store_errors
 
 
 def _fake_error_response(status_code):
@@ -668,9 +668,9 @@ class TestSnapcraftExceptionTests:
             },
         ),
         (
-            "HostToolNotFoundError",
+            "SnapcraftHostToolNotFoundError",
             {
-                "exception_class": errors.HostToolNotFoundError,
+                "exception_class": errors.SnapcraftHostToolNotFoundError,
                 "kwargs": {"command_name": "foo", "package_name": "foo-pkg"},
                 "expected_brief": "A tool snapcraft depends on could not be found: 'foo'",
                 "expected_resolution": "Ensure that 'foo-pkg' is installed.",
@@ -911,8 +911,8 @@ class TestSnapcraftExceptionTests:
     ):
         exception = exception_class(**kwargs)
 
-        assert expected_brief == exception.get_brief()
-        assert expected_resolution == exception.get_resolution()
-        assert expected_details == exception.get_details()
-        assert expected_docs_url == exception.get_docs_url()
-        assert expected_reportable == exception.get_reportable()
+        assert exception.get_brief() == expected_brief
+        assert exception.get_resolution() == expected_resolution
+        assert exception.get_details() == expected_details
+        assert exception.get_docs_url() == expected_docs_url
+        assert exception.get_reportable() == expected_reportable

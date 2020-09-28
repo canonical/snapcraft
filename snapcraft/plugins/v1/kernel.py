@@ -273,7 +273,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         os.makedirs(initrd_unpacked_path)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            unsquashfs_path = snapcraft.file_utils.get_tool_path("unsquashfs")
+            unsquashfs_path = snapcraft.file_utils.get_snap_tool_path("unsquashfs")
             subprocess.check_call(
                 [unsquashfs_path, self.os_snap, os.path.dirname(initrd_path)],
                 cwd=temp_dir,

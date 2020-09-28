@@ -118,6 +118,43 @@ class GodepsPlugin(PluginV1):
         else:
             raise errors.PluginBaseError(part_name=self.name, base=base)
 
+    def _install_godeps(self) -> None:
+        env = self._build_environment()
+        self.run(
+            ["go", "get", "-d", "github.com/rogpeppe/godeps"],
+            cwd=self._gopath_src,
+            env=env,
+        )
+
+        # Chicken and egg - godeps itself has dependency requirements, otherwise
+        # newer versions of go-toml will fail to build on older golang versions.
+        gotoml_path = os.path.join(self._gopath_src, "github.com/pelletier/go-toml")
+        self.run(
+            ["git", "checkout", "4e9e0ee19b60b13eb79915933f44d8ed5f268bdd"],
+            cwd=gotoml_path,
+            env=env,
+        )
+
+        gotool_path = os.path.join(self._gopath_src, "github.com/kisielk/gotool")
+        self.run(
+            ["git", "checkout", "d6ce6262d87e3a4e153e86023ff56ae771554a41"],
+            cwd=gotool_path,
+            env=env,
+        )
+
+        gotools_path = os.path.join(self._gopath_src, "golang.org/x/tools")
+        self.run(
+            ["git", "checkout", "1937f90a1bb43667aff4059b1bab13eb15121e8e"],
+            cwd=gotools_path,
+            env=env,
+        )
+
+        self.run(
+            ["go", "install", "github.com/rogpeppe/godeps"],
+            cwd=self._gopath_src,
+            env=env,
+        )
+
     def pull(self):
         super().pull()
 
@@ -129,7 +166,7 @@ class GodepsPlugin(PluginV1):
 
         # Fetch and run godeps
         logger.info("Fetching godeps...")
-        self._run(["go", "get", "github.com/rogpeppe/godeps"])
+        self._install_godeps()
 
         logger.info("Obtaining project dependencies...")
         self._run(

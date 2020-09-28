@@ -21,10 +21,10 @@ from typing import Any, Dict, List, Optional
 
 import click
 
-from snapcraft.project import Project, get_snapcraft_yaml
 from snapcraft.cli.echo import confirm, prompt, warning
 from snapcraft.internal import common, errors
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project, get_snapcraft_yaml
 
 
 class PromptOption(click.Option):
@@ -163,6 +163,13 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         hidden=True,
     ),
     dict(
+        param_decls="--enable-experimental-extensions",
+        is_flag=True,
+        help="Enable extensions that are experimental and not considered stable.",
+        envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
+        supported_providers=["host", "lxd", "managed-host", "multipass"],
+    ),
+    dict(
         param_decls="--enable-experimental-package-repositories",
         is_flag=True,
         help="Enable `package-repositories` support in schema.",
@@ -233,17 +240,17 @@ def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
                 f"{key} cannot be used with build provider {build_provider!r}"
             )
 
-    # Check if running as sudo.
-    if os.getenv("SUDO_USER") and os.geteuid() == 0:
-        if build_provider in ["lxd", "multipass"]:
-            raise errors.SnapcraftEnvironmentError(
-                f"'sudo' cannot be used with build provider {build_provider!r}"
-            )
-
-        if build_provider in ["host"]:
-            click.echo(
-                "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
-            )
+    # Check if running as sudo but only if the host is not managed-host where Snapcraft
+    # runs as root already. This effectively avoids the warning when using the default
+    # build provider (Multipass) that uses "sudo" to get "root".
+    if (
+        build_provider != "managed-host"
+        and os.getenv("SUDO_USER")
+        and os.geteuid() == 0
+    ):
+        warning(
+            "Running with 'sudo' may cause permission errors and is discouraged. Use 'sudo' when cleaning."
+        )
 
 
 def get_build_provider(skip_sanity_checks: bool = False, **kwargs) -> str:
@@ -372,4 +379,7 @@ def apply_host_provider_flags(build_provider_flags: Dict[str, str]) -> None:
 
     # Log any experimental flags in use.
     if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_PACKAGE_REPOSITORIES"):
-        warning("*EXPERIMENTAL* package-repositories in use")
+        warning("*EXPERIMENTAL* package-repositories enabled.")
+
+    if build_provider_flags.get("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"):
+        warning("*EXPERIMENTAL* extensions enabled.")

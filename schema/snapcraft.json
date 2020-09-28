@@ -135,7 +135,7 @@
                         "description": "Architectures to enable, or restrict to, for this repository.  Supports '$SNAPCRAFT_APT_HOST_ARCH' variable.  Defaults to host architecture."
                     }
                 },
-                "deb-types": {
+                "formats": {
                     "type": "array",
                     "description": "deb types to enable.  Defaults to [deb, deb-src].",
                     "minItems": 1,
@@ -784,7 +784,9 @@
                                     "flutter-master",
                                     "gnome-3-28",
                                     "gnome-3-34",
-                                    "kde-neon"
+                                    "kde-neon",
+                                    "ros1-noetic",
+                                    "ros2-foxy"
                                 ]
                             }
                         }

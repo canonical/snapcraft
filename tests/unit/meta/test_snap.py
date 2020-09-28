@@ -22,8 +22,8 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal.meta import errors
-from snapcraft.internal.meta.system_user import SystemUserScope
 from snapcraft.internal.meta.snap import Snap
+from snapcraft.internal.meta.system_user import SystemUserScope
 from tests import unit
 
 
@@ -143,7 +143,7 @@ class SnapTests(unit.TestCase):
                     "type": "apt",
                     "architectures": ["amd64", "i386"],
                     "components": ["main"],
-                    "deb-types": ["deb"],
+                    "formats": ["deb"],
                     "key-id": "test-key-id",
                     "key-server": "test-key-server.com",
                     "suites": ["xenial"],

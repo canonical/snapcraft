@@ -263,6 +263,20 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
                         },
                     ],
                     "default-track": "2.1",
+                    "tracks": [
+                        {
+                            "name": "2.0",
+                            "status": "default",
+                            "creation-date": "2019-10-17T14:11:59Z",
+                            "version-pattern": "2\\.*",
+                        },
+                        {
+                            "name": "latest",
+                            "status": "active",
+                            "creation-date": None,
+                            "version-pattern": None,
+                        },
+                    ],
                 },
             }
         )

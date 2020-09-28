@@ -18,4 +18,4 @@ parts:
     plugin: python
     python-packages:
       - pip==20.0.2
-      - appdirs
+      - appdirs; sys_platform == 'linux'

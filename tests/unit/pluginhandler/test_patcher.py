@@ -137,7 +137,7 @@ class TestPrimeTypeExcludesPatching:
 
 
 def test_patcher_called(monkeypatch, mock_partpatcher):
-    monkeypatch.setattr(file_utils, "get_tool_path", lambda x: x)
+    monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
 
     handler = load_part(
         "test-part",

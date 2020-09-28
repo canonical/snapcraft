@@ -23,6 +23,7 @@ from testtools.matchers import Contains, Equals
 
 from snapcraft.project import errors
 from snapcraft.project._schema import Validator
+
 from . import ProjectBaseTest
 
 
@@ -1285,7 +1286,7 @@ class PackageManagement(ProjectBaseTest):
                   - type: apt
                     architectures: [amd64, i386]
                     components: [main, multiverse]
-                    deb-types: [deb, deb-src]
+                    formats: [deb, deb-src]
                     key-id: test-key-id
                     key-server: keyserver.ubuntu.com
                     url: http://archive.ubuntu.com/ubuntu
@@ -1387,7 +1388,7 @@ class TestInvalidAptConfigurations:
                 packages=[
                     {
                         "type": "apt",
-                        "deb-type": ["invalid"],
+                        "format": ["invalid"],
                         "components": ["main"],
                         "key-id": "test-key-id",
                         "url": "http://archive.ubuntu.com/ubuntu",
