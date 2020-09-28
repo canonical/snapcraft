@@ -20,6 +20,7 @@ import pytest
 
 from snapcraft import file_utils
 from snapcraft.internal.pluginhandler import PartPatcher
+from snapcraft.internal import errors
 from tests.unit import load_part
 
 
@@ -27,6 +28,14 @@ from tests.unit import load_part
 def mock_elf_patcher():
     """Return a mock for snapcraft.internal.elf.Patcher."""
     patcher = mock.patch("snapcraft.internal.elf.Patcher", autospec=True)
+    yield patcher.start()
+    patcher.stop()
+
+
+@pytest.fixture
+def mock_partpatcher():
+    """Return a mock for snapcraft.internal.pluginhandler.PartPatcher."""
+    patcher = mock.patch("snapcraft.internal.pluginhandler.PartPatcher", autospec=True)
     yield patcher.start()
     patcher.stop()
 
@@ -105,13 +114,25 @@ class TestStaticBasePatching:
 
         mock_elf_patcher.assert_not_called()
 
+    def test_conflicting_patchelf_build_attributes(
+        self, monkeypatch, mock_partpatcher, confinement
+    ):
+        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
 
-@pytest.fixture
-def mock_partpatcher():
-    """Return a mock for snapcraft.internal.pluginhandler.PartPatcher."""
-    patcher = mock.patch("snapcraft.internal.pluginhandler.PartPatcher", autospec=True)
-    yield patcher.start()
-    patcher.stop()
+        part_properties = {
+            "source-subdir": "src",
+            "build-attributes": ["no-patchelf", "enable-patchelf"],
+        }
+
+        handler = load_part(
+            "test-part",
+            snap_name="test-snap",
+            part_properties=part_properties,
+            confinement=confinement,
+        )
+
+        with pytest.raises(errors.BuildAttributePatchelfConflictError):
+            handler.prime()
 
 
 class TestPrimeTypeExcludesPatching:

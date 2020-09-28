@@ -966,18 +966,16 @@ class PluginHandler:
             clear_execstack(elf_files=elf_files)
 
         # ELF files in this part need to have their rpath and interpreter patched
-        # to use the in-snap version in the following scenario:
+        # to use the in-snap version in the following scenarios:
         #
-        #   - `enable-patchelf` is a build attribute
-        #   OR
-        #     - The base is defined
-        #     AND
-        #       - The base is not one of the static bases
-        #     AND
-        #       - The snap uses classic confinement
-        #       OR
-        #         - libc has been staged (as opposed to being in the base snap)
-        patching_required = self._build_attributes.enable_patchelf() or (
+        #   - The base is defined
+        #   AND
+        #     - The base is not one of the static bases
+        #   AND
+        #     - The snap uses classic confinement
+        #     OR
+        #       - libc has been staged (as opposed to being in the base snap)
+        patching_required = (
             self._project._snap_meta.base
             and not self._project.is_static_base(self._project._snap_meta.base)
             and (
@@ -986,21 +984,32 @@ class PluginHandler:
             )
         )
 
-        if patching_required:
-            if self._build_attributes.no_patchelf():
-                logger.warning(
-                    "The primed files for part {!r} will not be verified for "
-                    "correctness or patched: build-attributes: [no-patchelf] "
-                    "is set.".format(self.name)
-                )
-            else:
-                part_patcher = PartPatcher(
-                    elf_files=elf_files,
-                    project=self._project,
-                    snap_base_path=self._snap_base_path,
-                    stage_packages=self._part_properties.get("stage-packages", []),
-                )
-                part_patcher.patch()
+        # In addition to considering whether patching is NEEDED, we need to account
+        # for the user requesting different behavior:
+        #
+        #  - Opting out of patching even though it's needed (i.e. `no-patchelf` is a
+        #    build attribute)
+        #  - Requesting patching even though it's not needed (i.e. `enable-patchelf` is
+        #    a build attribute)
+        if (
+            self._build_attributes.no_patchelf()
+            and self._build_attributes.enable_patchelf()
+        ):
+            raise errors.BuildAttributePatchelfConflictError(part_name=self.name)
+        elif patching_required and self._build_attributes.no_patchelf():
+            logger.warning(
+                "The primed files for part {!r} will not be verified for "
+                "correctness or patched: build-attributes: [no-patchelf] "
+                "is set.".format(self.name)
+            )
+        elif patching_required or self._build_attributes.enable_patchelf():
+            part_patcher = PartPatcher(
+                elf_files=elf_files,
+                project=self._project,
+                snap_base_path=self._snap_base_path,
+                stage_packages=self._part_properties.get("stage-packages", []),
+            )
+            part_patcher.patch()
 
         return self._calculate_dependency_paths(split_dependencies)
 
