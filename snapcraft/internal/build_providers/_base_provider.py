@@ -297,20 +297,28 @@ class Provider(abc.ABC):
     def _install_file(self, *, path: str, content: str, permissions: str) -> None:
         basename = os.path.basename(path)
 
-        with tempfile.NamedTemporaryFile(suffix=basename) as temp_file:
+        # Push to a location that can be written to by all backends
+        # with unique files depending on path.
+        # The path should be a valid path for the target.
+        remote_file = "/var/tmp/{}".format(base64.b64encode(path.encode()).decode())
+
+        # Windows cannot open the same file twice, so write to a temporary file that
+        # would later be deleted manually.
+        with tempfile.NamedTemporaryFile(delete=False, suffix=basename) as temp_file:
             temp_file.write(content.encode())
             temp_file.flush()
-            # Push to a location that can be written to by all backends
-            # with unique files depending on path.
-            remote_file = os.path.join(
-                "/var/tmp", base64.b64encode(path.encode()).decode()
-            )
+            temp_file_path = temp_file.name
+
+        try:
             self._push_file(source=temp_file.name, destination=remote_file)
             self._run(["mv", remote_file, path])
+
             # This chown is not necessarily needed. but does keep things
             # consistent.
             self._run(["chown", "root:root", path])
             self._run(["chmod", permissions, path])
+        finally:
+            os.unlink(temp_file_path)
 
     def _get_code_name_from_build_base(self):
         build_base = self.project._get_build_base()
@@ -326,7 +334,7 @@ class Provider(abc.ABC):
         primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if primary_mirror is None:
-            if platform.machine() in ["i686", "x86_64"]:
+            if platform.machine() in ["AMD64", "i686", "x86_64"]:
                 primary_mirror = "http://archive.ubuntu.com/ubuntu"
             else:
                 primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -337,7 +345,7 @@ class Provider(abc.ABC):
         security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if security_mirror is None:
-            if platform.machine() in ["i686", "x86_64"]:
+            if platform.machine() in ["AMD64", "i686", "x86_64"]:
                 security_mirror = "http://security.ubuntu.com/ubuntu"
             else:
                 security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
@@ -383,7 +391,7 @@ class Provider(abc.ABC):
             path="/etc/apt/sources.list.d/default.sources",
             content=dedent(
                 """\
-                    Types: deb deb-src
+                    Types: deb
                     URIs: {primary_mirror}
                     Suites: {release} {release}-updates
                     Components: main multiverse restricted universe
@@ -399,7 +407,7 @@ class Provider(abc.ABC):
             path="/etc/apt/sources.list.d/default-security.sources",
             content=dedent(
                 """\
-                        Types: deb deb-src
+                        Types: deb
                         URIs: {security_mirror}
                         Suites: {release}-security
                         Components: main multiverse restricted universe
