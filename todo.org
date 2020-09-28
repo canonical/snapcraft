@@ -79,7 +79,7 @@ CLOSED: [2020-06-24]
 - [X] Implement =snapcraft list-tracks=
 - [ ] Add documentation for track management to the [[https://snapcraft.io/docs/release-management][Release management]] docs.
 
-*** STRT [[file:specifications/unified-provider.org] Unified Provider]] [2/4]
+*** TODO [[file:specifications/unified-provider.org] Unified Provider]] [0/14]
 
 - [ ] Add =is_provider_ready()= interface.
 - [ ] Refactor =Provider.setup_provider()=.
