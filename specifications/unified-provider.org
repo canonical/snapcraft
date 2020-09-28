@@ -76,7 +76,6 @@ class Provider(abc.ABC):
       can be done with setup_provider().
 
       :returns: True if ready, False if further setup is required.
-
       """
 
     def setup_provider(self, interactive: bool) -> None:
