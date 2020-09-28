@@ -236,7 +236,7 @@ def _pack(
 
     command.append(directory)
 
-    if output_dir:
+    if output_dir is not None:
         command.append(output_dir)
 
     logger.debug(f"Running pack command: {command}")
