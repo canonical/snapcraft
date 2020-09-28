@@ -203,6 +203,7 @@ def _pack(
     directory: str, *, compression: Optional[str] = None, output: Optional[str]
 ) -> None:
     """Pack a snap.
+
     :param directory: directory to snap
     :param compression: compression type to use, None for defaults
     :param output: Output may either be:
