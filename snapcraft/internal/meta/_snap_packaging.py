@@ -389,7 +389,7 @@ class _SnapPackaging:
         icon_ext = parsed_path.suffix[1:]
         target_icon_path = pathlib.Path(self.meta_gui_dir, f"icon.{icon_ext}")
 
-        os.makedirs(self.meta_gui_dir, exist_ok=True)
+        target_icon_path.parent.mkdir(parents=True, exist_ok=True)
         if parsed_url.scheme in ["http", "https"]:
             # Remote - fetch URL and write to target.
             logger.info(f"Fetching icon from {icon!r}.")
