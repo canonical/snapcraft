@@ -365,8 +365,11 @@ class _SnapPackaging:
                     os.remove(os.path.join(self.meta_gui_dir, f))
 
     def _finalize_icon(self) -> Optional[pathlib.Path]:
-        """Make sure icon is properly configured, fetching from a remote
-        http(s) URL, if required, and placing in the meta/gui directory."""
+        """Ensure sure icon is properly configured and installed.
+
+        Fetch from a remote URL, if required, and place in the meta/gui
+        directory.
+        """
 
         # Nothing to do if no icon is configured, search for existing icon.
         icon: Optional[str] = self._config_data.get("icon")
