@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Some Comment -->
+<component type="desktop-application">
+  <id>io.snapcraft.appstream</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-2.0+</project_license>
+  <name>Appstream Desktop</name>
+  <summary>Appstream Desktop test</summary>
+
+  <description>
+    <p>
+      Some description.
+    </p>
+    <p>Some list:</p>
+    <ul>
+      <li>First item</li>
+      <li>Second item</li>
+    </ul>
+    <p>
+      Test me please.
+    </p>
+  </description>
+
+  <icon type="remote" width="60" height="60">https://dashboard.snapcraft.io/site_media/appmedia/2018/04/Snapcraft-logo-bird.png</icon>
+  <launchable type="desktop-id">io.snapcraft.appstream.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>snapcraft</caption>
+      <image>https://admin.insights.ubuntu.com/wp-content/uploads/3124/snapcraft_db_brandmark@4x.png</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://snapcraft.io</url>
+  <project_group>snapcraft</project_group>
+
+  <provides>
+    <binary>appstream</binary>
+  </provides>
+
+  <releases>
+    <release version="1.0.0" date="2020-01-01">
+      <description>
+        <p>Initial release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -41,17 +41,12 @@ logger = logging.getLogger(__name__)
 
 
 @jsonschema.FormatChecker.cls_checks("icon-path")
-def _validate_icon(instance):
+def _validate_icon(icon):
     allowed_extensions = [".png", ".svg"]
-    extension = os.path.splitext(instance.lower())[1]
+    extension = os.path.splitext(icon.lower())[1]
     if extension not in allowed_extensions:
         raise jsonschema.exceptions.ValidationError(
-            "'icon' must be either a .png or a .svg"
-        )
-
-    if not os.path.exists(instance):
-        raise jsonschema.exceptions.ValidationError(
-            "Specified icon '{}' does not exist".format(instance)
+            f"icon {icon!r} must be either a .png or a .svg"
         )
 
     return True

@@ -689,31 +689,7 @@ class IconTest(ProjectBaseTest):
         )
 
         self.assertThat(
-            raised.message, Equals("'icon' must be either a .png or a .svg")
-        )
-
-    def test_invalid_yaml_missing_icon(self):
-        raised = self.assertValidationRaises(
-            dedent(
-                """\
-            name: test
-            base: core18
-            version: "1"
-            summary: test
-            description: test
-            icon: icon.png
-            confinement: strict
-            grade: stable
-
-            parts:
-              part1:
-                plugin: nil
-            """
-            )
-        )
-
-        self.assertThat(
-            raised.message, Equals("Specified icon 'icon.png' does not exist")
+            raised.message, Equals("icon 'icon.foo' must be either a .png or a .svg")
         )
 
 
