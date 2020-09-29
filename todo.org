@@ -71,7 +71,7 @@ CLOSED: [2020-06-24]
 *** TODO [[file:specifications/configurable-apt-mirror.org][Configurable APT Mirror]] [0/7]
 - [ ] Add =--snapcraft-apt-mirror= command-line argument with matching
   =SNAPCRAFT_APT_MIRROR= environment variable.
-- [ ] Replace usage of =SNAPCRAFT_BUILD_EVNIRONMENT_PRIMARY_MIRROR= with
+- [ ] Replace usage of =SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR= with
   =SNAPCRAFT_APT_MIRROR=.
 - [ ] Remove configurable security mirror.
 - [ ] Move apt configuration in base provider into own
