@@ -16,8 +16,8 @@
 
 import contextlib
 import os
-import platform
 import pathlib
+import platform
 import tempfile
 from textwrap import dedent
 from unittest.mock import Mock, call, patch
@@ -26,9 +26,9 @@ import fixtures
 import pytest
 from testtools.matchers import DirExists, EndsWith, Equals, Not
 
-from snapcraft.project import Project
-from snapcraft.internal.meta.snap import Snap
 from snapcraft.internal.build_providers import errors
+from snapcraft.internal.meta.snap import Snap
+from snapcraft.project import Project
 
 from . import (
     BaseProviderBaseTest,
@@ -354,7 +354,6 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=True,
@@ -380,7 +379,6 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=True,
@@ -442,7 +440,6 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=False,
@@ -468,7 +465,6 @@ class MacProviderProvisionSnapcraftTest(MacBaseProviderWithBasesBaseTest):
             registry_filepath=os.path.join(
                 provider.provider_project_dir, "snap-registry.yaml"
             ),
-            snap_arch=self.project.deb_arch,
             runner=provider._run,
             file_pusher=provider._push_file,
             inject_from_host=False,

@@ -17,18 +17,19 @@
 import logging
 import os
 from textwrap import dedent
-from unittest.mock import call, patch, ANY
+from unittest.mock import ANY, call, patch
 
 import fixtures
 from testtools.matchers import Contains, Equals, FileContains, Not
 
-from . import ProviderImpl, get_project
 from snapcraft.internal.build_providers._snap import (
     SnapInjector,
-    repo,
     _get_snap_channel,
+    repo,
 )
 from tests import fixture_setup, unit
+
+from . import ProviderImpl, get_project
 
 
 class SnapInjectionTest(unit.TestCase):
@@ -84,7 +85,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -167,7 +167,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
             inject_from_host=False,
@@ -226,7 +225,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -292,7 +290,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -336,7 +333,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -375,7 +371,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=None,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -397,7 +392,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -444,7 +438,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -455,7 +448,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -470,7 +462,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -481,7 +472,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
@@ -505,7 +495,6 @@ class SnapInjectionTest(unit.TestCase):
 
         snap_injector = SnapInjector(
             registry_filepath=self.registry_filepath,
-            snap_arch="amd64",
             runner=self.provider._run,
             file_pusher=self.provider._push_file,
         )
