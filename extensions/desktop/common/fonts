@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 [ ! -d "${SNAP_DATA}/fontconfig" ] && mkdir -p "${SNAP_DATA}/fontconfig"
 
 function append_dir() {
