@@ -42,6 +42,9 @@ class EnvSetup(_base_provider.Provider):
     def _setup_environment(self):
         pass
 
+    def _setup_environment_apt(self):
+        pass
+
 
 class LXDTestImpl(LXD, GetEnv, EnvSetup):
     pass
@@ -183,6 +186,8 @@ class LXDBaseTest(BaseProviderBaseTest):
 
             if "getent" in command:
                 output = "2001:67c:1562::20 snapcraft.io"
+            elif "arch" in command:
+                output = "x86_64"
             else:
                 output = ""
 

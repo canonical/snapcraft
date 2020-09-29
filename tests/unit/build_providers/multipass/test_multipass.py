@@ -104,7 +104,8 @@ class GetEnv(_base_provider.Provider):
 
 
 class MultipassTestImpl(Multipass, GetEnv):
-    pass
+    def _get_environment_arch(self):
+        return "x86_64"
 
 
 class MultipassTest(BaseProviderBaseTest):

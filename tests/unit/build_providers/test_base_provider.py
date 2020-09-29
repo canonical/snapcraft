@@ -17,7 +17,6 @@
 import contextlib
 import os
 import pathlib
-import platform
 import tempfile
 from textwrap import dedent
 from unittest.mock import Mock, call, patch
@@ -125,6 +124,9 @@ class BaseProviderTest(BaseProviderBaseTest):
                     ),
                     call(["chown", "root:root", "/bin/_snapcraft_prompt"]),
                     call(["chmod", "0755", "/bin/_snapcraft_prompt"]),
+                    call(["arch"]),
+                    call().decode(),
+                    call().decode().strip(),
                     call(
                         [
                             "mv",
@@ -577,23 +579,20 @@ _ARCHIVES = {
 
 
 @pytest.mark.parametrize(
-    "machine_platform",
+    "arch",
     [
         ("x86_64", _ARCHIVES["x86"]),
-        ("AMD64", _ARCHIVES["x86"]),
+        ("i686", _ARCHIVES["x86"]),
         ("aarch64", _ARCHIVES["ports"]),
+        ("armhf", _ARCHIVES["ports"]),
     ],
 )
 @pytest.mark.parametrize(
     "distro", [("core", "xenial"), ("core18", "bionic"), ("core20", "focal")]
 )
-def test_setup_environment_content_x86(
-    tmp_work_path, monkeypatch, machine_platform, distro
-):
+def test_setup_environment_content_x86(tmp_work_path, monkeypatch, arch, distro):
     snapcraft_project = Project()
     snapcraft_project._snap_meta = Snap(name="test-snap", base=distro[0])
-
-    monkeypatch.setattr(platform, "machine", lambda: machine_platform[0])
 
     recorded_files = dict()
 
@@ -609,7 +608,11 @@ def test_setup_environment_content_x86(
     monkeypatch.setattr(tempfile, "NamedTemporaryFile", fake_namedtempfile)
 
     provider = ProviderImpl(project=snapcraft_project, echoer=Mock())
+
+    monkeypatch.setattr(provider, "_get_environment_arch", lambda: arch[0])
+
     provider._setup_environment()
+    provider._setup_environment_apt()
 
     assert recorded_files == {
         ".bashrc": '#!/bin/bash\nexport PS1="\\h \\$(/bin/_snapcraft_prompt)# "\n',
@@ -633,7 +636,7 @@ def test_setup_environment_content_x86(
         "default.sources": dedent(
             f"""\
                 Types: deb
-                URIs: {machine_platform[1]["main"]}
+                URIs: {arch[1]["main"]}
                 Suites: {distro[1]} {distro[1]}-updates
                 Components: main multiverse restricted universe
             """
@@ -641,7 +644,7 @@ def test_setup_environment_content_x86(
         "default-security.sources": dedent(
             f"""\
                 Types: deb
-                URIs: {machine_platform[1]["security"]}
+                URIs: {arch[1]["security"]}
                 Suites: {distro[1]}-security
                 Components: main multiverse restricted universe
             """

@@ -19,7 +19,6 @@ import base64
 import logging
 import os
 import pathlib
-import platform
 import shlex
 import shutil
 import sys
@@ -244,6 +243,9 @@ class Provider(abc.ABC):
             # Configure environment for snapcraft use.
             self._setup_environment()
 
+            # Configure apt in environment.
+            self._setup_environment_apt()
+
             # Refresh repository caches.
             self._run(["apt-get", "update"])
 
@@ -330,27 +332,29 @@ class Provider(abc.ABC):
             "core20": "focal",
         }[build_base]
 
-    def _get_primary_mirror(self) -> str:
+    def _get_environment_arch(self) -> str:
+        arch = self._run(["arch"], hide_output=True)
+        if not arch:
+            raise RuntimeError("Unexpected error running 'arch'")
+
+        return arch.decode().strip()
+
+    def _get_primary_mirror(self, *, arch: str) -> str:
         primary_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
 
         if primary_mirror is None:
-            if platform.machine() in ["AMD64", "i686", "x86_64"]:
+            if arch in ["i686", "x86_64"]:
                 primary_mirror = "http://archive.ubuntu.com/ubuntu"
             else:
                 primary_mirror = "http://ports.ubuntu.com/ubuntu-ports"
 
         return primary_mirror
 
-    def _get_security_mirror(self) -> str:
-        security_mirror = os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT_PRIMARY_MIRROR", None)
+    def _get_security_mirror(self, *, arch: str) -> str:
+        if arch in ["i686", "x86_64"]:
+            return "http://security.ubuntu.com/ubuntu"
 
-        if security_mirror is None:
-            if platform.machine() in ["AMD64", "i686", "x86_64"]:
-                security_mirror = "http://security.ubuntu.com/ubuntu"
-            else:
-                security_mirror = "http://ports.ubuntu.com/ubuntu-ports"
-
-        return security_mirror
+        return "http://ports.ubuntu.com/ubuntu-ports"
 
     def _setup_environment(self) -> None:
         self._install_file(
@@ -385,6 +389,11 @@ class Provider(abc.ABC):
             permissions="0755",
         )
 
+    def _setup_environment_apt(self) -> None:
+        target_arch = self._get_environment_arch()
+        primary_mirror = self._get_primary_mirror(arch=target_arch)
+        security_mirror = self._get_security_mirror(arch=target_arch)
+
         self._install_file(path="/etc/apt/sources.list", content="", permissions="0644")
 
         self._install_file(
@@ -396,7 +405,7 @@ class Provider(abc.ABC):
                     Suites: {release} {release}-updates
                     Components: main multiverse restricted universe
                     """.format(
-                    primary_mirror=self._get_primary_mirror(),
+                    primary_mirror=primary_mirror,
                     release=self._get_code_name_from_build_base(),
                 )
             ),
@@ -412,7 +421,7 @@ class Provider(abc.ABC):
                         Suites: {release}-security
                         Components: main multiverse restricted universe
                         """.format(
-                    security_mirror=self._get_security_mirror(),
+                    security_mirror=security_mirror,
                     release=self._get_code_name_from_build_base(),
                 )
             ),
