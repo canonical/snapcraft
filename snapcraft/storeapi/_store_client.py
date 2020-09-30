@@ -17,26 +17,21 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Union
 
 import pymacaroons
 import requests
 
-import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 
-from . import logger
-from . import _upload
-from . import errors
-from .constants import DEFAULT_SERIES
-
-from ._sso_client import SSOClient
-from ._snap_index_client import SnapIndexClient
+from . import _upload, errors, logger
 from ._sca_client import SCAClient
+from ._snap_index_client import SnapIndexClient
 from ._snap_v2_client import SnapV2Client
+from ._sso_client import SSOClient
 from ._up_down_client import UpDownClient
-
+from .constants import DEFAULT_SERIES
 
 if TYPE_CHECKING:
     from .v2 import snap_channel_map
@@ -280,13 +275,10 @@ class StoreClient:
         *,
         risk: str,
         download_path: str,
-        track: str = None,
-        arch: str = None,
-        except_hash=""
+        track: Optional[str] = None,
+        arch: Optional[str] = None,
+        except_hash: str = ""
     ):
-        if arch is None:
-            arch = snapcraft.ProjectOptions().deb_arch
-
         snap_info = self.cpi.get_info(snap_name)
         channel_mapping = snap_info.get_channel_mapping(
             risk=risk, track=track, arch=arch

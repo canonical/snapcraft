@@ -452,7 +452,6 @@ class Provider(abc.ABC):
 
         snap_injector = SnapInjector(
             registry_filepath=registry_filepath,
-            snap_arch=self.project.deb_arch,
             runner=self._run,
             file_pusher=self._push_file,
             inject_from_host=inject_from_host,
