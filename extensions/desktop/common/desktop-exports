@@ -297,9 +297,6 @@ function make_user_fontconfig {
   # cachedir and be blocked by AppArmor.
   echo '  <cachedir prefix="xdg">fontconfig</cachedir>'
   echo "  <cachedir>$SNAP_DATA/fontconfig</cachedir>"
-  if [ -d "$REALHOME/.cache/fontconfig" ]; then
-    echo "  <cachedir>$REALHOME/.cache/fontconfig</cachedir>"
-  fi
   echo "</fontconfig>"
 }
 
