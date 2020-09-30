@@ -215,8 +215,8 @@ class BuildPackagesTestCase(unit.TestCase):
             Equals(
                 [
                     "dependency-package=1.0",
-                    "package-installed=1.0",
                     "package=1.0",
+                    "package-installed=1.0",
                     "versioned-package=2.0",
                 ]
             ),
@@ -233,11 +233,12 @@ class BuildPackagesTestCase(unit.TestCase):
                             "apt-get",
                             "--no-install-recommends",
                             "-y",
+                            "--allow-downgrades",
                             "install",
-                            "dependency-package",
-                            "package",
-                            "package-installed",
-                            "versioned-package",
+                            "dependency-package=1.0",
+                            "package=1.0",
+                            "package-installed=1.0",
+                            "versioned-package=2.0",
                         ],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
@@ -305,8 +306,9 @@ class BuildPackagesTestCase(unit.TestCase):
                             "apt-get",
                             "--no-install-recommends",
                             "-y",
+                            "--allow-downgrades",
                             "install",
-                            "package-installed",
+                            "package-installed=3.0",
                         ],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
@@ -346,8 +348,9 @@ class BuildPackagesTestCase(unit.TestCase):
                             "apt-get",
                             "--no-install-recommends",
                             "-y",
+                            "--allow-downgrades",
                             "install",
-                            "package",
+                            "package=1.0",
                         ],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
@@ -387,10 +390,11 @@ class BuildPackagesTestCase(unit.TestCase):
                             "apt-get",
                             "--no-install-recommends",
                             "-y",
+                            "--allow-downgrades",
                             "-o",
                             "Dpkg::Progress-Fancy=1",
                             "install",
-                            "package",
+                            "package=1.0",
                         ],
                         env={
                             "DEBIAN_FRONTEND": "noninteractive",
@@ -435,9 +439,9 @@ class BuildPackagesTestCase(unit.TestCase):
         raised = self.assertRaises(
             errors.BuildPackagesNotInstalledError,
             repo.Ubuntu.install_build_packages,
-            ["package"],
+            ["package=1.0"],
         )
-        self.assertThat(raised.packages, Equals("package"))
+        self.assertThat(raised.packages, Equals("package=1.0"))
 
     def test_refresh_buid_packages(self):
         repo.Ubuntu.refresh_build_packages()
