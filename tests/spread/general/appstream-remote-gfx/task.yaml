@@ -8,7 +8,7 @@ systems:
   - ubuntu-18.04
 
 environment:
-  SNAP_DIR: snaps/appstream-desktop
+  SNAP_DIR: ../snaps/appstream-remote-gfx
 
 restore: |
   cd "$SNAP_DIR"
@@ -19,16 +19,21 @@ execute: |
   cd "$SNAP_DIR"
   snapcraft prime
 
-  expected_snap_yaml="$PWD/../../expected_snap.yaml"
+  expected_snap_yaml="$PWD/../../appstream-remote-gfx/expected_snap.yaml"
 
   if ! diff -U10 prime/meta/snap.yaml "$expected_snap_yaml"; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi
 
-  expected_desktop="$PWD/../../expected_appstream-desktop.desktop"
+  expected_desktop="$PWD/../../appstream-remote-gfx/expected_appstream-desktop.desktop"
 
   if ! diff -U10 prime/meta/gui/appstream-desktop.desktop "$expected_desktop"; then
       echo "The formatting for appstream-desktop.desktop is incorrect"
+      exit 1
+  fi
+
+  if [ ! -f prime/meta/gui/icon.png ]; then
+      echo "Failed to fetch remote icon."
       exit 1
   fi

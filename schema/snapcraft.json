@@ -945,6 +945,7 @@
                             "items": {
                                 "type": "string",
                                 "enum": [
+                                    "enable-patchelf",
                                     "no-patchelf",
                                     "no-install",
                                     "debug",
