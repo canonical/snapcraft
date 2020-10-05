@@ -55,8 +55,8 @@ Rev.    Uploaded              Arches      Version    Channels
 * Implementation
 
 The Snap Store API for [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases][Releases]] returns two /streams/ of interest, those
-are =revisions= and =releases=. These streams are ordered and relied on
-for proper output.
+are =revisions= and =releases=. These streams are ordered by revision
+creation for the former and by release operation for the latter.
 
 The =revisions= entry shall be used to create the main list output
 whilst the =releases= /stream/ shall be used to find the associated
