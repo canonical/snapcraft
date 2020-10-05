@@ -24,14 +24,15 @@ snapcraft <list-revisions|revisions> <snap-name> [--arch <arch>]
 
 On output, the following changes shall be made:
 
-- Acknowledge that a Snap Revision can be compromised of multiple
-  architectures, changing the output of the table from /Arch/ to /Arches/
-  and allowing for a comma separated list.
-- Always displaying the full channel under /Channels/ (the history
-  endpoint return only <risk> for defaults).
-- The /Channels/ comma separated list shall have no spaces for easier
-  parsing with command like tools such as =awk=.
-- The output can be paged if the terminal allows for it.
+- Rename the =Arch= column to =Arches= as a single revision can support
+  multiple architectures
+- =Arches= column value shall display the full set of supported
+  architectures for that revision as a comma-separated list or
+  architectures
+- Display the complete channel name in the =Channels= column
+- Remove the space from the comma-separated list of channels in de
+  =Channels= column
+- Page the output if the terminal allows it
 
 To contrast, this is the current output from running the command:
 
