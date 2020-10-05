@@ -26,79 +26,29 @@ On output, the following changes shall be made:
 
 - Rename the =Arch= column to =Arches= as a single revision can support
   multiple architectures
-- =Arches= column value shall display the full set of supported
-  architectures for that revision as a comma-separated list or
-  architectures
+- Remove the space from the comma-separated list of architectures in
+  the =Arches= column.
 - Display the complete channel name in the =Channels= column
-- Remove the space from the comma-separated list of channels in de
+- Remove the space from the comma-separated list of channels in the
   =Channels= column
 - Page the output if the terminal allows it
 
 To contrast, this is the current output from running the command:
 
 #+BEGIN_SRC
-Rev.    Uploaded              Arch     Version                   Channels
-5560    2020-10-01T23:52:20Z  armhf    4.3.post16+gitaaf24afc    edge*
-5559    2020-10-01T23:42:21Z  arm64    4.3.post16+gitaaf24afc    edge*
-5558    2020-10-01T23:21:20Z  ppc64el  4.3.post16+gitaaf24afc    edge*
-5557    2020-10-01T23:19:26Z  i386     4.3.post16+gitaaf24afc    edge*
-5556    2020-10-01T23:14:23Z  s390x    4.3.post16+gitaaf24afc    edge*
-5555    2020-10-01T23:09:20Z  amd64    4.3.post16+gitaaf24afc    edge*
-5554    2020-10-01T13:51:02Z  amd64    4.3.post24+git2b31c74     edge/pr-3299*
-5553    2020-10-01T12:33:26Z  amd64    4.3.post18+git05d646c     edge/pr-3303*
-5552    2020-10-01T00:25:44Z  amd64    4.3.post18+gitb7dba6f     edge/pr-3302*
-5551    2020-09-30T23:37:19Z  armhf    4.3.post15+gitdde6b5f4    edge
-5550    2020-09-30T23:14:01Z  arm64    4.3.post15+gitdde6b5f4    edge
-5549    2020-09-30T22:59:20Z  i386     4.3.post15+gitdde6b5f4    edge
-5548    2020-09-30T22:55:29Z  ppc64el  4.3.post15+gitdde6b5f4    edge
-5547    2020-09-30T22:44:22Z  s390x    4.3.post15+gitdde6b5f4    edge
-5546    2020-09-30T22:39:37Z  amd64    4.3.post15+gitdde6b5f4    edge
-5545    2020-09-30T22:12:11Z  amd64    4.3.post23+git5492f37     edge/pr-3299
-5544    2020-09-29T23:46:10Z  amd64    4.3.post16+git20374d3     edge/pr-3302
-5543    2020-09-29T19:57:46Z  amd64    4.3.post15+git3d475a7     edge/pr-3301*
-5542    2020-09-29T12:44:04Z  amd64    4.3.post19+git2612da8     edge/pr-3241*
-5541    2020-09-29T12:43:03Z  amd64    4.3.post19+git2612da8     edge/pr-3241
-...
-5477    2020-09-11T18:41:18Z  armhf    4.3                       edge, candidate*, stable*
-5476    2020-09-11T15:50:57Z  arm64    4.3                       edge, candidate*, stable*
-5475    2020-09-11T13:11:08Z  i386     4.3                       edge, candidate*, stable*
-5474    2020-09-11T13:05:33Z  ppc64el  4.3                       edge, candidate*, stable*
-5473    2020-09-11T12:55:28Z  s390x    4.3                       edge, candidate*, stable*
-5472    2020-09-11T12:50:35Z  amd64    4.3                       edge, candidate*, stable*
-
+Rev.    Uploaded              Arch         Version    Channels
+17      2020-10-05T18:35:32Z  i386, amd64  20         edge*
+16      2020-05-26T17:44:31Z  amd64        20.04      beta*, beta/foo*
+15      2020-05-26T17:41:47Z  amd64        0.1        beta
 #+END_SRC
 
 And this is how the new output shall display:
 
 #+BEGIN_SRC
-Rev.    Uploaded              Arches    Version                   Channels
-5560    2020-10-01T23:52:20Z  armhf     4.3.post16+gitaaf24afc    latest/edge*
-5559    2020-10-01T23:42:21Z  arm64     4.3.post16+gitaaf24afc    latest/edge*
-5558    2020-10-01T23:21:20Z  ppc64el   4.3.post16+gitaaf24afc    latest/edge*
-5557    2020-10-01T23:19:26Z  i386      4.3.post16+gitaaf24afc    latest/edge*
-5556    2020-10-01T23:14:23Z  s390x     4.3.post16+gitaaf24afc    latest/edge*
-5555    2020-10-01T23:09:20Z  amd64     4.3.post16+gitaaf24afc    latest/edge*
-5554    2020-10-01T13:51:02Z  amd64     4.3.post24+git2b31c74     latest/edge/pr-3299*
-5553    2020-10-01T12:33:26Z  amd64     4.3.post18+git05d646c     latest/edge/pr-3303*
-5552    2020-10-01T00:25:44Z  amd64     4.3.post18+gitb7dba6f     latest/edge/pr-3302*
-5551    2020-09-30T23:37:19Z  armhf     4.3.post15+gitdde6b5f4    latest/edge
-5550    2020-09-30T23:14:01Z  arm64     4.3.post15+gitdde6b5f4    latest/edge
-5549    2020-09-30T22:59:20Z  i386      4.3.post15+gitdde6b5f4    latest/edge
-5548    2020-09-30T22:55:29Z  ppc64el   4.3.post15+gitdde6b5f4    latest/edge
-5547    2020-09-30T22:44:22Z  s390x     4.3.post15+gitdde6b5f4    latest/edge
-5546    2020-09-30T22:39:37Z  amd64     4.3.post15+gitdde6b5f4    latest/edge
-5545    2020-09-30T22:12:11Z  amd64     4.3.post23+git5492f37     latest/edge/pr-3299
-5544    2020-09-29T23:46:10Z  amd64     4.3.post16+git20374d3     latest/edge/pr-3302
-5543    2020-09-29T19:57:46Z  amd64     4.3.post15+git3d475a7     latest/edge/pr-3301*
-5542    2020-09-29T12:44:04Z  amd64     4.3.post19+git2612da8     latest/edge/pr-3241*
-5541    2020-09-29T12:43:03Z  amd64     4.3.post19+git2612da8     latest/edge/pr-3241
-...
-5477    2020-09-11T18:41:18Z  armhf     4.3                       latest/stable*,latest/candidate*,latest/edge
-5476    2020-09-11T15:50:57Z  arm64     4.3                       latest/stable*,latest/candidate*,latest/edge
-5475    2020-09-11T13:11:08Z  i386      4.3                       latest/stable*,latest/candidate*,latest/edge
-5474    2020-09-11T13:05:33Z  ppc64el   4.3                       latest/stable*,latest/candidate*,latest/edge
-5473    2020-09-11T12:55:28Z  s390x     4.3                       latest/stable*,latest/candidate*,latest/edge
-5472    2020-09-11T12:50:35Z  amd64     4.3                       latest/stable*,latest/candidate*,latest/edge
+Rev.    Uploaded              Arches      Version    Channels
+17      2020-10-05T18:35:32Z  i386,amd64  20         latest/edge*
+16      2020-05-26T17:44:31Z  amd64       20.04      latest/beta/foo*,latest/beta*
+15      2020-05-26T17:41:47Z  amd64       0.1        latest/beta
 #+END_SRC
 
 * Implementation
