@@ -275,13 +275,13 @@ class Provider(abc.ABC):
         if certs_path.is_file():
             certificate_files = [certs_path]
         elif certs_path.is_dir():
-            certificate_files = sorted([x for x in certs_path.iterdir() if x.is_file()])
+            certificate_files = [x for x in certs_path.iterdir() if x.is_file()]
         else:
             raise RuntimeError(
                 f"Unable to read CA certificates: {certs_path!r} (unhandled file type)"
             )
 
-        for certificate_file in certificate_files:
+        for certificate_file in sorted(certificate_files):
             logger.info(f"Installing CA certificate: {certificate_file}")
             dst_path = "/usr/local/share/ca-certificates/" + certificate_file.name
             self._push_file(source=str(certificate_file), destination=dst_path)
