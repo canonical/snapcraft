@@ -42,7 +42,8 @@ Rev.    Uploaded              Arch         Version    Channels
 15      2020-05-26T17:41:47Z  amd64        0.1        beta
 #+END_SRC
 
-And this is how the new output shall display:
+With the changes applied, =snapcraft revisions <snap-name>= shall change
+the previous output to display as:
 
 #+BEGIN_SRC
 Rev.    Uploaded              Arches      Version    Channels
