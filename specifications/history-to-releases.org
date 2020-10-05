@@ -6,7 +6,7 @@
 
 Internal migration from the Snap Store v1 history API endpoint to the
 improved v2 releases endpoint which uses a /snap name/ instead of
-=snap-id= as en entry point and returns a much more versatile dataset to
+=snap-id= as an entry point and returns a much more versatile dataset to
 work with.
 
 Minimal user interface changes are introduced that were mostly a
