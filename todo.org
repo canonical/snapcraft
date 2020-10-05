@@ -89,5 +89,5 @@ CLOSED: [2020-10-01 jue 10:00]
 *** TODO [[file:specifications/history-to-releases.org][Snap Store API migration from v1 history to v2 releases]] [0/3]
 
 - [ ] Add bindings to Snap Store package
-- [ ] Replace use of history with releases bindings for CLI
+- [ ] Use releases bindings for CLI implementing new output
 - [ ] Remove v1 history bindings
