@@ -208,6 +208,58 @@ class BaseProviderTest(BaseProviderBaseTest):
             ]
         )
 
+    def test_launch_instance_with_cert_file(self):
+        test_certs = pathlib.Path(self.path, "certs")
+        test_certs.mkdir()
+        test_cert1 = pathlib.Path(test_certs, "1.crt")
+        test_cert1.write_text("")
+
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={"SNAPCRAFT_ADD_CA_CERTIFICATES": str(test_cert1)},
+        )
+        provider.launch_instance()
+
+        provider.push_file_mock.assert_has_calls(
+            [
+                call(
+                    destination="/usr/local/share/ca-certificates/1.crt",
+                    source=str(test_cert1),
+                )
+            ]
+        )
+        provider.run_mock.assert_has_calls([call(["update-ca-certificates"])])
+
+    def test_launch_instance_with_cert_dir_files(self):
+        test_certs = pathlib.Path(self.path, "certs")
+        test_certs.mkdir()
+        test_cert1 = pathlib.Path(test_certs, "1.crt")
+        test_cert1.write_text("")
+        test_cert2 = pathlib.Path(test_certs, "2.crt")
+        test_cert2.write_text("")
+
+        provider = ProviderImpl(
+            project=self.project,
+            echoer=self.echoer_mock,
+            build_provider_flags={"SNAPCRAFT_ADD_CA_CERTIFICATES": str(test_certs)},
+        )
+        provider.launch_instance()
+
+        provider.push_file_mock.assert_has_calls(
+            [
+                call(
+                    destination="/usr/local/share/ca-certificates/1.crt",
+                    source=str(test_cert1),
+                ),
+                call(
+                    destination="/usr/local/share/ca-certificates/2.crt",
+                    source=str(test_cert2),
+                ),
+            ]
+        )
+        provider.run_mock.assert_has_calls([call(["update-ca-certificates"])])
+
     def test_expose_prime(self):
         provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
         provider.expose_prime()
