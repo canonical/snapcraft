@@ -85,3 +85,9 @@ CLOSED: [2020-10-01 jue 10:00]
 - [X] Generate =configure= hook =command-chain= in desktop parts
 - [X] Extend yaml for neon, gnome-2-28 and gnome-3-34 to use desktop
       part's =command-chain= for the =configure= hook
+
+*** TODO [[file:specifications/history-to-releases.org][Snap Store API migration from v1 history to v2 releases]] [0/3]
+
+- [ ] Add bindings to Snap Store package
+- [ ] Use releases bindings for CLI implementing new output
+- [ ] Remove v1 history bindings
