@@ -89,6 +89,12 @@ class ExtensionImpl(Extension):
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
                 "GTK_USE_PORTALS": "1",
             },
+            "hooks": {
+                "configure": {
+                    "plugs": ["desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                }
+            },
             "layout": {
                 "/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0": {
                     "bind": "$SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0"
