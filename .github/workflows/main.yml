@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Snapcraft
+        uses: actions/checkout@v2
+        with:
+          # Fetch all of history so Snapcraft can determine its own version from git.
+          fetch-depth: 0
+
+      - name: Build Snapcraft
+        id: build-snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Upload Snapcraft snap
+        uses: actions/upload-artifact@v2
+        with:
+          name: snap
+          path: ${{ steps.build-snapcraft.outputs.snap }}
+
+      - name: Verify install of Snapcraft snap
+        run: |
+          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
