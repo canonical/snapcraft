@@ -80,12 +80,6 @@ jobs:
       if: (type = pull_request) AND (head_repo = "snapcore/snapcraft")
       script: ./tools/travis_deploy.sh
     - stage: integration
-      name: spread
-      workspaces:
-        use: snaps
-      if: repo = "snapcore/snapcraft" or env(SPREAD_GOOGLE_KEY) IS present
-      script: ./runtests.sh spread "google:"
-    - stage: integration
       name: store
       workspaces:
         use: snaps
