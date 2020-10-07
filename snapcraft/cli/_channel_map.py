@@ -110,10 +110,10 @@ def _get_channel_lines_for_channel(  # noqa: C901
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
     try:
-        progressive_mapped_channel: Optional[
-            MappedChannel
-        ] = snap_channel_map.get_mapped_channel(
-            channel_name=channel_name, architecture=architecture, progressive=True
+        progressive_mapped_channel: Optional[MappedChannel] = (
+            snap_channel_map.get_mapped_channel(
+                channel_name=channel_name, architecture=architecture, progressive=True
+            )
         )
     except ValueError:
         progressive_mapped_channel = None
@@ -123,20 +123,28 @@ def _get_channel_lines_for_channel(  # noqa: C901
             progressive_mapped_channel.revision
         )
 
+        if progressive_mapped_channel.progressive.percentage is None:
+            percentage = 0.0
+        else:
+            percentage = progressive_mapped_channel.progressive.percentage
+
+        if progressive_mapped_channel.progressive.current_percentage is None:
+            current_percentage = 0.0
+        else:
+            current_percentage = (
+                progressive_mapped_channel.progressive.current_percentage
+            )
+
         progressive_mapped_channel_line = _get_channel_line(
             mapped_channel=progressive_mapped_channel,
             revision=progressive_revision,
             channel_info=channel_info,
             hint=current_tick,
-            progress_string=f"{_HINTS.PROGRESSING_TO} {progressive_mapped_channel.progressive.percentage:.0f}%",
+            progress_string=f"{current_percentage:.0f} {_HINTS.PROGRESSING_TO} {percentage:.0f}%",
         )
-        if progressive_mapped_channel.progressive.percentage is None:
-            percentage = 0.0
-        else:
-            percentage = progressive_mapped_channel.progressive.percentage
         # Setup progress for the actually released revision, this needs to be
         # calculated. But only show it if the channel is open.
-        progress_string = "{} {:.0f}%".format(_HINTS.PROGRESSING_TO, 100 - percentage)
+        progress_string = f"{100 - current_percentage:.0f} {_HINTS.PROGRESSING_TO} {100 - percentage:.0f}%"
     else:
         progress_string = _HINTS.NO_PROGRESS
 

@@ -90,7 +90,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
                              beta       -          -           -
-                                        10         19          → 10%
+                                        10         19          0 → 10%
                              edge       ↑          ↑           -
             The '2.1/beta' channel is now open.
             """
@@ -114,7 +114,9 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 architecture="amd64",
                 expiration_date="2020-02-03T20:58:37Z",
                 revision=20,
-                progressive=Progressive(paused=None, percentage=None),
+                progressive=Progressive(
+                    paused=None, percentage=None, current_percentage=None
+                ),
             )
         )
         self.channel_map.revisions.append(
@@ -167,7 +169,9 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
                 architecture="amd64",
                 expiration_date="2020-02-03T20:58:37Z",
                 revision=20,
-                progressive=Progressive(paused=None, percentage=80.0),
+                progressive=Progressive(
+                    paused=None, percentage=80.0, current_percentage=None
+                ),
             )
         )
         self.channel_map.revisions.append(
@@ -204,7 +208,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             *EXPERIMENTAL* progressive releases in use.
             Track    Arch    Channel         Version    Revision    Progress    Expires at
             2.1      amd64   stable          -          -           -
-                             stable/hotfix1  10hotfix   20          → 80%       2020-02-03T20:58:37Z
+                             stable/hotfix1  10hotfix   20          0 → 80%     2020-02-03T20:58:37Z
                              candidate       -          -           -
                              beta            10         19          -
                              edge            ↑          ↑           -

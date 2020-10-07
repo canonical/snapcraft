@@ -41,6 +41,7 @@ CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
                         "properties": {
                             "paused": {"type": ["boolean", "null"]},
                             "percentage": {"type": ["number", "null"]},
+                            "current-percentage": {"type": ["number", "null"]},
                         },
                         "required": ["paused", "percentage"],
                         "type": "object",
