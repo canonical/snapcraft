@@ -11,7 +11,6 @@ if [ "$wayland_available" = true ]; then
   export QT_QPA_PLATFORM=wayland-egl
 fi
 append_dir GTK_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gtk-3.0"
-append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3.6/site-packages"
 
 # ibus and fcitx integration
 GTK_IM_MODULE_DIR="$XDG_CACHE_HOME/immodules"

@@ -106,7 +106,10 @@ class ExtensionImpl(Extension):
         }
 
         self.app_snippet = {
-            "command-chain": ["snap/command-chain/desktop-launch"],
+            "command-chain": [
+                "snap/command-chain/desktop-launch",
+                "snap/command-chain/dest-python",
+            ],
             "plugs": [
                 "desktop",
                 "desktop-legacy",
