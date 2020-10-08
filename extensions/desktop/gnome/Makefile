@@ -9,7 +9,6 @@ LIB_DIR              := $(DESTDIR)/lib
 DEST_LAUNCHER        := desktop-launch
 BINDTEXTDOMAIN       := bindtextdomain.so
 DEST_CONFIGURE_HOOK  := hooks-configure-desktop
-DEST_PYTHON          := dest-python
 HW_PLATFORM          := $(shell uname --hardware-platform)
 ARCH                 := $(HW_PLATFORM)-linux-gnu
 
@@ -33,22 +32,7 @@ $(DEST_LAUNCHER):
 $(DEST_CONFIGURE_HOOK):
 	@cat $(SRC_DIR)/fonts > $(DEST_CONFIGURE_HOOK)
 
-$(DEST_PYTHON):
-	ifeq ($(extensions), 'gnome-3-34')
-		ifdef $(PYTHONPATH)
-			$(PYTHONPATH)="$(PYTHONPATH):$(SNAP)/gnome-platform/usr/lib/python3.6/site-packages"
-		else
-			$(PYTHONPATH)="$(SNAP)/gnome-platform/usr/lib/python3.6/site-packages"
-		endif
-	elif ($(extensions), 'gnome-3-28')
-		ifdef $(PYTHONPATH)
-			$(PYTHONPATH)="$(PYTHONPATH):$(SNAP)/gnome-platform/usr/lib/python3.6/site-packages"
-		else
-			$(PYTHONPATH)="$(SNAP)/gnome-platform/usr/lib/python3.6/site-packages"
-		endif
-	endif
-
-install: $(DEST_LAUNCHER)  $(DEST_CONFIGURE_HOOK)  $(DEST_PYTHON)
+install: $(DEST_LAUNCHER)  $(DEST_CONFIGURE_HOOK)
 	install -d $(PLATFORM_DIR)
 	install -d $(DATA_DIR)
 	install -d $(DATA_DIR)/icons
@@ -57,4 +41,3 @@ install: $(DEST_LAUNCHER)  $(DEST_CONFIGURE_HOOK)  $(DEST_PYTHON)
 	install -D -m755 $(DEST_LAUNCHER) "$(BIN_DIR)"/$(DEST_LAUNCHER)
 	install -D -m644 $(ARCH)/$(BINDTEXTDOMAIN) "$(LIB_DIR)"/$(ARCH)/$(BINDTEXTDOMAIN)
 	install -D -m755 $(DEST_CONFIGURE_HOOK) "$(BIN_DIR)"/$(DEST_CONFIGURE_HOOK)
-	install -D -m755 $(DEST_PYTHON) "$(BIN_DIR)"/$(DEST_PYTHON)
