@@ -502,6 +502,7 @@ class CatkinPlugin(PluginV1):
         # Use rosdep for dependency detection and resolution
         rosdep = _ros.rosdep.Rosdep(
             ros_distro=self._rosdistro,
+            ros_version="1",
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
             ubuntu_distro=_BASE_TO_UBUNTU_RELEASE_MAP[self.project._get_build_base()],
