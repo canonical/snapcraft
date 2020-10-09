@@ -54,7 +54,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                         "required": ["paused", "percentage", "current-percentage"],
                         "type": "object",
                     },
-                    "revision": {"introduced_at": 1, "type": ["integer", "null"]},
+                    "revision": {"introduced_at": 1, "type": "integer"},
                     "risk": {"introduced_at": 1, "type": "string"},
                     "track": {"introduced_at": 1, "type": "string"},
                     "when": {
