@@ -70,7 +70,7 @@ class Release:
         architecture: str,
         branch: Optional[str],
         channel: str,
-        expiration_date: str,
+        expiration_date: Optional[str],
         revision: int,
         risk: str,
         track: str,
