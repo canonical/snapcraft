@@ -22,6 +22,7 @@
 from typing import Any, Dict
 
 
+# Version 14, found at: https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases
 RELEASES_JSONSCHEMA: Dict[str, Any] = {
     "properties": {
         "releases": {
