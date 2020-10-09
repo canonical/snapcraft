@@ -68,7 +68,7 @@ class Release:
     def __init__(
         self,
         architecture: str,
-        branch: str,
+        branch: Optional[str],
         channel: str,
         expiration_date: str,
         revision: int,
