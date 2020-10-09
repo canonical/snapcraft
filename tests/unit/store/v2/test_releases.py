@@ -22,13 +22,14 @@ from snapcraft.storeapi.v2 import releases
 @pytest.mark.parametrize(
     "branch", ((None, None), ("test-branch", "2020-02-11T17:51:40.891996Z"))
 )
-def test_release(branch):
+@pytest.mark.parametrize("revision", (42, None))
+def test_release(branch, revision):
     payload = {
         "architecture": "amd64",
         "branch": branch[0],
         "channel": "latest/stable",
         "expiration-date": branch[1],
-        "revision": 42,
+        "revision": revision,
         "risk": "stable",
         "track": "latest",
         "when": "2020-02-11T17:51:40.891996Z",

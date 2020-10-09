@@ -71,7 +71,7 @@ class Release:
         branch: Optional[str],
         channel: str,
         expiration_date: Optional[str],
-        revision: int,
+        revision: Optional[int],
         risk: str,
         track: str,
         when: str,
