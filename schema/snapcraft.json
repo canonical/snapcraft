@@ -126,6 +126,9 @@
                         "apt"
                     ]
                 },
+                "name": {
+                    "type": "string"
+                },
                 "architectures": {
                     "type": "array",
                     "minItems": 1,
