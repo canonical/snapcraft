@@ -132,7 +132,7 @@ class Revision:
         *,
         architectures: List[str],
         base: str,
-        build_url: str,
+        build_url: Optional[str],
         confinement: str,
         created_at: str,
         grade: str,
