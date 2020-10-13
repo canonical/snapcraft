@@ -1,0 +1,64 @@
+#+TITLE: Snap Store API migration from v1 history to v2 releases
+#+AUTHOR: Sergio Schvezov <sergio.schvezov@canonical.com>
+#+DATE: [2020-10-02]
+
+* Scope
+
+Internal migration from the Snap Store v1 history API endpoint to the
+improved v2 releases endpoint which uses a /snap name/ instead of
+=snap-id= as an entry point and returns a much more versatile dataset to
+work with.
+
+Minimal user interface changes are introduced that were mostly a
+limitation of the old API that was developed before Channels Tracks
+(or default tracks) were fully implemented.
+
+* User Experience
+
+There are no changes on command input, the same syntax and semantics are kept,
+such that the following must still be valid:
+
+#+BEGIN_SRC sh
+snapcraft <list-revisions|revisions> <snap-name> [--arch <arch>]
+#+END_SRC
+
+On output, the following changes shall be made:
+
+- Rename the =Arch= column to =Arches= as a single revision can support
+  multiple architectures
+- Remove the space from the comma-separated list of architectures in
+  the =Arches= column.
+- Display the complete channel name in the =Channels= column
+- Remove the space from the comma-separated list of channels in the
+  =Channels= column
+- Page the output if the terminal allows it
+
+To contrast, this is the current output from running the command:
+
+#+BEGIN_SRC
+Rev.    Uploaded              Arch         Version    Channels
+17      2020-10-05T18:35:32Z  i386, amd64  20         edge*
+16      2020-05-26T17:44:31Z  amd64        20.04      beta*, beta/foo*
+15      2020-05-26T17:41:47Z  amd64        0.1        beta
+#+END_SRC
+
+With the changes applied, =snapcraft revisions <snap-name>= shall change
+the previous output to display as:
+
+#+BEGIN_SRC
+Rev.    Uploaded              Arches      Version    Channels
+17      2020-10-05T18:35:32Z  i386,amd64  20         latest/edge*
+16      2020-05-26T17:44:31Z  amd64       20.04      latest/beta/foo*,latest/beta*
+15      2020-05-26T17:41:47Z  amd64       0.1        latest/beta
+#+END_SRC
+
+* Implementation
+
+The Snap Store API for [[https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases][Releases]] returns two /streams/ of interest, those
+are =revisions= and =releases=. These streams are ordered by revision
+creation for the former and by release operation for the latter.
+
+The =revisions= entry shall be used to create the main list output
+whilst the =releases= /stream/ shall be used to find the associated
+channels for a revision and to generate the /current/ (=*=) marker that
+represents the channel with the published release.
