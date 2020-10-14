@@ -139,6 +139,8 @@ class Runner:
 
                 {env}
 
+                set -x
+
                 {scriptlet}"""
             ).format(
                 interpreter=sys.executable,
