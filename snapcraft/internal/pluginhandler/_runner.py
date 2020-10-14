@@ -165,27 +165,28 @@ class Runner:
                         # call has been handled (must contain at least a
                         # newline, anything beyond is considered an error by
                         # snapcraftctl)
-                        feedback_fifo.write(
-                            "{}\n".format(
-                                self._handle_builtin_function(
-                                    scriptlet_name, function_call.strip()
-                                )
-                            )
+                        self._handle_builtin_function(
+                            scriptlet_name, function_call.strip()
                         )
+                        feedback_fifo.write("\n")
+
                     status = process.poll()
 
                     # Don't loop TOO busily
                     time.sleep(0.1)
+            except Exception as error:
+                feedback_fifo.write(f"{error!s}\n")
+                raise error
             finally:
                 call_fifo.close()
                 feedback_fifo.close()
 
-            if status:
+            if process.returncode != 0:
                 raise errors.ScriptletRunError(
                     scriptlet_name=scriptlet_name, code=status
                 )
 
-    def _handle_builtin_function(self, scriptlet_name, function_call):
+    def _handle_builtin_function(self, scriptlet_name, function_call) -> None:
         try:
             function_json = json.loads(function_call)
         except json.decoder.JSONDecodeError as e:
@@ -219,15 +220,7 @@ class Runner:
                 "{}".format(scriptlet_name, function_name)
             ) from e
 
-        # Return the feedback for this function call. No feedback
-        # (empty string) is the success case, and feedback is an error case,
-        # in which case it should be printed and snapcraftctl should print the
-        # feedback and exit non-zero.
-        try:
-            function(**function_args)
-        except errors.ScriptletBaseError as e:
-            return e.__str__()
-        return ""
+        function(**function_args)
 
 
 class _NonBlockingRWFifo:

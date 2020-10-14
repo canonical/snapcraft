@@ -22,9 +22,8 @@ import sys
 
 import click
 
-from snapcraft.internal import errors
 from snapcraft.cli._errors import exception_handler
-from snapcraft.internal import log
+from snapcraft.internal import errors, log
 
 
 @click.group()
@@ -108,6 +107,6 @@ def _call_function(function_name, args=None):
     with open(feedback_fifo, "r") as f:
         feedback = f.readline().strip()
 
-    # Any feedback is considered a fatal error to be printed
+    # Any feedback is considered a fatal error.
     if feedback:
-        raise errors.SnapcraftctlError(feedback)
+        sys.exit(-1)
