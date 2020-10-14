@@ -98,5 +98,8 @@ class CatkinPlugin(_ros.RosPlugin):
 
     def _get_workspace_activation_commands(self) -> List[str]:
         return [
-            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh"
+            'state="$(set +o)"',
+            "set +u",
+            "_CATKIN_SETUP_DIR=/opt/ros/$ROS_DISTRO . /opt/ros/$ROS_DISTRO/setup.sh",
+            'eval "$(state)"',
         ]

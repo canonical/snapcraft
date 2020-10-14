@@ -26,7 +26,7 @@ import shutil
 import subprocess
 import sys
 from glob import iglob
-from typing import cast, Dict, List, Optional, Set, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, cast
 
 import snapcraft.extractors
 from snapcraft import file_utils, plugins, yaml_utils
@@ -35,14 +35,13 @@ from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
 from ._dependencies import MissingDependencyResolver
+from ._dirty_report import Dependency, DirtyReport  # noqa
 from ._metadata_extraction import extract_metadata
+from ._outdated_report import OutdatedReport
 from ._part_environment import get_snapcraft_part_environment
+from ._patchelf import PartPatcher
 from ._plugin_loader import load_plugin  # noqa: F401
 from ._runner import Runner
-from ._patchelf import PartPatcher
-from ._dirty_report import Dependency, DirtyReport  # noqa
-from ._outdated_report import OutdatedReport
-
 
 if TYPE_CHECKING:
     from snapcraft.project import Project
@@ -126,9 +125,15 @@ class PluginHandler:
         ] = collections.defaultdict(snapcraft.extractors.ExtractedMetadata)
 
         if isinstance(plugin, plugins.v2.PluginV2):
+            self._shell = "/bin/bash"
+            self._shell_flags = "set -xeuo pipefail"
+
             env_generator = self._generate_part_env
             build_step_run_callable = self._do_v2_build
         else:
+            # sh supports -u, but for legacy purposes we do not enable it.
+            self._shell = "/bin/sh"
+            self._shell_flags = "set -xe"
 
             def generate_part_env(step: steps.Step) -> str:
                 return common.assemble_env()
@@ -154,6 +159,8 @@ class PluginHandler:
                 "set-version": self._set_version,
                 "set-grade": self._set_grade,
             },
+            shell=self._shell,
+            shell_flags=self._shell_flags,
         )
 
         self._current_step: Optional[steps.Step] = None
@@ -631,7 +638,7 @@ class PluginHandler:
 
         # Create the script.
         with io.StringIO() as run_environment:
-            print("#!/bin/sh", file=run_environment)
+            print(f"#!{self._shell}", file=run_environment)
             print("set -e", file=run_environment)
 
             print("# Environment", file=run_environment)
@@ -663,7 +670,7 @@ class PluginHandler:
         # TODO expand this in Runner.
         with build_script_path.open("w") as run_file:
             print(self._generate_part_env(steps.BUILD), file=run_file)
-            print("set -x", file=run_file)
+            print(self._shell_flags, file=run_file)
 
             for build_command in plugin_build_commands:
                 print(build_command, file=run_file)
