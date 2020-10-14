@@ -97,13 +97,13 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
         self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(
-        self, rosdistro, rosversion, package_path, rosdep_path, ubuntu_distro
+        self, rosdistro, ros_version, package_path, rosdep_path, ubuntu_distro
     ):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
                     ros_distro=rosdistro,
-                    ros_version=rosversion,
+                    ros_version=ros_version,
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
