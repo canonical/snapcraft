@@ -69,7 +69,7 @@ _FIXUP_BUILD_COMMANDS = [
         """\
             for e in $(find "${SNAPCRAFT_PART_INSTALL}" -type f -executable)
             do
-                sed -i "1 s|#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|" "${e}"
+                sed -i "1 s|^#\\!${SNAPCRAFT_PYTHON_VENV_INTERP_PATH}.*$|#\\!/usr/bin/env ${SNAPCRAFT_PYTHON_INTERPRETER}|" "${e}"
             done
         """
     ),
