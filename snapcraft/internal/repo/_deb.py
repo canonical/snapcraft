@@ -16,9 +16,7 @@
 
 import fileinput
 import functools
-import gnupg
 import io
-import lazr.restfulclient.errors
 import logging
 import os
 import pathlib
@@ -27,20 +25,21 @@ import subprocess
 import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
-from typing_extensions import Final
 
+import gnupg
+import lazr.restfulclient.errors
 from launchpadlib.launchpad import Launchpad
+from typing_extensions import Final
 from xdg import BaseDirectory
 
 from snapcraft import file_utils
-from snapcraft.project._project_options import ProjectOptions
 from snapcraft.internal import os_release
 from snapcraft.internal.indicators import is_dumb_terminal
+from snapcraft.project._project_options import ProjectOptions
 
 from . import errors
-from .apt_cache import AptCache
 from ._base import BaseRepo, get_pkg_name_parts
-
+from .apt_cache import AptCache
 
 logger = logging.getLogger(__name__)
 
@@ -701,9 +700,10 @@ class Ubuntu(BaseRepo):
 
             if architectures:
                 arch_text = " ".join(architectures)
-                host_arch = _get_host_arch()
-                arch_text = arch_text.replace("$SNAPCRAFT_APT_HOST_ARCH", host_arch)
-                print(f"Architectures: {arch_text}", file=deb822)
+            else:
+                arch_text = _get_host_arch()
+
+            print(f"Architectures: {arch_text}", file=deb822)
 
             return deb822.getvalue()
 
