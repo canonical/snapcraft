@@ -56,7 +56,7 @@ run_snapcraft_tests(){
 
     if [[ "$test_suite" == "tests/unit"* ]]; then
         # Run with coverage results, if available.
-        pytest --cov-report=xml --cov=snapcraft tests/unit/
+        pytest --cov-report=xml --cov=snapcraft "$test_suite"
     else
         python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi
