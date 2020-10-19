@@ -20,7 +20,7 @@ import pathlib
 from testtools.matchers import Contains, Equals, FileExists, Not
 
 from snapcraft import yaml_utils
-from snapcraft.internal.meta import application, errors, desktop
+from snapcraft.internal.meta import application, desktop, errors
 from tests import unit
 
 
@@ -112,7 +112,7 @@ class AppCommandTest(unit.TestCase):
         )
 
         self.assertRaises(
-            errors.InvalidAppCommandNotExecutable,
+            errors.InvalidAppCommandNotFound,
             app.prime_commands,
             base="core20",
             prime_dir=self.path,
