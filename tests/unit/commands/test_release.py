@@ -67,6 +67,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     def test_progressive_release(self):
         self.channel_map.channel_map[0].progressive.percentage = 10.0
+        self.channel_map.channel_map[0].progressive.current_percentage = 5.0
 
         result = self.run_command(
             [
@@ -90,7 +91,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
                              beta       -          -           -
-                                        10         19          0 → 10%
+                                        10         19          5 → 10%
                              edge       ↑          ↑           -
             The '2.1/beta' channel is now open.
             """
@@ -208,7 +209,7 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             *EXPERIMENTAL* progressive releases in use.
             Track    Arch    Channel         Version    Revision    Progress    Expires at
             2.1      amd64   stable          -          -           -
-                             stable/hotfix1  10hotfix   20          0 → 80%     2020-02-03T20:58:37Z
+                             stable/hotfix1  10hotfix   20          ? → 80%     2020-02-03T20:58:37Z
                              candidate       -          -           -
                              beta            10         19          -
                              edge            ↑          ↑           -
@@ -222,6 +223,46 @@ class ReleaseCommandTestCase(FakeStoreCommandsBaseTestCase):
             revision="20",
             channels=["2.1/stable/hotfix1"],
             progressive_percentage=80,
+        )
+
+    def test_progressive_release_with_null_current_percentage(self):
+        self.channel_map.channel_map[0].progressive.percentage = 10.0
+        self.channel_map.channel_map[0].progressive.current_percentage = None
+
+        result = self.run_command(
+            [
+                "release",
+                "nil-snap",
+                "19",
+                "2.1/beta",
+                "--progressive",
+                "10",
+                "--experimental-progressive-releases",
+            ]
+        )
+
+        self.assertThat(
+            result.output,
+            Equals(
+                dedent(
+                    """\
+            *EXPERIMENTAL* progressive releases in use.
+            Track    Arch    Channel    Version    Revision    Progress
+            2.1      amd64   stable     -          -           -
+                             candidate  -          -           -
+                             beta       -          -           -
+                                        10         19          ? → 10%
+                             edge       ↑          ↑           -
+            The '2.1/beta' channel is now open.
+            """
+                )
+            ),
+        )
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="nil-snap",
+            revision="19",
+            channels=["2.1/beta"],
+            progressive_percentage=10,
         )
 
     def test_release_without_login_must_ask(self):

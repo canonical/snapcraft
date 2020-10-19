@@ -293,7 +293,7 @@ class StatusCommandTestCase(FakeStoreCommandsBaseTestCase):
             2.1      amd64   stable     -          -           -
                              candidate  -          -           -
                              beta       -          -           -
-                                        10         19          0 → 10%
+                                        10         19          ? → 10%
                              edge       ↑          ↑           -
             """
                 )
