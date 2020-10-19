@@ -524,6 +524,10 @@ suites:
      sudo apt-get install git
      sudo apt-mark auto git
 
+# Electron builder tests
+ tests/spread/electron-builder/:
+   summary: electron-builder tests
+
 # Legacy tests
  tests/spread/legacy/:
    summary: legacy snapcraft tests
