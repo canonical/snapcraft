@@ -128,6 +128,7 @@ RELEASES_JSONSCHEMA: Dict[str, Any] = {
                     "confinement",
                     "created_at",
                     "grade",
+                    "revision",
                     "sha3-384",
                     "size",
                     "status",
