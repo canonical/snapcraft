@@ -21,7 +21,7 @@ import operator
 import stat
 import sys
 from textwrap import dedent
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
 import click
 from tabulate import tabulate
@@ -542,11 +542,71 @@ def list_revisions(snap_name, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    snapcraft.revisions(snap_name, arch)
+    releases = StoreClientCLI().get_snap_releases(snap_name=snap_name)
+
+    def get_channels_for_revision(revision: int) -> List[str]:
+        channels: Set[str] = set()
+        seen_channel: Dict[str, Set[str]] = dict()
+
+        for release in releases.releases:
+            if release.architecture not in seen_channel:
+                seen_channel[release.architecture] = set()
+
+            # If the revision is in this release entry and was not seen
+            # before it means that this is the revision on this channel
+            # is live.
+            if (
+                release.revision == revision
+                and release.channel not in seen_channel[release.architecture]
+            ):
+                channels.add(f"{release.channel}*")
+            # All other channels found for a revision are inactive.
+            elif (
+                release.revision == revision
+                and release.channel not in channels
+                and f"{release.channel}*" not in channels
+            ):
+                channels.add(release.channel)
+
+            seen_channel[release.architecture].add(release.channel)
+
+        return sorted(list(channels))
+
+    parsed_revisions = list()
+    for rev in releases.revisions:
+        if arch and arch not in rev.architectures:
+            continue
+        channels_for_revision = get_channels_for_revision(rev.revision)
+        if channels_for_revision:
+            channels = ",".join(channels_for_revision)
+        else:
+            channels = "-"
+        parsed_revisions.append(
+            (
+                rev.revision,
+                rev.created_at,
+                ",".join(rev.architectures),
+                rev.version,
+                channels,
+            )
+        )
+
+    tabulated_revisions = tabulate(
+        parsed_revisions,
+        numalign="left",
+        headers=["Rev.", "Uploaded", "Arches", "Version", "Channels"],
+        tablefmt="plain",
+    )
+
+    # 23 revisions + header should not need paging.
+    if len(parsed_revisions) < 24:
+        click.echo(tabulated_revisions)
+    else:
+        click.echo_via_pager(tabulated_revisions)
 
 
 @storecli.command("list")
-def list():
+def list_registered():
     """List snap names registered or shared with you.
 
     \b

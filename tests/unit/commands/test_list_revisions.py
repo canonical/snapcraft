@@ -24,33 +24,7 @@ from snapcraft import storeapi
 from . import FakeStoreCommandsBaseTestCase
 
 
-class RevisionsCommandBaseTestCase(FakeStoreCommandsBaseTestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.expected = [
-            {
-                "series": ["16"],
-                "channels": [],
-                "version": "2.0.1",
-                "timestamp": "2016-09-27T19:23:40Z",
-                "current_channels": ["beta", "edge"],
-                "arch": "i386",
-                "revision": 2,
-            },
-            {
-                "series": ["16"],
-                "channels": ["stable", "edge"],
-                "version": "2.0.2",
-                "timestamp": "2016-09-27T18:38:43Z",
-                "current_channels": ["stable", "candidate", "beta"],
-                "arch": "amd64",
-                "revision": 1,
-            },
-        ]
-
-
-class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
+class RevisionsCommandTestCase(FakeStoreCommandsBaseTestCase):
 
     command_name = "list-revisions"
 
@@ -61,14 +35,10 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         self.assertThat(result.output, Contains("Usage:"))
 
     def test_revisions_without_login_must_ask(self):
-        self.fake_store_account_info.mock.side_effect = [
+        self.fake_store_get_releases.mock.side_effect = [
             storeapi.errors.InvalidCredentialsError("error"),
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
-            {"snaps": {"16": {"snap-test": {"snap-id": "snap-test-snap-id"}}}},
+            self.releases,
         ]
-        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command(
             [self.command_name, "snap-test"], input="user@example.com\nsecret\n"
@@ -77,30 +47,7 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             result.output, Contains("You are required to login before continuing.")
         )
 
-    def test_revisions_with_3rd_party_snap(self):
-        self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            [self.command_name, "snap-test"],
-        )
-
-    def test_revisions_with_3rd_party_snap_by_arch(self):
-        self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            [self.command_name, "snap-test", "--arch=arm64"],
-        )
-
-    def test_revisions_by_unknown_arch(self):
-        self.assertRaises(
-            storeapi.errors.SnapNotFoundError,
-            self.run_command,
-            [self.command_name, "snap-test", "--arch=some-arch"],
-        )
-
     def test_revisions(self):
-        self.fake_store_revisions.mock.return_value = self.expected
-
         result = self.run_command([self.command_name, "snap-test"])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -109,30 +56,21 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Rev.    Uploaded              Arch    Version    Channels
-            2       2016-09-27T19:23:40Z  i386    2.0.1      -
-            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""
+            Rev.    Uploaded              Arches    Version    Channels
+            2       2016-09-27T19:23:40Z  i386      2.0.1      -
+            1       2016-09-27T18:38:43Z  amd64     2.0.2      latest/edge*,latest/stable"""
                 )
             ),
-        )  # noqa
-        self.fake_store_revisions.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", None
         )
 
     def test_alias(self):
         self.command_name = "list-revisions"
-
-        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command([self.command_name, "snap-test"])
 
         self.assertThat(result.exit_code, Equals(0))
 
     def test_revisions_by_arch(self):
-        self.fake_store_revisions.mock.return_value = [
-            rev for rev in self.expected if rev["arch"] == "amd64"
-        ]
-
         result = self.run_command([self.command_name, "snap-test", "--arch=amd64"])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -141,22 +79,17 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
             Contains(
                 dedent(
                     """\
-            Rev.    Uploaded              Arch    Version    Channels
-            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""
+            Rev.    Uploaded              Arches    Version    Channels
+            1       2016-09-27T18:38:43Z  amd64     2.0.2      latest/edge*,latest/stable"""
                 )
             ),
         )
-        self.fake_store_revisions.mock.assert_called_once_with(
-            "snap-test-snap-id", "16", "amd64"
-        )
 
 
-class DeprecatedHistoryCommandTestCase(RevisionsCommandBaseTestCase):
+class DeprecatedHistoryCommandTestCase(FakeStoreCommandsBaseTestCase):
     def test_history_with_deprecation_message(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
-
-        self.fake_store_revisions.mock.return_value = self.expected
 
         result = self.run_command(["history", "snap-test"])
 
