@@ -789,6 +789,9 @@ class CatkinPlugin(PluginV1):
 
         # Install the package
         catkincmd.append("--install")
+        
+        # handle dependencies inside the isolated workspace
+        catkincmd.append("--merge")
 
         if self.catkin_packages:
             # Specify the packages to be built
