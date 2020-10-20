@@ -171,8 +171,6 @@ the schema is to be considered stable.
 
   - *Notes:*
 
-    - Supports =$SNAPCRAFT_APT_RELEASE= variable for snapcraft to populate base's release name (e.g. =xenial=).
-
     - If your deb URL does not look like it has a suite defined, it is likely that the suite is =/=.
 
   - *Examples:*
@@ -182,8 +180,6 @@ the schema is to be considered stable.
     - =suites: [xenial]=
 
     - =suites: [xenial, xenial-updates]=
-
-    - =suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-security]=
 
 ** Property: url (required)
 
@@ -212,7 +208,7 @@ package-repositories:
   - type: apt
     formats: [deb, deb-src]
     components: [main]
-    suites: [$SNAPCRAFT_APT_RELEASE]
+    suites: [xenial]
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
 
@@ -240,7 +236,7 @@ package-repositories:
     name: default
     formats: [deb, deb-src]
     components: [main, multiverse, restricted, universe]
-    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+    suites: [xenial, xenial-updates]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
     url: http://archive.ubuntu.com/ubuntu
 
@@ -248,7 +244,7 @@ package-repositories:
     name: default-security
     formats: [deb, deb-src]
     components: [main, multiverse, restricted, universe]
-    suites: [$SNAPCRAFT_APT_RELEASE-security]
+    suites: [xenial-security]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
     url: http://security.ubuntu.com/ubuntu
 #+END_SRC

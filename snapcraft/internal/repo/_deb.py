@@ -660,6 +660,7 @@ class Ubuntu(BaseRepo):
     def install_ppa(cls, *, keys_path: pathlib.Path, ppa: str) -> bool:
         owner, name = cls._get_ppa_parts(ppa)
         key_id = cls._get_launchpad_ppa_key_id(ppa)
+        codename = os_release.OsRelease().version_codename()
 
         return any(
             [
@@ -668,7 +669,7 @@ class Ubuntu(BaseRepo):
                     components=["main"],
                     deb_types=["deb"],
                     name=f"ppa-{owner}_{name}",
-                    suites=["$SNAPCRAFT_APT_RELEASE"],
+                    suites=[codename],
                     url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
                 ),
             ]
@@ -689,10 +690,9 @@ class Ubuntu(BaseRepo):
                 deb_text = " ".join(deb_types)
                 print(f"Types: {deb_text}", file=deb822)
 
-            url_text = _format_sources_list(url)
-            print(f"URIs: {url_text}", file=deb822)
+            print(f"URIs: {url}", file=deb822)
 
-            suites_text = _format_sources_list(" ".join(suites))
+            suites_text = " ".join(suites)
             print(f"Suites: {suites_text}", file=deb822)
 
             components_text = " ".join(components)
@@ -757,9 +757,3 @@ class Ubuntu(BaseRepo):
             subprocess.check_call(["dpkg-deb", "--extract", deb_path, extract_dir])
         except subprocess.CalledProcessError:
             raise errors.UnpackError(deb_path)
-
-
-def _format_sources_list(sources_list: str):
-    release = os_release.OsRelease().version_codename()
-
-    return sources_list.replace("$SNAPCRAFT_APT_RELEASE", release)

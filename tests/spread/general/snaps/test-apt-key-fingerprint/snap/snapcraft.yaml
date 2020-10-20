@@ -20,6 +20,6 @@ package-repositories:
   - type: apt
     formats: [deb, deb-src]
     components: [main]
-    suites: [$SNAPCRAFT_APT_RELEASE]
+    suites: [bionic]
     key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
