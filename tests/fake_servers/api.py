@@ -160,6 +160,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.snap_channel_map, route_name="snap_channel_map")
 
         configurator.add_route(
+            "snap_releases",
+            urllib.parse.urljoin(self._V2_DEV_API_PATH, "{snap}/releases"),
+            request_method="GET",
+        )
+        configurator.add_view(self.snap_releases, route_name="snap_releases")
+
+        configurator.add_route(
             "snap_validations",
             urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{snap_id}/validations"),
             request_method="GET",
@@ -1135,7 +1142,11 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "channel": "2.1/beta",
                     "expiration-date": None,
                     "revision": 1,
-                    "progressive": {"paused": None, "percentage": None},
+                    "progressive": {
+                        "paused": None,
+                        "percentage": None,
+                        "current-percentage": None,
+                    },
                     "when": "2020-02-03T20:58:37Z",
                 }
             ],
@@ -1207,6 +1218,48 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             json.dumps(snap_channel_map).encode(),
+            response_code,
+            [("Content-Type", content_type)],
+        )
+
+    def snap_releases(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+        logger.debug("Handling snap releases request")
+        snap_releases = {
+            "revisions": [
+                {
+                    "architectures": ["arm64"],
+                    "base": "core20",
+                    "build_url": None,
+                    "confinement": "strict",
+                    "created_at": "2020-02-11T17:51:40.891996Z",
+                    "grade": "stable",
+                    "revision": 1,
+                    "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
+                    "size": 20,
+                    "status": "Published",
+                    "version": "1.0",
+                },
+            ],
+            "releases": [
+                {
+                    "architecture": "amd64",
+                    "branch": None,
+                    "channel": "latest/edge",
+                    "expiration-date": None,
+                    "revision": 1,
+                    "risk": "stable",
+                    "track": "latest",
+                    "when": "2020-01-12T17:51:40.891996Z",
+                },
+            ],
+        }
+
+        response_code = 200
+        content_type = "application/json"
+        return response.Response(
+            json.dumps(snap_releases).encode(),
             response_code,
             [("Content-Type", content_type)],
         )
