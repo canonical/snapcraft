@@ -1002,6 +1002,26 @@ def test_invalid_confinement(data, confinement):
     assert expected_message in str(error.value)
 
 
+@pytest.mark.parametrize("desc", ["test", "multi\nline\n"])
+def test_valid_description(data, desc):
+    data["description"] = desc
+    Validator(data).validate()
+
+
+@pytest.mark.parametrize("desc", [""])
+def test_invalid_description(data, desc):
+    data["description"] = desc
+
+    with pytest.raises(errors.YamlValidationError) as error:
+        Validator(data).validate()
+
+    expected_message = (
+        "The 'description' property does not match the required "
+        f"schema: {desc!r} is not a valid description string"
+    )
+    assert expected_message in str(error.value)
+
+
 @pytest.mark.parametrize("grade", ["stable", "devel"])
 def test_valid_grade(data, grade):
     data["grade"] = grade
