@@ -37,6 +37,10 @@ class SetVersionCommandTestCase(CommandBaseTestCase):
         self.assertThat(data["function"], Equals("set-version"))
         self.assertThat(data["args"], Equals({"version": "test-version"}))
 
+    def test_set_empty_version(self):
+        result = self.run_command(["set-version", ""])
+        assert result != 0
+
     def test_set_version_error(self):
         # If there is a string in the feedback, it should be considered an
         # error
