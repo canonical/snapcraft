@@ -9,20 +9,16 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
-
   snapcraft clean
   rm -f ./*.snap
 
-  restore_yaml "snap/snapcraft.yaml"
-
-execute: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  cd "$SNAP_DIR"
+  restore_yaml "snap/snapcraft.yaml"
 
+execute: |x
+  cd "$SNAP_DIR"
   snapcraft_log="$(snapcraft build 2>&1 || true)"
 
   echo "${snapcraft_log}" | NOMATCH "^should have failed set-version"
