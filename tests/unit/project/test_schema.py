@@ -1291,7 +1291,7 @@ class PackageManagement(ProjectBaseTest):
                     components: []
                     key-id: test-key-id
                     url: http://archive.ubuntu.com/ubuntu
-                    suites: [$SNAPCRAFT_APT_RELEASE, $SNAPCRAFT_APT_RELEASE-updates]
+                    suites: [bionic, bionic-updates]
                 """
             )
         )

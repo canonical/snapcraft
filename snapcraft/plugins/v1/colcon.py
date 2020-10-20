@@ -56,23 +56,23 @@ Additionally, this plugin uses the following plugin-specific keywords:
       quoting each argument with a leading space.
 """
 
-import contextlib
 import collections
+import contextlib
+import logging
 import os
 import pathlib
-import logging
 import re
 import shutil
 import textwrap
 from typing import List
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils
-from snapcraft.internal import errors, mangling, repo
+from snapcraft.internal import errors, mangling, os_release, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 logger = logging.getLogger(__name__)
 
@@ -226,14 +226,15 @@ class ColconPlugin(PluginV1):
         ]
 
     @classmethod
-    def get_required_package_repositories(self) -> List[PackageRepository]:
+    def get_required_package_repositories(cls) -> List[PackageRepository]:
+        codename = os_release.OsRelease().version_codename()
         return [
             PackageRepositoryApt(
                 deb_types=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
                 url="http://packages.ros.org/ros2/ubuntu",
-                suites=["$SNAPCRAFT_APT_RELEASE"],
+                suites=[codename],
             )
         ]
 

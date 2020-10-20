@@ -23,9 +23,9 @@ from subprocess import CalledProcessError
 from unittest import mock
 from unittest.mock import call
 
+import fixtures
 import testtools
 from testtools.matchers import Equals
-import fixtures
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
@@ -146,29 +146,6 @@ class TestPackages(unit.TestCase):
             base="core",
         )
         self.assertThat(str(raised), Equals("Package fetch error: foo"))
-
-
-class TestSourcesFormatting(unit.TestCase):
-    @mock.patch(
-        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
-    )
-    def test_sources_formatting(self, mock_version_codename):
-        sources_list = textwrap.dedent(
-            """
-            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE main restricted
-            deb http://archive.ubuntu.com/ubuntu $SNAPCRAFT_APT_RELEASE-updates main restricted
-            """
-        )
-
-        sources_list = repo._deb._format_sources_list(sources_list)
-
-        expected_sources_list = textwrap.dedent(
-            """
-            deb http://archive.ubuntu.com/ubuntu testy main restricted
-            deb http://archive.ubuntu.com/ubuntu testy-updates main restricted
-            """
-        )
-        self.assertThat(sources_list, Equals(expected_sources_list))
 
 
 class BuildPackagesTestCase(unit.TestCase):
@@ -607,7 +584,12 @@ class TestUbuntuInstallRepo(unit.TestCase):
     @mock.patch("subprocess.run")
     @mock.patch("snapcraft.internal.repo._deb.Launchpad")
     @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
-    def test_install_ppa(self, mock_install_sources, mock_launchpad, mock_run):
+    @mock.patch(
+        "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
+    )
+    def test_install_ppa(
+        self, os_release, mock_install_sources, mock_launchpad, mock_run
+    ):
         mock_launchpad.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
             "FAKE-SIGNING-KEY"
         )
@@ -646,7 +628,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                         components=["main"],
                         deb_types=["deb"],
                         name="ppa-test_ppa",
-                        suites=["$SNAPCRAFT_APT_RELEASE"],
+                        suites=["testy"],
                         url="http://ppa.launchpad.net/test/ppa/ubuntu",
                     )
                 ]
