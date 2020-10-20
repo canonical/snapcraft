@@ -28,7 +28,7 @@ from testtools.matchers import Contains, Equals, FileExists, Not, Is, IsInstance
 import tests
 from snapcraft import config, storeapi
 from snapcraft.storeapi import errors
-from snapcraft.storeapi.v2 import channel_map
+from snapcraft.storeapi.v2 import channel_map, releases
 from tests import fixture_setup, unit
 
 
@@ -1525,6 +1525,22 @@ class SnapChannelMapTest(StoreTestCase):
         self.assertThat(
             self.client.get_snap_channel_map(snap_name="basic"),
             IsInstance(channel_map.ChannelMap),
+        )
+
+
+class SnapReleasesTest(StoreTestCase):
+    def test_get_releases_without_login_raises_exception(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.get_snap_releases,
+            snap_name="basic",
+        )
+
+    def test_get_snap_releases(self):
+        self.client.login("dummy", "test correct password")
+        self.assertThat(
+            self.client.get_snap_releases(snap_name="basic"),
+            IsInstance(releases.Releases),
         )
 
 

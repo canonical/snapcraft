@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 
-from setuptools import setup, find_namespace_packages
+from setuptools import find_namespace_packages, setup
 
 
 def recursive_data_files(directory, install_directory):
@@ -34,7 +34,11 @@ def determine_version():
     # Examples (git describe -> python package version):
     # 4.1.1-0-gad012482d -> 4.1.1
     # 4.1.1-16-g2d8943dbc -> 4.1.1.post16+g2d8943dbc
-    version, distance, commit = (
+    #
+    # For shallow clones or repositories missing tags:
+    # 0ae7c04
+
+    desc = (
         subprocess.run(
             ["git", "describe", "--always", "--long"],
             check=True,
@@ -42,8 +46,16 @@ def determine_version():
         )
         .stdout.decode()
         .strip()
-        .split("-")
     )
+
+    split_desc = desc.split("-")
+    assert (
+        len(split_desc) == 3
+    ), f"Failed to parse Snapcraft git version description {desc!r}. Confirm that git repository is present and has the required tags/history."
+
+    version = split_desc[0]
+    distance = split_desc[1]
+    commit = split_desc[2]
 
     if distance == "0":
         return version
