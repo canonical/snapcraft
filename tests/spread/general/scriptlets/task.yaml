@@ -23,7 +23,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   cd "$SNAP_DIR"
 
-
   snapcraft_log="$(snapcraft build 2>&1 || true)"
 
   echo "${snapcraft_log}" | NOMATCH "^should have failed set-version"
