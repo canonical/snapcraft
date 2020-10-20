@@ -18,16 +18,15 @@ import functools
 import os
 import subprocess
 import textwrap
+from unittest import mock
 
 import fixtures
 import testtools
-from testtools.matchers import Equals
 from testscenarios.scenarios import multiply_scenarios
-from unittest import mock
+from testtools.matchers import Equals
 
-from snapcraft.internal import errors
 from snapcraft import yaml_utils
-
+from snapcraft.internal import errors
 from tests import unit
 from tests.unit.commands import CommandBaseTestCase
 
@@ -272,7 +271,7 @@ class TestScriptletMultipleSettersError:
 
         handler = unit.load_part("test_part", part_properties=part_properties)
 
-        with testtools.ExpectedException(errors.ScriptletRunError):
+        with testtools.ExpectedException(errors.ScriptletDuplicateFieldError):
             silent_popen = functools.partial(
                 subprocess.Popen, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
