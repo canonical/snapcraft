@@ -66,6 +66,7 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
 
         self.properties = props()
         self.ros_distro = "kinetic"
+        self.ros_version = "1"
         self.ubuntu_distro = "xenial"
 
         patcher = mock.patch("snapcraft.repo.Ubuntu")
@@ -95,11 +96,14 @@ class CatkinPluginBaseTest(PluginsV1BaseTestCase):
         self.addCleanup(patcher.stop)
         self.pip_mock.return_value.list.return_value = {}
 
-    def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path, ubuntu_distro):
+    def assert_rosdep_setup(
+        self, rosdistro, ros_version, package_path, rosdep_path, ubuntu_distro
+    ):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
                     ros_distro=rosdistro,
+                    ros_version=ros_version,
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
@@ -920,6 +924,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -980,6 +985,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1027,6 +1033,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1080,6 +1087,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1121,6 +1129,7 @@ class PullNoUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1180,6 +1189,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1240,6 +1250,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1287,6 +1298,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1340,6 +1352,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -1381,6 +1394,7 @@ class PullUnderlayTestCase(CatkinPluginBaseTest):
 
         self.assert_rosdep_setup(
             self.ros_distro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,

@@ -48,6 +48,7 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
             disable_parallel = False
 
         self.properties = props()
+        self.ros_version = "2"
         self.ubuntu_distro = "bionic"
 
         self.ubuntu_mock = self.useFixture(
@@ -70,12 +71,13 @@ class ColconPluginTestBase(PluginsV1BaseTestCase):
         self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(
-        self, rosdistro, package_path, rosdep_path, ubuntu_distro, base
+        self, rosdistro, ros_version, package_path, rosdep_path, ubuntu_distro, base
     ):
         self.rosdep_mock.assert_has_calls(
             [
                 mock.call(
                     ros_distro=rosdistro,
+                    ros_version=ros_version,
                     ros_package_path=package_path,
                     rosdep_path=rosdep_path,
                     ubuntu_distro=ubuntu_distro,
@@ -891,6 +893,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -942,6 +945,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "subdir", "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
@@ -971,6 +975,7 @@ class PullTestCase(ColconPluginTestBase):
 
         self.assert_rosdep_setup(
             plugin.options.colcon_rosdistro,
+            self.ros_version,
             os.path.join(plugin.sourcedir, "src"),
             os.path.join(plugin.partdir, "rosdep"),
             self.ubuntu_distro,
