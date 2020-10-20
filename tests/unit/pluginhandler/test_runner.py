@@ -18,8 +18,8 @@ import functools
 import os
 import subprocess
 from textwrap import dedent
-
 from unittest import mock
+
 from testtools.matchers import Contains, FileContains, FileExists
 
 from snapcraft.internal import errors

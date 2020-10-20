@@ -31,16 +31,22 @@ from tests.unit.build_providers import BaseProviderBaseTest
 if sys.platform == "linux":
     import pylxd
 
+LXD_RUN_ENV_COMMAND = [
+    "env",
+    "SNAPCRAFT_HAS_TTY=False",
+]
+
 LXD_RUN_COMMAND_PREFIX = [
     "/snap/bin/lxc",
     "exec",
     "snapcraft-project-name",
     "--",
-    "env",
-    "SNAPCRAFT_BUILD_ENVIRONMENT=managed-host",
-    "HOME=/root",
-    "SNAPCRAFT_HAS_TTY=False",
-]
+] + LXD_RUN_ENV_COMMAND
+
+
+class GetEnv(_base_provider.Provider):
+    def _get_env_command(self):
+        return LXD_RUN_ENV_COMMAND.copy()
 
 
 class EnvSetup(_base_provider.Provider):
@@ -48,7 +54,7 @@ class EnvSetup(_base_provider.Provider):
         pass
 
 
-class LXDTestImpl(LXD, EnvSetup):
+class LXDTestImpl(LXD, GetEnv, EnvSetup):
     pass
 
 

@@ -22,9 +22,8 @@ import sys
 
 import click
 
-from snapcraft.internal import errors
 from snapcraft.cli._errors import exception_handler
-from snapcraft.internal import log
+from snapcraft.internal import errors, log
 
 
 @click.group()

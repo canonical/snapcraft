@@ -20,7 +20,7 @@ from testtools.matchers import Contains, Equals, FileExists
 
 from snapcraft.internal import errors
 
-from . import CommandBaseTestCase, CommandBaseNoFifoTestCase
+from . import CommandBaseNoFifoTestCase, CommandBaseTestCase
 
 
 class SetGradeCommandTestCase(CommandBaseTestCase):

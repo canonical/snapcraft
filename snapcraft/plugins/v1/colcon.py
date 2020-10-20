@@ -56,23 +56,23 @@ Additionally, this plugin uses the following plugin-specific keywords:
       quoting each argument with a leading space.
 """
 
-import contextlib
 import collections
+import contextlib
+import logging
 import os
 import pathlib
-import logging
 import re
 import shutil
 import textwrap
 from typing import List
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils
 from snapcraft.internal import errors, mangling, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 logger = logging.getLogger(__name__)
 

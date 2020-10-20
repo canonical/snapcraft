@@ -72,24 +72,24 @@ Additionally, this plugin uses the following plugin-specific keywords:
 
 import contextlib
 import glob
+import logging
 import os
 import pathlib
-import tempfile
-import logging
 import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import textwrap
-from typing import List, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Set
 
-from snapcraft.plugins.v1 import PluginV1, _python, _ros
 from snapcraft import file_utils, formatting_utils
 from snapcraft.internal import common, errors, mangling, repo
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
 )
+from snapcraft.plugins.v1 import PluginV1, _python, _ros
 
 if TYPE_CHECKING:
     from snapcraft.project import Project

@@ -23,9 +23,9 @@ from subprocess import CalledProcessError
 from unittest import mock
 from unittest.mock import call
 
+import fixtures
 import testtools
 from testtools.matchers import Equals
-import fixtures
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
