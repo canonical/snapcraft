@@ -23,7 +23,7 @@ from ._client import Client
 from . import constants
 from . import errors
 from . import _macaroon_auth
-from .v2 import channel_map
+from .v2 import channel_map, releases
 
 
 class SnapV2Client(Client):
@@ -67,3 +67,20 @@ class SnapV2Client(Client):
             raise errors.StoreSnapChannelMapError(snap_name=snap_name)
 
         return channel_map.ChannelMap.unmarshal(response.json())
+
+    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
+        url = snap_name + "/releases"
+        auth = _macaroon_auth(self.conf)
+        response = self.get(
+            url,
+            headers={
+                "Authorization": auth,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        if not response.ok:
+            raise errors.StoreSnapChannelMapError(snap_name=snap_name)
+
+        return releases.Releases.unmarshal(response.json())
