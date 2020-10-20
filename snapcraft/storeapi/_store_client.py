@@ -17,7 +17,7 @@
 import os
 import urllib.parse
 from time import sleep
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Union
 
 import pymacaroons
 import requests
@@ -32,9 +32,7 @@ from ._snap_v2_client import SnapV2Client
 from ._sso_client import SSOClient
 from ._up_down_client import UpDownClient
 from .constants import DEFAULT_SERIES
-
-if TYPE_CHECKING:
-    from .v2 import snap_channel_map
+from .v2 import channel_map, releases
 
 
 class StoreClient:
@@ -257,11 +255,14 @@ class StoreClient:
 
         return response
 
-    def get_snap_channel_map(
-        self, *, snap_name: str
-    ) -> "snap_channel_map.SnapChannelMap":
+    def get_snap_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         return self._refresh_if_necessary(
             self.v2_snap.get_snap_channel_map, snap_name=snap_name
+        )
+
+    def get_snap_releases(self, *, snap_name: str) -> releases.Releases:
+        return self._refresh_if_necessary(
+            self.v2_snap.get_snap_releases, snap_name=snap_name
         )
 
     def close_channels(self, snap_id, channel_names):
