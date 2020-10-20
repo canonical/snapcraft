@@ -23,4 +23,3 @@ package-repositories:
     suites: [$SNAPCRAFT_APT_RELEASE]
     key-id: snapcraft-daily
     url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
-    architectures: [$SNAPCRAFT_APT_HOST_ARCH]

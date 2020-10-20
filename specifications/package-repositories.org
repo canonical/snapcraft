@@ -86,17 +86,14 @@ the schema is to be considered stable.
 
 - *Notes:*
 
-  - Supports =$SNAPCRAFT_APT_HOST_ARCH= variable.
-
-- *Default:* If unspecified, architectures is assumed to match the host's architecture, i.e. =architectures: [$SNAPCRAFT_APT_HOST_ARCH]=.
+- *Default:* If unspecified, architectures is assumed to match the host's
+  architecture.
 
 - *Examples:*
 
   - =architectures: [i386]=
 
   - =architectures: [i386, amd64]=
-
-  - =architectures: [i386, $SNAPCRAFT_APT_HOST_ARCH]=
 
 ** Property: formats (optional)
 

@@ -132,7 +132,7 @@
                     "uniqueItems": true,
                     "items": {
                         "type": "string",
-                        "description": "Architectures to enable, or restrict to, for this repository.  Supports '$SNAPCRAFT_APT_HOST_ARCH' variable.  Defaults to host architecture."
+                        "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
                     }
                 },
                 "formats": {
