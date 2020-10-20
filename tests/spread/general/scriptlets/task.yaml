@@ -17,7 +17,7 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
 
-execute: |x
+execute: |
   cd "$SNAP_DIR"
   snapcraft_log="$(snapcraft build 2>&1 || true)"
 
