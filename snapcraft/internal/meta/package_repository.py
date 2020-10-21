@@ -100,7 +100,7 @@ class PackageRepositoryApt(PackageRepository):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         key_id: str,
         key_server: Optional[str] = None,
         name: Optional[str] = None,
@@ -110,7 +110,7 @@ class PackageRepositoryApt(PackageRepository):
         self.type = "apt"
         self.architectures = architectures
         self.components = components
-        self.deb_types = deb_types
+        self.formats = formats
         self.key_id = key_id
         self.key_server = key_server
 
@@ -133,7 +133,7 @@ class PackageRepositoryApt(PackageRepository):
         new_sources: bool = repo.Ubuntu.install_sources(
             architectures=self.architectures,
             components=self.components,
-            deb_types=self.deb_types,
+            formats=self.formats,
             name=self.name,
             suites=self.suites,
             url=self.url,
@@ -149,8 +149,8 @@ class PackageRepositoryApt(PackageRepository):
 
         data["components"] = self.components
 
-        if self.deb_types:
-            data["formats"] = self.deb_types
+        if self.formats:
+            data["formats"] = self.formats
 
         data["key-id"] = self.key_id
 
@@ -172,7 +172,7 @@ class PackageRepositoryApt(PackageRepository):
 
         architectures = data_copy.pop("architectures", None)
         components = data_copy.pop("components", None)
-        deb_types = data_copy.pop("formats", None)
+        formats = data_copy.pop("formats", None)
         key_id = data_copy.pop("key-id", None)
         key_server = data_copy.pop("key-server", None)
         name = data_copy.pop("name", None)
@@ -200,8 +200,8 @@ class PackageRepositoryApt(PackageRepository):
                 f"invalid deb repository object: {data!r} (invalid components)"
             )
 
-        if deb_types is not None and any(
-            deb_type not in ["deb", "deb-src"] for deb_type in deb_types
+        if formats is not None and any(
+            format not in ["deb", "deb-src"] for format in formats
         ):
             raise RuntimeError(
                 f"invalid deb repository object: {data!r} (invalid formats)"
@@ -236,7 +236,7 @@ class PackageRepositoryApt(PackageRepository):
         return cls(
             architectures=architectures,
             components=components,
-            deb_types=deb_types,
+            formats=formats,
             key_id=key_id,
             key_server=key_server,
             name=name,

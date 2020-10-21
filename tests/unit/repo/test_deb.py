@@ -559,7 +559,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
         new_sources = repo.Ubuntu.install_sources(
             architectures=["amd64", "arm64"],
             components=["test-component"],
-            deb_types=["deb", "deb-src"],
+            formats=["deb", "deb-src"],
             name="test-name",
             suites=["test-suite1", "test-suite2"],
             url="http://test.url/ubuntu",
@@ -571,6 +571,33 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 [
                     call(
                         content=b"Types: deb deb-src\nURIs: http://test.url/ubuntu\nSuites: test-suite1 test-suite2\nComponents: test-component\nArchitectures: amd64 arm64\n",
+                        dst_path=Path(
+                            "/etc/apt/sources.list.d/snapcraft-test-name.sources"
+                        ),
+                    )
+                ]
+            ),
+        )
+
+        self.assertThat(new_sources, Equals(True))
+
+    @mock.patch("snapcraft.internal.repo._deb._sudo_write_file")
+    def test_install_sources_no_format(self, mock_write):
+        new_sources = repo.Ubuntu.install_sources(
+            architectures=["amd64", "arm64"],
+            components=["test-component"],
+            formats=None,
+            name="test-name",
+            suites=["test-suite1", "test-suite2"],
+            url="http://test.url/ubuntu",
+        )
+
+        self.assertThat(
+            mock_write.mock_calls,
+            Equals(
+                [
+                    call(
+                        content=b"Types: deb\nURIs: http://test.url/ubuntu\nSuites: test-suite1 test-suite2\nComponents: test-component\nArchitectures: amd64 arm64\n",
                         dst_path=Path(
                             "/etc/apt/sources.list.d/snapcraft-test-name.sources"
                         ),
@@ -626,7 +653,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 [
                     call(
                         components=["main"],
-                        deb_types=["deb"],
+                        formats=["deb"],
                         name="ppa-test_ppa",
                         suites=["testy"],
                         url="http://ppa.launchpad.net/test/ppa/ubuntu",

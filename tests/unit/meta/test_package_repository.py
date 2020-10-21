@@ -76,7 +76,7 @@ class DebTests(unit.TestCase):
         repo = PackageRepositoryApt(
             architectures=["amd64", "i386"],
             components=["main", "multiverse"],
-            deb_types=["deb", "deb-src"],
+            formats=["deb", "deb-src"],
             key_id="test-key-id",
             key_server="keyserver.ubuntu.com",
             name="test-name",
@@ -105,7 +105,7 @@ class DebTests(unit.TestCase):
         repo = PackageRepositoryApt(
             architectures=["amd64", "i386"],
             components=["main", "multiverse"],
-            deb_types=["deb", "deb-src"],
+            formats=["deb", "deb-src"],
             key_id="test-key-id",
             key_server="keyserver.ubuntu.com",
             suites=["xenial", "xenial-updates"],

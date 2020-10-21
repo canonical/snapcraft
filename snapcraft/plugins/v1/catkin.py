@@ -283,7 +283,7 @@ class CatkinPlugin(PluginV1):
 
         return [
             PackageRepositoryApt(
-                deb_types=["deb"],
+                formats=["deb"],
                 components=["main"],
                 key_id="C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
                 url="http://packages.ros.org/ros/ubuntu/",
