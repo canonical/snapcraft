@@ -667,7 +667,7 @@ class Ubuntu(BaseRepo):
                 cls.install_gpg_key_id(keys_path=keys_path, key_id=key_id),
                 cls.install_sources(
                     components=["main"],
-                    deb_types=["deb"],
+                    formats=["deb"],
                     name=f"ppa-{owner}_{name}",
                     suites=[codename],
                     url=f"http://ppa.launchpad.net/{owner}/{name}/ubuntu",
@@ -681,14 +681,17 @@ class Ubuntu(BaseRepo):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         suites: List[str],
         url: str,
     ) -> str:
         with io.StringIO() as deb822:
-            if deb_types:
-                deb_text = " ".join(deb_types)
-                print(f"Types: {deb_text}", file=deb822)
+            if formats:
+                type_text = " ".join(formats)
+            else:
+                type_text = "deb"
+
+            print(f"Types: {type_text}", file=deb822)
 
             print(f"URIs: {url}", file=deb822)
 
@@ -713,7 +716,7 @@ class Ubuntu(BaseRepo):
         *,
         architectures: Optional[List[str]] = None,
         components: List[str],
-        deb_types: Optional[List[str]] = None,
+        formats: Optional[List[str]] = None,
         name: str,
         suites: List[str],
         url: str,
@@ -721,7 +724,7 @@ class Ubuntu(BaseRepo):
         config = cls._construct_deb822_source(
             architectures=architectures,
             components=components,
-            deb_types=deb_types,
+            formats=formats,
             suites=suites,
             url=url,
         )
