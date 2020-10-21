@@ -218,6 +218,8 @@ class Rosdep:
             self._rosdep_install_path, "usr", "lib", "python2.7", "dist-packages"
         )
 
+        env["ROS_PYTHON_VERSION"] = "2"
+
         # By default, rosdep uses /etc/ros/rosdep to hold its sources list. We
         # don't want that here since we don't want to touch the host machine
         # (not to mention it would require sudo), so we can redirect it via
