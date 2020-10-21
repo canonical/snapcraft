@@ -545,7 +545,11 @@ def list_revisions(snap_name, arch):
     releases = StoreClientCLI().get_snap_releases(snap_name=snap_name)
 
     def get_channels_for_revision(revision: int) -> List[str]:
+        # channels: the set of channels revision was released to, active or not.
         channels: Set[str] = set()
+        # seen_channel: applies to channels regardless of revision.
+        # The first channel that shows up for each architecture is to
+        # be marked as the active channel, all others are historic.
         seen_channel: Dict[str, Set[str]] = dict()
 
         for release in releases.releases:
@@ -553,14 +557,14 @@ def list_revisions(snap_name, arch):
                 seen_channel[release.architecture] = set()
 
             # If the revision is in this release entry and was not seen
-            # before it means that this is the revision on this channel
-            # is live.
+            # before it means that this channel is active and needs to
+            # be represented with a *.
             if (
                 release.revision == revision
                 and release.channel not in seen_channel[release.architecture]
             ):
                 channels.add(f"{release.channel}*")
-            # All other channels found for a revision are inactive.
+            # All other releases found for a revision are inactive.
             elif (
                 release.revision == revision
                 and release.channel not in channels
