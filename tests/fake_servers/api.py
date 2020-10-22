@@ -139,13 +139,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.account, route_name="account")
 
         configurator.add_route(
-            "snap_history",
-            urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{dummy}/history"),
-            request_method="GET",
-        )
-        configurator.add_view(self.snap_history, route_name="snap_history")
-
-        configurator.add_route(
             "snap_state",
             urllib.parse.urljoin(self._DEV_API_PATH, "snaps/{dummy}/state"),
             request_method="GET",
@@ -1092,42 +1085,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         content_type = "application/json"
         return response.Response(
             payload, response_code, [("Content-Type", content_type)]
-        )
-
-    def snap_history(self, request):
-        if self.fake_store.needs_refresh:
-            return self._refresh_error()
-        logger.debug("Handling account request")
-        revisions = [
-            {
-                "series": ["16"],
-                "channels": [],
-                "version": "2.0.1",
-                "timestamp": "2016-09-27T19:23:40Z",
-                "current_channels": ["beta", "edge"],
-                "arch": "i386",
-                "revision": 2,
-            },
-            {
-                "series": ["16"],
-                "channels": ["stable", "edge"],
-                "version": "2.0.2",
-                "timestamp": "2016-09-27T18:38:43Z",
-                "current_channels": ["stable", "candidate", "beta"],
-                "arch": "amd64",
-                "revision": 1,
-            },
-        ]
-
-        parsed_qs = urllib.parse.parse_qs(urllib.parse.urlparse(request.url).query)
-        if "arch" in parsed_qs:
-            output = [rev for rev in revisions if rev["arch"] in parsed_qs["arch"]]
-        else:
-            output = revisions
-        response_code = 200
-        content_type = "application/json"
-        return response.Response(
-            json.dumps(output).encode(), response_code, [("Content-Type", content_type)]
         )
 
     def snap_channel_map(self, request):
