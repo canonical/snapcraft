@@ -197,3 +197,28 @@ class TestSnapcraftException:
         assert exception.get_details() == expected_details
         assert exception.get_docs_url() == expected_docs_url
         assert exception.get_reportable() == expected_reportable
+
+
+def test_PackageRepositoriesValidationError():
+    error = errors.PackageRepositoryValidationError(
+        url="http://foo", brief="some error", resolution="some way to fix"
+    )
+
+    assert (
+        error.get_brief() == "Invalid package-repository for 'http://foo': some error"
+    )
+    assert error.get_resolution() == "some way to fix"
+    assert error.get_details() is None
+    assert error.get_docs_url() == "https://snapcraft.io/docs/package-repositories"
+    assert error.get_reportable() is False
+
+
+def test_PackageRepositoriesValidationError_no_resolution():
+    error = errors.PackageRepositoryValidationError(
+        url="http://foo", brief="some error"
+    )
+
+    assert (
+        error.get_resolution()
+        == "You can verify package repository configuration according to the referenced documentation."
+    )

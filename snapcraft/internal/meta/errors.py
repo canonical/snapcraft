@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
@@ -177,6 +177,27 @@ class HookValidationError(errors.SnapcraftError):
 
     def __init__(self, *, hook_name: str, message: str) -> None:
         super().__init__(hook_name=hook_name, message=message)
+
+
+class PackageRepositoryValidationError(errors.SnapcraftException):
+    def __init__(
+        self, *, url: str, brief: str, resolution: Optional[str] = None
+    ) -> None:
+        self.url = url
+        self.brief = brief
+        self.resolution = resolution
+
+    def get_brief(self) -> str:
+        return f"Invalid package-repository for {self.url!r}: {self.brief}"
+
+    def get_resolution(self) -> str:
+        if self.resolution:
+            return self.resolution
+
+        return "You can verify package repository configuration according to the referenced documentation."
+
+    def get_docs_url(self) -> str:
+        return "https://snapcraft.io/docs/package-repositories"
 
 
 class SystemUsernamesValidationError(errors.SnapcraftException):
