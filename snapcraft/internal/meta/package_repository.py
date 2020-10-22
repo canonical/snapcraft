@@ -144,6 +144,8 @@ class PackageRepositoryApt(PackageRepository):
         self.suites = suites
         self.url = url
 
+        self.validate()
+
     def install(self, keys_path: Path) -> bool:
         # First install associated GPG key.
         new_key: bool = repo.Ubuntu.install_gpg_key_id(
@@ -183,6 +185,30 @@ class PackageRepositoryApt(PackageRepository):
         data["url"] = self.url
 
         return data
+
+    def validate(self) -> None:
+        if self.formats is not None and any(
+            f not in ["deb", "deb-src"] for f in self.formats
+        ):
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid formats {self.formats!r}.",
+                resolution="You can specify a list of formats including 'deb' and/or 'deb-src'.",
+            )
+
+        if not self.key_id:
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid Key Identifier {self.key_id!r}.",
+                resolution="You can verify that the key specifies a valid key identifier.",
+            )
+
+        if not self.url:
+            raise errors.PackageRepositoryValidationError(
+                url=self.url,
+                brief=f"Invalid URL {self.url!r}.",
+                resolution="You can update 'url' to a non-empty string.",
+            )
 
     @classmethod  # noqa: C901
     def unmarshal(cls, data: Dict[str, Any]) -> "PackageRepositoryApt":
@@ -224,16 +250,15 @@ class PackageRepositoryApt(PackageRepository):
             or not components
         ):
             raise errors.PackageRepositoryValidationError(
-                url=url,
-                brief=f"Invalid components {components!r}.",
-                resolution="Components must be a list of strings.",
+                url=url, brief=f"Invalid components {components!r}.",
             )
 
-        if formats and any(format not in ["deb", "deb-src"] for format in formats):
+        if formats is not None and (
+            not isinstance(formats, list)
+            or not all(isinstance(x, str) for x in formats)
+        ):
             raise errors.PackageRepositoryValidationError(
-                url=url,
-                brief=f"Invalid formats {formats!r}.",
-                resolution="You can specify a list of formats including 'deb' and/or 'deb-src'.",
+                url=url, brief=f"Invalid formats {formats!r}.",
             )
 
         if not isinstance(key_id, str):
@@ -260,19 +285,15 @@ class PackageRepositoryApt(PackageRepository):
                 url=url, brief=f"Suites must be a list of strings.",
             )
 
-        if not isinstance(url, str) or not url:
+        if not isinstance(url, str):
             raise errors.PackageRepositoryValidationError(
-                url=url,
-                brief=f"Invalid URL {url!r}.",
-                resolution="You can update 'url' to a non-empty string.",
+                url=url, brief=f"Invalid URL {url!r}.",
             )
 
         if data_copy:
             keys = ", ".join([repr(k) for k in data_copy.keys()])
             raise errors.PackageRepositoryValidationError(
-                url=url,
-                brief=f"Invalid keys present ({keys}).",
-                resolution="You can remove the unsupported keys.",
+                url=url, brief=f"Invalid keys present ({keys}).",
             )
 
         return cls(

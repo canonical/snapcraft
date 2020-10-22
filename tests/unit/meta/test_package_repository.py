@@ -65,7 +65,6 @@ class PpaTests(unit.TestCase):
         )
 
         assert error.brief == "Invalid keys present ('test')."
-        assert error.resolution == "You can remove the unsupported keys."
 
 
 class DebTests(unit.TestCase):
@@ -192,7 +191,6 @@ class DebTests(unit.TestCase):
         )
 
         assert error.brief == "Invalid keys present ('foo', 'foo2')."
-        assert error.resolution == "You can remove the unsupported keys."
 
 
 class RepoTests(unit.TestCase):
