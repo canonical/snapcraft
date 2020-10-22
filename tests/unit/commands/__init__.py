@@ -201,11 +201,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_status)
 
-        self.fake_store_revisions = fixtures.MockPatchObject(
-            storeapi._sca_client.SCAClient, "snap_revisions", return_value=dict()
-        )
-        self.useFixture(self.fake_store_revisions)
-
         self.fake_store_release = fixtures.MockPatchObject(
             storeapi.StoreClient, "release"
         )
