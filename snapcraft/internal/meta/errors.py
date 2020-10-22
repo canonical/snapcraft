@@ -158,19 +158,6 @@ class InvalidDesktopFileError(errors.SnapcraftError):
         super().__init__(filename=filename, message=message)
 
 
-class PrimedCommandNotFoundError(errors.SnapcraftError):
-    fmt = (
-        "Failed to generate snap metadata: "
-        "Specified command {command!r} was not found.\n"
-        "Verify the command is correct and for a more "
-        "deterministic outcome, specify the relative path "
-        "to the command from the prime directory."
-    )
-
-    def __init__(self, command: str) -> None:
-        super().__init__(command=command)
-
-
 class SlotValidationError(errors.SnapcraftError):
     fmt = "failed to validate slot={slot_name}: {message}"
 
