@@ -276,7 +276,7 @@ GPG key server: <key-server>
 #+END_SRC
 
 Once all repositories have been processed, if there are any unused keys present
-in =<project>/snap/keys=, Snapcraft will error.
+in =<project>/snap/keys=, Snapcraft must error.
 
 * GPG Keyring handling
 
