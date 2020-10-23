@@ -188,7 +188,7 @@ the schema is to be considered stable.
 
   - *Notes:*
 
-    - If the deb URL does not look like it has a suite defined, it is likely
+    - If your deb URL does not look like it has a suite defined, it is likely
       that the repository uses an absolute URL.  Consider using =path=.
 
   - *Examples:*
