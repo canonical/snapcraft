@@ -253,7 +253,7 @@ package-repositories:
      be imported.
 
    - If =<key-id[0:8]>.asc= file exists and =key-id= does not match, Snapcraft
-     will error.
+     must error.
 
    - If =<key-id[0:8]>.asc= file does not exist, continue to step 2.
 
