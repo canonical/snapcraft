@@ -125,7 +125,7 @@ the schema is to be considered stable.
 
   - *Description:* GPG key identifier.
 
-    - Sometimes referred to as "thumbprint" or "fingerprint".
+    - Sometimes referred to as a "thumbprint" or "fingerprint".
 
     - Must be 40 characters (the long-form thumbprint).
 
