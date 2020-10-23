@@ -119,7 +119,7 @@ the schema is to be considered stable.
 
   - =components: [main, multiverse, universe, restricted]=
 
-** Property: key-id (required if not using ppa)
+** Property: key-id (required if not using =ppa=)
 
   - *Type:* string
 
