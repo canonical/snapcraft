@@ -97,15 +97,18 @@ class ScriptletCommandsTestCase(CommandBaseTestCase):
 class TestScriptletSetter:
 
     scenarios = [
-        ("set-version", {"setter": "set-version", "getter": "get_version"}),
-        ("set-grade", {"setter": "set-grade", "getter": "get_grade"}),
+        (
+            "set-version",
+            {"setter": "set-version", "getter": "get_version", "value": "v1"},
+        ),
+        ("set-grade", {"setter": "set-grade", "getter": "get_grade", "value": "devel"}),
     ]
 
-    def test_set_in_pull(self, tmp_work_path, setter, getter):
+    def test_set_in_pull(self, tmp_work_path, setter, getter, value):
         handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-pull": "snapcraftctl {} test-value".format(setter)
+                "override-pull": "snapcraftctl {} {}".format(setter, value)
             },
         )
 
@@ -113,13 +116,13 @@ class TestScriptletSetter:
 
         pull_metadata = handler.get_pull_state().scriptlet_metadata
 
-        assert getattr(pull_metadata, getter)() == "test-value"
+        assert getattr(pull_metadata, getter)() == value
 
-    def test_set_in_build(self, tmp_work_path, setter, getter):
+    def test_set_in_build(self, tmp_work_path, setter, getter, value):
         handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-build": "snapcraftctl {} test-value".format(setter)
+                "override-build": "snapcraftctl {} {}".format(setter, value)
             },
         )
 
@@ -130,13 +133,13 @@ class TestScriptletSetter:
         build_metadata = handler.get_build_state().scriptlet_metadata
 
         assert getattr(pull_metadata, getter)() is None
-        assert getattr(build_metadata, getter)() == "test-value"
+        assert getattr(build_metadata, getter)() == value
 
-    def test_set_in_stage(self, tmp_work_path, setter, getter):
+    def test_set_in_stage(self, tmp_work_path, setter, getter, value):
         handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-stage": "snapcraftctl {} test-value".format(setter)
+                "override-stage": "snapcraftctl {} {}".format(setter, value)
             },
         )
 
@@ -150,13 +153,13 @@ class TestScriptletSetter:
 
         assert getattr(pull_metadata, getter)() is None
         assert getattr(build_metadata, getter)() is None
-        assert getattr(stage_metadata, getter)() == "test-value"
+        assert getattr(stage_metadata, getter)() == value
 
-    def test_set_in_prime(self, tmp_work_path, setter, getter):
+    def test_set_in_prime(self, tmp_work_path, setter, getter, value):
         handler = unit.load_part(
             "test_part",
             part_properties={
-                "override-prime": "snapcraftctl {} test-value".format(setter)
+                "override-prime": "snapcraftctl {} {}".format(setter, value)
             },
         )
 
@@ -173,7 +176,7 @@ class TestScriptletSetter:
         assert getattr(pull_metadata, getter)() is None
         assert getattr(build_metadata, getter)() is None
         assert getattr(stage_metadata, getter)() is None
-        assert getattr(prime_metadata, getter)() == "test-value"
+        assert getattr(prime_metadata, getter)() == value
 
 
 class TestScriptletMultipleSettersError:
@@ -182,8 +185,8 @@ class TestScriptletMultipleSettersError:
         (
             "override-pull/build",
             {
-                "override_pull": "snapcraftctl {setter} 1",
-                "override_build": "snapcraftctl {setter} 2",
+                "override_pull": "snapcraftctl {setter} {value}",
+                "override_build": "snapcraftctl {setter} {value}",
                 "override_stage": None,
                 "override_prime": None,
             },
@@ -191,27 +194,27 @@ class TestScriptletMultipleSettersError:
         (
             "override-pull/stage",
             {
-                "override_pull": "snapcraftctl {setter} 1",
+                "override_pull": "snapcraftctl {setter} {value}",
                 "override_build": None,
-                "override_stage": "snapcraftctl {setter} 3",
+                "override_stage": "snapcraftctl {setter} {value}",
                 "override_prime": None,
             },
         ),
         (
             "override-pull/prime",
             {
-                "override_pull": "snapcraftctl {setter} 1",
+                "override_pull": "snapcraftctl {setter} {value}",
                 "override_build": None,
                 "override_stage": None,
-                "override_prime": "snapcraftctl {setter} 4",
+                "override_prime": "snapcraftctl {setter} {value}",
             },
         ),
         (
             "override-build/stage",
             {
                 "override_pull": None,
-                "override_build": "snapcraftctl {setter} 2",
-                "override_stage": "snapcraftctl {setter} 3",
+                "override_build": "snapcraftctl {setter} {value}",
+                "override_stage": "snapcraftctl {setter} {value}",
                 "override_prime": None,
             },
         ),
@@ -219,9 +222,9 @@ class TestScriptletMultipleSettersError:
             "override-build/prime",
             {
                 "override_pull": None,
-                "override_build": "snapcraftctl {setter} 2",
+                "override_build": "snapcraftctl {setter} {value}",
                 "override_stage": None,
-                "override_prime": "snapcraftctl {setter} 4",
+                "override_prime": "snapcraftctl {setter} {value}",
             },
         ),
         (
@@ -229,15 +232,15 @@ class TestScriptletMultipleSettersError:
             {
                 "override_pull": None,
                 "override_build": None,
-                "override_stage": "snapcraftctl {setter} 3",
-                "override_prime": "snapcraftctl {setter} 4",
+                "override_stage": "snapcraftctl {setter} {value}",
+                "override_prime": "snapcraftctl {setter} {value}",
             },
         ),
     ]
 
     setter_scenarios = [
-        ("set-version", {"setter": "set-version"}),
-        ("set-grade", {"setter": "set-grade"}),
+        ("set-version", {"setter": "set-version", "value": "v1"}),
+        ("set-grade", {"setter": "set-grade", "value": "stable"}),
     ]
 
     scenarios = multiply_scenarios(setter_scenarios, scriptlet_scenarios)
@@ -246,6 +249,7 @@ class TestScriptletMultipleSettersError:
         self,
         tmp_work_path,
         setter,
+        value,
         override_pull,
         override_build,
         override_stage,
@@ -253,13 +257,21 @@ class TestScriptletMultipleSettersError:
     ):
         part_properties = {}
         if override_pull is not None:
-            part_properties["override-pull"] = override_pull.format(setter=setter)
+            part_properties["override-pull"] = override_pull.format(
+                setter=setter, value=value
+            )
         if override_build is not None:
-            part_properties["override-build"] = override_build.format(setter=setter)
+            part_properties["override-build"] = override_build.format(
+                setter=setter, value=value
+            )
         if override_stage is not None:
-            part_properties["override-stage"] = override_stage.format(setter=setter)
+            part_properties["override-stage"] = override_stage.format(
+                setter=setter, value=value
+            )
         if override_prime is not None:
-            part_properties["override-prime"] = override_prime.format(setter=setter)
+            part_properties["override-prime"] = override_prime.format(
+                setter=setter, value=value
+            )
 
         # A few of these test cases result in only one of these scriptlets
         # being set. In that case, we actually want to double them up (i.e.
