@@ -127,7 +127,7 @@ the schema is to be considered stable.
 
     - Sometimes referred to as "thumbprint" or "fingerprint".
 
-    - Must be 40 characters (full form).
+    - Must be 40 characters (the long-form thumbprint).
 
   - *Notes:*
 
