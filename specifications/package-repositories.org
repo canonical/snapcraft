@@ -131,7 +131,7 @@ the schema is to be considered stable.
 
   - *Notes:*
 
-    - If not using key-server, Snapcraft will look for corresponding key at:
+    - If not using a key-server, Snapcraft will look for the corresponding key at:
       =<project>/snap/keys/<key-id[0:8]>.asc=.
 
     - To determine a key-id from a given key file using =gpg=:
