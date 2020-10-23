@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from testtools.matchers import Equals, MatchesRegex
+from testtools.matchers import Equals
 
+from snapcraft.internal.meta import errors
 from snapcraft.internal.meta.package_repository import (
     PackageRepository,
     PackageRepositoryApt,
@@ -34,41 +35,36 @@ class PpaTests(unit.TestCase):
         test_dict = {"type": "aptx", "ppa": "test/ppa"}
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptPpa.unmarshal, test_dict
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryAptPpa.unmarshal,
+            test_dict,
         )
-        self.assertThat(
-            str(error),
-            Equals(
-                "invalid ppa repository object {'type': 'aptx', 'ppa': 'test/ppa'} (type invalid)"
-            ),
-        )
+
+        assert error.brief == "Unsupported type 'aptx'."
+        assert error.resolution == "You can use type 'apt'."
 
     def test_invalid_apt_ppa(self):
-        test_dict = {"type": "apt", "ppx": "test/ppa"}
+        test_dict = {"type": "apt", "ppa": ""}
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptPpa.unmarshal, test_dict
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryAptPpa.unmarshal,
+            test_dict,
         )
-        self.assertThat(
-            str(error),
-            Equals(
-                "invalid ppa repository object {'type': 'apt', 'ppx': 'test/ppa'} (ppa missing)"
-            ),
-        )
+
+        assert error.brief == "Invalid PPA ''."
+        assert error.resolution == "You can update 'ppa' to a non-empty string."
 
     def test_invalid_apt_ppa_extras(self):
         test_dict = {"type": "apt", "ppa": "test/ppa", "test": "foo"}
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryAptPpa.unmarshal, test_dict
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryAptPpa.unmarshal,
+            test_dict,
         )
 
-        self.assertThat(
-            str(error),
-            Equals(
-                "invalid ppa repository object {'type': 'apt', 'ppa': 'test/ppa', 'test': 'foo'} (extra keys)"
-            ),
-        )
+        assert error.brief == "Invalid keys present ('test')."
 
 
 class DebTests(unit.TestCase):
@@ -143,13 +139,15 @@ class DebTests(unit.TestCase):
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
-        )
-        self.assertThat(
-            str(error), MatchesRegex("invalid deb repository object:.*(invalid type)")
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryApt.unmarshal,
+            test_dict,
         )
 
-    def test_invalid_key(self):
+        assert error.brief == "Unsupported type 'aptx'."
+        assert error.resolution == "You can use type 'apt'."
+
+    def test_invalid_url(self):
         test_dict = {
             "architectures": ["amd64", "i386"],
             "components": ["main", "multiverse"],
@@ -159,15 +157,17 @@ class DebTests(unit.TestCase):
             "name": "test-name",
             "suites": ["xenial", "xenial-updates"],
             "type": "apt",
-            "xurl": "http://archive.ubuntu.com/ubuntu",
+            "url": "",
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryApt.unmarshal,
+            test_dict,
         )
-        self.assertThat(
-            str(error), MatchesRegex("invalid deb repository object:.*(invalid url)")
-        )
+
+        assert error.brief == "Invalid URL ''."
+        assert error.resolution == "You can update 'url' to a non-empty string."
 
     def test_invalid_apt_extra_key(self):
         test_dict = {
@@ -181,14 +181,16 @@ class DebTests(unit.TestCase):
             "type": "apt",
             "url": "http://archive.ubuntu.com/ubuntu",
             "foo": "bar",
+            "foo2": "bar",
         }
 
         error = self.assertRaises(
-            RuntimeError, PackageRepositoryApt.unmarshal, test_dict
+            errors.PackageRepositoryValidationError,
+            PackageRepositoryApt.unmarshal,
+            test_dict,
         )
-        self.assertThat(
-            str(error), MatchesRegex("invalid deb repository object:.*(extra keys)")
-        )
+
+        assert error.brief == "Invalid keys present ('foo', 'foo2')."
 
 
 class RepoTests(unit.TestCase):
