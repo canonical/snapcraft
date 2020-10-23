@@ -168,7 +168,7 @@ the schema is to be considered stable.
 
   - *Type:* string
 
-  - *Description:* Absolute path to repository from URL.
+  - *Description:* Absolute path to repository (from =url=).
 
     Apt sources using absolute paths are incompatible with suites and components.
 
