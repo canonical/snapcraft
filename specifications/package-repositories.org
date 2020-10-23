@@ -257,7 +257,7 @@ package-repositories:
 
    - If =<key-id[0:8]>.asc= file does not exist, continue to step 2.
 
-2. =<key-id>= will be queried from =<key-server>=, defaulting to =keyserver.ubuntu.com=.
+2. =<key-id>= will be queried from the =<key-server>=, defaulting to =keyserver.ubuntu.com=.
 
    - If key is found, the key will be imported.
 
