@@ -143,7 +143,7 @@ the schema is to be considered stable.
 
     - =key-id: 590CA3D8E4826565BE3200526A634116E00F4C82=
 
-      Snapcraft will install corresponding key at
+      Snapcraft will install a corresponding key at
       =<project>/snap/keys/590CA3D8.key=.
 
 
