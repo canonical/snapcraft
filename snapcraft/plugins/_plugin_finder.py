@@ -88,6 +88,8 @@ def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
     # from the plugins
     if build_base in ("core", "core16", "core18"):
         build_base = "legacy"
+    if build_base not in ("legacy", "core20"):
+        build_base = "core20"
     try:
         plugin_classes = _PLUGINS[build_base]
         return plugin_classes[plugin_name]
