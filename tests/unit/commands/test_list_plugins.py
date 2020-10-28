@@ -118,13 +118,9 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         )
 
     def test_core2y_list(self):
-        result = self.run_command([self.command_name, "--base", "core2y"])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(
-            result.output, Contains("Displaying plugins available for 'core2y")
-        )
-
+        # Note that core2y is some future core, _not_ allowed to be used from cmdline
+        # This tests that addition of the next base will use the latest version of plugins
+        snapcraft.cli.discovery.list_plugins("core2y")
         self.fake_iter_modules.mock.assert_called_once_with(
             snapcraft.plugins.v2.__path__
         )
