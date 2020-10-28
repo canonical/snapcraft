@@ -157,6 +157,20 @@ class PackageRepositoryApt(PackageRepository):
         self.validate()
 
     def install(self, keys_path: Path) -> bool:
+        """Install repository configuration.
+
+        1) First check to see if package repo is implied path,
+           or "bare repository" config.  This is indicated when no
+           path, components, or suites are indicated.
+        2) If path is specified, convert path to a suite entry,
+           ending with "/".
+
+        Relatedly, this assumes all of the error-checking has been
+        done already by validate(), but do some sanity checks here
+        anyways.
+
+        :returns: True if source configuration was changed.
+        """
         if not self.path and not self.components and not self.suites:
             suites = ["/"]
         elif self.path:
@@ -167,6 +181,8 @@ class PackageRepositoryApt(PackageRepository):
             suites = [path]
         elif self.suites:
             suites = self.suites
+            if not self.components:
+                raise RuntimeError("no components with suites")
         else:
             raise RuntimeError("no suites or path")
 
