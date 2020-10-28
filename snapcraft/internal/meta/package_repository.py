@@ -177,7 +177,7 @@ class PackageRepositoryApt(PackageRepository):
             # Suites denoting exact path must end with '/'.
             path = self.path
             if not path.endswith("/"):
-                path = path + "/"
+                path += "/"
             suites = [path]
         elif self.suites:
             suites = self.suites
