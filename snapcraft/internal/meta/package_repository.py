@@ -19,7 +19,7 @@ import logging
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from snapcraft.internal.repo._deb import Ubuntu
 
@@ -63,15 +63,14 @@ class PackageRepository(abc.ABC):
 
 
 class PackageRepositoryAptPpa(PackageRepository):
-    def __init__(self, *, ppa: str, apt_repo: Type[Ubuntu] = Ubuntu) -> None:
+    def __init__(self, *, ppa: str) -> None:
         self.type = "apt"
         self.ppa = ppa
-        self._apt_repo = apt_repo
 
         self.validate()
 
     def install(self, *, keys_path: Path) -> bool:
-        return self._apt_repo.install_ppa(keys_path=keys_path, ppa=self.ppa)
+        return Ubuntu.install_ppa(keys_path=keys_path, ppa=self.ppa)
 
     def marshal(self) -> Dict[str, Any]:
         data = dict(type="apt")
@@ -137,7 +136,6 @@ class PackageRepositoryApt(PackageRepository):
         path: Optional[str] = None,
         suites: Optional[List[str]] = None,
         url: str,
-        apt_repo: Type[Ubuntu] = Ubuntu,
     ) -> None:
         self.type = "apt"
         self.architectures = architectures
@@ -156,8 +154,6 @@ class PackageRepositoryApt(PackageRepository):
         self.suites = suites
         self.url = url
 
-        self._apt_repo = apt_repo
-
         self.validate()
 
     def install(self, keys_path: Path) -> bool:
@@ -175,12 +171,12 @@ class PackageRepositoryApt(PackageRepository):
             raise RuntimeError("no suites or path")
 
         # First install associated GPG key.
-        new_key: bool = self._apt_repo.install_gpg_key_id(
+        new_key: bool = Ubuntu.install_gpg_key_id(
             keys_path=keys_path, key_id=self.key_id, key_server=self.key_server
         )
 
         # Now install sources file.
-        new_sources: bool = self._apt_repo.install_sources(
+        new_sources: bool = Ubuntu.install_sources(
             architectures=self.architectures,
             components=self.components,
             formats=self.formats,

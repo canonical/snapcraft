@@ -27,9 +27,12 @@ from snapcraft.internal.meta.package_repository import (
 from tests.unit import mock
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_repo():
-    return mock.Mock(spec=repo.Ubuntu)
+    with mock.patch(
+        "snapcraft.internal.meta.package_repository.Ubuntu", spec=repo.Ubuntu
+    ) as m:
+        yield m
 
 
 def test_apt_name():
@@ -147,6 +150,8 @@ def test_apt_invalid_suites_as_path():
 
 
 def test_apt_install(mock_repo, tmp_path):
+    mock_repo.install_gpg_key_id.return_value = True
+
     repo = PackageRepositoryApt(
         architectures=["amd64", "i386"],
         components=["main", "multiverse"],
@@ -156,7 +161,6 @@ def test_apt_install(mock_repo, tmp_path):
         name="some-name",
         suites=["xenial", "xenial-updates"],
         url="http://archive.ubuntu.com/ubuntu",
-        apt_repo=mock_repo,
     )
 
     repo.install(keys_path=tmp_path)
@@ -179,11 +183,10 @@ def test_apt_install(mock_repo, tmp_path):
 
 
 def test_apt_install_with_path(mock_repo, tmp_path):
+    mock_repo.install_gpg_key_id.return_value = True
+
     repo = PackageRepositoryApt(
-        key_id="test-key-id",
-        path="x",
-        url="http://archive.ubuntu.com/ubuntu",
-        apt_repo=mock_repo,
+        key_id="test-key-id", path="x", url="http://archive.ubuntu.com/ubuntu",
     )
 
     repo.install(keys_path=tmp_path)
@@ -204,10 +207,10 @@ def test_apt_install_with_path(mock_repo, tmp_path):
 
 
 def test_apt_install_implied_path(mock_repo, tmp_path):
+    mock_repo.install_gpg_key_id.return_value = True
+
     repo = PackageRepositoryApt(
-        key_id="test-key-id",
-        url="http://archive.ubuntu.com/ubuntu",
-        apt_repo=mock_repo,
+        key_id="test-key-id", url="http://archive.ubuntu.com/ubuntu",
     )
 
     repo.install(keys_path=tmp_path)
@@ -327,7 +330,7 @@ def test_ppa_unmarshal_invalid_apt_ppa_extra_keys():
 
 
 def test_ppa_install(tmp_path, mock_repo):
-    repo = PackageRepositoryAptPpa(ppa="test/ppa", apt_repo=mock_repo)
+    repo = PackageRepositoryAptPpa(ppa="test/ppa")
 
     repo.install(keys_path=tmp_path)
 
