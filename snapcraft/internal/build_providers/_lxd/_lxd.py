@@ -14,21 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from textwrap import dedent
 import logging
 import os
 import subprocess
 import sys
 import urllib.parse
 import warnings
+from textwrap import dedent
 from time import sleep
 from typing import Dict, Optional, Sequence
 
-from .._base_provider import Provider
-from .._base_provider import errors
-from ._images import get_image_source
 from snapcraft.internal import repo
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+
+from .._base_provider import Provider, errors
+from ._images import get_image_source
 
 # LXD is only supported on Linux and causes issues when imported on Windows.
 # We conditionally import it and rely on ensure_provider() to check OS before
@@ -467,6 +467,7 @@ class LXD(Provider):
         # And only then install snapd.
         self._run(["apt-get", "install", "snapd", "sudo", "--yes"])
         self._run(["systemctl", "start", "snapd"], hide_output=True)
+        self._run(["snap", "wait", "system", "seed.loaded"], hide_output=True)
 
     def _setup_snapcraft(self):
         self._wait_for_network()
