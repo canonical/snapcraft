@@ -90,7 +90,11 @@ def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
     # Default for unknown, and core20
     plugin_version = "v2"
     # Others use v1
-    if build_base in ("", "legacy", "core", "core16", "core18"):
+    if build_base in ( "core", "core16", "core18"):
+        plugin_version = "v1"
+    elif build_base == "":
+        # This should never happen if 
+        raise RuntimeError("'build_base' cannot be unset.")
         plugin_version = "v1"
 
     try:
