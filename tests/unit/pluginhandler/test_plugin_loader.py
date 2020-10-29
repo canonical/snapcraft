@@ -70,7 +70,7 @@ class InTreePluginsTest(unit.TestCase):
             )
             self.expectThat(plugin_handler.plugin, IsInstance(PluginV1))
 
-    def test_all_core20_v2(self):
+    def test_all_v2(self):
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
         for plugin_name in _PLUGINS["v2"]:
             plugin_handler = self.load_part(
