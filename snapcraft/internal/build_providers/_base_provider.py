@@ -153,8 +153,7 @@ class Provider(abc.ABC):
         """Mount host source directory to target mount point."""
 
     def mount_project(self) -> None:
-        """Provider steps needed to make the project available to the instance.
-        """
+        """Provider steps needed to make the project available to the instance."""
         target = (self._get_home_directory() / "project").as_posix()
         self._mount(self.project._project_dir, target)
 
@@ -180,8 +179,7 @@ class Provider(abc.ABC):
         self._mount(src, target)
 
     def expose_prime(self) -> None:
-        """Provider steps needed to expose the prime directory to the host.
-        """
+        """Provider steps needed to expose the prime directory to the host."""
         os.makedirs(self.project.prime_dir, exist_ok=True)
         if not self._mount_prime_directory():
             self._run(command=["snapcraft", "clean", "--unprime"])
@@ -254,13 +252,14 @@ class Provider(abc.ABC):
             # image, but may be required for snapcraft to function.
             self._run(["apt-get", "install", "--yes", "apt-transport-https"])
 
+        # Always update snapd proxy settings to match current http(s) proxy
+        # settings.  All providers should have installed snapd upon completion
+        # of _setup_environment().
+        self._setup_snapd_proxy()
+
         # Always setup snapcraft after a start to bring it up to speed with
         # what is on the host.
         self._setup_snapcraft()
-
-        # Always update snapd proxy settings to match current http(s) proxy
-        # settings.
-        self._setup_snapd_proxy()
 
         # Install any CA certificates requested by the user.
         certs_path = self.build_provider_flags.get("SNAPCRAFT_ADD_CA_CERTIFICATES")
