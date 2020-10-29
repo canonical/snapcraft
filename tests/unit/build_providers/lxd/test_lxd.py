@@ -233,7 +233,6 @@ class LXDInitTest(LXDBaseTest):
         container = self.fake_pylxd_client.containers.get(self.instance_name)
         container.start_mock.assert_called_once_with(wait=True)
         self.assertThat(container.save_mock.call_count, Equals(2))
-        self.assertThat(self.check_output_mock.call_count, Equals(11))
 
         for args, kwargs in (
             self.check_output_mock.call_args_list + self.check_call_mock.call_args_list
@@ -256,6 +255,7 @@ class LXDInitTest(LXDBaseTest):
             ["systemctl", "enable", "systemd-udevd"],
             ["systemctl", "start", "systemd-udevd"],
             ["systemctl", "start", "snapd"],
+            ["snap", "wait", "system", "seed.loaded"],
             ["getent", "hosts", "snapcraft.io"],
         ]
 
