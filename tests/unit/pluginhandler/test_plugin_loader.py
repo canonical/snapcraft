@@ -61,7 +61,7 @@ class NonLocalTest(unit.TestCase):
 
 
 class InTreePluginsTest(unit.TestCase):
-    def test_all_known_core18_v1(self):
+    def test_all_known_v1(self):
         # We don't want validation to take place here.
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
         for plugin_name in _PLUGINS["v1"]:
