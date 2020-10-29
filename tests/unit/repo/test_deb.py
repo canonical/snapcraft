@@ -607,7 +607,10 @@ class TestUbuntuInstallRepo(unit.TestCase):
         self.assertThat(new_sources, Equals(True))
 
     @mock.patch("subprocess.run")
-    @mock.patch("snapcraft.internal.repo._deb.Launchpad")
+    @mock.patch(
+        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+        return_value="FAKE-PPA-KEY-ID",
+    )
     @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
     @mock.patch(
         "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
@@ -615,9 +618,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_ppa(
         self, os_release, mock_install_sources, mock_launchpad, mock_run
     ):
-        mock_launchpad.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
-            "FAKE-SIGNING-KEY"
-        )
         repo.Ubuntu.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
 
         mock_run.assert_has_calls(
@@ -632,7 +632,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                         "--keyserver",
                         "keyserver.ubuntu.com",
                         "--recv-keys",
-                        "FAKE-SIGNING-KEY",
+                        "FAKE-PPA-KEY-ID",
                     ],
                     check=True,
                     stdout=subprocess.PIPE,
@@ -656,16 +656,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 ]
             ),
         )
-
-    def test_install_ppa_invalid(self):
-        raised = self.assertRaises(
-            errors.AptPPAInstallError,
-            repo.Ubuntu.install_ppa,
-            keys_path=Path(self.path),
-            ppa="testppa",
-        )
-
-        self.assertThat(raised._ppa, Equals("testppa"))
 
     @mock.patch("subprocess.run")
     def test_apt_key_failure(self, mock_run):

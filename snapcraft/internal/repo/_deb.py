@@ -27,8 +27,6 @@ import tempfile
 from typing import Dict, List, Optional, Set, Tuple  # noqa: F401
 
 import gnupg
-import lazr.restfulclient.errors
-from launchpadlib.launchpad import Launchpad
 from typing_extensions import Final
 from xdg import BaseDirectory
 
@@ -37,7 +35,7 @@ from snapcraft.internal import os_release
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.project._project_options import ProjectOptions
 
-from . import errors
+from . import apt_ppa, errors
 from ._base import BaseRepo, get_pkg_name_parts
 from .apt_cache import AptCache
 
@@ -633,33 +631,9 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def _get_ppa_parts(cls, ppa: str) -> Tuple[str, str]:
-        ppa_split = ppa.split("/")
-        if len(ppa_split) != 2:
-            raise errors.AptPPAInstallError(ppa=ppa, reason="invalid PPA format")
-        return ppa_split[0], ppa_split[1]
-
-    @classmethod
-    def _get_launchpad_ppa_key_id(cls, ppa: str) -> str:
-        owner, name = cls._get_ppa_parts(ppa)
-        launchpad = Launchpad.login_anonymously("snapcraft", "production")
-        launchpad_url = f"~{owner}/+archive/{name}"
-
-        logger.debug(f"Loading launchpad url: {launchpad_url}")
-        try:
-            key_id = launchpad.load(launchpad_url).signing_key_fingerprint
-        except lazr.restfulclient.errors.NotFound as error:
-            raise errors.AptPPAInstallError(
-                ppa=ppa, reason="not found on launchpad"
-            ) from error
-
-        logger.debug(f"Retrieved launchpad PPA key ID: {key_id}")
-        return key_id
-
-    @classmethod
     def install_ppa(cls, *, keys_path: pathlib.Path, ppa: str) -> bool:
-        owner, name = cls._get_ppa_parts(ppa)
-        key_id = cls._get_launchpad_ppa_key_id(ppa)
+        owner, name = apt_ppa.split_ppa_parts(ppa=ppa)
+        key_id = apt_ppa.get_launchpad_ppa_key_id(ppa=ppa)
         codename = os_release.OsRelease().version_codename()
 
         return any(
