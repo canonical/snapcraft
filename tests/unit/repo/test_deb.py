@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -24,12 +23,19 @@ from unittest import mock
 from unittest.mock import call
 
 import fixtures
+import pytest
 import testtools
 from testtools.matchers import Equals
 
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from tests import unit
+
+
+@pytest.fixture(autouse=True)
+def mock_env_copy():
+    with mock.patch("os.environ.copy", return_value=dict()) as m:
+        yield m
 
 
 class TestPackages(unit.TestCase):
@@ -166,8 +172,6 @@ class BuildPackagesTestCase(unit.TestCase):
         self.fake_apt_cache.return_value.__enter__.return_value.get_installed_version.side_effect = (
             get_installed_version
         )
-
-        self.useFixture(fixtures.MockPatch("os.environ.copy", return_value={}))
 
         self.fake_is_dumb_terminal = self.useFixture(
             fixtures.MockPatch(
@@ -487,9 +491,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_gpg(self, mock_run):
         repo.Ubuntu.install_gpg_key(key_id="FAKE_KEYID", key="FAKEKEY")
 
-        env = os.environ.copy()
-        env["LANG"] = "C.UTF-8"
-
         mock_run.assert_has_calls(
             [
                 call(
@@ -505,7 +506,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                     input=b"FAKEKEY",
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    env=env,
+                    env=dict(LANG="C.UTF-8"),
                 )
             ]
         )
@@ -513,9 +514,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
     @mock.patch("subprocess.run")
     def test_install_gpg_key_id(self, mock_run):
         repo.Ubuntu.install_gpg_key_id(key_id="FAKE_KEYID", keys_path=Path(self.path))
-
-        env = os.environ.copy()
-        env["LANG"] = "C.UTF-8"
 
         mock_run.assert_has_calls(
             [
@@ -534,7 +532,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
                     check=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    env=env,
+                    env=dict(LANG="C.UTF-8"),
                 )
             ]
         )
@@ -609,7 +607,10 @@ class TestUbuntuInstallRepo(unit.TestCase):
         self.assertThat(new_sources, Equals(True))
 
     @mock.patch("subprocess.run")
-    @mock.patch("snapcraft.internal.repo._deb.Launchpad")
+    @mock.patch(
+        "snapcraft.internal.repo.apt_ppa.get_launchpad_ppa_key_id",
+        return_value="FAKE-PPA-KEY-ID",
+    )
     @mock.patch("snapcraft.internal.repo._deb.Ubuntu.install_sources")
     @mock.patch(
         "snapcraft.internal.os_release.OsRelease.version_codename", return_value="testy"
@@ -617,13 +618,7 @@ class TestUbuntuInstallRepo(unit.TestCase):
     def test_install_ppa(
         self, os_release, mock_install_sources, mock_launchpad, mock_run
     ):
-        mock_launchpad.login_anonymously.return_value.load.return_value.signing_key_fingerprint = (
-            "FAKE-SIGNING-KEY"
-        )
         repo.Ubuntu.install_ppa(keys_path=Path(self.path), ppa="test/ppa")
-
-        env = os.environ.copy()
-        env["LANG"] = "C.UTF-8"
 
         mock_run.assert_has_calls(
             [
@@ -637,12 +632,12 @@ class TestUbuntuInstallRepo(unit.TestCase):
                         "--keyserver",
                         "keyserver.ubuntu.com",
                         "--recv-keys",
-                        "FAKE-SIGNING-KEY",
+                        "FAKE-PPA-KEY-ID",
                     ],
                     check=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    env=env,
+                    env=dict(LANG="C.UTF-8"),
                 )
             ]
         )
@@ -661,16 +656,6 @@ class TestUbuntuInstallRepo(unit.TestCase):
                 ]
             ),
         )
-
-    def test_install_ppa_invalid(self):
-        raised = self.assertRaises(
-            errors.AptPPAInstallError,
-            repo.Ubuntu.install_ppa,
-            keys_path=Path(self.path),
-            ppa="testppa",
-        )
-
-        self.assertThat(raised._ppa, Equals("testppa"))
 
     @mock.patch("subprocess.run")
     def test_apt_key_failure(self, mock_run):
