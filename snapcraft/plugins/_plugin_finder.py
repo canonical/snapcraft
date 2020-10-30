@@ -93,7 +93,7 @@ def get_plugin_for_base(plugin_name: str, *, build_base: str) -> PluginTypes:
     if build_base in ( "core", "core16", "core18"):
         plugin_version = "v1"
     elif build_base == "":
-        # This should never happen if 
+        # This should never happen when using build_base from Project.
         raise RuntimeError("'build_base' cannot be unset.")
         plugin_version = "v1"
 
