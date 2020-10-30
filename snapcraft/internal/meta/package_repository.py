@@ -260,7 +260,7 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Suites cannot end with a '/'.",
-                resolution="You can either remove the '/' or instead use the 'path' property to define an exact path.",
+                resolution="Remove the trailing '/' or use the 'path' property to define an exact path.",
             )
 
         if self.path is not None and not self.path:
