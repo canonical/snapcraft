@@ -274,7 +274,8 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Components and suites cannot be used with path.",
-                resolution="Paths and components/suites are mutually exclusive options.  You can remove the path, or components and suites.",
+                details="Incompatible options: 'path' cannot be combined with 'components' or 'suites'.",
+                resolution="Remove 'path' or both 'components' and 'suites'.",
             )
 
         if self.suites and not self.components:
