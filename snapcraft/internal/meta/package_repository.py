@@ -383,7 +383,7 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=url,
                 brief=f"Invalid key(s) present ({keys}).",
-                resolution="You can remove the unsupported keys or correct their name(s).",
+                resolution="Remove the unsupported keys or correct their name(s).",
             )
 
         return cls(
