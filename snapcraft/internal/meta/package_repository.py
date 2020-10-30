@@ -267,7 +267,7 @@ class PackageRepositoryApt(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=self.url,
                 brief=f"Invalid path {self.path!r}.",
-                resolution="You can update 'path' to a non-empty string, such as '/'.",
+                resolution="Update 'path' to a non-empty string, such as '/'.",
             )
 
         if self.path and (self.components or self.suites):
