@@ -82,7 +82,7 @@ class PackageRepositoryAptPpa(PackageRepository):
             raise errors.PackageRepositoryValidationError(
                 url=self.ppa,
                 brief=f"Invalid PPA {self.ppa!r}.",
-                resolution="You can update 'ppa' to a non-empty string.",
+                resolution="Update 'ppa' to a non-empty string.",
             )
 
     @classmethod
