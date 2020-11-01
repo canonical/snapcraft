@@ -218,7 +218,10 @@ class Rosdep:
             self._rosdep_install_path, "usr", "lib", "python2.7", "dist-packages"
         )
 
-        env["ROS_PYTHON_VERSION"] = "2"
+        if self._ros_version == "2":
+            env["ROS_PYTHON_VERSION"] = "3"
+        else:
+            env["ROS_PYTHON_VERSION"] = "2"
 
         # By default, rosdep uses /etc/ros/rosdep to hold its sources list. We
         # don't want that here since we don't want to touch the host machine
