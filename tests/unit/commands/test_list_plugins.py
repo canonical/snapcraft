@@ -117,6 +117,14 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             snapcraft.plugins.v2.__path__
         )
 
+    def test_core2y_list(self):
+        # Note that core2y is some future base, _not_ allowed to be used from cmdline
+        # This tests that addition of the next base will use the latest version of plugins
+        snapcraft.cli.discovery.list_plugins.callback("core2y")
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft.plugins.v2.__path__
+        )
+
     def test_list_plugins_non_tty(self):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)

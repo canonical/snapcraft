@@ -43,10 +43,10 @@ def _try_get_base_from_project() -> str:
 
 
 def _get_modules_iter(base: str) -> Iterable:
-    if base == "core20":
-        modules_path = snapcraft.plugins.v2.__path__  # type: ignore  # mypy issue #1422
-    else:
+    if base in ("core", "core16", "core18"):
         modules_path = snapcraft.plugins.v1.__path__  # type: ignore  # mypy issue #1422
+    else:
+        modules_path = snapcraft.plugins.v2.__path__  # type: ignore  # mypy issue #1422
 
     # TODO make this part of plugin_finder.
     return pkgutil.iter_modules(modules_path)

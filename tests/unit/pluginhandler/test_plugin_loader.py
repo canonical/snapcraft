@@ -61,18 +61,18 @@ class NonLocalTest(unit.TestCase):
 
 
 class InTreePluginsTest(unit.TestCase):
-    def test_all_known_legacy(self):
+    def test_all_known_v1(self):
         # We don't want validation to take place here.
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
-        for plugin_name in _PLUGINS["legacy"]:
+        for plugin_name in _PLUGINS["v1"]:
             plugin_handler = self.load_part(
                 "test-part", plugin_name=plugin_name, base="core18"
             )
             self.expectThat(plugin_handler.plugin, IsInstance(PluginV1))
 
-    def test_all_core20(self):
+    def test_all_v2(self):
         self.useFixture(fixtures.MockPatch("jsonschema.validate"))
-        for plugin_name in _PLUGINS["core20"]:
+        for plugin_name in _PLUGINS["v2"]:
             plugin_handler = self.load_part(
                 "test-part", plugin_name=plugin_name, base="core20"
             )
