@@ -84,6 +84,7 @@ class PluginHandler:
         self.part_dir = os.path.join(project.parts_dir, self.name)
         self.part_source_dir = os.path.join(self.part_dir, "src")
         self.part_build_dir = os.path.join(self.part_dir, "build")
+        self.part_build_plugin_dir = os.path.join(self.part_dir, "build_plugin")
         self.part_install_dir = os.path.join(self.part_dir, "install")
         self.part_state_dir = os.path.join(self.part_dir, "state")
         self.part_snaps_dir = os.path.join(self.part_dir, "snaps")
@@ -258,6 +259,7 @@ class PluginHandler:
         dirs = [
             self.part_source_dir,
             self.part_build_dir,
+            self.part_build_plugin_dir,
             self.part_install_dir,
             self.part_state_dir,
             self._project.stage_dir,
@@ -582,6 +584,8 @@ class PluginHandler:
         ):
             if os.path.exists(self.part_build_dir):
                 shutil.rmtree(self.part_build_dir)
+            if os.path.exists(self.part_build_plugin_dir):
+                shutil.rmtree(self.part_build_plugin_dir)
 
             # No hard-links being used here in case the build process modifies
             # these files.

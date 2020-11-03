@@ -88,6 +88,7 @@ def get_snapcraft_part_directory_environment(
             {
                 "SNAPCRAFT_PART_BUILD": part.part_build_dir,
                 "SNAPCRAFT_PART_BUILD_WORK": part.part_build_work_dir,
+                "SNAPCRAFT_PART_BUILD_PLUGIN": part.part_build_plugin_dir,
                 "SNAPCRAFT_PART_INSTALL": part.part_install_dir,
             }
         )
