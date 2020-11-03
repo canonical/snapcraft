@@ -133,7 +133,7 @@ def stage_runtime_dependencies(part_install: str, ros_distro: str):
     # TODO: support python packages (only apt currently supported)
     apt_packages: Set[str] = set()
 
-    for pkg in catkin_packages.find_packages(".").values():
+    for pkg in catkin_packages.find_packages("$SNAPCRAFT_PART_BUILD_WORK").values():
         for dep in pkg.exec_depends:
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:
