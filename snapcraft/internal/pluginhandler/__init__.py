@@ -801,6 +801,9 @@ class PluginHandler:
         if os.path.exists(self.part_build_dir):
             shutil.rmtree(self.part_build_dir)
 
+        if os.path.exists(self.part_build_plugin_dir):
+            shutil.rmtree(self.part_build_plugin_dir)
+
         if os.path.exists(self.part_install_dir):
             shutil.rmtree(self.part_install_dir)
 
