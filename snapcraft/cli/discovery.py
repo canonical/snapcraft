@@ -21,9 +21,9 @@ import click
 
 import snapcraft
 from snapcraft.internal import errors
+from snapcraft.internal.common import format_output_in_columns, get_terminal_width
 from snapcraft.project import errors as project_errors
-from snapcraft.internal.common import format_output_in_columns
-from snapcraft.internal.common import get_terminal_width
+
 from ._options import get_project
 
 

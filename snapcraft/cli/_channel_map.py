@@ -18,9 +18,9 @@ import itertools
 import os
 from collections import OrderedDict
 from typing import List, Optional, Tuple
-from typing_extensions import Final
 
 from tabulate import tabulate
+from typing_extensions import Final
 
 from snapcraft.storeapi.v2.channel_map import (
     ChannelMap,
