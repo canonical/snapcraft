@@ -19,7 +19,7 @@ import subprocess
 import textwrap
 
 import yaml as yaml_utils
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Contains, Equals
 
 from tests import integration
 

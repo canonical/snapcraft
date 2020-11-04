@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
 import os
-import xdg
 
+import fixtures
+import xdg
 from testtools.matchers import Contains, Equals, FileContains
 
 from snapcraft import config

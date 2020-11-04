@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from simplejson.scanner import JSONDecodeError
 from unittest import mock
 
+from simplejson.scanner import JSONDecodeError
 from testtools.matchers import Contains, Equals, Not
 
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase
 
 

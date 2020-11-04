@@ -27,8 +27,8 @@ import testscenarios
 import yaml as yaml_utils
 from testtools.matchers import Contains, Equals
 
+from tests import fixture_setup, integration, os_release
 from tests.integration import repo
-from tests import integration, fixture_setup, os_release
 
 
 class AssetRecordingBaseTestCase(integration.TestCase):

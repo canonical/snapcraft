@@ -17,9 +17,9 @@
 import contextlib
 import logging
 import os
+import stat
 import textwrap
 from unittest.mock import patch
-import stat
 
 import fixtures
 import testtools
@@ -34,13 +34,12 @@ from testtools.matchers import (
     Not,
 )
 
-from snapcraft.internal.meta import errors as meta_errors, _snap_packaging
 from snapcraft import extractors, yaml_utils
+from snapcraft.internal import errors, project_loader, states
+from snapcraft.internal.meta import _snap_packaging
+from snapcraft.internal.meta import errors as meta_errors
 from snapcraft.project import Project
-from snapcraft.internal import errors
-from snapcraft.internal import project_loader
-from snapcraft.internal import states
-from tests import unit, fixture_setup
+from tests import fixture_setup, unit
 
 
 class CreateBaseTestCase(unit.TestCase):

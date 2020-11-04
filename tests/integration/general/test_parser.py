@@ -15,10 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import fixtures
 import subprocess
 
-
+import fixtures
 import testscenarios
 from testtools.matchers import FileExists, Not
 

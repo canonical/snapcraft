@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fixtures
-
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase, get_sample_key
 
 

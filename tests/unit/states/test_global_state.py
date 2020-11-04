@@ -18,7 +18,6 @@ from textwrap import dedent
 
 from snapcraft.internal.states import GlobalState
 
-
 _scenarios = [
     (
         "build-snaps, build-packages and required-grade",

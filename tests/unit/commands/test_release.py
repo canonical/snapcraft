@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from textwrap import dedent
+
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
@@ -24,6 +25,7 @@ from snapcraft.storeapi.v2.channel_map import (
     Revision,
     SnapChannel,
 )
+
 from . import FakeStoreCommandsBaseTestCase
 
 

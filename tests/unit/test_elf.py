@@ -16,18 +16,18 @@
 
 import logging
 import os
-import tempfile
 import subprocess
 import sys
+import tempfile
+from unittest import mock
 
 import fixtures
 import pytest
 from testtools.matchers import Contains, EndsWith, Equals, NotEquals, StartsWith
-from unittest import mock
 
 from snapcraft import ProjectOptions
-from snapcraft.internal import errors, elf
-from tests import unit, fixture_setup
+from snapcraft.internal import elf, errors
+from tests import fixture_setup, unit
 
 
 class TestElfBase(unit.TestCase):

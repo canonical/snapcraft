@@ -17,8 +17,8 @@
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Equals
 from testtools import TestCase
+from testtools.matchers import Equals
 
 from snapcraft.plugins.v2.npm import NpmPlugin
 

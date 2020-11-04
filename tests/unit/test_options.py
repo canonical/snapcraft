@@ -22,12 +22,12 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.project._project_options import (
-    _get_platform_architecture,
-    _32BIT_USERSPACE_ARCHITECTURE,
-)
 from snapcraft.internal import common
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.project._project_options import (
+    _32BIT_USERSPACE_ARCHITECTURE,
+    _get_platform_architecture,
+)
 from tests import unit
 
 

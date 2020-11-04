@@ -21,6 +21,7 @@ import fixtures
 from testtools.matchers import Contains, Equals
 
 from snapcraft import storeapi
+
 from . import FakeStoreCommandsBaseTestCase
 
 

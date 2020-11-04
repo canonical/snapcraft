@@ -14,18 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
 import json
 import subprocess
 from textwrap import dedent
 from unittest import mock
 
+import fixtures
 from click.testing import CliRunner
 
 from snapcraft import storeapi
+from snapcraft.cli._runner import run
 from snapcraft.storeapi.v2.channel_map import ChannelMap
 from snapcraft.storeapi.v2.releases import Releases
-from snapcraft.cli._runner import run
 from tests import fixture_setup, unit
 
 _sample_keys = [

@@ -16,12 +16,10 @@
 
 from textwrap import dedent
 
-from snapcraft.extractors import setuppy, ExtractedMetadata
-
 from testscenarios import multiply_scenarios
 from testtools.matchers import Equals
 
-from snapcraft.extractors import _errors
+from snapcraft.extractors import ExtractedMetadata, _errors, setuppy
 from tests import unit
 
 

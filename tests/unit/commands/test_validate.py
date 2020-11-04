@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest import mock
 
-import snapcraft.storeapi.errors
-
 import fixtures
 from testtools.matchers import Contains, Equals
+
+import snapcraft.storeapi.errors
 
 from . import StoreCommandsBaseTestCase
 

@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 import subprocess
-
+import sys
 from unittest import mock
+
 from testtools.matchers import DirExists, Equals, FileExists, MatchesRegex
 
 from snapcraft.internal import sources
